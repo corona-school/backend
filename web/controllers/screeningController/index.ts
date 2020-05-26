@@ -7,7 +7,7 @@ import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
 import {
     Student,
     getStudentByEmail,
-    getAllStudents,
+    getAllStudents
 } from "../../../common/entity/Student";
 import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
@@ -18,7 +18,8 @@ import { Screening } from "../../../common/entity/Screening";
 const logger = getLogger();
 
 /**
- * @api {GET} /student/
+ * @api {GET} /student getStudents
+ * @apiVersion 1.0.1
  * @apiDescription
  * Get a all students in the databse
  *
@@ -53,7 +54,8 @@ export async function getStudents(
 }
 
 /**
- * @api {GET} /student/:email
+ * @api {GET} /student/:email getStudentByMail
+ * @apiVersion 1.0.1
  * @apiDescription
  * Get a student by her/his email address
  *
@@ -101,7 +103,8 @@ export async function getStudentByMailHandler(
 }
 
 /**
- * @api {PUT} /student/:email
+ * @api {PUT} /student/:email updateStudentWithScreeningResult
+ * @apiVersion 1.0.1
  * @apiDescription
  * Update a student by her/his email address
  *
@@ -157,7 +160,8 @@ export async function updateStudentWithScreeningResultHandler(
 }
 
 /**
- * @api {GET} /screener/:email/:includepassword
+ * @api {GET} /screener/:email/:includepassword getScreenerByMail
+ * @apiVersion 1.0.1
  * @apiDescription
  * Get a screener by her/his email address, include or exclude password hash transmission with includepassword flag
  *
@@ -200,7 +204,8 @@ export async function getScreenerByMailHandler(
 }
 
 /**
- * @api {POST} /screener/
+ * @api {POST} /screener addScreener
+ * @apiVersion 1.0.1
  * @apiDescription
  * Adds a screener
  *
@@ -243,7 +248,8 @@ export async function addScreenerHandler(
 }
 
 /**
- * @api {PUT} /screener/:email
+ * @api {PUT} /screener/:email updateScreenerByMail
+ * @apiVersion 1.0.1
  * @apiDescription
  * Update a screener by her/his email address
  *

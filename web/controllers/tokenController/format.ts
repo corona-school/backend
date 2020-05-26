@@ -1,5 +1,6 @@
 /**
  * @apiDefine VerifyToken
+ * @apiVersion 1.0.1
  *
  * @apiParam (Verify Token) {string} token Verification token
  * @apiParamExample {json} Request Body
@@ -13,6 +14,7 @@ export class ApiVerifyToken {
 
 /**
  * @apiDefine AuthToken
+ * @apiVersion 1.0.1
  *
  * @apiParam (Auth Token) {string} token Authentication token
  * @apiParamExample {json} Response Body

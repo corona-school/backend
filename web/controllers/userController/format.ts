@@ -1,5 +1,6 @@
 /**
  * @apiDefine User
+ * @apiVersion 1.0.1
  *
  * @apiSuccess (User Object) {string} id Unique identifier for this user
  * @apiSuccess (User Object) {string} firstname First name
@@ -90,6 +91,7 @@ export class ApiGetUser {
 
 /**
  * @apiDefine UserPersonal
+ * @apiVersion 1.0.1
  *
  * @apiParam (User Personal) {string} firstname First name
  * @apiParam (User Personal) {string} lastname Last name
@@ -118,6 +120,7 @@ export class ApiPutUser {
 
 /**
  * @apiDefine UserSubjects
+ * @apiVersion 1.0.1
  *
  * @apiParam (User Subjects) {Subject[]} [root] Array of subjects
  * @apiParamExample {json} Pupil
@@ -147,6 +150,7 @@ export class ApiPutUser {
 
 /**
  * @apiDefine Subject
+ * @apiVersion 1.0.1
  *
  * @apiSuccess (Subject Object) {string} name Name
  * @apiSuccess (Subject Object) {number} minGrade <i>Only available for students:</i> Minimum grade they want to teach
@@ -160,6 +164,7 @@ export class ApiSubject {
 
 /**
  * @apiDefine Match
+ * @apiVersion 1.0.1
  *
  * @apiSuccess (Match Object) {string} uuid Unique identifier for the Match
  * @apiSuccess (Match Object) {string} firstname First name of the matched partner
@@ -211,6 +216,7 @@ export function checkSubject(s: string): boolean {
 
 /**
  * @apiDefine StudentDescription
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Student Description) {string} description Description
  */

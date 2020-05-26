@@ -23,6 +23,7 @@ const logger = getLogger();
 
 /**
  * @api {GET} /user getCurrentUser
+ * @apiVersion 1.0.1
  * @apiDescription
  * Get data about the currently authenticated user.
  *
@@ -58,6 +59,7 @@ export async function getSelfHandler(req: Request, res: Response) {
 
 /**
  * @api {GET} /user/:id getUser
+ * @apiVersion 1.0.1
  * @apiDescription
  * Get data about an user.
  *
@@ -113,6 +115,7 @@ export async function getHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id putUser
+ * @apiVersion 1.0.1
  * @apiDescription
  * Set personal data of the user.
  *
@@ -180,6 +183,7 @@ export async function putHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/subjects putUserSubjects
+ * @apiVersion 1.0.1
  * @apiDescription
  * Set the subjects of the user.
  *
@@ -297,6 +301,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/active/:active putUserActive
+ * @apiVersion 1.0.1
  * @apiDescription
  * Set the active status of the user.
  *
@@ -368,6 +373,40 @@ export async function putActiveHandler(req: Request, res: Response) {
     }
     res.status(status).end();
 }
+
+
+
+/**
+ * @api {PUT} /user/:id/description PutStudentDescription
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Set the description of the user.
+ *
+ * This endpoint allows editing of the description of a student.
+ * Setting a description will automatically make the student an instructor.
+ * If a user is an instructor the description can't be removed
+ *
+ * @apiName PutStudentDescription
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/description -d "<REQUEST>"
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserSubjects
+ * @apiUse Subject
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo: implement
 
 async function get(
     wix_id: string,

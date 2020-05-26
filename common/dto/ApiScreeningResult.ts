@@ -2,6 +2,7 @@ import { ApiSubject } from "../../web/controllers/userController/format";
 
 /**
  * @apiDefine ScreeningResult
+ * @apiVersion 1.0.1
  *
  * @apiSuccess {string} verified Verification
  * @apiSuccess {string} phone Phone number

@@ -10,6 +10,7 @@ const logger = getLogger();
 
 /**
  * @api {GET} /certificate/:student/:pupil getCertificate
+ * @apiVersion 1.2.0
  * @apiDescription
  * Fetch a certificate
  *

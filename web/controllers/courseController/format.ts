@@ -1,17 +1,20 @@
 /**
  * @apiDefine Courses
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Courses Object) {Course[]} root Array of all courses
  */
 
 /**
  * @apiDefine PostCourseReturn
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Course Return Object) {int} id Unique identifier for this course
  */
 
 /**
  * @apiDefine Course
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Course Object) {int} id Unique identifier for this course
  * @apiSuccess (Course Object) {string} instructor <em>(optional)</em> Name of the instructor for this course
@@ -50,6 +53,7 @@ export interface ApiCourse {
 
 /**
  * @apiDefine PostCourse
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Course Object) {string} name Name of this course
  * @apiSuccess (Course Object) {string} outline Outline of this course

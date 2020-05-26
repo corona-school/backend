@@ -1,5 +1,6 @@
 /**
  * @api {GET} /courses GetCourses
+ * @apiVersion 1.1.0
  * @apiDescription
  * Request a list of all available courses.
  *
@@ -32,6 +33,7 @@
 
 /**
  * @api {POST} /course AddCourse
+ * @apiVersion 1.1.0
  * @apiDescription
  * Add a new course.
  *
@@ -49,36 +51,6 @@
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course/ -d "<REQUEST>"
- *
- * @apiUse StatusNoContent
- * @apiUse StatusBadRequest
- * @apiUse StatusUnauthorized
- * @apiUse StatusForbidden
- * @apiUse StatusInternalServerError
- */
-
-/**
- * @api {PUT} /user/:id/description PutStudentDescription
- * @apiDescription
- * Set the description of the user.
- *
- * This endpoint allows editing of the description of a student.
- * Setting a description will automatically make the student an instructor.
- * If a user is an instructor the description can't be removed
- *
- * @apiName PutStudentDescription
- * @apiGroup User
- *
- * @apiUse Authentication
- * @apiUse ContentType
- *
- * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/description -d "<REQUEST>"
- *
- * @apiParam (URL Parameter) {string} id User Id
- *
- * @apiUse UserSubjects
- * @apiUse Subject
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
