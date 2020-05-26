@@ -67,6 +67,7 @@
   "devDependencies": {
     "@types/jest": "^25.2.1",
     "@types/rewire": "^2.5.28",
+    "apidoc": "^0.22.1",
     "cors": "^2.8.5",
     "jest": "^25.3.0",
     "libsodium-wrappers": "^0.7.6",
