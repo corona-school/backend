@@ -50,14 +50,24 @@ createConnection().then(() => {
     deployServer();
 
     function addCorsMiddleware() {
-        const options = {
-            "origin": [
+
+        let origins;
+
+        if(process.env.NODE_ENV == "dev") {
+            origins = [
                 "http://localhost:3000",                
                 "https://web-user-app-live.herokuapp.com",
                 "https://web-user-app-dev.herokuapp.com",
+            ];
+        } else {
+            origins = [
                 "https://dashboard.corona-school.de",
                 "https://my.corona-school.de"
-            ],
+            ];
+        }
+
+        const options = {
+            "origin": origins,
             "methods": ["GET", "POST", "DELETE", "PUT", "HEAD", "PATCH"]
         }
         
