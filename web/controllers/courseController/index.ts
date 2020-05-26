@@ -13,9 +13,9 @@
  *
  * @apiUse OptionalAuthentication
  *
- * @apiParam (Query Parameter) {string?} fields Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,category,startDate</code>
- * @apiParam (Query Parameter) {string?} state Default: <code>allowed</code>. Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
- * @apiParam (Query Parameter) {string?} instructor Id of an instructor. Return only courses by this instructor. This parameter requires authentication as the specified instructor.
+ * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,category,startDate</code>
+ * @apiParam (Query Parameter) {string} state <em>(optional, efault: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
+ * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses by this instructor. This parameter requires authentication as the specified instructor.
  *
  * @apiUse Courses
  * @apiUse Course
