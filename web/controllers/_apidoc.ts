@@ -7,6 +7,14 @@
  */
 
 /**
+ * @apiDefine OptionalAuthentication
+ *
+ * @apiHeader (Optional Authentication) {string} Token HTTP Header: Authentication Token of a valid user <em>(optional)</em>
+ * @apiHeaderExample Token
+ *      Token: longAuthenticationToken_With_Var10u5_Ch4r4ct3r5
+ */
+
+/**
  * @apiDefine ContentType
  *
  * @apiHeader (HTTP Header) {string} Content-Type <code>application/json</code>
@@ -35,9 +43,18 @@
 /**
  * @apiDefine StatusBadRequest
  *
- * @apiError (HTTP Status Codes) 400 The request was malformed and thus rejected.
+ * @apiError (HTTP Status Codes) 400 The request was malformed and thus rejected
  * @apiErrorExample {empty} Bad Request
  *      HTTP/1.1 400 Bad Request
+ *      (empty body)
+ */
+
+/**
+ * @apiDefine StatusForbidden
+ *
+ * @apiError (HTTP Status Codes) 401 The user is authenticated, but may not access this resource
+ * @apiErrorExample {empty} Forbidden
+ *      HTTP/1.1 401 Forbidden
  *      (empty body)
  */
 
@@ -53,7 +70,7 @@
 /**
  * @apiDefine StatusNotFound
  *
- * @apiError (HTTP Status Codes) 404 The requested resource was not found.
+ * @apiError (HTTP Status Codes) 404 The requested resource was not found
  * @apiErrorExample {empty} Not Found
  *      HTTP/1.1 404 Not Found
  *      (empty body)
