@@ -1,0 +1,37 @@
+{
+  "appenders": {
+    "file": {
+      "type": "dateFile",
+      "filename": "logs/jobs.log",
+      "keepFileExt": true
+    },
+    "file-filtered": {
+      "type": "logLevelFilter",
+      "appender": "file",
+      "level": "info"
+    },
+    "stdout": {
+      "type": "stdout"
+    },
+    "stdout-filtered": {
+      "type": "logLevelFilter",
+      "appender": "stdout",
+      "level": "info"
+    },
+    "stderr": {
+      "type": "stderr"
+    },
+    "stderr-filtered": {
+      "type": "logLevelFilter",
+      "appender": "stdout",
+      "level": "all",
+      "maxLevel": "debug"
+    }
+  },
+  "categories": {
+    "default": {
+      "appenders": ["stderr-filtered", "stdout-filtered", "file-filtered"],
+      "level": "all"
+    }
+  }
+}
