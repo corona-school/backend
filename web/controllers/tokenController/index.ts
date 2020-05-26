@@ -161,15 +161,10 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             const entityManager = getManager();
             const transactionLog = getTransactionLog();
 
-            let person: Pupil | Student;
-            let pupil = await entityManager.findOne(Student, { email: email });
-            if (pupil == undefined) {
-                let student = await entityManager.findOne(Pupil, {
-                    email: email,
-                });
-                person = student;
-            } else {
-                person = pupil;
+            let person: (Pupil|Student);
+            person = await entityManager.findOne(Student, {email: email});
+            if(person == undefined) {
+                person = await entityManager.findOne(Pupil, {email: email});
             }
 
             if (person !== undefined) {
@@ -181,14 +176,10 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authToken = hashToken(uuid);
                     person.authTokenSent = new Date();
                     person.authTokenUsed = false;
+                    
+                    logger.info("Generated and sending UUID " + uuid + " to " + person.email);
+                    await sendLoginTokenMail(person, uuid);
 
-                    logger.info(
-                        "Generated and sending UUID " +
-                            uuid +
-                            " to " +
-                            person.email
-                    );
-                    sendLoginTokenMail(person, uuid);
 
                     // Save new token to database and log action
                     await entityManager.save(person);

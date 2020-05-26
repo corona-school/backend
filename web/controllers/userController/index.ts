@@ -502,22 +502,9 @@ async function putPersonal(
     let type: ObjectType<Person>;
     if (person instanceof Student) {
         // Check if number of requested matches is valid
-        let matchCount = await entityManager.count(Match, {
-            student: person,
-            dissolved: false,
-        });
-        if (
-            req.matchesRequested > 2 ||
-            req.matchesRequested < 0 ||
-            !Number.isInteger(req.matchesRequested) ||
-            req.matchesRequested + matchCount > 4
-        ) {
-            logger.warn(
-                "User (with " +
-                    matchCount +
-                    " matches) wants to set invalid number of matches requested: " +
-                    req.matchesRequested
-            );
+        let matchCount = await entityManager.count(Match, {student: person, dissolved: false});
+        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6) {
+            logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
 

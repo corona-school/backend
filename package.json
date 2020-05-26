@@ -54,6 +54,7 @@
     "nodemailer": "^6.4.5",
     "papaparse": "^5.1.1",
     "paseto.js": "^0.1.6",
+    "pdf-lib": "^1.6.0",
     "pg": "^7.18.2",
     "react-select": "^3.1.0",
     "reflect-metadata": "^0.1.13",
