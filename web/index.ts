@@ -159,13 +159,13 @@ createConnection().then(() => {
             // Let's encrypt
             const options = {
                 key: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/privkey.pem"
+                    "/etc/letsencrypt/live/api.corona-school.de/privkey.pem"
                 ),
                 cert: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/cert.pem"
+                    "/etc/letsencrypt/live/api.corona-school.de/cert.pem"
                 ),
                 ca: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/chain.pem"
+                    "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
                 ),
             };
 
