@@ -16,6 +16,7 @@ const logger = getLogger();
 
 /**
  * @api {POST} /token verifyToken
+ * @apiVersion 1.0.1
  * @apiDescription
  * Try to verify a token.
  *
@@ -131,6 +132,7 @@ export async function verifyToken(token: string): Promise<string | null> {
 
 /**
  * @api {GET} /token requestNewToken
+ * @apiVersion 1.0.1
  * @apiDescription
  * Request a new token for the user account specified by email.
  *
