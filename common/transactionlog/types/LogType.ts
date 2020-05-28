@@ -9,6 +9,7 @@ enum LogType {
     UPDATE_SUBJECTS = "updateSubjects",
     ACCESSED_BY_SCREENER = "accessedByScreener",
     UPDATED_BY_SCREENER = "updatedByScreener",
+    UPDATE_STUDENT_DESCRIPTION = "updateStudentDescription"
 }
 
 export default LogType;
