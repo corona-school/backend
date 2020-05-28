@@ -10,6 +10,7 @@ import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
+import { Course } from "./Course";
 
 @Entity()
 export class Student extends Person {
@@ -61,6 +62,25 @@ export class Student extends Person {
         nullable: true,
     })
     feedback: string;
+
+    @Column({
+        default: true
+    })
+    isStudent: boolean;
+
+    @Column({
+        default: false
+    })
+    isInstructor: boolean;
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    instructorDescription: string;
+
+    @OneToMany(type => Course, course => course.instructor)
+    courses: Course[];
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
