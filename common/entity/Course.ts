@@ -51,6 +51,9 @@ export class Course {
     maxGrade: number;
 
     @Column()
+    maxRecipients: number;
+
+    @Column()
     categoryId: number;
 
     @Column()
