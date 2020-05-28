@@ -406,7 +406,9 @@ export async function putActiveHandler(req: Request, res: Response) {
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo: implement
+export async function putDescriptionHandler(req: Request, res: Response) {
+
+}
 
 async function get(
     wix_id: string,
