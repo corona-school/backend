@@ -4,10 +4,10 @@ import { Request, Response } from "express";
 import {
     ApiGetUser,
     ApiMatch,
-    ApiPutUser,
+    ApiPutUser, ApiStudentDescription,
     ApiSubject,
     checkName,
-    checkSubject,
+    checkSubject
 } from "./format";
 import { Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
@@ -346,7 +346,7 @@ export async function putActiveHandler(req: Request, res: Response) {
                 } else {
                     logger.warn(
                         "Invalid parameter :active for PUT /user/active: " +
-                            req.params.active
+                        req.params.active
                     );
                     status = 400;
                 }
@@ -373,7 +373,6 @@ export async function putActiveHandler(req: Request, res: Response) {
     }
     res.status(status).end();
 }
-
 
 
 /**
@@ -407,7 +406,35 @@ export async function putActiveHandler(req: Request, res: Response) {
  * @apiUse StatusInternalServerError
  */
 export async function putDescriptionHandler(req: Request, res: Response) {
-
+    let status = 204;
+    try {
+        let b = req.body;
+        if (req.params.id != undefined && res.locals.user instanceof Person) {
+            if (b instanceof Object && b.description != undefined) {
+                const studentDescription: ApiStudentDescription = b;
+                try {
+                    if (status < 300) {
+                        status = await putDescription(res.locals.user, req.params.id, studentDescription);
+                    }
+                } catch (e) {
+                    logger.warn("Error during GET /user: " + e.message);
+                    logger.debug(e);
+                    status = 500;
+                }
+            } else {
+                logger.error("Invalid format for subjects: Expected StudentDescription Object");
+                logger.debug(b);
+                status = 400;
+            }
+        } else {
+            status = 500;
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
 }
 
 async function get(
@@ -423,9 +450,9 @@ async function get(
     if (person.wix_id != wix_id) {
         logger.warn(
             "Person with id " +
-                person.wix_id +
-                " tried to access data from id " +
-                wix_id
+            person.wix_id +
+            " tried to access data from id " +
+            wix_id
         );
         return null;
     }
@@ -449,7 +476,7 @@ async function get(
 
         let matches = await entityManager.find(Match, {
             student: person,
-            dissolved: false,
+            dissolved: false
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -481,7 +508,7 @@ async function get(
 
         let matches = await entityManager.find(Match, {
             pupil: person,
-            dissolved: false,
+            dissolved: false
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -522,9 +549,9 @@ async function putPersonal(
     if (person.wix_id != wix_id) {
         logger.warn(
             "Person with id " +
-                person.wix_id +
-                "tried to access data from id " +
-                wix_id
+            person.wix_id +
+            "tried to access data from id " +
+            wix_id
         );
         return 403;
     }
@@ -543,7 +570,7 @@ async function putPersonal(
     let type: ObjectType<Person>;
     if (person instanceof Student) {
         // Check if number of requested matches is valid
-        let matchCount = await entityManager.count(Match, {student: person, dissolved: false});
+        let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
         if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
@@ -555,7 +582,7 @@ async function putPersonal(
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, {
             pupil: person,
-            dissolved: false,
+            dissolved: false
         });
         if (
             req.matchesRequested > 1 ||
@@ -565,9 +592,9 @@ async function putPersonal(
         ) {
             logger.warn(
                 "User (with " +
-                    matchCount +
-                    " matches) wants to set invalid number of matches requested: " +
-                    req.matchesRequested
+                matchCount +
+                " matches) wants to set invalid number of matches requested: " +
+                req.matchesRequested
             );
             return 400;
         }
@@ -623,9 +650,9 @@ async function putSubjects(
     if (person.wix_id != wix_id) {
         logger.warn(
             "Person with id " +
-                person.wix_id +
-                "tried to access data from id " +
-                wix_id
+            person.wix_id +
+            "tried to access data from id " +
+            wix_id
         );
         return 403;
     }
@@ -673,9 +700,9 @@ async function putActive(
     if (person.wix_id != wix_id) {
         logger.warn(
             "Person with id " +
-                person.wix_id +
-                " tried to access data from id " +
-                wix_id
+            person.wix_id +
+            " tried to access data from id " +
+            wix_id
         );
         return 403;
     }
@@ -705,9 +732,9 @@ async function putActive(
             // Deactivate if active
             logger.info(
                 "Deactivating person " +
-                    person.firstname +
-                    " " +
-                    person.lastname
+                person.firstname +
+                " " +
+                person.lastname
             );
 
             // Step 1: Dissolve all matches
@@ -715,12 +742,12 @@ async function putActive(
             if (type == Student) {
                 options = {
                     student: person,
-                    dissolved: false,
+                    dissolved: false
                 };
             } else {
                 options = {
                     pupil: person,
-                    dissolved: false,
+                    dissolved: false
                 };
             }
             let matches = await entityManager.find(Match, options);
@@ -739,6 +766,44 @@ async function putActive(
             "Can't " + (active ? "" : "de") + "activate user: " + e.message
         );
         logger.debug(person, e);
+        return 500;
+    }
+
+    return 204;
+}
+
+async function putDescription(student: Person, wix_id: string, obj: ApiStudentDescription) {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!(student instanceof Student)) {
+        logger.warn(`Requestor is not a student (type ${typeof student}`);
+        logger.debug(student);
+        return 403;
+    }
+
+    if (student.wix_id != wix_id) {
+        logger.warn(`Student (ID ${student.wix_id}) wants to edit another person (ID ${wix_id}`);
+        logger.debug(student);
+        return 403;
+    }
+
+    if (obj.description.length > 2048 || obj.description.length == 0) {
+        logger.warn(`Student wants to set description of length ${obj.description.length}`);
+        logger.debug(obj);
+        return 400;
+    }
+
+    student.instructorDescription = obj.description;
+    student.isInstructor = true;
+
+    try {
+        await entityManager.save(Student, student);
+        // todo await transactionLog.log()
+        logger.info(`Updated student description (ID: ${student.id}`);
+    } catch (e) {
+        logger.error("Can't store user description:", e.message);
+        logger.debug(e);
         return 500;
     }
 

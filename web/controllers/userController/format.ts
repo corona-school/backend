@@ -218,7 +218,7 @@ export function checkSubject(s: string): boolean {
  * @apiDefine StudentDescription
  * @apiVersion 1.1.0
  *
- * @apiSuccess (Student Description) {string} description Description
+ * @apiSuccess (Student Description) {string} description Description (maximum length: 2048)
  */
 
 export interface ApiStudentDescription {
