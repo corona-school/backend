@@ -28,7 +28,7 @@
  * @apiSuccess (Course Object) {int} maxParticipants <em>(optional)</em> Maximum count of participants
  * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course
  * @apiSuccess (Course Object) {boolean} joinAfterStart <em>(optional)</em> Indicates whether participants are allowed to join after the start date
- * @apiSuccess (Course Object) {string} startDate <em>(optional)</em> Start Date of this course
+ * @apiSuccess (Course Object) {number} startDate <em>(optional)</em> Start Date of this course
  * @apiSuccess (Course Object) {int} duration <em>(optional)</em> Duration (>= 1) of the course (count of days)
  * @apiSuccess (Course Object) {int} frequency <em>(optional)</em> Days (>= 0) <strong>between</strong> single course appointments (so 0 means, the appointments are on consecutive days)
  * @apiSuccess (Course Object) {string} state <em>(optional)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
@@ -47,7 +47,7 @@ export interface ApiCourse {
     maxParticipants?: number;
     category?: string;
     joinAfterStart?: boolean;
-    startDate?: string;
+    startDate?: number;
     duration?: number;
     frequency?: number;
     state?: string;
