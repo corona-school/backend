@@ -15,6 +15,7 @@ import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
 import { dissolveMatch } from "../matchController";
 import { getTransactionLog } from "../../../common/transactionlog";
+import UpdateStudentDescriptionEvent from "../../../common/transactionlog/types/UpdateStudentDescriptionEvent";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
@@ -794,12 +795,14 @@ async function putDescription(student: Person, wix_id: string, obj: ApiStudentDe
         return 400;
     }
 
+    const oldStudent = Object.assign({}, student);
+
     student.instructorDescription = obj.description;
     student.isInstructor = true;
 
     try {
         await entityManager.save(Student, student);
-        // todo await transactionLog.log()
+        await transactionLog.log(new UpdateStudentDescriptionEvent(student, oldStudent));
         logger.info(`Updated student description (ID: ${student.id}`);
     } catch (e) {
         logger.error("Can't store user description:", e.message);
