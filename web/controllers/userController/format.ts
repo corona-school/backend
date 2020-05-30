@@ -37,7 +37,8 @@
  *                  "lastname": "Doe",
  *                  "email": "jane.doe@example.com",
  *                  "uuid": "af7392d74-8d7f-9083-0973-fda9b8e0f9f",
- *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f"
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
+ *                  "date": 1590834509
  *              }
  *          ]
  *      }
@@ -70,7 +71,8 @@
  *                      "Englisch",
  *                      "Chinesisch"
  *                  ]
- *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f"
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
+ *                  "date": 1590834509
  *              }
  *          ]
  *      }
@@ -164,7 +166,7 @@ export class ApiSubject {
 
 /**
  * @apiDefine Match
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  *
  * @apiSuccess (Match Object) {string} uuid Unique identifier for the Match
  * @apiSuccess (Match Object) {string} firstname First name of the matched partner
@@ -173,6 +175,7 @@ export class ApiSubject {
  * @apiSuccess (Match Object) {string} grade <i>only available for students:</i> Grade of the pupil
  * @apiSuccess (Match Object) {string[]} subjects Subjects of the matched partner
  * @apiSuccess (Match Object) {string} jitsilink Link to the Jitsi session
+ * @apiSuccess (Match Object) {number} date Unix timestamp of when these persons were matched
  */
 export class ApiMatch {
     firstname: string;
@@ -182,6 +185,7 @@ export class ApiMatch {
     grade?: number;
     subjects: string[];
     jitsilink: string;
+    date: number;
 }
 
 export function checkSubject(s: string): boolean {
