@@ -10,12 +10,21 @@ const logger = getLogger();
 
 /**
  * @api {GET} /certificate/:student/:pupil getCertificate
- * @apiVersion 1.2.0
+ * @apiVersion 1.1.0
  * @apiDescription
  * Fetch a certificate
  *
  * This endpoint allows fetching a certificate (as PDF) with the second page customized for a pupil.
- * todo: specify request parameters
+ * It is only available for students.
+ *
+ * @apiParam (URL Parameter) {string} student ID of the student
+ * @apiParam (URL Parameter) {string} pupil ID of a matched pupil
+ *
+ * @apiParam (Query Parameter) {number} endDate Unix Timestamp for the end date
+ * @apiParam (Query Parameter) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
+ * @apiParam (Query Parameter) {number} hoursPerWeek Hours per week helped
+ * @apiParam (Query Parameter) {number} hoursTotal Total hours helped
+ * @apiParam (Query Parameter) {string} categories Comma seperated integers specifying indices for predefined help categories. Maximum count: 5
  *
  * @apiName getCertificate
  * @apiGroup Certificate
@@ -23,11 +32,12 @@ const logger = getLogger();
  * @apiExample {curl} Curl
  * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/00000000-0000-0002-0001-1b4c4c526364/00000000-0000-0001-0001-1b4c4c526364
  *
- * @apiUse AuthToken
+ * @apiUse Authentication
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
  * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
 export async function certificateHandler(req: Request, res: Response) {
