@@ -66,7 +66,7 @@ export interface ApiCourse {
  * @apiSuccess (Course Object) {int} maxParticipants Maximum count of participants
  * @apiSuccess (Course Object) {string} category Category of this course
  * @apiSuccess (Course Object) {boolean} joinAfterStart Indicates whether participants are allowed to join after the start date
- * @apiSuccess (Course Object) {string} startDate Start Date of this course
+ * @apiSuccess (Course Object) {number} startDate Start Date of this course (Unix Timestamp). Must be at least one day from now
  * @apiSuccess (Course Object) {int} duration Duration (>= 1) of the course (count of days)
  * @apiSuccess (Course Object) {int} frequency Days (>= 0) <strong>between</strong> single course appointments (so 0 means, the appointments are on consecutive days)
  * @apiSuccess (Course Object) {bool} submit If submit is true, the course will be marked as submitted and can't be edited anymore.
@@ -82,8 +82,8 @@ export interface ApiAddCourse {
     maxParticipants: number;
     category: string;
     joinAfterStart: boolean;
-    startDate: string;
+    startDate: number;
     duration: number;
     frequency: number;
-    state: string;
+    submit: boolean;
 }
