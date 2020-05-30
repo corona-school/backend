@@ -239,7 +239,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse PostCourseReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course/ -d "<REQUEST>"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -247,6 +247,11 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+export async function postCourseHandler(req: Request, res: Response) {
+    let status = 204;
+    res.status(status).end();
+}
 
+async function post() {
 
-
+}
