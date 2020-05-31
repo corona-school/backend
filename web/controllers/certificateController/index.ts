@@ -5,6 +5,10 @@ import {Student} from '../../../common/entity/Student';
 import {getTransactionLog} from '../../../common/transactionlog';
 import {getManager} from 'typeorm';
 import {Match} from '../../../common/entity/Match';
+import {readFileSync} from 'fs';
+import * as pdf from 'html-pdf';
+import * as path from 'path';
+import * as moment from "moment";
 
 const logger = getLogger();
 
@@ -24,7 +28,7 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
  * @apiParam (Query Parameter) {number} hoursPerWeek Hours per week helped
  * @apiParam (Query Parameter) {number} hoursTotal Total hours helped
- * @apiParam (Query Parameter) {string} categories Comma seperated integers specifying indices for predefined help categories. Maximum count: 5
+ * @apiParam (Query Parameter) {string} categories String of category texts for pupil's student description, separated by newlines
  *
  * @apiName getCertificate
  * @apiGroup Certificate
@@ -45,9 +49,23 @@ export async function certificateHandler(req: Request, res: Response) {
 
     try {
         if (req.params.student != undefined && req.params.pupil != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
-            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil);
+
+            // TODO: typehint this
+            let params = {
+                endDate: req.query.endDate || moment().format("X"),
+                subjects: req.query.subjects || "Mathematik,Mathematik,Mathematik",
+                hoursPerWeek: req.query.hoursPerWeek || 1337,
+                hoursTotal: req.query.hoursTotal || 4242,
+                categories: req.query.categories || "Liste\nListe2\nListe3"
+            }
+
+            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params);
             if (certificate.status == 200) {
-                res.send(certificate.pdf);
+                res.writeHead(200, {
+                    'Content-Type': 'application/pdf',
+                    'Content-Length': certificate.pdf.length
+                });
+                res.end(certificate.pdf);
             }
             status = certificate.status;
         } else {
@@ -58,10 +76,10 @@ export async function certificateHandler(req: Request, res: Response) {
         logger.debug(req, e);
         status = 500;
     }
-    res.status(status).contentType('application/pdf').end();
+    res.status(status).end();
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, pupilid: string): Promise<{ status: number, pdf: any }> {
+async function generateCertificate(requestor: (Pupil | Student), studentid: string, pupilid: string, params: {endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any}): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -91,7 +109,40 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     }
 
     // Todo: Load PDF and modify
+    ret.pdf = await createPDFBinary(requestor, pupil, params);
+    ret.status = 200;
+
     // todo: Save request in transactionlog
 
     return ret;
+}
+
+function createPDFBinary(student: Student, pupil: Pupil, params: {endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any}): Promise<Buffer> {
+    let html = readFileSync("./assets/certificateTemplate.html", "utf8");
+    const options = {
+        "base": "file://"+path.resolve(__dirname + "/../../../../assets") + "/"
+    };
+
+    // adjust variables
+    html = html.replace("%NAMESTUDENT%", student.firstname + " " + student.lastname);
+    html = html.replace("%NAMESCHUELER%", pupil.firstname + " " + pupil.lastname);
+    html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
+    html = html.replace("%SCHUELERSTART%", moment().format("D.M.YYYY"));
+    html = html.replace("%SCHUELERENDE%", moment().format("D.M.YYYY"));
+    html = html.replace("%SCHUELERFAECHER%", params.subjects.replace(/,/g,"<br />"));
+    html = html.replace("%SCHUELERFREITEXT%", params.categories.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    html = html.replace("%SCHUELERPROWOCHE%", params.hoursPerWeek);
+    html = html.replace("%SCHUELERGESAMT%", params.hoursTotal);
+
+    // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
+
+    return new Promise((resolve, reject) => {
+        pdf.create(html, options).toBuffer((err, buffer) => {
+            if(err) {
+                reject(err);
+            } else {
+                resolve(buffer);
+            } 
+        });
+    });
 }

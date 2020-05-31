@@ -10,6 +10,7 @@ import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
 import * as screeningController from "./controllers/screeningController";
+import * as certificateController from "./controllers/certificateController";
 import { configure, getLogger, connectLogger } from "log4js";
 import { createConnection } from "typeorm";
 import {
@@ -51,6 +52,7 @@ createConnection().then(() => {
 
     configureBasicAPI();
     configureUserAPI();
+    configureCertificateAPI();
     configureTokenAPI();
     configureScreenerAPI();
     deployServer();
@@ -99,6 +101,14 @@ createConnection().then(() => {
         tokenApiRouter.get("/", tokenController.getNewTokenHandler);
         app.use("/api/token", tokenApiRouter);
     }
+
+
+    function configureCertificateAPI() {
+        const certificateRouter = express.Router();
+        certificateRouter.use(basicTokenCheck, authCheck);
+        certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
+        app.use("/api/certificate", certificateRouter);
+    }    
 
     function configureScreenerAPI() {
         const screenerApiRouter = express.Router();
