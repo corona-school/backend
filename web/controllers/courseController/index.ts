@@ -1,13 +1,11 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
-import { Person } from '../../../common/entity/Person';
-import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
-import { ApiGetUser, ApiMatch } from '../userController/format';
-import { Match } from '../../../common/entity/Match';
-import { ApiCourse } from './format';
+import { ApiAddCourse, ApiCourse } from './format';
 import { Course, CourseState } from '../../../common/entity/Course';
+import { getTransactionLog } from '../../../common/transactionlog';
+import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
 
 const logger = getLogger();
 
@@ -152,7 +150,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const courses = await entityManager.find(Course, {where: filters, relations: ['instructor']});
+        const courses = await entityManager.find(Course, { where: filters, relations: ['instructor'] });
 
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
@@ -239,7 +237,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse PostCourseReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course/ -d "<REQUEST>"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -247,6 +245,171 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+export async function postCourseHandler(req: Request, res: Response) {
+    let status = 204;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (typeof req.body.name == 'string' &&
+                typeof req.body.outline == 'string' &&
+                typeof req.body.description == 'string' &&
+                typeof req.body.motivation == 'string' &&
+                typeof req.body.minGrade == 'number' &&
+                typeof req.body.maxGrade == 'number' &&
+                typeof req.body.maxParticipants == 'number' &&
+                typeof req.body.category == 'string' &&
+                typeof req.body.joinAfterStart == 'boolean' &&
+                typeof req.body.startDate == 'number' &&
+                typeof req.body.duration == 'number' &&
+                typeof req.body.frequency == 'number' &&
+                typeof req.body.submit == 'boolean') {
 
+                const ret = await post(res.locals.user, req.body);
+                if (typeof ret == 'number') {
+                    status = ret;
+                } else {
+                    res.json(ret);
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
 
+async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCourse | number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
 
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    let coursesByInstructor = await entityManager.count(Course, { instructor: student });
+    if (coursesByInstructor >= 3) {
+        logger.warn(`Student (ID ${student.id}) tried to add an course, but already owns 3 other courses`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Some generous checks
+    if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
+        logger.warn(`Invalid length of field 'name': ${apiCourse.name.length}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.outline.length == 0 || apiCourse.outline.length > 300) {
+        logger.warn(`Invalid length of field 'outline': ${apiCourse.outline.length}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.description.length == 0 || apiCourse.description.length > 2000) {
+        logger.warn(`Invalid length of field 'description': ${apiCourse.description.length}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.motivation.length == 0 || apiCourse.motivation.length > 2000) {
+        logger.warn(`Invalid length of field 'motivation': ${apiCourse.motivation.length}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.maxGrade < 1 || apiCourse.maxGrade > 13 || !Number.isInteger(apiCourse.maxGrade)) {
+        logger.warn(`Invalid value of field 'minGrade': ${apiCourse.maxGrade}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.maxGrade < 1 || apiCourse.maxGrade > 13 || !Number.isInteger(apiCourse.maxGrade)) {
+        logger.warn(`Invalid value of field 'maxGrade': ${apiCourse.maxGrade}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.maxGrade < apiCourse.minGrade) {
+        logger.warn(`Invalid values: Field 'maxGrade' may not be smaller than field 'minGrade'`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.maxParticipants < 2 || apiCourse.maxParticipants > 50 || !Number.isInteger(apiCourse.maxParticipants)) {
+        logger.warn(`Invalid value of field 'maxParticipants': ${apiCourse.maxParticipants}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    let categoryId = 0;
+    if (apiCourse.category) {
+        // todo waiting for category list
+        logger.warn(`Invalid length of field 'name': ${apiCourse.category.length}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    // You can't create courses starting in the past or starting in less than a day
+    if (!Number.isInteger(apiCourse.startDate) || apiCourse.startDate < (new Date()).getTime() + 86400) {
+        logger.warn(`Invalid value of field 'startDate': ${apiCourse.startDate}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.duration < 1 || apiCourse.duration > 50 || !Number.isInteger(apiCourse.duration)) {
+        logger.warn(`Invalid value of field 'duration': ${apiCourse.duration}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    if (apiCourse.frequency < 0 || apiCourse.frequency > 30 || !Number.isInteger(apiCourse.frequency)) {
+        logger.warn(`Invalid value of field 'frequency': ${apiCourse.frequency}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
+    const course = new Course();
+    course.instructor = student;
+    course.name = apiCourse.name;
+    course.outline = apiCourse.outline;
+    course.description = apiCourse.description;
+    course.motivation = apiCourse.motivation;
+    course.requirements = "";
+    course.imageUrl = null;
+    course.minGrade = apiCourse.minGrade;
+    course.maxGrade = apiCourse.maxGrade;
+    course.maxParticipants = apiCourse.maxParticipants;
+    course.categoryId = categoryId;
+    course.joinAfterStart = apiCourse.joinAfterStart;
+    course.startDate = new Date(apiCourse.startDate);
+    course.duration = apiCourse.duration;
+    course.frequency = apiCourse.frequency;
+    course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+
+    try {
+        await entityManager.save(Course, course);
+        await transactionLog.log(new CreateCourseEvent(student, course));
+        logger.info("Successfully saved new course");
+
+        // todo check if typeorm sets the id
+        return {
+            id: course.id
+        };
+    } catch (e) {
+        logger.error("Can't save new course: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
