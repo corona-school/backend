@@ -15,7 +15,7 @@ import { createConnection } from "typeorm";
 import {
     authCheck,
     screenerAuthCheck,
-    basicTokenCheck,
+    basicTokenCheck
 } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 
@@ -64,13 +64,7 @@ createConnection().then(() => {
         const apiRouter = express.Router();
         apiRouter.get("/", authCheck, (req, res) => {
             // This route is only available with a valid user.
-            res.send(
-                "Logged in: " +
-                    res.locals.user +
-                    " (type: " +
-                    res.locals.userType +
-                    ")"
-            );
+            res.send(`Logged in: ${res.locals.user} (type: ${res.locals.userType})`);
         });
         app.use("/api", apiRouter);
     }
@@ -82,14 +76,9 @@ createConnection().then(() => {
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
-        userApiRouter.put(
-            "/:id/active/:active",
-            userController.putActiveHandler
-        );
-        userApiRouter.delete(
-            "/:id/matches/:uuid",
-            matchController.deleteHandler
-        );
+        userApiRouter.put("/:id/description", userController.putDescriptionHandler);
+        userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
+        userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
         app.use("/api/user", userApiRouter);
     }
 
@@ -148,16 +137,16 @@ createConnection().then(() => {
                 ),
                 ca: fs.readFileSync(
                     "/etc/letsencrypt/live/dashboard.corona-school.de/chain.pem"
-                ),
+                )
             };
 
             // Start listening
             https.createServer(options, app).listen(443);
 
             // Redirect on port 80 server
-            http.createServer(function (req, res) {
+            http.createServer(function(req, res) {
                 res.writeHead(301, {
-                    Location: "https://" + req.headers["host"] + req.url,
+                    Location: "https://" + req.headers["host"] + req.url
                 });
                 res.end();
             }).listen(80);
