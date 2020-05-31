@@ -461,6 +461,7 @@ async function get(
             apiMatch.uuid = matches[i].uuid;
             apiMatch.jitsilink =
                 "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
         }
@@ -492,6 +493,7 @@ async function get(
             apiMatch.uuid = matches[i].uuid;
             apiMatch.jitsilink =
                 "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
         }
