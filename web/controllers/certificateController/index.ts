@@ -1,14 +1,15 @@
-import {getLogger} from 'log4js';
-import {Request, Response} from 'express';
-import {Pupil} from '../../../common/entity/Pupil';
-import {Student} from '../../../common/entity/Student';
-import {getTransactionLog} from '../../../common/transactionlog';
-import {getManager} from 'typeorm';
-import {Match} from '../../../common/entity/Match';
-import {readFileSync} from 'fs';
+import { getLogger } from 'log4js';
+import { Request, Response } from 'express';
+import { Pupil } from '../../../common/entity/Pupil';
+import { Student } from '../../../common/entity/Student';
+import { getTransactionLog } from '../../../common/transactionlog';
+import { getManager } from 'typeorm';
+import { Match } from '../../../common/entity/Match';
+import { readFileSync } from 'fs';
 import * as pdf from 'html-pdf';
 import * as path from 'path';
 import * as moment from "moment";
+import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 
 const logger = getLogger();
 
@@ -57,7 +58,7 @@ export async function certificateHandler(req: Request, res: Response) {
                 hoursPerWeek: req.query.hoursPerWeek || 1337,
                 hoursTotal: req.query.hoursTotal || 4242,
                 categories: req.query.categories || "Liste\nListe2\nListe3"
-            }
+            };
 
             let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params);
             if (certificate.status == 200) {
@@ -79,7 +80,7 @@ export async function certificateHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, pupilid: string, params: {endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any}): Promise<{ status: number, pdf: any }> {
+async function generateCertificate(requestor: (Pupil | Student), studentid: string, pupilid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -101,8 +102,8 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     }
 
     // Students may only request for their matches
-    let pupil = await entityManager.findOne(Pupil, {wix_id: pupilid});
-    let matches = await entityManager.findOne(Match, {student: requestor, pupil: pupil});
+    let pupil = await entityManager.findOne(Pupil, { wix_id: pupilid });
+    let matches = await entityManager.findOne(Match, { student: requestor, pupil: pupil });
     if (pupil == undefined || matches == undefined) {
         ret.status = 400;
         return ret;
@@ -112,15 +113,15 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     ret.pdf = await createPDFBinary(requestor, pupil, params);
     ret.status = 200;
 
-    // todo: Save request in transactionlog
+    await transactionLog.log(new CertificateRequestEvent(requestor, undefined)); // todo use correct matchid as second parameter
 
     return ret;
 }
 
-function createPDFBinary(student: Student, pupil: Pupil, params: {endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any}): Promise<Buffer> {
+function createPDFBinary(student: Student, pupil: Pupil, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<Buffer> {
     let html = readFileSync("./assets/certificateTemplate.html", "utf8");
     const options = {
-        "base": "file://"+path.resolve(__dirname + "/../../../../assets") + "/"
+        "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/"
     };
 
     // adjust variables
@@ -129,7 +130,7 @@ function createPDFBinary(student: Student, pupil: Pupil, params: {endDate: any, 
     html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
     html = html.replace("%SCHUELERSTART%", moment().format("D.M.YYYY"));
     html = html.replace("%SCHUELERENDE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERFAECHER%", params.subjects.replace(/,/g,"<br />"));
+    html = html.replace("%SCHUELERFAECHER%", params.subjects.replace(/,/g, "<br />"));
     html = html.replace("%SCHUELERFREITEXT%", params.categories.replace(/(?:\r\n|\r|\n)/g, '<br>'));
     html = html.replace("%SCHUELERPROWOCHE%", params.hoursPerWeek);
     html = html.replace("%SCHUELERGESAMT%", params.hoursTotal);
@@ -138,11 +139,11 @@ function createPDFBinary(student: Student, pupil: Pupil, params: {endDate: any, 
 
     return new Promise((resolve, reject) => {
         pdf.create(html, options).toBuffer((err, buffer) => {
-            if(err) {
+            if (err) {
                 reject(err);
             } else {
                 resolve(buffer);
-            } 
+            }
         });
     });
 }
