@@ -110,11 +110,10 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
         return ret;
     }
 
-    // Todo: Load PDF and modify
     ret.pdf = await createPDFBinary(requestor, match.pupil, params);
     ret.status = 200;
 
-    await transactionLog.log(new CertificateRequestEvent(requestor, undefined)); // todo use correct matchid as second parameter
+    await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
 
     return ret;
 }
