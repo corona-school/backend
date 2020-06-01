@@ -1,11 +1,11 @@
 import * as express from "express";
-import * as path from "path";
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
 import * as bodyParser from "body-parser";
 import * as hpp from "hpp";
 import * as helmet from "helmet";
+import * as cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
@@ -33,22 +33,16 @@ const accessLogger = getLogger("access");
 logger.info("Webserver backend started");
 const app = express();
 
-//allow CORS in dev to simplify frontend development
-if (process.env.NODE_ENV == "dev") {
-    var cors = require("cors");
-    app.use(cors());
-}
-
 // Database connection
 createConnection().then(() => {
     logger.info("Database connected");
     app.use(connectLogger(accessLogger, { level: "auto" }));
 
     // Express setup
-
     app.use(bodyParser.json());
 
-    addSecurityMiddleWare();
+    addCorsMiddleware();
+    addSecurityMiddleware();
 
     configureBasicAPI();
     configureUserAPI();
@@ -57,7 +51,32 @@ createConnection().then(() => {
     configureScreenerAPI();
     deployServer();
 
-    function addSecurityMiddleWare() {
+    function addCorsMiddleware() {
+
+        let origins;
+
+        if(process.env.NODE_ENV == "dev") {
+            origins = [
+                "http://localhost:3000",                
+                "https://web-user-app-live.herokuapp.com",
+                "https://web-user-app-dev.herokuapp.com",
+            ];
+        } else {
+            origins = [
+                "https://dashboard.corona-school.de",
+                "https://my.corona-school.de"
+            ];
+        }
+
+        const options = {
+            "origin": origins,
+            "methods": ["GET", "POST", "DELETE", "PUT", "HEAD", "PATCH"]
+        }
+        
+        app.use(cors(options));        
+    }
+
+    function addSecurityMiddleware() {
         app.use(hpp());
         app.use(helmet());
     }
@@ -127,7 +146,6 @@ createConnection().then(() => {
         app.use("/api", screenerApiRouter);
     }
 
-
     function deployServer() {
         if (process.env.NODE_ENV == "dev") {
             setupDevDB().then(() => {
@@ -140,14 +158,14 @@ createConnection().then(() => {
             // Let's encrypt
             const options = {
                 key: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/privkey.pem"
+                    "/etc/letsencrypt/live/api.corona-school.de/privkey.pem"
                 ),
                 cert: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/cert.pem"
+                    "/etc/letsencrypt/live/api.corona-school.de/cert.pem"
                 ),
                 ca: fs.readFileSync(
-                    "/etc/letsencrypt/live/dashboard.corona-school.de/chain.pem"
-                )
+                    "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
+                ),
             };
 
             // Start listening

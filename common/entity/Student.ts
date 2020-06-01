@@ -81,6 +81,17 @@ export class Student extends Person {
 
     @OneToMany(type => Course, course => course.instructor)
     courses: Course[];
+    @Column({
+        nullable: false,
+        default: 0,
+    })
+    sentScreeningReminderCount: number
+    
+    @Column({
+        nullable: true,
+        default: null,
+    })
+    lastSentScreeningInvitationDate: Date
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
