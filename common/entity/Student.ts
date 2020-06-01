@@ -62,6 +62,18 @@ export class Student extends Person {
     })
     feedback: string;
 
+    @Column({
+        nullable: false,
+        default: 0,
+    })
+    sentScreeningReminderCount: number
+    
+    @Column({
+        nullable: true,
+        default: null,
+    })
+    lastSentScreeningInvitationDate: Date
+
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
             screeningResult.phone === undefined

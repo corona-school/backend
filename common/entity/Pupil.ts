@@ -39,6 +39,12 @@ export class Pupil extends Person {
         default: 1,
     })
     openMatchRequestCount: number;
+
+    @Column({
+        nullable: false,
+        default: 0, //everyone is default 0, i.e no priority
+    })
+    matchingPriority: number;
 }
 
 export function getPupilWithEmail(manager: EntityManager, email: string) {
