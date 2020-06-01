@@ -30,6 +30,7 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
  * @apiParam (Query Parameter) {number} hoursPerWeek Hours per week helped
  * @apiParam (Query Parameter) {number} hoursTotal Total hours helped
+ * @apiParam (Query Parameter) {string} medium Support medium
  * @apiParam (Query Parameter) {string} categories String of category texts for pupil's student description, separated by newlines
  *
  * @apiName getCertificate
@@ -56,9 +57,10 @@ export async function certificateHandler(req: Request, res: Response) {
             // TODO: typehint this
             let params = {
                 endDate: req.query.endDate || moment().format("X"),
-                subjects: req.query.subjects || "Mathematik,Mathematik,Mathematik",
-                hoursPerWeek: req.query.hoursPerWeek || 1337,
-                hoursTotal: req.query.hoursTotal || 4242,
+                subjects: req.query.subjects || "Mathematik, Biologie, Altgriechisch",
+                hoursPerWeek: Number.parseInt(req.query.hoursPerWeek, 10) || 0,
+                hoursTotal: Number.parseInt(req.query.hoursTotal, 10) || 0,
+                medium: req.query.medium || "Taschenrechner mit Programmierfunktion",
                 categories: req.query.categories || "Liste\nListe2\nListe3"
             };
 
@@ -82,7 +84,7 @@ export async function certificateHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<{ status: number, pdf: any }> {
+async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -110,7 +112,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
         return ret;
     }
 
-    ret.pdf = await createPDFBinary(requestor, match.pupil, params);
+    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params);
     ret.status = 200;
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
@@ -118,7 +120,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     return ret;
 }
 
-function createPDFBinary(student: Student, pupil: Pupil, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<Buffer> {
+function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<Buffer> {
     let html = readFileSync("./assets/certificateTemplate.html", "utf8");
     const options = {
         "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/"
@@ -126,15 +128,16 @@ function createPDFBinary(student: Student, pupil: Pupil, params: { endDate: any,
 
     // adjust variables
     // todo for 2021: replace %TPL% by <TPL>
-    html = html.replace("%NAMESTUDENT%", escape(student.firstname + " " + student.lastname));
-    html = html.replace("%NAMESCHUELER%", escape(pupil.firstname + " " + pupil.lastname));
+    html = html.replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname));
+    html = html.replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname));
     html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERSTART%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERENDE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERFAECHER%", escape(params.subjects).replace(/,/g, "<br />"));
-    html = html.replace("%SCHUELERFREITEXT%", escape(params.categories).replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    html = html.replace("%SCHUELERSTART%", moment(startDate,"X").format("D.M.YYYY"));
+    html = html.replace("%SCHUELERENDE%", moment(params.endDate,"X").format("D.M.YYYY"));
+    html = html.replace("%SCHUELERFAECHER%", escape(params.subjects).replace(/,/g, ", "));
+    html = html.replace("%SCHUELERFREITEXT%", escape(params.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
     html = html.replace("%SCHUELERPROWOCHE%", escape(params.hoursPerWeek));
     html = html.replace("%SCHUELERGESAMT%", escape(params.hoursTotal));
+    html = html.replace("%MEDIUM%", escape(params.medium));
 
     // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
 
