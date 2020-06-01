@@ -14,7 +14,7 @@ import CertificateRequestEvent from '../../../common/transactionlog/types/Certif
 const logger = getLogger();
 
 /**
- * @api {GET} /certificate/:student/:pupil getCertificate
+ * @api {GET} /certificate/:student/:match getCertificate
  * @apiVersion 1.1.0
  * @apiDescription
  * Fetch a certificate
@@ -23,7 +23,7 @@ const logger = getLogger();
  * It is only available for students.
  *
  * @apiParam (URL Parameter) {string} student ID of the student
- * @apiParam (URL Parameter) {string} pupil ID of a matched pupil
+ * @apiParam (URL Parameter) {string} match UUID of the match
  *
  * @apiParam (Query Parameter) {number} endDate Unix Timestamp for the end date
  * @apiParam (Query Parameter) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
@@ -49,6 +49,7 @@ export async function certificateHandler(req: Request, res: Response) {
     let status;
 
     try {
+        // todo rename parameter pupil to match
         if (req.params.student != undefined && req.params.pupil != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
 
             // TODO: typehint this
@@ -80,7 +81,7 @@ export async function certificateHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, pupilid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<{ status: number, pdf: any }> {
+async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, categories: any }): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -102,15 +103,14 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     }
 
     // Students may only request for their matches
-    let pupil = await entityManager.findOne(Pupil, { wix_id: pupilid });
-    let matches = await entityManager.findOne(Match, { student: requestor, pupil: pupil });
-    if (pupil == undefined || matches == undefined) {
+    let match = await entityManager.findOne(Match, { student: requestor, uuid: matchuuid });
+    if (match == undefined) {
         ret.status = 400;
         return ret;
     }
 
     // Todo: Load PDF and modify
-    ret.pdf = await createPDFBinary(requestor, pupil, params);
+    ret.pdf = await createPDFBinary(requestor, match.pupil, params);
     ret.status = 200;
 
     await transactionLog.log(new CertificateRequestEvent(requestor, undefined)); // todo use correct matchid as second parameter
