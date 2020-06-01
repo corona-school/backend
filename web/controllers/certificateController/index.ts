@@ -6,6 +6,7 @@ import { getTransactionLog } from '../../../common/transactionlog';
 import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync } from 'fs';
+import * as escape from 'escape-html';
 import * as pdf from 'html-pdf';
 import * as path from 'path';
 import * as moment from "moment";
@@ -125,15 +126,16 @@ function createPDFBinary(student: Student, pupil: Pupil, params: { endDate: any,
     };
 
     // adjust variables
-    html = html.replace("%NAMESTUDENT%", student.firstname + " " + student.lastname);
-    html = html.replace("%NAMESCHUELER%", pupil.firstname + " " + pupil.lastname);
+    // todo for 2021: replace %TPL% by <TPL>
+    html = html.replace("%NAMESTUDENT%", escape(student.firstname + " " + student.lastname));
+    html = html.replace("%NAMESCHUELER%", escape(pupil.firstname + " " + pupil.lastname));
     html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
     html = html.replace("%SCHUELERSTART%", moment().format("D.M.YYYY"));
     html = html.replace("%SCHUELERENDE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERFAECHER%", params.subjects.replace(/,/g, "<br />"));
-    html = html.replace("%SCHUELERFREITEXT%", params.categories.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-    html = html.replace("%SCHUELERPROWOCHE%", params.hoursPerWeek);
-    html = html.replace("%SCHUELERGESAMT%", params.hoursTotal);
+    html = html.replace("%SCHUELERFAECHER%", escape(params.subjects).replace(/,/g, "<br />"));
+    html = html.replace("%SCHUELERFREITEXT%", escape(params.categories).replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    html = html.replace("%SCHUELERPROWOCHE%", escape(params.hoursPerWeek));
+    html = html.replace("%SCHUELERGESAMT%", escape(params.hoursTotal));
 
     // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
 
