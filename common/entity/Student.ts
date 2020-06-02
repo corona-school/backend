@@ -68,6 +68,11 @@ export class Student extends Person {
     isInstructor: boolean;
 
     @Column({
+        default: false
+    })
+    isTeacher: boolean;
+
+    @Column({
         nullable: true,
         default: null
     })
