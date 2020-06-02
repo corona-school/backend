@@ -1,5 +1,14 @@
-import {Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column, OneToMany, ManyToOne, JoinColumn} from "typeorm";
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from "typeorm";
 import { Student } from "./Student";
+import { Subcourse } from './Subcourse';
 
 export enum CourseState {
     CREATED = "created",
@@ -18,23 +27,23 @@ export class Course {
     createdAt: Date;
 
     @UpdateDateColumn({ type: "timestamp" })
-    updatedAt: Date;    
+    updatedAt: Date;
 
-    @ManyToOne(type=>Student, student => student.courses)
-    @JoinColumn()
-    instructor: Student;
+    @ManyToMany(type => Student, student => student.courses)
+    @JoinTable()
+    instructors: Student;
 
     @Column()
     name: string;
 
     @Column()
     outline: string;
-    
+
     @Column()
     description: string;
-    
+
     @Column()
-    motivation: string;  
+    motivation: string;
 
     @Column()
     requirements: string;
@@ -45,28 +54,13 @@ export class Course {
     imageUrl: string;
 
     @Column()
-    minGrade: number;
-
-    @Column()
-    maxGrade: number;
-
-    @Column()
-    maxParticipants: number;
-
-    @Column()
     categoryId: number;
 
     @Column()
     joinAfterStart: boolean;
 
     @Column()
-    startDate: Date;
-
-    @Column()
-    duration: number;
-
-    @Column()
-    frequency: number;
+    subcourses: Promise<Subcourse[]>;
 
     @Column({
         type: "enum",

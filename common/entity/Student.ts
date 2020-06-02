@@ -1,22 +1,16 @@
-import {
-    Column,
-    Entity,
-    EntityManager,
-    Index,
-    OneToMany,
-    OneToOne,
-} from "typeorm";
+import { Column, Entity, EntityManager, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { Course } from "./Course";
+import { Lecture } from './Lecture';
 
 @Entity()
 export class Student extends Person {
     @Column()
     @Index({
-        unique: true,
+        unique: true
     })
     wix_id: string;
 
@@ -24,7 +18,7 @@ export class Student extends Person {
     wix_creation_date: Date;
 
     @Column("date", {
-        nullable: true,
+        nullable: true
     })
     birthday: Date;
 
@@ -32,34 +26,34 @@ export class Student extends Person {
     subjects: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     msg: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     phone: string;
 
     @OneToMany((type) => Match, (match) => match.student, {
-        nullable: true,
+        nullable: true
     })
     matches: Promise<Match[]>;
 
     @OneToOne((type) => Screening, (screening) => screening.student, {
         nullable: true,
-        cascade: true,
+        cascade: true
     })
     screening: Promise<Screening>;
 
     @Column({
         nullable: false,
-        default: 1,
+        default: 1
     })
     openMatchRequestCount: number;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     feedback: string;
 
@@ -79,19 +73,24 @@ export class Student extends Person {
     })
     instructorDescription: string;
 
-    @OneToMany(type => Course, course => course.instructor)
-    courses: Course[];
+    @ManyToMany(type => Course, course => course.instructors)
+    courses: Promise<Course[]>;
+
+    @ManyToOne(type => Lecture, lecture => lecture.instructor)
+    @JoinColumn()
+    lectures: Promise<Lecture[]>;
+
     @Column({
         nullable: false,
-        default: 0,
+        default: 0
     })
-    sentScreeningReminderCount: number
-    
+    sentScreeningReminderCount: number;
+
     @Column({
         nullable: true,
-        default: null,
+        default: null
     })
-    lastSentScreeningInvitationDate: Date
+    lastSentScreeningInvitationDate: Date;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
@@ -146,6 +145,7 @@ export enum ScreeningStatus {
     Accepted = "ACCEPTED",
     Rejected = "REJECTED",
 }
+
 export function getAllStudents(
     manager: EntityManager
 ): Promise<Student[]> | undefined {

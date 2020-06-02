@@ -1,12 +1,13 @@
-import { Column, Entity, EntityManager, Index, OneToMany } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany } from "typeorm";
 import { Match } from "./Match";
 import { Person } from "./Person";
+import { Subcourse } from './Subcourse';
 
 @Entity()
 export class Pupil extends Person {
     @Column()
     @Index({
-        unique: true,
+        unique: true
     })
     wix_id: string;
 
@@ -17,32 +18,35 @@ export class Pupil extends Person {
     subjects: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     state: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     msg: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     grade: string;
+
+    @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
+    subcourses: Promise<Subcourse[]>;
 
     @OneToMany((type) => Match, (match) => match.pupil, { nullable: true })
     matches: Promise<Match[]>;
 
     @Column({
         nullable: false,
-        default: 1,
+        default: 1
     })
     openMatchRequestCount: number;
 
     @Column({
         nullable: false,
-        default: 0, //everyone is default 0, i.e no priority
+        default: 0 //everyone is default 0, i.e no priority
     })
     matchingPriority: number;
 }
