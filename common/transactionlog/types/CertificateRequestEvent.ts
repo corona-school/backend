@@ -4,6 +4,6 @@ import { Student } from "../../entity/Student";
 
 export default class CertificateRequestEvent extends LogUserEvent {
     constructor(student: Student, matchuuid: string) {
-        super(LogType.CREATED_COURSE, student, { uuid: matchuuid });
+        super(LogType.CERTIFICATE_REQUEST, student, { uuid: matchuuid });
     }
 }
