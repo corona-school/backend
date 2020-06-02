@@ -14,11 +14,7 @@ import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import { configure, getLogger, connectLogger } from "log4js";
 import { createConnection } from "typeorm";
-import {
-    authCheck,
-    screenerAuthCheck,
-    basicTokenCheck
-} from "./middleware/auth";
+import { screenerAuthCheck, basicTokenCheck, authCheckFactory } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 
 // Logger setup
@@ -85,7 +81,7 @@ createConnection().then(() => {
 
     function configureUserAPI() {
         const userApiRouter = express.Router();
-        userApiRouter.use(basicTokenCheck, authCheck);
+        userApiRouter.use(basicTokenCheck, authCheckFactory());
         userApiRouter.get("/", userController.getSelfHandler);
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
@@ -105,21 +101,21 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.use(basicTokenCheck, authCheck);
+        certificateRouter.use(basicTokenCheck, authCheckFactory());
         certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
         app.use("/api/certificate", certificateRouter);
     }
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
-        coursesRouter.use(basicTokenCheck, authCheck);
+        coursesRouter.use(basicTokenCheck, authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
         app.use("/api/course", coursesRouter);
     }
 
     function configureCoursesAPI() {
         const coursesRouter = express.Router();
-        coursesRouter.use(basicTokenCheck, authCheck);
+        coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/", courseController.getHandler);
         app.use("/api/courses", coursesRouter);
     }
