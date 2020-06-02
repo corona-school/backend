@@ -7,17 +7,6 @@ import { getLogger } from 'log4js';
 
 const logger = getLogger();
 
-export async function basicTokenCheck(req: Request, res: Response, next) {
-    if (req.method == "OPTIONS") next();
-
-    const token = req.get("Token");
-    if (!token) {
-        res.status(403).send("no token specified.").end();
-        return;
-    }
-    return next();
-}
-
 export function authCheckFactory(optional = false) {
     return async function (req: Request, res: Response, next) {
         if (req.method == "OPTIONS") next();
@@ -73,8 +62,10 @@ export async function screenerAuthCheck(req: Request, res: Response, next) {
     if (req.method == "OPTIONS") next();
 
     const token = req.get("Token");
-    if (token === process.env.SCREENER_AUTH_TOKEN) {
-        return next();
+    if (token != undefined) {
+        if (token === process.env.SCREENER_AUTH_TOKEN) {
+            return next();
+        }
     }
     res.status(403).send("Invalid token specified.").end();
     return;
