@@ -161,7 +161,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                     case 'id':
                         break;
                     case 'instructor':
-                        apiCourse.instructor = courses[i].instructor.firstname + " " + courses[i].instructor.lastname;
+                        // apiCourse.instructor = courses[i].instructor.firstname + " " + courses[i].instructor.lastname;
                         break;
                     case 'name':
                         apiCourse.name = courses[i].name;
@@ -179,13 +179,13 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                         apiCourse.image = courses[i].imageUrl;
                         break;
                     case 'mingrade':
-                        apiCourse.minGrade = courses[i].minGrade;
+                        // apiCourse.minGrade = courses[i].minGrade;
                         break;
                     case 'maxgrade':
-                        apiCourse.maxGrade = courses[i].maxGrade;
+                        // apiCourse.maxGrade = courses[i].maxGrade;
                         break;
                     case 'maxparticipants':
-                        apiCourse.maxParticipants = courses[i].maxParticipants;
+                        // apiCourse.maxParticipants = courses[i].maxParticipants;
                         break;
                     case 'category':
                         apiCourse.category = courses[i].categoryId.toString();
@@ -194,13 +194,13 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                         apiCourse.joinAfterStart = courses[i].joinAfterStart;
                         break;
                     case 'startdate':
-                        apiCourse.startDate = courses[i].startDate.getTime();
+                        // apiCourse.startDate = courses[i].startDate.getTime();
                         break;
                     case 'duration':
-                        apiCourse.duration = courses[i].duration;
+                        // apiCourse.duration = courses[i].duration;
                         break;
                     case 'frequency':
-                        apiCourse.frequency = courses[i].frequency;
+                        // apiCourse.frequency = courses[i].frequency;
                         break;
                     case 'state':
                         apiCourse.state = courses[i].courseState;
@@ -297,12 +297,12 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
         return 403;
     }
 
-    let coursesByInstructor = await entityManager.count(Course, { instructor: student });
-    if (coursesByInstructor >= 3) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but already owns 3 other courses`);
-        logger.debug(student);
-        return 403;
-    }
+    // let coursesByInstructor = await entityManager.count(Course, { instructor: student });
+    // if (coursesByInstructor >= 3) {
+    //     logger.warn(`Student (ID ${student.id}) tried to add an course, but already owns 3 other courses`);
+    //     logger.debug(student);
+    //     return 403;
+    // }
 
     // Some generous checks
     if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
@@ -381,21 +381,21 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
     }
 
     const course = new Course();
-    course.instructor = student;
+    // course.instructor = student;
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
     course.motivation = apiCourse.motivation;
     course.requirements = "";
     course.imageUrl = null;
-    course.minGrade = apiCourse.minGrade;
-    course.maxGrade = apiCourse.maxGrade;
-    course.maxParticipants = apiCourse.maxParticipants;
+    // course.minGrade = apiCourse.minGrade;
+    // course.maxGrade = apiCourse.maxGrade;
+    // course.maxParticipants = apiCourse.maxParticipants;
     course.categoryId = categoryId;
     course.joinAfterStart = apiCourse.joinAfterStart;
-    course.startDate = new Date(apiCourse.startDate);
-    course.duration = apiCourse.duration;
-    course.frequency = apiCourse.frequency;
+    // course.startDate = new Date(apiCourse.startDate);
+    // course.duration = apiCourse.duration;
+    // course.frequency = apiCourse.frequency;
     course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
 
     try {
