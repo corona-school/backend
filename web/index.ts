@@ -45,7 +45,6 @@ createConnection().then(() => {
     addCorsMiddleware();
     addSecurityMiddleware();
 
-    configureBasicAPI();
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
@@ -82,15 +81,6 @@ createConnection().then(() => {
     function addSecurityMiddleware() {
         app.use(hpp());
         app.use(helmet());
-    }
-
-    function configureBasicAPI() {
-        const apiRouter = express.Router();
-        apiRouter.get("/", authCheck, (req, res) => {
-            // This route is only available with a valid user.
-            res.send(`Logged in: ${res.locals.user} (type: ${res.locals.userType})`);
-        });
-        app.use("/api", apiRouter);
     }
 
     function configureUserAPI() {
@@ -159,7 +149,6 @@ createConnection().then(() => {
             screeningController.updateScreenerByMailHandler
         );
         app.use("/api/screening", screenerApiRouter);
-        // app.use("/api", screenerApiRouter);
     }
 
     function deployServer() {
