@@ -5,6 +5,7 @@ import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
+import { Course, CourseState } from "../common/entity/Course";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -86,6 +87,99 @@ export async function setupDevDB() {
         console.log("Inserted Dev Student " + i);
     }
 
+    // courses
+    const courses: Course[] = [];
+
+    let c = new Course();
+    c.instructor = students[1];
+    c.name = "Basteln mit Gero";
+    c.description =
+        "Dieser Kurs ist einer der besten. Hier kannst du ganz viele Dinge tun. Wie basten, spaß haben und bli bla blub.";
+    c.outline =
+        "In diesem Kurs lernt ihr wie ihr coole Seesterne aus Pappe herstellt.";
+    c.motivation =
+        "Ich will den Schülern einfach beibringen wie man richtig bastelt.";
+    c.requirements = "Schere, Papper und Papier";
+    c.imageUrl = null;
+    c.minGrade = 5;
+    c.maxGrade = 12;
+    c.maxParticipants = 5;
+    c.categoryId = 1;
+    c.joinAfterStart = false;
+    c.startDate = new Date();
+    c.duration = 60;
+    c.frequency = 1;
+    c.courseState = CourseState.CREATED;
+
+    courses.push(c);
+
+    c = new Course();
+    c.instructor = students[1];
+    c.name = "Mathe Nachhilfe";
+    c.description =
+        "Dieser Kurs ist einer der besten. Hier gibt es kostenlose Nachhilfe von den besten der besten.";
+    c.outline = "In diesem Kurs lernt die Grundlagen der linearen Algebra";
+    c.motivation = "Ich will den Schülern bei Mathe helfen.";
+    c.requirements = "Taschenrechner und was zum schreiben.";
+    c.imageUrl = null;
+    c.minGrade = 10;
+    c.maxGrade = 12;
+    c.maxParticipants = 3;
+    c.categoryId = 2;
+    c.joinAfterStart = false;
+    c.startDate = new Date();
+    c.duration = 90;
+    c.frequency = 3;
+    c.courseState = CourseState.SUBMITTED;
+
+    courses.push(c);
+
+    c = new Course();
+    c.instructor = students[0];
+    c.name = "Wie funktionieren Robotor?";
+    c.description =
+        "Dieser Kurs ist einer der besten. Hier gibt es kostenlose Nachhilfe von den besten der besten.";
+    c.outline = "In diesem Kurs lernt die Grundlagen der linearen Algebra";
+    c.motivation = "Ich will die Schüler für Technik begeistern.";
+    c.requirements = "-";
+    c.imageUrl = null;
+    c.minGrade = 8;
+    c.maxGrade = 12;
+    c.maxParticipants = 6;
+    c.categoryId = 3;
+    c.joinAfterStart = false;
+    c.startDate = new Date();
+    c.duration = 30;
+    c.frequency = 3;
+    c.courseState = CourseState.ALLOWED;
+
+    c = new Course();
+    c.instructor = s;
+    c.name = "Abi Vorbereitung";
+    c.description =
+        "Dieser Kurs ist einer der besten. Hier gibt es kostenlose Nachhilfe von den besten der besten.";
+    c.outline = "In diesem Kurs lernt die Grundlagen für Abitur";
+    c.motivation = "Ich will die Schüler fürs lernen begeistern";
+    c.requirements = "-";
+    c.imageUrl = null;
+    c.minGrade = 12;
+    c.maxGrade = 12;
+    c.maxParticipants = 10;
+    c.categoryId = 3;
+    c.joinAfterStart = false;
+    c.startDate = new Date();
+    c.duration = 45;
+    c.frequency = 5;
+    c.courseState = CourseState.ALLOWED;
+
+    courses.push(c);
+
+    for (let i = 0; i < courses.length; i++) {
+        await entityManager.save(Course, courses[i]);
+        console.log("Inserted Dev Course " + i);
+    }
+
+    // matches
     const matches: Match[] = [];
 
     let m = new Match();
