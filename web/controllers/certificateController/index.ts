@@ -123,7 +123,8 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
 function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<Buffer> {
     let html = readFileSync("./assets/certificateTemplate.html", "utf8");
     const options = {
-        "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/"
+        "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
+        "filename": "/tmp/html-pdf-"+student.id+"-"+pupil.id+"-"+moment().format("X")+".pdf"
     };
 
     // adjust variables
