@@ -26,17 +26,23 @@ export class Subcourse {
     @UpdateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @ManyToOne(type => Student, student => student.courses)
+    @ManyToOne(type => Student, student => student.courses, {
+        eager: true
+    })
     @JoinColumn()
-    instructors: Student;
+    instructors: Student[];
 
-    @ManyToMany(type => Pupil, pupil => pupil.subcourses)
+    @ManyToMany(type => Pupil, pupil => pupil.subcourses, {
+        eager: true
+    })
     @JoinTable()
     participants: Pupil[];
 
-    @OneToMany(type => Lecture, lecture => lecture.subcourse)
+    @OneToMany(type => Lecture, lecture => lecture.subcourse, {
+        eager: true
+    })
     @Column()
-    lectures: Subcourse[];
+    lectures: Lecture[];
 
     @OneToMany(type => Course, course => course.subcourses)
     course: Course;
@@ -49,6 +55,9 @@ export class Subcourse {
 
     @Column()
     maxParticipants: number;
+
+    @Column()
+    published: boolean;
 
     @Column({
         default: false

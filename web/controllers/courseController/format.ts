@@ -6,34 +6,22 @@
  */
 
 /**
- * @apiDefine PostCourseReturn
- * @apiVersion 1.1.0
- *
- * @apiSuccess (Course Return Object) {int} id Unique identifier for this course
- */
-
-/**
  * @apiDefine Course
  * @apiVersion 1.1.0
  *
  * @apiSuccess (Course Object) {int} id Unique identifier for this course
- * @apiSuccess (Course Object) {string} instructor <em>(optional)</em> Name of the instructor for this course
+ * @apiSuccess (Course Object) {Instructor[]} instructors <em>(optional)</em> Information about the instructors of this course
  * @apiSuccess (Course Object) {string} name <em>(optional)</em> Name of this course
  * @apiSuccess (Course Object) {string} outline <em>(optional)</em> Outline of this course
  * @apiSuccess (Course Object) {string} description <em>(optional)</em> Description of this course
- * @apiSuccess (Course Object) {string} motivation <em>(optional)</em> Motivation of this course
  * @apiSuccess (Course Object) {string|null} image <em>(optional)</em> URL of an associated image
- * @apiSuccess (Course Object) {int} minGrade <em>(optional)</em> Minimum grade (>= 1) of participants
- * @apiSuccess (Course Object) {int} maxGrade <em>(optional)</em> Maximum grade (<= 13) of participants
- * @apiSuccess (Course Object) {int} maxParticipants <em>(optional)</em> Maximum count of participants
- * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course
- * @apiSuccess (Course Object) {boolean} joinAfterStart <em>(optional)</em> Indicates whether participants are allowed to join after the start date
- * @apiSuccess (Course Object) {number} startDate <em>(optional)</em> Start Date of this course
- * @apiSuccess (Course Object) {int} duration <em>(optional)</em> Duration (>= 1) of the course (count of days)
- * @apiSuccess (Course Object) {int} frequency <em>(optional)</em> Days (>= 0) <strong>between</strong> single course appointments (so 0 means, the appointments are on consecutive days)
- * @apiSuccess (Course Object) {string} state <em>(optional)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
+ * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
+ * @apiSuccess (Course Object) {CourseTag[]} tags <em>(optional)</em> Tags for this course
+ * @apiSuccess (Course Object) {Subcourse[]} subcourses <em>(optional)</em> Array of Subcourses
+ * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  *
  */
+// todo adjust interface
 export interface ApiCourse {
     id: number;
     instructor?: string;
@@ -54,24 +42,53 @@ export interface ApiCourse {
 }
 
 /**
+ * @apiDefine Subcourse
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subcourse Object) {int} id Unique identifier for this subcourse
+ * @apiSuccess (Subcourse Object) {Instructor[]} instructors <em>(optional)</em> Information about the instructors of this course
+ * @apiSuccess (Subcourse Object) {int} minGrade <em>(optional)</em> Minimum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxGrade <em>(optional)</em> Maximum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
+ * @apiSuccess (Subcourse Object) {int} participants <em>(optional)</em> Current number of registered participants
+ * @apiSuccess (Subcourse Object) {Lecture[]} lectures <em>(optional)</em> Array of lectures
+ * @apiSuccess (Subcourse Object) {bool} published <em>(optional, requires authentication)</em> False if subcourse has not yet been published
+ * @apiSuccess (Subcourse Object) {bool} cancelled <em>(optional, requires authentication)</em> True if subcourse has been cancelled
+ *
+ */
+// todo write interface
+
+/**
+ * @apiDefine Lecture
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Lecture Object) {Instructor} instructor Instructor of the lecture
+ * @apiSuccess (Lecture Object) {int} start Unix Timestamp of start date
+ * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
+ *
+ */
+// todo write interface
+
+/**
  * @apiDefine PostCourse
  * @apiVersion 1.1.0
  *
+ * @apiSuccess (Course Object) {string[]} instructors Array of instructor IDs for this course. The authenticated user's ID must be contained
  * @apiSuccess (Course Object) {string} name Name of this course
  * @apiSuccess (Course Object) {string} outline Outline of this course
  * @apiSuccess (Course Object) {string} description Description of this course
- * @apiSuccess (Course Object) {string} motivation Motivation of this course
- * @apiSuccess (Course Object) {int} minGrade Minimum grade (>= 1) of participants
- * @apiSuccess (Course Object) {int} maxGrade Maximum grade (<= 13) of participants
- * @apiSuccess (Course Object) {int} maxParticipants Maximum count of participants
- * @apiSuccess (Course Object) {string} category Category of this course
- * @apiSuccess (Course Object) {boolean} joinAfterStart Indicates whether participants are allowed to join after the start date
- * @apiSuccess (Course Object) {number} startDate Start Date of this course (Unix Timestamp). Must be at least one day from now
- * @apiSuccess (Course Object) {int} duration Duration (>= 1) of the course (count of days)
- * @apiSuccess (Course Object) {int} frequency Days (>= 0) <strong>between</strong> single course appointments (so 0 means, the appointments are on consecutive days)
- * @apiSuccess (Course Object) {bool} submit If submit is true, the course will be marked as submitted and can't be edited anymore.
+ * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
+ * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
+ * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards
  *
  */
+/**
+ * @apiDefine PostCourseReturn
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Course Return Object) {int} id Unique identifier for this course
+ */
+// todo adjust interface
 export interface ApiAddCourse {
     name: string;
     outline: string;
@@ -87,3 +104,98 @@ export interface ApiAddCourse {
     frequency: number;
     submit: boolean;
 }
+
+/**
+ * @apiDefine PostSubcourse
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subcourse Object) {string[]} instructors Array of instructor IDs for this subcourse. The authenticated user's ID must not be contained
+ * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
+ *
+ */
+/**
+ * @apiDefine PostSubcourseReturn
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subcourse Return Object) {int} id Unique identifier for this subcourse
+ */
+// todo write interface
+
+/**
+ * @apiDefine PostLecture
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Lecture Object) {string} instructor ID of the instructor for this lecture. Must be contained in the subcourses instructors
+ * @apiSuccess (Lecture Object) {int} start Unix Timestamp of start date
+ * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
+ *
+ */
+/**
+ * @apiDefine PostLectureReturn
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Lecture Return Object) {int} id Unique identifier for this lecture
+ */
+// todo write interface
+
+/**
+ * @apiDefine PutCourse
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Course Object) {string[]} instructors Array of instructor IDs for this course. The authenticated user's ID must be contained
+ * @apiSuccess (Course Object) {string} name Name of this course, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string} outline Outline of this course, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string} description Description of this course
+ * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
+ * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
+ *
+ */
+// todo write interface
+
+/**
+ * @apiDefine PutSubcourse
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subcourse Object) {string[]} instructors Array of instructor IDs for this subcourse. The authenticated user's ID must not be contained
+ * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants. May not be lower than the number of already registered participants
+ *
+ */
+// todo write interface
+
+/**
+ * @apiDefine PutLecture
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Lecture Object) {string} instructor ID of the instructor for this lecture. Must be contained in the subcourses instructors
+ * @apiSuccess (Lecture Object) {int} start Unix Timestamp of start date
+ * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
+ *
+ */
+// todo write interface
+
+/**
+ * @apiDefine Instructor
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Instructor Object) {string} id ID of the instructor. Will automatically be included in authorized requests.
+ * @apiSuccess (Instructor Object) {string} firstname First name
+ * @apiSuccess (Instructor Object) {string} lastname Last name
+ *
+ */
+// todo write interface
+
+/**
+ * @apiDefine CourseTag
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (CourseTag Object) {string} id Unique identifier of this tag
+ * @apiSuccess (CourseTag Object) {string} name Name used for displaying
+ * @apiSuccess (CourseTag Object) {string} category Tags with identical category identifiers should be grouped
+ *
+ */
+// todo write interface

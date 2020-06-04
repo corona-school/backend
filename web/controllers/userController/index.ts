@@ -23,7 +23,7 @@ const logger = getLogger();
 
 /**
  * @api {GET} /user getCurrentUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get data about the currently authenticated user.
  *
@@ -59,7 +59,7 @@ export async function getSelfHandler(req: Request, res: Response) {
 
 /**
  * @api {GET} /user/:id getUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get data about an user.
  *
@@ -115,7 +115,7 @@ export async function getHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id putUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set personal data of the user.
  *
@@ -183,7 +183,7 @@ export async function putHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/subjects putUserSubjects
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set the subjects of the user.
  *
@@ -301,7 +301,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/active/:active putUserActive
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set the active status of the user.
  *

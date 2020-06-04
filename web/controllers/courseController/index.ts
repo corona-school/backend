@@ -25,15 +25,19 @@ const logger = getLogger();
  *
  * @apiUse OptionalAuthentication
  *
- * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,category,startDate</code>
+ * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,tags</code>. If you want optional marked fields of subobjects, you need to specify the subobject and the requested subobject properties. Example: <code>fields=subcourses,subcourses.maxParticipants,subcourses.participants</code>
  * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
- * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses by this instructor. This parameter requires authentication as the specified instructor.
+ * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
  *
  * @apiUse Courses
  * @apiUse Course
+ * @apiUse Subcourse
+ * @apiUse Lecture
+ * @apiUse Instructor
+ * @apiUse CourseTag
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET "https://dashboard.corona-school.de/api/courses?fields=name,outline,category,startDate"
+ * curl -k -i -X GET "https://api.corona-school.de/api/courses?fields=name,outline,category,startDate"
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -218,6 +222,40 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
     return apiCourses;
 }
 
+
+/**
+ * @api {GET} /course/:id GetCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get details about an existing course
+ *
+ * This endpoint allows getting details about a course.
+ * The available fields depend on whether this request is authenticated and whether the user is the instructor of the course
+ *
+ * @apiName GetCourse
+ * @apiGroup Courses
+ *
+ * @apiUse OptionalAuthentication
+ *
+ * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,tags</code>. If you want optional marked fields of subobjects, you need to specify the subobject and the requested subobject properties. Example: <code>fields=subcourses,subcourses.maxParticipants,subcourses.participants</code>
+ * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
+ * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
+ *
+ * @apiUse Course
+ * @apiUse Subcourse
+ * @apiUse Lecture
+ * @apiUse Instructor
+ * @apiUse CourseTag
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+
 /**
  * @api {POST} /course AddCourse
  * @apiVersion 1.1.0
@@ -237,7 +275,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse PostCourseReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course -d "<REQUEST>"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -413,3 +451,245 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
         return 500;
     }
 }
+
+/**
+ * @api {POST} /course/:id/subcourse AddSubcourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add a new subcourse under an existing course
+ *
+ * This endpoint allows adding a new subcourse.
+ * If successful the ID of the newly created subcourse will be returned.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName AddSubcourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiUse PostSubcourse
+ * @apiUse PostSubcourseReturn
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID>/subcourse -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/lecture AddLecture
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add a new lecture under an existing subcourse
+ *
+ * This endpoint allows adding a new lecture.
+ * If successful the ID of the newly created lecture will be returned.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName AddLecture
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiUse PostLecture
+ * @apiUse PostLectureReturn
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/lecture -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {PUT} /course/:id EditCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Edit a course.
+ *
+ * This endpoint allows editing an existing course.
+ * Only an instructor is allowed to edit his own courses.
+ * There are some constraints on the editability of fields, especially when submitted.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName EditCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiUse PutCourse
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID> -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {PUT} /course/:id/subcourse/:subid EditSubcourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Edit a subcourse.
+ *
+ * This endpoint allows editing an existing subcourse.
+ * A subcourse can only be editable by owners of the main course.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName EditSubcourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiUse PutSubcourse
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID> -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {PUT} /course/:id/subcourse/:subid/lecture/:lecid EditLecture
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Edit a lecture.
+ *
+ * This endpoint allows editing an existing lecture.
+ * A lecture can only be editable by owners of the main course.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {int} lecid ID of the lecture
+ *
+ * @apiName EditLecture
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiUse PutLecture
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/lecture/<LECID> -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+
+/**
+ * @api {DELETE} /course/:id CancelCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Cancel a course.
+ *
+ * This endpoint allows cancelling a course, which means that all planned subcourses will be cancelled.
+ * Furthermore the registered participants will be notified and the course won't appear in the public register anymore.
+ * The course and all subresources won't be editable anymore
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName CancelCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid CancelSubcourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Cancel a subcourse.
+ *
+ * This endpoint allows cancelling a subcourse.
+ * All registered participants will be notified and the course won't appear in the public register anymore.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName CancelCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid/lecture/:lecid DeleteLecture
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Delete a lecture.
+ *
+ * This endpoint allows deleting a lecture.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {int} lecid ID of the lecture
+ *
+ * @apiName CancelCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/lecture/<LECID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement

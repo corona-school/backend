@@ -12,7 +12,7 @@ export enum SchoolType {
     REALSCHULE = "realschule",
     GYMNASIUM = "gymnasium",
     FOERDERSCHULE = "förderschule",
-    SONSTIGES = "sonstiges"
+    SONSTIGES = "other"
 }
 
 @Entity()
