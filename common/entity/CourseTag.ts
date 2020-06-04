@@ -26,7 +26,7 @@ export class CourseTag {
     @ManyToMany(type => Pupil, pupil => pupil.tags)
     pupils: Promise<Pupil[]>
 
-    @ManyToMany(type => Student, student => student.tags)
+    @ManyToMany(type => Student, student => student.courseTags)
     students: Promise<Student[]>
 
 }

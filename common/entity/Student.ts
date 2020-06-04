@@ -25,6 +25,9 @@ export enum TeacherModule {
 
 @Entity()
 export class Student extends Person {
+    /*
+     * Management data
+     */
     @Column()
     @Index({
         unique: true
@@ -34,18 +37,90 @@ export class Student extends Person {
     @Column()
     wix_creation_date: Date;
 
+    /*
+     * General data
+     */
     @Column("date", {
         nullable: true
     })
     birthday: Date;
 
-    @Column()
-    subjects: string;
-
     @Column({
         nullable: true
     })
     msg: string;
+
+    @Column({
+        nullable: true
+    })
+    phone: string;
+
+    @Column({
+        nullable: true
+    })
+    feedback: string;
+
+    @Column({
+        default: false
+    })
+    newsletter: boolean;
+
+    /*
+     *  Student data
+     */
+    @Column({
+        default: true
+    })
+    isStudent: boolean;
+
+    @Column({
+        nullable: true
+    })
+    subjects: string;
+
+    @OneToMany((type) => Match, (match) => match.student, {
+        nullable: true
+    })
+    matches: Promise<Match[]>;
+
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    openMatchRequestCount: number;
+
+    /*
+     * Instructor data
+     */
+    @Column({
+        default: false
+    })
+    isInstructor: boolean;
+
+    @ManyToMany(type => CourseTag, tag => tag.students)
+    @JoinTable()
+    courseTags: Promise<CourseTag[]>
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    instructorDescription: string;
+
+    @ManyToMany(type => Course, course => course.instructors)
+    courses: Promise<Course[]>;
+
+    @ManyToOne(type => Lecture, lecture => lecture.instructor)
+    @JoinColumn()
+    lectures: Promise<Lecture[]>;
+
+    /*
+     * Teacher data
+     */
+    @Column({
+        default: false
+    })
+    isTeacher: boolean;
 
     @Column({
         nullable: true
@@ -70,64 +145,14 @@ export class Student extends Person {
     })
     moduleHours: number;
 
-    @Column({
-        nullable: true
-    })
-    phone: string;
-
-    @ManyToMany(type => CourseTag, tag => tag.students)
-    @JoinTable()
-    tags: Promise<CourseTag[]>
-
-    @OneToMany((type) => Match, (match) => match.student, {
-        nullable: true
-    })
-    matches: Promise<Match[]>;
-
+    /*
+     * Other data
+     */
     @OneToOne((type) => Screening, (screening) => screening.student, {
         nullable: true,
         cascade: true
     })
     screening: Promise<Screening>;
-
-    @Column({
-        nullable: false,
-        default: 1
-    })
-    openMatchRequestCount: number;
-
-    @Column({
-        nullable: true
-    })
-    feedback: string;
-
-    @Column({
-        default: true
-    })
-    isStudent: boolean;
-
-    @Column({
-        default: false
-    })
-    isInstructor: boolean;
-
-    @Column({
-        default: false
-    })
-    isTeacher: boolean;
-
-    @Column({
-        nullable: true,
-        default: null
-    })
-    instructorDescription: string;
-
-    @ManyToMany(type => Course, course => course.instructors)
-    courses: Promise<Course[]>;
-
-    @ManyToOne(type => Lecture, lecture => lecture.instructor)
-    @JoinColumn()
-    lectures: Promise<Lecture[]>;
 
     @Column({
         nullable: false,
@@ -141,11 +166,6 @@ export class Student extends Person {
     })
     lastSentScreeningInvitationDate: Date;
 
-    @Column({
-        nullable: false,
-        default: false
-    })
-    newsletter: boolean;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
