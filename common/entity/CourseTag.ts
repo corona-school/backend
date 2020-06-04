@@ -1,7 +1,7 @@
 import {
     Column,
     CreateDateColumn,
-    Entity,
+    Entity, Index,
     JoinTable,
     ManyToMany,
     PrimaryGeneratedColumn, Unique,
@@ -17,16 +17,16 @@ export class CourseTag {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Index({
+        unique: true
+    })
     @Column()
     identifier: string;
 
+    @Column()
+    category: string;
+
     @ManyToMany(type => Course, course => course.tags)
-    courses: Promise<Course[]>
-
-    @ManyToMany(type => Pupil, pupil => pupil.tags)
-    pupils: Promise<Pupil[]>
-
-    @ManyToMany(type => Student, student => student.courseTags)
-    students: Promise<Student[]>
+    courses: Course[];
 
 }

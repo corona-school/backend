@@ -3,10 +3,10 @@ import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
+import { State } from './State';
 
 export enum SchoolType {
     GRUNDSCHULE = "grundschule",
-    GANZTAGSSCHULE = "ganztagsschule",
     GESAMTSCHULE = "gesamtschule",
     HAUPTSCHULE = "hauptschule",
     REALSCHULE = "realschule",
@@ -33,9 +33,11 @@ export class Pupil extends Person {
      * General data
      */
     @Column({
-        nullable: true
+        type: 'enum',
+        enum: State,
+        default: State.OTHER
     })
-    state: string;
+    state: State;
 
     @Column({
         type: 'enum',
@@ -63,11 +65,13 @@ export class Pupil extends Person {
      * Pupil data
      */
     @Column({
-        default: true
+        default: false
     })
     isPupil: boolean;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     subjects: string;
 
     @OneToMany(type => Match, match => match.pupil, { nullable: true })
@@ -83,16 +87,12 @@ export class Pupil extends Person {
      * Participant data
      */
     @Column({
-        default: false
+        default: true
     })
     isParticipant: boolean;
 
-    @ManyToMany(type => CourseTag, tag => tag.pupils)
-    @JoinTable()
-    tags: Promise<CourseTag[]>
-
     @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
-    subcourses: Promise<Subcourse[]>;
+    subcourses: Subcourse[];
 
     /*
      * Other data

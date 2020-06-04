@@ -3,7 +3,7 @@ import {
     CreateDateColumn,
     Entity,
     JoinTable,
-    ManyToMany,
+    ManyToMany, OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
@@ -17,6 +17,12 @@ export enum CourseState {
     ALLOWED = "allowed",
     DENIED = "denied",
     CANCELLED = "cancelled"
+}
+
+export enum CourseCategory {
+    REVISION = 'revision',
+    CLUB = 'club',
+    COACHING = 'coaching'
 }
 
 @Entity()
@@ -43,29 +49,29 @@ export class Course {
     @Column()
     description: string;
 
-    @Column()
-    motivation: string;
-
-    @Column()
-    requirements: string;
-
     @Column({
         nullable: true
     })
     imageUrl: string;
 
-    @Column()
-    categoryId: number;
+    @Column({
+        type: 'enum',
+        enum: CourseCategory,
+        nullable: false
+    })
+    category: CourseCategory;
 
-    @ManyToMany(type => CourseTag, tag => tag.courses)
+    @ManyToMany(type => CourseTag, tag => tag.courses, {
+        eager: true
+    })
     @JoinTable()
-    tags: Promise<CourseTag[]>
+    tags: CourseTag[];
 
+    @OneToMany(type => Subcourse, subcourse => subcourse.course, {
+        eager: true
+    })
     @Column()
-    joinAfterStart: boolean;
-
-    @Column()
-    subcourses: Promise<Subcourse[]>;
+    subcourses: Subcourse[];
 
     @Column({
         type: "enum",

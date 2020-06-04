@@ -28,10 +28,6 @@ export class Lecture {
     @OneToMany(type => Student, student => student.courses)
     instructor: Student;
 
-    @ManyToMany(type => Pupil, pupil => pupil.subcourses)
-    @JoinTable()
-    participants: Promise<Pupil[]>;
-
     @ManyToOne(type => Subcourse, subcourse => subcourse.lectures)
     @JoinColumn()
     subcourse: Subcourse;
@@ -41,19 +37,5 @@ export class Lecture {
 
     @Column()
     duration: number;
-
-    @Column()
-    minGrade: number;
-
-    @Column()
-    maxGrade: number;
-
-    @Column()
-    maxParticipants: number;
-
-    @Column({
-        default: false
-    })
-    cancelled: boolean;
 
 }

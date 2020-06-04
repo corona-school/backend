@@ -12,9 +12,9 @@ import * as matchController from "./controllers/matchController";
 import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
-import { configure, getLogger, connectLogger } from "log4js";
+import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
-import { screenerAuthCheck, basicTokenCheck, authCheckFactory } from "./middleware/auth";
+import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 
 // Logger setup
@@ -86,7 +86,6 @@ createConnection().then(() => {
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
-        userApiRouter.put("/:id/description", userController.putDescriptionHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
         app.use("/api/user", userApiRouter);

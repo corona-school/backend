@@ -173,7 +173,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                         apiCourse.description = courses[i].description;
                         break;
                     case 'motivation':
-                        apiCourse.motivation = courses[i].motivation;
+                        // apiCourse.motivation = courses[i].motivation;
                         break;
                     case 'image':
                         apiCourse.image = courses[i].imageUrl;
@@ -188,10 +188,10 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                         // apiCourse.maxParticipants = courses[i].maxParticipants;
                         break;
                     case 'category':
-                        apiCourse.category = courses[i].categoryId.toString();
+                        // apiCourse.category = courses[i].categoryId.toString();
                         break;
                     case 'joinafterstart':
-                        apiCourse.joinAfterStart = courses[i].joinAfterStart;
+                        // apiCourse.joinAfterStart = courses[i].joinAfterStart;
                         break;
                     case 'startdate':
                         // apiCourse.startDate = courses[i].startDate.getTime();
@@ -385,14 +385,14 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
-    course.motivation = apiCourse.motivation;
-    course.requirements = "";
+    // course.motivation = apiCourse.motivation;
+    // course.requirements = "";
     course.imageUrl = null;
     // course.minGrade = apiCourse.minGrade;
     // course.maxGrade = apiCourse.maxGrade;
     // course.maxParticipants = apiCourse.maxParticipants;
-    course.categoryId = categoryId;
-    course.joinAfterStart = apiCourse.joinAfterStart;
+    // course.categoryId = categoryId;
+    // course.joinAfterStart = apiCourse.joinAfterStart;
     // course.startDate = new Date(apiCourse.startDate);
     // course.duration = apiCourse.duration;
     // course.frequency = apiCourse.frequency;

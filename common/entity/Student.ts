@@ -17,6 +17,7 @@ import { Person } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { CourseTag } from './CourseTag';
+import { State } from './State';
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -40,11 +41,6 @@ export class Student extends Person {
     /*
      * General data
      */
-    @Column("date", {
-        nullable: true
-    })
-    birthday: Date;
-
     @Column({
         nullable: true
     })
@@ -78,7 +74,7 @@ export class Student extends Person {
     })
     subjects: string;
 
-    @OneToMany((type) => Match, (match) => match.student, {
+    @OneToMany(type => Match, match => match.student, {
         nullable: true
     })
     matches: Promise<Match[]>;
@@ -97,35 +93,23 @@ export class Student extends Person {
     })
     isInstructor: boolean;
 
-    @ManyToMany(type => CourseTag, tag => tag.students)
-    @JoinTable()
-    courseTags: Promise<CourseTag[]>
-
-    @Column({
-        nullable: true,
-        default: null
-    })
-    instructorDescription: string;
-
     @ManyToMany(type => Course, course => course.instructors)
-    courses: Promise<Course[]>;
+    courses: Course[];
 
     @ManyToOne(type => Lecture, lecture => lecture.instructor)
     @JoinColumn()
-    lectures: Promise<Lecture[]>;
+    lectures: Lecture[];
 
     /*
      * Teacher data
      */
     @Column({
-        default: false
+        type: 'enum',
+        enum: State,
+        nullable: true,
+        default: State.OTHER
     })
-    isTeacher: boolean;
-
-    @Column({
-        nullable: true
-    })
-    state: string;
+    state: State;
 
     @Column({
         nullable: true
@@ -172,10 +156,6 @@ export class Student extends Person {
             screeningResult.phone === undefined
                 ? this.phone
                 : screeningResult.phone;
-        this.birthday =
-            screeningResult.birthday === undefined
-                ? this.birthday
-                : screeningResult.birthday;
         this.subjects =
             screeningResult.subjects === undefined
                 ? this.subjects

@@ -32,11 +32,11 @@ export class Subcourse {
 
     @ManyToMany(type => Pupil, pupil => pupil.subcourses)
     @JoinTable()
-    participants: Promise<Pupil[]>;
+    participants: Pupil[];
 
     @OneToMany(type => Lecture, lecture => lecture.subcourse)
     @Column()
-    lectures: Promise<Subcourse[]>;
+    lectures: Subcourse[];
 
     @OneToMany(type => Course, course => course.subcourses)
     course: Course;
