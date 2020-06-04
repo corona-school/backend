@@ -14,7 +14,7 @@ const logger = getLogger();
 
 /**
  * @api {DELETE} /user/:id/matches/:uuid dissolveMatch
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Dissolve the specified Match.
  *
