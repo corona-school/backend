@@ -15,7 +15,6 @@ import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
 import { dissolveMatch } from "../matchController";
 import { getTransactionLog } from "../../../common/transactionlog";
-import UpdateStudentDescriptionEvent from "../../../common/transactionlog/types/UpdateStudentDescriptionEvent";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
@@ -376,68 +375,6 @@ export async function putActiveHandler(req: Request, res: Response) {
 }
 
 
-/**
- * @api {PUT} /user/:id/description PutStudentDescription
- * @apiVersion 1.1.0
- * @apiDescription
- * Set the description of the user.
- *
- * This endpoint allows editing of the description of a student.
- * Setting a description will automatically make the student an instructor.
- * If a user is an instructor the description can't be removed
- *
- * @apiName PutStudentDescription
- * @apiGroup User
- *
- * @apiUse Authentication
- * @apiUse ContentType
- *
- * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/description -d "<REQUEST>"
- *
- * @apiParam (URL Parameter) {string} id User Id
- *
- * @apiUse UserSubjects
- * @apiUse Subject
- *
- * @apiUse StatusNoContent
- * @apiUse StatusBadRequest
- * @apiUse StatusUnauthorized
- * @apiUse StatusForbidden
- * @apiUse StatusInternalServerError
- */
-export async function putDescriptionHandler(req: Request, res: Response) {
-    let status = 204;
-    try {
-        let b = req.body;
-        if (req.params.id != undefined && res.locals.user instanceof Person) {
-            if (b instanceof Object && b.description != undefined) {
-                const studentDescription: ApiStudentDescription = b;
-                try {
-                    if (status < 300) {
-                        status = await putDescription(res.locals.user, req.params.id, studentDescription);
-                    }
-                } catch (e) {
-                    logger.warn("Error during GET /user: " + e.message);
-                    logger.debug(e);
-                    status = 500;
-                }
-            } else {
-                logger.error("Invalid format for subjects: Expected StudentDescription Object");
-                logger.debug(b);
-                status = 400;
-            }
-        } else {
-            status = 500;
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
-}
-
 async function get(
     wix_id: string,
     person: Pupil | Student
@@ -769,46 +706,6 @@ async function putActive(
             "Can't " + (active ? "" : "de") + "activate user: " + e.message
         );
         logger.debug(person, e);
-        return 500;
-    }
-
-    return 204;
-}
-
-async function putDescription(student: Person, wix_id: string, obj: ApiStudentDescription) {
-    const entityManager = getManager();
-    const transactionLog = getTransactionLog();
-
-    if (!(student instanceof Student)) {
-        logger.warn(`Requestor is not a student (type ${typeof student}`);
-        logger.debug(student);
-        return 403;
-    }
-
-    if (student.wix_id != wix_id) {
-        logger.warn(`Student (ID ${student.wix_id}) wants to edit another person (ID ${wix_id}`);
-        logger.debug(student);
-        return 403;
-    }
-
-    if (obj.description.length > 2048 || obj.description.length == 0) {
-        logger.warn(`Student wants to set description of length ${obj.description.length}`);
-        logger.debug(obj);
-        return 400;
-    }
-
-    const oldStudent = Object.assign({}, student);
-
-    student.instructorDescription = obj.description;
-    student.isInstructor = true;
-
-    try {
-        await entityManager.save(Student, student);
-        await transactionLog.log(new UpdateStudentDescriptionEvent(student, oldStudent));
-        logger.info(`Updated student description (ID: ${student.id}`);
-    } catch (e) {
-        logger.error("Can't store user description:", e.message);
-        logger.debug(e);
         return 500;
     }
 

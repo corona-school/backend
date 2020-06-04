@@ -1,6 +1,7 @@
 import { EntityManager } from "typeorm";
 import { Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
+import { State } from '../../../common/entity/State';
 
 async function insertTestData(transactionManager: EntityManager) {
     //if that fails, this will probably due to already existing records with the same email adresses
@@ -9,7 +10,6 @@ async function insertTestData(transactionManager: EntityManager) {
     s.lastname = "Embser";
     s.email = "gero@students.example.com";
     s.wix_creation_date = new Date();
-    s.birthday = new Date();
     s.subjects = `["Mathematik","Deutsch","Englisch","Biologie","Politik"]`;
     s.msg = `Hallo Welt! Was sonst...`;
     s.wix_id = `b97ae228-3471-492d-bf86-0d37755aae4f`;
@@ -20,7 +20,7 @@ async function insertTestData(transactionManager: EntityManager) {
     p.lastname = "Embser";
     p.email = "gero@pupils.example.com";
     p.wix_creation_date = new Date();
-    p.state = "Nordrhein-Westfalen";
+    p.state = State.NW;
     p.subjects = `["Mathematik","Geschichte","Politik","Wirtschaft"]`;
     p.msg = "nervt...";
     p.wix_id = "2e5d0c6b-558f-40b3-adc6-5d9d5b7f149a";
