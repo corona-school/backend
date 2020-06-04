@@ -18,7 +18,7 @@
  * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
  * @apiSuccess (Course Object) {CourseTag[]} tags <em>(optional)</em> Tags for this course
  * @apiSuccess (Course Object) {Subcourse[]} subcourses <em>(optional)</em> Array of Subcourses
- * @apiSuccess (Course Object) {string} state <em>(optional)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
+ * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  *
  */
 // todo adjust interface
@@ -52,7 +52,8 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
  * @apiSuccess (Subcourse Object) {int} participants <em>(optional)</em> Current number of registered participants
  * @apiSuccess (Subcourse Object) {Lecture[]} lectures <em>(optional)</em> Array of lectures
- * @apiSuccess (Subcourse Object) {bool} cancelled <em>(optional)</em> True if subcourse has been cancelled
+ * @apiSuccess (Subcourse Object) {bool} published <em>(optional, requires authentication)</em> False if subcourse has not yet been published
+ * @apiSuccess (Subcourse Object) {bool} cancelled <em>(optional, requires authentication)</em> True if subcourse has been cancelled
  *
  */
 // todo write interface
@@ -61,6 +62,7 @@ export interface ApiCourse {
  * @apiDefine Lecture
  * @apiVersion 1.1.0
  *
+ * @apiSuccess (Lecture Object) {Instructor} instructor Instructor of the lecture
  * @apiSuccess (Lecture Object) {int} start Unix Timestamp of start date
  * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
  *
@@ -76,7 +78,7 @@ export interface ApiCourse {
  * @apiSuccess (Course Object) {string} outline Outline of this course
  * @apiSuccess (Course Object) {string} description Description of this course
  * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
- * @apiSuccess (Course Object) {CourseTag[]} tags Tags for this course
+ * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards
  *
  */
@@ -147,7 +149,7 @@ export interface ApiAddCourse {
  * @apiSuccess (Course Object) {string} outline Outline of this course, <em>only if not submitted</em>
  * @apiSuccess (Course Object) {string} description Description of this course
  * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
- * @apiSuccess (Course Object) {CourseTag[]} tags Tags for this course
+ * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
  *
  */
@@ -180,6 +182,7 @@ export interface ApiAddCourse {
  * @apiDefine Instructor
  * @apiVersion 1.1.0
  *
+ * @apiSuccess (Instructor Object) {string} id ID of the instructor. Will automatically be included in authorized requests.
  * @apiSuccess (Instructor Object) {string} firstname First name
  * @apiSuccess (Instructor Object) {string} lastname Last name
  *

@@ -30,7 +30,7 @@ export class Subcourse {
         eager: true
     })
     @JoinColumn()
-    instructors: Student;
+    instructors: Student[];
 
     @ManyToMany(type => Pupil, pupil => pupil.subcourses, {
         eager: true
@@ -55,6 +55,9 @@ export class Subcourse {
 
     @Column()
     maxParticipants: number;
+
+    @Column()
+    published: boolean;
 
     @Column({
         default: false

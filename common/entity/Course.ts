@@ -38,7 +38,7 @@ export class Course {
 
     @ManyToMany(type => Student, student => student.courses)
     @JoinTable()
-    instructors: Student;
+    instructors: Student[];
 
     @Column()
     name: string;
