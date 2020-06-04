@@ -33,7 +33,7 @@ const logger = getLogger();
  * @apiUse Course
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET "https://dashboard.corona-school.de/api/courses?fields=name,outline,category,startDate"
+ * curl -k -i -X GET "https://api.corona-school.de/api/courses?fields=name,outline,category,startDate"
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -237,7 +237,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
  * @apiUse PostCourseReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course -d "<REQUEST>"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -429,7 +429,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse OptionalAuthentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/course/<ID>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
@@ -454,7 +454,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse ContentType
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course/<ID> -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/course/<ID> -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -478,7 +478,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/course/<ID>
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
