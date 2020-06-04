@@ -70,7 +70,6 @@ export class Course {
     @OneToMany(type => Subcourse, subcourse => subcourse.course, {
         eager: true
     })
-    @Column()
     subcourses: Subcourse[];
 
     @Column({

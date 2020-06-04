@@ -24,6 +24,9 @@ export class CourseTag {
     identifier: string;
 
     @Column()
+    name: string;
+
+    @Column()
     category: string;
 
     @ManyToMany(type => Course, course => course.tags)
