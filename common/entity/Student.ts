@@ -1,10 +1,27 @@
-import { Column, Entity, EntityManager, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import {
+    Column,
+    Entity,
+    EntityManager,
+    Index,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    OneToOne
+} from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
+import { CourseTag } from './CourseTag';
+
+export enum TeacherModule {
+    INTERNSHIP = "internship",
+    SEMINAR = "seminar"
+}
 
 @Entity()
 export class Student extends Person {
@@ -33,7 +50,34 @@ export class Student extends Person {
     @Column({
         nullable: true
     })
+    state: string;
+
+    @Column({
+        nullable: true
+    })
+    university: string;
+
+    @Column({
+        type: "enum",
+        enum: TeacherModule,
+        nullable: true,
+        default: null
+    })
+    module: TeacherModule;
+
+    @Column({
+        nullable: true
+    })
+    moduleHours: number;
+
+    @Column({
+        nullable: true
+    })
     phone: string;
+
+    @ManyToMany(type => CourseTag, tag => tag.students)
+    @JoinTable()
+    tags: Promise<CourseTag[]>
 
     @OneToMany((type) => Match, (match) => match.student, {
         nullable: true
@@ -96,6 +140,12 @@ export class Student extends Person {
         default: null
     })
     lastSentScreeningInvitationDate: Date;
+
+    @Column({
+        nullable: false,
+        default: false
+    })
+    newsletter: boolean;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =

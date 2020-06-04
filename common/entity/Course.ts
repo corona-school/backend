@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
+import { CourseTag } from './CourseTag';
 
 export enum CourseState {
     CREATED = "created",
@@ -55,6 +56,10 @@ export class Course {
 
     @Column()
     categoryId: number;
+
+    @ManyToMany(type => CourseTag, tag => tag.courses)
+    @JoinTable()
+    tags: Promise<CourseTag[]>
 
     @Column()
     joinAfterStart: boolean;

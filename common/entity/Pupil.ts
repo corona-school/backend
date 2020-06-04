@@ -1,7 +1,8 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, EntityManager, Index, JoinTable, ManyToMany, OneToMany } from "typeorm";
 import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
+import { CourseTag } from './CourseTag';
 
 @Entity()
 export class Pupil extends Person {
@@ -14,8 +15,22 @@ export class Pupil extends Person {
     @Column()
     wix_creation_date: Date;
 
+    @Column({
+        default: true
+    })
+    isPupil: boolean;
+
+    @Column({
+        default: false
+    })
+    isParticipant: boolean;
+
     @Column()
     subjects: string;
+
+    @ManyToMany(type => CourseTag, tag => tag.pupils)
+    @JoinTable()
+    tags: Promise<CourseTag[]>
 
     @Column({
         nullable: true
@@ -49,6 +64,12 @@ export class Pupil extends Person {
         default: 0 //everyone is default 0, i.e no priority
     })
     matchingPriority: number;
+
+    @Column({
+        nullable: false,
+        default: false
+    })
+    newsletter: boolean;
 }
 
 export function getPupilWithEmail(manager: EntityManager, email: string) {
