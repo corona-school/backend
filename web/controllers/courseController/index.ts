@@ -413,3 +413,76 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
         return 500;
     }
 }
+
+/**
+ * @api {GET} /course/:id GetCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get details about an existing course
+ *
+ * This endpoint allows getting details about a course.
+ * The available fields depend on whether this request is authenticated and whether the user is the instructor of the course
+ *
+ * @apiName GetCourse
+ * @apiGroup Courses
+ *
+ * @apiUse OptionalAuthentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/course/<ID>
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+
+/**
+ * @api {PUT} /course/:id EditCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Edit a course.
+ *
+ * This endpoint allows editing an existing course.
+ * Only an instructor is allowed to edit his own courses.
+ * There are some constraints on the editability of fields.
+ *
+ * @apiName EditCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/course/<ID> -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+
+/**
+ * @api {DELETE} /course/:id CancelCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Cancel a course.
+ *
+ * This endpoint allows cancelling a course, which means that all planned subcourses will be cancelled.
+ * Furthermore the registered participants will be notified and the course won't appear in the public register anymore.
+ *
+ * @apiName CancelCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/course/<ID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
