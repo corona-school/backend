@@ -1,35 +1,19 @@
 /**
- * @api {POST} /register/instructor RegisterInstructor
+ * @api {POST} /register/tutor RegisterTutor
  * @apiVersion 1.1.0
  * @apiDescription
- * Register a user as an instructor.
+ * Register a user as a tutor.
  *
- * @apiName RegisterInstructor
+ * @apiName RegisterTutor
  * @apiGroup Registration
  *
  * @apiUse ContentType
  *
- * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/instructor -d "<REQUEST>"
- *
- * @apiUse StatusNoContent
- * @apiUse StatusBadRequest
- * @apiUse StatusInternalServerError
- */
-
-/**
- * @api {POST} /register/teacher RegisterTeacher
- * @apiVersion 1.1.0
- * @apiDescription
- * Register a user as an teacher.
- *
- * @apiName RegisterTeacher
- * @apiGroup Registration
- *
- * @apiUse ContentType
+ * @apiUse AddTutor
+ * @apiUse AddTutorSubject
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/teacher -d "<REQUEST>"
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutor -d "<REQUEST>"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -46,6 +30,9 @@
  * @apiGroup Registration
  *
  * @apiUse ContentType
+ *
+ * @apiUse AddTutee
+ * @apiUse AddTuteeSubject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee -d "<REQUEST>"

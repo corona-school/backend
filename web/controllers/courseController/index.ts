@@ -513,6 +513,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
 
 /**
  * @api {PUT} /course/:id EditCourse
@@ -543,6 +544,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
 
 /**
  * @api {PUT} /course/:id/subcourse/:subid EditSubcourse
@@ -573,6 +575,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
 
 /**
  * @api {PUT} /course/:id/subcourse/:subid/lecture/:lecid EditLecture
@@ -604,7 +607,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-
+// todo implement
 
 
 /**
@@ -633,6 +636,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
 
 /**
  * @api {DELETE} /course/:id/subcourse/:subid CancelSubcourse
@@ -660,6 +664,7 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
 
 /**
  * @api {DELETE} /course/:id/subcourse/:subid/lecture/:lecid DeleteLecture
@@ -687,3 +692,4 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+// todo implement
