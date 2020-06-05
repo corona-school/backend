@@ -26,10 +26,10 @@ export class Subcourse {
     @UpdateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @ManyToOne(type => Student, student => student.courses, {
+    @ManyToMany(type => Student, student => student.subcourses, {
         eager: true
     })
-    @JoinColumn()
+    @JoinTable()
     instructors: Student[];
 
     @ManyToMany(type => Pupil, pupil => pupil.subcourses, {
@@ -41,7 +41,6 @@ export class Subcourse {
     @OneToMany(type => Lecture, lecture => lecture.subcourse, {
         eager: true
     })
-    @Column()
     lectures: Lecture[];
 
     @OneToMany(type => Course, course => course.subcourses)
