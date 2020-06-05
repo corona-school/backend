@@ -25,7 +25,8 @@ export class Lecture {
     @UpdateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @OneToMany(type => Student, student => student.lectures)
+    @ManyToOne(type => Student, student => student.lectures)
+    @JoinColumn()
     instructor: Student;
 
     @ManyToOne(type => Subcourse, subcourse => subcourse.lectures)

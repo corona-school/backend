@@ -18,6 +18,7 @@ import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { CourseTag } from './CourseTag';
 import { State } from './State';
+import { Subcourse } from "./Subcourse";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -96,8 +97,10 @@ export class Student extends Person {
     @ManyToMany(type => Course, course => course.instructors)
     courses: Course[];
 
-    @ManyToOne(type => Lecture, lecture => lecture.instructor)
-    @JoinColumn()
+    @ManyToMany(type => Subcourse, subcourse => subcourse.instructors)
+    subcourses: Subcourse[];
+
+    @OneToMany(type => Lecture, lecture => lecture.instructor)
     lectures: Lecture[];
 
     /*
@@ -120,7 +123,8 @@ export class Student extends Person {
         type: "enum",
         enum: TeacherModule,
         nullable: true,
-        default: null
+        default: undefined // See typeorm/typeorm#5371: Setting this to null causes typeORM to generate 'null' as a string.
+                           // This is fine for now because enums in postgres are DEFAULT NULL anyways 
     })
     module: TeacherModule;
 
