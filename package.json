@@ -42,6 +42,7 @@
     "@types/textversionjs": "^1.1.0",
     "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
+    "cron": "^1.8.2",
     "csv-writer": "^1.6.0",
     "dotenv": "^8.2.0",
     "ejs": "^2.5.6",
