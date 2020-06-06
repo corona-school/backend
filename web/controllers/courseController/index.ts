@@ -3,7 +3,7 @@ import { getLogger } from 'log4js';
 import { Brackets, getManager } from 'typeorm';
 import { Student } from '../../../common/entity/Student';
 import {
-    ApiAddCourse,
+    ApiAddCourse, ApiAddLecture,
     ApiAddSubcourse,
     ApiCourse,
     ApiCourseTag,
@@ -16,6 +16,7 @@ import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
+import { Lecture } from '../../../common/entity/Lecture';
 
 const logger = getLogger();
 
@@ -729,9 +730,9 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
-        logger.warn(`User tried to add subcourse to non existent course (ID ${courseId})`)
+        logger.warn(`User tried to add subcourse to non existent course (ID ${courseId})`);
         logger.debug(student, apiSubcourse);
         return 404;
     }
@@ -744,7 +745,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
         }
     }
     if (!authorized) {
-        logger.warn(`User tried to add subcourse, but has no access rights (ID ${courseId})`)
+        logger.warn(`User tried to add subcourse, but has no access rights (ID ${courseId})`);
         logger.debug(student, apiSubcourse);
         return 403;
     }
@@ -843,7 +844,126 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function postLectureHandler(req: Request, res: Response) {
+    let status = 204;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                typeof req.body.instructor == 'string' &&
+                typeof req.body.start == 'number' &&
+                typeof req.body.duration == 'number') {
+
+                if (status < 300) {
+                    const ret = await postLecture(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body);
+                    if (typeof ret == 'number') {
+                        status = ret;
+                    } else {
+                        res.json(ret);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/lecture");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add a lecture");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function postLecture(student: Student, courseId: number, subcourseId: number, apiLecture: ApiAddLecture): Promise<{ id: number } | number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseId });
+    if (course == undefined) {
+        logger.warn(`User tried to add lecture to non-existent course (ID ${courseId})`);
+        logger.debug(student, apiLecture);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn(`User tried to add lecture to non-existent subcourse (ID ${subcourseId})`);
+        logger.debug(student, apiLecture);
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn(`User tried to add lecture, but has no access rights (ID ${courseId})`);
+        logger.debug(student, apiLecture);
+        return 403;
+    }
+
+    // Check validity of fields
+    let instructor: Student = undefined;
+    for (let i = 0; i < subcourse.instructors.length; i++) {
+        if (apiLecture.instructor == subcourse.instructors[i].wix_id) {
+            instructor = subcourse.instructors[i];
+        }
+    }
+    if (instructor == undefined) {
+        logger.warn(`Field 'instructor' contains an illegal value: ${apiLecture.instructor}`);
+        logger.debug(apiLecture);
+        return 400;
+    }
+
+    // You can only create lectures that start at least in 2 days
+    if (!Number.isInteger(apiLecture.start) || apiLecture.start - (new Date()).getTime() < 2 * 86400000) {
+        logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
+        logger.debug(apiLecture);
+        return 400;
+    }
+
+    if (!Number.isInteger(apiLecture.duration) || apiLecture.duration < 15 || apiLecture.duration > 480) {
+        logger.warn(`Field 'duration' contains an illegal value: ${apiLecture.duration}`);
+        logger.debug(apiLecture);
+        return 400;
+    }
+
+    const lecture = new Lecture();
+    lecture.instructor = instructor;
+    lecture.subcourse = subcourse;
+    lecture.start = new Date(apiLecture.start * 1000);
+    lecture.duration = apiLecture.duration;
+
+    try {
+        await entityManager.save(Lecture, lecture);
+        // todo add transactionlog
+        logger.info("Successfully saved new lecture");
+
+        return {
+            id: lecture.id
+        };
+    } catch (e) {
+        logger.error("Can't save new lecture: " + e.message);
+        logger.debug(lecture, e);
+        return 500;
+    }
+}
 
 /**
  * @api {PUT} /course/:id EditCourse
