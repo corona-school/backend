@@ -1418,7 +1418,7 @@ export async function putLectureHandler(req: Request, res: Response) {
             }
         } else {
             status = 403;
-            logger.warn("A non-student wanted to add a lecture");
+            logger.warn("A non-student wanted to edit a lecture");
             logger.debug(res.locals.user);
         }
     } catch (e) {
@@ -1549,7 +1549,98 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function deleteCourseHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined) {
+                status = await deleteCourse(res.locals.user, Number.parseInt(req.params.id, 10));
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to cancel a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function deleteCourse(student: Student, courseId: number): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to cancel a course, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access right
+    const course = await entityManager.findOne(Course, { id: courseId });
+    if (course == undefined) {
+        logger.warn(`User tried to cancel non-existent course (ID ${courseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn(`User tried to cancel course, but has no access rights (ID ${courseId})`);
+        logger.debug(student);
+        return 403;
+    }
+
+    if (course.courseState != CourseState.CANCELLED) {
+        // We have a non-mitigated race condition here: Someone could post a new subcourse into the course, while the course gets cancelled
+        try {
+            // Run in transaction, so we may not have a mixed state, where some subcourses are cancelled, but others are not
+            await entityManager.transaction(async em => {
+
+                for (let i = 0; course.subcourses.length; i++) {
+                    if (!course.subcourses[i].cancelled) {
+                        course.subcourses[i].cancelled = true;
+                        // todo inform participants
+                        await em.save(Subcourse, course.subcourses[i]);
+                    }
+                }
+
+                course.courseState = CourseState.CANCELLED;
+                await em.save(Course, course);
+
+            }).catch(e => {
+                logger.error("Can't cancel course");
+                logger.debug(course, e);
+            });
+
+            // todo add transaction log
+            logger.info("Successfully cancelled course");
+
+            return 204;
+        } catch (e) {
+            logger.error("Can't cancel course: " + e.message);
+            logger.debug(course, e);
+            return 500;
+        }
+    } else {
+        logger.warn(`User tried to delete course repeatedly (ID ${courseId})`);
+        logger.debug(student);
+        return 403;
+    }
+}
 
 /**
  * @api {DELETE} /course/:id/subcourse/:subid CancelSubcourse
@@ -1577,7 +1668,91 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function deleteSubcourseHandler(req: Request, res: Response) {
+    let status = 204;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined && req.params.subid != undefined) {
+
+                status = await deleteSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10));
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to cancel a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function deleteSubcourse(student: Student, courseId: number, subcourseId: number): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to cancel a subcourse, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseId });
+    if (course == undefined) {
+        logger.warn(`User tried to cancel subcourse of non existent course (ID ${courseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn(`User tried to cancel non-existent subcourse (ID ${subcourseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn(`User tried to cancel subcourse, but has no access rights (ID ${courseId})`);
+        logger.debug(student);
+        return 403;
+    }
+
+    if (!subcourse.cancelled) {
+        // todo inform participants
+        subcourse.cancelled = true;
+    } else {
+        logger.warn(`User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
+        logger.debug(student);
+        return 403;
+    }
+
+    try {
+        await entityManager.save(Subcourse, subcourse);
+        // todo add transactionlog
+        logger.info("Successfully cancelled subcourse");
+
+        return 204;
+    } catch (e) {
+        logger.error("Can't cancelled subcourse: " + e.message);
+        logger.debug(subcourse, e);
+        return 500;
+    }
+}
 
 /**
  * @api {DELETE} /course/:id/subcourse/:subid/lecture/:lecid DeleteLecture
@@ -1605,4 +1780,94 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function deleteLectureHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.lecid != undefined) {
+
+                status = await deleteLecture(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), Number.parseInt(req.params.lecid, 10));
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/lecture/:lecid");
+                logger.debug(req.params);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wants to delete a lecture");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to delete a lecture, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseId });
+    if (course == undefined) {
+        logger.warn(`User tried to delete a lecture of non-existent course (ID ${courseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn(`User tried to delete a lecture of non-existent subcourse (ID ${subcourseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    const lecture = await entityManager.findOne(Lecture, { id: lectureId, subcourse: subcourse });
+    if (lecture == undefined) {
+        logger.warn(`User tried to delete non-existent lecture (ID ${subcourseId})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn(`User tried to delete lecture, but has no access rights (ID ${courseId})`);
+        logger.debug(student);
+        return 403;
+    }
+
+    if (lecture.start.getTime() < (new Date()).getTime()) {
+        logger.warn(`User tried to delete lecture from the past (ID ${courseId})`);
+        logger.debug(student);
+        return 403;
+    }
+
+    try {
+        await entityManager.delete(Lecture, lecture);
+        // todo add transactionlog
+        logger.info("Successfully deleted lecture");
+
+        return 204;
+    } catch (e) {
+        logger.error("Can't delete lecture: " + e.message);
+        logger.debug(lecture, e);
+        return 500;
+    }
+}
