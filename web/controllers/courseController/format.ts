@@ -21,23 +21,16 @@
  * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  *
  */
-// todo adjust interface
 export interface ApiCourse {
     id: number;
-    instructor?: string;
+    instructor?: ApiInstructor[];
     name?: string;
     outline?: string;
     description?: string;
-    motivation?: string;
     image?: string | null;
-    minGrade?: number;
-    maxGrade?: number;
-    maxParticipants?: number;
     category?: string;
-    joinAfterStart?: boolean;
-    startDate?: number;
-    duration?: number;
-    frequency?: number;
+    tags?: ApiCourseTag[];
+    subcourses?: ApiSubcourse[];
     state?: string;
 }
 
@@ -56,18 +49,34 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {bool} cancelled <em>(optional, requires authentication)</em> True if subcourse has been cancelled
  *
  */
-// todo write interface
+export interface ApiSubcourse {
+    id: number;
+    instructors?: ApiInstructor[];
+    minGrade?: number;
+    maxGrade?: number;
+    maxParticipants?: number;
+    participants?: number;
+    lectures?: ApiLecture[];
+    published?: boolean;
+    cancelled?: boolean;
+}
 
 /**
  * @apiDefine Lecture
  * @apiVersion 1.1.0
  *
+ * @apiSuccess (Lecture Object) {int} id ID of the lecture
  * @apiSuccess (Lecture Object) {Instructor} instructor Instructor of the lecture
  * @apiSuccess (Lecture Object) {int} start Unix Timestamp of start date
  * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
  *
  */
-// todo write interface
+export interface ApiLecture {
+    id: number;
+    instructor: ApiInstructor;
+    start: number;
+    duration: number;
+}
 
 /**
  * @apiDefine PostCourse
@@ -88,20 +97,13 @@ export interface ApiCourse {
  *
  * @apiSuccess (Course Return Object) {int} id Unique identifier for this course
  */
-// todo adjust interface
 export interface ApiAddCourse {
+    instructors: string[];
     name: string;
     outline: string;
     description: string;
-    motivation: string;
-    minGrade: number;
-    maxGrade: number;
-    maxParticipants: number;
     category: string;
-    joinAfterStart: boolean;
-    startDate: number;
-    duration: number;
-    frequency: number;
+    tags: string[];
     submit: boolean;
 }
 
@@ -121,7 +123,12 @@ export interface ApiAddCourse {
  *
  * @apiSuccess (Subcourse Return Object) {int} id Unique identifier for this subcourse
  */
-// todo write interface
+export interface ApiAddSubcourse {
+    instructors: string[];
+    minGrade: number;
+    maxGrade: number;
+    maxParticipants: number;
+}
 
 /**
  * @apiDefine PostLecture
@@ -138,7 +145,11 @@ export interface ApiAddCourse {
  *
  * @apiSuccess (Lecture Return Object) {int} id Unique identifier for this lecture
  */
-// todo write interface
+export interface ApiAddLecture {
+    instructor: string;
+    start: number;
+    duration: number;
+}
 
 /**
  * @apiDefine PutCourse
@@ -153,7 +164,15 @@ export interface ApiAddCourse {
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
  *
  */
-// todo write interface
+export interface ApiEditCourse {
+    instructors: string[];
+    name: string;
+    outline: string;
+    description: string;
+    category: string;
+    tags: string[];
+    submit: boolean;
+}
 
 /**
  * @apiDefine PutSubcourse
@@ -165,7 +184,12 @@ export interface ApiAddCourse {
  * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants. May not be lower than the number of already registered participants
  *
  */
-// todo write interface
+export interface ApiEditSubcourse {
+    instructors: string[];
+    minGrade: number;
+    maxGrade: number;
+    maxParticipants: number;
+}
 
 /**
  * @apiDefine PutLecture
@@ -176,7 +200,11 @@ export interface ApiAddCourse {
  * @apiSuccess (Lecture Object) {int} duration Duration of the lecture in minutes
  *
  */
-// todo write interface
+export interface ApiEditLecture {
+    instructor: string;
+    start: number;
+    duration: number;
+}
 
 /**
  * @apiDefine Instructor
@@ -187,7 +215,11 @@ export interface ApiAddCourse {
  * @apiSuccess (Instructor Object) {string} lastname Last name
  *
  */
-// todo write interface
+export interface ApiInstructor {
+    id: string;
+    firstname: string;
+    lastname: string;
+}
 
 /**
  * @apiDefine CourseTag
@@ -198,4 +230,8 @@ export interface ApiAddCourse {
  * @apiSuccess (CourseTag Object) {string} category Tags with identical category identifiers should be grouped
  *
  */
-// todo write interface
+export interface ApiCourseTag {
+    id: string;
+    name: string;
+    category: string;
+}
