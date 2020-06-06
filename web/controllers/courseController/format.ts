@@ -158,22 +158,22 @@ export interface ApiAddLecture {
  * @apiVersion 1.1.0
  *
  * @apiSuccess (Course Object) {string[]} instructors Array of instructor IDs for this course. The authenticated user's ID must be contained
- * @apiSuccess (Course Object) {string} name Name of this course, <em>only if not submitted</em>
- * @apiSuccess (Course Object) {string} outline Outline of this course, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string} name <em>(optional)</em> Name of this course, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string} outline <em>(optional)</em> Outline of this course, <em>only if not submitted</em>
  * @apiSuccess (Course Object) {string} description Description of this course
- * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
- * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {bool} submit <em>(optional)</em> If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
  *
  */
 export interface ApiEditCourse {
     instructors: string[];
-    name: string;
-    outline: string;
+    name?: string;
+    outline?: string;
     description: string;
-    category: string;
+    category?: string;
     tags: string[];
-    submit: boolean;
+    submit?: boolean;
 }
 
 /**
@@ -184,6 +184,7 @@ export interface ApiEditCourse {
  * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants. May not be lower than the number of already registered participants
+ * @apiSuccess (Subcourse Object) {bool} published If published, the subcourse can't be easily cancelled and will appear in the public list. Once published it can't be unpublished
  *
  */
 export interface ApiEditSubcourse {
@@ -191,6 +192,7 @@ export interface ApiEditSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    published: boolean;
 }
 
 /**
