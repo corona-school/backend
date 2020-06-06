@@ -115,7 +115,7 @@ createConnection().then(() => {
     function configureCoursesAPI() {
         const coursesRouter = express.Router();
         coursesRouter.use(authCheckFactory(true));
-        coursesRouter.get("/", courseController.getHandler);
+        coursesRouter.get("/", courseController.getCoursesHandler);
         app.use("/api/courses", coursesRouter);
     }
 

@@ -23,7 +23,7 @@
  */
 export interface ApiCourse {
     id: number;
-    instructor?: ApiInstructor[];
+    instructors?: ApiInstructor[];
     name?: string;
     outline?: string;
     description?: string;
@@ -39,14 +39,14 @@ export interface ApiCourse {
  * @apiVersion 1.1.0
  *
  * @apiSuccess (Subcourse Object) {int} id Unique identifier for this subcourse
- * @apiSuccess (Subcourse Object) {Instructor[]} instructors <em>(optional)</em> Information about the instructors of this course
- * @apiSuccess (Subcourse Object) {int} minGrade <em>(optional)</em> Minimum grade of participants
- * @apiSuccess (Subcourse Object) {int} maxGrade <em>(optional)</em> Maximum grade of participants
- * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
- * @apiSuccess (Subcourse Object) {int} participants <em>(optional)</em> Current number of registered participants
- * @apiSuccess (Subcourse Object) {Lecture[]} lectures <em>(optional)</em> Array of lectures
- * @apiSuccess (Subcourse Object) {bool} published <em>(optional, requires authentication)</em> False if subcourse has not yet been published
- * @apiSuccess (Subcourse Object) {bool} cancelled <em>(optional, requires authentication)</em> True if subcourse has been cancelled
+ * @apiSuccess (Subcourse Object) {Instructor[]} instructors Information about the instructors of this course
+ * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
+ * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants
+ * @apiSuccess (Subcourse Object) {int} participants Current number of registered participants
+ * @apiSuccess (Subcourse Object) {Lecture[]} lectures Array of lectures
+ * @apiSuccess (Subcourse Object) {bool} published <em>(requires authentication)</em> False if subcourse has not yet been published
+ * @apiSuccess (Subcourse Object) {bool} cancelled <em>(requires authentication)</em> True if subcourse has been cancelled
  *
  */
 export interface ApiSubcourse {
@@ -216,7 +216,7 @@ export interface ApiEditLecture {
  *
  */
 export interface ApiInstructor {
-    id: string;
+    id?: string;
     firstname: string;
     lastname: string;
 }

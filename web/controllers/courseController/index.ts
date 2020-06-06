@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { getManager } from 'typeorm';
+import { Brackets, getManager } from 'typeorm';
 import { Student } from '../../../common/entity/Student';
-import { ApiAddCourse, ApiCourse } from './format';
-import { Course, CourseState } from '../../../common/entity/Course';
+import { ApiAddCourse, ApiCourse, ApiCourseTag, ApiInstructor, ApiLecture, ApiSubcourse } from './format';
+import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
 import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
+import { CourseTag } from '../../../common/entity/CourseTag';
 
 const logger = getLogger();
 
@@ -44,7 +45,7 @@ const logger = getLogger();
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function getHandler(req: Request, res: Response) {
+export async function getCoursesHandler(req: Request, res: Response) {
     let status = 200;
     try {
         let authenticated = false;
@@ -65,7 +66,7 @@ export async function getHandler(req: Request, res: Response) {
         }
 
         try {
-            let obj = await get(authenticated ? res.locals.user : undefined, fields, states, instructorId);
+            let obj = await getCourses(authenticated ? res.locals.user : undefined, fields, states, instructorId);
             if (typeof obj == 'number') {
                 status = obj;
             } else {
@@ -84,7 +85,7 @@ export async function getHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function get(student: Student | undefined, fields: Array<string>, states: Array<string>, wix_id: string | undefined): Promise<Array<ApiCourse> | number> {
+async function getCourses(student: Student | undefined, fields: Array<string>, states: Array<string>, wix_id: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
     let authenticated = false;
@@ -119,42 +120,50 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
         logger.debug(student, fields, states, wix_id);
         return 400;
     }
-    let filters = [];
+    let stateFilters = [];
     for (let i = 0; i < states.length; i++) {
-        let filter: {
-            state?: CourseState;
-            instructor?: Student;
-        } = {};
+        let state: CourseState;
         switch (states[i]) {
             case 'created':
-                filter.state = CourseState.CREATED;
+                state = CourseState.CREATED;
                 break;
             case 'submitted':
-                filter.state = CourseState.SUBMITTED;
+                state = CourseState.SUBMITTED;
                 break;
             case 'allowed':
-                filter.state = CourseState.ALLOWED;
+                state = CourseState.ALLOWED;
                 break;
             case 'denied':
-                filter.state = CourseState.DENIED;
+                state = CourseState.DENIED;
                 break;
             case 'cancelled':
-                filter.state = CourseState.CANCELLED;
+                state = CourseState.CANCELLED;
                 break;
             default:
                 logger.warn("Unknown state: " + states[i]);
                 logger.debug(student, fields, states, wix_id);
                 return 400;
         }
-        if (wix_id != undefined) {
-            filter.instructor = student;
-        }
-        filters.push(filter);
+        stateFilters.push(state);
     }
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const courses = await entityManager.find(Course, { where: filters, relations: ['instructor'] });
+        const qb = entityManager.getRepository(Course)
+            .createQueryBuilder("course")
+            .leftJoin("course.instructors", "instructor")
+            .where("instructor.wix_id = :id", { id: student.wix_id });
+
+        if (stateFilters.length > 0) {
+            qb.andWhere(new Brackets(sub => {
+                sub = sub.where("course.state = :state", { state: stateFilters.pop() });
+                while (stateFilters.length > 0) {
+                    sub = sub.orWhere("course.state = :state", { state: stateFilters.pop() });
+                }
+            }));
+        }
+
+        const courses = await qb.getMany();
 
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
@@ -164,8 +173,18 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                 switch (fields[j].toLowerCase()) {
                     case 'id':
                         break;
-                    case 'instructor':
-                        // apiCourse.instructor = courses[i].instructor.firstname + " " + courses[i].instructor.lastname;
+                    case 'instructors':
+                        apiCourse.instructors = [];
+                        for (let k = 0; k < courses[i].instructors.length; k++) {
+                            let instructor: ApiInstructor = {
+                                firstname: courses[i].instructors[k].firstname,
+                                lastname: courses[i].instructors[k].lastname,
+                            };
+                            if (authenticated && student.wix_id != wix_id) {
+                                instructor.id = courses[i].instructors[k].wix_id;
+                            }
+                            apiCourse.instructors.push(instructor);
+                        }
                         break;
                     case 'name':
                         apiCourse.name = courses[i].name;
@@ -176,35 +195,62 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
                     case 'description':
                         apiCourse.description = courses[i].description;
                         break;
-                    case 'motivation':
-                        // apiCourse.motivation = courses[i].motivation;
-                        break;
                     case 'image':
                         apiCourse.image = courses[i].imageUrl;
                         break;
-                    case 'mingrade':
-                        // apiCourse.minGrade = courses[i].minGrade;
-                        break;
-                    case 'maxgrade':
-                        // apiCourse.maxGrade = courses[i].maxGrade;
-                        break;
-                    case 'maxparticipants':
-                        // apiCourse.maxParticipants = courses[i].maxParticipants;
-                        break;
                     case 'category':
-                        // apiCourse.category = courses[i].categoryId.toString();
+                        apiCourse.category = courses[i].category;
                         break;
-                    case 'joinafterstart':
-                        // apiCourse.joinAfterStart = courses[i].joinAfterStart;
+                    case 'tags':
+                        apiCourse.tags = [];
+                        for (let k = 0; k < courses[i].tags.length; k++) {
+                            let tag: ApiCourseTag = {
+                                id: courses[i].tags[k].identifier,
+                                name: courses[i].tags[k].name,
+                                category: courses[i].tags[k].category
+                            };
+                            apiCourse.tags.push(tag);
+                        }
                         break;
-                    case 'startdate':
-                        // apiCourse.startDate = courses[i].startDate.getTime();
-                        break;
-                    case 'duration':
-                        // apiCourse.duration = courses[i].duration;
-                        break;
-                    case 'frequency':
-                        // apiCourse.frequency = courses[i].frequency;
+                    case 'subcourses':
+                        apiCourse.subcourses = [];
+                        for (let k = 0; k < courses[i].subcourses.length; k++) {
+                            let subcourse: ApiSubcourse = {
+                                id: courses[i].subcourses[k].id,
+                                minGrade: courses[i].subcourses[k].minGrade,
+                                maxGrade: courses[i].subcourses[k].maxGrade,
+                                maxParticipants: courses[i].subcourses[k].maxParticipants,
+                                participants: courses[i].subcourses[k].participants.length,
+                                instructors: [],
+                                lectures: []
+                            };
+                            for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
+                                let instructor: ApiInstructor = {
+                                    firstname: courses[i].subcourses[k].instructors[l].firstname,
+                                    lastname: courses[i].subcourses[k].instructors[l].lastname,
+                                };
+                                if (authenticated && student.wix_id != wix_id) {
+                                    instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                }
+                                subcourse.instructors.push(instructor);
+                            }
+                            for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
+                                let lecture: ApiLecture = {
+                                    id: courses[i].subcourses[k].lectures[l].id,
+                                    instructor: {
+                                        firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
+                                        lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
+                                    },
+                                    start: courses[i].subcourses[k].lectures[l].start.getTime(),
+                                    duration: courses[i].subcourses[k].lectures[l].duration,
+                                };
+                                if (authenticated && student.wix_id != wix_id) {
+                                    lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                }
+                                subcourse.lectures.push(lecture);
+                            }
+                            apiCourse.subcourses.push(subcourse);
+                        }
                         break;
                     case 'state':
                         apiCourse.state = courses[i].courseState;
@@ -215,7 +261,7 @@ async function get(student: Student | undefined, fields: Array<string>, states: 
         }
     } catch (e) {
         logger.error("Can't fetch courses: " + e.message);
-        logger.debug(e, filters);
+        logger.debug(e);
         return 500;
     }
 
@@ -287,25 +333,35 @@ export async function postCourseHandler(req: Request, res: Response) {
     let status = 204;
     try {
         if (res.locals.user instanceof Student) {
-            if (typeof req.body.name == 'string' &&
+            if (req.body.instructors instanceof Array &&
+                typeof req.body.name == 'string' &&
                 typeof req.body.outline == 'string' &&
                 typeof req.body.description == 'string' &&
-                typeof req.body.motivation == 'string' &&
-                typeof req.body.minGrade == 'number' &&
-                typeof req.body.maxGrade == 'number' &&
-                typeof req.body.maxParticipants == 'number' &&
                 typeof req.body.category == 'string' &&
-                typeof req.body.joinAfterStart == 'boolean' &&
-                typeof req.body.startDate == 'number' &&
-                typeof req.body.duration == 'number' &&
-                typeof req.body.frequency == 'number' &&
+                req.body.tags instanceof Array &&
                 typeof req.body.submit == 'boolean') {
 
-                const ret = await post(res.locals.user, req.body);
-                if (typeof ret == 'number') {
-                    status = ret;
-                } else {
-                    res.json(ret);
+                // Check if string arrays
+                for (let i = 0; i < req.body.instructors.length; i++) {
+                    if (typeof req.body.instructors[i] != 'string') {
+                        status = 400;
+                        logger.warn(`Instructor ID ${req.body.instructors[i]} is no string`);
+                    }
+                }
+                for (let i = 0; i < req.body.tags.length; i++) {
+                    if (typeof req.body.tags[i] != 'string') {
+                        status = 400;
+                        logger.warn(`Tag ID ${req.body.tags[i]} is no string`);
+                    }
+                }
+
+                if (status < 300) {
+                    const ret = await postCourse(res.locals.user, req.body);
+                    if (typeof ret == 'number') {
+                        status = ret;
+                    } else {
+                        res.json(ret);
+                    }
                 }
             } else {
                 status = 400;
@@ -325,7 +381,7 @@ export async function postCourseHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCourse | number> {
+async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<ApiCourse | number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -335,105 +391,83 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
         return 403;
     }
 
-    // let coursesByInstructor = await entityManager.count(Course, { instructor: student });
-    // if (coursesByInstructor >= 3) {
-    //     logger.warn(`Student (ID ${student.id}) tried to add an course, but already owns 3 other courses`);
-    //     logger.debug(student);
-    //     return 403;
-    // }
+    // Some checks
+    if (apiCourse.instructors.indexOf(student.wix_id) < 0) {
+        logger.warn(`Instructor is not mentioned in field 'instructors': ${apiCourse.instructors.join(', ')}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
 
-    // Some generous checks
+    let filters = [];
+    for (let i = 0; i < apiCourse.instructors.length; i++) {
+        filters.push({
+            wix_id: apiCourse.instructors[i]
+        });
+    }
+    const instructors = await entityManager.find(Student, { where: filters });
+    if (instructors.length != apiCourse.instructors.length) {
+        logger.warn(`Field 'instructors' contains invalid values: ${apiCourse.instructors.join(', ')}`);
+        logger.debug(apiCourse);
+        return 400;
+    }
+
     if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
         logger.warn(`Invalid length of field 'name': ${apiCourse.name.length}`);
         logger.debug(apiCourse);
         return 400;
     }
 
-    if (apiCourse.outline.length == 0 || apiCourse.outline.length > 300) {
+    if (apiCourse.outline.length == 0 || apiCourse.outline.length > 200) {
         logger.warn(`Invalid length of field 'outline': ${apiCourse.outline.length}`);
         logger.debug(apiCourse);
         return 400;
     }
 
-    if (apiCourse.description.length == 0 || apiCourse.description.length > 2000) {
+    if (apiCourse.description.length == 0 || apiCourse.description.length > 3000) {
         logger.warn(`Invalid length of field 'description': ${apiCourse.description.length}`);
         logger.debug(apiCourse);
         return 400;
     }
 
-    if (apiCourse.motivation.length == 0 || apiCourse.motivation.length > 2000) {
-        logger.warn(`Invalid length of field 'motivation': ${apiCourse.motivation.length}`);
-        logger.debug(apiCourse);
-        return 400;
+    let category: CourseCategory;
+    switch (apiCourse.category) {
+        case "revision":
+            category = CourseCategory.REVISION;
+            break;
+        case "club":
+            category = CourseCategory.CLUB;
+            break;
+        case "coaching":
+            category = CourseCategory.COACHING;
+            break;
+        default:
+            logger.warn(`Invalid course category: ${apiCourse.category}`);
+            logger.debug(apiCourse);
+            return 400;
     }
 
-    if (apiCourse.maxGrade < 1 || apiCourse.maxGrade > 13 || !Number.isInteger(apiCourse.maxGrade)) {
-        logger.warn(`Invalid value of field 'minGrade': ${apiCourse.maxGrade}`);
-        logger.debug(apiCourse);
-        return 400;
+    filters = [];
+    for (let i = 0; i < apiCourse.tags.length; i++) {
+        filters.push({
+            identifier: apiCourse.tags[i]
+        });
     }
-
-    if (apiCourse.maxGrade < 1 || apiCourse.maxGrade > 13 || !Number.isInteger(apiCourse.maxGrade)) {
-        logger.warn(`Invalid value of field 'maxGrade': ${apiCourse.maxGrade}`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    if (apiCourse.maxGrade < apiCourse.minGrade) {
-        logger.warn(`Invalid values: Field 'maxGrade' may not be smaller than field 'minGrade'`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    if (apiCourse.maxParticipants < 2 || apiCourse.maxParticipants > 50 || !Number.isInteger(apiCourse.maxParticipants)) {
-        logger.warn(`Invalid value of field 'maxParticipants': ${apiCourse.maxParticipants}`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    let categoryId = 0;
-    if (apiCourse.category) {
-        // todo waiting for category list
-        logger.warn(`Invalid length of field 'name': ${apiCourse.category.length}`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    // You can't create courses starting in the past or starting in less than a day
-    if (!Number.isInteger(apiCourse.startDate) || apiCourse.startDate < (new Date()).getTime() + 86400) {
-        logger.warn(`Invalid value of field 'startDate': ${apiCourse.startDate}`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    if (apiCourse.duration < 1 || apiCourse.duration > 50 || !Number.isInteger(apiCourse.duration)) {
-        logger.warn(`Invalid value of field 'duration': ${apiCourse.duration}`);
-        logger.debug(apiCourse);
-        return 400;
-    }
-
-    if (apiCourse.frequency < 0 || apiCourse.frequency > 30 || !Number.isInteger(apiCourse.frequency)) {
-        logger.warn(`Invalid value of field 'frequency': ${apiCourse.frequency}`);
+    const tags = await entityManager.find(CourseTag, { where: filters });
+    if (tags.length != apiCourse.tags.length) {
+        logger.warn(`Field 'tags' contains invalid values: ${apiCourse.instructors.join(', ')}`);
         logger.debug(apiCourse);
         return 400;
     }
 
     const course = new Course();
-    // course.instructor = student;
+    course.instructors = instructors;
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
-    // course.motivation = apiCourse.motivation;
-    // course.requirements = "";
-    course.imageUrl = null;
-    // course.minGrade = apiCourse.minGrade;
-    // course.maxGrade = apiCourse.maxGrade;
-    // course.maxParticipants = apiCourse.maxParticipants;
-    // course.categoryId = categoryId;
-    // course.joinAfterStart = apiCourse.joinAfterStart;
-    // course.startDate = new Date(apiCourse.startDate);
-    // course.duration = apiCourse.duration;
-    // course.frequency = apiCourse.frequency;
+    course.imageUrl = undefined;
+    course.category = category;
+    course.tags = tags;
+    course.subcourses = [];
     course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
 
     try {
@@ -441,7 +475,6 @@ async function post(student: Student, apiCourse: ApiAddCourse): Promise<ApiCours
         await transactionLog.log(new CreateCourseEvent(student, course));
         logger.info("Successfully saved new course");
 
-        // todo check if typeorm sets the id
         return {
             id: course.id
         };
