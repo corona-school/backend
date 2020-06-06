@@ -115,6 +115,7 @@ export interface ApiAddCourse {
  * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
+ * @apiSuccess (Subcourse Object) {bool} published If published, the subcourse can't be easily cancelled and will appear in the public list
  *
  */
 /**
@@ -128,6 +129,7 @@ export interface ApiAddSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    published: boolean;
 }
 
 /**

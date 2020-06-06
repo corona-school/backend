@@ -2,11 +2,20 @@ import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { Brackets, getManager } from 'typeorm';
 import { Student } from '../../../common/entity/Student';
-import { ApiAddCourse, ApiCourse, ApiCourseTag, ApiInstructor, ApiLecture, ApiSubcourse } from './format';
+import {
+    ApiAddCourse,
+    ApiAddSubcourse,
+    ApiCourse,
+    ApiCourseTag,
+    ApiInstructor,
+    ApiLecture,
+    ApiSubcourse
+} from './format';
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
 import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
 import { CourseTag } from '../../../common/entity/CourseTag';
+import { Subcourse } from '../../../common/entity/Subcourse';
 
 const logger = getLogger();
 
@@ -664,7 +673,145 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function postSubcourseHandler(req: Request, res: Response) {
+    let status = 204;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                req.body.instructors instanceof Array &&
+                typeof req.body.minGrade == 'number' &&
+                typeof req.body.maxGrade == 'number' &&
+                (req.body.maxParticipants == undefined || typeof req.body.maxParticipants == 'number') &&
+                typeof req.body.published == 'boolean') {
+
+                // Check if string arrays
+                for (let i = 0; i < req.body.instructors.length; i++) {
+                    if (typeof req.body.instructors[i] != 'string') {
+                        status = 400;
+                        logger.warn(`Instructor ID ${req.body.instructors[i]} is no string`);
+                    }
+                }
+
+                if (status < 300) {
+                    const ret = await postSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
+                    if (typeof ret == 'number') {
+                        status = ret;
+                    } else {
+                        res.json(ret);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function postSubcourse(student: Student, courseId: number, apiSubcourse: ApiAddSubcourse): Promise<ApiSubcourse | number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (!student.isInstructor) {
+        logger.warn(`Student (ID ${student.id}) tried to add an subcourse, but is no instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, {id: courseId});
+    if (course == undefined) {
+        logger.warn(`User tried to add subcourse to non existent course (ID ${courseId})`)
+        logger.debug(student, apiSubcourse);
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn(`User tried to add subcourse, but has no access rights (ID ${courseId})`)
+        logger.debug(student, apiSubcourse);
+        return 403;
+    }
+
+    // Check validity of fields
+    let filters = [];
+    for (let i = 0; i < apiSubcourse.instructors.length; i++) {
+        filters.push({
+            wix_id: apiSubcourse.instructors[i]
+        });
+    }
+    const instructors = await entityManager.find(Student, { where: filters });
+    if (instructors.length == 0 || instructors.length != apiSubcourse.instructors.length) {
+        logger.warn(`Field 'instructors' contains invalid values: ${apiSubcourse.instructors.join(', ')}`);
+        logger.debug(apiSubcourse);
+        return 400;
+    }
+
+    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13) {
+        logger.warn(`Field 'minGrade' contains an illegal value: ${apiSubcourse.minGrade}`);
+        logger.debug(apiSubcourse);
+        return 400;
+    }
+
+    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13) {
+        logger.warn(`Field 'maxGrade' contains an illegal value: ${apiSubcourse.maxGrade}`);
+        logger.debug(apiSubcourse);
+        return 400;
+    }
+
+    if (apiSubcourse.maxGrade < apiSubcourse.minGrade) {
+        logger.warn(`Field 'maxGrade' is smaller than field 'minGrade': ${apiSubcourse.maxGrade} < ${apiSubcourse.minGrade}`);
+        logger.debug(apiSubcourse);
+        return 400;
+    }
+
+    if (apiSubcourse.maxParticipants == undefined) apiSubcourse.maxParticipants = 30;
+    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
+        logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
+        logger.debug(apiSubcourse);
+        return 400;
+    }
+
+    const subcourse = new Subcourse();
+    subcourse.instructors = instructors;
+    subcourse.course = course;
+    subcourse.lectures = [];
+    subcourse.minGrade = apiSubcourse.minGrade;
+    subcourse.maxGrade = apiSubcourse.maxGrade;
+    subcourse.maxParticipants = apiSubcourse.maxParticipants;
+    subcourse.published = apiSubcourse.published;
+    subcourse.cancelled = false;
+
+    try {
+        await entityManager.save(Subcourse, subcourse);
+        // todo add transactionlog
+        logger.info("Successfully saved new subcourse");
+
+        return {
+            id: subcourse.id
+        };
+    } catch (e) {
+        logger.error("Can't save new subcourse: " + e.message);
+        logger.debug(subcourse, e);
+        return 500;
+    }
+}
 
 /**
  * @api {POST} /course/:id/subcourse/:subid/lecture AddLecture
