@@ -46,7 +46,7 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {int} participants Current number of registered participants
  * @apiSuccess (Subcourse Object) {Lecture[]} lectures Array of lectures
  * @apiSuccess (Subcourse Object) {bool} published <em>(requires authentication)</em> False if subcourse has not yet been published
- * @apiSuccess (Subcourse Object) {bool} cancelled <em>(requires authentication)</em> True if subcourse has been cancelled
+ * @apiSuccess (Subcourse Object) {bool} cancelled True if subcourse has been cancelled
  *
  */
 export interface ApiSubcourse {

@@ -178,7 +178,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                         for (let k = 0; k < courses[i].instructors.length; k++) {
                             let instructor: ApiInstructor = {
                                 firstname: courses[i].instructors[k].firstname,
-                                lastname: courses[i].instructors[k].lastname,
+                                lastname: courses[i].instructors[k].lastname
                             };
                             if (authenticated && student.wix_id != wix_id) {
                                 instructor.id = courses[i].instructors[k].wix_id;
@@ -227,7 +227,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                             for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
                                 let instructor: ApiInstructor = {
                                     firstname: courses[i].subcourses[k].instructors[l].firstname,
-                                    lastname: courses[i].subcourses[k].instructors[l].lastname,
+                                    lastname: courses[i].subcourses[k].instructors[l].lastname
                                 };
                                 if (authenticated && student.wix_id != wix_id) {
                                     instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
@@ -242,7 +242,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                         lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
                                     },
                                     start: courses[i].subcourses[k].lectures[l].start.getTime(),
-                                    duration: courses[i].subcourses[k].lectures[l].duration,
+                                    duration: courses[i].subcourses[k].lectures[l].duration
                                 };
                                 if (authenticated && student.wix_id != wix_id) {
                                     lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
@@ -283,10 +283,6 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
  *
  * @apiUse OptionalAuthentication
  *
- * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,tags</code>. If you want optional marked fields of subobjects, you need to specify the subobject and the requested subobject properties. Example: <code>fields=subcourses,subcourses.maxParticipants,subcourses.participants</code>
- * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
- * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
- *
  * @apiUse Course
  * @apiUse Subcourse
  * @apiUse Lecture
@@ -301,6 +297,160 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
+export async function getCourseHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (req.params.id != undefined) {
+            let authenticated = false;
+            if (res.locals.user instanceof Student) {
+                authenticated = true;
+            }
+            try {
+                let obj = await getCourse(authenticated ? res.locals.user : undefined, Number.parseInt(req.params.id, 10));
+                if (typeof obj == 'number') {
+                    status = obj;
+                } else {
+                    res.json(obj);
+                }
+            } catch (e) {
+                logger.error("An error occurred during GET /course: " + e.message);
+                logger.debug(req, e);
+                status = 500;
+            }
+        } else {
+            status = 400;
+            logger.error("Expected id parameter on route");
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function getCourse(student: Student | undefined, course_id: number): Promise<ApiCourse | number> {
+    const entityManager = getManager();
+
+    let authenticated = false;
+    let authorized = false;
+    if (student instanceof Student) {
+        authenticated = true;
+    }
+
+    let apiCourse: ApiCourse;
+    try {
+        const course = await entityManager.findOne(Course, { id: course_id });
+
+        for (let i = 0; i < course.instructors.length; i++) {
+            // We don't need to compare wix_id here
+            if (student.id == course.instructors[i].id) {
+                authorized = true;
+            }
+        }
+
+        if (!authorized && course.courseState != CourseState.ALLOWED) {
+            logger.error("Unauthorized user tried to access course of state " + course.courseState);
+            logger.debug(student);
+            return 403;
+        }
+
+        apiCourse = {
+            id: course.id,
+            instructors: [],
+            name: course.name,
+            outline: course.outline,
+            description: course.description,
+            image: course.imageUrl,
+            category: course.category,
+            tags: [],
+            subcourses: []
+        };
+
+        if (authorized) {
+            apiCourse.state = course.courseState;
+        }
+
+        for (let i = 0; i < course.instructors.length; i++) {
+            if (authorized) {
+                apiCourse.instructors.push({
+                    id: course.instructors[i].wix_id,
+                    firstname: course.instructors[i].firstname,
+                    lastname: course.instructors[i].lastname
+                });
+            } else {
+                apiCourse.instructors.push({
+                    firstname: course.instructors[i].firstname,
+                    lastname: course.instructors[i].lastname
+                });
+            }
+        }
+
+        for (let i = 0; i < course.tags.length; i++) {
+            apiCourse.tags.push({
+                id: course.tags[i].identifier,
+                name: course.tags[i].name,
+                category: course.tags[i].category
+            });
+        }
+
+        for (let i = 0; i < course.subcourses.length; i++) {
+            // Skip not published subcourses for unauthorized users
+            if (!authorized && !course.subcourses[i].published) continue;
+
+            let subcourse: ApiSubcourse = {
+                id: course.subcourses[i].id,
+                instructors: [],
+                minGrade: course.subcourses[i].minGrade,
+                maxGrade: course.subcourses[i].maxGrade,
+                maxParticipants: course.subcourses[i].maxParticipants,
+                participants: course.subcourses[i].participants.length,
+                lectures: [],
+                cancelled: course.subcourses[i].cancelled
+            };
+            if (authorized) {
+                subcourse.published = course.subcourses[i].published;
+            }
+            for (let j = 0; j < course.subcourses[i].instructors.length; j++) {
+                if (authorized) {
+                    subcourse.instructors.push({
+                        id: course.subcourses[i].instructors[j].wix_id,
+                        firstname: course.subcourses[i].instructors[j].firstname,
+                        lastname: course.subcourses[i].instructors[j].lastname
+                    });
+                } else {
+                    subcourse.instructors.push({
+                        firstname: course.subcourses[i].instructors[j].firstname,
+                        lastname: course.subcourses[i].instructors[j].lastname
+                    });
+                }
+            }
+            for (let j = 0; j < course.subcourses[i].lectures.length; j++) {
+                let lecture: ApiLecture = {
+                    id: course.subcourses[i].lectures[j].id,
+                    instructor: {
+                        firstname: course.subcourses[i].lectures[j].instructor.firstname,
+                        lastname: course.subcourses[i].lectures[j].instructor.lastname
+                    },
+                    start: course.subcourses[i].lectures[j].start.getTime(),
+                    duration: course.subcourses[i].lectures[j].duration
+                };
+                if (authorized) {
+                    lecture.instructor.id = course.subcourses[i].lectures[j].instructor.wix_id;
+                }
+                apiCourse.subcourses[i].lectures.push(lecture);
+            }
+            apiCourse.subcourses.push(subcourse);
+        }
+
+    } catch (e) {
+        logger.error("Can't fetch courses: " + e.message);
+        logger.debug(e);
+        return 500;
+    }
+
+    return apiCourse;
+}
 
 /**
  * @api {POST} /course AddCourse
