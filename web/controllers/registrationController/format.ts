@@ -16,7 +16,20 @@
  * @apiSuccess (Tutor Object) {string} msg Additional information
  *
  */
-// todo write interface
+export interface ApiAddTutor {
+    firstname: string,
+    lastname: string,
+    email: string
+    isTutor: boolean,
+    subjects?: ApiAddTutorSubject[],
+    isOfficial: boolean,
+    state?: string,
+    university?: string,
+    module?: string,
+    hours: number,
+    newsletter: boolean,
+    msg: string
+}
 
 /**
  * @apiDefine AddTutee
@@ -34,7 +47,18 @@
  * @apiSuccess (Tutee Object) {string} msg Additional information
  *
  */
-// todo write interface
+export interface ApiAddTutee {
+    firstname: string,
+    lastname: string,
+    email: string,
+    grade: number,
+    state: string,
+    school: string,
+    isTutee: boolean,
+    subjects?: ApiAddTuteeSubject[],
+    newsletter: boolean,
+    msg: string
+}
 
 /**
  * @apiDefine AddTutorSubject
@@ -45,7 +69,11 @@
  * @apiSuccess (Subject Object) {int} maxGrade Maximum grade
  *
  */
-// todo write interface
+export interface ApiAddTutorSubject {
+    name: string,
+    minGrade: number,
+    maxGrade: number
+}
 
 /**
  * @apiDefine AddTuteeSubject
@@ -54,4 +82,6 @@
  * @apiSuccess (Subject Object) {string} name Name of the subject
  *
  */
-// todo write interface
+export interface ApiAddTuteeSubject {
+    name: string
+}
