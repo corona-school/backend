@@ -1,4 +1,4 @@
-import { splitAtIndex, intersection } from "../utils";
+import { splitAtIndex, intersection } from "./basic";
 
 //subject string to array
 function subjectsAsArray(subjectsString: string): string[] {
