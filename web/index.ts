@@ -12,6 +12,7 @@ import * as matchController from "./controllers/matchController";
 import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
+import * as registrationController from "./controllers/registrationController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
@@ -47,6 +48,7 @@ createConnection().then(() => {
     configureCourseAPI();
     configureScreenerAPI();
     configureCoursesAPI();
+    configureRegistrationAPI();
     deployServer();
 
     function addCorsMiddleware() {
@@ -128,6 +130,13 @@ createConnection().then(() => {
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/", courseController.getCoursesHandler);
         app.use("/api/courses", coursesRouter);
+    }
+
+    function configureRegistrationAPI() {
+        const registrationRouter = express.Router();
+        registrationRouter.post("/tutee", registrationController.postTuteeHandler);
+        registrationRouter.post("/tutor", registrationController.postTutorHandler);
+        app.use("/api/register", registrationRouter);
     }
 
     function configureScreenerAPI() {
