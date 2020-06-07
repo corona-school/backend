@@ -163,18 +163,25 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const qb = entityManager.getRepository(Course)
-            .createQueryBuilder("course")
-            .leftJoin("course.instructors", "instructor")
-            .where("instructor.wix_id = :id", { id: student.wix_id });
+        const qb = entityManager.getRepository(Course).createQueryBuilder("course");
+
+        if (authenticated) {
+            qb.leftJoin("course.instructors", "instructor")
+                .where("instructor.wix_id = :id", { id: student.wix_id });
+        }
 
         if (stateFilters.length > 0) {
-            qb.andWhere(new Brackets(sub => {
-                sub = sub.where("course.state = :state", { state: stateFilters.pop() });
+            const b = new Brackets(sub => {
+                sub = sub.where("course.courseState = :state", { state: stateFilters.pop() });
                 while (stateFilters.length > 0) {
-                    sub = sub.orWhere("course.state = :state", { state: stateFilters.pop() });
+                    sub = sub.orWhere("course.courseState = :state", { state: stateFilters.pop() });
                 }
-            }));
+            });
+            if (authenticated) {
+                qb.andWhere(b);
+            } else {
+                qb.where(b);
+            }
         }
 
         const courses = await qb.getMany();
@@ -452,7 +459,7 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                 if (authorized) {
                     lecture.instructor.id = course.subcourses[i].lectures[j].instructor.wix_id;
                 }
-                apiCourse.subcourses[i].lectures.push(lecture);
+                subcourse.lectures.push(lecture);
             }
             apiCourse.subcourses.push(subcourse);
         }
@@ -936,7 +943,7 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
     }
 
     // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start - (new Date()).getTime() < 2 * 86400000) {
+    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1495,7 +1502,7 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     lecture.instructor = instructor;
 
     // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start - (new Date()).getTime() < 2 * 86400000) {
+    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1610,7 +1617,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
             // Run in transaction, so we may not have a mixed state, where some subcourses are cancelled, but others are not
             await entityManager.transaction(async em => {
 
-                for (let i = 0; course.subcourses.length; i++) {
+                for (let i = 0; i < course.subcourses.length; i++) {
                     if (!course.subcourses[i].cancelled) {
                         course.subcourses[i].cancelled = true;
                         // todo inform participants

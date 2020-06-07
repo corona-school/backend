@@ -43,7 +43,8 @@ export class Subcourse {
     })
     lectures: Lecture[];
 
-    @OneToMany(type => Course, course => course.subcourses)
+    @ManyToOne(type => Course, course => course.subcourses)
+    @JoinColumn()
     course: Course;
 
     @Column()
