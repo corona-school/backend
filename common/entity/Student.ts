@@ -66,7 +66,7 @@ export class Student extends Person {
      *  Student data
      */
     @Column({
-        default: true
+        default: false
     })
     isStudent: boolean;
 
@@ -90,7 +90,7 @@ export class Student extends Person {
      * Instructor data
      */
     @Column({
-        default: false
+        default: true
     })
     isInstructor: boolean;
 
