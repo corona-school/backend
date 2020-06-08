@@ -148,4 +148,17 @@ export const mailjet = {
             variables: variables,
         };
     },
+    STUDENTSCREENINGREMINDER: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'studentscreeningreminder',
+            id: 1391548,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables,
+        };
+    },
 };
