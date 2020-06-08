@@ -4,10 +4,12 @@ import { ApiAddTutor, ApiAddTutee } from './format';
 import { sendVerificationMail } from '../../../jobs/backend/verification';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
-import { Student } from '../../../common/entity/Student';
+import { Student, TeacherModule } from '../../../common/entity/Student';
 import VerificationRequestEvent from '../../../common/transactionlog/types/VerificationRequestEvent';
 import { checkSubject } from '../userController/format';
-import { Pupil } from '../../../common/entity/Pupil';
+import { Pupil, SchoolType } from '../../../common/entity/Pupil';
+import { v4 as uuidv4 } from "uuid";
+import { State } from 'common/entity/State';
 
 const logger = getLogger();
 
@@ -63,8 +65,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             }
 
             if(req.body.isOfficial) {
-                if(typeof req.body.state == 'string' ||
-                typeof req.body.university == 'string' ||
+                if(typeof req.body.university == 'string' ||
                 typeof req.body.module == 'string' ||
                 typeof req.body.hours == 'number') {
                     status = 400;
@@ -94,8 +95,6 @@ export async function postTutorHandler(req: Request, res: Response) {
 }
 
 async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
-    // TODO: check State and TeacherModule enums and values
-
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -121,7 +120,9 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.email = apiTutor.email;    
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
-
+    tutor.isInstructor = true;
+    tutor.wix_id = "Z" + uuidv4();
+    
     if(apiTutor.isTutor) {
         if(apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -134,8 +135,6 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
                 return 400;
             }
         }
-
-        tutor.isInstructor = true;
         tutor.subjects = JSON.stringify(apiTutor.subjects);
     }
 
@@ -152,9 +151,20 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
             return 400;
         }
 
-        // tutor.state = apiTutor.state;
         tutor.university = apiTutor.university;
-        // tutor.module = apiTutor.module;
+
+        switch(apiTutor.module) {
+            case "internship":
+                tutor.module = TeacherModule.INTERNSHIP;
+                break;
+            case "seminar":
+                tutor.module = TeacherModule.SEMINAR;
+                break;
+            default:
+                logger.warn("Tutor registration has invalid string for teacher module " + apiTutor.module);
+                return 400;
+        }
+
         tutor.moduleHours = apiTutor.hours;
     }
 
@@ -243,8 +253,6 @@ export async function postTuteeHandler(req: Request, res: Response) {
 }
 
 async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
-    // TODO: check State and Schooltype values
-
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -269,10 +277,94 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email;
     tutee.grade = apiTutee.grade + ". Klasse";
-    //tutee.state = 
-    //tutee.schooltype = 
+
+    switch(apiTutee.state) {
+        case "bw":
+            tutee.state = State.BW;
+            break;
+        case "by":
+            tutee.state = State.BY;
+            break;
+        case "be":
+            tutee.state = State.BE;
+            break;
+        case "bb":
+            tutee.state = State.BB;
+            break;
+        case "hb":
+            tutee.state = State.HB;
+            break;                          
+        case "hh":
+            tutee.state = State.HH;
+            break;
+        case "he":
+            tutee.state = State.HE;
+            break;
+        case "mv":
+            tutee.state = State.MV;
+            break;
+        case "ni":
+            tutee.state = State.NI;
+            break;            
+        case "nw":
+            tutee.state = State.NW;
+            break;            
+        case "rp":
+            tutee.state = State.RP;
+            break;
+        case "sl":
+            tutee.state = State.SL;
+            break;
+        case "sn":
+            tutee.state = State.SN;
+            break;
+        case "st":
+            tutee.state = State.ST;
+            break;
+        case "sh":
+            tutee.state = State.SH;
+            break;
+        case "th":
+            tutee.state = State.TH;
+            break;
+        case "other":
+            tutee.state = State.OTHER;
+            break;
+        default:
+            logger.warn("Invalid value for Tutee registration state: " + apiTutee.state);
+            return 400;
+    }
+
+    switch(apiTutee.school) {
+        case "grundschule":
+            tutee.schooltype = SchoolType.GRUNDSCHULE;
+            break;
+        case "gesamtschule":
+            tutee.schooltype = SchoolType.GESAMTSCHULE;
+            break;
+        case "hauptschule":
+            tutee.schooltype = SchoolType.HAUPTSCHULE;
+            break;
+        case "realschule":
+            tutee.schooltype = SchoolType.REALSCHULE;
+            break;
+        case "gymnasium":
+            tutee.schooltype = SchoolType.GYMNASIUM;
+            break;
+        case "förderschule":
+            tutee.schooltype = SchoolType.FOERDERSCHULE;
+            break;
+        case "other":
+            tutee.schooltype = SchoolType.SONSTIGES;
+            break;
+        default:
+            logger.warn("Invalid value for Tutee registration schooltype: " + apiTutee.school);
+            return 400;            
+    }
+
     tutee.newsletter = apiTutee.newsletter;
     tutee.msg = apiTutee.msg;
+    tutee.wix_id = "Z" + uuidv4();
 
     if(apiTutee.isTutee) {
         if(apiTutee.subjects.length < 1) {

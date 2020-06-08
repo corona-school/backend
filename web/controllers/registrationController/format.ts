@@ -8,7 +8,6 @@
  * @apiSuccess (Tutor Object) {bool} isTutor True, if eligible for one-on-one matching
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutor Object) {bool} isOfficial True, if user is looking for something official
- * @apiSuccess (Tutor Object) {string} state <em>required if</em> <code>isOfficial = true</code>: State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (Tutor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
  * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar"</code>
  * @apiSuccess (Tutor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
@@ -23,7 +22,6 @@ export interface ApiAddTutor {
     isTutor: boolean,
     subjects?: ApiAddTutorSubject[],
     isOfficial: boolean,
-    state?: string,
     university?: string,
     module?: string,
     hours: number,
