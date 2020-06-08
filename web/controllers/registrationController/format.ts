@@ -24,7 +24,7 @@ export interface ApiAddTutor {
     isOfficial: boolean,
     university?: string,
     module?: string,
-    hours: number,
+    hours?: number,
     newsletter: boolean,
     msg: string
 }

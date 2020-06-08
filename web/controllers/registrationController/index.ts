@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { ApiAddTutor, ApiAddTutee } from './format';
-import { sendVerificationMail } from '../../../jobs/backend/verification';
+import { generateToken, sendVerificationMail } from '../../../jobs/backend/verification';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
@@ -65,9 +65,9 @@ export async function postTutorHandler(req: Request, res: Response) {
             }
 
             if(req.body.isOfficial) {
-                if(typeof req.body.university == 'string' ||
-                typeof req.body.module == 'string' ||
-                typeof req.body.hours == 'number') {
+                if(typeof req.body.university !== 'string' ||
+                typeof req.body.module !== 'string' ||
+                typeof req.body.hours !== 'number') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters")
                 }
@@ -82,12 +82,12 @@ export async function postTutorHandler(req: Request, res: Response) {
             }
  
         } else {
-            logger.error("Missing required parameters for Tutor registration");
+            logger.error("Missing required parameters for Tutor registration", req.body);
             status = 400;
         }
     } catch(e) {
         logger.error("Unexpected request format: " + e.message);
-        logger.debug(req, e);
+        logger.debug(e, req.body);
         status = 500;
     }
 
@@ -99,18 +99,22 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     const transactionLog = getTransactionLog();
 
     if(apiTutor.firstname.length == 0 || apiTutor.firstname.length > 100) {
+        logger.warn("apiTutor.firstname outside of length restrictions");
         return 400;
     }
 
     if(apiTutor.lastname.length == 0 || apiTutor.lastname.length > 100) {
+        logger.warn("apiTutor.lastname outside of length restrictions");
         return 400;
     }
     
     if(apiTutor.email.length == 0 || apiTutor.email.length > 100) {
+        logger.warn("apiTutor.email outside of length restrictions");
         return 400;
     }
 
     if(apiTutor.msg.length == 0 || apiTutor.msg.length > 3000) {
+        logger.warn("apiTutor.msg outside of length restrictions");
         return 400;
     }
 
@@ -120,8 +124,13 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.email = apiTutor.email;    
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
+
+    tutor.isStudent = false;
     tutor.isInstructor = true;
-    tutor.wix_id = "Z" + uuidv4();
+    tutor.wix_id = "Z-" + uuidv4();
+    tutor.wix_creation_date = new Date();
+    tutor.verification = generateToken();
+    tutor.openMatchRequestCount = 0;
     
     if(apiTutor.isTutor) {
         if(apiTutor.subjects.length < 1) {
@@ -136,22 +145,19 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
             }
         }
         tutor.subjects = JSON.stringify(apiTutor.subjects);
+        tutor.openMatchRequestCount = 1;
     }
 
     if(apiTutor.isOfficial) {
         if(apiTutor.university.length == 0 || apiTutor.university.length > 100) {
+            logger.warn("apiTutor.university outside of length restrictions");
             return 400;
         }
 
-        if(apiTutor.module.length == 0 || apiTutor.module.length > 100) {
+        if(apiTutor.hours == 0 || apiTutor.hours > 1000) {
+            logger.warn("apiTutor.hours outside of size restrictions");
             return 400;
         }
-        
-        if(apiTutor.hours > 1000) {
-            return 400;
-        }
-
-        tutor.university = apiTutor.university;
 
         switch(apiTutor.module) {
             case "internship":
@@ -165,6 +171,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
                 return 400;
         }
 
+        tutor.university = apiTutor.university;
         tutor.moduleHours = apiTutor.hours;
     }
 
@@ -257,18 +264,22 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     const transactionLog = getTransactionLog();
 
     if(apiTutee.firstname.length == 0 || apiTutee.firstname.length > 100) {
+        logger.error("apiTutee.firstname outside of length restrictions");
         return 400;
     }
 
     if(apiTutee.lastname.length == 0 || apiTutee.lastname.length > 100) {
+        logger.error("apiTutee.lastname outside of length restrictions");
         return 400;
     }
     
     if(apiTutee.email.length == 0 || apiTutee.email.length > 100) {
+        logger.error("apiTutee.email outside of length restrictions");
         return 400;
     }
 
     if(apiTutee.msg.length == 0 || apiTutee.msg.length > 3000) {
+        logger.error("apiTutee.msg outside of length restrictions");
         return 400;
     }
 
@@ -331,7 +342,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             tutee.state = State.OTHER;
             break;
         default:
-            logger.warn("Invalid value for Tutee registration state: " + apiTutee.state);
+            logger.error("Invalid value for Tutee registration state: " + apiTutee.state);
             return 400;
     }
 
@@ -358,23 +369,26 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             tutee.schooltype = SchoolType.SONSTIGES;
             break;
         default:
-            logger.warn("Invalid value for Tutee registration schooltype: " + apiTutee.school);
+            logger.error("Invalid value for Tutee registration schooltype: " + apiTutee.school);
             return 400;            
     }
 
     tutee.newsletter = apiTutee.newsletter;
     tutee.msg = apiTutee.msg;
-    tutee.wix_id = "Z" + uuidv4();
+
+    tutee.wix_id = "Z-" + uuidv4();
+    tutee.wix_creation_date = new Date();
+    tutee.verification = generateToken();
 
     if(apiTutee.isTutee) {
         if(apiTutee.subjects.length < 1) {
-            logger.warn("Tutee subjects needs to contain at least one element.");
+            logger.error("Tutee subjects needs to contain at least one element.");
             return 400;
         }
 
         for(let i = 0; i < apiTutee.subjects.length; i++) {
             if(!checkSubject(apiTutee.subjects[i].name)) {
-                logger.warn("Tutee subjects contain invalid subject " + apiTutee.subjects[i].name);
+                logger.error("Tutee subjects contain invalid subject " + apiTutee.subjects[i].name);
                 return 400;
             }
         }
