@@ -9,7 +9,7 @@ import VerificationRequestEvent from '../../../common/transactionlog/types/Verif
 import { checkSubject } from '../userController/format';
 import { Pupil, SchoolType } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
-import { State } from 'common/entity/State';
+import { State } from '../../../common/entity/State';
 
 const logger = getLogger();
 
