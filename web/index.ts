@@ -109,13 +109,24 @@ createConnection().then(() => {
         const coursesRouter = express.Router();
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
+        coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.put("/:id", courseController.putCourseHandler);
+        coursesRouter.delete("/:id", courseController.deleteCourseHandler);
+
+        coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
+        coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
+        coursesRouter.delete("/:id/subcourse/:subid", courseController.deleteSubcourseHandler);
+
+        coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
+        coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
         app.use("/api/course", coursesRouter);
     }
 
     function configureCoursesAPI() {
         const coursesRouter = express.Router();
         coursesRouter.use(authCheckFactory(true));
-        coursesRouter.get("/", courseController.getHandler);
+        coursesRouter.get("/", courseController.getCoursesHandler);
         app.use("/api/courses", coursesRouter);
     }
 

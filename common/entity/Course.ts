@@ -36,7 +36,9 @@ export class Course {
     @UpdateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @ManyToMany(type => Student, student => student.courses)
+    @ManyToMany(type => Student, student => student.courses, {
+        eager: true
+    })
     @JoinTable()
     instructors: Student[];
 
