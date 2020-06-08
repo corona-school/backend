@@ -8,7 +8,6 @@
  * @apiSuccess (Tutor Object) {bool} isTutor True, if eligible for one-on-one matching
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutor Object) {bool} isOfficial True, if user is looking for something official
- * @apiSuccess (Tutor Object) {string} state <em>required if</em> <code>isOfficial = true</code>: State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (Tutor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
  * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar"</code>
  * @apiSuccess (Tutor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
@@ -16,7 +15,19 @@
  * @apiSuccess (Tutor Object) {string} msg Additional information
  *
  */
-// todo write interface
+export interface ApiAddTutor {
+    firstname: string,
+    lastname: string,
+    email: string
+    isTutor: boolean,
+    subjects?: ApiAddTutorSubject[],
+    isOfficial: boolean,
+    university?: string,
+    module?: string,
+    hours?: number,
+    newsletter: boolean,
+    msg: string
+}
 
 /**
  * @apiDefine AddTutee
@@ -34,7 +45,18 @@
  * @apiSuccess (Tutee Object) {string} msg Additional information
  *
  */
-// todo write interface
+export interface ApiAddTutee {
+    firstname: string,
+    lastname: string,
+    email: string,
+    grade: number,
+    state: string,
+    school: string,
+    isTutee: boolean,
+    subjects?: ApiAddTuteeSubject[],
+    newsletter: boolean,
+    msg: string
+}
 
 /**
  * @apiDefine AddTutorSubject
@@ -45,7 +67,11 @@
  * @apiSuccess (Subject Object) {int} maxGrade Maximum grade
  *
  */
-// todo write interface
+export interface ApiAddTutorSubject {
+    name: string,
+    minGrade: number,
+    maxGrade: number
+}
 
 /**
  * @apiDefine AddTuteeSubject
@@ -54,4 +80,6 @@
  * @apiSuccess (Subject Object) {string} name Name of the subject
  *
  */
-// todo write interface
+export interface ApiAddTuteeSubject {
+    name: string
+}

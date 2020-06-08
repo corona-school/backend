@@ -1,3 +1,18 @@
+import { Request, Response } from 'express';
+import { getLogger } from 'log4js';
+import { ApiAddTutor, ApiAddTutee } from './format';
+import { generateToken, sendVerificationMail } from '../../../jobs/backend/verification';
+import { getManager } from 'typeorm';
+import { getTransactionLog } from '../../../common/transactionlog';
+import { Student, TeacherModule } from '../../../common/entity/Student';
+import VerificationRequestEvent from '../../../common/transactionlog/types/VerificationRequestEvent';
+import { checkSubject } from '../userController/format';
+import { Pupil, SchoolType } from '../../../common/entity/Pupil';
+import { v4 as uuidv4 } from "uuid";
+import { State } from '../../../common/entity/State';
+
+const logger = getLogger();
+
 /**
  * @api {POST} /register/tutor RegisterTutor
  * @apiVersion 1.1.0
@@ -19,6 +34,158 @@
  * @apiUse StatusBadRequest
  * @apiUse StatusInternalServerError
  */
+export async function postTutorHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+
+        if(typeof req.body.firstname == 'string' &&
+           typeof req.body.lastname == 'string' &&
+           typeof req.body.email == 'string' &&
+           typeof req.body.isTutor == 'boolean' &&
+           typeof req.body.isOfficial == 'boolean' &&
+           typeof req.body.newsletter == 'boolean' &&
+           typeof req.body.msg == 'string') {
+
+            if(req.body.isTutor) {
+                if(req.body.subjects instanceof Array) {
+                    for(let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if(typeof elem.name !== 'string'
+                        || typeof elem.minGrade !== 'number' 
+                        || typeof elem.maxGrade !== 'number') {
+                            status = 400;
+                            logger.error("Tutor registration with isTutor has malformed subjects.")
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Tutor registration with isTutor missing subjects.")                    
+                }                
+            }
+
+            if(req.body.isOfficial) {
+                if(typeof req.body.university !== 'string' ||
+                typeof req.body.module !== 'string' ||
+                typeof req.body.hours !== 'number') {
+                    status = 400;
+                    logger.error("Tutor registration with isOfficial has incomplete/invalid parameters")
+                }
+            }
+
+            if(status < 300) {
+                // try registering
+                status = await registerTutor(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for Tutor registration")
+                status = 400;
+            }
+ 
+        } else {
+            logger.error("Missing required parameters for Tutor registration", req.body);
+            status = 400;
+        }
+    } catch(e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(e, req.body);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if(apiTutor.firstname.length == 0 || apiTutor.firstname.length > 100) {
+        logger.warn("apiTutor.firstname outside of length restrictions");
+        return 400;
+    }
+
+    if(apiTutor.lastname.length == 0 || apiTutor.lastname.length > 100) {
+        logger.warn("apiTutor.lastname outside of length restrictions");
+        return 400;
+    }
+    
+    if(apiTutor.email.length == 0 || apiTutor.email.length > 100) {
+        logger.warn("apiTutor.email outside of length restrictions");
+        return 400;
+    }
+
+    if(apiTutor.msg.length == 0 || apiTutor.msg.length > 3000) {
+        logger.warn("apiTutor.msg outside of length restrictions");
+        return 400;
+    }
+
+    const tutor = new Student();
+    tutor.firstname  = apiTutor.firstname;
+    tutor.lastname = apiTutor.lastname;
+    tutor.email = apiTutor.email;    
+    tutor.newsletter = apiTutor.newsletter;
+    tutor.msg = apiTutor.msg;
+
+    tutor.isStudent = false;
+    tutor.isInstructor = true;
+    tutor.wix_id = "Z-" + uuidv4();
+    tutor.wix_creation_date = new Date();
+    tutor.verification = generateToken();
+    tutor.openMatchRequestCount = 0;
+    
+    if(apiTutor.isTutor) {
+        if(apiTutor.subjects.length < 1) {
+            logger.warn("Subjects needs to contain at least one element.");
+            return 400;
+        }
+
+        for(let i = 0; i < apiTutor.subjects.length; i++) {
+            if(!checkSubject(apiTutor.subjects[i].name)) {
+                logger.warn("Subjects contain invalid subject " + apiTutor.subjects[i].name);
+                return 400;
+            }
+        }
+        tutor.subjects = JSON.stringify(apiTutor.subjects);
+        tutor.openMatchRequestCount = 1;
+    }
+
+    if(apiTutor.isOfficial) {
+        if(apiTutor.university.length == 0 || apiTutor.university.length > 100) {
+            logger.warn("apiTutor.university outside of length restrictions");
+            return 400;
+        }
+
+        if(apiTutor.hours == 0 || apiTutor.hours > 1000) {
+            logger.warn("apiTutor.hours outside of size restrictions");
+            return 400;
+        }
+
+        switch(apiTutor.module) {
+            case "internship":
+                tutor.module = TeacherModule.INTERNSHIP;
+                break;
+            case "seminar":
+                tutor.module = TeacherModule.SEMINAR;
+                break;
+            default:
+                logger.warn("Tutor registration has invalid string for teacher module " + apiTutor.module);
+                return 400;
+        }
+
+        tutor.university = apiTutor.university;
+        tutor.moduleHours = apiTutor.hours;
+    }
+
+    try {
+        // Saving may fail for some reasons, e.g. duplicate user/email errors.
+        await entityManager.save(Student, tutor);
+        await sendVerificationMail(tutor);
+        await transactionLog.log(new VerificationRequestEvent(tutor));
+        return 204;
+    } catch(e) {
+        logger.error("Unable to add Tutor to database: " + e.message)
+        return 500;
+    }
+}
 
 /**
  * @api {POST} /register/tutee RegisterTutee
@@ -41,4 +208,203 @@
  * @apiUse StatusBadRequest
  * @apiUse StatusInternalServerError
  */
+export async function postTuteeHandler(req: Request, res: Response) {
+    let status = 204;
 
+    try {
+
+        if(typeof req.body.firstname == 'string' &&
+           typeof req.body.lastname == 'string' &&
+           typeof req.body.email == 'string' &&
+           typeof req.body.grade == 'number' &&
+           typeof req.body.state == 'string' &&
+           typeof req.body.school == 'string' &&
+           typeof req.body.isTutee == 'boolean' &&
+           typeof req.body.newsletter == 'boolean' &&
+           typeof req.body.msg == 'string') {
+
+            if(req.body.isTutor) {
+                if(req.body.subjects instanceof Array) {
+                    for(let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if(typeof elem.name !== 'string') {
+                            status = 400;
+                            logger.error("Tutee registration with isTutee has malformed subjects.")
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Tutee registration with isTutee missing subjects.")                    
+                }                
+            }
+
+            if(status < 300) {
+                // try registering
+                status = await registerTutee(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for Tutor registration")
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for Tutee registration");
+            status = 400;
+        }
+    } catch(e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if(apiTutee.firstname.length == 0 || apiTutee.firstname.length > 100) {
+        logger.error("apiTutee.firstname outside of length restrictions");
+        return 400;
+    }
+
+    if(apiTutee.lastname.length == 0 || apiTutee.lastname.length > 100) {
+        logger.error("apiTutee.lastname outside of length restrictions");
+        return 400;
+    }
+    
+    if(apiTutee.email.length == 0 || apiTutee.email.length > 100) {
+        logger.error("apiTutee.email outside of length restrictions");
+        return 400;
+    }
+
+    if(apiTutee.msg.length == 0 || apiTutee.msg.length > 3000) {
+        logger.error("apiTutee.msg outside of length restrictions");
+        return 400;
+    }
+
+    const tutee = new Pupil();
+    tutee.firstname  = apiTutee.firstname;
+    tutee.lastname = apiTutee.lastname;
+    tutee.email = apiTutee.email;
+    tutee.grade = apiTutee.grade + ". Klasse";
+
+    switch(apiTutee.state) {
+        case "bw":
+            tutee.state = State.BW;
+            break;
+        case "by":
+            tutee.state = State.BY;
+            break;
+        case "be":
+            tutee.state = State.BE;
+            break;
+        case "bb":
+            tutee.state = State.BB;
+            break;
+        case "hb":
+            tutee.state = State.HB;
+            break;                          
+        case "hh":
+            tutee.state = State.HH;
+            break;
+        case "he":
+            tutee.state = State.HE;
+            break;
+        case "mv":
+            tutee.state = State.MV;
+            break;
+        case "ni":
+            tutee.state = State.NI;
+            break;            
+        case "nw":
+            tutee.state = State.NW;
+            break;            
+        case "rp":
+            tutee.state = State.RP;
+            break;
+        case "sl":
+            tutee.state = State.SL;
+            break;
+        case "sn":
+            tutee.state = State.SN;
+            break;
+        case "st":
+            tutee.state = State.ST;
+            break;
+        case "sh":
+            tutee.state = State.SH;
+            break;
+        case "th":
+            tutee.state = State.TH;
+            break;
+        case "other":
+            tutee.state = State.OTHER;
+            break;
+        default:
+            logger.error("Invalid value for Tutee registration state: " + apiTutee.state);
+            return 400;
+    }
+
+    switch(apiTutee.school) {
+        case "grundschule":
+            tutee.schooltype = SchoolType.GRUNDSCHULE;
+            break;
+        case "gesamtschule":
+            tutee.schooltype = SchoolType.GESAMTSCHULE;
+            break;
+        case "hauptschule":
+            tutee.schooltype = SchoolType.HAUPTSCHULE;
+            break;
+        case "realschule":
+            tutee.schooltype = SchoolType.REALSCHULE;
+            break;
+        case "gymnasium":
+            tutee.schooltype = SchoolType.GYMNASIUM;
+            break;
+        case "förderschule":
+            tutee.schooltype = SchoolType.FOERDERSCHULE;
+            break;
+        case "other":
+            tutee.schooltype = SchoolType.SONSTIGES;
+            break;
+        default:
+            logger.error("Invalid value for Tutee registration schooltype: " + apiTutee.school);
+            return 400;            
+    }
+
+    tutee.newsletter = apiTutee.newsletter;
+    tutee.msg = apiTutee.msg;
+
+    tutee.wix_id = "Z-" + uuidv4();
+    tutee.wix_creation_date = new Date();
+    tutee.verification = generateToken();
+
+    if(apiTutee.isTutee) {
+        if(apiTutee.subjects.length < 1) {
+            logger.error("Tutee subjects needs to contain at least one element.");
+            return 400;
+        }
+
+        for(let i = 0; i < apiTutee.subjects.length; i++) {
+            if(!checkSubject(apiTutee.subjects[i].name)) {
+                logger.error("Tutee subjects contain invalid subject " + apiTutee.subjects[i].name);
+                return 400;
+            }
+        }
+
+        tutee.isPupil = true;
+        tutee.subjects = JSON.stringify(apiTutee.subjects);
+    }
+
+    try {
+        // Saving may fail for some reasons, e.g. duplicate user/email errors.
+        await entityManager.save(Pupil, tutee);
+        await sendVerificationMail(tutee);
+        await transactionLog.log(new VerificationRequestEvent(tutee));
+        return 204;
+    } catch(e) {
+        logger.error("Unable to add Tutee to database: " + e.message)
+        return 500;
+    }
+}
