@@ -32,6 +32,7 @@ const logger = getLogger();
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
 export async function postTutorHandler(req: Request, res: Response) {
@@ -113,7 +114,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         return 400;
     }
 
-    if(apiTutor.msg.length == 0 || apiTutor.msg.length > 3000) {
+    if(apiTutor.msg.length > 3000) {
         logger.warn("apiTutor.msg outside of length restrictions");
         return 400;
     }
@@ -121,7 +122,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     const tutor = new Student();
     tutor.firstname  = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
-    tutor.email = apiTutor.email;    
+    tutor.email = apiTutor.email.toLowerCase();    
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
 
@@ -177,8 +178,13 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.moduleHours = apiTutor.hours;
     }
 
+    const result = await entityManager.findOne(Student, { email: tutor.email });
+    if(result !== undefined) {
+        logger.error("Tutor with given email already exists");
+        return 409;
+    }
+
     try {
-        // Saving may fail for some reasons, e.g. duplicate user/email errors.
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
@@ -208,6 +214,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
 export async function postTuteeHandler(req: Request, res: Response) {
@@ -280,7 +287,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 400;
     }
 
-    if(apiTutee.msg.length == 0 || apiTutee.msg.length > 3000) {
+    if(apiTutee.msg.length > 3000) {
         logger.error("apiTutee.msg outside of length restrictions");
         return 400;
     }
@@ -288,7 +295,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     const tutee = new Pupil();
     tutee.firstname  = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
-    tutee.email = apiTutee.email;
+    tutee.email = apiTutee.email.toLowerCase();
     tutee.grade = apiTutee.grade + ". Klasse";
 
     switch(apiTutee.state) {
@@ -402,8 +409,13 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.subjects = JSON.stringify(apiTutee.subjects);
     }
 
+    const result = await entityManager.findOne(Pupil, { email: tutee.email });
+    if(result !== undefined) {
+        logger.error("Tutee with given email already exists.");
+        return 409;
+    }
+
     try {
-        // Saving may fail for some reasons, e.g. duplicate user/email errors.
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));

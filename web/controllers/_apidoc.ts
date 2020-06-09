@@ -86,6 +86,16 @@
  */
 
 /**
+ * @apiDefine StatusConflict
+ * @apiVersion 1.0.1
+ *
+ * @apiError (HTTP Status Codes) 409 Resource conflicts with existing resource
+ * @apiErrorExample {empty} Conflict
+ *      HTTP/1.1 409 Conflict
+ *      (empty body)
+ */ 
+
+/**
  * @apiDefine StatusInternalServerError
  * @apiVersion 1.0.1
  *
