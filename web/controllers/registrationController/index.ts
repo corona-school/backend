@@ -177,8 +177,13 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.moduleHours = apiTutor.hours;
     }
 
+    const result = await entityManager.findOne(Student, { email: tutor.email });
+    if(result !== undefined) {
+        logger.error("Tutor with given email already exists");
+        return 409;
+    }
+
     try {
-        // Saving may fail for some reasons, e.g. duplicate user/email errors.
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
@@ -402,8 +407,13 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.subjects = JSON.stringify(apiTutee.subjects);
     }
 
+    const result = await entityManager.findOne(Pupil, { email: tutee.email });
+    if(result !== undefined) {
+        logger.error("Tutee with given email already exists.");
+        return 409;
+    }
+
     try {
-        // Saving may fail for some reasons, e.g. duplicate user/email errors.
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
