@@ -18,8 +18,8 @@ import { Mail } from "./Mail";
 import {
     intersectionWithRespectToGrade,
     subjectsAsArray,
-} from "../../jobs/backend/matching/subjectsutils";
-import { gradeAsInt } from "../../jobs/backend/utils";
+} from "../util/subjectsutils";
+import { gradeAsInt } from "../util/gradestrings";
 
 export enum SourceType {
     IMPORTED = "imported",

@@ -31,19 +31,6 @@
             "outputCapture": "std"
         },
         {
-            "name": "Import (Debug)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "import:debug"
-            ],
-            "port": 9229,
-            "envFile": "${workspaceRoot}/.env",
-            "outputCapture": "std"
-        },
-        {
             "name": "Tests (Debug)",
             "type": "node",
             "request": "launch",
@@ -51,19 +38,6 @@
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run-script", "test:debug"
-            ],
-            "port": 9229,
-            "envFile": "${workspaceRoot}/.env",
-            "outputCapture": "std"
-        },
-        {
-            "name": "Export (Debug)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "export:debug"
             ],
             "port": 9229,
             "envFile": "${workspaceRoot}/.env",

@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { getLogger } from "log4js";
-import { sendTemplateMail, mailjetTemplates } from "../../../common/mails";
-import { Person } from "../../../common/entity/Person";
+import { sendTemplateMail, mailjetTemplates } from "../../../../../common/mails";
+import { Person } from "../../../../../common/entity/Person";
 
 const logger = getLogger();
 

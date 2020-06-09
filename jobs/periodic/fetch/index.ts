@@ -3,7 +3,7 @@ import { Student } from "../../../common/entity/Student";
 import { ApiPupil, ApiResponse, ApiStudent } from "./api";
 import { Pupil } from "../../../common/entity/Pupil";
 import { getConnection, getManager } from "typeorm";
-import { generateToken, sendVerificationMail } from "../verification";
+import { generateToken, sendVerificationMail } from "./utils/verification";
 import { getLogger } from "log4js";
 import { getTransactionLog } from "../../../common/transactionlog";
 import FetchedFromWixEvent from "../../../common/transactionlog/types/FetchedFromWixEvent";
@@ -95,7 +95,7 @@ async function getPupilsAfter(date: Date): Promise<Pupil[]> {
     return [];
 }
 
-export async function fetchFromWixToDb() {
+export default async function fetchFromWixToDb() {
     if (!init) {
         await initModule();
     }
