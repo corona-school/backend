@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { ApiAddTutor, ApiAddTutee } from './format';
-import { generateToken, sendVerificationMail } from '../../../jobs/backend/verification';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
@@ -10,6 +9,7 @@ import { checkSubject } from '../userController/format';
 import { Pupil, SchoolType } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
+import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
 
 const logger = getLogger();
 
