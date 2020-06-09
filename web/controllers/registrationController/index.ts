@@ -114,7 +114,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         return 400;
     }
 
-    if(apiTutor.msg.length == 0 || apiTutor.msg.length > 3000) {
+    if(apiTutor.msg.length > 3000) {
         logger.warn("apiTutor.msg outside of length restrictions");
         return 400;
     }
@@ -287,7 +287,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 400;
     }
 
-    if(apiTutee.msg.length == 0 || apiTutee.msg.length > 3000) {
+    if(apiTutee.msg.length > 3000) {
         logger.error("apiTutee.msg outside of length restrictions");
         return 400;
     }
