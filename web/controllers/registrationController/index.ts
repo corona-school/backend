@@ -122,7 +122,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     const tutor = new Student();
     tutor.firstname  = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
-    tutor.email = apiTutor.email;    
+    tutor.email = apiTutor.email.toLowerCase();    
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
 
@@ -295,7 +295,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     const tutee = new Pupil();
     tutee.firstname  = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
-    tutee.email = apiTutee.email;
+    tutee.email = apiTutee.email.toLowerCase();
     tutee.grade = apiTutee.grade + ". Klasse";
 
     switch(apiTutee.state) {
