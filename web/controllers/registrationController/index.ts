@@ -127,6 +127,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     tutor.isStudent = false;
     tutor.isInstructor = true;
+    
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
@@ -146,6 +147,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         }
         tutor.subjects = JSON.stringify(apiTutor.subjects);
         tutor.openMatchRequestCount = 1;
+        tutor.isStudent = true;
     }
 
     if(apiTutor.isOfficial) {
@@ -375,6 +377,9 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
     tutee.newsletter = apiTutee.newsletter;
     tutee.msg = apiTutee.msg;
+
+    tutee.isParticipant = true;
+    tutee.isPupil = false;
 
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
