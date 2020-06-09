@@ -43,6 +43,7 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,tags</code>. If you want optional marked fields of subobjects, you need to specify the subobject and the requested subobject properties. Example: <code>fields=subcourses,subcourses.maxParticipants,subcourses.participants</code>
  * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
  * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
+ * @apiParam (Query Parameter) {string} participant <em>(optional)</em> Id of a participant. Return only courses this participant has joined. This parameter requires authentication as the specified participant.
  *
  * @apiUse Courses
  * @apiUse Course
@@ -1878,3 +1879,90 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
         return 500;
     }
 }
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/participants/:userid JoinCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Join a course.
+ *
+ * This endpoint allows joining a course.
+ * Only accessable for authorized participants.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName JoinCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/participants/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid/participants/:userid LeaveCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Leave a course.
+ *
+ * This endpoint allows leaving an already joined course.
+ * Only accessable for authorized participants.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName LeaveCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/participants/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/groupmail GroupMail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send a group mail to all participants.
+ *
+ * The course and subcourse instructors may use this endpoint to send a mail to all participants
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName GroupMail
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostGroupMail
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/groupmail -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
