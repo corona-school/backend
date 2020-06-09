@@ -32,6 +32,7 @@ const logger = getLogger();
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
 export async function postTutorHandler(req: Request, res: Response) {
@@ -213,6 +214,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
 export async function postTuteeHandler(req: Request, res: Response) {
