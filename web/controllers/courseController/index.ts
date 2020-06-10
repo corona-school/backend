@@ -64,9 +64,13 @@ const logger = getLogger();
 export async function getCoursesHandler(req: Request, res: Response) {
     let status = 200;
     try {
-        let authenticated = false;
+        let authenticatedStudent = false;
+        let authenticatedPupil = false;
         if (res.locals.user instanceof Student) {
-            authenticated = true;
+            authenticatedStudent = true;
+        }
+        if (res.locals.user instanceof Pupil) {
+            authenticatedPupil = true;
         }
         let fields = [];
         if (typeof req.query.fields == 'string') {
@@ -80,9 +84,20 @@ export async function getCoursesHandler(req: Request, res: Response) {
         if (typeof req.query.instructor == 'string') {
             instructorId = req.query.instructor;
         }
+        let participantId = undefined;
+        if (typeof req.query.participant == 'string') {
+            participantId = req.query.participant;
+        }
 
         try {
-            let obj = await getCourses(authenticated ? res.locals.user : undefined, fields, states, instructorId);
+            let obj = await getCourses(
+                authenticatedStudent ? res.locals.user : undefined,
+                authenticatedPupil ? res.locals.user : undefined,
+                fields,
+                states,
+                instructorId,
+                participantId
+            );
             if (typeof obj == 'number') {
                 status = obj;
             } else {
@@ -101,39 +116,58 @@ export async function getCoursesHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getCourses(student: Student | undefined, fields: Array<string>, states: Array<string>, wix_id: string | undefined): Promise<Array<ApiCourse> | number> {
+async function getCourses(student: Student | undefined,
+                          pupil: Pupil | undefined, fields: Array<string>,
+                          states: Array<string>,
+                          instructorId: string | undefined,
+                          participantId: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
-    let authenticated = false;
+    let authenticatedStudent = false;
+    let authenticatedPupil = false;
     if (student instanceof Student) {
-        authenticated = true;
+        authenticatedStudent = true;
+    }
+    if (pupil instanceof Pupil) {
+        authenticatedPupil = true;
     }
 
-    if (wix_id != undefined && !authenticated) {
-        logger.warn(`Unauthenticated user tried to access courses created by instructor (ID: ${wix_id})`);
+    if (instructorId != undefined && !authenticatedStudent) {
+        logger.warn(`Unauthenticated user tried to access courses created by instructor (ID: ${instructorId})`);
         return 401;
     }
 
-    if (wix_id != undefined && authenticated && student.wix_id != wix_id) {
-        logger.warn(`User (ID: ${student.wix_id}) tried to filter by instructor id ${wix_id}`);
-        logger.debug(student, fields, states, wix_id);
+    if (participantId != undefined && !authenticatedPupil) {
+        logger.warn(`Unauthenticated user tried to access courses joined by pupil (ID: ${participantId})`);
+        return 401;
+    }
+
+    if (instructorId != undefined && authenticatedStudent && student.wix_id != instructorId) {
+        logger.warn(`User (ID: ${student.wix_id}) tried to filter by instructor id ${instructorId}`);
+        logger.debug(student, fields, states, instructorId);
+        return 403;
+    }
+
+    if (participantId != undefined && authenticatedPupil && pupil.wix_id != participantId) {
+        logger.warn(`User (ID: ${student.wix_id}) tried to filter by participant id ${participantId}`);
+        logger.debug(pupil, fields, participantId);
         return 403;
     }
 
     if (states.length != 1 || states[0] != 'allowed') {
-        if (!authenticated) {
+        if (!authenticatedStudent) {
             logger.warn(`Unauthenticated user tried to filter by states ${states.join(',')}`);
             return 401;
-        } else if (wix_id == undefined) {
+        } else if (instructorId == undefined) {
             logger.warn(`User (ID: ${student.wix_id}) tried to filter by states ${states.join(',')} without specifying an instructor id`);
-            logger.debug(student, fields, states, wix_id);
+            logger.debug(student, fields, states, instructorId);
             return 403;
         }
     }
 
     if (states.length == 0) {
         logger.warn("Request for /courses while filtering with states=(empty). This would never return any results");
-        logger.debug(student, fields, states, wix_id);
+        logger.debug(student, fields, states, instructorId);
         return 400;
     }
     let stateFilters = [];
@@ -157,7 +191,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                 break;
             default:
                 logger.warn("Unknown state: " + states[i]);
-                logger.debug(student, fields, states, wix_id);
+                logger.debug(student, fields, states, instructorId);
                 return 400;
         }
         stateFilters.push(state);
@@ -167,9 +201,13 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
     try {
         const qb = entityManager.getRepository(Course).createQueryBuilder("course");
 
-        if (authenticated) {
+        if (instructorId) {
             qb.leftJoin("course.instructors", "instructor")
                 .where("instructor.wix_id = :id", { id: student.wix_id });
+        } else if (participantId) {
+            qb.leftJoin("course.subcourses", "subcourse")
+                .leftJoin("subcourse.participants", "participant")
+                .where("participant.wix_id = :id", { id: pupil.wix_id });
         }
 
         if (stateFilters.length > 0) {
@@ -179,7 +217,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                     sub = sub.orWhere("course.courseState = :state", { state: stateFilters.pop() });
                 }
             });
-            if (authenticated) {
+            if (instructorId || participantId) {
                 qb.andWhere(b);
             } else {
                 qb.where(b);
@@ -203,7 +241,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                 firstname: courses[i].instructors[k].firstname,
                                 lastname: courses[i].instructors[k].lastname
                             };
-                            if (authenticated && student.wix_id != wix_id) {
+                            if (authenticatedStudent && student.wix_id != instructorId) {
                                 instructor.id = courses[i].instructors[k].wix_id;
                             }
                             apiCourse.instructors.push(instructor);
@@ -253,7 +291,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                     firstname: courses[i].subcourses[k].instructors[l].firstname,
                                     lastname: courses[i].subcourses[k].instructors[l].lastname
                                 };
-                                if (authenticated && student.wix_id == wix_id) {
+                                if (authenticatedStudent && student.wix_id == instructorId) {
                                     instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
                                 }
                                 subcourse.instructors.push(instructor);
@@ -268,12 +306,12 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                     start: courses[i].subcourses[k].lectures[l].start.getTime(),
                                     duration: courses[i].subcourses[k].lectures[l].duration
                                 };
-                                if (authenticated && student.wix_id == wix_id) {
+                                if (authenticatedStudent && student.wix_id == instructorId) {
                                     lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
                                 }
                                 subcourse.lectures.push(lecture);
                             }
-                            if (authenticated && student.wix_id == wix_id) {
+                            if (authenticatedStudent && student.wix_id == instructorId) {
                                 subcourse.participantList = [];
                                 for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
                                     subcourse.participantList.push({
@@ -283,6 +321,15 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                         grade: parseInt(courses[i].subcourses[k].participants[l].grade),
                                         schooltype: courses[i].subcourses[k].participants[l].schooltype
                                     });
+                                }
+                            }
+                            if (authenticatedPupil && pupil.wix_id == participantId) {
+                                subcourse.joined = false;
+                                for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                    if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
+                                        subcourse.joined = true;
+                                        break;
+                                    }
                                 }
                             }
                             apiCourse.subcourses.push(subcourse);
@@ -337,12 +384,20 @@ export async function getCourseHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if (req.params.id != undefined) {
-            let authenticated = false;
+            let authenticatedStudent = false;
+            let authenticatedPupil = false;
             if (res.locals.user instanceof Student) {
-                authenticated = true;
+                authenticatedStudent = true;
+            }
+            if (res.locals.user instanceof Pupil) {
+                authenticatedPupil = true;
             }
             try {
-                let obj = await getCourse(authenticated ? res.locals.user : undefined, Number.parseInt(req.params.id, 10));
+                let obj = await getCourse(
+                    authenticatedStudent ? res.locals.user : undefined,
+                    authenticatedPupil ? res.locals.user : undefined,
+                    Number.parseInt(req.params.id, 10)
+                );
                 if (typeof obj == 'number') {
                     status = obj;
                 } else {
@@ -365,13 +420,17 @@ export async function getCourseHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getCourse(student: Student | undefined, course_id: number): Promise<ApiCourse | number> {
+async function getCourse(student: Student | undefined, pupil: Pupil | undefined, course_id: number): Promise<ApiCourse | number> {
     const entityManager = getManager();
 
-    let authenticated = false;
-    let authorized = false;
+    let authenticatedStudent = false;
+    let authorizedStudent = false;
     if (student instanceof Student) {
-        authenticated = true;
+        authenticatedStudent = true;
+    }
+    let authenticatedPupil = false;
+    if (pupil instanceof Pupil) {
+        authenticatedPupil = true;
     }
 
     let apiCourse: ApiCourse;
@@ -381,11 +440,11 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
         for (let i = 0; i < course.instructors.length; i++) {
             // We don't need to compare wix_id here
             if (student.id == course.instructors[i].id) {
-                authorized = true;
+                authorizedStudent = true;
             }
         }
 
-        if (!authorized && course.courseState != CourseState.ALLOWED) {
+        if (!authorizedStudent && course.courseState != CourseState.ALLOWED) {
             logger.error("Unauthorized user tried to access course of state " + course.courseState);
             logger.debug(student);
             return 403;
@@ -403,12 +462,12 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
             subcourses: []
         };
 
-        if (authorized) {
+        if (authorizedStudent) {
             apiCourse.state = course.courseState;
         }
 
         for (let i = 0; i < course.instructors.length; i++) {
-            if (authorized) {
+            if (authorizedStudent) {
                 apiCourse.instructors.push({
                     id: course.instructors[i].wix_id,
                     firstname: course.instructors[i].firstname,
@@ -432,7 +491,7 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
 
         for (let i = 0; i < course.subcourses.length; i++) {
             // Skip not published subcourses for unauthorized users
-            if (!authorized && !course.subcourses[i].published) continue;
+            if (!authorizedStudent && !course.subcourses[i].published) continue;
 
             let subcourse: ApiSubcourse = {
                 id: course.subcourses[i].id,
@@ -445,11 +504,11 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                 joinAfterStart: course.subcourses[i].joinAfterStart,
                 cancelled: course.subcourses[i].cancelled
             };
-            if (authorized) {
+            if (authorizedStudent) {
                 subcourse.published = course.subcourses[i].published;
             }
             for (let j = 0; j < course.subcourses[i].instructors.length; j++) {
-                if (authorized) {
+                if (authorizedStudent) {
                     subcourse.instructors.push({
                         id: course.subcourses[i].instructors[j].wix_id,
                         firstname: course.subcourses[i].instructors[j].firstname,
@@ -472,12 +531,12 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                     start: course.subcourses[i].lectures[j].start.getTime(),
                     duration: course.subcourses[i].lectures[j].duration
                 };
-                if (authorized) {
+                if (authorizedStudent) {
                     lecture.instructor.id = course.subcourses[i].lectures[j].instructor.wix_id;
                 }
                 subcourse.lectures.push(lecture);
             }
-            if (authorized) {
+            if (authorizedStudent) {
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
                         firstname: course.subcourses[i].participants[j].firstname,
@@ -486,6 +545,15 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                         grade: parseInt(course.subcourses[i].participants[j].grade),
                         schooltype: course.subcourses[i].participants[j].schooltype
                     });
+                }
+            }
+            if (authenticatedPupil) {
+                subcourse.joined = false;
+                for (let j = 0; j < course.subcourses[i].participants.length; j++) {
+                    if (course.subcourses[i].participants[j].wix_id == pupil.wix_id) {
+                        subcourse.joined = true;
+                        break;
+                    }
                 }
             }
             apiCourse.subcourses.push(subcourse);
