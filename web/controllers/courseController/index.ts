@@ -21,6 +21,7 @@ import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourse
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
+import { Pupil } from '../../../common/entity/Pupil';
 
 const logger = getLogger();
 
@@ -1891,10 +1892,11 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
  * @api {POST} /course/:id/subcourse/:subid/participants/:userid JoinCourse
  * @apiVersion 1.1.0
  * @apiDescription
- * Join a course.
+ * Join a (sub)course.
  *
- * This endpoint allows joining a course.
+ * This endpoint allows joining a subcourse.
  * Only accessable for authorized participants.
+ * If all places are already taken or subcourse has already started 409 Conflict is returned
  *
  * @apiParam (URL Parameter) {int} id ID of the main course
  * @apiParam (URL Parameter) {int} subid ID of the subcourse
@@ -1912,9 +1914,90 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
  * @apiUse StatusBadRequest
  * @apiUse StatusUnauthorized
  * @apiUse StatusForbidden
+ * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function joinSubcourseHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await joinSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/participants");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to join a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to join course");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to join course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+            // Check if course is full
+            if (subcourse.maxParticipants <= subcourse.participants.length) {
+                logger.warn("Pupil can't join subcourse, because it is already full");
+                logger.debug(subcourse);
+                status = 409;
+                return;
+            }
+            // Check if course has already started
+            let startDate = (new Date()).getTime() + 3600000;
+            for (let i = 0; i < subcourse.lectures.length; i++) {
+                if (startDate > subcourse.lectures[i].start.getTime())
+                    startDate = subcourse.lectures[i].start.getTime();
+            }
+            if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
+                logger.warn("Pupil can't join subcourse, because it has already started");
+                logger.debug(subcourse);
+                status = 409;
+                return;
+            }
+
+            subcourse.participants.push(pupil);
+            await em.save(Subcourse, subcourse);
+
+            logger.info("Pupil successfully joined subcourse");
+            // todo add transactionlog
+
+        } catch (e) {
+            logger.warn("Can't join subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
 
 /**
  * @api {DELETE} /course/:id/subcourse/:subid/participants/:userid LeaveCourse
@@ -1943,7 +2026,83 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function leaveSubcourseHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await leaveSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/participants/:userid");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to leave a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to leave course");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to leave course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+            // Check if pupil is participant
+            let index: number = undefined;
+            for (let i = 0; i < subcourse.participants.length; i++) {
+                if (subcourse.participants[i].wix_id == userId) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == undefined) {
+                logger.warn("Pupil tried to leave subcourse he didn't join");
+                logger.debug(subcourse, userId);
+                status = 400;
+                return;
+            }
+
+            subcourse.participants = subcourse.participants.splice(index, 1);
+            await em.save(Subcourse, subcourse);
+
+            logger.info("Pupil successfully left subcourse");
+            // todo add transactionlog
+
+        } catch (e) {
+            logger.warn("Can't leave subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
 
 /**
  * @api {POST} /course/:id/subcourse/:subid/groupmail GroupMail
