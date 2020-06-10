@@ -58,6 +58,7 @@ export interface ApiSubcourse {
     maxGrade?: number;
     maxParticipants?: number;
     participants?: number;
+    participantList?: ApiParticipant[];
     lectures?: ApiLecture[];
     joinAfterStart?: boolean;
     published?: boolean;
@@ -243,7 +244,13 @@ export interface ApiInstructor {
  * @apiSuccess (Participant Object) {string} schooltype School type. One of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "other"</code>
  *
  */
-// todo create interface
+export interface ApiParticipant {
+    firstname: string;
+    lastname: string;
+    email: string;
+    grade: number;
+    schooltype: string;
+}
 
 /**
  * @apiDefine CourseTag

@@ -253,7 +253,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                     firstname: courses[i].subcourses[k].instructors[l].firstname,
                                     lastname: courses[i].subcourses[k].instructors[l].lastname
                                 };
-                                if (authenticated && student.wix_id != wix_id) {
+                                if (authenticated && student.wix_id == wix_id) {
                                     instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
                                 }
                                 subcourse.instructors.push(instructor);
@@ -268,10 +268,22 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                     start: courses[i].subcourses[k].lectures[l].start.getTime(),
                                     duration: courses[i].subcourses[k].lectures[l].duration
                                 };
-                                if (authenticated && student.wix_id != wix_id) {
+                                if (authenticated && student.wix_id == wix_id) {
                                     lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
                                 }
                                 subcourse.lectures.push(lecture);
+                            }
+                            if (authenticated && student.wix_id == wix_id) {
+                                subcourse.participantList = [];
+                                for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                    subcourse.participantList.push({
+                                        firstname: courses[i].subcourses[k].participants[l].firstname,
+                                        lastname: courses[i].subcourses[k].participants[l].lastname,
+                                        email: courses[i].subcourses[k].participants[l].email,
+                                        grade: parseInt(courses[i].subcourses[k].participants[l].grade),
+                                        schooltype: courses[i].subcourses[k].participants[l].schooltype
+                                    });
+                                }
                             }
                             apiCourse.subcourses.push(subcourse);
                         }
@@ -464,6 +476,17 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                     lecture.instructor.id = course.subcourses[i].lectures[j].instructor.wix_id;
                 }
                 subcourse.lectures.push(lecture);
+            }
+            if (authorized) {
+                for (let j = 0; j < course.subcourses[i].participants.length; j++) {
+                    subcourse.participantList.push({
+                        firstname: course.subcourses[i].participants[j].firstname,
+                        lastname: course.subcourses[i].participants[j].lastname,
+                        email: course.subcourses[i].participants[j].email,
+                        grade: parseInt(course.subcourses[i].participants[j].grade),
+                        schooltype: course.subcourses[i].participants[j].schooltype
+                    });
+                }
             }
             apiCourse.subcourses.push(subcourse);
         }
