@@ -59,6 +59,7 @@ export interface ApiSubcourse {
     maxParticipants?: number;
     participants?: number;
     lectures?: ApiLecture[];
+    joinAfterStart?: boolean;
     published?: boolean;
     cancelled?: boolean;
 }
@@ -132,6 +133,7 @@ export interface ApiAddSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    joinAfterStart: boolean;
     published: boolean;
 }
 
@@ -196,6 +198,7 @@ export interface ApiEditSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    joinAfterStart: boolean;
     published: boolean;
 }
 

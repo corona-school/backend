@@ -244,7 +244,8 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                 maxParticipants: courses[i].subcourses[k].maxParticipants,
                                 participants: courses[i].subcourses[k].participants.length,
                                 instructors: [],
-                                lectures: []
+                                lectures: [],
+                                joinAfterStart: courses[i].subcourses[k].joinAfterStart
                             };
                             for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
                                 let instructor: ApiInstructor = {
@@ -428,6 +429,7 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                 maxParticipants: course.subcourses[i].maxParticipants,
                 participants: course.subcourses[i].participants.length,
                 lectures: [],
+                joinAfterStart: course.subcourses[i].joinAfterStart,
                 cancelled: course.subcourses[i].cancelled
             };
             if (authorized) {
@@ -695,6 +697,7 @@ export async function postSubcourseHandler(req: Request, res: Response) {
                 typeof req.body.minGrade == 'number' &&
                 typeof req.body.maxGrade == 'number' &&
                 (req.body.maxParticipants == undefined || typeof req.body.maxParticipants == 'number') &&
+                typeof req.body.joinAfterStart == 'boolean' &&
                 typeof req.body.published == 'boolean') {
 
                 // Check if string arrays
@@ -809,6 +812,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
     subcourse.maxGrade = apiSubcourse.maxGrade;
     subcourse.maxParticipants = apiSubcourse.maxParticipants;
     subcourse.published = apiSubcourse.published;
+    subcourse.cancelled = apiSubcourse.joinAfterStart;
     subcourse.cancelled = false;
 
     try {
@@ -1239,7 +1243,8 @@ export async function putSubcourseHandler(req: Request, res: Response) {
                 typeof req.body.minGrade == 'number' &&
                 typeof req.body.maxGrade == 'number' &&
                 typeof req.body.maxParticipants == 'number' &&
-                typeof req.body.published == 'boolean') {
+                typeof req.body.published == 'boolean' &&
+                typeof req.body.joinAfterStart == 'boolean') {
 
                 // Check if string array
                 for (let i = 0; i < req.body.instructors.length; i++) {
@@ -1362,6 +1367,8 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
         return 400;
     }
     subcourse.published = apiSubcourse.published;
+
+    subcourse.joinAfterStart = apiSubcourse.joinAfterStart;
 
     try {
         await entityManager.save(Subcourse, subcourse);
