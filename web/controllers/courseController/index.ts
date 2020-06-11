@@ -199,15 +199,19 @@ async function getCourses(student: Student | undefined,
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const qb = entityManager.getRepository(Course).createQueryBuilder("course");
+        const qb = entityManager.getRepository(Course).createQueryBuilder("course")
+            .leftJoinAndSelect("course.subcourses", "subcourse")
+            .leftJoinAndSelect("course.tags", "tags")
+            .leftJoinAndSelect("course.instructors", "instructor")
+            .leftJoinAndSelect("subcourse.instructors", "subinstructor")
+            .leftJoinAndSelect("subcourse.participants", "participant")
+            .leftJoinAndSelect("subcourse.lectures", "lecture")
+            .leftJoinAndSelect("lecture.instructor", "lecinstructor");
 
         if (instructorId) {
-            qb.leftJoin("course.instructors", "instructor")
-                .where("instructor.wix_id = :id", { id: student.wix_id });
+            qb.where("instructor.wix_id = :id", { id: student.wix_id });
         } else if (participantId) {
-            qb.leftJoin("course.subcourses", "subcourse")
-                .leftJoin("subcourse.participants", "participant")
-                .where("participant.wix_id = :id", { id: pupil.wix_id });
+            qb.where("participant.wix_id = :id", { id: pupil.wix_id });
         }
 
         if (stateFilters.length > 0) {
@@ -275,64 +279,68 @@ async function getCourses(student: Student | undefined,
                         break;
                     case 'subcourses':
                         apiCourse.subcourses = [];
-                        for (let k = 0; k < courses[i].subcourses.length; k++) {
-                            let subcourse: ApiSubcourse = {
-                                id: courses[i].subcourses[k].id,
-                                minGrade: courses[i].subcourses[k].minGrade,
-                                maxGrade: courses[i].subcourses[k].maxGrade,
-                                maxParticipants: courses[i].subcourses[k].maxParticipants,
-                                participants: courses[i].subcourses[k].participants.length,
-                                instructors: [],
-                                lectures: [],
-                                joinAfterStart: courses[i].subcourses[k].joinAfterStart
-                            };
-                            for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
-                                let instructor: ApiInstructor = {
-                                    firstname: courses[i].subcourses[k].instructors[l].firstname,
-                                    lastname: courses[i].subcourses[k].instructors[l].lastname
+                        if (courses[i].subcourses) {
+                            for (let k = 0; k < courses[i].subcourses.length; k++) {
+                                let subcourse: ApiSubcourse = {
+                                    id: courses[i].subcourses[k].id,
+                                    minGrade: courses[i].subcourses[k].minGrade,
+                                    maxGrade: courses[i].subcourses[k].maxGrade,
+                                    maxParticipants: courses[i].subcourses[k].maxParticipants,
+                                    participants: courses[i].subcourses[k].participants.length,
+                                    instructors: [],
+                                    lectures: [],
+                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart
                                 };
+                                for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
+                                    let instructor: ApiInstructor = {
+                                        firstname: courses[i].subcourses[k].instructors[l].firstname,
+                                        lastname: courses[i].subcourses[k].instructors[l].lastname
+                                    };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                    }
+                                    subcourse.instructors.push(instructor);
+                                }
+                                for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
+                                    let lecture: ApiLecture = {
+                                        id: courses[i].subcourses[k].lectures[l].id,
+                                        instructor: {
+                                            firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
+                                            lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
+                                        },
+                                        start: courses[i].subcourses[k].lectures[l].start.getTime(),
+                                        duration: courses[i].subcourses[k].lectures[l].duration
+                                    };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                    }
+                                    subcourse.lectures.push(lecture);
+                                }
                                 if (authenticatedStudent && student.wix_id == instructorId) {
-                                    instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
-                                }
-                                subcourse.instructors.push(instructor);
-                            }
-                            for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
-                                let lecture: ApiLecture = {
-                                    id: courses[i].subcourses[k].lectures[l].id,
-                                    instructor: {
-                                        firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
-                                        lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
-                                    },
-                                    start: courses[i].subcourses[k].lectures[l].start.getTime(),
-                                    duration: courses[i].subcourses[k].lectures[l].duration
-                                };
-                                if (authenticatedStudent && student.wix_id == instructorId) {
-                                    lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
-                                }
-                                subcourse.lectures.push(lecture);
-                            }
-                            if (authenticatedStudent && student.wix_id == instructorId) {
-                                subcourse.participantList = [];
-                                for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
-                                    subcourse.participantList.push({
-                                        firstname: courses[i].subcourses[k].participants[l].firstname,
-                                        lastname: courses[i].subcourses[k].participants[l].lastname,
-                                        email: courses[i].subcourses[k].participants[l].email,
-                                        grade: parseInt(courses[i].subcourses[k].participants[l].grade),
-                                        schooltype: courses[i].subcourses[k].participants[l].schooltype
-                                    });
-                                }
-                            }
-                            if (authenticatedPupil && pupil.wix_id == participantId) {
-                                subcourse.joined = false;
-                                for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
-                                    if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
-                                        subcourse.joined = true;
-                                        break;
+                                    subcourse.participantList = [];
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        subcourse.participantList.push({
+                                            firstname: courses[i].subcourses[k].participants[l].firstname,
+                                            lastname: courses[i].subcourses[k].participants[l].lastname,
+                                            email: courses[i].subcourses[k].participants[l].email,
+                                            grade: parseInt(courses[i].subcourses[k].participants[l].grade),
+                                            schooltype: courses[i].subcourses[k].participants[l].schooltype
+                                        });
                                     }
                                 }
+                                if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.joined = false;
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
+                                            subcourse.joined = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                apiCourse.subcourses.push(subcourse);
                             }
-                            apiCourse.subcourses.push(subcourse);
+                        } else {
+                            logger.debug(courses[i]);
                         }
                         break;
                     case 'state':
@@ -437,10 +445,12 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
     try {
         const course = await entityManager.findOne(Course, { id: course_id });
 
-        for (let i = 0; i < course.instructors.length; i++) {
-            // We don't need to compare wix_id here
-            if (student.id == course.instructors[i].id) {
-                authorizedStudent = true;
+        if (authenticatedStudent) {
+            for (let i = 0; i < course.instructors.length; i++) {
+                // We don't need to compare wix_id here
+                if (student.id == course.instructors[i].id) {
+                    authorizedStudent = true;
+                }
             }
         }
 
@@ -537,6 +547,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                 subcourse.lectures.push(lecture);
             }
             if (authorizedStudent) {
+                subcourse.participantList = [];
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
                         firstname: course.subcourses[i].participants[j].firstname,
@@ -550,7 +561,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             if (authenticatedPupil) {
                 subcourse.joined = false;
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
-                    if (course.subcourses[i].participants[j].wix_id == pupil.wix_id) {
+                    if (course.subcourses[i].participants[j].id == pupil.id) {
                         subcourse.joined = true;
                         break;
                     }
@@ -2051,8 +2062,8 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
     let status = 204;
     await entityManager.transaction(async em => {
         try {
-            const course = await em.findOneOrFail(Course, { id: courseId });
-            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
 
             // Check if course is full
             if (subcourse.maxParticipants <= subcourse.participants.length) {
@@ -2179,7 +2190,7 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
                 return;
             }
 
-            subcourse.participants = subcourse.participants.splice(index, 1);
+            subcourse.participants.splice(index, 1);
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully left subcourse");
