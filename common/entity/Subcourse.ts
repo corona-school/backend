@@ -56,6 +56,11 @@ export class Subcourse {
     @Column()
     maxParticipants: number;
 
+    @Column({
+        default: false
+    })
+    joinAfterStart: boolean;
+
     @Column()
     published: boolean;
 
