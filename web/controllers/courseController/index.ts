@@ -215,16 +215,10 @@ async function getCourses(student: Student | undefined,
         }
 
         if (stateFilters.length > 0) {
-            const b = new Brackets(sub => {
-                sub = sub.where("course.courseState = :state", { state: stateFilters.pop() });
-                while (stateFilters.length > 0) {
-                    sub = sub.orWhere("course.courseState = :state", { state: stateFilters.pop() });
-                }
-            });
             if (instructorId || participantId) {
-                qb.andWhere(b);
+                qb.andWhere("course.courseState IN (:...states)", { states: stateFilters });
             } else {
-                qb.where(b);
+                qb.where("course.courseState IN (:...states)", { states: stateFilters });
             }
         }
 
