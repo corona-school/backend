@@ -35,20 +35,12 @@ async function getStudentsAfter(date: Date): Promise<Student[]> {
             let s = new Student();
             s.subjects = JSON.stringify(curr.feldFurMehrfachauswahl);
             s.email = curr.email.toLowerCase();
-            try {
-                if (typeof curr.geburtstag != "undefined") {
-                    s.birthday = new Date(curr.geburtstag);
-                } else {
-                    s.birthday = new Date("01/01/2100");
-                }
-            } catch (e) {
-                s.birthday = new Date("01/01/2100");
-            }
             s.wix_id = curr._id;
             s.wix_creation_date = new Date(curr.submissionTime);
             s.lastname = curr.kopieVonVorname;
             s.firstname = curr.firstName;
             s.msg = curr.message;
+            s.isStudent = true;
 
             students.push(s);
         }
@@ -125,8 +117,6 @@ export default async function fetchFromWixToDb() {
                 let student = newStudents[i];
                 student.verification = generateToken();
                 try {
-                    if (!(student.birthday instanceof Date))
-                        student.birthday = new Date(null);
                     // Note: Saving may fail and this is totally fine
                     // Possible reasons:
                     //   - A person tries to double-register (ie. duplicate email)

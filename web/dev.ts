@@ -55,6 +55,8 @@ export async function setupDevDB() {
     s.lastname = "Jackson";
     s.active = true;
     s.email = "leon-jackson@t-online.de";
+    s.isInstructor = true;
+    s.isStudent = true;
     s.verification = null;
     s.verifiedAt = new Date(new Date().getTime() - 110000);
     s.lastSentScreeningInvitationDate = s.verifiedAt;
@@ -73,6 +75,8 @@ export async function setupDevDB() {
     s.lastname = "Meiers";
     s.active = true;
     s.email = "mel-98@gmail.com";
+    s.isInstructor = true;
+    s.isStudent = true;
     s.verification = null;
     s.verifiedAt = new Date(new Date().getTime() - 220000);
     s.lastSentScreeningInvitationDate = s.verifiedAt;

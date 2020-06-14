@@ -11,13 +11,11 @@ import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
 import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
-import { configure, getLogger, connectLogger } from "log4js";
+import * as courseController from "./controllers/courseController";
+import * as registrationController from "./controllers/registrationController";
+import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
-import {
-    authCheck,
-    screenerAuthCheck,
-    basicTokenCheck
-} from "./middleware/auth";
+import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 
 // Logger setup
@@ -44,22 +42,24 @@ createConnection().then(() => {
     addCorsMiddleware();
     addSecurityMiddleware();
 
-    configureBasicAPI();
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
+    configureCourseAPI();
     configureScreenerAPI();
+    configureCoursesAPI();
+    configureRegistrationAPI();
     deployServer();
 
     function addCorsMiddleware() {
 
         let origins;
 
-        if(process.env.NODE_ENV == "dev") {
+        if (process.env.NODE_ENV == "dev") {
             origins = [
-                "http://localhost:3000",                
+                "http://localhost:3000",
                 "https://web-user-app-live.herokuapp.com",
-                "https://web-user-app-dev.herokuapp.com",
+                "https://web-user-app-dev.herokuapp.com"
             ];
         } else {
             origins = [
@@ -71,9 +71,9 @@ createConnection().then(() => {
         const options = {
             "origin": origins,
             "methods": ["GET", "POST", "DELETE", "PUT", "HEAD", "PATCH"]
-        }
-        
-        app.use(cors(options));        
+        };
+
+        app.use(cors(options));
     }
 
     function addSecurityMiddleware() {
@@ -81,23 +81,13 @@ createConnection().then(() => {
         app.use(helmet());
     }
 
-    function configureBasicAPI() {
-        const apiRouter = express.Router();
-        apiRouter.get("/", authCheck, (req, res) => {
-            // This route is only available with a valid user.
-            res.send(`Logged in: ${res.locals.user} (type: ${res.locals.userType})`);
-        });
-        app.use("/api", apiRouter);
-    }
-
     function configureUserAPI() {
         const userApiRouter = express.Router();
-        userApiRouter.use(basicTokenCheck, authCheck);
+        userApiRouter.use(authCheckFactory());
         userApiRouter.get("/", userController.getSelfHandler);
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
-        userApiRouter.put("/:id/description", userController.putDescriptionHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
         app.use("/api/user", userApiRouter);
@@ -110,17 +100,51 @@ createConnection().then(() => {
         app.use("/api/token", tokenApiRouter);
     }
 
-
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.use(basicTokenCheck, authCheck);
+        certificateRouter.use(authCheckFactory());
         certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
         app.use("/api/certificate", certificateRouter);
-    }    
+    }
+
+    function configureCourseAPI() {
+        const coursesRouter = express.Router();
+        coursesRouter.use(authCheckFactory());
+        coursesRouter.post("/", courseController.postCourseHandler);
+        coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.put("/:id", courseController.putCourseHandler);
+        coursesRouter.delete("/:id", courseController.deleteCourseHandler);
+
+        coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
+        coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
+        coursesRouter.delete("/:id/subcourse/:subid", courseController.deleteSubcourseHandler);
+
+        coursesRouter.post("/:id/subcourse/:subid/participants/:userid", courseController.joinSubcourseHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
+
+        coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
+        coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
+        app.use("/api/course", coursesRouter);
+    }
+
+    function configureCoursesAPI() {
+        const coursesRouter = express.Router();
+        coursesRouter.use(authCheckFactory(true));
+        coursesRouter.get("/", courseController.getCoursesHandler);
+        app.use("/api/courses", coursesRouter);
+    }
+
+    function configureRegistrationAPI() {
+        const registrationRouter = express.Router();
+        registrationRouter.post("/tutee", registrationController.postTuteeHandler);
+        registrationRouter.post("/tutor", registrationController.postTutorHandler);
+        app.use("/api/register", registrationRouter);
+    }
 
     function configureScreenerAPI() {
         const screenerApiRouter = express.Router();
-        screenerApiRouter.use(basicTokenCheck, screenerAuthCheck);
+        screenerApiRouter.use(screenerAuthCheck);
         screenerApiRouter.get("/student", screeningController.getStudents);
         screenerApiRouter.get(
             "/student/:email",
@@ -143,7 +167,6 @@ createConnection().then(() => {
             screeningController.updateScreenerByMailHandler
         );
         app.use("/api/screening", screenerApiRouter);
-        app.use("/api", screenerApiRouter);
     }
 
     function deployServer() {
@@ -165,7 +188,7 @@ createConnection().then(() => {
                 ),
                 ca: fs.readFileSync(
                     "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
-                ),
+                )
             };
 
             // Start listening

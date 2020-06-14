@@ -1,21 +1,13 @@
 import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
-import {
-    ApiGetUser,
-    ApiMatch,
-    ApiPutUser, ApiStudentDescription,
-    ApiSubject,
-    checkName,
-    checkSubject
-} from "./format";
+import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject } from "./format";
 import { Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
 import { dissolveMatch } from "../matchController";
 import { getTransactionLog } from "../../../common/transactionlog";
-import UpdateStudentDescriptionEvent from "../../../common/transactionlog/types/UpdateStudentDescriptionEvent";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
@@ -24,7 +16,7 @@ const logger = getLogger();
 
 /**
  * @api {GET} /user getCurrentUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get data about the currently authenticated user.
  *
@@ -60,7 +52,7 @@ export async function getSelfHandler(req: Request, res: Response) {
 
 /**
  * @api {GET} /user/:id getUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get data about an user.
  *
@@ -116,7 +108,7 @@ export async function getHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id putUser
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set personal data of the user.
  *
@@ -146,23 +138,13 @@ export async function putHandler(req: Request, res: Response) {
 
     try {
         let b = req.body;
-        if (
-            typeof b.firstname == "string" &&
+        if (typeof b.firstname == "string" &&
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
-            (b.matchesRequested == undefined ||
-                typeof b.matchesRequested == "number")
-        ) {
-            if (
-                req.params.id != undefined &&
-                res.locals.user instanceof Person
-            ) {
+            (b.matchesRequested == undefined || typeof b.matchesRequested == "number")) {
+            if (req.params.id != undefined && res.locals.user instanceof Person) {
                 try {
-                    status = await putPersonal(
-                        req.params.id,
-                        b,
-                        res.locals.user
-                    );
+                    status = await putPersonal(req.params.id, b, res.locals.user);
                 } catch (e) {
                     logger.warn("Error PUT /user: " + e.message);
                     logger.debug(e);
@@ -184,13 +166,15 @@ export async function putHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/subjects putUserSubjects
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set the subjects of the user.
  *
  * This endpoint allows editing of the user subjects. Please be aware, that
- * students and pupils have different subject formats
+ * students and pupils have different subject formats.
  * The user has to be authenticated and can only edit his own subjects.
+ *
+ * Adding subjects to a participant or instructor automatically makes them tutee or tutor.
  *
  * @apiName putUserSubjects
  * @apiGroup User
@@ -223,35 +207,25 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             status = 400;
         } else {
             let subjectType = 0; // Short type
-            if (
-                b.length > 0 &&
-                b[0].minGrade != undefined &&
-                b[0].maxGrade != undefined
-            )
+            if (b.length > 0 && b[0].minGrade != undefined && b[0].maxGrade != undefined)
                 subjectType = 1; // Long Type
 
             for (let i = 0; i < b.length; i++) {
                 let elem = b[i];
                 if (subjectType == 0) {
-                    if (
-                        typeof elem.name == "string" &&
-                        checkSubject(elem.name)
+                    if (typeof elem.name == "string" && checkSubject(elem.name)
                     ) {
                         let subject = new ApiSubject();
                         subject.name = elem.name;
                         subjects.push(subject);
                     } else {
-                        logger.error(
-                            "Invalid format for shortType subjects: Missing or wrongly typed properties in ",
-                            elem
-                        );
+                        logger.error("Invalid format for shortType subjects: Missing or wrongly typed properties in ", elem);
                         logger.debug("Index " + i, b);
                         status = 400;
                         break;
                     }
                 } else {
-                    if (
-                        typeof elem.name == "string" &&
+                    if (typeof elem.name == "string" &&
                         typeof elem.minGrade == "number" &&
                         typeof elem.maxGrade == "number" &&
                         elem.minGrade >= 1 &&
@@ -259,18 +233,16 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         elem.minGrade <= elem.maxGrade &&
                         elem.maxGrade >= 1 &&
                         elem.maxGrade <= 13 &&
-                        checkSubject(elem.name)
-                    ) {
+                        checkSubject(elem.name)) {
+
                         let subject = new ApiSubject();
                         subject.name = elem.name;
                         subject.minGrade = elem.minGrade;
                         subject.maxGrade = elem.maxGrade;
                         subjects.push(subject);
+
                     } else {
-                        logger.error(
-                            "Invalid format for longType subjects: Missing or wrongly typed properties in ",
-                            elem
-                        );
+                        logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
                         logger.debug("Index " + i, b);
                         status = 400;
                         break;
@@ -279,11 +251,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             }
         }
 
-        if (
-            status < 300 &&
-            req.params.id != undefined &&
-            res.locals.user instanceof Person
-        ) {
+        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
             try {
                 status = await putSubjects(req.params.id, b, res.locals.user);
             } catch (e) {
@@ -302,7 +270,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
 
 /**
  * @api {PUT} /user/:id/active/:active putUserActive
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Set the active status of the user.
  *
@@ -333,22 +301,18 @@ export async function putActiveHandler(req: Request, res: Response) {
     let status = 204;
 
     try {
-        if (
-            req.params.id != undefined &&
+        if (req.params.id != undefined &&
             req.params.active != undefined &&
-            res.locals.user instanceof Person
-        ) {
+            res.locals.user instanceof Person) {
             try {
+
                 let active: boolean;
                 if (req.params.active == "true") {
                     active = true;
                 } else if (req.params.active == "false") {
                     active = false;
                 } else {
-                    logger.warn(
-                        "Invalid parameter :active for PUT /user/active: " +
-                        req.params.active
-                    );
+                    logger.warn("Invalid parameter :active for PUT /user/active: " + req.params.active);
                     status = 400;
                 }
 
@@ -376,72 +340,7 @@ export async function putActiveHandler(req: Request, res: Response) {
 }
 
 
-/**
- * @api {PUT} /user/:id/description PutStudentDescription
- * @apiVersion 1.1.0
- * @apiDescription
- * Set the description of the user.
- *
- * This endpoint allows editing of the description of a student.
- * Setting a description will automatically make the student an instructor.
- * If a user is an instructor the description can't be removed
- *
- * @apiName PutStudentDescription
- * @apiGroup User
- *
- * @apiUse Authentication
- * @apiUse ContentType
- *
- * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/description -d "<REQUEST>"
- *
- * @apiParam (URL Parameter) {string} id User Id
- *
- * @apiUse UserSubjects
- * @apiUse Subject
- *
- * @apiUse StatusNoContent
- * @apiUse StatusBadRequest
- * @apiUse StatusUnauthorized
- * @apiUse StatusForbidden
- * @apiUse StatusInternalServerError
- */
-export async function putDescriptionHandler(req: Request, res: Response) {
-    let status = 204;
-    try {
-        let b = req.body;
-        if (req.params.id != undefined && res.locals.user instanceof Person) {
-            if (b instanceof Object && b.description != undefined) {
-                const studentDescription: ApiStudentDescription = b;
-                try {
-                    if (status < 300) {
-                        status = await putDescription(res.locals.user, req.params.id, studentDescription);
-                    }
-                } catch (e) {
-                    logger.warn("Error during GET /user: " + e.message);
-                    logger.debug(e);
-                    status = 500;
-                }
-            } else {
-                logger.error("Invalid format for subjects: Expected StudentDescription Object");
-                logger.debug(b);
-                status = 400;
-            }
-        } else {
-            status = 500;
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
-}
-
-async function get(
-    wix_id: string,
-    person: Pupil | Student
-): Promise<ApiGetUser> {
+async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser> {
     const entityManager = getManager();
 
     if (person == null) {
@@ -449,12 +348,7 @@ async function get(
         return null;
     }
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " +
-            person.wix_id +
-            " tried to access data from id " +
-            wix_id
-        );
+        logger.warn("Person with id " + person.wix_id + " tried to access data from id " + wix_id);
         return null;
     }
 
@@ -468,10 +362,7 @@ async function get(
     if (person instanceof Student) {
         apiResponse.type = "student";
         apiResponse.screeningStatus = await person.screeningStatus();
-        apiResponse.matchesRequested =
-            person.openMatchRequestCount <= 2
-                ? person.openMatchRequestCount
-                : 2; // todo support for legacy values
+        apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
         apiResponse.matches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
 
@@ -485,12 +376,9 @@ async function get(
             apiMatch.lastname = matches[i].pupil.lastname;
             apiMatch.email = matches[i].pupil.email;
             apiMatch.grade = Number.parseInt(matches[i].pupil.grade);
-            apiMatch.subjects = subjectsToStringArray(
-                JSON.parse(matches[i].pupil.subjects)
-            );
+            apiMatch.subjects = subjectsToStringArray(JSON.parse(matches[i].pupil.subjects));
             apiMatch.uuid = matches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
@@ -498,15 +386,9 @@ async function get(
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
         apiResponse.grade = parseInt(person.grade);
-        apiResponse.matchesRequested =
-            person.openMatchRequestCount <= 1
-                ? person.openMatchRequestCount
-                : 1;
+        apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
-        apiResponse.subjects = convertSubjects(
-            JSON.parse(person.subjects),
-            false
-        );
+        apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
 
         let matches = await entityManager.find(Match, {
             pupil: person,
@@ -537,11 +419,7 @@ async function get(
     return apiResponse;
 }
 
-async function putPersonal(
-    wix_id: string,
-    req: ApiPutUser,
-    person: Pupil | Student
-): Promise<number> {
+async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Student): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -550,12 +428,7 @@ async function putPersonal(
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " +
-            person.wix_id +
-            "tried to access data from id " +
-            wix_id
-        );
+        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -587,30 +460,21 @@ async function putPersonal(
             pupil: person,
             dissolved: false
         });
-        if (
-            req.matchesRequested > 1 ||
+        if (req.matchesRequested > 1 ||
             req.matchesRequested < 0 ||
             !Number.isInteger(req.matchesRequested) ||
-            req.matchesRequested + matchCount > 1
-        ) {
-            logger.warn(
-                "User (with " +
-                matchCount +
-                " matches) wants to set invalid number of matches requested: " +
-                req.matchesRequested
-            );
+            req.matchesRequested + matchCount > 1) {
+
+            logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
 
         person.openMatchRequestCount = req.matchesRequested;
 
-        if (req.grade) {
-            //todo: advanced checks...
+        if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
             person.grade = req.grade + ". Klasse";
         } else {
-            logger.warn(
-                "User who is a pupil wants to set a grade of null or undefined! It is ignored."
-            );
+            logger.warn("User who is a pupil wants to set an invalid grade o! It is ignored.");
         }
 
         type = Pupil;
@@ -623,11 +487,7 @@ async function putPersonal(
     try {
         await entityManager.save(type, person);
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
-        logger.info(
-            `Updated user ${person.firstname} ${person.lastname} (ID ${
-                person.wix_id
-            }, Type ${type.toString()}`
-        );
+        logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${type.toString()}`);
         logger.debug(person);
     } catch (e) {
         logger.error("Can't update user: " + e.message);
@@ -638,11 +498,7 @@ async function putPersonal(
     return 204;
 }
 
-async function putSubjects(
-    wix_id: string,
-    req: ApiSubject[],
-    person: Pupil | Student
-): Promise<number> {
+async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | Student): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -651,12 +507,7 @@ async function putSubjects(
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " +
-            person.wix_id +
-            "tried to access data from id " +
-            wix_id
-        );
+        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -664,9 +515,17 @@ async function putSubjects(
 
     let type: ObjectType<Person>;
     if (person instanceof Student) {
+
         type = Student;
+        if (!person.isStudent)
+            person.isStudent = true;
+
     } else if (person instanceof Pupil) {
+
         type = Pupil;
+        if (!person.isPupil)
+            person.isPupil = true;
+
     } else {
         logger.error("Unknown type of person: " + typeof person);
         logger.debug(person);
@@ -688,11 +547,7 @@ async function putSubjects(
     return 204;
 }
 
-async function putActive(
-    wix_id: string,
-    active: boolean,
-    person: Pupil | Student
-): Promise<number> {
+async function putActive(wix_id: string, active: boolean, person: Pupil | Student): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -702,11 +557,7 @@ async function putActive(
     }
     if (person.wix_id != wix_id) {
         logger.warn(
-            "Person with id " +
-            person.wix_id +
-            " tried to access data from id " +
-            wix_id
-        );
+            "Person with id " + person.wix_id + " tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -724,21 +575,14 @@ async function putActive(
     try {
         if (active && !person.active) {
             // Activate if deactivated
-            logger.info(
-                "Activating person " + person.firstname + " " + person.lastname
-            );
+            logger.info("Activating person " + person.firstname + " " + person.lastname);
             person.active = true;
 
             await entityManager.save(type, person);
             await transactionLog.log(new DeActivateEvent(person, true));
         } else if (!active && person.active) {
             // Deactivate if active
-            logger.info(
-                "Deactivating person " +
-                person.firstname +
-                " " +
-                person.lastname
-            );
+            logger.info("Deactivating person " + person.firstname + " " + person.lastname);
 
             // Step 1: Dissolve all matches
             let options;
@@ -765,9 +609,7 @@ async function putActive(
             await transactionLog.log(new DeActivateEvent(person, false));
         }
     } catch (e) {
-        logger.error(
-            "Can't " + (active ? "" : "de") + "activate user: " + e.message
-        );
+        logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);
         logger.debug(person, e);
         return 500;
     }
@@ -775,51 +617,8 @@ async function putActive(
     return 204;
 }
 
-async function putDescription(student: Person, wix_id: string, obj: ApiStudentDescription) {
-    const entityManager = getManager();
-    const transactionLog = getTransactionLog();
-
-    if (!(student instanceof Student)) {
-        logger.warn(`Requestor is not a student (type ${typeof student}`);
-        logger.debug(student);
-        return 403;
-    }
-
-    if (student.wix_id != wix_id) {
-        logger.warn(`Student (ID ${student.wix_id}) wants to edit another person (ID ${wix_id}`);
-        logger.debug(student);
-        return 403;
-    }
-
-    if (obj.description.length > 2048 || obj.description.length == 0) {
-        logger.warn(`Student wants to set description of length ${obj.description.length}`);
-        logger.debug(obj);
-        return 400;
-    }
-
-    const oldStudent = Object.assign({}, student);
-
-    student.instructorDescription = obj.description;
-    student.isInstructor = true;
-
-    try {
-        await entityManager.save(Student, student);
-        await transactionLog.log(new UpdateStudentDescriptionEvent(student, oldStudent));
-        logger.info(`Updated student description (ID: ${student.id}`);
-    } catch (e) {
-        logger.error("Can't store user description:", e.message);
-        logger.debug(e);
-        return 500;
-    }
-
-    return 204;
-}
-
 // Support for legacy formats
-function convertSubjects(
-    oldSubjects: Array<any>,
-    longtype: boolean = true
-): ApiSubject[] {
+function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): ApiSubject[] {
     let subjects = [];
     for (let i = 0; i < oldSubjects.length; i++) {
         if (typeof oldSubjects[i] == "string") {

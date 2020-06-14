@@ -3,105 +3,163 @@ import {
     Entity,
     EntityManager,
     Index,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
     OneToMany,
-    OneToOne,
+    OneToOne
 } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { Course } from "./Course";
+import { Lecture } from './Lecture';
+import { CourseTag } from './CourseTag';
+import { State } from './State';
+import { Subcourse } from "./Subcourse";
+
+export enum TeacherModule {
+    INTERNSHIP = "internship",
+    SEMINAR = "seminar"
+}
 
 @Entity()
 export class Student extends Person {
+    /*
+     * Management data
+     */
     @Column()
     @Index({
-        unique: true,
+        unique: true
     })
     wix_id: string;
 
     @Column()
     wix_creation_date: Date;
 
-    @Column("date", {
-        nullable: true,
-    })
-    birthday: Date;
-
-    @Column()
-    subjects: string;
-
+    /*
+     * General data
+     */
     @Column({
-        nullable: true,
+        nullable: true
     })
     msg: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     phone: string;
 
-    @OneToMany((type) => Match, (match) => match.student, {
-        nullable: true,
+    @Column({
+        nullable: true
+    })
+    feedback: string;
+
+    @Column({
+        default: false
+    })
+    newsletter: boolean;
+
+    /*
+     *  Student data
+     */
+    @Column({
+        default: false
+    })
+    isStudent: boolean;
+
+    @Column({
+        nullable: true
+    })
+    subjects: string;
+
+    @OneToMany(type => Match, match => match.student, {
+        nullable: true
     })
     matches: Promise<Match[]>;
 
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    openMatchRequestCount: number;
+
+    /*
+     * Instructor data
+     */
+    @Column({
+        default: true
+    })
+    isInstructor: boolean;
+
+    @ManyToMany(type => Course, course => course.instructors)
+    courses: Course[];
+
+    @ManyToMany(type => Subcourse, subcourse => subcourse.instructors)
+    subcourses: Subcourse[];
+
+    @OneToMany(type => Lecture, lecture => lecture.instructor)
+    lectures: Lecture[];
+
+    /*
+     * Teacher data
+     */
+    @Column({
+        type: 'enum',
+        enum: State,
+        nullable: true,
+        default: State.OTHER
+    })
+    state: State;
+
+    @Column({
+        nullable: true
+    })
+    university: string;
+
+    @Column({
+        type: "enum",
+        enum: TeacherModule,
+        nullable: true,
+        default: undefined // See typeorm/typeorm#5371: Setting this to null causes typeORM to generate 'null' as a string.
+                           // This is fine for now because enums in postgres are DEFAULT NULL anyways 
+    })
+    module: TeacherModule;
+
+    @Column({
+        nullable: true
+    })
+    moduleHours: number;
+
+    /*
+     * Other data
+     */
     @OneToOne((type) => Screening, (screening) => screening.student, {
         nullable: true,
-        cascade: true,
+        cascade: true
     })
     screening: Promise<Screening>;
 
     @Column({
         nullable: false,
-        default: 1,
+        default: 0
     })
-    openMatchRequestCount: number;
-
-    @Column({
-        nullable: true,
-    })
-    feedback: string;
-
-    @Column({
-        default: true
-    })
-    isStudent: boolean;
-
-    @Column({
-        default: false
-    })
-    isInstructor: boolean;
+    sentScreeningReminderCount: number;
 
     @Column({
         nullable: true,
         default: null
     })
-    instructorDescription: string;
+    lastSentScreeningInvitationDate: Date;
 
-    @OneToMany(type => Course, course => course.instructor)
-    courses: Course[];
-    @Column({
-        nullable: false,
-        default: 0,
-    })
-    sentScreeningReminderCount: number
-    
-    @Column({
-        nullable: true,
-        default: null,
-    })
-    lastSentScreeningInvitationDate: Date
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
             screeningResult.phone === undefined
                 ? this.phone
                 : screeningResult.phone;
-        this.birthday =
-            screeningResult.birthday === undefined
-                ? this.birthday
-                : screeningResult.birthday;
         this.subjects =
             screeningResult.subjects === undefined
                 ? this.subjects
@@ -146,6 +204,7 @@ export enum ScreeningStatus {
     Accepted = "ACCEPTED",
     Rejected = "REJECTED",
 }
+
 export function getAllStudents(
     manager: EntityManager
 ): Promise<Student[]> | undefined {

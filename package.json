@@ -21,11 +21,11 @@
     "web:docs": "apidoc -i web/controllers -i common -o web/public/docs",
     "jest:clear": "./node_modules/.bin/jest --clearCache",
     "typeorm": "npm run build:clean && npx typeorm",
-    "database:migration:new:empty": "npm run typeorm -- migration:create -n",
-    "database:migration:new:auto": "npm run typeorm -- migration:generate -n",
-    "database:migration:run": "npm run typeorm -- migration:run",
-    "database:migration:revert": "npm run typeorm -- migration:revert",
-    "database:migration:show": "npm run typeorm -- migration:show"
+    "db:migration:create": "npm run typeorm -- migration:create -n",
+    "db:migration:generate": "npm run typeorm -- migration:generate -n",
+    "db:migration:run": "npm run typeorm -- migration:run",
+    "db:migration:revert": "npm run typeorm -- migration:revert",
+    "db:migration:show": "npm run typeorm -- migration:show"
   },
   "dependencies": {
     "@types/bcrypt": "^3.0.0",
