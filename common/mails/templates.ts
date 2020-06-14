@@ -163,4 +163,34 @@ export const mailjet = {
             variables: variables,
         };
     },
+    COURSESUPCOMINGREMINDERINSTRUCTOR: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseupcomingfirstlecturereminderinstructors",
+            id: 1498911,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs startet bald!",
+            disabled: false,
+            variables: variables,
+        };
+    },
+    COURSESUPCOMINGREMINDERPARTICIPANT: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseupcomingfirstlecturereminderparticipants",
+            id: 1498899,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs startet bald!",
+            disabled: false,
+            variables: variables,
+        };
+    },
 };
