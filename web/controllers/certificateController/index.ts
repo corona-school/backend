@@ -54,14 +54,13 @@ export async function certificateHandler(req: Request, res: Response) {
         // todo rename parameter pupil to match
         if (req.params.student != undefined && req.params.pupil != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
 
-            // TODO: typehint this
             let params = {
-                endDate: req.query.endDate || moment().format("X"),
-                subjects: req.query.subjects || "Mathematik, Biologie, Altgriechisch",
-                hoursPerWeek: Number.parseInt(req.query.hoursPerWeek, 10) || 0,
-                hoursTotal: Number.parseInt(req.query.hoursTotal, 10) || 0,
-                medium: req.query.medium || "Taschenrechner mit Programmierfunktion",
-                categories: req.query.categories || "Liste\nListe2\nListe3"
+                endDate: req.query.endDate as string || moment().format("X") as string,
+                subjects: req.query.subjects as string || "Mathematik, Biologie, Altgriechisch",
+                hoursPerWeek: Number.parseInt(req.query.hoursPerWeek as string, 10) || 0,
+                hoursTotal: Number.parseInt(req.query.hoursTotal as string, 10) || 0,
+                medium: req.query.medium as string || "Taschenrechner mit Programmierfunktion",
+                categories: req.query.categories as string || "Liste\nListe2\nListe3"
             };
 
             let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params);
