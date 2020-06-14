@@ -22,6 +22,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
+import { sendSubcourseCancelNotifications } from '../../../common/mails/courses';
 
 const logger = getLogger();
 
@@ -1733,6 +1734,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                         course.subcourses[i].cancelled = true;
                         // todo inform participants
                         await em.save(Subcourse, course.subcourses[i]);
+                        sendSubcourseCancelNotifications(course, course.subcourses[i]);
                     }
                 }
 
@@ -1851,7 +1853,6 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
     }
 
     if (!subcourse.cancelled) {
-        // todo inform participants
         subcourse.cancelled = true;
     } else {
         logger.warn(`User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
@@ -1861,6 +1862,7 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
 
     try {
         await entityManager.save(Subcourse, subcourse);
+        sendSubcourseCancelNotifications(course, subcourse);
         // todo add transactionlog
         logger.info("Successfully cancelled subcourse");
 
