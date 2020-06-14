@@ -148,4 +148,19 @@ export const mailjet = {
             variables: variables,
         };
     },
+    COURSESCANCELLED: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coursecancelledparticipantnotification",
+            id: 1498806,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs wurde abgesagt!",
+            disabled: false,
+            variables: variables,
+        };
+    },
 };
