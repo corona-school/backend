@@ -31,7 +31,7 @@ async function getAllStudentsWithPendingReminders(manager: EntityManager) {
         .select("s")
         .from(Student, "s")
         .leftJoinAndSelect("s.screening", "sc")
-        .where("s.verification IS NULL AND sc IS NULL AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }) //email verified | never screened | everything less than 0 is meant to be: do not sent any screening reminders
+        .where("s.active IS TRUE AND s.verification IS NULL AND sc IS NULL AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }) //active | email verified | never screened | everything less than 0 is meant to be: do not sent any screening reminders
         .getMany(); 
 }
 
