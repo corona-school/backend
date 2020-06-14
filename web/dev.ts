@@ -5,6 +5,7 @@ import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
+import { hashPassword } from "../common/util/hashing";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -118,7 +119,8 @@ export async function setupDevDB() {
     screener.active = true;
     screener.email = "maxi-screening@example.org";
     screener.oldNumberID = -1;
-    screener.password = "🔑";
+    // Screeners use another hashing algorithm than regular users
+    screener.password = await hashPassword("screener");
     screener.verified = true;
 
     screeners.push(screener);
