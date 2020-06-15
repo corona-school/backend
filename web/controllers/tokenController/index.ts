@@ -158,7 +158,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
 
     try {
         if (req.query.email) {
-            let email = req.query.email.trim().toLowerCase();
+            let email = (req.query.email as string).trim().toLowerCase();
 
             const entityManager = getManager();
             const transactionLog = getTransactionLog();
