@@ -2227,4 +2227,24 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-// todo implement
+export async function groupMailHandler(req: Request, res: Response) {
+
+    let status = 204;
+
+    if(req.params.id != undefined
+    && req.params.subid != undefined
+    && typeof req.body.subject == "string"
+    && typeof req.body.body == "string") {
+        status = await sendGroupMail(Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+    } else {
+        logger.warn("Missing or invalid parameters for groupMailHandler");
+        status = 400;
+    }
+
+    res.status(status).end();
+}
+
+async function sendGroupMail(courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+    // TODO
+    return 204;
+}
