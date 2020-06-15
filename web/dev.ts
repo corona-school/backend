@@ -196,16 +196,19 @@ export async function setupDevDB() {
     t = new CourseTag();
     t.name = "Prüfungsvorbereitung";
     t.identifier = "preparation";
+    t.category = "coaching";
     tags.push(t);
 
     t = new CourseTag();
     t.name = "Selbstsorganisation";
     t.identifier = "organisation";
+    t.category = "coaching";
     tags.push(t);
 
     t = new CourseTag();
     t.name = "Persönlichkeitsbildung";
     t.identifier = "personality";
+    t.category = "coaching";
     tags.push(t);
 
     for (let i = 0; i < tags.length; i++) {
