@@ -6,6 +6,7 @@ import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
 import { hashPassword } from "../common/util/hashing";
+import { CourseTag } from "../common/entity/CourseTag";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -108,6 +109,108 @@ export async function setupDevDB() {
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
         console.log("Inserted Dev Match " + i);
+    }
+
+    // course tags
+
+    const tags: CourseTag[] = [];
+
+    let t = new CourseTag();
+    t.name = "easy";
+    t.identifier = "easy";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "medium";
+    t.identifier = "medium";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "difficult";
+    t.identifier = "difficult";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Mathematik";
+    t.identifier = "Mathematics";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Englisch";
+    t.identifier = "English";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Deutsch";
+    t.identifier = "German";
+    t.category = "revision";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Spiel&Spaß";
+    t.identifier = "play&fun";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Kreativität";
+    t.identifier = "creativity";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Sport & Bewegung";
+    t.identifier = "sports";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Naturwissenschaften";
+    t.identifier = "science";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Musik";
+    t.identifier = "music";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Gesundheit";
+    t.identifier = "health";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Interkulturelles";
+    t.identifier = "intercultural";
+    t.category = "club";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Prüfungsvorbereitung";
+    t.identifier = "preparation";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Selbstsorganisation";
+    t.identifier = "organisation";
+    tags.push(t);
+
+    t = new CourseTag();
+    t.name = "Persönlichkeitsbildung";
+    t.identifier = "personality";
+    tags.push(t);
+
+    for (let i = 0; i < tags.length; i++) {
+        await entityManager.save(CourseTag, tags[i]);
+        console.log("Inserted Course Tag " + tags[i].identifier);
     }
 
     // Screening results
