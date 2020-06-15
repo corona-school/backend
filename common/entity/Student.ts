@@ -16,13 +16,13 @@ import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
-import { CourseTag } from './CourseTag';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
-    SEMINAR = "seminar"
+    SEMINAR = "seminar",
+    OTHER = "other"
 }
 
 @Entity()
