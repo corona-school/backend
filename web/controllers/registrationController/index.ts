@@ -169,6 +169,8 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
             case "seminar":
                 tutor.module = TeacherModule.SEMINAR;
                 break;
+            case "other":
+                tutor.module = TeacherModule.OTHER;
             default:
                 logger.warn("Tutor registration has invalid string for teacher module " + apiTutor.module);
                 return 400;
