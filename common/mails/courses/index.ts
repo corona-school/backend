@@ -3,6 +3,8 @@ import { Subcourse } from "../../entity/Subcourse";
 import { mailjetTemplates, sendTemplateMail } from "../index";
 import moment from "moment";
 import { getLogger } from "log4js";
+import { Student } from "../../entity/Student";
+import { Pupil } from "../../entity/Pupil";
 
 const logger = getLogger();
 
@@ -26,4 +28,24 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
         });
         await sendTemplateMail(mail, participant.email);
     }
+}
+
+export async function sendCourseUpcomingReminderInstructor(instructor: Student, course: Course, firstLecture: Date) {
+    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
+        participantFirstname: instructor.firstname,
+        courseName: null,
+        firstLectureDate: moment(null).format("DD.MM.YYYY"),
+        firstLectureTime: moment(null).format("HH:mm")
+    });
+    await sendTemplateMail(mail, instructor.email);
+}
+
+export async function sendCourseUpcomingReminderParticipant(participant: Pupil, course: Course, firstLecture: Date) {
+    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
+        participantFirstname: null,
+        courseName: null,
+        firstLectureDate: moment(null).format("DD.MM.YYYY"),
+        firstLectureTime: moment(null).format("HH:mm")
+    });
+    await sendTemplateMail(mail, participant.email);    
 }
