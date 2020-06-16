@@ -10,6 +10,7 @@ import {
 import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
+import { ApiCourseUpdate } from "../../common/dto/ApiCourseUpdate";
 
 export enum CourseState {
     CREATED = "created",
@@ -80,5 +81,16 @@ export class Course {
         default: CourseState.CREATED
     })
     courseState: CourseState;
+
+
+    updateCourse(update: ApiCourseUpdate) {
+        if(!update.isValid())
+            throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
+
+        for(const [key, value] of Object.entries(update)) {
+            if(typeof value !== "undefined")
+                this[key] = value;
+        }
+    }
 
 }

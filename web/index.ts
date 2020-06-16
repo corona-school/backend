@@ -167,6 +167,10 @@ createConnection().then(() => {
             "/courses",
             screeningController.getCourses
         );
+        screenerApiRouter.post(
+            "/course/:id/update",
+            screeningController.updateCourse
+        );
 
         app.use("/api/screening", screenerApiRouter);
     }
