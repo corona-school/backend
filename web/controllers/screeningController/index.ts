@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager } from "typeorm";
+import { getManager, Like } from "typeorm";
 import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentToScreen } from "../../../common/dto/StudentToScreen";
@@ -14,6 +14,7 @@ import AccessedByScreenerEvent from "../../../common/transactionlog/types/Access
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
+import { Course } from "../../../common/entity/Course";
 
 const logger = getLogger();
 
@@ -299,5 +300,54 @@ export async function updateScreenerByMailHandler(
             logger.warn(err.message);
         }
         next();
+    }
+}
+
+/**
+ * @api {POST} /courses getCourses
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * 
+ * Retrieves the first 20 courses that match the specified filters.
+ * 
+ * 
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getCourses
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screening/courses
+ *
+ * @apiParam (JSON Body) {string} state the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (JSON Body) {string} search A query text to be searched in the title and description
+ */
+export async function getCourses(req: Request, res: Response) {
+    try {
+        const { state, search } = req.body;
+
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(state) === -1)
+            return res.status(400).send("invalid value for parameter 'state'");
+
+        if (typeof search !== "undefined" && typeof search !== "string")
+            return res.status(400).send("invalid value for parameter 'search', must be string.");
+
+        const where = state
+          ? (search 
+            ? [{ courseState: state, title: Like(`%${search}%`)}, /* OR */ { courseState: state, description: Like(`%${search}%`) }] 
+            : { courseState: state })
+          : (search ? [{ title: Like(`%${search}%`)}, /* OR */ { description: Like(`%${search}%`)}] : {});
+
+        const courses = await getManager().find(Course, {
+            where,
+            take: 20,
+        });
+
+        return res.json({ courses });
+    } catch (error) {
+        logger.warn(error.message);
+        return res.status(500).send("internal server error");
     }
 }
