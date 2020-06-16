@@ -10,7 +10,7 @@ import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
-import { sendFirstScreeningInvitation } from "../../../common/mails/screening";
+import { sendFirstScreeningInvitationToStudent } from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -81,7 +81,7 @@ export async function verifyToken(token: string): Promise<string | null> {
 
             try {
                 await sendLoginTokenMail(student, uuid);
-                await sendFirstScreeningInvitation(student); //after the student has verified her*his email address, we need to invite them to the screening interview
+                await sendFirstScreeningInvitationToStudent(entityManager, student); //after the student has verified her*his email address, we need to invite them to the screening interview
             } 
             catch (mailerror) {
                 logger.error(
