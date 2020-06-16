@@ -18,10 +18,13 @@ import {
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
 import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
+import CancelSubcourseEvent from '../../../common/transactionlog/types/CancelSubcourseEvent';
+import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourseEvent';
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
+import { sendSubcourseCancelNotifications } from '../../../common/mails/courses';
 
 const logger = getLogger();
 
@@ -1731,8 +1734,8 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                 for (let i = 0; i < course.subcourses.length; i++) {
                     if (!course.subcourses[i].cancelled) {
                         course.subcourses[i].cancelled = true;
-                        // todo inform participants
                         await em.save(Subcourse, course.subcourses[i]);
+                        sendSubcourseCancelNotifications(course, course.subcourses[i]);
                     }
                 }
 
@@ -1744,7 +1747,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                 logger.debug(course, e);
             });
 
-            // todo add transaction log
+            transactionLog.log(new CancelCourseEvent(student, course))
             logger.info("Successfully cancelled course");
 
             return 204;
@@ -1851,7 +1854,6 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
     }
 
     if (!subcourse.cancelled) {
-        // todo inform participants
         subcourse.cancelled = true;
     } else {
         logger.warn(`User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
@@ -1861,7 +1863,8 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
 
     try {
         await entityManager.save(Subcourse, subcourse);
-        // todo add transactionlog
+        sendSubcourseCancelNotifications(course, subcourse);
+        transactionLog.log(new CancelSubcourseEvent(student, subcourse))
         logger.info("Successfully cancelled subcourse");
 
         return 204;
