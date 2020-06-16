@@ -94,7 +94,9 @@ export class Student extends Person {
     })
     isInstructor: boolean;
 
-    @ManyToMany(type => Course, course => course.instructors)
+    @ManyToMany(type => Course, course => course.instructors, {
+        eager: true
+    })
     courses: Course[];
 
     @ManyToMany(type => Subcourse, subcourse => subcourse.instructors)

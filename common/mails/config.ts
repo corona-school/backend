@@ -15,6 +15,7 @@ const DEFAULTSENDERS = {
     anmeldung: '"Corona School Team" <anmeldung@corona-school.de>',
     noreply: '"Corona School Team" <noreply@corona-school.de>',
     screening: '"Corona School Team" <screening@corona-school.de>',
+    support: '"Corona School Team" <support@corona-school.de>',
 };
 
 export { mailjetSmtp, DEFAULTSENDERS };
