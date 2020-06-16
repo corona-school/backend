@@ -60,6 +60,7 @@ export async function setupDevDB() {
     s.isStudent = true;
     s.verification = null;
     s.verifiedAt = new Date(new Date().getTime() - 110000);
+    s.lastSentScreeningInvitationDate = s.verifiedAt;
     s.authToken = sha512("authtokenS1");
     s.wix_id = "00000000-0000-0002-0001-1b4c4c526364";
     s.wix_creation_date = new Date(new Date().getTime() - 11000000);
@@ -79,6 +80,7 @@ export async function setupDevDB() {
     s.isStudent = true;
     s.verification = null;
     s.verifiedAt = new Date(new Date().getTime() - 220000);
+    s.lastSentScreeningInvitationDate = s.verifiedAt;
     s.authToken = sha512("authtokenS2");
     s.wix_id = "00000000-0000-0002-0002-1b4c4c526364";
     s.wix_creation_date = new Date(new Date().getTime() - 22000000);
