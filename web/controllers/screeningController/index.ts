@@ -334,11 +334,14 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
-        const where = state
+        const where = (state
           ? (search 
-            ? [{ courseState: state, title: Like(`%${search}%`)}, /* OR */ { courseState: state, description: Like(`%${search}%`) }] 
+            ? [{ courseState: state, name: Like(`%${search}%`)}, /* OR */ { courseState: state, description: Like(`%${search}%`) }] 
             : { courseState: state })
-          : (search ? [{ title: Like(`%${search}%`)}, /* OR */ { description: Like(`%${search}%`)}] : {});
+          : (search 
+            ? [{ name: Like(`%${search}%`)}, /* OR */ { description: Like(`%${search}%`)}] 
+            : {})
+        );
 
         const courses = await getManager().find(Course, {
             where,
