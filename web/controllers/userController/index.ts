@@ -410,11 +410,16 @@ async function get(
                 ? person.openMatchRequestCount
                 : 2; // todo support for legacy values
         apiResponse.matches = [];
+        apiResponse.dissolved_matches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
 
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
+        });        
+        let dissolved_matches = await entityManager.find(Match, {
+            student: person,
+            dissolved: true
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -431,6 +436,22 @@ async function get(
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
+        }
+        for (let i = 0; i < dissolved_matches.length; i++) {
+            let apiMatch = new ApiMatch();
+            apiMatch.firstname = dissolved_matches[i].pupil.firstname;
+            apiMatch.lastname = dissolved_matches[i].pupil.lastname;
+            apiMatch.email = dissolved_matches[i].pupil.email;
+            apiMatch.grade = Number.parseInt(dissolved_matches[i].pupil.grade);
+            apiMatch.subjects = subjectsToStringArray(
+                JSON.parse(dissolved_matches[i].pupil.subjects)
+            );
+            apiMatch.uuid = dissolved_matches[i].uuid;
+            apiMatch.jitsilink =
+                "https://meet.jit.si/CoronaSchool-" + dissolved_matches[i].uuid;
+            apiMatch.date = dissolved_matches[i].createdAt.getTime();
+
+            apiResponse.dissolved_matches.push(apiMatch);
         }
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
@@ -464,6 +485,7 @@ async function get(
 
             apiResponse.matches.push(apiMatch);
         }
+        apiResponse.dissolved_matches = [];
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);
