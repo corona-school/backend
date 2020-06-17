@@ -90,7 +90,7 @@ export class Student extends Person {
      * Instructor data
      */
     @Column({
-        default: true
+        default: false
     })
     isInstructor: boolean;
 
