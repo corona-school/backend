@@ -18,6 +18,7 @@ import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
+import { InstructorScreening } from "./InstructorScreening";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -154,6 +155,23 @@ export class Student extends Person {
     })
     lastSentScreeningInvitationDate: Date;
 
+    @OneToOne((type) => InstructorScreening, (instructorScreening) => instructorScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    instructorScreening: Promise<InstructorScreening>; 
+    
+    @Column({
+        nullable: false,
+        default: 0
+    })
+    sentInstructorScreeningReminderCount: number;    
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastSentInstructorScreeningInvitationDate: Date;    
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
@@ -186,6 +204,20 @@ export class Student extends Person {
         }
 
         if (screening.success) {
+            return ScreeningStatus.Accepted;
+        } else {
+            return ScreeningStatus.Rejected;
+        }
+    }
+
+    async instructorScreeningStatus(): Promise<ScreeningStatus> {
+        const instructorScreening = await this.instructorScreening;
+
+        if (!instructorScreening) {
+            return ScreeningStatus.Unscreened;
+        }
+
+        if (instructorScreening.success) {
             return ScreeningStatus.Accepted;
         } else {
             return ScreeningStatus.Rejected;
