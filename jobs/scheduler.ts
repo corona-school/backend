@@ -11,50 +11,50 @@ const logger = getLogger();
 
 const activeConnectionMutex = new Mutex();
 let jobConnection: Connection;
-/// Returns the connection(pool) that should be used for all the jobs. The returned connection is always active, i.e. connected. 
+/// Returns the connection(pool) that should be used for all the jobs. The returned connection is always active, i.e. connected.
 async function getActiveJobConnection() {
     const release = await activeConnectionMutex.acquire(); //restrict access to this function to only one concurrent caller (to prevent creating two default connections, which occurs primarily if two jobs are scheduled at just the same time)
-    
+
     if (!jobConnection) {
-        logger.info("Create new connection to database...")
-        jobConnection = await createConnection()
+        logger.info("Create new connection to database...");
+        jobConnection = await createConnection();
     }
     else if (!jobConnection.isConnected) {
-        logger.info("Job database connection is no longer connected. Reconnect...")
+        logger.info("Job database connection is no longer connected. Reconnect...");
         //Do this always, to have no transaction log that uses a connection that was closed (which then would result in errors)
-        invalidateActiveTransactionLog() // that might not be necessary here, but include it for safety reasons
-        await jobConnection.connect()
+        invalidateActiveTransactionLog(); // that might not be necessary here, but include it for safety reasons
+        await jobConnection.connect();
     }
 
     release();
 
-    return jobConnection
+    return jobConnection;
 }
 
 
 function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
     return async function() { //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
         //"this" is the context of the cron-job -> see definition of node cron package
-        this.stop() //start stop, so that the same job is never executed in parallel
+        this.stop(); //start stop, so that the same job is never executed in parallel
 
         try {
             //Get the connection that should be used to execute the job in
             //we assume that the returned connection is always active
-            const connection = await jobConnectionGetter()
-            
+            const connection = await jobConnectionGetter();
+
             //The entity manager that should be used to manage the entities
-            const manager = connection.manager
+            const manager = connection.manager;
 
             //execute the job with the manager
-            await job(manager)
+            await job(manager);
         }
         catch (e) {
-            logger.error(`Can't execute job: ${job.name} due to error with message: ${e.message}`)
-            logger.debug(e)
+            logger.error(`Can't execute job: ${job.name} due to error with message: ${e.message}`);
+            logger.debug(e);
         }
 
-        this.start()
-    }
+        this.start();
+    };
 }
 
 
@@ -66,7 +66,7 @@ export async function scheduleJobs(jobs: CSCronJob[]) {
             cronTime: j.cronTime,
             runOnInit: false,
             onTick: executeJob(j.jobFunction, getActiveJobConnection)
-        })
+        });
     }
     );
 

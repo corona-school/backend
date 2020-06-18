@@ -5,15 +5,15 @@ import { mailjetTemplates, sendTemplateMail } from "../index";
 export async function sendFirstScreeningInvitationMail(student: Student) {
     const mail = mailjetTemplates.STUDENTFIRSTSCREENINGINVITATION({
         personFirstname: student.firstname,
-        confirmationURL: student.screeningURL(),
+        confirmationURL: student.screeningURL()
     });
     await sendTemplateMail(mail, student.email);
 }
 /// Use this function to send a screening reminder mail to the student
 export async function sendScreeningInvitationReminderMail(student: Student) {
     const mail = mailjetTemplates.STUDENTSCREENINGREMINDER({
-        personFirstname: student.firstname, 
-        confirmationURL: student.screeningURL(),
+        personFirstname: student.firstname,
+        confirmationURL: student.screeningURL()
     });
     await sendTemplateMail(mail, student.email);
 }

@@ -28,7 +28,7 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
         for (let subcourse of subcourses) {
             // skip if this subcourse has no lectures
             if(subcourse.lectures.length == 0) continue;
-            
+
             // get first lecture
             let firstLecture = subcourse.lectures[0];
             for (let i = 1; i < subcourse.lectures.length; i++) {

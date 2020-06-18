@@ -124,7 +124,7 @@ export class Student extends Person {
         enum: TeacherModule,
         nullable: true,
         default: undefined // See typeorm/typeorm#5371: Setting this to null causes typeORM to generate 'null' as a string.
-                           // This is fine for now because enums in postgres are DEFAULT NULL anyways 
+        // This is fine for now because enums in postgres are DEFAULT NULL anyways
     })
     module: TeacherModule;
 

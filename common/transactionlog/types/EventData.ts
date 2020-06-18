@@ -1,1 +1,1 @@
-export default interface EventData {}
+export interface EventData {}

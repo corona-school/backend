@@ -66,7 +66,7 @@ export async function setupDevDB() {
     s.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s.openMatchRequestCount = 1;
     students.push(s);

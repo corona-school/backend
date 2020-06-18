@@ -53,5 +53,5 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil, 
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
-    await sendTemplateMail(mail, participant.email);    
+    await sendTemplateMail(mail, participant.email);
 }

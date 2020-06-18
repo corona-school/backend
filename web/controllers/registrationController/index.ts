@@ -53,16 +53,16 @@ export async function postTutorHandler(req: Request, res: Response) {
                     for(let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
                         if(typeof elem.name !== 'string'
-                        || typeof elem.minGrade !== 'number' 
+                        || typeof elem.minGrade !== 'number'
                         || typeof elem.maxGrade !== 'number') {
                             status = 400;
-                            logger.error("Tutor registration with isTutor has malformed subjects.")
+                            logger.error("Tutor registration with isTutor has malformed subjects.");
                         }
                     }
                 } else {
                     status = 400;
-                    logger.error("Tutor registration with isTutor missing subjects.")                    
-                }                
+                    logger.error("Tutor registration with isTutor missing subjects.");
+                }
             }
 
             if(req.body.isOfficial) {
@@ -70,7 +70,7 @@ export async function postTutorHandler(req: Request, res: Response) {
                 typeof req.body.module !== 'string' ||
                 typeof req.body.hours !== 'number') {
                     status = 400;
-                    logger.error("Tutor registration with isOfficial has incomplete/invalid parameters")
+                    logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
                 }
             }
 
@@ -78,10 +78,10 @@ export async function postTutorHandler(req: Request, res: Response) {
                 // try registering
                 status = await registerTutor(req.body);
             } else {
-                logger.error("Malformed parameters in optional fields for Tutor registration")
+                logger.error("Malformed parameters in optional fields for Tutor registration");
                 status = 400;
             }
- 
+
         } else {
             logger.error("Missing required parameters for Tutor registration", req.body);
             status = 400;
@@ -108,7 +108,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         logger.warn("apiTutor.lastname outside of length restrictions");
         return 400;
     }
-    
+
     if(apiTutor.email.length == 0 || apiTutor.email.length > 100) {
         logger.warn("apiTutor.email outside of length restrictions");
         return 400;
@@ -120,20 +120,20 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     }
 
     const tutor = new Student();
-    tutor.firstname  = apiTutor.firstname;
+    tutor.firstname = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
-    tutor.email = apiTutor.email.toLowerCase();    
+    tutor.email = apiTutor.email.toLowerCase();
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
 
     tutor.isStudent = false;
     tutor.isInstructor = false;
-    
+
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
     tutor.openMatchRequestCount = 0;
-    
+
     if(apiTutor.isTutor) {
         if(apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -193,7 +193,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch(e) {
-        logger.error("Unable to add Tutor to database: " + e.message)
+        logger.error("Unable to add Tutor to database: " + e.message);
         return 500;
     }
 }
@@ -241,20 +241,20 @@ export async function postTuteeHandler(req: Request, res: Response) {
                         let elem = req.body.subjects[i];
                         if(typeof elem.name !== 'string') {
                             status = 400;
-                            logger.error("Tutee registration with isTutee has malformed subjects.")
+                            logger.error("Tutee registration with isTutee has malformed subjects.");
                         }
                     }
                 } else {
                     status = 400;
-                    logger.error("Tutee registration with isTutee missing subjects.")                    
-                }                
+                    logger.error("Tutee registration with isTutee missing subjects.");
+                }
             }
 
             if(status < 300) {
                 // try registering
                 status = await registerTutee(req.body);
             } else {
-                logger.error("Malformed parameters in optional fields for Tutor registration")
+                logger.error("Malformed parameters in optional fields for Tutor registration");
                 status = 400;
             }
 
@@ -284,7 +284,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         logger.error("apiTutee.lastname outside of length restrictions");
         return 400;
     }
-    
+
     if(apiTutee.email.length == 0 || apiTutee.email.length > 100) {
         logger.error("apiTutee.email outside of length restrictions");
         return 400;
@@ -296,7 +296,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     }
 
     const tutee = new Pupil();
-    tutee.firstname  = apiTutee.firstname;
+    tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
     tutee.grade = apiTutee.grade + ". Klasse";
@@ -316,7 +316,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             break;
         case "hb":
             tutee.state = State.HB;
-            break;                          
+            break;
         case "hh":
             tutee.state = State.HH;
             break;
@@ -328,10 +328,10 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             break;
         case "ni":
             tutee.state = State.NI;
-            break;            
+            break;
         case "nw":
             tutee.state = State.NW;
-            break;            
+            break;
         case "rp":
             tutee.state = State.RP;
             break;
@@ -382,7 +382,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             break;
         default:
             logger.error("Invalid value for Tutee registration schooltype: " + apiTutee.school);
-            return 400;            
+            return 400;
     }
 
     tutee.newsletter = apiTutee.newsletter;
@@ -424,7 +424,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch(e) {
-        logger.error("Unable to add Tutee to database: " + e.message)
+        logger.error("Unable to add Tutee to database: " + e.message);
         return 500;
     }
 }

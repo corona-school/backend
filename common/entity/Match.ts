@@ -10,14 +10,14 @@ import {
     OneToMany,
     ManyToOne,
     Unique,
-    EntityManager,
+    EntityManager
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
 import { Mail } from "./Mail";
 import {
     intersectionWithRespectToGrade,
-    subjectsAsArray,
+    subjectsAsArray
 } from "../util/subjectsutils";
 import { gradeAsInt } from "../util/gradestrings";
 
@@ -42,18 +42,18 @@ export class Match {
      *   0:  The match has been dissolved, because a member deactivated his account
      */
     @Column({
-        default: false,
+        default: false
     })
     dissolved: boolean;
 
     @Column({
         default: null,
-        nullable: true,
+        nullable: true
     })
     dissolveReason: number;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     proposedTime: Date;
 
@@ -64,13 +64,13 @@ export class Match {
     updatedAt: Date;
 
     @ManyToOne((type) => Student, (student) => student.matches, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     student: Student;
 
     @ManyToOne((type) => Pupil, (pupil) => pupil.matches, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     pupil: Pupil;
@@ -101,24 +101,24 @@ export class Match {
     feedbackToStudentMail: Promise<Mail>;
 
     @Column({
-        default: false,
+        default: false
     })
     automaticMailsForConfirmationDisabled: boolean; //if that is true, the system should not automatically send pending confirmation emails to the match -> this is primarily important for importing old matches
 
     @Column({
-        default: false,
+        default: false
     })
     automaticMailsForDissolutionDisabled: boolean;
 
     @Column({
-        default: false,
+        default: false
     })
     automaticMailsForFeedbackDisabled: boolean;
 
     @Column({
         type: "enum",
         enum: SourceType,
-        default: SourceType.MATCHEDINTERNAL,
+        default: SourceType.MATCHEDINTERNAL
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 }
@@ -141,7 +141,7 @@ export async function haveDissolvedMatch(
             await manager.find(Match, {
                 student: s,
                 pupil: p,
-                dissolved: true,
+                dissolved: true
             })
         ).length > 0
     );
@@ -154,7 +154,7 @@ export async function alreadyMatched(
 ) {
     const matches = manager.find(Match, {
         student: s,
-        pupil: p,
+        pupil: p
     });
 
     return (await matches).length !== 0;

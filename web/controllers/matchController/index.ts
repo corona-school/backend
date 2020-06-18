@@ -108,13 +108,13 @@ async function del(
         options = {
             uuid: uuid,
             student: person,
-            dissolved: false,
+            dissolved: false
         };
     } else if (person instanceof Pupil) {
         options = {
             uuid: uuid,
             pupil: person,
-            dissolved: false,
+            dissolved: false
         };
     } else {
         logger.error("Unknown type of person: " + typeof person);
@@ -182,13 +182,13 @@ export async function sendMatchDissolvedMail(to: Person, dissolver: Person) {
             // Send mail to (remaining) pupil
             mail = mailjetTemplates.PUPILMATCHDISSOLVED({
                 studentFirstname: dissolver.firstname,
-                pupilFirstname: to.firstname,
+                pupilFirstname: to.firstname
             });
         } else {
             // Send mail to (remaining) student
             mail = mailjetTemplates.STUDENTMATCHDISSOLVED({
                 studentFirstname: to.firstname,
-                pupilFirstname: dissolver.firstname,
+                pupilFirstname: dissolver.firstname
             });
         }
         //send out mail...

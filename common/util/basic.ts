@@ -15,5 +15,5 @@ function randomIntFromInterval(min: number, max: number) {
 export {
     intersection,
     randomIntFromInterval,
-    splitAtIndex,
+    splitAtIndex
 };
