@@ -7,6 +7,12 @@ import { getLogger } from "log4js";
 const logger = getLogger();
 
 export async function sendSubcourseCancelNotifications(course: Course, subcourse: Subcourse) {
+
+    if(subcourse.lectures.length == 0) {
+        logger.info("No lectures found: no cancellation mails sent for subcourse " + subcourse.id + " of course " + course.name);
+        return;
+    }
+
     // Find first lecture, subcourse lectures are eagerly loaded
     let firstLecture = subcourse.lectures[0].start;
     for(let i = 1; i < subcourse.lectures.length; i++) {
