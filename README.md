@@ -79,8 +79,7 @@ We have some coding style guidelines you will need to follow when contributing.
   - camelCase for functions and PascalCase for classes
   - Semicolon at the end of statements
   - No trailing comma in objects, imports etc.
-  - Single quotes for internal strings, eg. `import * as express from 'express';`
-  - Double quotes for external strings, eg. `console.log("Saving information...");`
+  - Preserve single and double quotes
   - Use space (eg. in form of newlines), where it helps with readability, but don't overdo it
 3. Make your code readable. This includes
   - Use self-explaining function names
