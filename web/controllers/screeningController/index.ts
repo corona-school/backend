@@ -322,23 +322,23 @@ export async function updateScreenerByMailHandler(
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screening/courses
  *
- * @apiParam (JSON Body) {string=} state the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (JSON Body) {string=} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
  * @apiParam (JSON Body) {string=} search A query text to be searched in the title and description
  */
 export async function getCourses(req: Request, res: Response) {
     try {
-        const { state, search } = req.body;
+        const { courseState, search } = req.body;
 
-        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(state) === -1)
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");
 
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
-        const where = (state
+        const where = (courseState
             ? (search
-                ? [{ courseState: state, name: Like(`%${search}%`) }, /* OR */ { courseState: state, description: Like(`%${search}%`) }]
-                : { courseState: state })
+                ? [{ courseState, name: Like(`%${search}%`) }, /* OR */ { courseState, description: Like(`%${search}%`) }]
+                : { courseState })
             : (search
                 ? [{ name: Like(`%${search}%`) }, /* OR */ { description: Like(`%${search}%`) }]
                 : {})
@@ -374,7 +374,7 @@ export async function getCourses(req: Request, res: Response) {
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screening/course/id/update
  *
- * @apiParam (JSON Body) {string=} state the course state ("allowed", "denied", "cancelled") to update
+ * @apiParam (JSON Body) {string=} courseState the course state ("allowed", "denied", "cancelled") to update
  * @apiParam (JSON Body) {string=} name the new name
  * @apiParam (JSON Body) {string=} description the new description
  * @apiParam (JSON Body) {string=} outline the new outline
@@ -398,6 +398,8 @@ export async function updateCourse(req: Request, res: Response) {
 
         course.updateCourse(update);
         await getManager().save(course);
+
+        return res.json({ course });
     } catch (error) {
         logger.warn("/screening/course/../update failed with", error);
         return res.status(500).send("internal server error");

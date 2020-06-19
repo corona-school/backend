@@ -1,15 +1,15 @@
 import { CourseCategory, CourseState } from "../../common/entity/Course";
 
 export class ApiCourseUpdate {
-    state?: CourseState.ALLOWED | CourseState.DENIED | CourseState.CANCELLED;
+    courseState?: CourseState.ALLOWED | CourseState.DENIED | CourseState.CANCELLED;
     name?: string;
     description?: string;
     outline?: string;
     category?: CourseCategory;
     imageUrl?: string | null;
 
-    constructor({ state, name, description, category, outline, imageUrl }: any) {
-        this.state = state;
+    constructor({ courseState, name, description, category, outline, imageUrl }: any) {
+        this.courseState = courseState;
         this.name = name;
         this.description = description;
         this.category = category;
@@ -19,7 +19,7 @@ export class ApiCourseUpdate {
 
     isValid() {
         return is<ApiCourseUpdate>(
-            isValue("state", [CourseState.ALLOWED, CourseState.CANCELLED, CourseState.DENIED, undefined]),
+            isValue("courseState", [CourseState.ALLOWED, CourseState.CANCELLED, CourseState.DENIED, undefined]),
             isType("name", ["undefined", "string"]),
             isType("description", ["undefined", "string"]),
             isValue("category", [CourseCategory.CLUB, CourseCategory.COACHING, CourseCategory.REVISION, undefined]),
