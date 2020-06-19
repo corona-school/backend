@@ -43,7 +43,7 @@ export class InstructorScreening {
     @JoinColumn()
     screener: Screener;
 
-    @OneToOne((type) => Student, (student) => student.screening, {
+    @OneToOne((type) => Student, (student) => student.instructorScreening, {
         eager: true,
     })
     @JoinColumn()
