@@ -44,7 +44,10 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants
  * @apiSuccess (Subcourse Object) {int} participants Current number of registered participants
+ * @apiSuccess (Subcourse Object) {Participant[]} participantList <em>(requires authentication</em> List of all registered participants
  * @apiSuccess (Subcourse Object) {Lecture[]} lectures Array of lectures
+ * @apiSuccess (Subcourse Object) {bool} joinAfterStart If set to true, participants can join after the first lecture has already started
+ * @apiSuccess (Subcourse Object) {bool} joined <em>(requires authentication)</em> True if the participant has joined this subcourse
  * @apiSuccess (Subcourse Object) {bool} published <em>(requires authentication)</em> False if subcourse has not yet been published
  * @apiSuccess (Subcourse Object) {bool} cancelled True if subcourse has been cancelled
  *
@@ -56,7 +59,10 @@ export interface ApiSubcourse {
     maxGrade?: number;
     maxParticipants?: number;
     participants?: number;
+    participantList?: ApiParticipant[];
     lectures?: ApiLecture[];
+    joinAfterStart?: boolean;
+    joined?: boolean;
     published?: boolean;
     cancelled?: boolean;
 }
@@ -115,6 +121,7 @@ export interface ApiAddCourse {
  * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxParticipants <em>(optional)</em> Maximum number of participants
+ * @apiSuccess (Subcourse Object) {bool} joinAfterStart If set to true, participants can join after the first lecture has already started
  * @apiSuccess (Subcourse Object) {bool} published If published, the subcourse can't be easily cancelled and will appear in the public list
  *
  */
@@ -129,6 +136,7 @@ export interface ApiAddSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    joinAfterStart: boolean;
     published: boolean;
 }
 
@@ -184,6 +192,7 @@ export interface ApiEditCourse {
  * @apiSuccess (Subcourse Object) {int} minGrade Minimum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxGrade Maximum grade of participants
  * @apiSuccess (Subcourse Object) {int} maxParticipants Maximum number of participants. May not be lower than the number of already registered participants
+ * @apiSuccess (Subcourse Object) {bool} joinAfterStart If set to true, participants can join after the first lecture has already started
  * @apiSuccess (Subcourse Object) {bool} published If published, the subcourse can't be easily cancelled and will appear in the public list. Once published it can't be unpublished
  *
  */
@@ -192,6 +201,7 @@ export interface ApiEditSubcourse {
     minGrade: number;
     maxGrade: number;
     maxParticipants: number;
+    joinAfterStart: boolean;
     published: boolean;
 }
 
@@ -226,6 +236,25 @@ export interface ApiInstructor {
 }
 
 /**
+ * @apiDefine Participant
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Participant Object) {string} firstname First name
+ * @apiSuccess (Participant Object) {string} lastname Last name
+ * @apiSuccess (Participant Object) {string} email E-Mail
+ * @apiSuccess (Participant Object) {int} grade Grade
+ * @apiSuccess (Participant Object) {string} schooltype School type. One of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "other"</code>
+ *
+ */
+export interface ApiParticipant {
+    firstname: string;
+    lastname: string;
+    email: string;
+    grade: number;
+    schooltype: string;
+}
+
+/**
  * @apiDefine CourseTag
  * @apiVersion 1.1.0
  *
@@ -239,3 +268,14 @@ export interface ApiCourseTag {
     name: string;
     category: string;
 }
+
+
+/**
+ * @apiDefine PostGroupMail
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (GroupMail Object) {string} subject Subject <em>maximum 80 chars</em>
+ * @apiSuccess (GroupMail Object) {string} body Plaintext body of the mail <em>maximum 2000 chars</em>
+ *
+ */
+// todo create interface

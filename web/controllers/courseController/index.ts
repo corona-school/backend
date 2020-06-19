@@ -21,6 +21,7 @@ import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourse
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
+import { Pupil } from '../../../common/entity/Pupil';
 
 const logger = getLogger();
 
@@ -43,6 +44,7 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} fields <em>(optional)</em> Comma seperated list of additionally requested fields (<code>id</code> will be always included). Example: <code>fields=name,outline,tags</code>. If you want optional marked fields of subobjects, you need to specify the subobject and the requested subobject properties. Example: <code>fields=subcourses,subcourses.maxParticipants,subcourses.participants</code>
  * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
  * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
+ * @apiParam (Query Parameter) {string} participant <em>(optional)</em> Id of a participant. Return only courses this participant has joined. This parameter requires authentication as the specified participant.
  *
  * @apiUse Courses
  * @apiUse Course
@@ -62,9 +64,13 @@ const logger = getLogger();
 export async function getCoursesHandler(req: Request, res: Response) {
     let status = 200;
     try {
-        let authenticated = false;
+        let authenticatedStudent = false;
+        let authenticatedPupil = false;
         if (res.locals.user instanceof Student) {
-            authenticated = true;
+            authenticatedStudent = true;
+        }
+        if (res.locals.user instanceof Pupil) {
+            authenticatedPupil = true;
         }
         let fields = [];
         if (typeof req.query.fields == 'string') {
@@ -78,9 +84,20 @@ export async function getCoursesHandler(req: Request, res: Response) {
         if (typeof req.query.instructor == 'string') {
             instructorId = req.query.instructor;
         }
+        let participantId = undefined;
+        if (typeof req.query.participant == 'string') {
+            participantId = req.query.participant;
+        }
 
         try {
-            let obj = await getCourses(authenticated ? res.locals.user : undefined, fields, states, instructorId);
+            let obj = await getCourses(
+                authenticatedStudent ? res.locals.user : undefined,
+                authenticatedPupil ? res.locals.user : undefined,
+                fields,
+                states,
+                instructorId,
+                participantId
+            );
             if (typeof obj == 'number') {
                 status = obj;
             } else {
@@ -99,39 +116,58 @@ export async function getCoursesHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getCourses(student: Student | undefined, fields: Array<string>, states: Array<string>, wix_id: string | undefined): Promise<Array<ApiCourse> | number> {
+async function getCourses(student: Student | undefined,
+                          pupil: Pupil | undefined, fields: Array<string>,
+                          states: Array<string>,
+                          instructorId: string | undefined,
+                          participantId: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
-    let authenticated = false;
+    let authenticatedStudent = false;
+    let authenticatedPupil = false;
     if (student instanceof Student) {
-        authenticated = true;
+        authenticatedStudent = true;
+    }
+    if (pupil instanceof Pupil) {
+        authenticatedPupil = true;
     }
 
-    if (wix_id != undefined && !authenticated) {
-        logger.warn(`Unauthenticated user tried to access courses created by instructor (ID: ${wix_id})`);
+    if (instructorId != undefined && !authenticatedStudent) {
+        logger.warn(`Unauthenticated user tried to access courses created by instructor (ID: ${instructorId})`);
         return 401;
     }
 
-    if (wix_id != undefined && authenticated && student.wix_id != wix_id) {
-        logger.warn(`User (ID: ${student.wix_id}) tried to filter by instructor id ${wix_id}`);
-        logger.debug(student, fields, states, wix_id);
+    if (participantId != undefined && !authenticatedPupil) {
+        logger.warn(`Unauthenticated user tried to access courses joined by pupil (ID: ${participantId})`);
+        return 401;
+    }
+
+    if (instructorId != undefined && authenticatedStudent && student.wix_id != instructorId) {
+        logger.warn(`User (ID: ${student.wix_id}) tried to filter by instructor id ${instructorId}`);
+        logger.debug(student, fields, states, instructorId);
+        return 403;
+    }
+
+    if (participantId != undefined && authenticatedPupil && pupil.wix_id != participantId) {
+        logger.warn(`User (ID: ${student.wix_id}) tried to filter by participant id ${participantId}`);
+        logger.debug(pupil, fields, participantId);
         return 403;
     }
 
     if (states.length != 1 || states[0] != 'allowed') {
-        if (!authenticated) {
+        if (!authenticatedStudent) {
             logger.warn(`Unauthenticated user tried to filter by states ${states.join(',')}`);
             return 401;
-        } else if (wix_id == undefined) {
+        } else if (instructorId == undefined) {
             logger.warn(`User (ID: ${student.wix_id}) tried to filter by states ${states.join(',')} without specifying an instructor id`);
-            logger.debug(student, fields, states, wix_id);
+            logger.debug(student, fields, states, instructorId);
             return 403;
         }
     }
 
     if (states.length == 0) {
         logger.warn("Request for /courses while filtering with states=(empty). This would never return any results");
-        logger.debug(student, fields, states, wix_id);
+        logger.debug(student, fields, states, instructorId);
         return 400;
     }
     let stateFilters = [];
@@ -155,7 +191,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                 break;
             default:
                 logger.warn("Unknown state: " + states[i]);
-                logger.debug(student, fields, states, wix_id);
+                logger.debug(student, fields, states, instructorId);
                 return 400;
         }
         stateFilters.push(state);
@@ -163,24 +199,26 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const qb = entityManager.getRepository(Course).createQueryBuilder("course");
+        const qb = entityManager.getRepository(Course).createQueryBuilder("course")
+            .leftJoinAndSelect("course.subcourses", "subcourse")
+            .leftJoinAndSelect("course.tags", "tags")
+            .leftJoinAndSelect("course.instructors", "instructor")
+            .leftJoinAndSelect("subcourse.instructors", "subinstructor")
+            .leftJoinAndSelect("subcourse.participants", "participant")
+            .leftJoinAndSelect("subcourse.lectures", "lecture")
+            .leftJoinAndSelect("lecture.instructor", "lecinstructor");
 
-        if (authenticated) {
-            qb.leftJoin("course.instructors", "instructor")
-                .where("instructor.wix_id = :id", { id: student.wix_id });
+        if (instructorId) {
+            qb.where("instructor.wix_id = :id", { id: student.wix_id });
+        } else if (participantId) {
+            qb.where("participant.wix_id = :id", { id: pupil.wix_id });
         }
 
         if (stateFilters.length > 0) {
-            const b = new Brackets(sub => {
-                sub = sub.where("course.courseState = :state", { state: stateFilters.pop() });
-                while (stateFilters.length > 0) {
-                    sub = sub.orWhere("course.courseState = :state", { state: stateFilters.pop() });
-                }
-            });
-            if (authenticated) {
-                qb.andWhere(b);
+            if (instructorId || participantId) {
+                qb.andWhere("course.courseState IN (:...states)", { states: stateFilters });
             } else {
-                qb.where(b);
+                qb.where("course.courseState IN (:...states)", { states: stateFilters });
             }
         }
 
@@ -201,7 +239,7 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                                 firstname: courses[i].instructors[k].firstname,
                                 lastname: courses[i].instructors[k].lastname
                             };
-                            if (authenticated && student.wix_id != wix_id) {
+                            if (authenticatedStudent && student.wix_id != instructorId) {
                                 instructor.id = courses[i].instructors[k].wix_id;
                             }
                             apiCourse.instructors.push(instructor);
@@ -235,42 +273,68 @@ async function getCourses(student: Student | undefined, fields: Array<string>, s
                         break;
                     case 'subcourses':
                         apiCourse.subcourses = [];
-                        for (let k = 0; k < courses[i].subcourses.length; k++) {
-                            let subcourse: ApiSubcourse = {
-                                id: courses[i].subcourses[k].id,
-                                minGrade: courses[i].subcourses[k].minGrade,
-                                maxGrade: courses[i].subcourses[k].maxGrade,
-                                maxParticipants: courses[i].subcourses[k].maxParticipants,
-                                participants: courses[i].subcourses[k].participants.length,
-                                instructors: [],
-                                lectures: []
-                            };
-                            for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
-                                let instructor: ApiInstructor = {
-                                    firstname: courses[i].subcourses[k].instructors[l].firstname,
-                                    lastname: courses[i].subcourses[k].instructors[l].lastname
+                        if (courses[i].subcourses) {
+                            for (let k = 0; k < courses[i].subcourses.length; k++) {
+                                let subcourse: ApiSubcourse = {
+                                    id: courses[i].subcourses[k].id,
+                                    minGrade: courses[i].subcourses[k].minGrade,
+                                    maxGrade: courses[i].subcourses[k].maxGrade,
+                                    maxParticipants: courses[i].subcourses[k].maxParticipants,
+                                    participants: courses[i].subcourses[k].participants.length,
+                                    instructors: [],
+                                    lectures: [],
+                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart
                                 };
-                                if (authenticated && student.wix_id != wix_id) {
-                                    instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
+                                    let instructor: ApiInstructor = {
+                                        firstname: courses[i].subcourses[k].instructors[l].firstname,
+                                        lastname: courses[i].subcourses[k].instructors[l].lastname
+                                    };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                    }
+                                    subcourse.instructors.push(instructor);
                                 }
-                                subcourse.instructors.push(instructor);
-                            }
-                            for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
-                                let lecture: ApiLecture = {
-                                    id: courses[i].subcourses[k].lectures[l].id,
-                                    instructor: {
-                                        firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
-                                        lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
-                                    },
-                                    start: courses[i].subcourses[k].lectures[l].start.getTime(),
-                                    duration: courses[i].subcourses[k].lectures[l].duration
-                                };
-                                if (authenticated && student.wix_id != wix_id) {
-                                    lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
+                                    let lecture: ApiLecture = {
+                                        id: courses[i].subcourses[k].lectures[l].id,
+                                        instructor: {
+                                            firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
+                                            lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
+                                        },
+                                        start: courses[i].subcourses[k].lectures[l].start.getTime(),
+                                        duration: courses[i].subcourses[k].lectures[l].duration
+                                    };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                    }
+                                    subcourse.lectures.push(lecture);
                                 }
-                                subcourse.lectures.push(lecture);
+                                if (authenticatedStudent && student.wix_id == instructorId) {
+                                    subcourse.participantList = [];
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        subcourse.participantList.push({
+                                            firstname: courses[i].subcourses[k].participants[l].firstname,
+                                            lastname: courses[i].subcourses[k].participants[l].lastname,
+                                            email: courses[i].subcourses[k].participants[l].email,
+                                            grade: parseInt(courses[i].subcourses[k].participants[l].grade),
+                                            schooltype: courses[i].subcourses[k].participants[l].schooltype
+                                        });
+                                    }
+                                }
+                                if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.joined = false;
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
+                                            subcourse.joined = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                apiCourse.subcourses.push(subcourse);
                             }
-                            apiCourse.subcourses.push(subcourse);
+                        } else {
+                            logger.debug(courses[i]);
                         }
                         break;
                     case 'state':
@@ -322,12 +386,20 @@ export async function getCourseHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if (req.params.id != undefined) {
-            let authenticated = false;
+            let authenticatedStudent = false;
+            let authenticatedPupil = false;
             if (res.locals.user instanceof Student) {
-                authenticated = true;
+                authenticatedStudent = true;
+            }
+            if (res.locals.user instanceof Pupil) {
+                authenticatedPupil = true;
             }
             try {
-                let obj = await getCourse(authenticated ? res.locals.user : undefined, Number.parseInt(req.params.id, 10));
+                let obj = await getCourse(
+                    authenticatedStudent ? res.locals.user : undefined,
+                    authenticatedPupil ? res.locals.user : undefined,
+                    Number.parseInt(req.params.id, 10)
+                );
                 if (typeof obj == 'number') {
                     status = obj;
                 } else {
@@ -350,27 +422,33 @@ export async function getCourseHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getCourse(student: Student | undefined, course_id: number): Promise<ApiCourse | number> {
+async function getCourse(student: Student | undefined, pupil: Pupil | undefined, course_id: number): Promise<ApiCourse | number> {
     const entityManager = getManager();
 
-    let authenticated = false;
-    let authorized = false;
+    let authenticatedStudent = false;
+    let authorizedStudent = false;
     if (student instanceof Student) {
-        authenticated = true;
+        authenticatedStudent = true;
+    }
+    let authenticatedPupil = false;
+    if (pupil instanceof Pupil) {
+        authenticatedPupil = true;
     }
 
     let apiCourse: ApiCourse;
     try {
         const course = await entityManager.findOne(Course, { id: course_id });
 
-        for (let i = 0; i < course.instructors.length; i++) {
-            // We don't need to compare wix_id here
-            if (student.id == course.instructors[i].id) {
-                authorized = true;
+        if (authenticatedStudent) {
+            for (let i = 0; i < course.instructors.length; i++) {
+                // We don't need to compare wix_id here
+                if (student.id == course.instructors[i].id) {
+                    authorizedStudent = true;
+                }
             }
         }
 
-        if (!authorized && course.courseState != CourseState.ALLOWED) {
+        if (!authorizedStudent && course.courseState != CourseState.ALLOWED) {
             logger.error("Unauthorized user tried to access course of state " + course.courseState);
             logger.debug(student);
             return 403;
@@ -388,12 +466,12 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
             subcourses: []
         };
 
-        if (authorized) {
+        if (authorizedStudent) {
             apiCourse.state = course.courseState;
         }
 
         for (let i = 0; i < course.instructors.length; i++) {
-            if (authorized) {
+            if (authorizedStudent) {
                 apiCourse.instructors.push({
                     id: course.instructors[i].wix_id,
                     firstname: course.instructors[i].firstname,
@@ -417,7 +495,7 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
 
         for (let i = 0; i < course.subcourses.length; i++) {
             // Skip not published subcourses for unauthorized users
-            if (!authorized && !course.subcourses[i].published) continue;
+            if (!authorizedStudent && !course.subcourses[i].published) continue;
 
             let subcourse: ApiSubcourse = {
                 id: course.subcourses[i].id,
@@ -427,13 +505,14 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                 maxParticipants: course.subcourses[i].maxParticipants,
                 participants: course.subcourses[i].participants.length,
                 lectures: [],
+                joinAfterStart: course.subcourses[i].joinAfterStart,
                 cancelled: course.subcourses[i].cancelled
             };
-            if (authorized) {
+            if (authorizedStudent) {
                 subcourse.published = course.subcourses[i].published;
             }
             for (let j = 0; j < course.subcourses[i].instructors.length; j++) {
-                if (authorized) {
+                if (authorizedStudent) {
                     subcourse.instructors.push({
                         id: course.subcourses[i].instructors[j].wix_id,
                         firstname: course.subcourses[i].instructors[j].firstname,
@@ -456,10 +535,31 @@ async function getCourse(student: Student | undefined, course_id: number): Promi
                     start: course.subcourses[i].lectures[j].start.getTime(),
                     duration: course.subcourses[i].lectures[j].duration
                 };
-                if (authorized) {
+                if (authorizedStudent) {
                     lecture.instructor.id = course.subcourses[i].lectures[j].instructor.wix_id;
                 }
                 subcourse.lectures.push(lecture);
+            }
+            if (authorizedStudent) {
+                subcourse.participantList = [];
+                for (let j = 0; j < course.subcourses[i].participants.length; j++) {
+                    subcourse.participantList.push({
+                        firstname: course.subcourses[i].participants[j].firstname,
+                        lastname: course.subcourses[i].participants[j].lastname,
+                        email: course.subcourses[i].participants[j].email,
+                        grade: parseInt(course.subcourses[i].participants[j].grade),
+                        schooltype: course.subcourses[i].participants[j].schooltype
+                    });
+                }
+            }
+            if (authenticatedPupil) {
+                subcourse.joined = false;
+                for (let j = 0; j < course.subcourses[i].participants.length; j++) {
+                    if (course.subcourses[i].participants[j].id == pupil.id) {
+                        subcourse.joined = true;
+                        break;
+                    }
+                }
             }
             apiCourse.subcourses.push(subcourse);
         }
@@ -694,6 +794,7 @@ export async function postSubcourseHandler(req: Request, res: Response) {
                 typeof req.body.minGrade == 'number' &&
                 typeof req.body.maxGrade == 'number' &&
                 (req.body.maxParticipants == undefined || typeof req.body.maxParticipants == 'number') &&
+                typeof req.body.joinAfterStart == 'boolean' &&
                 typeof req.body.published == 'boolean') {
 
                 // Check if string arrays
@@ -808,6 +909,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
     subcourse.maxGrade = apiSubcourse.maxGrade;
     subcourse.maxParticipants = apiSubcourse.maxParticipants;
     subcourse.published = apiSubcourse.published;
+    subcourse.cancelled = apiSubcourse.joinAfterStart;
     subcourse.cancelled = false;
 
     try {
@@ -1238,7 +1340,8 @@ export async function putSubcourseHandler(req: Request, res: Response) {
                 typeof req.body.minGrade == 'number' &&
                 typeof req.body.maxGrade == 'number' &&
                 typeof req.body.maxParticipants == 'number' &&
-                typeof req.body.published == 'boolean') {
+                typeof req.body.published == 'boolean' &&
+                typeof req.body.joinAfterStart == 'boolean') {
 
                 // Check if string array
                 for (let i = 0; i < req.body.instructors.length; i++) {
@@ -1361,6 +1464,8 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
         return 400;
     }
     subcourse.published = apiSubcourse.published;
+
+    subcourse.joinAfterStart = apiSubcourse.joinAfterStart;
 
     try {
         await entityManager.save(Subcourse, subcourse);
@@ -1878,3 +1983,248 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
         return 500;
     }
 }
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/participants/:userid JoinCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Join a (sub)course.
+ *
+ * This endpoint allows joining a subcourse.
+ * Only accessable for authorized participants.
+ * If all places are already taken or subcourse has already started 409 Conflict is returned
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName JoinCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/participants/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function joinSubcourseHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await joinSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/participants");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to join a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to join course");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to join course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
+
+            // Check if course is full
+            if (subcourse.maxParticipants <= subcourse.participants.length) {
+                logger.warn("Pupil can't join subcourse, because it is already full");
+                logger.debug(subcourse);
+                status = 409;
+                return;
+            }
+            // Check if course has already started
+            let startDate = (new Date()).getTime() + 3600000;
+            for (let i = 0; i < subcourse.lectures.length; i++) {
+                if (startDate > subcourse.lectures[i].start.getTime())
+                    startDate = subcourse.lectures[i].start.getTime();
+            }
+            if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
+                logger.warn("Pupil can't join subcourse, because it has already started");
+                logger.debug(subcourse);
+                status = 409;
+                return;
+            }
+
+            subcourse.participants.push(pupil);
+            await em.save(Subcourse, subcourse);
+
+            logger.info("Pupil successfully joined subcourse");
+            // todo add transactionlog
+
+        } catch (e) {
+            logger.warn("Can't join subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid/participants/:userid LeaveCourse
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Leave a course.
+ *
+ * This endpoint allows leaving an already joined course.
+ * Only accessable for authorized participants.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName LeaveCourse
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/participants/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function leaveSubcourseHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await leaveSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/participants/:userid");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to leave a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to leave course");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to leave course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+            // Check if pupil is participant
+            let index: number = undefined;
+            for (let i = 0; i < subcourse.participants.length; i++) {
+                if (subcourse.participants[i].wix_id == userId) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == undefined) {
+                logger.warn("Pupil tried to leave subcourse he didn't join");
+                logger.debug(subcourse, userId);
+                status = 400;
+                return;
+            }
+
+            subcourse.participants.splice(index, 1);
+            await em.save(Subcourse, subcourse);
+
+            logger.info("Pupil successfully left subcourse");
+            // todo add transactionlog
+
+        } catch (e) {
+            logger.warn("Can't leave subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/groupmail GroupMail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send a group mail to all participants.
+ *
+ * The course and subcourse instructors may use this endpoint to send a mail to all participants
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName GroupMail
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostGroupMail
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/groupmail -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+// todo implement
