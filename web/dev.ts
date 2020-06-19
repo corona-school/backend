@@ -7,6 +7,8 @@ import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
 import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
+import { Course, CourseState } from "../common/entity/Course";
+import { CourseCategory } from "../common/entity/Course";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -53,7 +55,7 @@ export async function setupDevDB() {
     const students: Student[] = [];
 
     let s = new Student();
-    s.firstname = "Leon";
+    const s1 = s.firstname = "Leon";
     s.lastname = "Jackson";
     s.active = true;
     s.email = "leon-jackson@t-online.de";
@@ -71,7 +73,7 @@ export async function setupDevDB() {
     s.openMatchRequestCount = 1;
     students.push(s);
 
-    s = new Student();
+    const s2 = s = new Student();
     s.firstname = "Melanie";
     s.lastname = "Meiers";
     s.active = true;
@@ -169,7 +171,7 @@ export async function setupDevDB() {
     t.category = "club";
     tags.push(t);
 
-    t = new CourseTag();
+    const science = t = new CourseTag();
     t.name = "Naturwissenschaften";
     t.identifier = "science";
     t.category = "club";
@@ -193,7 +195,7 @@ export async function setupDevDB() {
     t.category = "club";
     tags.push(t);
 
-    t = new CourseTag();
+    const preparation = t = new CourseTag();
     t.name = "Prüfungsvorbereitung";
     t.identifier = "preparation";
     t.category = "coaching";
@@ -205,7 +207,7 @@ export async function setupDevDB() {
     t.category = "coaching";
     tags.push(t);
 
-    t = new CourseTag();
+    const personality = t = new CourseTag();
     t.name = "Persönlichkeitsbildung";
     t.identifier = "personality";
     t.category = "coaching";
@@ -214,6 +216,71 @@ export async function setupDevDB() {
     for (let i = 0; i < tags.length; i++) {
         await entityManager.save(CourseTag, tags[i]);
         console.log("Inserted Course Tag " + tags[i].identifier);
+    }
+
+    // courses
+
+    const courses = [
+        Object.assign(new Course(), {
+            instructors: [s1, s2],
+            name: "Grundlagen der Physik",
+            outline: "E(m) = m * c * c",
+            description: "Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.",
+            imageUrl: null,
+            category: CourseCategory.COACHING,
+            tags: [preparation, science],
+            subcourses: [],
+            courseState: CourseState.SUBMITTED, 
+        }),
+        Object.assign(new Course(), {
+            instructors: [s1],
+            name: "COBOL und ABAP - Eine Reise in die Steinzeit der Informatik",
+            outline: "Mit lebenden Exemplaren zum anschauen",
+            description: "COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.",
+            imageUrl: null,
+            category: CourseCategory.CLUB,
+            tags: [science],
+            subcourses: [],
+            courseState: CourseState.ALLOWED, 
+        }),
+        Object.assign(new Course(), {
+            instructors: [s1, s2],
+            name: "Grundlagen der Mathematik",
+            outline: "(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0",
+            description: "Hinter den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...",
+            imageUrl: null,
+            category: CourseCategory.REVISION,
+            tags: [preparation, science],
+            subcourses: [],
+            courseState: CourseState.DENIED, 
+        }),
+        Object.assign(new Course(), {
+            instructors: [s2],
+            name: "KIZ, 187, Aligatoah.",
+            outline: "Die Musik des neuen Jahrtausends",
+            description: "Eine musikalische Reise zu den melodischen Klängen der neuen Musikgenres.",
+            imageUrl: null,
+            category: CourseCategory.REVISION,
+            tags: [preparation, science],
+            subcourses: [],
+            courseState: CourseState.CANCELLED, 
+        }),
+        Object.assign(new Course(), {
+            instructors: [],
+            name: "Die Geschichte der Dampflok",
+            outline: "Von Adler bis Baureihe 05 - Eine bewegende Geschichte",
+            description: "Wusstest du, das die schnellste Dampflok bis zu 200km/h fuhr? Nein? Dann bist du hier genau richtig!",
+            imageUrl: null,
+            category: CourseCategory.REVISION,
+            tags: [preparation, science],
+            subcourses: [],
+            courseState: CourseState.CREATED, 
+        }),
+    ];
+
+    for (const course of courses) {
+        await entityManager.save(Course, course);
+        console.log("Inserted Course " + course.name);
     }
 
     // Screening results
