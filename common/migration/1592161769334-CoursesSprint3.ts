@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class CoursesSprint31592161769334 implements MigrationInterface {
-    name = 'CoursesSprint31592161769334'
+    name = 'CoursesSprint31592161769334';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "subcourse" ADD "joinAfterStart" boolean NOT NULL DEFAULT false`, undefined);
