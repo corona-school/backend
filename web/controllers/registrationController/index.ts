@@ -40,7 +40,7 @@ export async function postTutorHandler(req: Request, res: Response) {
 
     try {
 
-        if(typeof req.body.firstname == 'string' &&
+        if (typeof req.body.firstname == 'string' &&
            typeof req.body.lastname == 'string' &&
            typeof req.body.email == 'string' &&
            typeof req.body.isTutor == 'boolean' &&
@@ -48,11 +48,11 @@ export async function postTutorHandler(req: Request, res: Response) {
            typeof req.body.newsletter == 'boolean' &&
            typeof req.body.msg == 'string') {
 
-            if(req.body.isTutor) {
-                if(req.body.subjects instanceof Array) {
-                    for(let i = 0; i < req.body.subjects.length; i++) {
+            if (req.body.isTutor) {
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
-                        if(typeof elem.name !== 'string'
+                        if (typeof elem.name !== 'string'
                         || typeof elem.minGrade !== 'number'
                         || typeof elem.maxGrade !== 'number') {
                             status = 400;
@@ -65,8 +65,8 @@ export async function postTutorHandler(req: Request, res: Response) {
                 }
             }
 
-            if(req.body.isOfficial) {
-                if(typeof req.body.university !== 'string' ||
+            if (req.body.isOfficial) {
+                if (typeof req.body.university !== 'string' ||
                 typeof req.body.module !== 'string' ||
                 typeof req.body.hours !== 'number') {
                     status = 400;
@@ -74,7 +74,7 @@ export async function postTutorHandler(req: Request, res: Response) {
                 }
             }
 
-            if(status < 300) {
+            if (status < 300) {
                 // try registering
                 status = await registerTutor(req.body);
             } else {
@@ -86,7 +86,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             logger.error("Missing required parameters for Tutor registration", req.body);
             status = 400;
         }
-    } catch(e) {
+    } catch (e) {
         logger.error("Unexpected request format: " + e.message);
         logger.debug(e, req.body);
         status = 500;
@@ -99,22 +99,22 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
-    if(apiTutor.firstname.length == 0 || apiTutor.firstname.length > 100) {
+    if (apiTutor.firstname.length == 0 || apiTutor.firstname.length > 100) {
         logger.warn("apiTutor.firstname outside of length restrictions");
         return 400;
     }
 
-    if(apiTutor.lastname.length == 0 || apiTutor.lastname.length > 100) {
+    if (apiTutor.lastname.length == 0 || apiTutor.lastname.length > 100) {
         logger.warn("apiTutor.lastname outside of length restrictions");
         return 400;
     }
 
-    if(apiTutor.email.length == 0 || apiTutor.email.length > 100) {
+    if (apiTutor.email.length == 0 || apiTutor.email.length > 100) {
         logger.warn("apiTutor.email outside of length restrictions");
         return 400;
     }
 
-    if(apiTutor.msg.length > 3000) {
+    if (apiTutor.msg.length > 3000) {
         logger.warn("apiTutor.msg outside of length restrictions");
         return 400;
     }
@@ -134,14 +134,14 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.verification = generateToken();
     tutor.openMatchRequestCount = 0;
 
-    if(apiTutor.isTutor) {
-        if(apiTutor.subjects.length < 1) {
+    if (apiTutor.isTutor) {
+        if (apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
             return 400;
         }
 
-        for(let i = 0; i < apiTutor.subjects.length; i++) {
-            if(!checkSubject(apiTutor.subjects[i].name)) {
+        for (let i = 0; i < apiTutor.subjects.length; i++) {
+            if (!checkSubject(apiTutor.subjects[i].name)) {
                 logger.warn("Subjects contain invalid subject " + apiTutor.subjects[i].name);
                 return 400;
             }
@@ -151,18 +151,18 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.isStudent = true;
     }
 
-    if(apiTutor.isOfficial) {
-        if(apiTutor.university.length == 0 || apiTutor.university.length > 100) {
+    if (apiTutor.isOfficial) {
+        if (apiTutor.university.length == 0 || apiTutor.university.length > 100) {
             logger.warn("apiTutor.university outside of length restrictions");
             return 400;
         }
 
-        if(apiTutor.hours == 0 || apiTutor.hours > 1000) {
+        if (apiTutor.hours == 0 || apiTutor.hours > 1000) {
             logger.warn("apiTutor.hours outside of size restrictions");
             return 400;
         }
 
-        switch(apiTutor.module) {
+        switch (apiTutor.module) {
             case "internship":
                 tutor.module = TeacherModule.INTERNSHIP;
                 break;
@@ -182,7 +182,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     }
 
     const result = await entityManager.findOne(Student, { email: tutor.email });
-    if(result !== undefined) {
+    if (result !== undefined) {
         logger.error("Tutor with given email already exists");
         return 409;
     }
@@ -192,7 +192,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         await sendVerificationMail(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
-    } catch(e) {
+    } catch (e) {
         logger.error("Unable to add Tutor to database: " + e.message);
         return 500;
     }
@@ -225,7 +225,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
 
     try {
 
-        if(typeof req.body.firstname == 'string' &&
+        if (typeof req.body.firstname == 'string' &&
            typeof req.body.lastname == 'string' &&
            typeof req.body.email == 'string' &&
            typeof req.body.grade == 'number' &&
@@ -235,11 +235,11 @@ export async function postTuteeHandler(req: Request, res: Response) {
            typeof req.body.newsletter == 'boolean' &&
            typeof req.body.msg == 'string') {
 
-            if(req.body.isTutor) {
-                if(req.body.subjects instanceof Array) {
-                    for(let i = 0; i < req.body.subjects.length; i++) {
+            if (req.body.isTutor) {
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
-                        if(typeof elem.name !== 'string') {
+                        if (typeof elem.name !== 'string') {
                             status = 400;
                             logger.error("Tutee registration with isTutee has malformed subjects.");
                         }
@@ -250,7 +250,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 }
             }
 
-            if(status < 300) {
+            if (status < 300) {
                 // try registering
                 status = await registerTutee(req.body);
             } else {
@@ -262,7 +262,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
             logger.error("Missing required parameters for Tutee registration");
             status = 400;
         }
-    } catch(e) {
+    } catch (e) {
         logger.error("Unexpected request format: " + e.message);
         logger.debug(req, e);
         status = 500;
@@ -275,22 +275,22 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
-    if(apiTutee.firstname.length == 0 || apiTutee.firstname.length > 100) {
+    if (apiTutee.firstname.length == 0 || apiTutee.firstname.length > 100) {
         logger.error("apiTutee.firstname outside of length restrictions");
         return 400;
     }
 
-    if(apiTutee.lastname.length == 0 || apiTutee.lastname.length > 100) {
+    if (apiTutee.lastname.length == 0 || apiTutee.lastname.length > 100) {
         logger.error("apiTutee.lastname outside of length restrictions");
         return 400;
     }
 
-    if(apiTutee.email.length == 0 || apiTutee.email.length > 100) {
+    if (apiTutee.email.length == 0 || apiTutee.email.length > 100) {
         logger.error("apiTutee.email outside of length restrictions");
         return 400;
     }
 
-    if(apiTutee.msg.length > 3000) {
+    if (apiTutee.msg.length > 3000) {
         logger.error("apiTutee.msg outside of length restrictions");
         return 400;
     }
@@ -301,7 +301,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.email = apiTutee.email.toLowerCase();
     tutee.grade = apiTutee.grade + ". Klasse";
 
-    switch(apiTutee.state) {
+    switch (apiTutee.state) {
         case "bw":
             tutee.state = State.BW;
             break;
@@ -358,7 +358,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             return 400;
     }
 
-    switch(apiTutee.school) {
+    switch (apiTutee.school) {
         case "grundschule":
             tutee.schooltype = SchoolType.GRUNDSCHULE;
             break;
@@ -395,14 +395,14 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
 
-    if(apiTutee.isTutee) {
-        if(apiTutee.subjects.length < 1) {
+    if (apiTutee.isTutee) {
+        if (apiTutee.subjects.length < 1) {
             logger.error("Tutee subjects needs to contain at least one element.");
             return 400;
         }
 
-        for(let i = 0; i < apiTutee.subjects.length; i++) {
-            if(!checkSubject(apiTutee.subjects[i].name)) {
+        for (let i = 0; i < apiTutee.subjects.length; i++) {
+            if (!checkSubject(apiTutee.subjects[i].name)) {
                 logger.error("Tutee subjects contain invalid subject " + apiTutee.subjects[i].name);
                 return 400;
             }
@@ -413,7 +413,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     }
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
-    if(result !== undefined) {
+    if (result !== undefined) {
         logger.error("Tutee with given email already exists.");
         return 409;
     }
@@ -423,7 +423,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         await sendVerificationMail(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
-    } catch(e) {
+    } catch (e) {
         logger.error("Unable to add Tutee to database: " + e.message);
         return 500;
     }

@@ -165,7 +165,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
 
             let person: (Pupil|Student);
             person = await entityManager.findOne(Student, {email: email});
-            if(person == undefined) {
+            if (person == undefined) {
                 person = await entityManager.findOne(Pupil, {email: email});
             }
 

@@ -20,6 +20,9 @@
             "ImportDeclaration": "first",
             "ObjectExpression": "first"
         }],
+        "keyword-spacing": ["error", {
+            "after": true
+        }],
         "key-spacing": ["error", {
             "mode": "strict",
             "beforeColon": false,

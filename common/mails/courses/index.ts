@@ -10,22 +10,22 @@ const logger = getLogger();
 
 export async function sendSubcourseCancelNotifications(course: Course, subcourse: Subcourse) {
 
-    if(subcourse.lectures.length == 0) {
+    if (subcourse.lectures.length == 0) {
         logger.info("No lectures found: no cancellation mails sent for subcourse " + subcourse.id + " of course " + course.name);
         return;
     }
 
     // Find first lecture, subcourse lectures are eagerly loaded
     let firstLecture = subcourse.lectures[0].start;
-    for(let i = 1; i < subcourse.lectures.length; i++) {
-        if(subcourse.lectures[i].start < firstLecture) {
+    for (let i = 1; i < subcourse.lectures.length; i++) {
+        if (subcourse.lectures[i].start < firstLecture) {
             firstLecture = subcourse.lectures[i].start;
         }
     }
 
     // Send mail or this lecture to each participant
     logger.info("Sending cancellation mails for subcourse " + subcourse.id + " of course " + course.name + " to " + subcourse.participants.length + " participants");
-    for(let participant of subcourse.participants) {
+    for (let participant of subcourse.participants) {
         const mail = mailjetTemplates.COURSESCANCELLED({
             participantFirstname: participant.firstname,
             courseName: course.name,
