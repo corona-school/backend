@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class AddInstructorScreening1592477604748 implements MigrationInterface {
-    name = 'AddInstructorScreening1592477604748'
+    name = 'AddInstructorScreening1592477604748';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "instructor_screening" ("id" SERIAL NOT NULL, "success" boolean NOT NULL, "comment" character varying, "knowsCoronaSchoolFrom" character varying, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "screenerId" integer, "studentId" integer, CONSTRAINT "REL_e176665fa769d2e603d825f6fa" UNIQUE ("studentId"), CONSTRAINT "PK_e29a51f8dce0a07d2e1dba73636" PRIMARY KEY ("id"))`, undefined);

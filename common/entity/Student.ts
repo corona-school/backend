@@ -159,19 +159,19 @@ export class Student extends Person {
         nullable: true,
         cascade: true
     })
-    instructorScreening: Promise<InstructorScreening>; 
-    
+    instructorScreening: Promise<InstructorScreening>;
+
     @Column({
         nullable: false,
         default: 0
     })
-    sentInstructorScreeningReminderCount: number;    
+    sentInstructorScreeningReminderCount: number;
 
     @Column({
         nullable: true,
         default: null
     })
-    lastSentInstructorScreeningInvitationDate: Date;    
+    lastSentInstructorScreeningInvitationDate: Date;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
