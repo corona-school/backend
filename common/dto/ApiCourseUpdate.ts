@@ -7,14 +7,16 @@ export class ApiCourseUpdate {
     outline?: string;
     category?: CourseCategory;
     imageUrl?: string | null;
+    screeningComment?: string | null;
 
-    constructor({ courseState, name, description, category, outline, imageUrl }: any) {
+    constructor({ courseState, name, description, category, outline, imageUrl, screeningComment }: any) {
         this.courseState = courseState;
         this.name = name;
         this.description = description;
         this.category = category;
         this.outline = outline;
         this.imageUrl = imageUrl;
+        this.screeningComment = screeningComment;
     }
 
     isValid() {
@@ -24,7 +26,8 @@ export class ApiCourseUpdate {
             isType("description", ["undefined", "string"]),
             isValue("category", [CourseCategory.CLUB, CourseCategory.COACHING, CourseCategory.REVISION, undefined]),
             isType("outline", ["undefined", "string"]),
-            value => value.imageUrl === undefined || value.imageUrl === null || typeof value.imageUrl === "string"
+            value => value.imageUrl === undefined || value.imageUrl === null || typeof value.imageUrl === "string",
+            value => value.screeningComment === undefined || value.screeningComment === null || typeof value.screeningComment === "string"
         )(this);
     }
 }

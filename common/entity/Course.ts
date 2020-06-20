@@ -82,7 +82,9 @@ export class Course {
     })
     courseState: CourseState;
 
-
+    @Column({ nullable: true })
+    screeningComment: string;
+    
     updateCourse(update: ApiCourseUpdate) {
         if(!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
