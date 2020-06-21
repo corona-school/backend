@@ -54,40 +54,40 @@ export async function setupDevDB() {
     }
     const students: Student[] = [];
 
-    let s = new Student();
-    const s1 = s.firstname = "Leon";
-    s.lastname = "Jackson";
-    s.active = true;
-    s.email = "leon-jackson@t-online.de";
-    s.isInstructor = true;
-    s.isStudent = true;
-    s.verification = null;
-    s.verifiedAt = new Date(new Date().getTime() - 110000);
-    s.authToken = sha512("authtokenS1");
-    s.wix_id = "00000000-0000-0002-0001-1b4c4c526364";
-    s.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s.subjects = JSON.stringify([
+    const s1 = new Student();
+    s1.firstname = "Leon";
+    s1.lastname = "Jackson";
+    s1.active = true;
+    s1.email = "leon-jackson@t-online.de";
+    s1.isInstructor = true;
+    s1.isStudent = true;
+    s1.verification = null;
+    s1.verifiedAt = new Date(new Date().getTime() - 110000);
+    s1.authToken = sha512("authtokenS1");
+    s1.wix_id = "00000000-0000-0002-0001-1b4c4c526364";
+    s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
         { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
-    s.openMatchRequestCount = 1;
-    students.push(s);
+    s1.openMatchRequestCount = 1;
+    students.push(s1);
 
-    const s2 = s = new Student();
-    s.firstname = "Melanie";
-    s.lastname = "Meiers";
-    s.active = true;
-    s.email = "mel-98@gmail.com";
-    s.isInstructor = true;
-    s.isStudent = true;
-    s.verification = null;
-    s.verifiedAt = new Date(new Date().getTime() - 220000);
-    s.authToken = sha512("authtokenS2");
-    s.wix_id = "00000000-0000-0002-0002-1b4c4c526364";
-    s.wix_creation_date = new Date(new Date().getTime() - 22000000);
-    s.subjects = JSON.stringify(["Deutsch3:5", "Mathematik4:6"]);
-    s.openMatchRequestCount = 2;
-    students.push(s);
+    const s2 = new Student();
+    s2.firstname = "Melanie";
+    s2.lastname = "Meiers";
+    s2.active = true;
+    s2.email = "mel-98@gmail.com";
+    s2.isInstructor = true;
+    s2.isStudent = true;
+    s2.verification = null;
+    s2.verifiedAt = new Date(new Date().getTime() - 220000);
+    s2.authToken = sha512("authtokenS2");
+    s2.wix_id = "00000000-0000-0002-0002-1b4c4c526364";
+    s2.wix_creation_date = new Date(new Date().getTime() - 22000000);
+    s2.subjects = JSON.stringify(["Deutsch3:5", "Mathematik4:6"]);
+    s2.openMatchRequestCount = 2;
+    students.push(s2);
 
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
