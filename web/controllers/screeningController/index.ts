@@ -305,7 +305,7 @@ export async function updateScreenerByMailHandler(
 }
 
 /**
- * @api {POST} /courses getCourses
+ * @api {POST} /api/screening/courses getCourses
  * @apiVersion 1.0.1
  * @apiDescription
  * 
@@ -320,10 +320,10 @@ export async function updateScreenerByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screening/courses
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/courses
  *
- * @apiParam (JSON Body) {string=} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
- * @apiParam (JSON Body) {string=} search A query text to be searched in the title and description
+ * @apiParam (JSON Body) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (JSON Body) {string|undefined} search A query text to be searched in the title and description
  */
 export async function getCourses(req: Request, res: Response) {
     try {
@@ -357,7 +357,7 @@ export async function getCourses(req: Request, res: Response) {
 }
 
 /**
- * @api {POST} /course/:courseID/update updateCourse
+ * @api {POST} /api/screening/course/:courseID/update updateCourse
  * @apiVersion 1.0.1
  * @apiDescription
  * 
@@ -372,14 +372,14 @@ export async function getCourses(req: Request, res: Response) {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screening/course/id/update
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/course/id/update
  *
- * @apiParam (JSON Body) {string=} courseState the course state ("allowed", "denied", "cancelled") to update
- * @apiParam (JSON Body) {string=} name the new name
- * @apiParam (JSON Body) {string=} description the new description
- * @apiParam (JSON Body) {string=} outline the new outline
- * @apiParam (JSON Body) {string=} category the new category ("revision", "club", "coaching")
- * @apiParam (JSON Body) {string|null=} imageUrl the new image url, or null if no image should be set 
+ * @apiParam (JSON Body) {string|undefined} courseState the course state ("allowed", "denied", "cancelled") to update
+ * @apiParam (JSON Body) {string|undefined} name the new name
+ * @apiParam (JSON Body) {string|undefined} description the new description
+ * @apiParam (JSON Body) {string|undefined} outline the new outline
+ * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
+ * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set 
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
