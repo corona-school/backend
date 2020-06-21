@@ -732,11 +732,14 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
             identifier: apiCourse.tags[i]
         });
     }
-    const tags = await entityManager.find(CourseTag, { where: filters });
-    if (tags.length != apiCourse.tags.length) {
-        logger.warn(`Field 'tags' contains invalid values: ${apiCourse.instructors.join(', ')}`);
-        logger.debug(apiCourse);
-        return 400;
+    let tags: CourseTag[] = [];
+    if (filters.length > 0) {
+        tags = await entityManager.find(CourseTag, { where: filters });
+        if (tags.length != apiCourse.tags.length) {
+            logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
+            logger.debug(apiCourse, tags)
+            return 400;
+        }
     }
 
     const course = new Course();
@@ -1282,11 +1285,14 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
             identifier: apiCourse.tags[i]
         });
     }
-    const tags = await entityManager.find(CourseTag, { where: filters });
-    if (tags.length != apiCourse.tags.length) {
-        logger.warn(`Field 'tags' contains invalid values: ${apiCourse.instructors.join(', ')}`);
-        logger.debug(apiCourse);
-        return 400;
+    let tags: CourseTag[] = [];
+    if (filters.length > 0) {
+        tags = await entityManager.find(CourseTag, { where: filters });
+        if (tags.length != apiCourse.tags.length) {
+            logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
+            logger.debug(apiCourse, tags)
+            return 400;
+        }
     }
     course.tags = tags;
 
