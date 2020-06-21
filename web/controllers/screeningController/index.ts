@@ -305,7 +305,7 @@ export async function updateScreenerByMailHandler(
 }
 
 /**
- * @api {POST} /api/screening/courses getCourses
+ * @api {POST} /screening/courses getCourses
  * @apiVersion 1.0.1
  * @apiDescription
  * 
@@ -357,7 +357,7 @@ export async function getCourses(req: Request, res: Response) {
 }
 
 /**
- * @api {POST} /api/screening/course/:courseID/update updateCourse
+ * @api {POST} /screening/course/:courseID/update updateCourse
  * @apiVersion 1.0.1
  * @apiDescription
  * 
