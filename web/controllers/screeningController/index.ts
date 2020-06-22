@@ -305,7 +305,7 @@ export async function updateScreenerByMailHandler(
 }
 
 /**
- * @api {POST} /screening/courses getCourses
+ * @api {GET} /screening/courses getCourses
  * @apiVersion 1.0.1
  * @apiDescription
  * 
@@ -320,14 +320,14 @@ export async function updateScreenerByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/courses
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/courses
  *
- * @apiParam (JSON Body) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
- * @apiParam (JSON Body) {string|undefined} search A query text to be searched in the title and description
+ * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
  */
 export async function getCourses(req: Request, res: Response) {
     try {
-        const { courseState, search } = req.body;
+        const { courseState, search } = req.query;
 
         if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");

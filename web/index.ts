@@ -166,7 +166,7 @@ createConnection().then(() => {
             "/screener/:email",
             screeningController.updateScreenerByMailHandler
         );
-        screenerApiRouter.post(
+        screenerApiRouter.get(
             "/courses",
             screeningController.getCourses
         );
