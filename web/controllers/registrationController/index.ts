@@ -151,6 +151,11 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.isStudent = true;
     }
 
+    if (apiTutor.isInstructor) {
+        // todo queue for instructor screening
+        tutor.isInstructor = true;
+    }
+
     if(apiTutor.isOfficial) {
         if(apiTutor.university.length == 0 || apiTutor.university.length > 100) {
             logger.warn("apiTutor.university outside of length restrictions");
