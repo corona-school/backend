@@ -50,6 +50,12 @@ async function sendMail(
     return await request;
 }
 
+const ErrorCodes = {
+    RATE_LIMIT: 429,
+    NOT_AUTHORIZED: 401
+}
+
 export default {
     send: sendMail,
+    ErrorCodes: ErrorCodes
 };

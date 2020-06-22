@@ -127,7 +127,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.msg = apiTutor.msg;
 
     tutor.isStudent = false;
-    tutor.isInstructor = true;
+    tutor.isInstructor = false;
     
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
@@ -168,6 +168,9 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
                 break;
             case "seminar":
                 tutor.module = TeacherModule.SEMINAR;
+                break;
+            case "other":
+                tutor.module = TeacherModule.OTHER;
                 break;
             default:
                 logger.warn("Tutor registration has invalid string for teacher module " + apiTutor.module);

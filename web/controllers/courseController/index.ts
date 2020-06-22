@@ -18,10 +18,13 @@ import {
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
 import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
+import CancelSubcourseEvent from '../../../common/transactionlog/types/CancelSubcourseEvent';
+import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourseEvent';
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
+import { sendSubcourseCancelNotifications } from '../../../common/mails/courses';
 
 const logger = getLogger();
 
@@ -662,6 +665,12 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         return 403;
     }
 
+    if (student.courses.length >= 3) {
+        logger.warn(`Student (ID ${student.id}) tried to add an course, but has reached his limit.`);
+        logger.debug(student);
+        return 403;
+    }
+
     // Some checks
     if (apiCourse.instructors.indexOf(student.wix_id) < 0) {
         logger.warn(`Instructor is not mentioned in field 'instructors': ${apiCourse.instructors.join(', ')}`);
@@ -723,11 +732,14 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
             identifier: apiCourse.tags[i]
         });
     }
-    const tags = await entityManager.find(CourseTag, { where: filters });
-    if (tags.length != apiCourse.tags.length) {
-        logger.warn(`Field 'tags' contains invalid values: ${apiCourse.instructors.join(', ')}`);
-        logger.debug(apiCourse);
-        return 400;
+    let tags: CourseTag[] = [];
+    if (filters.length > 0) {
+        tags = await entityManager.find(CourseTag, { where: filters });
+        if (tags.length != apiCourse.tags.length) {
+            logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
+            logger.debug(apiCourse, tags)
+            return 400;
+        }
     }
 
     const course = new Course();
@@ -1273,11 +1285,14 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
             identifier: apiCourse.tags[i]
         });
     }
-    const tags = await entityManager.find(CourseTag, { where: filters });
-    if (tags.length != apiCourse.tags.length) {
-        logger.warn(`Field 'tags' contains invalid values: ${apiCourse.instructors.join(', ')}`);
-        logger.debug(apiCourse);
-        return 400;
+    let tags: CourseTag[] = [];
+    if (filters.length > 0) {
+        tags = await entityManager.find(CourseTag, { where: filters });
+        if (tags.length != apiCourse.tags.length) {
+            logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
+            logger.debug(apiCourse, tags)
+            return 400;
+        }
     }
     course.tags = tags;
 
@@ -1725,8 +1740,8 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                 for (let i = 0; i < course.subcourses.length; i++) {
                     if (!course.subcourses[i].cancelled) {
                         course.subcourses[i].cancelled = true;
-                        // todo inform participants
                         await em.save(Subcourse, course.subcourses[i]);
+                        sendSubcourseCancelNotifications(course, course.subcourses[i]);
                     }
                 }
 
@@ -1738,7 +1753,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                 logger.debug(course, e);
             });
 
-            // todo add transaction log
+            transactionLog.log(new CancelCourseEvent(student, course))
             logger.info("Successfully cancelled course");
 
             return 204;
@@ -1845,7 +1860,6 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
     }
 
     if (!subcourse.cancelled) {
-        // todo inform participants
         subcourse.cancelled = true;
     } else {
         logger.warn(`User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
@@ -1855,7 +1869,8 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
 
     try {
         await entityManager.save(Subcourse, subcourse);
-        // todo add transactionlog
+        sendSubcourseCancelNotifications(course, subcourse);
+        transactionLog.log(new CancelSubcourseEvent(student, subcourse))
         logger.info("Successfully cancelled subcourse");
 
         return 204;

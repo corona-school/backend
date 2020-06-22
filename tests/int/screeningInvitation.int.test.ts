@@ -1,4 +1,4 @@
-import { sendFirstScreeningInvitation } from "../../common/mails/screening";
+import { sendFirstScreeningInvitationMail } from "../../common/mails/screening";
 import { Student } from "../../common/entity/Student";
 import mailjet from "../../common/mails/mailjet";
 import { DEFAULTSENDERS } from "../../common/mails/config";
@@ -50,7 +50,7 @@ describe("Screening Invitation", () => {
 
         const spy = jest.spyOn(mailjet, "send");
 
-        await sendFirstScreeningInvitation(testStudent);
+        await sendFirstScreeningInvitationMail(testStudent);
 
         expect(spy).toBeCalledWith(
             "Wir möchten dich kennenlernen!",
