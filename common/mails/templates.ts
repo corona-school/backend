@@ -206,4 +206,71 @@ export const mailjet = {
             variables: variables,
         };
     },
+    PUPILMATCHFOLLOWUP: (variables: {
+        pupilFirstName: string;
+        studentFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilmatchfollowup",
+            id: 1513038,
+            sender: DEFAULTSENDERS.support,
+            title: "Wie läuft das gemeinsame Lernen?",
+            disabled: false,
+            variables: variables,
+        };
+    },
+    STUDENTMATCHFOLLOWUP: (variables: {
+        studentFirstName: string;
+        pupilFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "studentmatchfollowup",
+            id: 1513030,
+            sender: DEFAULTSENDERS.support,
+            title: "Wie läuft das gemeinsame Lernen?",
+            disabled: false,
+            variables: variables,
+        };
+    },
+    PARTICIPANTCOURSEREGISTRATIONCONFIRMATION: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "participantcourseregistrationconfirmation",
+            id: 1513027,
+            sender: DEFAULTSENDERS.support,
+            title: "Du hast dich für einen Kurs angemeldet!",
+            disabled: false,
+            variables: variables,
+        };
+    },
+    PUPILREQUESTFEEDBACK: (variables: {
+        pupilFirstName: string;
+        studentFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilrequestfeedback",
+            id: 1513025,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Feedback zur Corona School!",
+            disabled: false,
+            variables: variables,
+        };
+    },
+    STUDENTREQUESTFEEDBACK: (variables: {
+        studentFirstName: string;
+        pupilFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "studentrequestfeedback",
+            id: 1513023,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Feedback zur Corona School!",
+            disabled: false,
+            variables: variables,
+        };
+    },
 };
