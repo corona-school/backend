@@ -45,6 +45,7 @@ export async function postTutorHandler(req: Request, res: Response) {
            typeof req.body.email == 'string' &&
            typeof req.body.isTutor == 'boolean' &&
            typeof req.body.isOfficial == 'boolean' &&
+            typeof req.body.isInstructor == 'boolean' &&
            typeof req.body.newsletter == 'boolean' &&
            typeof req.body.msg == 'string') {
 

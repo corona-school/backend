@@ -448,7 +448,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
         if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
-            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted)) {
+            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
