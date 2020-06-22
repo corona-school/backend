@@ -2,7 +2,7 @@ import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject } from "./format";
-import { Student } from "../../../common/entity/Student";
+import { ScreeningStatus, Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
@@ -446,9 +446,9 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     let type: ObjectType<Person>;
     if (person instanceof Student) {
         // Check if number of requested matches is valid
-        // todo check if screened
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
-        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6) {
+        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
+            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted)) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
