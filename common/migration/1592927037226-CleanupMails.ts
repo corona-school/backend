@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class CleanupMails1592927037226 implements MigrationInterface {
-    name = 'CleanupMails1592927037226'
+    name = 'CleanupMails1592927037226';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "match" DROP CONSTRAINT "FK_fef5c21e7977af1f5fdf2153e0f"`, undefined);

@@ -12,8 +12,8 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "*/30 * * * * *", jobFunction: fetchJob},
     // every morning
     { cronTime: "00 15 08 * * *", jobFunction: screeningReminderJob},
-    // every morning, but a little later 
+    // every morning, but a little later
     { cronTime: "00 15 09 * * *", jobFunction: courseReminderJob},
-    // every morning, but a little bit later 
+    // every morning, but a little bit later
     { cronTime: "00 15 10 * * *", jobFunction: feedbackRequestJob}
 ];

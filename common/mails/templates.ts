@@ -216,7 +216,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.support,
             title: "Wie läuft das gemeinsame Lernen?",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTMATCHFOLLOWUP: (variables: {
@@ -229,7 +229,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.support,
             title: "Wie läuft das gemeinsame Lernen?",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     PARTICIPANTCOURSEREGISTRATIONCONFIRMATION: (variables: {
@@ -244,7 +244,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.support,
             title: "Du hast dich für einen Kurs angemeldet!",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     PUPILREQUESTFEEDBACK: (variables: {
@@ -257,7 +257,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.support,
             title: "Dein Feedback zur Corona School!",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTREQUESTFEEDBACK: (variables: {
@@ -270,7 +270,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.support,
             title: "Dein Feedback zur Corona School!",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
-    },
+    }
 };
