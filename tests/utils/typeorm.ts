@@ -6,7 +6,7 @@ import {
     EntitySchema,
     createConnections,
     NamingStrategyInterface,
-    PromiseUtils,
+    PromiseUtils
 } from "typeorm";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
@@ -90,7 +90,7 @@ export function setupSingleTestingConnection(
         schema: options.schema ? options.schema : undefined,
         namingStrategy: options.namingStrategy
             ? options.namingStrategy
-            : undefined,
+            : undefined
     });
     if (!testingConnections.length) return undefined;
 
@@ -175,7 +175,7 @@ export function setupTestingConnections(
                             : connectionOptions.logging,
                     namingStrategy: options.namingStrategy
                         ? options.namingStrategy
-                        : connectionOptions.namingStrategy,
+                        : connectionOptions.namingStrategy
                 }
             );
 

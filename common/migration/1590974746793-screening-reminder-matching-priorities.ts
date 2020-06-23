@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class screeningReminderMatchingPriorities1590974746793 implements MigrationInterface {
-    name = 'screeningReminderMatchingPriorities1590974746793'
+    name = 'screeningReminderMatchingPriorities1590974746793';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "student" ADD "sentScreeningReminderCount" integer NOT NULL DEFAULT 0`, undefined);

@@ -10,7 +10,7 @@ import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
-import { sendFirstScreeningInvitation } from "../../../common/mails/screening";
+import { sendFirstScreeningInvitationToStudent } from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -59,7 +59,7 @@ export async function verifyToken(token: string): Promise<string | null> {
 
         // Try to find student
         let student = await entityManager.findOne(Student, {
-            verification: token,
+            verification: token
         });
 
         if (student instanceof Student) {
@@ -81,8 +81,8 @@ export async function verifyToken(token: string): Promise<string | null> {
 
             try {
                 await sendLoginTokenMail(student, uuid);
-                await sendFirstScreeningInvitation(student); //after the student has verified her*his email address, we need to invite them to the screening interview
-            } 
+                await sendFirstScreeningInvitationToStudent(entityManager, student); //after the student has verified her*his email address, we need to invite them to the screening interview
+            }
             catch (mailerror) {
                 logger.error(
                     `Can't send emails to student ${student.email} after verification due to mail error...`
@@ -158,14 +158,14 @@ export async function getNewTokenHandler(req: Request, res: Response) {
 
     try {
         if (req.query.email) {
-            let email = req.query.email.trim().toLowerCase();
+            let email = (req.query.email as string).trim().toLowerCase();
 
             const entityManager = getManager();
             const transactionLog = getTransactionLog();
 
             let person: (Pupil|Student);
             person = await entityManager.findOne(Student, {email: email});
-            if(person == undefined) {
+            if (person == undefined) {
                 person = await entityManager.findOne(Pupil, {email: email});
             }
 
@@ -178,7 +178,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authToken = hashToken(uuid);
                     person.authTokenSent = new Date();
                     person.authTokenUsed = false;
-                    
+
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
                     await sendLoginTokenMail(person, uuid);
 
@@ -250,7 +250,7 @@ export async function sendLoginTokenMail(person: Person, token: string) {
     try {
         const mail = mailjetTemplates.LOGINTOKEN({
             personFirstname: person.firstname,
-            dashboardURL: dashboardURL,
+            dashboardURL: dashboardURL
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {

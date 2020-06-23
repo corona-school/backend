@@ -15,7 +15,7 @@ function formatDate(d: Date): string {
         d.getUTCDate(),
         d.getUTCHours(),
         d.getUTCMinutes(),
-        d.getUTCSeconds(),
+        d.getUTCSeconds()
     ].join("-");
 }
 
@@ -79,7 +79,7 @@ async function sendMailTo(
         to: recipient, // list of receivers
         subject: subject, // Subject line
         text: text, // plain text body
-        html: html, // html body
+        html: html // html body
     });
 
     logger.info(`Message sent to ${recipient}`);

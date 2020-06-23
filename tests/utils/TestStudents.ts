@@ -15,5 +15,5 @@ function generateMax() {
 }
 
 export default {
-    max: generateMax,
+    max: generateMax
 };

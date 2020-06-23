@@ -41,6 +41,7 @@ async function getStudentsAfter(date: Date): Promise<Student[]> {
             s.firstname = curr.firstName;
             s.msg = curr.message;
             s.isStudent = true;
+            s.isInstructor = false;
 
             students.push(s);
         }

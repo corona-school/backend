@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager } from "typeorm";
+import { getManager, Like } from "typeorm";
 import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentToScreen } from "../../../common/dto/StudentToScreen";
@@ -14,6 +14,8 @@ import AccessedByScreenerEvent from "../../../common/transactionlog/types/Access
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
+import { Course } from "../../../common/entity/Course";
+import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 
 const logger = getLogger();
 
@@ -301,3 +303,106 @@ export async function updateScreenerByMailHandler(
         next();
     }
 }
+
+/**
+ * @api {GET} /screening/courses getCourses
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Retrieves the first 20 courses that match the specified filters.
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getCourses
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/courses
+ *
+ * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
+ */
+export async function getCourses(req: Request, res: Response) {
+    try {
+        const { courseState, search } = req.query;
+
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
+            return res.status(400).send("invalid value for parameter 'state'");
+
+        if (typeof search !== "undefined" && typeof search !== "string")
+            return res.status(400).send("invalid value for parameter 'search', must be string.");
+
+        const where = (courseState
+            ? (search
+                ? [{ courseState, name: Like(`%${search}%`) }, /* OR */ { courseState, description: Like(`%${search}%`) }]
+                : { courseState })
+            : (search
+                ? [{ name: Like(`%${search}%`) }, /* OR */ { description: Like(`%${search}%`) }]
+                : {})
+        );
+
+        const courses = await getManager().find(Course, {
+            where,
+            take: 20
+        });
+
+        return res.json({ courses });
+    } catch (error) {
+        logger.warn("/screening/courses failed with", error.message);
+        return res.status(500).send("internal server error");
+    }
+}
+
+/**
+ * @api {POST} /screening/course/:courseID/update updateCourse
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Updates a course
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName updateCourse
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/course/id/update
+ *
+ * @apiParam (JSON Body) {string|undefined} courseState the course state ("allowed", "denied", "cancelled") to update
+ * @apiParam (JSON Body) {string|undefined} name the new name
+ * @apiParam (JSON Body) {string|undefined} description the new description
+ * @apiParam (JSON Body) {string|undefined} outline the new outline
+ * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
+ * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
+ */
+export async function updateCourse(req: Request, res: Response) {
+    try {
+        const update = new ApiCourseUpdate(req.body);
+        const { id } = req.params;
+
+        if (typeof id !== "string" || !Number.isInteger(+id))
+            return res.status(400).send("Invalid course id!");
+        if (!update.isValid())
+            return res.status(400).send("Invalid course update!");
+
+        const course = await getManager().findOne(Course, { where: { id: +id } });
+
+        if (!course)
+            return res.status(404).send("Course not found");
+
+        course.updateCourse(update);
+        await getManager().save(course);
+
+        return res.json({ course });
+    } catch (error) {
+        logger.warn("/screening/course/../update failed with", error);
+        return res.status(500).send("internal server error");
+    }
+}
+

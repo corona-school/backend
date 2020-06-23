@@ -1,11 +1,11 @@
-import { sendFirstScreeningInvitation } from "../../common/mails/screening";
+import { sendFirstScreeningInvitationMail } from "../../common/mails/screening";
 import { Student } from "../../common/entity/Student";
 import mailjet from "../../common/mails/mailjet";
 import { DEFAULTSENDERS } from "../../common/mails/config";
 import { Connection } from "typeorm";
 import {
     createTestingConnection,
-    closeTestingConnection,
+    closeTestingConnection
 } from "../utils/typeorm";
 import TestStudents from "../utils/TestStudents";
 import { verifyToken } from "../../web/controllers/tokenController";
@@ -17,7 +17,7 @@ describe("Screening Invitation", () => {
     beforeEach(async (done) => {
         connection = await createTestingConnection({
             name: "default", //use the default name, because the function that we wanna test use the getConnection function
-            dropSchema: true, //reset database before each test
+            dropSchema: true //reset database before each test
         });
 
         //create tables etc.
@@ -50,7 +50,7 @@ describe("Screening Invitation", () => {
 
         const spy = jest.spyOn(mailjet, "send");
 
-        await sendFirstScreeningInvitation(testStudent);
+        await sendFirstScreeningInvitationMail(testStudent);
 
         expect(spy).toBeCalledWith(
             "Wir möchten dich kennenlernen!",
@@ -59,7 +59,7 @@ describe("Screening Invitation", () => {
             1362938,
             {
                 personFirstname: testStudent.firstname,
-                confirmationURL: testStudent.screeningURL(),
+                confirmationURL: testStudent.screeningURL()
             },
             false
         );
@@ -100,7 +100,7 @@ describe("Screening Invitation", () => {
             1337159,
             {
                 personFirstname: testStudent.firstname,
-                dashboardURL: expect.stringMatching(dashboardURLUUIDMatchRegex),
+                dashboardURL: expect.stringMatching(dashboardURLUUIDMatchRegex)
             },
             false
         );
@@ -112,7 +112,7 @@ describe("Screening Invitation", () => {
             1362938,
             {
                 personFirstname: testStudent.firstname,
-                confirmationURL: testStudent.screeningURL(),
+                confirmationURL: testStudent.screeningURL()
             },
             false
         );

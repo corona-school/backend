@@ -13,7 +13,7 @@ test("send mail via mailjet API", async () => {
         subjects: "Englisch/Deutsch",
         meetingProposalDate: "18. April 2020",
         meetingProposalTime: "15.42 Uhr",
-        callURL: "https://meet.jit.si/christopheristcoolcoronaschool",
+        callURL: "https://meet.jit.si/christopheristcoolcoronaschool"
     };
 
     const result = await mailjet.send(
@@ -31,34 +31,34 @@ test("send mail via mailjet API", async () => {
             url: "https://api.mailjet.com/v3.1/send",
             header: {
                 "user-agent": "mailjet-api-v3-nodejs/3.3.1",
-                "Content-type": "application/json",
+                "Content-type": "application/json"
             },
             _data: {
                 SandboxMode: true,
                 Messages: [
                     {
                         From: {
-                            Email: sender,
+                            Email: sender
                         },
                         To: [
                             {
-                                Email: receiver,
-                            },
+                                Email: receiver
+                            }
                         ],
                         TemplateID: templateID,
                         TemplateLanguage: true,
                         Variables: variables,
-                        Subject: subject,
-                    },
-                ],
-            },
+                        Subject: subject
+                    }
+                ]
+            }
         },
         header: {
             "content-length": "196",
             "content-type": "application/json; charset=UTF-8",
-            connection: "close",
+            connection: "close"
         },
         status: 200,
-        text: `{"Messages":[{"Status":"success","CustomID":"","To":[{"Email":"${receiver}","MessageUUID":"","MessageID":0,"MessageHref":"https://api.mailjet.com/v3/REST/message/0"}],"Cc":[],"Bcc":[]}]}`,
+        text: `{"Messages":[{"Status":"success","CustomID":"","To":[{"Email":"${receiver}","MessageUUID":"","MessageID":0,"MessageHref":"https://api.mailjet.com/v3/REST/message/0"}],"Cc":[],"Bcc":[]}]}`
     });
 });
