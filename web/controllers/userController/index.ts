@@ -407,11 +407,16 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
+        apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
 
         let matches = await entityManager.find(Match, {
             pupil: person,
             dissolved: false
+        });
+        let dissolvedMatches = await entityManager.find(Match, {
+            pupil: person,
+            dissolved: true
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -428,7 +433,21 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.matches.push(apiMatch);
         }
-        apiResponse.dissolvedMatches = [];
+        for (let i = 0; i < dissolvedMatches.length; i++) {
+            let apiMatch = new ApiMatch();
+            apiMatch.firstname = dissolvedMatches[i].student.firstname;
+            apiMatch.lastname = dissolvedMatches[i].student.lastname;
+            apiMatch.email = dissolvedMatches[i].student.email;
+            apiMatch.subjects = subjectsToStringArray(
+                JSON.parse(dissolvedMatches[i].student.subjects)
+            );
+            apiMatch.uuid = dissolvedMatches[i].uuid;
+            apiMatch.jitsilink =
+                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.date = dissolvedMatches[i].createdAt.getTime();
+
+            apiResponse.dissolvedMatches.push(apiMatch);
+        }
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);

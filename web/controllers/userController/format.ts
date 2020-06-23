@@ -42,7 +42,16 @@
  *                  "date": 1590834509
  *              }
  *          ],
- *          "dissolvedMatches": []
+ *          "dissolvedMatches": [
+ *              {
+ *                  "firstname": "John",
+ *                  "lastname": "Appleseed",
+ *                  "email": "john.appleseed@example.com",
+ *                  "uuid": "1a215b2f-ef17-44f8-a38d-6bcec820a8cf",
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-1a215b2f-ef17-44f8-a38d-6bcec820a8cf",
+ *                  "date": 1590834509
+ *              }
+ *          ]
  *      }
  * @apiSuccessExample {json} Student
  *      HTTP/1.1 200 OK
@@ -80,14 +89,14 @@
  *          "dissolvedMatches": [
  *              {
  *                  "firstname": "Jane",
- *                  "lastname": "Doe",
- *                  "email": "jane.doe@example.com",
+ *                  "lastname": "Appleseed",
+ *                  "email": "jane.appleseed@example.com",
  *                  "uuid": "24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
  *                  "grade": 9,
  *                  "subjects": [
  *                      "Mathematik",
  *                      "Englisch"
- *                  ]
+ *                  ],
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
  *                  "date": 1590834509
  *              }
