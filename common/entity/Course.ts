@@ -84,13 +84,13 @@ export class Course {
 
     @Column({ nullable: true })
     screeningComment: string;
-    
+
     updateCourse(update: ApiCourseUpdate) {
-        if(!update.isValid())
+        if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
 
-        for(const [key, value] of Object.entries(update)) {
-            if(typeof value !== "undefined")
+        for (const [key, value] of Object.entries(update)) {
+            if (typeof value !== "undefined")
                 this[key] = value;
         }
     }

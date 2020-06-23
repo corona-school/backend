@@ -224,8 +224,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         status = 400;
                         break;
                     }
-                } else {
-                    if (typeof elem.name == "string" &&
+                } else if (typeof elem.name == "string" &&
                         typeof elem.minGrade == "number" &&
                         typeof elem.maxGrade == "number" &&
                         elem.minGrade >= 1 &&
@@ -235,18 +234,17 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         elem.maxGrade <= 13 &&
                         checkSubject(elem.name)) {
 
-                        let subject = new ApiSubject();
-                        subject.name = elem.name;
-                        subject.minGrade = elem.minGrade;
-                        subject.maxGrade = elem.maxGrade;
-                        subjects.push(subject);
+                    let subject = new ApiSubject();
+                    subject.name = elem.name;
+                    subject.minGrade = elem.minGrade;
+                    subject.maxGrade = elem.maxGrade;
+                    subjects.push(subject);
 
-                    } else {
-                        logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
-                        logger.debug("Index " + i, b);
-                        status = 400;
-                        break;
-                    }
+                } else {
+                    logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
+                    logger.debug("Index " + i, b);
+                    status = 400;
+                    break;
                 }
             }
         }

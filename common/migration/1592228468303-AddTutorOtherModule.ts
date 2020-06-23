@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class AddTutorOtherModule1592228468303 implements MigrationInterface {
-    name = 'AddTutorOtherModule1592228468303'
+    name = 'AddTutorOtherModule1592228468303';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TYPE "public"."student_module_enum" RENAME TO "student_module_enum_old"`, undefined);

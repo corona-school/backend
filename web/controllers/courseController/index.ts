@@ -737,7 +737,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
-            logger.debug(apiCourse, tags)
+            logger.debug(apiCourse, tags);
             return 400;
         }
     }
@@ -1290,7 +1290,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
         tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
-            logger.debug(apiCourse, tags)
+            logger.debug(apiCourse, tags);
             return 400;
         }
     }
@@ -1753,7 +1753,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                 logger.debug(course, e);
             });
 
-            transactionLog.log(new CancelCourseEvent(student, course))
+            transactionLog.log(new CancelCourseEvent(student, course));
             logger.info("Successfully cancelled course");
 
             return 204;
@@ -1870,7 +1870,7 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
     try {
         await entityManager.save(Subcourse, subcourse);
         await sendSubcourseCancelNotifications(course, subcourse);
-        await transactionLog.log(new CancelSubcourseEvent(student, subcourse))
+        await transactionLog.log(new CancelSubcourseEvent(student, subcourse));
         logger.info("Successfully cancelled subcourse");
 
         return 204;

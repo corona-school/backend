@@ -2,7 +2,7 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    PrimaryGeneratedColumn,
+    PrimaryGeneratedColumn
 } from "typeorm";
 import LogType from "../transactionlog/types/LogType";
 
@@ -14,7 +14,7 @@ export default class Log {
     @Column({
         type: "enum",
         enum: LogType,
-        default: LogType.MISC,
+        default: LogType.MISC
     })
     logtype: LogType;
 

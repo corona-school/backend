@@ -9,7 +9,7 @@ export async function sendScreeningReminderToStudent(manager: EntityManager, stu
 
     //...store that in database
     student.lastSentScreeningInvitationDate = new Date();
-    student.sentScreeningReminderCount += 1; 
+    student.sentScreeningReminderCount += 1;
 
     await manager.save(student);
 }

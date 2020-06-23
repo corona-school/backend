@@ -39,7 +39,7 @@ export function authCheckFactory(optional = false) {
             // Try to find pupil and continue request
             const pupil = await entityManager.findOne(Pupil, {
                 authToken: hashToken(token),
-                active: true,
+                active: true
             });
             if (pupil instanceof Pupil) {
                 pupil.authTokenUsed = true;
@@ -59,7 +59,7 @@ export function authCheckFactory(optional = false) {
             logger.debug(e);
             logger.error("Error in auth check: " + e.message);
         }
-    }
+    };
 }
 
 export async function screenerAuthCheck(req: Request, res: Response, next) {

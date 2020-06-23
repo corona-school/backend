@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class AddCertAndCourseLog1591092825596 implements MigrationInterface {
-    name = 'AddCertAndCourseLog1591092825596'
+    name = 'AddCertAndCourseLog1591092825596';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TYPE "public"."log_logtype_enum" RENAME TO "log_logtype_enum_old"`, undefined);

@@ -16,7 +16,7 @@ export async function httpsGet(url: string) {
             .get(
                 url,
                 {
-                    rejectUnauthorized: true,
+                    rejectUnauthorized: true
                 },
                 (res) => {
                     let body = "";

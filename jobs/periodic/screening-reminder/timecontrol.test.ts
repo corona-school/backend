@@ -23,7 +23,7 @@ describe("Screening Reminder Time Handling", () => {
         const weekendDate1 = createDateWithRandomTime(13,6,2020);
         const corpusChristi = createDateWithRandomTime(11,6,2020);
         const assumptionDay = createDateWithRandomTime(15,8,2020);
-        
+
         const weekday1 = createDateWithRandomTime(12,6,2020);
         const weekday2 = createDateWithRandomTime(2,7,2020);
         const weekday3 = createDateWithRandomTime(9,10,2020);

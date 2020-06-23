@@ -22,7 +22,7 @@ export async function sendVerificationMail(person: Person) {
     try {
         const mail = mailjetTemplates.VERIFICATION({
             confirmationURL: `${verificationUrl}${person.verification}`,
-            personFirstname: person.firstname,
+            personFirstname: person.firstname
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {

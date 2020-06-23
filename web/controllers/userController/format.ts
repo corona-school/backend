@@ -213,7 +213,7 @@ export function checkSubject(s: string): boolean {
             "spanisch",
             "italienisch",
             "russisch",
-            "niederländisch",
+            "niederländisch"
         ].indexOf(s.toLowerCase()) >= 0
     );
 }

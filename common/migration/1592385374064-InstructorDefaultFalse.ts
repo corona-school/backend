@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class InstructorDefaultFalse1592385374064 implements MigrationInterface {
-    name = 'InstructorDefaultFalse1592385374064'
+    name = 'InstructorDefaultFalse1592385374064';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "isInstructor" SET DEFAULT false`, undefined);

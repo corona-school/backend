@@ -125,7 +125,7 @@ export class Student extends Person {
         enum: TeacherModule,
         nullable: true,
         default: undefined // See typeorm/typeorm#5371: Setting this to null causes typeORM to generate 'null' as a string.
-                           // This is fine for now because enums in postgres are DEFAULT NULL anyways 
+        // This is fine for now because enums in postgres are DEFAULT NULL anyways
     })
     module: TeacherModule;
 
@@ -159,19 +159,19 @@ export class Student extends Person {
         nullable: true,
         cascade: true
     })
-    instructorScreening: Promise<InstructorScreening>; 
-    
+    instructorScreening: Promise<InstructorScreening>;
+
     @Column({
         nullable: false,
         default: 0
     })
-    sentInstructorScreeningReminderCount: number;    
+    sentInstructorScreeningReminderCount: number;
 
     @Column({
         nullable: true,
         default: null
     })
-    lastSentInstructorScreeningInvitationDate: Date;    
+    lastSentInstructorScreeningInvitationDate: Date;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
