@@ -19,39 +19,9 @@ export class CleanupMails1592927037226 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "match" DROP COLUMN "dissolutionToStudentMailId"`, undefined);
         await queryRunner.query(`ALTER TABLE "match" DROP CONSTRAINT "REL_24e84ce75ede0251f5c4f30e73"`, undefined);
         await queryRunner.query(`ALTER TABLE "match" DROP COLUMN "dissolutionToPupilMailId"`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "verification" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "verifiedAt" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "authToken" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "authTokenSent" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "match" ALTER COLUMN "dissolveReason" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "verification" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "verifiedAt" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "authToken" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "authTokenSent" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "verification" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "verifiedAt" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "authToken" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "authTokenSent" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentScreeningInvitationDate" SET DEFAULT null`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentInstructorScreeningInvitationDate" SET DEFAULT null`, undefined);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentInstructorScreeningInvitationDate" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentScreeningInvitationDate" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "authTokenSent" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "authToken" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "verifiedAt" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "verification" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "authTokenSent" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "authToken" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "verifiedAt" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "verification" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "match" ALTER COLUMN "dissolveReason" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "authTokenSent" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "authToken" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "verifiedAt" DROP DEFAULT`, undefined);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "verification" DROP DEFAULT`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD "dissolutionToPupilMailId" integer`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD CONSTRAINT "REL_24e84ce75ede0251f5c4f30e73" UNIQUE ("dissolutionToPupilMailId")`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD "dissolutionToStudentMailId" integer`, undefined);
