@@ -110,13 +110,10 @@ export async function certificateHandler(req: Request, res: Response) {
  */
 export async function confirmCertificateHandler(req: Request, res: Response) {
     let status;
-console.log(req.params.certificateId)
     if (req.params.certificateId != undefined) {
-        
         return res.json(await viewParticipationCertificate(req.params.certificateId));
     }
     status = 500;
-    console.log("500 er ")
     res.status(status).end();
 }
 
@@ -153,7 +150,6 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
 
-    console.log("saveing certificate")
     let pc = new ParticipationCertificate();
     pc.pupil = match.pupil;
     pc.student = match.student;
