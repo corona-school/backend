@@ -102,6 +102,7 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
+        certificateRouter.get("/:certificateId", certificateController.confirmCertificateHandler);
         certificateRouter.use(authCheckFactory());
         certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
         app.use("/api/certificate", certificateRouter);

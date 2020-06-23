@@ -1,10 +1,11 @@
 import { getConnection, getManager } from "typeorm";
-import { createHash } from "crypto";
+import { createHash, Certificate } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
 import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
+import { ParticipationCertificate } from "../common/entity/ParticipationCertificate"
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -108,6 +109,20 @@ export async function setupDevDB() {
         await entityManager.save(Match, matches[i]);
         console.log("Inserted Dev Match " + i);
     }
+
+    let pc = new ParticipationCertificate();
+    pc.uuid = "000000001-0000-0000-0701-1b4c4c526384";
+    pc.pupil = pupils[0];
+    pc.student = students[0];
+    pc.subjects = JSON.stringify(["Englisch", "Deutsch"]);
+    pc.certificateDate = new Date();
+    pc.startDate = new Date();
+    pc.endDate = new Date();
+    pc.activities = JSON.stringify(["xyz", "zipd"]);    //or coded with numbers + own entries
+    pc.hoursTotal = 8;
+    pc.hoursPerWeek = 8;
+
+    await entityManager.save(ParticipationCertificate, pc);
 
     // Screening results
     const screeners: Screener[] = [];

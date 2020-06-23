@@ -11,6 +11,7 @@ import * as pdf from 'html-pdf';
 import * as path from 'path';
 import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
+import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 
 const logger = getLogger();
 
@@ -84,6 +85,41 @@ export async function certificateHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
+
+/**
+ * @api {GET} /certificate/:certificateId getCertificateConfirmation
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * View a certificate
+ *
+ * This endpoint allows looking at a certificate (as HTML) as confirmation link printed on the PDF Certificate.
+ *
+ * @apiParam (URL Parameter) {string} certificateId UUID of the certificate
+ *
+ * @apiName getCertificate
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/00000000-0000-0002-0001-1b4c4c526364
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function confirmCertificateHandler(req: Request, res: Response) {
+    let status;
+console.log(req.params.certificateId)
+    if (req.params.certificateId != undefined) {
+        
+        return res.json(await viewParticipationCertificate(req.params.certificateId));
+    }
+    status = 500;
+    console.log("500 er ")
+    res.status(status).end();
+}
+
 async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
@@ -117,6 +153,16 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
 
+    console.log("saveing certificate")
+    let pc = new ParticipationCertificate();
+    pc.pupil = match.pupil;
+    pc.student = match.student;
+    pc.subjects = params.subjects;
+    pc.hoursPerWeek = params.hoursPerWeek;
+    pc.hoursTotal = params.hoursTotal;
+    pc.endDate = params.endDate;
+    await entityManager.save(ParticipationCertificate, pc);
+
     return ret;
 }
 
@@ -124,7 +170,7 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
     let html = readFileSync("./assets/certificateTemplate.html", "utf8");
     const options = {
         "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
-        "filename": "/tmp/html-pdf-"+student.id+"-"+pupil.id+"-"+moment().format("X")+".pdf"
+        "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
     };
 
     // adjust variables
@@ -132,8 +178,8 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
     html = html.replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname));
     html = html.replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname));
     html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERSTART%", moment(startDate,"X").format("D.M.YYYY"));
-    html = html.replace("%SCHUELERENDE%", moment(params.endDate,"X").format("D.M.YYYY"));
+    html = html.replace("%SCHUELERSTART%", moment(startDate, "X").format("D.M.YYYY"));
+    html = html.replace("%SCHUELERENDE%", moment(params.endDate, "X").format("D.M.YYYY"));
     html = html.replace("%SCHUELERFAECHER%", escape(params.subjects).replace(/,/g, ", "));
     html = html.replace("%SCHUELERFREITEXT%", escape(params.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
     html = html.replace("%SCHUELERPROWOCHE%", escape(params.hoursPerWeek));
@@ -151,4 +197,17 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
             }
         });
     });
+}
+
+async function viewParticipationCertificate(certificateId) {
+    const entityManager = getManager();
+    let certificate = null;
+    try {
+        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId });
+    }
+    catch (e) {
+        logger.error(e);
+    }
+    //generate some html here
+    return certificate;
 }
