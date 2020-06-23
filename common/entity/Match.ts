@@ -14,7 +14,6 @@ import {
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
-import { Mail } from "./Mail";
 import {
     intersectionWithRespectToGrade,
     subjectsAsArray,
@@ -76,44 +75,15 @@ export class Match {
     pupil: Pupil;
 
     //all emails that were sent associated with this match (i.e. emails about confirming the match, dissolving it, etc. )
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    confirmationToStudentMail: Promise<Mail>;
-
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    confirmationToPupilMail: Promise<Mail>;
-
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    dissolutionToStudentMail: Promise<Mail>;
-
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    dissolutionToPupilMail: Promise<Mail>;
-
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    feedbackToPupilMail: Promise<Mail>;
-
-    @OneToOne((type) => Mail, { nullable: true })
-    @JoinColumn()
-    feedbackToStudentMail: Promise<Mail>;
+    @Column({
+        default: false,
+    })
+    feedbackToPupilMail: boolean;
 
     @Column({
         default: false,
     })
-    automaticMailsForConfirmationDisabled: boolean; //if that is true, the system should not automatically send pending confirmation emails to the match -> this is primarily important for importing old matches
-
-    @Column({
-        default: false,
-    })
-    automaticMailsForDissolutionDisabled: boolean;
-
-    @Column({
-        default: false,
-    })
-    automaticMailsForFeedbackDisabled: boolean;
+    feedbackToStudentMail: boolean;
 
     @Column({
         type: "enum",
