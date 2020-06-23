@@ -737,7 +737,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
-            logger.debug(apiCourse, tags)
+            logger.debug(apiCourse, tags);
             return 400;
         }
     }
@@ -1290,7 +1290,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
         tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
-            logger.debug(apiCourse, tags)
+            logger.debug(apiCourse, tags);
             return 400;
         }
     }

@@ -34,5 +34,5 @@ export class ApiCourseUpdate {
 
 /* Helper functions for data validation, usage as above */
 const is = <T>(...checks: ((value: T) => boolean)[]) => (value: T) => checks.every(check => check(value));
-const isType = <T>(key: keyof T, types: ("string" | "number" | "undefined" | "boolean")[]) => (value: T) => types.indexOf(typeof value[key] as any) !== -1; 
-const isValue = <T, K extends keyof T>(key: K, should: T[K][]) => (value: T) => should.indexOf(value[key]) !== -1; 
+const isType = <T>(key: keyof T, types: ("string" | "number" | "undefined" | "boolean")[]) => (value: T) => types.indexOf(typeof value[key] as any) !== -1;
+const isValue = <T, K extends keyof T>(key: K, should: T[K][]) => (value: T) => should.indexOf(value[key]) !== -1;

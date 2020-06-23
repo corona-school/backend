@@ -308,10 +308,10 @@ export async function updateScreenerByMailHandler(
  * @api {GET} /screening/courses getCourses
  * @apiVersion 1.0.1
  * @apiDescription
- * 
+ *
  * Retrieves the first 20 courses that match the specified filters.
- * 
- * 
+ *
+ *
  * Only screeners with a valid token in the request header can use the API.
  *
  * @apiName getCourses
@@ -346,7 +346,7 @@ export async function getCourses(req: Request, res: Response) {
 
         const courses = await getManager().find(Course, {
             where,
-            take: 20,
+            take: 20
         });
 
         return res.json({ courses });
@@ -360,10 +360,10 @@ export async function getCourses(req: Request, res: Response) {
  * @api {POST} /screening/course/:courseID/update updateCourse
  * @apiVersion 1.0.1
  * @apiDescription
- * 
+ *
  * Updates a course
- * 
- * 
+ *
+ *
  * Only screeners with a valid token in the request header can use the API.
  *
  * @apiName updateCourse
@@ -379,7 +379,7 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|undefined} description the new description
  * @apiParam (JSON Body) {string|undefined} outline the new outline
  * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
- * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set 
+ * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
