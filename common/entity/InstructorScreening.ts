@@ -7,7 +7,7 @@ import {
     UpdateDateColumn,
     CreateDateColumn,
     ManyToOne,
-    getManager,
+    getManager
 } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { getScreenerByEmail, Screener } from "./Screener";
@@ -22,12 +22,12 @@ export class InstructorScreening {
     success: boolean; //verified or not verified
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     comment: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     knowsCoronaSchoolFrom: string;
 
@@ -38,13 +38,13 @@ export class InstructorScreening {
     updatedAt: Date;
 
     @ManyToOne((type) => Screener, (screener) => screener.screenings, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     screener: Screener;
 
     @OneToOne((type) => Student, (student) => student.instructorScreening, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     student: Student;

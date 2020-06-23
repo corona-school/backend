@@ -10,13 +10,13 @@ import {
     OneToMany,
     ManyToOne,
     Unique,
-    EntityManager,
+    EntityManager
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
 import {
     intersectionWithRespectToGrade,
-    subjectsAsArray,
+    subjectsAsArray
 } from "../util/subjectsutils";
 import { gradeAsInt } from "../util/gradestrings";
 
@@ -41,18 +41,18 @@ export class Match {
      *   0:  The match has been dissolved, because a member deactivated his account
      */
     @Column({
-        default: false,
+        default: false
     })
     dissolved: boolean;
 
     @Column({
         default: null,
-        nullable: true,
+        nullable: true
     })
     dissolveReason: number;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     proposedTime: Date;
 
@@ -63,32 +63,32 @@ export class Match {
     updatedAt: Date;
 
     @ManyToOne((type) => Student, (student) => student.matches, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     student: Student;
 
     @ManyToOne((type) => Pupil, (pupil) => pupil.matches, {
-        eager: true,
+        eager: true
     })
     @JoinColumn()
     pupil: Pupil;
 
     //all emails that were sent associated with this match (i.e. emails about confirming the match, dissolving it, etc. )
     @Column({
-        default: false,
+        default: false
     })
     feedbackToPupilMail: boolean;
 
     @Column({
-        default: false,
+        default: false
     })
     feedbackToStudentMail: boolean;
 
     @Column({
         type: "enum",
         enum: SourceType,
-        default: SourceType.MATCHEDINTERNAL,
+        default: SourceType.MATCHEDINTERNAL
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 }
@@ -111,7 +111,7 @@ export async function haveDissolvedMatch(
             await manager.find(Match, {
                 student: s,
                 pupil: p,
-                dissolved: true,
+                dissolved: true
             })
         ).length > 0
     );
@@ -124,7 +124,7 @@ export async function alreadyMatched(
 ) {
     const matches = manager.find(Match, {
         student: s,
-        pupil: p,
+        pupil: p
     });
 
     return (await matches).length !== 0;

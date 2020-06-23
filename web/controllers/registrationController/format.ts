@@ -6,6 +6,7 @@
  * @apiSuccess (Tutor Object) {string} lastname Last name
  * @apiSuccess (Tutor Object) {string} email E-Mail
  * @apiSuccess (Tutor Object) {bool} isTutor True, if eligible for one-on-one matching
+ * @apiSuccess (Tutor Object) {bool} isInstructor True, if eligible for course management
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutor Object) {bool} isOfficial True, if user is looking for something official
  * @apiSuccess (Tutor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
@@ -20,6 +21,7 @@ export interface ApiAddTutor {
     lastname: string,
     email: string
     isTutor: boolean,
+    isInstructor: boolean,
     subjects?: ApiAddTutorSubject[],
     isOfficial: boolean,
     university?: string,

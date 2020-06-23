@@ -2,7 +2,7 @@ import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject } from "./format";
-import { Student } from "../../../common/entity/Student";
+import { ScreeningStatus, Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
@@ -224,8 +224,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         status = 400;
                         break;
                     }
-                } else {
-                    if (typeof elem.name == "string" &&
+                } else if (typeof elem.name == "string" &&
                         typeof elem.minGrade == "number" &&
                         typeof elem.maxGrade == "number" &&
                         elem.minGrade >= 1 &&
@@ -235,18 +234,17 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         elem.maxGrade <= 13 &&
                         checkSubject(elem.name)) {
 
-                        let subject = new ApiSubject();
-                        subject.name = elem.name;
-                        subject.minGrade = elem.minGrade;
-                        subject.maxGrade = elem.maxGrade;
-                        subjects.push(subject);
+                    let subject = new ApiSubject();
+                    subject.name = elem.name;
+                    subject.minGrade = elem.minGrade;
+                    subject.maxGrade = elem.maxGrade;
+                    subjects.push(subject);
 
-                    } else {
-                        logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
-                        logger.debug("Index " + i, b);
-                        status = 400;
-                        break;
-                    }
+                } else {
+                    logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
+                    logger.debug("Index " + i, b);
+                    status = 400;
+                    break;
                 }
             }
         }
@@ -446,9 +444,9 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     let type: ObjectType<Person>;
     if (person instanceof Student) {
         // Check if number of requested matches is valid
-        // todo check if screened
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
-        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6) {
+        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
+            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }

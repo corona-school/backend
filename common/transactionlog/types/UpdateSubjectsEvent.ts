@@ -6,7 +6,7 @@ import { Pupil } from "../../entity/Pupil";
 export default class UpdateSubjectsEvent extends LogUserEvent {
     constructor(user: Pupil | Student, oldSubjects: Array<any>) {
         super(LogType.UPDATE_SUBJECTS, user, {
-            oldSubjects: oldSubjects,
+            oldSubjects: oldSubjects
         });
     }
 }

@@ -1,0 +1,42 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "module"
+    },
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "block-scoped-var": "error",
+        "camelcase": "warn",
+        "comma-dangle": "error",
+        "indent": ["error", 4, {
+            "SwitchCase": 1,
+            "ArrayExpression": "first",
+            "CallExpression": {"arguments": "first"},
+            "FunctionDeclaration": {"parameters": "first"},
+            "FunctionExpression": {"parameters": "first"},
+            "ImportDeclaration": "first",
+            "ObjectExpression": "first"
+        }],
+        "keyword-spacing": ["error", {
+            "after": true
+        }],
+        "key-spacing": ["error", {
+            "mode": "strict",
+            "beforeColon": false,
+            "afterColon": true
+        }],
+        "no-debugger": "error",
+        "no-duplicate-case": "error",
+        "no-eval": "error",
+        "no-extra-bind": "error",
+        "no-extra-semi": "error",
+        "no-invalid-regexp": "error",
+        "no-lonely-if": "warn",
+        "no-multi-spaces": "error",
+        "no-trailing-spaces": "error",
+        "@typescript-eslint/semi": ["error", "always"]
+    }
+}

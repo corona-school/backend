@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class InitCourseEntities1590681099752 implements MigrationInterface {
-    name = 'InitCourseEntities1590681099752'
+    name = 'InitCourseEntities1590681099752';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "course_coursestate_enum" AS ENUM('created', 'submitted', 'allowed', 'denied', 'cancelled')`, undefined);

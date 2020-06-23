@@ -10,7 +10,7 @@ const logger = getLogger();
 /// This will only respect the day, not the hour (e.g. christmas eve is usually only a holiday after 2 pm, but no one wants to screen at christmas eve)
 function isHolidayAtDate(holiday: Holidays.Holiday, date: Date) {
     //holiday duration ROUNDED UP to at least one day
-    const startOfStart = moment(holiday.start).startOf("day"); 
+    const startOfStart = moment(holiday.start).startOf("day");
     const holidayDuration = Math.ceil(moment(holiday.end).clone().diff(startOfStart, "days", true));
 
     //the start and end time on a daily granularity, such that if a holiday actually begins at 2pm, the start time will be 0am (if holiday ends at 4pm, end time will be 11.59pm)
@@ -23,7 +23,7 @@ function isHolidayAtDate(holiday: Holidays.Holiday, date: Date) {
     if (isHD) {
         return holiday;
     }
-    return false
+    return false;
 }
 
 // ----------------------------------------------------

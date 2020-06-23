@@ -6,11 +6,11 @@ import { sendToStudents } from "./send";
 
 const logger = getLogger();
 
-/// Will remind all students, that should be reminded now. 
-/// It is possible that no one will get reminded, for example due to public holidays etc. 
+/// Will remind all students, that should be reminded now.
+/// It is possible that no one will get reminded, for example due to public holidays etc.
 export async function remindAllThatShouldBeRemindedNow(manager: EntityManager) {
     const now = new Date();
-    
+
     //prevent reminders, if there's a public holiday today
     if (!shouldRemindAtDate(now)) {
         logger.info("---> Will not send screening reminders today!");
