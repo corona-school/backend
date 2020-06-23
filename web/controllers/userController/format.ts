@@ -13,6 +13,7 @@
  * @apiSuccess (User Object) {string} screeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
+ * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -40,7 +41,8 @@
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
  *                  "date": 1590834509
  *              }
- *          ]
+ *          ],
+ *          "dissolvedMatches": []
  *      }
  * @apiSuccessExample {json} Student
  *      HTTP/1.1 200 OK
@@ -72,6 +74,21 @@
  *                      "Chinesisch"
  *                  ]
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
+ *                  "date": 1590834509
+ *              }
+ *          ],
+ *          "dissolvedMatches": [
+ *              {
+ *                  "firstname": "Jane",
+ *                  "lastname": "Doe",
+ *                  "email": "jane.doe@example.com",
+ *                  "uuid": "24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
+ *                  "grade": 9,
+ *                  "subjects": [
+ *                      "Mathematik",
+ *                      "Englisch"
+ *                  ]
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
  *                  "date": 1590834509
  *              }
  *          ]
