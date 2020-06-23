@@ -410,14 +410,14 @@ async function get(
                 ? person.openMatchRequestCount
                 : 2; // todo support for legacy values
         apiResponse.matches = [];
-        apiResponse.dissolved_matches = [];
+        apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
 
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
         });        
-        let dissolved_matches = await entityManager.find(Match, {
+        let dissolvedMatches = await entityManager.find(Match, {
             student: person,
             dissolved: true
         });
@@ -437,21 +437,21 @@ async function get(
 
             apiResponse.matches.push(apiMatch);
         }
-        for (let i = 0; i < dissolved_matches.length; i++) {
+        for (let i = 0; i < dissolvedMatches.length; i++) {
             let apiMatch = new ApiMatch();
-            apiMatch.firstname = dissolved_matches[i].pupil.firstname;
-            apiMatch.lastname = dissolved_matches[i].pupil.lastname;
-            apiMatch.email = dissolved_matches[i].pupil.email;
-            apiMatch.grade = Number.parseInt(dissolved_matches[i].pupil.grade);
+            apiMatch.firstname = dissolvedMatches[i].pupil.firstname;
+            apiMatch.lastname = dissolvedMatches[i].pupil.lastname;
+            apiMatch.email = dissolvedMatches[i].pupil.email;
+            apiMatch.grade = Number.parseInt(dissolvedMatches[i].pupil.grade);
             apiMatch.subjects = subjectsToStringArray(
-                JSON.parse(dissolved_matches[i].pupil.subjects)
+                JSON.parse(dissolvedMatches[i].pupil.subjects)
             );
-            apiMatch.uuid = dissolved_matches[i].uuid;
+            apiMatch.uuid = dissolvedMatches[i].uuid;
             apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + dissolved_matches[i].uuid;
-            apiMatch.date = dissolved_matches[i].createdAt.getTime();
+                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
-            apiResponse.dissolved_matches.push(apiMatch);
+            apiResponse.dissolvedMatches.push(apiMatch);
         }
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
@@ -485,7 +485,7 @@ async function get(
 
             apiResponse.matches.push(apiMatch);
         }
-        apiResponse.dissolved_matches = [];
+        apiResponse.dissolvedMatches = [];
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);

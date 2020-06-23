@@ -89,7 +89,7 @@ export class ApiGetUser {
     screeningStatus?: string;
     subjects: ApiSubject[];
     matches: ApiMatch[];
-    dissolved_matches: ApiMatch[];
+    dissolvedMatches: ApiMatch[];
 }
 
 /**
