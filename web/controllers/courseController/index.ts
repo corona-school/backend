@@ -24,7 +24,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
 
 const logger = getLogger();
 
@@ -2246,20 +2246,66 @@ export async function groupMailHandler(req: Request, res: Response) {
 
     let status = 204;
 
-    if(req.params.id != undefined
-    && req.params.subid != undefined
-    && typeof req.body.subject == "string"
-    && typeof req.body.body == "string") {
-        status = await sendGroupMail(Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+    if (res.locals.user instanceof Student) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && typeof req.body.subject == "string"
+            && typeof req.body.body == "string") {
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+        } else {
+            logger.warn("Missing or invalid parameters for groupMailHandler");
+            status = 400;
+        }
     } else {
-        logger.warn("Missing or invalid parameters for groupMailHandler");
-        status = 400;
+        logger.warn("Groupmail requested by Non-Student");
+        status = 403;
     }
 
     res.status(status).end();
 }
 
-async function sendGroupMail(courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
-    // TODO
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, {id: courseId});
+
+    if (course == undefined) {
+        logger.warn("Tried to send group mail to invalid course");
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId});
+    if (subcourse == undefined) {
+        logger.warn("Tried to send group mail to invalid subcourse");
+        return 404;
+    }
+
+    let authorized = false;
+    for (let i = 0; i < course.instructors.length; i++) {
+        if (student.id == course.instructors[i].id) {
+            authorized = true;
+            break;
+        }
+    }
+    if (!authorized) {
+        logger.warn("Tried to send group mail as user who is not instructor of this course");
+        logger.debug(student);
+        return 403;
+    }
+
+    try {
+        for (let participant of subcourse.participants) {
+            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
+        }
+    } catch (e) {
+        logger.warn("Unable to send group mail");
+        logger.debug(e);
+        return 400;
+    }
+
     return 204;
 }
