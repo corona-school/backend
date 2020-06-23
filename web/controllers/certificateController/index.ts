@@ -100,7 +100,7 @@ export async function certificateHandler(req: Request, res: Response) {
  * @apiGroup Certificate
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/00000000-0000-0002-0001-1b4c4c526364
+ * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -144,20 +144,25 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
         ret.status = 400;
         return ret;
     }
+    console.log("save cert")
+    let pc = new ParticipationCertificate();
+    pc.pupil = match.pupil;
+    pc.student = match.student;
+    pc.subjects = params.subjects;
+    pc.activities = params.subjects;
+    pc.hoursPerWeek = params.hoursPerWeek;
+    pc.hoursTotal = params.hoursTotal;
+    pc.endDate = params.endDate;
+    pc.startDate = params.endDate;
+    pc.uuid = "000000001-0000-0000-0701-1b4c4c526385"
+    console.log(pc)
+    await entityManager.save(ParticipationCertificate, pc);
 
     ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params);
     ret.status = 200;
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
 
-    let pc = new ParticipationCertificate();
-    pc.pupil = match.pupil;
-    pc.student = match.student;
-    pc.subjects = params.subjects;
-    pc.hoursPerWeek = params.hoursPerWeek;
-    pc.hoursTotal = params.hoursTotal;
-    pc.endDate = params.endDate;
-    await entityManager.save(ParticipationCertificate, pc);
 
     return ret;
 }

@@ -2,7 +2,7 @@ import {
     Entity,
     Column,
     PrimaryGeneratedColumn,
-    OneToOne,
+    ManyToOne,
     JoinColumn,
     Index,
     CreateDateColumn
@@ -40,11 +40,11 @@ export class ParticipationCertificate {
     @Column()
     hoursTotal: number;
 
-    @OneToOne((type) => Student)
+    @ManyToOne((type) => Student)
     @JoinColumn()
     student: Student;
 
-    @OneToOne((type) => Pupil)
+    @ManyToOne((type) => Pupil)
     @JoinColumn()
     pupil: Pupil;
 
