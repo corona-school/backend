@@ -32,24 +32,30 @@ async function sendMail(
         Messages: [
             {
                 From: {
-                    Email: senderAddress,
+                    Email: senderAddress
                 },
                 To: [
                     {
-                        Email: receiverAddress,
-                    },
+                        Email: receiverAddress
+                    }
                 ],
                 TemplateID: templateID,
                 TemplateLanguage: true,
                 Variables: variables,
-                Subject: subject,
-            },
-        ],
+                Subject: subject
+            }
+        ]
     });
 
     return await request;
 }
 
+const ErrorCodes = {
+    RATE_LIMIT: 429,
+    NOT_AUTHORIZED: 401
+};
+
 export default {
     send: sendMail,
+    ErrorCodes: ErrorCodes
 };

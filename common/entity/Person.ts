@@ -7,7 +7,7 @@ import {
     Index,
     UpdateDateColumn,
     CreateDateColumn,
-    OneToMany,
+    OneToMany
 } from "typeorm";
 
 export abstract class Person {
@@ -21,17 +21,17 @@ export abstract class Person {
     updatedAt: Date;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     firstname: string;
 
     @Column({
-        nullable: true,
+        nullable: true
     })
     lastname: string;
 
     @Column({
-        default: true,
+        default: true
     })
     active: boolean;
 
@@ -42,33 +42,33 @@ export abstract class Person {
     @Index({ unique: true })
     @Column({
         nullable: true,
-        default: null,
+        default: null
     })
     verification: string;
 
     @Column({
         type: "timestamp",
         default: null,
-        nullable: true,
+        nullable: true
     })
     verifiedAt: Date;
 
     @Index({ unique: true })
     @Column({
         nullable: true,
-        default: null,
+        default: null
     })
     authToken: string;
 
     @Column({
         nullable: false,
-        default: false,
+        default: false
     })
     authTokenUsed: boolean;
 
     @Column({
         nullable: true,
-        default: null,
+        default: null
     })
     authTokenSent: Date;
 }

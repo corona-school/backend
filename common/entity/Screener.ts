@@ -10,18 +10,18 @@ export class Screener extends Person {
 
     @Column({
         default: false,
-        nullable: true,
+        nullable: true
     })
     verified: boolean;
 
     @Column({
         nullable: true,
-        unique: true,
+        unique: true
     })
     oldNumberID: number; //the number that screener had in the old database
 
     @OneToMany((type) => Screening, (screening) => screening.screener, {
-        nullable: true,
+        nullable: true
     })
     screenings: Promise<Screening[]>;
 

@@ -8,7 +8,7 @@ import {
     UpdateDateColumn,
     CreateDateColumn,
     OneToMany,
-    ManyToOne,
+    ManyToOne
 } from "typeorm";
 
 export enum MailType {
@@ -27,7 +27,7 @@ export class Mail {
     @Column({
         type: "enum",
         enum: MailType,
-        default: MailType.OTHER,
+        default: MailType.OTHER
     })
     mailtype: MailType;
 

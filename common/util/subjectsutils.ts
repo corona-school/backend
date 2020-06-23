@@ -35,14 +35,14 @@ function convertToSubjectWithGradeDetail(extendedSubjectString: string) {
         const limits = r[1].split(":");
         grade = {
             lower: parseInt(limits[0]),
-            upper: parseInt(limits[1]),
+            upper: parseInt(limits[1])
         };
     }
 
     //return the subject-with-grade-detail-object
     return {
         name: name,
-        grade: grade,
+        grade: grade
     };
 }
 
@@ -87,5 +87,5 @@ export {
     convertToSubjectWithGradeDetail,
     intersectionWithRespectToGrade,
     addDefaultGradeDetailToSubjectIfPossible,
-    unifiedFormOfSubjects,
+    unifiedFormOfSubjects
 };
