@@ -368,7 +368,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
-        });        
+        });
         let dissolvedMatches = await entityManager.find(Match, {
             student: person,
             dissolved: true
