@@ -9,6 +9,7 @@ export async function sendFirstScreeningInvitationMail(student: Student) {
     });
     await sendTemplateMail(mail, student.email);
 }
+
 /// Use this function to send a screening reminder mail to the student
 export async function sendScreeningInvitationReminderMail(student: Student) {
     const mail = mailjetTemplates.STUDENTSCREENINGREMINDER({
@@ -16,4 +17,15 @@ export async function sendScreeningInvitationReminderMail(student: Student) {
         confirmationURL: student.screeningURL()
     });
     await sendTemplateMail(mail, student.email);
+}
+
+export async function sendFirstInstructorScreeningInvitationMail(student: Student) {
+    // TODO: Mail parameters
+    /*
+    const mail = mailjetTemplates.STUDENTFIRSTINSTRUCTORSCREENINGINVITATION({
+        personFirstname: student.firstname,
+        confirmationURL: student.screeningURL()
+    })
+    await sendTemplateMail(mail, student.email);
+    ;*/
 }
