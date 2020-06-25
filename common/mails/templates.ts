@@ -161,6 +161,19 @@ export const mailjet = {
             variables: variables
         };
     },
+    INSTRUCTORFIRSTSCREENINGINVITATION: (variables: {
+        instructorFirstName: string;
+        selectAppointmentURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "instructorfirstscreeninginvitation",
+            id: 1518623,
+            sender: DEFAULTSENDERS.screening,
+            title: "Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
     COURSESCANCELLED: (variables: {
         participantFirstname: string;
         courseName: string;

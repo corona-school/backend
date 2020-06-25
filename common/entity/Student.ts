@@ -229,6 +229,10 @@ export class Student extends Person {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
         return "https://authentication.corona-school.de/";
     }
+
+    instructorScreeningURL(): string {
+        return "https://go.oncehub.com/CourseReview?name=" + this.firstname + "&email=" + this.email + "&skip=1";
+    }
 }
 
 export enum ScreeningStatus {

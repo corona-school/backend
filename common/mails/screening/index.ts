@@ -19,13 +19,10 @@ export async function sendScreeningInvitationReminderMail(student: Student) {
     await sendTemplateMail(mail, student.email);
 }
 
-export async function sendFirstInstructorScreeningInvitationMail(student: Student) {
-    // TODO: Mail parameters
-    /*
-    const mail = mailjetTemplates.STUDENTFIRSTINSTRUCTORSCREENINGINVITATION({
-        personFirstname: student.firstname,
-        confirmationURL: student.screeningURL()
-    })
-    await sendTemplateMail(mail, student.email);
-    ;*/
+export async function sendFirstInstructorScreeningInvitationMail(instructor: Student) {
+    const mail = mailjetTemplates.INSTRUCTORFIRSTSCREENINGINVITATION({
+        instructorFirstName: instructor.firstname,
+        selectAppointmentURL: instructor.instructorScreeningURL()
+    });
+    await sendTemplateMail(mail, instructor.email);
 }
