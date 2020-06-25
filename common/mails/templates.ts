@@ -221,5 +221,5 @@ export const mailjet = {
             disabled: false,
             variables: variables
         };
-    },
+    }
 };
