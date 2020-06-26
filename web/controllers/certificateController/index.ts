@@ -204,7 +204,7 @@ async function viewParticipationCertificate(certificateId) {
     const entityManager = getManager();
     let certificate = null;
     try {
-        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId });
+        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId },  { relations: ["student", "pupil"] });
     }
     catch (e) {
         logger.error(e);
