@@ -12,6 +12,8 @@ import * as path from 'path';
 import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
+import { v4 as uuidv4 } from "uuid";
+import { createHash } from "crypto";
 
 const logger = getLogger();
 
@@ -144,7 +146,6 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
         ret.status = 400;
         return ret;
     }
-    console.log("save cert")
     let pc = new ParticipationCertificate();
     pc.pupil = match.pupil;
     pc.student = match.student;
@@ -154,8 +155,8 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.hoursTotal = params.hoursTotal;
     pc.endDate = params.endDate;
     pc.startDate = params.endDate;
-    pc.uuid = "000000001-0000-0000-0701-1b4c4c526385"
-    console.log(pc)
+    pc.uuid = createHash("sha512").update(uuidv4()).digest("hex");
+    console.log(pc) //to remove
     await entityManager.save(ParticipationCertificate, pc);
 
     ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params);
