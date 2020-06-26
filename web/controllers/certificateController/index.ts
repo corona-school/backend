@@ -204,23 +204,23 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
 async function viewParticipationCertificate(certificateId) {
     const entityManager = getManager();
     let certificate = null;
+    let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
     try {
         certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId },  { relations: ["student", "pupil"] });
+        html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
+        html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
+        html = html.replace("%DATUMHEUTE%", certificate.certificateDate);
+        html = html.replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"));
+        html = html.replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"));
+        html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
+    // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
+        html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
+        html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
+        html = html.replace("%MEDIUM%", escape(certificate.medium));
     }
     catch (e) {
         logger.error(e);
     }
-    let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
-    html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
-    html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
-    html = html.replace("%DATUMHEUTE%", certificate.certificateDate);
-    html = html.replace("%SCHUELERSTART%", certificate.startDate.format);
-    html = html.replace("%SCHUELERENDE%", certificate.endDate.format);
-    html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
-   // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
-    html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
-    html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
-    html = html.replace("%MEDIUM%", escape(certificate.medium));
 
     return html;
 }
