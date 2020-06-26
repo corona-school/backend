@@ -54,11 +54,10 @@ async function getPupilsForFeedbackRequest(manager: EntityManager): Promise<Matc
     return filterMatches(preselectedMatches);
 }
 
-async function filterMatches(matches: Match[]): Promise<Match[]> {
+function filterMatches(matches: Match[]): Match[] {
     const now = new Date();
     const thirtyDaysAgo = moment(now).subtract(30, "days").toDate();
     return matches.filter(m => {
-        logger.info(m.createdAt);
         return m.createdAt <= thirtyDaysAgo;
     });
 }
