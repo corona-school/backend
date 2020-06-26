@@ -5,7 +5,7 @@ import { Student } from '../../../common/entity/Student';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
-import { readFileSync } from 'fs';
+import { readFileSync, read } from 'fs';
 import * as escape from 'escape-html';
 import * as pdf from 'html-pdf';
 import * as path from 'path';
@@ -111,7 +111,7 @@ export async function certificateHandler(req: Request, res: Response) {
 export async function confirmCertificateHandler(req: Request, res: Response) {
     let status;
     if (req.params.certificateId != undefined) {
-        return res.json(await viewParticipationCertificate(req.params.certificateId));
+        return res.send(await viewParticipationCertificate(req.params.certificateId));
     }
     status = 500;
     res.status(status).end();
@@ -209,6 +209,18 @@ async function viewParticipationCertificate(certificateId) {
     catch (e) {
         logger.error(e);
     }
-    //generate some html here
-    return certificate;
+    let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
+    html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
+    html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
+    html = html.replace("%DATUMHEUTE%", certificate.certificateDate);
+    html = html.replace("%SCHUELERSTART%", certificate.startDate.format);
+    html = html.replace("%SCHUELERENDE%", certificate.endDate.format);
+    html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
+   // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
+    html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
+    html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
+    html = html.replace("%MEDIUM%", escape(certificate.medium));
+
+    return html;
 }
+
