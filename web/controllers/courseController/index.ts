@@ -2278,7 +2278,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId});
+    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
     if (subcourse == undefined) {
         logger.warn("Tried to send group mail to invalid subcourse");
         return 404;
