@@ -210,8 +210,8 @@ async function viewParticipationCertificate(certificateId) {
         logger.error(e);
     }
     let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
-    html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
-    html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
+    html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student.firstname + " " + certificate.student.lastname));
+    html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil.firstname + " " + certificate.pupil.lastname));
     html = html.replace("%DATUMHEUTE%", certificate.certificateDate);
     html = html.replace("%SCHUELERSTART%", certificate.startDate.format);
     html = html.replace("%SCHUELERENDE%", certificate.endDate.format);
