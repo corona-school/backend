@@ -27,9 +27,13 @@ export class CleanupMails1592927037226 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "match" DROP COLUMN "feedbackToStudentMailId"`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD "feedbackToPupilMail" boolean NOT NULL DEFAULT false`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD "feedbackToStudentMail" boolean NOT NULL DEFAULT false`, undefined);
+        await queryRunner.query(`DROP TABLE "mail"`, undefined);
+        await queryRunner.query(`DROP TYPE "mail_mailtype_enum"`, undefined);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TYPE "mail_mailtype_enum" AS ENUM('dissolved', 'matched', 'verification', 'logintoken', 'other')`, undefined);
+        await queryRunner.query(`CREATE TABLE "mail" ("id" SERIAL NOT NULL, "mailtype" "mail_mailtype_enum" NOT NULL DEFAULT 'other', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "sendTimestamp" TIMESTAMP NOT NULL, "sender" character varying NOT NULL, "subject" character varying NOT NULL, "html" character varying NOT NULL, "text" character varying NOT NULL, "receiver" character varying NOT NULL, CONSTRAINT "PK_5407da42b983ba54c6c62d462d3" PRIMARY KEY ("id"))`, undefined);
         await queryRunner.query(`ALTER TABLE "match" DROP COLUMN "feedbackToStudentMail"`, undefined);
         await queryRunner.query(`ALTER TABLE "match" DROP COLUMN "feedbackToPupilMail"`, undefined);
         await queryRunner.query(`ALTER TABLE "match" ADD "feedbackToStudentMailId" integer`, undefined);
