@@ -209,7 +209,7 @@ async function viewParticipationCertificate(certificateId) {
         certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId },  { relations: ["student", "pupil"] });
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
-        html = html.replace("%DATUMHEUTE%", certificate.certificateDate);
+        html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));

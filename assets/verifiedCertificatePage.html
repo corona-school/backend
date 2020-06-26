@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Corona School Bescheinigung</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<style>
+    body {
+        text-align: center;
+        font-family: 'Roboto', sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.007mm;
+        line-height: 4mm;
+        margin: 0;
+    }
+
+    .tc {
+        color: rgb(183, 146, 16);
+    }
+
+    #student {
+        width: 75%;
+        margin: 25px auto 20px auto;
+        color: rgb(183, 146, 16);
+        border-top: 1px solid #aaa;
+        border-bottom: 1px solid #aaa;
+    }
+
+    #schueler {
+        width: 75%;
+        margin: 25px auto 20px auto;
+        color: rgb(183, 146, 16);
+        border-bottom: 1px solid #aaa;
+    }
+
+    .unterschriften {
+        width: 75%;
+        margin: 76px auto 20px auto;
+        line-height: 3mm;
+    }
+
+    .unterschrift {
+        border-top: 1px solid black;
+        margin-top: 0;
+        padding-top: 7px;
+    }
+
+    .unterschriften > div {
+        width: 47vw;
+    }
+
+    #pageFooter-first {
+        line-height: 3.2mm;
+        border-top: 1px solid #555;
+        text-align: left;
+        margin: auto;
+        width: 75%;
+        font-size: 10px;
+        padding-top: 5px;
+        color: #444;
+    }
+
+    #pageFooter-first div {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    #disclaimer {
+        line-height: 2.8mm;
+        font-size: 9px;
+        clear: both;
+        width: 75%;
+        margin: 30px auto 40px auto;
+        padding-top: 30px;
+        color: #444;
+    }
+
+    svg {
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<body>
+<header>
+</header>
+<h1 style="margin-bottom: 50px; font-weight: bold">Teilnahmebescheinigung</h1>
+<span style="font-size: 12px">Der Corona School e.V. bestätigt hiermit, dass</span>
+<div id="student">
+    <h1 style="padding: 7px">%NAMESTUDENT%</h1>
+</div>
+<p>in einem Eignungsgespräch durch ein Mitglied des Corona School<br>
+    Teams überprüft und anschließend an eine*n Schüler*in vermittelt<br>
+    wurde, um diese*n kostenfrei und digital beim Lernen zu<br>
+    unterstützen. Das Ausmaß der ehrenamtlichen Tätigkeit wird auf<br>
+    einer weiteren Seite durch den/die Schüler*in bestätigt.</p>
+<div class="unterschriften">
+    <div style="float: left; ">
+        <div style="height: 26px"></div>
+        <div style="height: 16px">
+            Bonn, %DATUMHEUTE%
+        </div>
+        <div class="unterschrift">
+            Ort, Datum
+        </div>
+    </div>
+</div>
+<div id="disclaimer">
+    Die Corona School versteht sich in erster Instanz als Kontaktvermittler zwischen Schüler*innen und
+    Studierenden. Das Ausmaß und die Umsetzung der ehrenamtlichen Tätigkeit kann nicht direkt durch den Verein
+    Corona School e.V. nachgewiesen werden. Es besteht die Möglichkeit, mehrere Schüler*innen zeitgleich zu
+    unterstützen. In diesem Fall kann das Bestätigungsformular für Schüler*innen mehrfach ausgefüllt und beigefügt
+    werden. Jede*r Schüler*in füllt in diesem Fall eine eigene Seite aus.<br>
+    Bei weiteren Fragen wenden Sie sich bitte per E-Mail an zertifikat@corona-school.de.
+</div>
+</div>
+<!-- Page 2 -->
+<header>
+</header>
+<h1 style="margin-bottom: 25px; font-size: 18px; margin-top: -15px;">Bestätigung der ehrenamtlichen Tätigkeit</h1>
+<p style="font-size: 14px">durch den/die Schüler*in</p>
+<div id="schueler">
+    <h2 style="margin-bottom: 5px">%NAMESCHUELER%</h2>
+</div>
+<div>Hiermit bestätigt %NAMESCHUELER%, dass %NAMESTUDENT% im Zeitraum von</div>
+<div style="margin: 10px auto">
+    <span class="">%SCHUELERSTART%</span>&nbsp;&nbsp; bis &nbsp;&nbsp;<span class="">%SCHUELERENDE%</span>
+</div>
+<div>
+    in dem Fach / den Fächern
+</div>
+<div style="margin: 10px auto">
+    <span class="">%SCHUELERFAECHER%</span>
+</div>
+<div style="width: 75%; margin: 0 auto">
+    ehrenamtliche Unterstützung geleistet hat. Die Unterstützung erfolgte per %MEDIUM% mit einem durchschnittlichen Arbeitsaufwand von
+</div>
+<div style="margin: 10px auto;">
+    <b class="tc">%SCHUELERPROWOCHE% h/Woche</b> bzw. einem Gesamtaufwand von <b class="tc">%SCHUELERGESAMT% h</b>.
+</div>
+<div style="border-top: 1px solid #aaa; text-align: left; width: 75%; margin: 15px auto; padding-top: 15px">
+    Folgende Tätigkeiten waren Gegenstand des ehrenamtlichen Engagements:
+</div>
+<div style="margin: 10px auto; height: 100px; text-align:left; width: 75% ">
+    <!--%SCHUELERFREITEXT%!-->
+</div>
+<div id="pageFooter-first">
+    <div style="width:30%;">
+        Corona School e.V.<br>
+        Dorotheenstr. 157<br>
+        53119 Bonn
+    </div>
+    <div style="width:50%;">
+        Vorsitzender: Christopher Reiners<br>
+        stellv. Vorsitzender: Lukas Pin<br>
+        Schatzmeisterin: Rosa Kreider
+    </div>
+    <div style="width:15%;">
+        Vereinsregister<br>
+        Amtsgericht Bonn<br>
+        Register-Nr. 11607
+    </div>
+        
+</body>
+</html>
