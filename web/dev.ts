@@ -9,6 +9,8 @@ import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
 import { Course, CourseState } from "../common/entity/Course";
 import { CourseCategory } from "../common/entity/Course";
+import { Subcourse } from "../common/entity/Subcourse";
+import { Lecture } from "../common/entity/Lecture";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -68,7 +70,7 @@ export async function setupDevDB() {
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s1.openMatchRequestCount = 1;
     students.push(s1);
@@ -171,7 +173,7 @@ export async function setupDevDB() {
     t.category = "club";
     tags.push(t);
 
-    const science = t = new CourseTag();
+    const science = (t = new CourseTag());
     t.name = "Naturwissenschaften";
     t.identifier = "science";
     t.category = "club";
@@ -195,7 +197,7 @@ export async function setupDevDB() {
     t.category = "club";
     tags.push(t);
 
-    const preparation = t = new CourseTag();
+    const preparation = (t = new CourseTag());
     t.name = "Prüfungsvorbereitung";
     t.identifier = "preparation";
     t.category = "coaching";
@@ -207,7 +209,7 @@ export async function setupDevDB() {
     t.category = "coaching";
     tags.push(t);
 
-    const personality = t = new CourseTag();
+    const personality = (t = new CourseTag());
     t.name = "Persönlichkeitsbildung";
     t.identifier = "personality";
     t.category = "coaching";
@@ -220,67 +222,180 @@ export async function setupDevDB() {
 
     // courses
 
-    const courses = [
-        Object.assign(new Course(), {
-            instructors: [s1, s2],
-            name: "Grundlagen der Physik",
-            outline: "E(m) = m * c * c",
-            description: "Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.",
-            imageUrl: null,
-            category: CourseCategory.COACHING,
-            tags: [preparation, science],
-            subcourses: [],
-            courseState: CourseState.SUBMITTED
-        }),
-        Object.assign(new Course(), {
-            instructors: [s1],
-            name: "COBOL und ABAP - Eine Reise in die Steinzeit der Informatik",
-            outline: "Mit lebenden Exemplaren zum anschauen",
-            description: "COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.",
-            imageUrl: null,
-            category: CourseCategory.CLUB,
-            tags: [science],
-            subcourses: [],
-            courseState: CourseState.ALLOWED
-        }),
-        Object.assign(new Course(), {
-            instructors: [s1, s2],
-            name: "Grundlagen der Mathematik",
-            outline: "(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0",
-            description: "Hinter den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...",
-            imageUrl: null,
-            category: CourseCategory.REVISION,
-            tags: [preparation, science],
-            subcourses: [],
-            courseState: CourseState.DENIED
-        }),
-        Object.assign(new Course(), {
-            instructors: [s2],
-            name: "KIZ, 187, Aligatoah.",
-            outline: "Die Musik des neuen Jahrtausends",
-            description: "Eine musikalische Reise zu den melodischen Klängen der neuen Musikgenres.",
-            imageUrl: null,
-            category: CourseCategory.REVISION,
-            tags: [preparation, science],
-            subcourses: [],
-            courseState: CourseState.CANCELLED
-        }),
-        Object.assign(new Course(), {
-            instructors: [],
-            name: "Die Geschichte der Dampflok",
-            outline: "Von Adler bis Baureihe 05 - Eine bewegende Geschichte",
-            description: "Wusstest du, das die schnellste Dampflok bis zu 200km/h fuhr? Nein? Dann bist du hier genau richtig!",
-            imageUrl: null,
-            category: CourseCategory.REVISION,
-            tags: [preparation, science],
-            subcourses: [],
-            courseState: CourseState.CREATED
-        })
-    ];
+    const courses: Course[] = [];
+
+    let course1 = new Course();
+    course1.instructors = [s1, s2];
+    course1.name = "Grundlagen der Physik";
+    course1.outline = "E(m) = m * c * c";
+    course1.description =
+        "Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.";
+    course1.imageUrl = null;
+    course1.category = CourseCategory.COACHING;
+    course1.tags = [preparation, science];
+    course1.subcourses = [];
+    course1.courseState = CourseState.SUBMITTED;
+
+    courses.push(course1);
+
+    let course2 = new Course();
+    course2.instructors = [s1];
+    course2.name =
+        "COBOL und ABAP - Eine Reise in die Steinzeit der Informatik";
+    course2.outline = "Mit lebenden Exemplaren zum anschauen";
+    course2.description =
+        "COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.";
+    course2.imageUrl = null;
+    course2.category = CourseCategory.CLUB;
+    course2.tags = [science];
+    course2.subcourses = [];
+    course2.courseState = CourseState.ALLOWED;
+
+    courses.push(course2);
+
+    let course3 = new Course();
+    course3.instructors = [s1, s2];
+    course3.name = "Grundlagen der Mathematik";
+    course3.outline = "(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0";
+    course3.description =
+        "Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...";
+    course3.imageUrl = null;
+    course3.category = CourseCategory.REVISION;
+    course3.tags = [preparation, science];
+    course3.subcourses = [];
+    course3.courseState = CourseState.DENIED;
+
+    courses.push(course3);
+
+    let course4 = new Course();
+    course4.instructors = [s2];
+    course4.name = "KIZ, 187, Aligatoah.";
+    course4.outline = "Die Musik des neuen Jahrtausends";
+    course4.description =
+        "Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.";
+    course4.imageUrl = null;
+    course4.category = CourseCategory.REVISION;
+    course4.tags = [preparation, science];
+    course4.subcourses = [];
+    course4.courseState = CourseState.CANCELLED;
+
+    courses.push(course4);
 
     for (const course of courses) {
         await entityManager.save(Course, course);
+
         console.log("Inserted Course " + course.name);
+    }
+
+    // courses
+
+    const subcourses = [];
+
+    const subcourse1 = new Subcourse();
+    subcourse1.course = course1;
+    subcourse1.joinAfterStart = true;
+    subcourse1.minGrade = 1;
+    subcourse1.maxGrade = 13;
+    subcourse1.instructors = [s1, s2];
+    subcourse1.maxParticipants = 4;
+    subcourse1.published = false;
+
+    subcourses.push(subcourse1);
+
+    const subcourse2 = new Subcourse();
+    subcourse2.course = course2;
+    subcourse2.joinAfterStart = true;
+    subcourse2.minGrade = 3;
+    subcourse2.maxGrade = 10;
+    subcourse2.instructors = [s1];
+    subcourse2.maxParticipants = 10;
+    subcourse2.published = true;
+
+    subcourses.push(subcourse2);
+
+    const subcourse3 = new Subcourse();
+    subcourse3.course = course3;
+    subcourse3.joinAfterStart = false;
+    subcourse3.minGrade = 10;
+    subcourse3.maxGrade = 11;
+    subcourse3.instructors = [s1, s2];
+    subcourse3.maxParticipants = 10;
+    subcourse3.published = true;
+
+    subcourses.push(subcourse2);
+
+    const subcourse4 = new Subcourse();
+    subcourse4.course = course3;
+    subcourse4.joinAfterStart = false;
+    subcourse4.minGrade = 8;
+    subcourse4.maxGrade = 11;
+    subcourse4.instructors = [s2];
+    subcourse4.maxParticipants = 10;
+    subcourse4.published = true;
+
+    subcourses.push(subcourse4);
+
+    for (const subcourse of subcourses) {
+        await entityManager.save(Subcourse, subcourse);
+        console.log("Inserted SubCourse.");
+    }
+
+    // lectures
+
+    const lectures = [];
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const day = now.getDay();
+
+    const lecture1: Lecture = new Lecture();
+    lecture1.subcourse = subcourse1;
+    lecture1.duration = 45;
+    lecture1.start = new Date(year, month, day + 5, 20, 0, 0, 0);
+    lecture1.instructor = s1;
+
+    const lecture2: Lecture = new Lecture();
+    lecture2.subcourse = subcourse1;
+    lecture2.duration = 45;
+    lecture2.start = new Date(year, month, day + 6, 20, 0, 0, 0);
+    lecture2.instructor = s1;
+
+    lectures.push(lecture1, lecture2);
+
+    const lecture3: Lecture = new Lecture();
+    lecture3.subcourse = subcourse2;
+    lecture3.duration = 120;
+    lecture3.start = new Date(year, month, day + 10, 19, 0, 0, 0);
+    lecture3.instructor = s1;
+
+    const lecture4: Lecture = new Lecture();
+    lecture4.subcourse = subcourse2;
+    lecture4.duration = 120;
+    lecture4.start = new Date(year, month, day + 14, 21, 0, 0, 0);
+    lecture4.instructor = s1;
+
+    lectures.push(lecture3, lecture4);
+
+    const lecture5: Lecture = new Lecture();
+    lecture5.subcourse = subcourse3;
+    lecture5.duration = 90;
+    lecture5.start = new Date(year, month, day + 5, 10, 0, 0, 0);
+    lecture5.instructor = s2;
+
+    lectures.push(lecture5);
+
+    const lecture6: Lecture = new Lecture();
+    lecture6.subcourse = subcourse4;
+    lecture6.duration = 120;
+    lecture6.start = new Date(year, month, day + 15, 11, 0, 0, 0);
+    lecture6.instructor = s2;
+
+    lectures.push(lecture6);
+
+    for (const lecture of lectures) {
+        await entityManager.save(Lecture, lecture);
+        console.log("Inserted Lecture.");
     }
 
     // Screening results
