@@ -436,19 +436,22 @@ export async function getInstructors(req: Request, res: Response) {
         let instructors: {}[];
         
         if(screeningStatus === ScreeningStatus.Accepted) {
-            instructors = await createQueryBuilder("student")
+            instructors = await getManager()
+                .createQueryBuilder(Student,"student")
                 .innerJoin("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = true")
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Rejected) {
-            instructors = await createQueryBuilder("student")
+            instructors = await getManager()
+                .createQueryBuilder(Student, "student")
                 .innerJoin("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = true")
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Unscreened) {
-            instructors = await createQueryBuilder("student")
+            instructors = await getManager()
+                .createQueryBuilder(Student,"student")
                 .innerJoin("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = null")
                 .take(20)
