@@ -446,7 +446,7 @@ export async function getInstructors(req: Request, res: Response) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .innerJoin("student.screening", "screening")
-                .where("student.isInstructor = true AND screening.success = true")
+                .where("student.isInstructor = true AND screening.success = false")
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Unscreened) {
