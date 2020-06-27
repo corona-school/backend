@@ -425,35 +425,41 @@ export async function updateCourse(req: Request, res: Response) {
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/instructors
  *
  * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
+ * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email
  */
 export async function getInstructors(req: Request, res: Response) {
     try {
-        const { screeningStatus } = req.query;
+        let { screeningStatus, search } = req.query;
 
         if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
 
+        if(typeof search !== "string")
+            return res.status(400).send("invalid value for parameter 'search'");
+
+        search = `%${search}%`; // fuzzy search
+        
         let instructors: {}[];
         
         if(screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .innerJoin("student.screening", "screening")
-                .where("student.isInstructor = true AND screening.success = true")
+                .where("student.isInstructor = true AND screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .innerJoin("student.screening", "screening")
-                .where("student.isInstructor = true AND screening.success = false")
+                .where("student.isInstructor = true AND screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .innerJoin("student.screening", "screening")
-                .where("student.isInstructor = true AND screening.success = null")
+                .where("student.isInstructor = true AND screening.success = null AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         }
