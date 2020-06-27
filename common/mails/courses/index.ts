@@ -55,3 +55,15 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil, 
     });
     await sendTemplateMail(mail, participant.email);
 }
+
+export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
+    const mail = mailjetTemplates.COURSEINSTRUCTORGROUPMAIL({
+        participantFirstname: participant.firstname,
+        courseName: course.name,
+        messageTitle: messageTitle,
+        messageBody: messageBody,
+        instructorMail: instructor.email
+    });
+
+    await sendTemplateMail(mail, participant.email, instructor.email);
+}

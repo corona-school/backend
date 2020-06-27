@@ -272,5 +272,21 @@ export const mailjet = {
             disabled: false,
             variables: variables
         };
+    },
+    COURSEINSTRUCTORGROUPMAIL: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        messageTitle: string;
+        messageBody: string;
+        instructorMail: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseinstructorgroupmail",
+            id: 1518580,
+            sender: DEFAULTSENDERS.support,
+            title: "Nachricht zu deinem Kurs",
+            disabled: false,
+            variables: variables
+        };
     }
 };
