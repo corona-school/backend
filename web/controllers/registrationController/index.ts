@@ -134,6 +134,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
     tutor.openMatchRequestCount = 0;
+    tutor.subjects = JSON.stringify([]);
 
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
@@ -400,6 +401,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
+    tutee.subjects = JSON.stringify([]);
 
     if (apiTutee.isTutee) {
         if (apiTutee.subjects.length < 1) {
