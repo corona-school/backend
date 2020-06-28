@@ -11,6 +11,7 @@ import { Course, CourseState } from "../common/entity/Course";
 import { CourseCategory } from "../common/entity/Course";
 import { Subcourse } from "../common/entity/Subcourse";
 import { Lecture } from "../common/entity/Lecture";
+import { InstructorScreening } from "../common/entity/InstructorScreening";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -90,6 +91,25 @@ export async function setupDevDB() {
     s2.subjects = JSON.stringify(["Deutsch3:5", "Mathematik4:6"]);
     s2.openMatchRequestCount = 2;
     students.push(s2);
+
+    const s3 = new Student();
+    s3.firstname = "Leon";
+    s3.lastname = "Erath";
+    s3.active = true;
+    s3.email = "leon-erath@test.de";
+    s3.isInstructor = true;
+    s3.isStudent = true;
+    s3.verification = null;
+    s3.verifiedAt = new Date(new Date().getTime() - 110000);
+    s3.authToken = sha512("authtokenS3");
+    s3.wix_id = "00000000-0000-0002-0001-1b4c4c5263123";
+    s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s3.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
+    s3.openMatchRequestCount = 1;
+    students.push(s3);
 
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
@@ -429,9 +449,64 @@ export async function setupDevDB() {
 
     screenings.push(sres);
 
+    let sres2 = new Screening();
+    sres2.success = true;
+    sres2.comment = "🎉";
+    sres2.knowsCoronaSchoolFrom = "Internet";
+    sres2.screener = screeners[0];
+    sres2.student = students[1];
+
+    screenings.push(sres2);
+
+    let sres3 = new Screening();
+    sres3.success = true;
+    sres3.comment = "🎉";
+    sres3.knowsCoronaSchoolFrom = "Internet";
+    sres3.screener = screeners[0];
+    sres3.student = students[2];
+
+    screenings.push(sres3);
+
     for (let i = 0; i < screenings.length; i++) {
         await entityManager.save(Screening, screenings[i]);
         console.log("Inserted Dev Screening " + i);
+    }
+
+
+
+    // instructor screening
+    const instructorScreenings: InstructorScreening[] = [];
+
+    const instructorScrenning1 = new InstructorScreening();
+    instructorScrenning1.success = true;
+    instructorScrenning1.comment = "🎉";
+    instructorScrenning1.knowsCoronaSchoolFrom = "Internet";
+    instructorScrenning1.screener = screeners[0];
+    instructorScrenning1.student = students[2];
+
+    instructorScreenings.push(instructorScrenning1);
+
+    const instructorScrenning2 = new InstructorScreening();
+    instructorScrenning2.success = true;
+    instructorScrenning2.comment = "🎉";
+    instructorScrenning2.knowsCoronaSchoolFrom = "Internet";
+    instructorScrenning2.screener = screeners[0];
+    instructorScrenning2.student = students[1];
+
+    instructorScreenings.push(instructorScrenning2);
+
+    const instructorScrenning3 = new InstructorScreening();
+    instructorScrenning3.success = true;
+    instructorScrenning3.comment = "🎉";
+    instructorScrenning3.knowsCoronaSchoolFrom = "Internet";
+    instructorScrenning3.screener = screeners[0];
+    instructorScrenning3.student = students[0];
+
+    instructorScreenings.push(instructorScrenning3);
+
+    for (let i = 0; i < instructorScreenings.length; i++) {
+        await entityManager.save(InstructorScreening, instructorScreenings[i]);
+        console.log("Inserted Dev Instrcutor Screening " + i);
     }
 }
 
