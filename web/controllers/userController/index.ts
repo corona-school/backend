@@ -360,6 +360,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     if (person instanceof Student) {
         apiResponse.type = "student";
         apiResponse.screeningStatus = await person.screeningStatus();
+        apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
