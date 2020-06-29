@@ -444,22 +444,22 @@ export async function getInstructors(req: Request, res: Response) {
         if(screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
-                .innerJoin("student.screening", "screening")
+                .leftJoinAndSelect("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
-                .innerJoin("student.screening", "screening")
+                .leftJoinAndSelect("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if(screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
-                .innerJoin("student.screening", "screening")
-                .where("student.isInstructor = true AND screening.success = null AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .leftJoinAndSelect("student.screening", "screening")
+                .where("student.isInstructor = true AND screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         }
