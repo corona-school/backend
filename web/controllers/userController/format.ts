@@ -11,6 +11,7 @@
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
  * @apiSuccess (User Object) {string} screeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
+ * @apiSuccess (User Object) {string} instructorScreeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened for group courses with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
@@ -63,6 +64,7 @@
  *          "type": "student",
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
+ *          "instructorScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
  *          "subjects": [
  *              {
@@ -113,6 +115,7 @@ export class ApiGetUser {
     grade?: number;
     matchesRequested?: number;
     screeningStatus?: string;
+    instructorScreeningStatus?: string;
     subjects: ApiSubject[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
