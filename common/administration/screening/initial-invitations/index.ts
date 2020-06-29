@@ -10,7 +10,7 @@ export async function sendFirstScreeningInvitationToTutor(manager: EntityManager
     //... store that in the database
     student.lastSentScreeningInvitationDate = new Date();
 
-    manager.save(student);
+    await manager.save(student);
 }
 
 export async function sendFirstScreeningInvitationToInstructor(manager: EntityManager, student: Student) {
@@ -20,5 +20,5 @@ export async function sendFirstScreeningInvitationToInstructor(manager: EntityMa
     //... store that in the database
     student.lastSentInstructorScreeningInvitationDate = new Date();
 
-    manager.save(student);
+    await manager.save(student);
 }
