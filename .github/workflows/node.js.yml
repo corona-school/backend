@@ -33,6 +33,7 @@ jobs:
         node-version: '12.x'
     - run: npm ci
     - run: npm run linter
+    - run: npm run test
 
 
 
