@@ -231,7 +231,7 @@ export class Student extends Person {
     }
 
     instructorScreeningURL(): string {
-        return "https://go.oncehub.com/CourseReview?name=" + this.firstname + "&email=" + this.email + "&skip=1";
+        return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
     }
 }
 
