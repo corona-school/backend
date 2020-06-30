@@ -213,7 +213,7 @@ async function viewParticipationCertificate(certificateId) {
         html = html.replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
-    // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
+        // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
         html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
         html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
         html = html.replace("%MEDIUM%", escape(certificate.medium));
