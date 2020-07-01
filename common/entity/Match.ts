@@ -86,6 +86,16 @@ export class Match {
     feedbackToStudentMail: boolean;
 
     @Column({
+        default: false
+    })
+    followUpToPupilMail: boolean;
+
+    @Column({
+        default: false
+    })
+    followUpToStudentMail: boolean;
+
+    @Column({
         type: "enum",
         enum: SourceType,
         default: SourceType.MATCHEDINTERNAL
