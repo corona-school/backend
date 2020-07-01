@@ -65,7 +65,7 @@ function filterMatches(matches: Match[]): Match[] {
 async function sendFeedbackRequestsToStudents(manager: EntityManager, matches: Match[]) {
     try {
         for (const m of matches) {
-            sendFeedbackRequestStudent(m.student, m.pupil);
+            await sendFeedbackRequestStudent(m.student, m.pupil);
             m.feedbackToStudentMail = true;
             await manager.save(Match, m);
         }
@@ -82,7 +82,7 @@ async function sendFeedbackRequestsToStudents(manager: EntityManager, matches: M
 async function sendFeedbackRequestsToPupils(manager: EntityManager, matches: Match[]) {
     try {
         for (const m of matches) {
-            sendFeedbackRequestPupil(m.student, m.pupil);
+            await sendFeedbackRequestPupil(m.student, m.pupil);
             m.feedbackToPupilMail = true;
             await manager.save(Match, m);
         }
