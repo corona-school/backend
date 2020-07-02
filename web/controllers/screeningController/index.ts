@@ -425,7 +425,7 @@ export async function updateCourse(req: Request, res: Response) {
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/instructors
  *
  * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
- * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email
+ * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email, supporting Postgres ILIKE syntax
  */
 export async function getInstructors(req: Request, res: Response) {
     try {
