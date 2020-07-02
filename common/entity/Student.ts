@@ -16,13 +16,14 @@ import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
-import { CourseTag } from './CourseTag';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
+import { InstructorScreening } from "./InstructorScreening";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
-    SEMINAR = "seminar"
+    SEMINAR = "seminar",
+    OTHER = "other"
 }
 
 @Entity()
@@ -90,7 +91,7 @@ export class Student extends Person {
      * Instructor data
      */
     @Column({
-        default: true
+        default: false
     })
     isInstructor: boolean;
 
@@ -124,7 +125,7 @@ export class Student extends Person {
         enum: TeacherModule,
         nullable: true,
         default: undefined // See typeorm/typeorm#5371: Setting this to null causes typeORM to generate 'null' as a string.
-                           // This is fine for now because enums in postgres are DEFAULT NULL anyways 
+        // This is fine for now because enums in postgres are DEFAULT NULL anyways
     })
     module: TeacherModule;
 
@@ -154,6 +155,23 @@ export class Student extends Person {
     })
     lastSentScreeningInvitationDate: Date;
 
+    @OneToOne((type) => InstructorScreening, (instructorScreening) => instructorScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    instructorScreening: Promise<InstructorScreening>;
+
+    @Column({
+        nullable: false,
+        default: 0
+    })
+    sentInstructorScreeningReminderCount: number;
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastSentInstructorScreeningInvitationDate: Date;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone =
@@ -192,10 +210,28 @@ export class Student extends Person {
         }
     }
 
+    async instructorScreeningStatus(): Promise<ScreeningStatus> {
+        const instructorScreening = await this.instructorScreening;
+
+        if (!instructorScreening) {
+            return ScreeningStatus.Unscreened;
+        }
+
+        if (instructorScreening.success) {
+            return ScreeningStatus.Accepted;
+        } else {
+            return ScreeningStatus.Rejected;
+        }
+    }
+
     //Returns the URL that the student can use to get to his screening video call
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
         return "https://authentication.corona-school.de/";
+    }
+
+    instructorScreeningURL(): string {
+        return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
     }
 }
 

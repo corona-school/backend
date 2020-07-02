@@ -10,7 +10,7 @@ import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
-import { sendFirstScreeningInvitation } from "../../../common/mails/screening";
+import { sendFirstScreeningInvitationToTutor, sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -59,7 +59,7 @@ export async function verifyToken(token: string): Promise<string | null> {
 
         // Try to find student
         let student = await entityManager.findOne(Student, {
-            verification: token,
+            verification: token
         });
 
         if (student instanceof Student) {
@@ -73,16 +73,20 @@ export async function verifyToken(token: string): Promise<string | null> {
             student.authToken = hashToken(uuid);
             student.authTokenSent = new Date();
             student.authTokenUsed = false;
-            logger.info(
-                "Generated and sending UUID " + uuid + " to " + student.email
-            );
+            logger.info("Generated and sending UUID " + uuid + " to " + student.email);
 
             await entityManager.save(student);
 
             try {
                 await sendLoginTokenMail(student, uuid);
-                await sendFirstScreeningInvitation(student); //after the student has verified her*his email address, we need to invite them to the screening interview
-            } 
+                if (student.isInstructor) {
+                    // Invite to instructor screening
+                    await sendFirstScreeningInvitationToInstructor(entityManager, student);
+                } else {
+                    // Invite to tutor screening
+                    await sendFirstScreeningInvitationToTutor(entityManager, student);
+                }
+            }
             catch (mailerror) {
                 logger.error(
                     `Can't send emails to student ${student.email} after verification due to mail error...`
@@ -165,7 +169,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
 
             let person: (Pupil|Student);
             person = await entityManager.findOne(Student, {email: email});
-            if(person == undefined) {
+            if (person == undefined) {
                 person = await entityManager.findOne(Pupil, {email: email});
             }
 
@@ -178,7 +182,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authToken = hashToken(uuid);
                     person.authTokenSent = new Date();
                     person.authTokenUsed = false;
-                    
+
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
                     await sendLoginTokenMail(person, uuid);
 
@@ -188,18 +192,12 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     await transactionLog.log(new VerifiedEvent(person));
                 } else {
                     // rate limited
-                    logger.info(
-                        "Not sending auth token: rate limit time not passed yet",
-                        person.authTokenSent
-                    );
+                    logger.info("Not sending auth token: rate limit time not passed yet", person.authTokenSent);
                     status = 403;
                 }
             } else {
                 // email not found
-                logger.info(
-                    "Not sending auth token: email/person not found",
-                    email
-                );
+                logger.info("Not sending auth token: email/person not found", email);
                 status = 404;
             }
         } else {
@@ -229,13 +227,8 @@ function allowedToRequestToken(person: Person): boolean {
     }
 
     // If previous reset is less than 24 hours ago, disallow for unused tokens
-    if (
-        moment(person.authTokenSent).isAfter(moment().subtract(1, "days")) &&
-        !person.authTokenUsed
-    ) {
-        logger.debug(
-            "Token was disallowed, rate-limited while token was unused"
-        );
+    if (moment(person.authTokenSent).isAfter(moment().subtract(1, "days")) && !person.authTokenUsed) {
+        logger.debug("Token was disallowed, rate-limited while token was unused");
         return false;
     }
 
@@ -245,12 +238,11 @@ function allowedToRequestToken(person: Person): boolean {
 }
 
 export async function sendLoginTokenMail(person: Person, token: string) {
-    const dashboardURL =
-        "https://dashboard.corona-school.de/login?token=" + token;
+    const dashboardURL = "https://dashboard.corona-school.de/login?token=" + token;
     try {
         const mail = mailjetTemplates.LOGINTOKEN({
             personFirstname: person.firstname,
-            dashboardURL: dashboardURL,
+            dashboardURL: dashboardURL
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {

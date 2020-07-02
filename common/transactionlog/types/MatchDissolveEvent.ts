@@ -7,7 +7,7 @@ import { Match } from "../../entity/Match";
 export default class MatchDissolveEvent extends LogUserEvent {
     constructor(user: Pupil | Student, match: Match) {
         super(LogType.MATCH_DISSOLVE, user, {
-            matchId: match.id,
+            matchId: match.id
         });
     }
 }

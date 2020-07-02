@@ -4,4 +4,4 @@ function gradeAsInt(gradeStr: string) {
 
 export {
     gradeAsInt
-}
+};

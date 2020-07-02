@@ -278,4 +278,7 @@ export interface ApiCourseTag {
  * @apiSuccess (GroupMail Object) {string} body Plaintext body of the mail <em>maximum 2000 chars</em>
  *
  */
-// todo create interface
+export interface ApiPostGroupMail {
+    subject: string,
+    body: string
+}

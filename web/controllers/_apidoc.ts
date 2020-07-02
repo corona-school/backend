@@ -93,7 +93,7 @@
  * @apiErrorExample {empty} Conflict
  *      HTTP/1.1 409 Conflict
  *      (empty body)
- */ 
+ */
 
 /**
  * @apiDefine StatusInternalServerError

@@ -2,7 +2,7 @@ import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject } from "./format";
-import { Student } from "../../../common/entity/Student";
+import { ScreeningStatus, Student } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
@@ -224,8 +224,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         status = 400;
                         break;
                     }
-                } else {
-                    if (typeof elem.name == "string" &&
+                } else if (typeof elem.name == "string" &&
                         typeof elem.minGrade == "number" &&
                         typeof elem.maxGrade == "number" &&
                         elem.minGrade >= 1 &&
@@ -235,18 +234,17 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         elem.maxGrade <= 13 &&
                         checkSubject(elem.name)) {
 
-                        let subject = new ApiSubject();
-                        subject.name = elem.name;
-                        subject.minGrade = elem.minGrade;
-                        subject.maxGrade = elem.maxGrade;
-                        subjects.push(subject);
+                    let subject = new ApiSubject();
+                    subject.name = elem.name;
+                    subject.minGrade = elem.minGrade;
+                    subject.maxGrade = elem.maxGrade;
+                    subjects.push(subject);
 
-                    } else {
-                        logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
-                        logger.debug("Index " + i, b);
-                        status = 400;
-                        break;
-                    }
+                } else {
+                    logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
+                    logger.debug("Index " + i, b);
+                    status = 400;
+                    break;
                 }
             }
         }
@@ -362,13 +360,19 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     if (person instanceof Student) {
         apiResponse.type = "student";
         apiResponse.screeningStatus = await person.screeningStatus();
+        apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
         apiResponse.matches = [];
+        apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
 
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
+        });
+        let dissolvedMatches = await entityManager.find(Match, {
+            student: person,
+            dissolved: true
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -383,16 +387,37 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.matches.push(apiMatch);
         }
+        for (let i = 0; i < dissolvedMatches.length; i++) {
+            let apiMatch = new ApiMatch();
+            apiMatch.firstname = dissolvedMatches[i].pupil.firstname;
+            apiMatch.lastname = dissolvedMatches[i].pupil.lastname;
+            apiMatch.email = dissolvedMatches[i].pupil.email;
+            apiMatch.grade = Number.parseInt(dissolvedMatches[i].pupil.grade);
+            apiMatch.subjects = subjectsToStringArray(
+                JSON.parse(dissolvedMatches[i].pupil.subjects)
+            );
+            apiMatch.uuid = dissolvedMatches[i].uuid;
+            apiMatch.jitsilink =
+                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.date = dissolvedMatches[i].createdAt.getTime();
+
+            apiResponse.dissolvedMatches.push(apiMatch);
+        }
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
+        apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
 
         let matches = await entityManager.find(Match, {
             pupil: person,
             dissolved: false
+        });
+        let dissolvedMatches = await entityManager.find(Match, {
+            pupil: person,
+            dissolved: true
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -408,6 +433,21 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
+        }
+        for (let i = 0; i < dissolvedMatches.length; i++) {
+            let apiMatch = new ApiMatch();
+            apiMatch.firstname = dissolvedMatches[i].student.firstname;
+            apiMatch.lastname = dissolvedMatches[i].student.lastname;
+            apiMatch.email = dissolvedMatches[i].student.email;
+            apiMatch.subjects = subjectsToStringArray(
+                JSON.parse(dissolvedMatches[i].student.subjects)
+            );
+            apiMatch.uuid = dissolvedMatches[i].uuid;
+            apiMatch.jitsilink =
+                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.date = dissolvedMatches[i].createdAt.getTime();
+
+            apiResponse.dissolvedMatches.push(apiMatch);
         }
     } else {
         logger.warn("Unknown type of person: " + typeof person);
@@ -447,7 +487,8 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     if (person instanceof Student) {
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
-        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6) {
+        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
+            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
