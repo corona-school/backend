@@ -66,8 +66,7 @@ export async function certificateHandler(req: Request, res: Response) {
                 medium: req.query.medium || "Taschenrechner mit Programmierfunktion",
                 categories: req.query.categories || "Liste\nListe2\nListe3"
             };
-
-            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params);
+            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params, req.headers['host']);
             if (certificate.status == 200) {
                 res.writeHead(200, {
                     'Content-Type': 'application/pdf',
@@ -119,7 +118,7 @@ export async function confirmCertificateHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<{ status: number, pdf: any }> {
+async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }, host: string): Promise<{ status: number, pdf: any }> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -156,10 +155,10 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.endDate = params.endDate;
     pc.startDate = params.endDate;
     pc.uuid = createHash("sha512").update(uuidv4()).digest("hex");
-    console.log(pc) //to remove
     await entityManager.save(ParticipationCertificate, pc);
+    const verifictionLink = "http://" + host + "/api/certificate/" + pc.uuid;
 
-    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params);
+    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verifictionLink);
     ret.status = 200;
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
@@ -168,7 +167,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     return ret;
 }
 
-function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }): Promise<Buffer> {
+function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }, link: string): Promise<Buffer> {
     let html = readFileSync("./assets/certificateTemplate.html", "utf8");
     const options = {
         "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
@@ -187,6 +186,7 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
     html = html.replace("%SCHUELERPROWOCHE%", escape(params.hoursPerWeek));
     html = html.replace("%SCHUELERGESAMT%", escape(params.hoursTotal));
     html = html.replace("%MEDIUM%", escape(params.medium));
+    html = html.replace("%CERTLINK%", link);
 
     // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
 
