@@ -518,10 +518,9 @@ export async function updateInstructor(req: Request, res: Response) {
 
         await instructor.addScreeningResult(screeningResult);
 
-        if(isStudent !== instructor.isStudent) {
-            instructor.isStudent = isStudent;
-            await getManager().save(Student, instructor);
-        }
+        instructor.isStudent = isStudent;
+        
+        await getManager().save(Student, instructor);
 
         const screening = await instructor.screening;
 
