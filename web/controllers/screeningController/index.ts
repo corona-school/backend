@@ -519,12 +519,10 @@ export async function updateInstructor(req: Request, res: Response) {
         await instructor.addScreeningResult(screeningResult);
 
         instructor.isStudent = isStudent;
-        
+
         await getManager().save(Student, instructor);
 
-        const screening = await instructor.screening;
-
-        return res.json({ instructor, screening });
+        return res.json({ instructor });
     } catch (error) {
         logger.warn("/screening/course/../update failed with", error);
         return res.status(500).send("internal server error");
