@@ -445,21 +445,21 @@ export async function getInstructors(req: Request, res: Response) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         }
