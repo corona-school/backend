@@ -196,6 +196,29 @@ export class Student extends Person {
         this.screening = Promise.resolve(currentScreening);
     }
 
+    async addInstructorScreeningResult(screeningResult: ApiScreeningResult) {
+        this.phone =
+            screeningResult.phone === undefined
+                ? this.phone
+                : screeningResult.phone;
+        this.subjects =
+            screeningResult.subjects === undefined
+                ? this.subjects
+                : screeningResult.subjects;
+        this.feedback =
+            screeningResult.feedback === undefined
+                ? this.feedback
+                : screeningResult.feedback;
+
+        let currentScreening = await this.instructorScreening;
+
+        if (!currentScreening) {
+            currentScreening = new InstructorScreening();
+        }
+        await currentScreening.addScreeningResult(screeningResult);
+        this.instructorScreening = Promise.resolve(currentScreening);
+    }
+
     async screeningStatus(): Promise<ScreeningStatus> {
         const screening = await this.screening;
 

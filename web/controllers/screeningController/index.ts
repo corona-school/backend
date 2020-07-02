@@ -444,21 +444,21 @@ export async function getInstructors(req: Request, res: Response) {
         if (screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
-                .leftJoinAndSelect("student.screening", "screening")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.screening", "screening")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
-                .leftJoinAndSelect("student.screening", "screening")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
@@ -516,7 +516,7 @@ export async function updateInstructor(req: Request, res: Response) {
         if (!instructor)
             return res.status(404).send("Instructor not found");
 
-        await instructor.addScreeningResult(screeningResult);
+        await instructor.addInstructorScreeningResult(screeningResult);
 
         instructor.isStudent = isStudent;
 
