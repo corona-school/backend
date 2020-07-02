@@ -149,7 +149,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.pupil = match.pupil;
     pc.student = match.student;
     pc.subjects = params.subjects;
-    pc.activities = params.subjects;
+    pc.categories = params.categories;
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.endDate = params.endDate;
@@ -157,7 +157,6 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.uuid = createHash("sha512").update(uuidv4()).digest("hex");
     await entityManager.save(ParticipationCertificate, pc);
     const verifictionLink = "http://" + host + "/api/certificate/" + pc.uuid;
-
     ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verifictionLink);
     ret.status = 200;
 
@@ -213,7 +212,7 @@ async function viewParticipationCertificate(certificateId) {
         html = html.replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"));
         html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
-        // html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
+        html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
         html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
         html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
         html = html.replace("%MEDIUM%", escape(certificate.medium));

@@ -23,7 +23,7 @@ export class ParticipationCertificate {
     subjects: string;
 
     @Column()
-    activities: string;
+    categories: string;
 
     @CreateDateColumn({ type: "timestamp" })
     certificateDate: Date;

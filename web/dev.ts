@@ -118,7 +118,7 @@ export async function setupDevDB() {
     pc.certificateDate = new Date();
     pc.startDate = new Date();
     pc.endDate = new Date();
-    pc.activities = JSON.stringify(["xyz", "zipd"]);    //or coded with numbers + own entries
+    pc.categories = "xyzipd";
     pc.hoursTotal = 8;
     pc.hoursPerWeek = 8;
 

@@ -11,7 +11,6 @@ mailstore
 
 # Assets
 assets/*
-!assets/verifiedCertificatePage.html
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
