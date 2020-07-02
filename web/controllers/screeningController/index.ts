@@ -410,10 +410,10 @@ export async function updateCourse(req: Request, res: Response) {
  * @api {GET} /screening/instructors getInstructors
  * @apiVersion 1.0.1
  * @apiDescription
- * 
+ *
  * Retrieves the first 20 courses that match the specified filters.
- * 
- * 
+ *
+ *
  * Only screeners with a valid token in the request header can use the API.
  *
  * @apiName getInstructors
@@ -434,28 +434,28 @@ export async function getInstructors(req: Request, res: Response) {
         if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
 
-        if(typeof search !== "string")
+        if (typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search'");
 
         search = `%${search}%`; // fuzzy search
-        
+
         let instructors: {}[];
-        
-        if(screeningStatus === ScreeningStatus.Accepted) {
+
+        if (screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .leftJoinAndSelect("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
-        } else if(screeningStatus === ScreeningStatus.Rejected) {
+        } else if (screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.screening", "screening")
                 .where("student.isInstructor = true AND screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
                 .getMany();
-        } else if(screeningStatus === ScreeningStatus.Unscreened) {
+        } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student,"student")
                 .leftJoinAndSelect("student.screening", "screening")
@@ -475,10 +475,10 @@ export async function getInstructors(req: Request, res: Response) {
  * @api {POST} /screening/instructor/:instructorID/update updateInstructor
  * @apiVersion 1.0.1
  * @apiDescription
- * 
+ *
  * Updates an instructor
- * 
- * 
+ *
+ *
  * Only screeners with a valid token in the request header can use the API.
  *
  * @apiName updateCourse
