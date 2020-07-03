@@ -520,6 +520,14 @@ export async function updateInstructor(req: Request, res: Response) {
 
         instructor.isStudent = isStudent;
 
+        //also store a tutor screening in the database
+        if (await instructor.screeningStatus() === ScreeningStatus.Unscreened) { //do not overwrite existing tutor screenings
+            screeningResult.commentScreener = "Screened as part of an Instructor Screening";
+            screeningResult.verified = isStudent;
+
+            await instructor.addScreeningResult(screeningResult);
+        }
+
         await getManager().save(Student, instructor);
 
         return res.json({ instructor });
