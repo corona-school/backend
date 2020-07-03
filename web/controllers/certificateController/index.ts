@@ -12,8 +12,7 @@ import * as path from 'path';
 import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
-import { v4 as uuidv4 } from "uuid";
-import { createHash } from "crypto";
+import { randomBytes } from "crypto";
 
 const logger = getLogger();
 
@@ -154,10 +153,10 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.hoursTotal = params.hoursTotal;
     pc.endDate = params.endDate;
     pc.startDate = params.endDate;
-    pc.uuid = createHash("sha512").update(uuidv4()).digest("hex");
+    pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     await entityManager.save(ParticipationCertificate, pc);
-    const verifictionLink = "http://" + host + "/api/certificate/" + pc.uuid;
-    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verifictionLink);
+    const verificationLink = "http://" + host + "/api/certificate/" + pc.uuid;
+    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verificationLink);
     ret.status = 200;
 
     await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
