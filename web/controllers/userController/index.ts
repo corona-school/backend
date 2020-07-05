@@ -31,7 +31,7 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user
  *
  * @apiUse User
  * @apiUse Subject
@@ -66,7 +66,7 @@ export async function getSelfHandler(req: Request, res: Response) {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>
  *
  * @apiUse User
  * @apiUse Subject
@@ -122,7 +122,7 @@ export async function getHandler(req: Request, res: Response) {
  * @apiUse ContentType
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/personal -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/personal -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -183,7 +183,7 @@ export async function putHandler(req: Request, res: Response) {
  * @apiUse ContentType
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/subjects -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/subjects -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -283,7 +283,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>/active/<ACTIVE>
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/active/<ACTIVE>
  *
  * @apiParam (URL Parameter) {string} id User Id
  * @apiParam (URL Parameter) {string} active Either <code>"true"</code> or <code>"false"</code>
@@ -714,7 +714,7 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>/role/instructor
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/instructor
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -758,7 +758,8 @@ async function postUserRoleInstructor(wixId: string, student: Student): Promise<
     try {
         student.isInstructor = true;
         // TODO: instructor screening?
-        entityManager.save(Student, student);
+        // TODO: transaction log
+        await entityManager.save(Student, student);
     } catch (e) {
         logger.error("Unable to update student status: " + e.message);
         return 500;
@@ -780,7 +781,7 @@ async function postUserRoleInstructor(wixId: string, student: Student): Promise<
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>/role/tutor
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/tutor
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -803,7 +804,9 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
             if (typeof testSubject.name == "string"
                 && checkSubject(testSubject.name)
                 && typeof testSubject.minGrade == "number"
+                && Number.isInteger(testSubject.minGrade)
                 && typeof testSubject.maxGrade == "number"
+                && Number.isInteger(testSubject.maxGrade)
                 && testSubject.minGrade >= 1 && testSubject.minGrade <= 13
                 && testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13
                 && testSubject.minGrade <= testSubject.maxGrade) {
@@ -846,9 +849,10 @@ async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiS
 
     try {
         student.isStudent = true;
-        student.openMatchRequestCount += 1;
+        student.openMatchRequestCount = 1;
         student.subjects = JSON.stringify(subjects);
-        entityManager.save(Student, student);
+        // TODO: transaction log
+        await entityManager.save(Student, student);
     } catch (e) {
         logger.error("Unable to update student status: " + e.message);
         return 500;
