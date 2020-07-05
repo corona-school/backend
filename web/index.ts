@@ -90,6 +90,8 @@ createConnection().then(() => {
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
+        userApiRouter.post("/:id/role/instructor", userController.postUserRoleInstructorHandler);
+        userApiRouter.post("/:id/role/tutor", userController.postUserRoleTutorHandler);
         app.use("/api/user", userApiRouter);
     }
 
