@@ -859,3 +859,57 @@ async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiS
     }
     return 204;
 }
+
+/**
+ * @api {PUT} /user/:id/mentor/description putMentorDescription
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Set or update the mentor description.
+ *
+ * The user has to be an authenticated mentor and can only edit his own description.
+ *
+ * @apiName putMentorDescription
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/mentor/description -d "<REQUEST>"
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse MentorDescription
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+
+/**
+ * @api {PUT} /user/:id/image putUserImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Upload an image file (mentors only).
+ *
+ * The user has to be an authenticated mentor and can only edit his own image.
+ *
+ * @apiName putUserImage
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/image -d "<REQUEST>"
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserImage
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */

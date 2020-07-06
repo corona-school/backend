@@ -107,6 +107,8 @@ export interface ApiAddMentor {
     division: string[],
     expertise: string[],
     subjects: ApiAddMentorSubject[],
+    teachingExperience: boolean,
+    message: string
 }
 
 /**
