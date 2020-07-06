@@ -181,6 +181,27 @@ export class ApiPutUser {
  */
 
 /**
+ * @apiDefine UserRoleTutorSubjects
+ * @apiVersion 1.0.1
+ *
+ * @apiParam (User Subjects) {Subject[]} root Array of subjects
+ *
+ * @apiParamExample {json} Example
+ *      [
+ *          {
+ *              "name": "Chemie",
+ *              "minGrade": 1,
+ *              "maxGrade": 4
+ *          },
+ *          {
+ *              "name": "Physik",
+ *              "minGrade": 10,
+ *              "maxGrade": 13
+ *          }
+ *      ]
+ */
+
+/**
  * @apiDefine Subject
  * @apiVersion 1.0.1
  *
@@ -192,6 +213,20 @@ export class ApiSubject {
     name: string;
     minGrade?: number;
     maxGrade?: number;
+}
+
+/**
+ * @apiDefine SubjectStudent
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subject Object) {string} name Name
+ * @apiSuccess (Subject Object) {number} minGrade
+ * @apiSuccess (Subject Object) {number} maxGrade
+ */
+export class ApiSubjectStudent {
+    name: string;
+    minGrade: number;
+    maxGrade: number;
 }
 
 /**
