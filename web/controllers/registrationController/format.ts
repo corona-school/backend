@@ -85,3 +85,37 @@ export interface ApiAddTutorSubject {
 export interface ApiAddTuteeSubject {
     name: string
 }
+
+/**
+ * @apiDefine AddMentor
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Mentor Object) {string} firstname First name
+ * @apiSuccess (Mentor Object) {string} lastname Last name
+ * @apiSuccess (Mentor Object) {string} email E-Mail
+ * @apiSuccess (Mentor Object) {string[]} division Division, array of <code>"facebook", "email", "events", "video", "supervision"</code>
+ * @apiSuccess (Mentor Object) {string[]} expertise Expertise, array of <code>"language_difficulties", "specialized_subject_experience", "didactic_expert", "technical_support", "self_organization"</code>
+ * @apiSuccess (Mentor Object) {Subject[]} subjects Subjects, <em>required if</em> <code>division = "supervision"</code> or <code>expertise = "specialized_subject_experience"</code>
+ * @apiSuccess (Mentor Object) {bool} teachingExperience User reports existing teaching experience
+ * @apiSuccess (Mentor Object) {string} message Additional message
+ *
+ */
+export interface ApiAddMentor {
+    firstname: string,
+    lastname: string,
+    email: string,
+    division: string[],
+    expertise: string[],
+    subjects: ApiAddMentorSubject[],
+}
+
+/**
+ * @apiDefine AddMentorSubject
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subject Object) {string} name Name of the subject
+ *
+ */
+export interface ApiAddMentorSubject {
+    name: string
+}
