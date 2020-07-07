@@ -212,6 +212,7 @@ export class ApiPutUser {
  * @apiVersion 1.0.1
  *
  * @apiSuccess (Instructor Object) {bool} isOfficial True, if user is looking for something official
+ * @apiSuccess (Instructor Object) {string} state <em>required if</em> <code>isOfficial = true</code>: State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>)
  * @apiSuccess (Instructor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
  * @apiSuccess (Instructor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
  * @apiSuccess (Instructor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
@@ -219,6 +220,7 @@ export class ApiPutUser {
  */
 export class ApiUserRoleInstructor {
     isOfficial: boolean;
+    state?: string;
     university?: string;
     module?: string;
     hours?: number;
