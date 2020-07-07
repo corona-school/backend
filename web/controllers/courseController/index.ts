@@ -665,7 +665,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         return 403;
     }
 
-    if (student.courses.length >= 3) {
+    if (student.courses.length >= 25) {
         logger.warn(`Student (ID ${student.id}) tried to add an course, but has reached his limit.`);
         logger.debug(student);
         return 403;

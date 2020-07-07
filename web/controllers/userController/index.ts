@@ -1,8 +1,8 @@
 import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
-import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject } from "./format";
-import { ScreeningStatus, Student } from "../../../common/entity/Student";
+import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject, ApiSubjectStudent, ApiUserRoleInstructor } from "./format";
+import { ScreeningStatus, Student, TeacherModule } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
@@ -11,6 +11,7 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
+import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -31,7 +32,7 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user
  *
  * @apiUse User
  * @apiUse Subject
@@ -66,7 +67,7 @@ export async function getSelfHandler(req: Request, res: Response) {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>
  *
  * @apiUse User
  * @apiUse Subject
@@ -122,7 +123,7 @@ export async function getHandler(req: Request, res: Response) {
  * @apiUse ContentType
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/personal -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/personal -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -183,7 +184,7 @@ export async function putHandler(req: Request, res: Response) {
  * @apiUse ContentType
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://dashboard.corona-school.de/api/user/<ID>/subjects -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/subjects -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
@@ -283,7 +284,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/user/<ID>/active/<ACTIVE>
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/active/<ACTIVE>
  *
  * @apiParam (URL Parameter) {string} id User Id
  * @apiParam (URL Parameter) {string} active Either <code>"true"</code> or <code>"false"</code>
@@ -359,7 +360,10 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
     if (person instanceof Student) {
         apiResponse.type = "student";
+        apiResponse.isTutor = person.isStudent;
+        apiResponse.isInstructor = person.isInstructor;
         apiResponse.screeningStatus = await person.screeningStatus();
+        apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
@@ -697,4 +701,210 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
         }
     }
     return stringSubjects;
+}
+
+/**
+ * @api {POST} /user/:id/role/instructor postUserRoleInstructor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add the instructor role to the current user.
+ *
+ * The user has to be authenticated.
+ *
+ * @apiName postUserRoleInstructor
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/instructor
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserRoleInstructor
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function postUserRoleInstructorHandler(req: Request, res: Response) {
+    let status = 204;
+    if (res.locals.user instanceof Student
+        && req.params.id != undefined
+        && typeof req.body.isOfficial == 'boolean') {
+
+        if (req.body.isOfficial) {
+            if (typeof req.body.university !== 'string'
+            || typeof req.body.module !== 'string'
+            || typeof req.body.hours !== 'number') {
+                status = 400;
+                logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
+            }
+        }
+
+        if (status < 300) {
+            status = await postUserRoleInstructor(req.params.id, res.locals.user, req.body);
+        } else {
+            logger.error("Malformed parameters in optional fields for Instructor role change");
+            status = 400;
+        }
+    } else {
+        logger.error("Malfored required parameters for Instructor role change");
+        status = 400;
+    }
+
+    res.status(status).end();
+}
+
+async function postUserRoleInstructor(wixId: string, student: Student, apiInstructor: ApiUserRoleInstructor): Promise<number> {
+    if (wixId != student.wix_id) {
+        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        return 403;
+    }
+
+    if (student.isInstructor) {
+        logger.warn("Current user is already an instructor");
+        return 400;
+    }
+
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    student.isInstructor = true;
+
+    if (apiInstructor.isOfficial) {
+        if (apiInstructor.university.length == 0 || apiInstructor.university.length > 100) {
+            logger.warn("apiInstructor.university outside of length restrictions");
+            return 400;
+        }
+
+        if (apiInstructor.hours == 0 || apiInstructor.hours > 1000) {
+            logger.warn("apiInstructor.hours outside of size restrictions");
+            return 400;
+        }
+
+        switch (apiInstructor.module) {
+            case "internship":
+                student.module = TeacherModule.INTERNSHIP;
+                break;
+            case "seminar":
+                student.module = TeacherModule.SEMINAR;
+                break;
+            case "other":
+                student.module = TeacherModule.OTHER;
+                break;
+            default:
+                logger.warn("Tutor registration has invalid string for teacher module " + apiInstructor.module);
+                return 400;
+        }
+
+        student.university = apiInstructor.university;
+        student.moduleHours = apiInstructor.hours;
+    }
+
+    try {
+
+        // TODO: transaction log
+        await entityManager.save(Student, student);
+        // Invite to instructor screening
+        await sendFirstScreeningInvitationToInstructor(entityManager, student);
+    } catch (e) {
+        logger.error("Unable to update student status: " + e.message);
+        return 500;
+    }
+    return 204;
+}
+
+/**
+ * @api {POST} /user/:id/role/tutor postUserRoleTutor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add the tutor role to the current user by supplying subjects for matching.
+ *
+ * The user has to be authenticated.
+ *
+ * @apiName postUserRoleInstructor
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/tutor
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserRoleTutorSubjects
+ * @apiUse SubjectStudent
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function postUserRoleTutorHandler(req: Request, res: Response) {
+    let status = 204;
+
+    if (res.locals.user instanceof Student
+        && req.params.id != undefined
+        && req.body instanceof Array) {
+        let subjects: ApiSubjectStudent[] = [];
+        for (let testSubject of req.body) {
+            if (typeof testSubject.name == "string"
+                && checkSubject(testSubject.name)
+                && typeof testSubject.minGrade == "number"
+                && Number.isInteger(testSubject.minGrade)
+                && typeof testSubject.maxGrade == "number"
+                && Number.isInteger(testSubject.maxGrade)
+                && testSubject.minGrade >= 1 && testSubject.minGrade <= 13
+                && testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13
+                && testSubject.minGrade <= testSubject.maxGrade) {
+                let newSubject = new ApiSubjectStudent;
+                newSubject.name = testSubject.name;
+                newSubject.minGrade = testSubject.minGrade;
+                newSubject.maxGrade = testSubject.maxGrade;
+                subjects.push(newSubject);
+            } else {
+                logger.warn("Invalid format for subject data element.");
+                logger.debug(testSubject);
+                status = 400;
+            }
+        }
+
+        if (status < 300 && subjects.length >= 1) {
+            status = await postUserRoleTutor(req.params.id, res.locals.user, subjects);
+        }
+    } else {
+        logger.warn("Missing request parameters for roleTutorHandler.");
+        status = 400;
+    }
+
+    res.status(status).end();
+}
+
+async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiSubjectStudent[]): Promise<number> {
+    if (wixId != student.wix_id) {
+        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        return 403;
+    }
+
+    if (student.isStudent) {
+        logger.warn("Current user is already a tutor");
+        return 400;
+    }
+
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    try {
+        student.isStudent = true;
+        student.openMatchRequestCount = 1;
+        student.subjects = JSON.stringify(subjects);
+        // TODO: transaction log
+        await entityManager.save(Student, student);
+    } catch (e) {
+        logger.error("Unable to update student status: " + e.message);
+        return 500;
+    }
+    return 204;
 }

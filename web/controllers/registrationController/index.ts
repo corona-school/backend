@@ -45,7 +45,7 @@ export async function postTutorHandler(req: Request, res: Response) {
            typeof req.body.email == 'string' &&
            typeof req.body.isTutor == 'boolean' &&
            typeof req.body.isOfficial == 'boolean' &&
-            typeof req.body.isInstructor == 'boolean' &&
+           typeof req.body.isInstructor == 'boolean' &&
            typeof req.body.newsletter == 'boolean' &&
            typeof req.body.msg == 'string') {
 
@@ -153,8 +153,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.isStudent = true;
     }
 
-    if (apiTutor.isInstructor) {
-        // todo queue for instructor screening
+    if (apiTutor.isInstructor || apiTutor.isOfficial) {
         tutor.isInstructor = true;
     }
 

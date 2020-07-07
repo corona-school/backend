@@ -46,11 +46,6 @@ export class Student extends Person {
     @Column({
         nullable: true
     })
-    msg: string;
-
-    @Column({
-        nullable: true
-    })
     phone: string;
 
     @Column({
@@ -104,8 +99,13 @@ export class Student extends Person {
     @OneToMany(type => Lecture, lecture => lecture.instructor)
     lectures: Lecture[];
 
+    @Column({
+        nullable: true
+    })
+    msg: string;
+
     /*
-     * Teacher data
+     * Intern data
      */
     @Column({
         type: 'enum',
@@ -196,6 +196,29 @@ export class Student extends Person {
         this.screening = Promise.resolve(currentScreening);
     }
 
+    async addInstructorScreeningResult(screeningResult: ApiScreeningResult) {
+        this.phone =
+            screeningResult.phone === undefined
+                ? this.phone
+                : screeningResult.phone;
+        this.subjects =
+            screeningResult.subjects === undefined
+                ? this.subjects
+                : screeningResult.subjects;
+        this.feedback =
+            screeningResult.feedback === undefined
+                ? this.feedback
+                : screeningResult.feedback;
+
+        let currentScreening = await this.instructorScreening;
+
+        if (!currentScreening) {
+            currentScreening = new InstructorScreening();
+        }
+        await currentScreening.addScreeningResult(screeningResult);
+        this.instructorScreening = Promise.resolve(currentScreening);
+    }
+
     async screeningStatus(): Promise<ScreeningStatus> {
         const screening = await this.screening;
 
@@ -228,6 +251,10 @@ export class Student extends Person {
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
         return "https://authentication.corona-school.de/";
+    }
+
+    instructorScreeningURL(): string {
+        return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
     }
 }
 

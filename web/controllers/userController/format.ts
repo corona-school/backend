@@ -7,10 +7,13 @@
  * @apiSuccess (User Object) {string} lastname Last name
  * @apiSuccess (User Object) {string} email E-Mail address (unique)
  * @apiSuccess (User Object) {string} type Either <code>"pupil"</code> or <code>"student"</code>
+ * @apiSuccess (User Object) {string} isTutor <i>Only available for students:</i> User registered as Tutor for 1:1 matches
+ * @apiSuccess (User Object) {string} isInstructor <i>Only available for students:</i> User registered as Instructor for courses
  * @apiSuccess (User Object) {boolean} active An inactive user is not considered for new matches.
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
  * @apiSuccess (User Object) {string} screeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
+ * @apiSuccess (User Object) {string} instructorScreeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened for group courses with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
@@ -61,8 +64,11 @@
  *          "lastname": "Doe",
  *          "email": "jane.doe@example.com",
  *          "type": "student",
+ *          "isTutor": true,
+ *          "isInstructor": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
+ *          "instructorScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
  *          "subjects": [
  *              {
@@ -109,10 +115,13 @@ export class ApiGetUser {
     lastname: string;
     email: string;
     type: "student" | "pupil";
+    isTutor?: boolean;
+    isInstructor?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
     screeningStatus?: string;
+    instructorScreeningStatus?: string;
     subjects: ApiSubject[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
@@ -178,6 +187,42 @@ export class ApiPutUser {
  */
 
 /**
+ * @apiDefine UserRoleTutorSubjects
+ * @apiVersion 1.0.1
+ *
+ * @apiParam (User Subjects) {Subject[]} root Array of subjects
+ *
+ * @apiParamExample {json} Example
+ *      [
+ *          {
+ *              "name": "Chemie",
+ *              "minGrade": 1,
+ *              "maxGrade": 4
+ *          },
+ *          {
+ *              "name": "Physik",
+ *              "minGrade": 10,
+ *              "maxGrade": 13
+ *          }
+ *      ]
+ */
+
+/**
+ * @apiDefine UserRoleInstructor
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Instructor Object) {bool} isOfficial True, if user is looking for something official
+ * @apiSuccess (Instructor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
+ * @apiSuccess (Instructor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
+ * @apiSuccess (Instructor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
+ */
+export class ApiUserRoleInstructor {
+    isOfficial: boolean;
+    university?: string;
+    module?: string;
+    hours?: number;
+}
+/**
  * @apiDefine Subject
  * @apiVersion 1.0.1
  *
@@ -189,6 +234,20 @@ export class ApiSubject {
     name: string;
     minGrade?: number;
     maxGrade?: number;
+}
+
+/**
+ * @apiDefine SubjectStudent
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subject Object) {string} name Name
+ * @apiSuccess (Subject Object) {number} minGrade
+ * @apiSuccess (Subject Object) {number} maxGrade
+ */
+export class ApiSubjectStudent {
+    name: string;
+    minGrade: number;
+    maxGrade: number;
 }
 
 /**

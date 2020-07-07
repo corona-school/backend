@@ -10,7 +10,7 @@
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutor Object) {bool} isOfficial True, if user is looking for something official
  * @apiSuccess (Tutor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
- * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar"</code>
+ * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
  * @apiSuccess (Tutor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
  * @apiSuccess (Tutor Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutor Object) {string} msg Additional information
