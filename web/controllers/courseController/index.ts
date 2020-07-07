@@ -286,7 +286,8 @@ async function getCourses(student: Student | undefined,
                                     participants: courses[i].subcourses[k].participants.length,
                                     instructors: [],
                                     lectures: [],
-                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart
+                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart,
+                                    published: courses[i].subcourses[k].published
                                 };
                                 for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
                                     let instructor: ApiInstructor = {
