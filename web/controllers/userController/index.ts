@@ -732,7 +732,8 @@ export async function postUserRoleInstructorHandler(req: Request, res: Response)
     let status = 204;
     if (res.locals.user instanceof Student
         && req.params.id != undefined
-        && typeof req.body.isOfficial == 'boolean') {
+        && typeof req.body.isOfficial == 'boolean'
+        && typeof req.body.msg == 'string') {
 
         if (req.body.isOfficial) {
             if (typeof req.body.university !== 'string'
@@ -784,6 +785,11 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
             return 400;
         }
 
+        if (apiInstructor.msg.length > 3000) {
+            logger.warn("apiInstructor.msg outside of length restrictions");
+            return 400;
+        }
+
         switch (apiInstructor.module) {
             case "internship":
                 student.module = TeacherModule.INTERNSHIP;
@@ -799,6 +805,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
                 return 400;
         }
 
+        student.msg = apiInstructor.msg;
         student.university = apiInstructor.university;
         student.moduleHours = apiInstructor.hours;
     }
