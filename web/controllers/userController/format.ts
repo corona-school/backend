@@ -7,6 +7,8 @@
  * @apiSuccess (User Object) {string} lastname Last name
  * @apiSuccess (User Object) {string} email E-Mail address (unique)
  * @apiSuccess (User Object) {string} type Either <code>"pupil"</code> or <code>"student"</code>
+ * @apiSuccess (User Object) {string} isTutor <i>Only available for students:</i> User registered as Tutor for 1:1 matches
+ * @apiSuccess (User Object) {string} isInstructor <i>Only available for students:</i> User registered as Instructor for courses
  * @apiSuccess (User Object) {boolean} active An inactive user is not considered for new matches.
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
@@ -62,6 +64,8 @@
  *          "lastname": "Doe",
  *          "email": "jane.doe@example.com",
  *          "type": "student",
+ *          "isTutor": true,
+ *          "isInstructor": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
  *          "instructorScreeningStatus": "ACCEPTED",
@@ -111,6 +115,8 @@ export class ApiGetUser {
     lastname: string;
     email: string;
     type: "student" | "pupil";
+    isTutor?: boolean;
+    isInstructor?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
@@ -201,6 +207,21 @@ export class ApiPutUser {
  *      ]
  */
 
+/**
+ * @apiDefine UserRoleInstructor
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Instructor Object) {bool} isOfficial True, if user is looking for something official
+ * @apiSuccess (Instructor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
+ * @apiSuccess (Instructor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
+ * @apiSuccess (Instructor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
+ */
+export class ApiUserRoleInstructor {
+    isOfficial: boolean;
+    university?: string;
+    module?: string;
+    hours?: number;
+}
 /**
  * @apiDefine Subject
  * @apiVersion 1.0.1
