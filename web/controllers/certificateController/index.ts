@@ -155,7 +155,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.startDate = params.endDate;
     pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     await entityManager.save(ParticipationCertificate, pc);
-    const verificationLink = "http://" + host + "/api/certificate/" + pc.uuid;
+    const verificationLink = "http://verify." + host + "/" + pc.uuid;
     ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verificationLink);
     ret.status = 200;
 
@@ -185,6 +185,7 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
     html = html.replace("%SCHUELERGESAMT%", escape(params.hoursTotal));
     html = html.replace("%MEDIUM%", escape(params.medium));
     html = html.replace("%CERTLINK%", link);
+    html = html.replace("%CERTLINKTEXT%", link);
 
     // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
 
@@ -218,6 +219,7 @@ async function viewParticipationCertificate(certificateId) {
     }
     catch (e) {
         logger.error(e);
+        return "<h1>Zertifikatslink nicht valide.</h1>";
     }
 
     return html;

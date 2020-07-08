@@ -42,6 +42,7 @@ createConnection().then(() => {
     addCorsMiddleware();
     addSecurityMiddleware();
 
+    configureParticipationCertificateAPI();
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
@@ -102,7 +103,6 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.get("/:certificateId", certificateController.confirmCertificateHandler);
         certificateRouter.use(authCheckFactory());
         certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
         app.use("/api/certificate", certificateRouter);
@@ -165,6 +165,23 @@ createConnection().then(() => {
             screeningController.updateScreenerByMailHandler
         );
         app.use("/api/screening", screenerApiRouter);
+    }
+
+    function configureParticipationCertificateAPI() {
+        const participationCertificateRouter = express.Router();
+        participationCertificateRouter.get("/:certificateId", (req, res, next) => {
+            if(!req.subdomains.includes("verify")){
+                return next();
+            }
+            certificateController.confirmCertificateHandler(req, res)
+        });
+        participationCertificateRouter.use((req, res, next) =>{
+            if(req.subdomains.includes("verify")){
+                return res.status(404).end()
+            }
+            next();
+        });
+        app.use(participationCertificateRouter);
     }
 
     function deployServer() {
