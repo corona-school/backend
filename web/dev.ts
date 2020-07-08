@@ -6,6 +6,7 @@ import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
 import { ParticipationCertificate } from "../common/entity/ParticipationCertificate"
+import { randomBytes } from "crypto";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -111,7 +112,8 @@ export async function setupDevDB() {
     }
 
     let pc = new ParticipationCertificate();
-    pc.uuid = "000000001-0000-0000-0701-1b4c4c526384";
+    //pc.uuid = "000000001-0000-0000-0701-1b4c4c526384";
+    pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     pc.pupil = pupils[0];
     pc.student = students[0];
     pc.subjects = JSON.stringify(["Englisch", "Deutsch"]);
@@ -123,6 +125,7 @@ export async function setupDevDB() {
     pc.hoursPerWeek = 8;
 
     await entityManager.save(ParticipationCertificate, pc);
+    console.log("Inserted a certificate with ID: " + pc.uuid)
 
     // Screening results
     const screeners: Screener[] = [];

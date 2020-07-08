@@ -153,7 +153,10 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.hoursTotal = params.hoursTotal;
     pc.endDate = params.endDate;
     pc.startDate = params.endDate;
-    pc.uuid = randomBytes(5).toString('hex').toUpperCase();
+    do {
+        pc.uuid = randomBytes(5).toString('hex').toUpperCase();
+    } while(await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }))
+
     await entityManager.save(ParticipationCertificate, pc);
     const verificationLink = "http://verify." + host + "/" + pc.uuid;
     ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verificationLink);
