@@ -1,0 +1,13 @@
+import { mailjetTemplates, sendTemplateMail } from "../index";
+import { Pupil } from "../../entity/Pupil";
+
+export async function sendConfirmationMailAfterRegistration(participant: Pupil, course: Course, firstLecture: Date) {
+    const mail = mailjetTemplates.PARTICIPANTCOURSEREGISTRATIONCONFIRMATION({
+            participantFirstname: participant.firstname,
+            courseName: course.name,
+            firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+            firstLectureTime: moment(firstLecture).format("HH:mm")
+     
+    });
+    await sendTemplateMail(mail, participant.email);
+}
