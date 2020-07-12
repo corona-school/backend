@@ -90,10 +90,10 @@ export class Course {
         if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
 
-        if(update.instructors)
+        if (update.instructors)
             update.instructors = await Promise.all(update.instructors.map(it => getManager().findOneOrFail(Student, { where: { id: it.id, isInstructor: true }})));
-        
-            for (const [key, value] of Object.entries(update)) {
+
+        for (const [key, value] of Object.entries(update)) {
             if (typeof value !== "undefined")
                 this[key] = value;
         }
