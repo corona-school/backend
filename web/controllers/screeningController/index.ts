@@ -397,7 +397,7 @@ export async function updateCourse(req: Request, res: Response) {
         if (!course)
             return res.status(404).send("Course not found");
 
-        course.updateCourse(update);
+        await course.updateCourse(update);
         await getManager().save(course);
 
         return res.json({ course });
