@@ -8,8 +8,9 @@ export class ApiCourseUpdate {
     category?: CourseCategory;
     imageUrl?: string | null;
     screeningComment?: string | null;
+    instructors?: { id: number }[];
 
-    constructor({ courseState, name, description, category, outline, imageUrl, screeningComment }: any) {
+    constructor({ courseState, name, description, category, outline, imageUrl, screeningComment, instructors }: any) {
         this.courseState = courseState;
         this.name = name;
         this.description = description;
@@ -17,6 +18,7 @@ export class ApiCourseUpdate {
         this.outline = outline;
         this.imageUrl = imageUrl;
         this.screeningComment = screeningComment;
+        this.instructors = instructors;
     }
 
     isValid() {
@@ -27,7 +29,8 @@ export class ApiCourseUpdate {
             isValue("category", [CourseCategory.CLUB, CourseCategory.COACHING, CourseCategory.REVISION, undefined]),
             isType("outline", ["undefined", "string"]),
             value => value.imageUrl === undefined || value.imageUrl === null || typeof value.imageUrl === "string",
-            value => value.screeningComment === undefined || value.screeningComment === null || typeof value.screeningComment === "string"
+            value => value.screeningComment === undefined || value.screeningComment === null || typeof value.screeningComment === "string",
+            value => value.instructors === undefined || (Array.isArray(value.instructors) && value.instructors.every(it => Number.isInteger(it.id)))
         )(this);
     }
 }
