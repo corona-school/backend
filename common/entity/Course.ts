@@ -5,7 +5,8 @@ import {
     JoinTable,
     ManyToMany, OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    getManager
 } from "typeorm";
 import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
@@ -85,9 +86,12 @@ export class Course {
     @Column({ nullable: true })
     screeningComment: string;
 
-    updateCourse(update: ApiCourseUpdate) {
+    async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
+
+        if (update.instructors)
+            update.instructors = await Promise.all(update.instructors.map(it => getManager().findOneOrFail(Student, { where: { id: it.id, isInstructor: true }})));
 
         for (const [key, value] of Object.entries(update)) {
             if (typeof value !== "undefined")
