@@ -40,6 +40,9 @@ export class ParticipationCertificate {
     @Column()
     hoursTotal: number;
 
+    @Column()
+    medium: string;
+
     @ManyToOne((type) => Student)
     @JoinColumn()
     student: Student;

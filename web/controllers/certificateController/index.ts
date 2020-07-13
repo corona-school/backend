@@ -110,7 +110,7 @@ export async function certificateHandler(req: Request, res: Response) {
  */
 export async function confirmCertificateHandler(req: Request, res: Response) {
     let status;
-    if (req.params.certificateId != undefined) {
+    if (req.params.certificateId != undefined || ("" + req.params.certificateId)) {
         return res.send(await viewParticipationCertificate(req.params.certificateId));
     }
     status = 500;
@@ -151,6 +151,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.categories = params.categories;
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
+    pc.medium = params.medium;
     pc.endDate = params.endDate;
     pc.startDate = params.endDate;
     do {
@@ -208,7 +209,7 @@ async function viewParticipationCertificate(certificateId) {
     let certificate = null;
     let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
     try {
-        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId },  { relations: ["student", "pupil"] });
+        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() },  { relations: ["student", "pupil"] });
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
         html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));
