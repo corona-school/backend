@@ -17,6 +17,7 @@ import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
 import { setupDevDB } from "./dev";
+import * as favicon from "express-favicon";
 
 // Logger setup
 try {
@@ -38,7 +39,8 @@ createConnection().then(() => {
 
     // Express setup
     app.use(bodyParser.json());
-
+    app.use(favicon('./assets/favicon.ico'));
+    
     addCorsMiddleware();
     addSecurityMiddleware();
 
