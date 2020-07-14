@@ -1,4 +1,3 @@
-// TODO rewrite for mocha and move to tests directory.
 import mailjet from "../../../../common/mails/mailjet";
 import * as assert from "assert";
 
