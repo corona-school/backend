@@ -76,6 +76,10 @@ export async function postTutorHandler(req: Request, res: Response) {
                 }
             }
 
+            
+            if(req.body.redirectTo !== undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
+
             if (status < 300) {
                 // try registering
                 status = await registerTutor(req.body);
@@ -254,7 +258,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     try {
         await entityManager.save(Student, tutor);
-        await sendVerificationMail(tutor);
+        await sendVerificationMail(tutor, apiTutor.redirectTo);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -314,6 +318,9 @@ export async function postTuteeHandler(req: Request, res: Response) {
                     logger.error("Tutee registration with isTutee missing subjects.");
                 }
             }
+
+            if(req.body.redirectTo !== undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
 
             if (status < 300) {
                 // try registering
@@ -486,7 +493,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
     try {
         await entityManager.save(Pupil, tutee);
-        await sendVerificationMail(tutee);
+        await sendVerificationMail(tutee, apiTutee.redirectTo);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
