@@ -15,6 +15,7 @@
  * @apiSuccess (Tutor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
  * @apiSuccess (Tutor Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutor Object) {string} msg Additional information
+ * @apiSuccess (Tutor Object) {string|undefined} redirectTo the page the user sees after registration
  *
  */
 export interface ApiAddTutor {
@@ -30,7 +31,8 @@ export interface ApiAddTutor {
     module?: string,
     hours?: number,
     newsletter: boolean,
-    msg: string
+    msg: string,
+    redirectTo?: string;
 }
 
 /**
@@ -47,7 +49,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutee Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutee Object) {string} msg Additional information
- *
+ * @apiSuccess (Tutee Object) {string|undefined} redirectTo the page the user sees after registration
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -59,7 +61,8 @@ export interface ApiAddTutee {
     isTutee: boolean,
     subjects?: ApiAddTuteeSubject[],
     newsletter: boolean,
-    msg: string
+    msg: string,
+    redirectTo?: string;
 }
 
 /**
