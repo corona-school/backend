@@ -2328,7 +2328,6 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  *
  * @apiUse Course
  * @apiUse Subcourse
- * @apiUse Instructor
  * @apiUse CourseTag
  *
  * @apiExample {curl} Curl
@@ -2414,7 +2413,6 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  *
  * @apiUse Course
  * @apiUse Subcourse
- * @apiUse Instructor
  * @apiUse CourseTag
  *
  * @apiExample {curl} Curl

@@ -1,9 +1,9 @@
 import { hashToken } from "../../common/util/hashing";
 import { getLogger } from 'log4js';
 import axios from "axios";
-import xml2js from "xml2js";
+import { Parser } from "xml2js";
 
-const parser = new xml2js.Parser();
+const parser = new Parser();
 const logger = getLogger();
 
 export let bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
