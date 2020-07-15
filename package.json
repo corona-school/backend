@@ -7,7 +7,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "echo Please be more specific what to start (for now...)",
+    "start": "echo Please be more specific what to start for now...",
     "build": "tsc",
     "build:clean": "rm -rf built && tsc",
     "test": "npm run build && jest",

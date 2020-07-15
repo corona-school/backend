@@ -196,8 +196,8 @@ createConnection().then(() => {
         if (process.env.NODE_ENV == "dev") {
             setupDevDB().then(() => {
                 // Start listening
-                http.createServer(app).listen(5000, () =>
-                    logger.info("DEV server listening on port 5000")
+                http.createServer(app).listen(process.env.PORT || 5000, () =>
+                    logger.info("DEV server listening on port " + process.env.PORT || 5000)
                 );
             });
         } else {

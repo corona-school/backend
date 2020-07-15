@@ -19,7 +19,7 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
     const moderatorPW = hashToken('' + Math.random(), "sha1");
 
     const callName = 'create';
-    const queryParams = `attendeePW=${attendeePW}&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`;
+    const queryParams = encodeURI(`attendeePW=${attendeePW}&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`);
 
     if (!bbbMeetingCache.has(id)) {
         return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
@@ -45,7 +45,7 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
 
 export function getMeetingUrl(id: string, name: string, pw: string): string {
     const callName = 'join';
-    const queryParams = `fullName=${name}&meetingID=${id}&password=${pw}&redirect=true`
+    const queryParams = encodeURI(`fullName=${name}&meetingID=${id}&password=${pw}&redirect=true`);
 
     return encodeURI(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
 }
@@ -53,7 +53,7 @@ export function getMeetingUrl(id: string, name: string, pw: string): string {
 
 export async function isBBBMeetingRunning(id: string): Promise<boolean> {
     const callName = 'isMeetingRunning';
-    const queryParams = `meetingID=${id}`
+    const queryParams = encodeURI(`meetingID=${id}`);
     return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
         .then(response => parser.parseStringPromise(response.data))
         .then(jsonResponse => jsonResponse && jsonResponse.response && jsonResponse.response.running &&
@@ -66,7 +66,7 @@ export async function isBBBMeetingRunning(id: string): Promise<boolean> {
 
 export async function endBBBMeeting(id: string, moderatorPW: string): Promise<boolean> {
     const callName = "end";
-    const queryParams = `meetingID=${id}&password=${moderatorPW}`;
+    const queryParams = encodeURI(`meetingID=${id}&password=${moderatorPW}`);
 
     return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
         .then(response => parser.parseStringPromise(response.data))
