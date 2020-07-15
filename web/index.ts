@@ -127,6 +127,9 @@ createConnection().then(() => {
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
+
+        coursesRouter.get("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+
         app.use("/api/course", coursesRouter);
     }
 
