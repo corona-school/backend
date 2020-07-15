@@ -86,6 +86,12 @@ export class Course {
     @Column({ nullable: true })
     screeningComment: string;
 
+    @Column({
+        nullable: false,
+        default: 0
+    })
+    publicRanking: number;
+
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");

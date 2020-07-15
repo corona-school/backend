@@ -229,7 +229,8 @@ async function getCourses(student: Student | undefined,
 
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
-                id: courses[i].id
+                id: courses[i].id,
+                publicRanking: courses[i].publicRanking
             };
             for (let j = 0; j < fields.length; j++) {
                 switch (fields[j].toLowerCase()) {
@@ -459,6 +460,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
         apiCourse = {
             id: course.id,
+            publicRanking: course.publicRanking,
             instructors: [],
             name: course.name,
             outline: course.outline,
@@ -759,7 +761,8 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         logger.info("Successfully saved new course");
 
         return {
-            id: course.id
+            id: course.id,
+            publicRanking: course.publicRanking
         };
     } catch (e) {
         logger.error("Can't save new course: " + e.message);

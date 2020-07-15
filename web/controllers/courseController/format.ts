@@ -19,6 +19,7 @@
  * @apiSuccess (Course Object) {CourseTag[]} tags <em>(optional)</em> Tags for this course
  * @apiSuccess (Course Object) {Subcourse[]} subcourses <em>(optional)</em> Array of Subcourses
  * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
+ * @apiSuccess (Course Object) {number} publicRanking A number indicating a ranking/order of how courses should be displayed in UI.
  *
  */
 export interface ApiCourse {
@@ -32,6 +33,7 @@ export interface ApiCourse {
     tags?: ApiCourseTag[];
     subcourses?: ApiSubcourse[];
     state?: string;
+    publicRanking: number;
 }
 
 /**
