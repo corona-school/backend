@@ -21,7 +21,7 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
     const verificationUrl = `https://dashboard.corona-school.de/verify?token=${person.verification}&redirectTo=${redirectTo ?? ""}`;
 
     console.log("verificationURL", verificationUrl);
-    
+
     try {
         const mail = mailjetTemplates.VERIFICATION({
             confirmationURL: verificationUrl,
