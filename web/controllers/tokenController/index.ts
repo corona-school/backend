@@ -150,7 +150,7 @@ export async function verifyToken(token: string): Promise<string | null> {
  * @apiParam (Query Parameter) {string} redirectTo route to the page the Token-Link shall lead to (optional)
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET "https://dashboard.corona-school.de/api/token?email=info%40example.org&redirectTo=/courses/2"
+ * curl -k -i -X GET "https://dashboard.corona-school.de/api/token?email=info%40example.org&path=/courses/2"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -242,7 +242,7 @@ function allowedToRequestToken(person: Person): boolean {
 }
 
 export async function sendLoginTokenMail(person: Person, token: string, redirectTo?: string) {
-    const dashboardURL = `https://dashboard.corona-school.de/login?token=${token}&redirectTo=${redirectTo ?? ""}`;
+    const dashboardURL = `https://dashboard.corona-school.de/login?token=${token}&path=${redirectTo ?? ""}`;
 
     console.log(dashboardURL);
 
