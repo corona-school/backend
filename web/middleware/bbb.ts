@@ -6,10 +6,10 @@ import xml2js from "xml2js";
 const parser = new xml2js.Parser();
 const logger = getLogger();
 
-export let bbbMeetingCache = new Map<string, BBBMeeting>();
+export let bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
 setInterval(() => {
     updateBBBMeetingCache();
-}, 60000);
+}, 840000);
 
 const sharedSecret = process.env.BBB_SECRET;
 const baseUrl = process.env.BBB_BASEURL;
@@ -19,7 +19,7 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
     const moderatorPW = hashToken('' + Math.random(), "sha1");
 
     const callName = 'create';
-    const queryParams = `allowStartStopRecording=true&attendeePW=${attendeePW}&autoStartRecording=false&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`;
+    const queryParams = `attendeePW=${attendeePW}&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`;
 
     if (!bbbMeetingCache.has(id)) {
         return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)

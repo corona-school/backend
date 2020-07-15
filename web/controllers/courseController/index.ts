@@ -2382,7 +2382,85 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                     }
                 }
 
-                res.json(obj);
+            } catch (e) {
+                logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
+                logger.debug(req, e);
+                status = 500;
+            }
+        } else {
+            status = 400;
+            logger.error("Expected id parameter on route");
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
+ * @api {GET} /course/:id/meeting getCourseMeeting
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get the BBB-Meeting for a given course
+ *
+ * This endpoint provides the BBB-Meeting of a course.
+ *
+ * @apiName GetCourseMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse OptionalAuthentication
+ *
+ * @apiUse Course
+ * @apiUse Subcourse
+ * @apiUse Instructor
+ * @apiUse CourseTag
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getCourseMeetingHandler(req: Request, res: Response) {
+    let status = 200;
+    let course: ApiCourse;
+    let meeting: BBBMeeting;
+    try {
+        if (req.params.id != undefined) {
+            let authenticatedStudent = false;
+            let authenticatedPupil = false;
+            if (res.locals.user instanceof Student) {
+                authenticatedStudent = true;
+            }
+            if (res.locals.user instanceof Pupil) {
+                authenticatedPupil = true;
+            }
+            try {
+                let obj = await getCourse(
+                    authenticatedStudent ? res.locals.user : undefined,
+                    authenticatedPupil ? res.locals.user : undefined,
+                    Number.parseInt(req.params.id, 10)
+                );
+                if (typeof obj == 'number') {
+                    status = obj;
+                } else {
+                    course = obj;
+                }
+
+                if (authenticatedStudent || authenticatedPupil) {
+                    meeting = bbbMeetingCache.get(req.params.id);
+                }
+
+                if(meeting){
+                    res.json(meeting);
+                } else{
+                    status = 400;
+                    logger.error("No meeting was found for given id");
+                }
 
             } catch (e) {
                 logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
