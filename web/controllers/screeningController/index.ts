@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { getManager, Like, createQueryBuilder, getConnection } from "typeorm";
 import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
+import { ApiCreateLecture } from "../../../common/dto/ApiCreateLecture";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentToScreen } from "../../../common/dto/StudentToScreen";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
@@ -17,6 +18,9 @@ import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
 import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
+import {Lecture} from "../../../common/entity/Lecture";
+import {Subcourse} from "../../../common/entity/Subcourse";
+import {axiosRequestNewToken} from "../../../../web-user-app/src/api/api";
 
 const logger = getLogger();
 
@@ -407,6 +411,52 @@ export async function updateCourse(req: Request, res: Response) {
         return res.status(500).send("internal server error");
     }
 }
+
+export async function postLecture(req: Request, res: Response) {
+    try {
+        const lectureParams = new ApiCreateLecture(req.body);
+        const entityManager = getManager();
+
+        if (!lectureParams.isValid())
+            return res.status(400).send("Invalid lecture data.");
+
+        const newLecture = new Lecture();
+        newLecture.subcourse = await entityManager.findOne(Subcourse, { id: lectureParams.subcourse.id });
+        newLecture.instructor = await entityManager.findOne(Student, { id: lectureParams.instructor.id });
+        newLecture.start = lectureParams.start;
+        newLecture.duration = lectureParams.duration;
+
+        await entityManager.save(Lecture, newLecture);
+
+        return res.json({ newLecture });
+    } catch (error) {
+        logger.warn("/screening/course/../postLecture failed with", error);
+        return res.status(500).send("internal service error");
+    }
+}
+
+export async function deleteLecture(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+
+        if (typeof id !== "string" || !Number.isInteger(+id))
+            return res.status(400).send("Invalid lecture id.");
+
+        const lecture = await getManager().findOne(Lecture, { id: +id });
+
+        if (lecture === undefined)
+            return res.status(400).send("Cannot find lecture with given id.");
+
+        await getManager().delete(Lecture, lecture);
+
+        return res.status(204).send("Successfully deleted lecture.");
+    }
+    catch (error) {
+        logger.warn("/screening/courses/../deleteLecture failed with", error);
+        return res.status(500).send("internal service error");
+    }
+}
+
 /**
  * @api {GET} /screening/instructors getInstructors
  * @apiVersion 1.0.1
