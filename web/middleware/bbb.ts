@@ -47,7 +47,7 @@ export function getMeetingUrl(id: string, name: string, pw: string): string {
     const callName = 'join';
     const queryParams = encodeURI(`fullName=${name}&meetingID=${id}&password=${pw}&redirect=true`);
 
-    return encodeURI(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+    return (`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
 }
 
 

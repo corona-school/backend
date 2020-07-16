@@ -2367,13 +2367,17 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                 if (authenticatedStudent) {
                     let user: Student = res.locals.user;
                     meeting = await createBBBMeeting(course.name, req.params.id);
-                    res.redirect(meeting.moderatorUrl(`${user.firstname}+${user.lastname}`));
+                    res.send({
+                        url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                    });
                 } else if (authenticatedPupil) {
                     let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
                     if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
                         let user: Pupil = res.locals.user;
                         meeting = bbbMeetingCache.get(req.params.id);
-                        res.redirect(meeting.attendeeUrl(`${user.firstname}+${user.lastname}`));
+                        res.send({
+                            url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
+                        });
                     } else {
                         status = 400;
                         logger.error("BBB-Meeting has not startet yet");
@@ -2424,6 +2428,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  * @apiUse StatusInternalServerError
  */
 export async function getCourseMeetingHandler(req: Request, res: Response) {
+    bbbMeetingCache.forEach((value, key) => console.log(value))
     let status = 200;
     let course: ApiCourse;
     let meeting: BBBMeeting;
