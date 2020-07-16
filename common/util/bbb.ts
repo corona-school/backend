@@ -1,4 +1,4 @@
-import { hashToken } from "../../common/util/hashing";
+import { hashToken } from "./hashing";
 import { getLogger } from 'log4js';
 import axios from "axios";
 import { Parser } from "xml2js";
@@ -6,7 +6,7 @@ import { Parser } from "xml2js";
 const parser = new Parser();
 const logger = getLogger();
 
-export let bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
+export const bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
 setInterval(() => {
     updateBBBMeetingCache();
 }, 840000);

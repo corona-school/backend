@@ -25,7 +25,7 @@ import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
-import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../middleware/bbb';
+import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../../common/util/bbb';
 
 const logger = getLogger();
 
@@ -121,10 +121,10 @@ export async function getCoursesHandler(req: Request, res: Response) {
 }
 
 async function getCourses(student: Student | undefined,
-                          pupil: Pupil | undefined, fields: Array<string>,
-                          states: Array<string>,
-                          instructorId: string | undefined,
-                          participantId: string | undefined): Promise<Array<ApiCourse> | number> {
+    pupil: Pupil | undefined, fields: Array<string>,
+    states: Array<string>,
+    instructorId: string | undefined,
+    participantId: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
     let authenticatedStudent = false;
@@ -2272,14 +2272,14 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     const entityManager = getManager();
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
 
     if (course == undefined) {
         logger.warn("Tried to send group mail to invalid course");
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn("Tried to send group mail to invalid subcourse");
         return 404;
@@ -2323,12 +2323,8 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  *
  * @apiName JoinCourseMeeting
  * @apiGroup Courses
- *
- * @apiUse OptionalAuthentication
- *
- * @apiUse Course
- * @apiUse Subcourse
- * @apiUse CourseTag
+ * 
+ * @apiUse Authentication
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
@@ -2353,36 +2349,53 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                 authenticatedPupil = true;
             }
             try {
-                let obj = await getCourse(
-                    authenticatedStudent ? res.locals.user : undefined,
-                    authenticatedPupil ? res.locals.user : undefined,
-                    Number.parseInt(req.params.id, 10)
-                );
-                if (typeof obj == 'number') {
-                    status = obj;
-                } else {
-                    course = obj;
-                }
 
-                if (authenticatedStudent) {
-                    let user: Student = res.locals.user;
-                    meeting = await createBBBMeeting(course.name, req.params.id);
-                    res.send({
-                        url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
-                    });
-                } else if (authenticatedPupil) {
-                    let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
-                    if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
-                        let user: Pupil = res.locals.user;
-                        meeting = bbbMeetingCache.get(req.params.id);
-                        res.send({
-                            url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
-                        });
-                    } else {
-                        status = 400;
-                        logger.error("BBB-Meeting has not startet yet");
+                if (authenticatedPupil || authenticatedStudent) {
 
+                    if (authenticatedStudent) {
+                        let user: Student = res.locals.user;
+
+                        if (bbbMeetingCache.has(req.params.id)) {
+                            meeting = bbbMeetingCache.get(req.params.id);
+                            res.send({
+                                url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                            });
+                        } else {
+
+                            let obj = await getCourse(
+                                authenticatedStudent ? res.locals.user : undefined,
+                                authenticatedPupil ? res.locals.user : undefined,
+                                Number.parseInt(req.params.id, 10)
+                            );
+                            if (typeof obj == 'number') {
+                                status = obj;
+                            } else {
+                                course = obj;
+                                meeting = await createBBBMeeting(course.name, req.params.id);
+                                res.send({
+                                    url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                                });
+                            }
+                        }
+
+                    } else if (authenticatedPupil) {
+                        let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
+                        if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
+                            let user: Pupil = res.locals.user;
+                            meeting = bbbMeetingCache.get(req.params.id);
+                            res.send({
+                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
+                            });
+                        } else {
+                            status = 400;
+                            logger.error("BBB-Meeting has not startet yet");
+                        }
                     }
+
+                } else {
+                    status = 403;
+                    logger.warn("An unauthorized user wanted to join a BBB-Meeting");
+                    logger.debug(res.locals.user);
                 }
 
             } catch (e) {
@@ -2413,11 +2426,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  * @apiName GetCourseMeeting
  * @apiGroup Courses
  *
- * @apiUse OptionalAuthentication
- *
- * @apiUse Course
- * @apiUse Subcourse
- * @apiUse CourseTag
+ * @apiUse Authentication
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting
@@ -2428,52 +2437,31 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  * @apiUse StatusInternalServerError
  */
 export async function getCourseMeetingHandler(req: Request, res: Response) {
-    bbbMeetingCache.forEach((value, key) => console.log(value))
     let status = 200;
-    let course: ApiCourse;
     let meeting: BBBMeeting;
     try {
         if (req.params.id != undefined) {
-            let authenticatedStudent = false;
-            let authenticatedPupil = false;
-            if (res.locals.user instanceof Student) {
-                authenticatedStudent = true;
-            }
-            if (res.locals.user instanceof Pupil) {
-                authenticatedPupil = true;
-            }
-            try {
-                let obj = await getCourse(
-                    authenticatedStudent ? res.locals.user : undefined,
-                    authenticatedPupil ? res.locals.user : undefined,
-                    Number.parseInt(req.params.id, 10)
-                );
-                if (typeof obj == 'number') {
-                    status = obj;
-                } else {
-                    course = obj;
-                }
+            if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
 
-                if (authenticatedStudent || authenticatedPupil) {
-                    meeting = bbbMeetingCache.get(req.params.id);
-                }
+                meeting = bbbMeetingCache.get(req.params.id);
 
-                if(meeting){
+                if (meeting) {
                     res.json(meeting);
-                } else{
+                } else {
                     status = 400;
                     logger.error("No meeting was found for given id");
                 }
 
-            } catch (e) {
-                logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
-                logger.debug(req, e);
-                status = 500;
+            } else {
+                status = 403;
+                logger.warn("An unauthorized user requestes BBB-Meeting information");
+                logger.debug(res.locals.user);
             }
         } else {
             status = 400;
             logger.error("Expected id parameter on route");
         }
+
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
         logger.debug(req, e);
