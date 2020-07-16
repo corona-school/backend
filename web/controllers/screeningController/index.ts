@@ -20,7 +20,6 @@ import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Lecture} from "../../../common/entity/Lecture";
 import {Subcourse} from "../../../common/entity/Subcourse";
-import {axiosRequestNewToken} from "../../../../web-user-app/src/api/api";
 
 const logger = getLogger();
 
