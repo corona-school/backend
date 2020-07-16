@@ -121,10 +121,10 @@ export async function getCoursesHandler(req: Request, res: Response) {
 }
 
 async function getCourses(student: Student | undefined,
-    pupil: Pupil | undefined, fields: Array<string>,
-    states: Array<string>,
-    instructorId: string | undefined,
-    participantId: string | undefined): Promise<Array<ApiCourse> | number> {
+                          pupil: Pupil | undefined, fields: Array<string>,
+                          states: Array<string>,
+                          instructorId: string | undefined,
+                          participantId: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
     let authenticatedStudent = false;
@@ -2323,7 +2323,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  *
  * @apiName JoinCourseMeeting
  * @apiGroup Courses
- * 
+ *
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl

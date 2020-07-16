@@ -26,8 +26,8 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
             .then(response => {
                 if (response.status === 200) {
                     const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
-                        (userName: string): string => getMeetingUrl(id, userName, attendeePW),
-                        (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
+                                                         (userName: string): string => getMeetingUrl(id, userName, attendeePW),
+                                                         (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
                     bbbMeetingCache.set(m.meetingID, m);
                     return m;
                 } else {
@@ -102,13 +102,13 @@ function mapJSONtoBBBMeetings(json: any): [BBBMeeting] {
 
 function mapJSONtoBBBMeeting(o: any): BBBMeeting {
     return new BBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
-        o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
-        o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
-        o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-            o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0]),
-        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-            o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
+                          o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
+                          o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+                          o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
+                          (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                      o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0]),
+                          (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                      o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
 export class BBBMeeting {
@@ -121,9 +121,9 @@ export class BBBMeeting {
     moderatorUrl: (userName: string) => string;
 
     constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-        attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
+                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
         this.meetingID = meetingID;
-        this.meetingName = meetingName
+        this.meetingName = meetingName;
         this.attendeePW = attendeePW;
         this.moderatorPW = moderatorPW;
 
