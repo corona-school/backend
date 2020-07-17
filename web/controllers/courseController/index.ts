@@ -2325,6 +2325,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiGroup Courses
  *
  * @apiUse Authentication
+ * @apiUse Course
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join

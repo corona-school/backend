@@ -2,10 +2,14 @@ import { hashToken } from "./hashing";
 import { getLogger } from 'log4js';
 import axios from "axios";
 import { Parser } from "xml2js";
+import { Mutex } from "async-mutex";
 
 const parser = new Parser();
 const logger = getLogger();
 
+const cacheUpdateMutex = new Mutex();
+
+updateBBBMeetingCache();
 export const bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
 setInterval(() => {
     updateBBBMeetingCache();
@@ -22,7 +26,8 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
     const queryParams = encodeURI(`attendeePW=${attendeePW}&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`);
 
     if (!bbbMeetingCache.has(id)) {
-        return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
+        const release = await cacheUpdateMutex.acquire();
+        const meeting = axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
             .then(response => {
                 if (response.status === 200) {
                     const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
@@ -38,6 +43,9 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
                 logger.debug(error);
                 return Promise.reject("An error occured.");
             });
+
+        release();
+        return meeting;
     } else {
         return bbbMeetingCache.get(id);
     }
@@ -86,13 +94,15 @@ export async function getBBBMeetings(): Promise<[BBBMeeting]> {
         .then(jsonResponse => mapJSONtoBBBMeetings(jsonResponse))
         .catch(error => {
             logger.debug(error);
-            return Promise.reject("An error occured.");
+            return null;
         });
 }
 
 export async function updateBBBMeetingCache(): Promise<void> {
+    const release = await cacheUpdateMutex.acquire();
     bbbMeetingCache.clear();
-    return getBBBMeetings().then(meetings => meetings.forEach(meeting => bbbMeetingCache.set(meeting.meetingID, meeting)));
+    getBBBMeetings().then(meetings => meetings && meetings.forEach(meeting => bbbMeetingCache.set(meeting.meetingID, meeting)));
+    release();
 }
 
 function mapJSONtoBBBMeetings(json: any): [BBBMeeting] {
