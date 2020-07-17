@@ -1,7 +1,7 @@
 import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
 import { mailjetTemplates, sendTemplateMail } from "../index";
-import moment from "moment";
+import * as moment from "moment";
 import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
@@ -47,7 +47,7 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Student, 
 }
 
 export async function sendCourseUpcomingReminderParticipant(participant: Pupil, course: Course, firstLecture: Date) {
-    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
+    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
