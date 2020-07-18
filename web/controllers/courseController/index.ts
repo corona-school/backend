@@ -25,6 +25,7 @@ import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
+import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../../common/util/bbb';
 
 const logger = getLogger();
 
@@ -2274,14 +2275,14 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     const entityManager = getManager();
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
 
     if (course == undefined) {
         logger.warn("Tried to send group mail to invalid course");
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn("Tried to send group mail to invalid subcourse");
         return 404;
@@ -2311,4 +2312,164 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     return 204;
+}
+
+/**
+ * @api {GET} /course/:id/meeting/join JoinCourseMeeting
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Joins the BBB-Meeting for a given course
+ *
+ * This endpoint allows joining the BBB-Meeting of a course.
+ * If the user is the instructor of the course the Meeting gets created with this call.
+ * The other participants can only join after the instructor created the meeting with this endpoint
+ *
+ * @apiName JoinCourseMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse Course
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function joinCourseMeetingHandler(req: Request, res: Response) {
+    let status = 200;
+    let course: ApiCourse;
+    let meeting: BBBMeeting;
+    try {
+        if (req.params.id != undefined) {
+            let authenticatedStudent = false;
+            let authenticatedPupil = false;
+            if (res.locals.user instanceof Student) {
+                authenticatedStudent = true;
+            }
+            if (res.locals.user instanceof Pupil) {
+                authenticatedPupil = true;
+            }
+            try {
+
+                if (authenticatedPupil || authenticatedStudent) {
+
+                    if (authenticatedStudent) {
+                        let user: Student = res.locals.user;
+
+                        if (bbbMeetingCache.has(req.params.id)) {
+                            meeting = bbbMeetingCache.get(req.params.id);
+                            res.send({
+                                url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                            });
+                        } else {
+
+                            let obj = await getCourse(
+                                authenticatedStudent ? res.locals.user : undefined,
+                                authenticatedPupil ? res.locals.user : undefined,
+                                Number.parseInt(req.params.id, 10)
+                            );
+                            if (typeof obj == 'number') {
+                                status = obj;
+                            } else {
+                                course = obj;
+                                meeting = await createBBBMeeting(course.name, req.params.id);
+                                res.send({
+                                    url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                                });
+                            }
+                        }
+
+                    } else if (authenticatedPupil) {
+                        let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
+                        if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
+                            let user: Pupil = res.locals.user;
+                            meeting = bbbMeetingCache.get(req.params.id);
+                            res.send({
+                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
+                            });
+                        } else {
+                            status = 400;
+                            logger.error("BBB-Meeting has not startet yet");
+                        }
+                    }
+
+                } else {
+                    status = 403;
+                    logger.warn("An unauthorized user wanted to join a BBB-Meeting");
+                    logger.debug(res.locals.user);
+                }
+
+            } catch (e) {
+                logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
+                logger.debug(req, e);
+                status = 500;
+            }
+        } else {
+            status = 400;
+            logger.error("Expected id parameter on route");
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
+ * @api {GET} /course/:id/meeting getCourseMeeting
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get the BBB-Meeting for a given course
+ *
+ * This endpoint provides the BBB-Meeting of a course.
+ *
+ * @apiName GetCourseMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getCourseMeetingHandler(req: Request, res: Response) {
+    let status = 200;
+    let meeting: BBBMeeting;
+    try {
+        if (req.params.id != undefined) {
+            if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
+
+                meeting = bbbMeetingCache.get(req.params.id);
+
+                if (meeting) {
+                    res.json(meeting);
+                } else {
+                    status = 400;
+                    logger.error("No meeting was found for given id");
+                }
+
+            } else {
+                status = 403;
+                logger.warn("An unauthorized user requestes BBB-Meeting information");
+                logger.debug(res.locals.user);
+            }
+        } else {
+            status = 400;
+            logger.error("Expected id parameter on route");
+        }
+
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
 }

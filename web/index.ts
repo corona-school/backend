@@ -127,6 +127,10 @@ createConnection().then(() => {
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
+
+        coursesRouter.get("/:id/meeting", courseController.getCourseMeetingHandler);
+        coursesRouter.get("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+
         app.use("/api/course", coursesRouter);
     }
 
@@ -192,8 +196,8 @@ createConnection().then(() => {
         if (process.env.NODE_ENV == "dev") {
             setupDevDB().then(() => {
                 // Start listening
-                http.createServer(app).listen(5000, () =>
-                    logger.info("DEV server listening on port 5000")
+                http.createServer(app).listen(process.env.PORT || 5000, () =>
+                    logger.info("DEV server listening on port " + process.env.PORT || 5000)
                 );
             });
         } else {
