@@ -8,9 +8,8 @@ const parser = new Parser();
 const logger = getLogger();
 
 const cacheUpdateMutex = new Mutex();
-
-updateBBBMeetingCache();
 export const bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
+updateBBBMeetingCache();
 setInterval(() => {
     updateBBBMeetingCache();
 }, 840000);
@@ -27,25 +26,19 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
 
     if (!bbbMeetingCache.has(id)) {
         const release = await cacheUpdateMutex.acquire();
-        const meeting = axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
-            .then(response => {
-                if (response.status === 200) {
-                    const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
-                                                         (userName: string): string => getMeetingUrl(id, userName, attendeePW),
-                                                         (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
-                    bbbMeetingCache.set(m.meetingID, m);
-                    return m;
-                } else {
-                    Promise.reject("Status code: " + response.status);
-                }
-            })
-            .catch(error => {
-                logger.debug(error);
-                return Promise.reject("An error occured.");
-            });
+        const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        if (response.status === 200) {
+            const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
+                                                 (userName: string): string => getMeetingUrl(id, userName, attendeePW),
+                                                 (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
+            bbbMeetingCache.set(m.meetingID, m);
 
-        release();
-        return meeting;
+            release();
+            return m;
+        } else {
+            release();
+            throw new Error("Status code: " + response.status);
+        }
     } else {
         return bbbMeetingCache.get(id);
     }
@@ -86,28 +79,40 @@ export async function endBBBMeeting(id: string, moderatorPW: string): Promise<bo
         });
 }
 
-export async function getBBBMeetings(): Promise<[BBBMeeting]> {
+export async function getBBBMeetings(): Promise<BBBMeeting[]> {
     const callName = "getMeetings";
 
-    return axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`)
-        .then(response => parser.parseStringPromise(response.data))
-        .then(jsonResponse => mapJSONtoBBBMeetings(jsonResponse))
-        .catch(error => {
-            logger.debug(error);
-            return null;
-        });
+
+    try {
+        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        const jsonResponse = await parser.parseStringPromise(response.data);
+
+
+        return mapJSONtoBBBMeetings(jsonResponse);
+    }
+    catch (error) {
+        logger.debug(error);
+        return null;
+    }
 }
 
 export async function updateBBBMeetingCache(): Promise<void> {
     const release = await cacheUpdateMutex.acquire();
+
     bbbMeetingCache.clear();
-    getBBBMeetings().then(meetings => meetings && meetings.forEach(meeting => bbbMeetingCache.set(meeting.meetingID, meeting)));
+
+    const meetings = await getBBBMeetings();
+    meetings?.forEach(meeting => bbbMeetingCache.set(meeting.meetingID, meeting));
+
     release();
 }
 
-function mapJSONtoBBBMeetings(json: any): [BBBMeeting] {
-    return json && json.response && json.response.meetings && json.response.meetings.length > 0 && json.response.meetings[0] &&
-        json.response.meetings[0].meeting && json.meeting.length > 0 && json.meeting.map(o => mapJSONtoBBBMeeting(o));
+function mapJSONtoBBBMeetings(json: any): BBBMeeting[] {
+    if (json && json.response && json.response.meetings && json.response.meetings.length > 0 && json.response.meetings[0] &&
+        json.response.meetings[0].meeting && json.response.meetings[0].meeting.length > 0) {
+        return json.response.meetings[0].meeting.map(o => mapJSONtoBBBMeeting(o));
+    }
+    return [];
 }
 
 function mapJSONtoBBBMeeting(o: any): BBBMeeting {
