@@ -125,6 +125,7 @@ createConnection().then(() => {
         coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
 
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
+        coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
