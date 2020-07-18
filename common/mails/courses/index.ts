@@ -58,7 +58,8 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil, 
 
 export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
     const mail = mailjetTemplates.COURSEINSTRUCTORGROUPMAIL({
-        participantFirstname: participant.firstname,
+        participantFirstName: participant.firstname,
+        instructorFirstName: instructor.firstname,
         courseName: course.name,
         messageTitle: messageTitle,
         messageBody: messageBody,
