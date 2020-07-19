@@ -3,7 +3,7 @@ import { getLogger, Logger } from "log4js";
 import mailjet from "../../../common/mails/mailjet";
 import { Match } from "../../../common/entity/Match";
 import { sendMatchFollowUpStudent, sendMatchFollowUpPupil } from "../../../common/mails/match-follow-up";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 
 const logger = getLogger();
 

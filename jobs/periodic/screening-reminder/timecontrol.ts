@@ -1,6 +1,6 @@
 import * as Holidays from "date-holidays";
 import { getLogger } from "log4js";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 
 const logger = getLogger();
 

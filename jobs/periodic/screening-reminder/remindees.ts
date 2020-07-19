@@ -2,7 +2,7 @@ import { EntityManager, Not, IsNull, Between } from "typeorm";
 import { Student } from "../../../common/entity/Student";
 
 import { MAX_REMINDER_COUNT, REMINDER_INTERVALS } from "./constants";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 
 
 // ------------

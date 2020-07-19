@@ -1,7 +1,7 @@
 import { EntityManager } from "typeorm";
 import { Course, CourseState } from "../../../common/entity/Course";
 import { Subcourse } from "../../../common/entity/Subcourse";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { Lecture } from "../../../common/entity/Lecture";
 import { sendCourseUpcomingReminderInstructor, sendCourseUpcomingReminderParticipant } from "../../../common/mails/courses";
