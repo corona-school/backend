@@ -2366,6 +2366,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             });
                         } else {
 
+                            // todo this should get its own method and not use a method from some other route
                             let obj = await getCourse(
                                 authenticatedStudent ? res.locals.user : undefined,
                                 authenticatedPupil ? res.locals.user : undefined,
