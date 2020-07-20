@@ -381,6 +381,8 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|undefined} outline the new outline
  * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
+ * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
+ * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
@@ -397,7 +399,7 @@ export async function updateCourse(req: Request, res: Response) {
         if (!course)
             return res.status(404).send("Course not found");
 
-        course.updateCourse(update);
+        await course.updateCourse(update);
         await getManager().save(course);
 
         return res.json({ course });

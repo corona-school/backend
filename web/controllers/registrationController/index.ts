@@ -69,11 +69,16 @@ export async function postTutorHandler(req: Request, res: Response) {
             if (req.body.isOfficial) {
                 if (typeof req.body.university !== 'string' ||
                 typeof req.body.module !== 'string' ||
-                typeof req.body.hours !== 'number') {
+                typeof req.body.hours !== 'number' ||
+                typeof req.body.state !== 'string') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
                 }
             }
+
+
+            if (req.body.redirectTo !== undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
 
             if (status < 300) {
                 // try registering
@@ -158,6 +163,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     }
 
     if (apiTutor.isOfficial) {
+
         if (apiTutor.university.length == 0 || apiTutor.university.length > 100) {
             logger.warn("apiTutor.university outside of length restrictions");
             return 400;
@@ -166,6 +172,63 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         if (apiTutor.hours == 0 || apiTutor.hours > 1000) {
             logger.warn("apiTutor.hours outside of size restrictions");
             return 400;
+        }
+
+        switch (apiTutor.state) {
+            case "bw":
+                tutor.state = State.BW;
+                break;
+            case "by":
+                tutor.state = State.BY;
+                break;
+            case "be":
+                tutor.state = State.BE;
+                break;
+            case "bb":
+                tutor.state = State.BB;
+                break;
+            case "hb":
+                tutor.state = State.HB;
+                break;
+            case "hh":
+                tutor.state = State.HH;
+                break;
+            case "he":
+                tutor.state = State.HE;
+                break;
+            case "mv":
+                tutor.state = State.MV;
+                break;
+            case "ni":
+                tutor.state = State.NI;
+                break;
+            case "nw":
+                tutor.state = State.NW;
+                break;
+            case "rp":
+                tutor.state = State.RP;
+                break;
+            case "sl":
+                tutor.state = State.SL;
+                break;
+            case "sn":
+                tutor.state = State.SN;
+                break;
+            case "st":
+                tutor.state = State.ST;
+                break;
+            case "sh":
+                tutor.state = State.SH;
+                break;
+            case "th":
+                tutor.state = State.TH;
+                break;
+            case "other":
+                tutor.state = State.OTHER;
+                break;
+            default:
+                logger.error("Invalid value for Tutor registration state: " + apiTutor.state);
+                return 400;
         }
 
         switch (apiTutor.module) {
@@ -195,7 +258,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     try {
         await entityManager.save(Student, tutor);
-        await sendVerificationMail(tutor);
+        await sendVerificationMail(tutor, apiTutor.redirectTo);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -255,6 +318,9 @@ export async function postTuteeHandler(req: Request, res: Response) {
                     logger.error("Tutee registration with isTutee missing subjects.");
                 }
             }
+
+            if (req.body.redirectTo !== undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
 
             if (status < 300) {
                 // try registering
@@ -427,7 +493,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
     try {
         await entityManager.save(Pupil, tutee);
-        await sendVerificationMail(tutee);
+        await sendVerificationMail(tutee, apiTutee.redirectTo);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {

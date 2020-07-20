@@ -12,6 +12,7 @@ import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePers
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
 import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
+import { State } from "../../../common/entity/State";
 
 const logger = getLogger();
 
@@ -732,7 +733,8 @@ export async function postUserRoleInstructorHandler(req: Request, res: Response)
     let status = 204;
     if (res.locals.user instanceof Student
         && req.params.id != undefined
-        && typeof req.body.isOfficial == 'boolean') {
+        && typeof req.body.isOfficial == 'boolean'
+        && typeof req.body.msg == 'string') {
 
         if (req.body.isOfficial) {
             if (typeof req.body.university !== 'string'
@@ -784,6 +786,68 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
             return 400;
         }
 
+        if (apiInstructor.msg.length > 3000) {
+            logger.warn("apiInstructor.msg outside of length restrictions");
+            return 400;
+        }
+
+        switch (apiInstructor.state) {
+            case "bw":
+                student.state = State.BW;
+                break;
+            case "by":
+                student.state = State.BY;
+                break;
+            case "be":
+                student.state = State.BE;
+                break;
+            case "bb":
+                student.state = State.BB;
+                break;
+            case "hb":
+                student.state = State.HB;
+                break;
+            case "hh":
+                student.state = State.HH;
+                break;
+            case "he":
+                student.state = State.HE;
+                break;
+            case "mv":
+                student.state = State.MV;
+                break;
+            case "ni":
+                student.state = State.NI;
+                break;
+            case "nw":
+                student.state = State.NW;
+                break;
+            case "rp":
+                student.state = State.RP;
+                break;
+            case "sl":
+                student.state = State.SL;
+                break;
+            case "sn":
+                student.state = State.SN;
+                break;
+            case "st":
+                student.state = State.ST;
+                break;
+            case "sh":
+                student.state = State.SH;
+                break;
+            case "th":
+                student.state = State.TH;
+                break;
+            case "other":
+                student.state = State.OTHER;
+                break;
+            default:
+                logger.error("Invalid value for Instructor role change state: " + apiInstructor.state);
+                return 400;
+        }
+
         switch (apiInstructor.module) {
             case "internship":
                 student.module = TeacherModule.INTERNSHIP;
@@ -799,6 +863,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
                 return 400;
         }
 
+        student.msg = apiInstructor.msg;
         student.university = apiInstructor.university;
         student.moduleHours = apiInstructor.hours;
     }
