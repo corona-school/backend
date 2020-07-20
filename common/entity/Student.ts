@@ -46,11 +46,6 @@ export class Student extends Person {
     @Column({
         nullable: true
     })
-    msg: string;
-
-    @Column({
-        nullable: true
-    })
     phone: string;
 
     @Column({
@@ -104,8 +99,13 @@ export class Student extends Person {
     @OneToMany(type => Lecture, lecture => lecture.instructor)
     lectures: Lecture[];
 
+    @Column({
+        nullable: true
+    })
+    msg: string;
+
     /*
-     * Teacher data
+     * Intern data
      */
     @Column({
         type: 'enum',

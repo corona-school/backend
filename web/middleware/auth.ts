@@ -20,10 +20,16 @@ export function authCheckFactory(optional = false) {
 
             // Try to find student and continue request
             const student = await entityManager.findOne(Student, {
-                where: {
-                    authToken: hashToken(token),
-                    active: true
-                },
+                where: [
+                    {
+                        authToken: hashToken(token),
+                        active: true
+                    },
+                    {
+                        authToken: token,
+                        active: true
+                    }
+                ],
                 relations: ['courses']
             });
 
@@ -38,8 +44,16 @@ export function authCheckFactory(optional = false) {
 
             // Try to find pupil and continue request
             const pupil = await entityManager.findOne(Pupil, {
-                authToken: hashToken(token),
-                active: true
+                where: [
+                    {
+                        authToken: hashToken(token),
+                        active: true
+                    },
+                    {
+                        authToken: token,
+                        active: true
+                    }
+                ]
             });
             if (pupil instanceof Pupil) {
                 pupil.authTokenUsed = true;

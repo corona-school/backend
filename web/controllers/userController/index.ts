@@ -1,8 +1,8 @@
 import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
-import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject, ApiSubjectStudent } from "./format";
-import { ScreeningStatus, Student } from "../../../common/entity/Student";
+import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject, ApiSubjectStudent, ApiUserRoleInstructor } from "./format";
+import { ScreeningStatus, Student, TeacherModule } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
 import { Match } from "../../../common/entity/Match";
@@ -11,6 +11,8 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
+import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
+import { State } from "../../../common/entity/State";
 
 const logger = getLogger();
 
@@ -359,6 +361,8 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
     if (person instanceof Student) {
         apiResponse.type = "student";
+        apiResponse.isTutor = person.isStudent;
+        apiResponse.isInstructor = person.isInstructor;
         apiResponse.screeningStatus = await person.screeningStatus();
         apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
@@ -718,6 +722,8 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
+ * @apiUse UserRoleInstructor
+ *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
  * @apiUse StatusUnauthorized
@@ -726,22 +732,34 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
 export async function postUserRoleInstructorHandler(req: Request, res: Response) {
     let status = 204;
     if (res.locals.user instanceof Student
-        && req.params.id != undefined) {
-        try {
-            status = await postUserRoleInstructor(req.params.id, res.locals.user);
-        } catch (e) {
-            logger.error("Error while updating user role: " + e.message);
-            logger.debug(e);
-            status = 500;
+        && req.params.id != undefined
+        && typeof req.body.isOfficial == 'boolean'
+        && typeof req.body.msg == 'string') {
+
+        if (req.body.isOfficial) {
+            if (typeof req.body.university !== 'string'
+            || typeof req.body.module !== 'string'
+            || typeof req.body.hours !== 'number') {
+                status = 400;
+                logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
+            }
+        }
+
+        if (status < 300) {
+            status = await postUserRoleInstructor(req.params.id, res.locals.user, req.body);
+        } else {
+            logger.error("Malformed parameters in optional fields for Instructor role change");
+            status = 400;
         }
     } else {
+        logger.error("Malfored required parameters for Instructor role change");
         status = 400;
     }
 
     res.status(status).end();
 }
 
-async function postUserRoleInstructor(wixId: string, student: Student): Promise<number> {
+async function postUserRoleInstructor(wixId: string, student: Student, apiInstructor: ApiUserRoleInstructor): Promise<number> {
     if (wixId != student.wix_id) {
         logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
         return 403;
@@ -755,11 +773,107 @@ async function postUserRoleInstructor(wixId: string, student: Student): Promise<
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
+    student.isInstructor = true;
+
+    if (apiInstructor.isOfficial) {
+        if (apiInstructor.university.length == 0 || apiInstructor.university.length > 100) {
+            logger.warn("apiInstructor.university outside of length restrictions");
+            return 400;
+        }
+
+        if (apiInstructor.hours == 0 || apiInstructor.hours > 1000) {
+            logger.warn("apiInstructor.hours outside of size restrictions");
+            return 400;
+        }
+
+        if (apiInstructor.msg.length > 3000) {
+            logger.warn("apiInstructor.msg outside of length restrictions");
+            return 400;
+        }
+
+        switch (apiInstructor.state) {
+            case "bw":
+                student.state = State.BW;
+                break;
+            case "by":
+                student.state = State.BY;
+                break;
+            case "be":
+                student.state = State.BE;
+                break;
+            case "bb":
+                student.state = State.BB;
+                break;
+            case "hb":
+                student.state = State.HB;
+                break;
+            case "hh":
+                student.state = State.HH;
+                break;
+            case "he":
+                student.state = State.HE;
+                break;
+            case "mv":
+                student.state = State.MV;
+                break;
+            case "ni":
+                student.state = State.NI;
+                break;
+            case "nw":
+                student.state = State.NW;
+                break;
+            case "rp":
+                student.state = State.RP;
+                break;
+            case "sl":
+                student.state = State.SL;
+                break;
+            case "sn":
+                student.state = State.SN;
+                break;
+            case "st":
+                student.state = State.ST;
+                break;
+            case "sh":
+                student.state = State.SH;
+                break;
+            case "th":
+                student.state = State.TH;
+                break;
+            case "other":
+                student.state = State.OTHER;
+                break;
+            default:
+                logger.error("Invalid value for Instructor role change state: " + apiInstructor.state);
+                return 400;
+        }
+
+        switch (apiInstructor.module) {
+            case "internship":
+                student.module = TeacherModule.INTERNSHIP;
+                break;
+            case "seminar":
+                student.module = TeacherModule.SEMINAR;
+                break;
+            case "other":
+                student.module = TeacherModule.OTHER;
+                break;
+            default:
+                logger.warn("Tutor registration has invalid string for teacher module " + apiInstructor.module);
+                return 400;
+        }
+
+        student.msg = apiInstructor.msg;
+        student.university = apiInstructor.university;
+        student.moduleHours = apiInstructor.hours;
+    }
+
     try {
-        student.isInstructor = true;
-        // TODO: instructor screening?
+
         // TODO: transaction log
         await entityManager.save(Student, student);
+        // Invite to instructor screening
+        await sendFirstScreeningInvitationToInstructor(entityManager, student);
     } catch (e) {
         logger.error("Unable to update student status: " + e.message);
         return 500;
