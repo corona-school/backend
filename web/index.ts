@@ -111,9 +111,11 @@ createConnection().then(() => {
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
+        //public routes
+        coursesRouter.get("/:id", courseController.getCourseHandler);
+        //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
-        coursesRouter.get("/:id", courseController.getCourseHandler);
         coursesRouter.put("/:id", courseController.putCourseHandler);
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
 
