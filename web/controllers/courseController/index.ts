@@ -26,7 +26,6 @@ import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
 import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../../common/util/bbb';
-import { isJoinableCourse } from './utils';
 
 const logger = getLogger();
 
@@ -50,7 +49,6 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} states <em>(optional, Default: <code>allowed</code>) Comma seperated list of possible states of the course. Requires the <code>instructor</code> parameter to be set.
  * @apiParam (Query Parameter) {string} instructor <em>(optional)</em> Id of an instructor. Return only courses owned by this instructor. This parameter requires authentication as the specified instructor.
  * @apiParam (Query Parameter) {string} participant <em>(optional)</em> Id of a participant. Return only courses this participant has joined. This parameter requires authentication as the specified participant.
- * @apiParam (Query Parameter) {boolean} onlyJoinableCourses <em>(optional)</em> Default is true. If true, it will return only those courses that are still joinable (i.e. courses with outstanding lectures and late join allowed if course has started but not yet finished)
  *
  * @apiUse Courses
  * @apiUse Course
@@ -94,10 +92,6 @@ export async function getCoursesHandler(req: Request, res: Response) {
         if (typeof req.query.participant == 'string') {
             participantId = req.query.participant;
         }
-        let onlyJoinableCourses = true;
-        if (typeof req.query.onlyJoinableCourses == 'string') {
-            onlyJoinableCourses = req.query.onlyJoinableCourses === 'true';
-        }
 
         try {
             let obj = await getCourses(
@@ -106,8 +100,7 @@ export async function getCoursesHandler(req: Request, res: Response) {
                 fields,
                 states,
                 instructorId,
-                participantId,
-                onlyJoinableCourses
+                participantId
             );
             if (typeof obj == 'number') {
                 status = obj;
@@ -131,8 +124,7 @@ async function getCourses(student: Student | undefined,
                           pupil: Pupil | undefined, fields: Array<string>,
                           states: Array<string>,
                           instructorId: string | undefined,
-                          participantId: string | undefined,
-                          onlyJoinableCourses: boolean): Promise<Array<ApiCourse> | number> {
+                          participantId: string | undefined): Promise<Array<ApiCourse> | number> {
     const entityManager = getManager();
 
     let authenticatedStudent = false;
@@ -361,11 +353,6 @@ async function getCourses(student: Student | undefined,
         logger.error("Can't fetch courses: " + e.message);
         logger.debug(e);
         return 500;
-    }
-
-    //filter out onlyJoinableCourses, if requested
-    if (onlyJoinableCourses) {
-        apiCourses = apiCourses.filter(isJoinableCourse);
     }
 
     return apiCourses;
