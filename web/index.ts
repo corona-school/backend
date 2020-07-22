@@ -112,6 +112,7 @@ createConnection().then(() => {
     function configureCourseAPI() {
         const coursesRouter = express.Router();
         //public routes
+        coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
         //private routes
         coursesRouter.use(authCheckFactory());
