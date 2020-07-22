@@ -938,7 +938,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
     subcourse.maxGrade = apiSubcourse.maxGrade;
     subcourse.maxParticipants = apiSubcourse.maxParticipants;
     subcourse.published = apiSubcourse.published;
-    subcourse.cancelled = apiSubcourse.joinAfterStart;
+    subcourse.joinAfterStart = apiSubcourse.joinAfterStart;
     subcourse.cancelled = false;
 
     try {
