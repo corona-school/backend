@@ -2004,7 +2004,7 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
     }
 
     try {
-        await entityManager.delete(Lecture, lecture);
+        await entityManager.remove(Lecture, lecture);
         // todo add transactionlog
         logger.info("Successfully deleted lecture");
 
