@@ -1,4 +1,5 @@
 import { ApiCourse, ApiLecture, ApiSubcourse } from "./format";
+import * as moment from "moment-timezone"
 
 
 function getLecturesSorted(apiSubcourse: ApiSubcourse) {
@@ -11,7 +12,7 @@ function subcourseStarted(apiSubcourse: ApiSubcourse) {
         throw new Error(`Cannot compute whether subcourse has started or not for a subcourse with no lectures (subcourse ID ${apiSubcourse.id})`);
     }
     const sortedLectures = getLecturesSorted(apiSubcourse);
-    return sortedLectures[0].start <= Date.now();
+    return moment.unix(sortedLectures[0].start).isSameOrBefore(Date.now());
 }
 
 function subcourseFinished(apiSubcourse: ApiSubcourse) {
@@ -20,7 +21,7 @@ function subcourseFinished(apiSubcourse: ApiSubcourse) {
     }
     const sortedLectures = getLecturesSorted(apiSubcourse);
     const lastLecture = sortedLectures[sortedLectures.length - 1];
-    return lastLecture.start + lastLecture.duration * 60 <= Date.now();
+    return moment.unix(lastLecture.start).add(lastLecture.duration, "minutes").isSameOrBefore(Date.now());
 }
 
 function isJoinableSubcourse(apiSubcourse: ApiSubcourse) {
