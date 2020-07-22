@@ -315,7 +315,7 @@ async function getCourses(student: Student | undefined,
                                             firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
                                             lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
                                         },
-                                        start: courses[i].subcourses[k].lectures[l].start.getTime(),
+                                        start: courses[i].subcourses[k].lectures[l].start.getTime() / 1000,
                                         duration: courses[i].subcourses[k].lectures[l].duration
                                     };
                                     if (authenticatedStudent && student.wix_id == instructorId) {
@@ -551,7 +551,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                         firstname: course.subcourses[i].lectures[j].instructor.firstname,
                         lastname: course.subcourses[i].lectures[j].instructor.lastname
                     },
-                    start: course.subcourses[i].lectures[j].start.getTime(),
+                    start: course.subcourses[i].lectures[j].start.getTime() / 1000,
                     duration: course.subcourses[i].lectures[j].duration
                 };
                 if (authorizedStudent) {
