@@ -1,5 +1,5 @@
 import { ApiCourse, ApiLecture, ApiSubcourse } from "./format";
-import * as moment from "moment-timezone"
+import * as moment from "moment-timezone";
 
 
 function getLecturesSorted(apiSubcourse: ApiSubcourse) {
