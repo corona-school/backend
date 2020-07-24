@@ -7,7 +7,8 @@ import {createTestingConnection, closeTestingConnection} from "../utils/typeorm"
 import TestStudents from "../utils/TestStudents";
 import {verifyToken} from "../../web/controllers/tokenController";
 
-describe.only("Screening Invitation", function() {
+// Skipped for CI because there is no DB setup. To run locally remove 'skip' from 'describe.skip'
+describe.skip("Screening Invitation", function() {
     this.timeout(10000);
 
     // The connection that should be used for tests
