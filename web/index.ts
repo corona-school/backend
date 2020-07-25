@@ -58,8 +58,6 @@ createConnection().then(() => {
         if (process.env.NODE_ENV == "dev") {
             origins = [
                 "http://localhost:3000",
-                "http://192.168.178.60:3000",
-                "http://geros-macbook-pro-2.local:3000",
                 "https://web-user-app-live.herokuapp.com",
                 "https://web-user-app-dev.herokuapp.com"
             ];
