@@ -41,7 +41,7 @@ createConnection().then(() => {
     // Express setup
     app.use(bodyParser.json());
     app.use(favicon('./assets/favicon.ico'));
-    
+
     addCorsMiddleware();
     addSecurityMiddleware();
 
@@ -203,14 +203,14 @@ createConnection().then(() => {
     function configureParticipationCertificateAPI() {
         const participationCertificateRouter = express.Router();
         participationCertificateRouter.get("/:certificateId", (req, res, next) => {
-            if(!req.subdomains.includes("verify")){
+            if (!req.subdomains.includes("verify")){
                 return next();
             }
-            certificateController.confirmCertificateHandler(req, res)
+            certificateController.confirmCertificateHandler(req, res);
         });
         participationCertificateRouter.use((req, res, next) =>{
-            if(req.subdomains.includes("verify")){
-                return res.status(404).end()
+            if (req.subdomains.includes("verify")){
+                return res.status(404).end();
             }
             next();
         });

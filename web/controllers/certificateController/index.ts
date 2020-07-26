@@ -155,7 +155,7 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.startDate = params.endDate;
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
-    } while(await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }))
+    } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
 
     await entityManager.save(ParticipationCertificate, pc);
     const verificationLink = "http://verify." + host + "/" + pc.uuid;
@@ -208,7 +208,7 @@ async function viewParticipationCertificate(certificateId) {
     let certificate = null;
     let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
     try {
-        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() },  { relations: ["student", "pupil"] });
+        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
         html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));

@@ -5,7 +5,7 @@ import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
-import { ParticipationCertificate } from "../common/entity/ParticipationCertificate"
+import { ParticipationCertificate } from "../common/entity/ParticipationCertificate";
 import { randomBytes } from "crypto";
 import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
@@ -138,7 +138,6 @@ export async function setupDevDB() {
     }
 
     let pc = new ParticipationCertificate();
-    //pc.uuid = "000000001-0000-0000-0701-1b4c4c526384";
     pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     pc.pupil = pupils[0];
     pc.student = students[0];
@@ -152,9 +151,9 @@ export async function setupDevDB() {
     pc.hoursPerWeek = 8;
 
     await entityManager.save(ParticipationCertificate, pc);
-    console.log("Inserted a certificate with ID: " + pc.uuid)
-    // course tags
+    console.log("Inserted a certificate with ID: " + pc.uuid);
 
+    // course tags
     const tags: CourseTag[] = [];
 
     let t = new CourseTag();
