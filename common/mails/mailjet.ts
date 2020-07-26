@@ -10,7 +10,8 @@ async function sendMail(
     receiverAddress: string,
     templateID: number,
     variables: object,
-    sandbox: boolean = false
+    sandbox: boolean = false,
+    replyToAddress?: string
 ) {
     //determine whether we have sandbox mode or not...
     let sandboxMode = sandbox;
@@ -27,29 +28,43 @@ async function sendMail(
     );
 
     //send actual email
-    const request = mailjet.post("send", { version: "v3.1" }).request({
+    let requestOptions = {
         SandboxMode: sandboxMode,
         Messages: [
             {
                 From: {
-                    Email: senderAddress,
+                    Email: senderAddress
                 },
                 To: [
                     {
-                        Email: receiverAddress,
-                    },
+                        Email: receiverAddress
+                    }
                 ],
                 TemplateID: templateID,
                 TemplateLanguage: true,
                 Variables: variables,
-                Subject: subject,
-            },
-        ],
-    });
+                Subject: subject
+            }
+        ]
+    };
+
+    if (replyToAddress != undefined) {
+        requestOptions.Messages[0]['ReplyTo'] = {
+            Email: replyToAddress
+        };
+    }
+
+    const request = mailjet.post("send", { version: "v3.1" }).request(requestOptions);
 
     return await request;
 }
 
+const ErrorCodes = {
+    RATE_LIMIT: 429,
+    NOT_AUTHORIZED: 401
+};
+
 export default {
     send: sendMail,
+    ErrorCodes: ErrorCodes
 };

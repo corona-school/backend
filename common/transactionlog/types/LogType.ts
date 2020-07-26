@@ -11,7 +11,9 @@ enum LogType {
     UPDATED_BY_SCREENER = "updatedByScreener",
     UPDATE_STUDENT_DESCRIPTION = "updateStudentDescription",
     CREATED_COURSE = "createdCourse",
-    CERTIFICATE_REQUEST = "certificateRequest"
+    CERTIFICATE_REQUEST = "certificateRequest",
+    CANCELLED_COURSE = "cancelledCourse",
+    CANCELLED_SUBCOURSE = "cancelledSubcourse"
 }
 
 export default LogType;

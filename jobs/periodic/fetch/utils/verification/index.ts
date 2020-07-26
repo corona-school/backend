@@ -17,12 +17,15 @@ export function generateToken(): string {
     return token;
 }
 
-export async function sendVerificationMail(person: Person) {
-    const verificationUrl = "https://dashboard.corona-school.de/verify?token=";
+export async function sendVerificationMail(person: Person, redirectTo?: string) {
+    const verificationUrl = `https://dashboard.corona-school.de/verify?token=${person.verification}&redirectTo=${redirectTo ?? ""}`;
+
+    console.log("verificationURL", verificationUrl);
+
     try {
         const mail = mailjetTemplates.VERIFICATION({
-            confirmationURL: `${verificationUrl}${person.verification}`,
-            personFirstname: person.firstname,
+            confirmationURL: verificationUrl,
+            personFirstname: person.firstname
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {

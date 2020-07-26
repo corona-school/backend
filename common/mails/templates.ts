@@ -20,7 +20,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Verifizierung",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     LOGINTOKEN: (variables: {
@@ -33,7 +33,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Dein Account",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     PUPILMATCHMAILS: (variables: {
@@ -51,7 +51,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.anmeldung,
             title: "Corona School - Match",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTMATCHMAILS: (variables: {
@@ -70,7 +70,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.anmeldung,
             title: "Corona School - Match",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     PUPILNEXTSTEPS: (variables: { pupilFirstname: string }) => {
@@ -80,7 +80,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Nächste Schritte",
             disabled: true,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTNEXTSTEPS: (variables: {
@@ -93,7 +93,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Nächste Schritte",
             disabled: true,
-            variables: variables,
+            variables: variables
         };
     },
     PUPILMATCHDISSOLVED: (variables: {
@@ -106,7 +106,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Nächstes Mal",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTMATCHDISSOLVED: (variables: {
@@ -119,7 +119,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Nächstes Mal",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     OLDAUTHTOKEN: (variables: {
@@ -132,7 +132,7 @@ export const mailjet = {
             sender: DEFAULTSENDERS.noreply,
             title: "Corona School - Dein Account",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
     STUDENTFIRSTSCREENINGINVITATION: (variables: {
@@ -145,7 +145,162 @@ export const mailjet = {
             sender: DEFAULTSENDERS.screening,
             title: "Wir möchten dich kennenlernen!",
             disabled: false,
-            variables: variables,
+            variables: variables
         };
     },
+    STUDENTSCREENINGREMINDER: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'studentscreeningreminder',
+            id: 1391548,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    INSTRUCTORFIRSTSCREENINGINVITATION: (variables: {
+        instructorFirstName: string;
+        selectAppointmentURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "instructorfirstscreeninginvitation",
+            id: 1518623,
+            sender: DEFAULTSENDERS.screening,
+            title: "Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    COURSESCANCELLED: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coursecancelledparticipantnotification",
+            id: 1498806,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs wurde abgesagt!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    COURSESUPCOMINGREMINDERINSTRUCTOR: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseupcomingfirstlecturereminderinstructors",
+            id: 1498911,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs startet bald!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    COURSESUPCOMINGREMINDERPARTICIPANT: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseupcomingfirstlecturereminderparticipants",
+            id: 1498899,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Kurs startet bald!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PUPILMATCHFOLLOWUP: (variables: {
+        pupilFirstName: string;
+        studentFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilmatchfollowup",
+            id: 1513038,
+            sender: DEFAULTSENDERS.support,
+            title: "Wie läuft das gemeinsame Lernen?",
+            disabled: false,
+            variables: variables
+        };
+    },
+    STUDENTMATCHFOLLOWUP: (variables: {
+        studentFirstName: string;
+        pupilFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "studentmatchfollowup",
+            id: 1513030,
+            sender: DEFAULTSENDERS.support,
+            title: "Wie läuft das gemeinsame Lernen?",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PARTICIPANTCOURSEREGISTRATIONCONFIRMATION: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "participantcourseregistrationconfirmation",
+            id: 1513027,
+            sender: DEFAULTSENDERS.support,
+            title: "Du hast dich für einen Kurs angemeldet!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PUPILREQUESTFEEDBACK: (variables: {
+        pupilFirstName: string;
+        studentFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilrequestfeedback",
+            id: 1513025,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Feedback zur Corona School!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    STUDENTREQUESTFEEDBACK: (variables: {
+        studentFirstName: string;
+        pupilFirstName: string;
+    }) => {
+        return <TemplateMail>{
+            type: "studentrequestfeedback",
+            id: 1513023,
+            sender: DEFAULTSENDERS.support,
+            title: "Dein Feedback zur Corona School!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    COURSEINSTRUCTORGROUPMAIL: (variables: {
+        participantFirstName: string;
+        instructorFirstName: string;
+        courseName: string;
+        messageTitle: string;
+        messageBody: string;
+        instructorMail: string;
+    }) => {
+        return <TemplateMail>{
+            type: "courseinstructorgroupmail",
+            id: 1518580,
+            sender: DEFAULTSENDERS.support,
+            title: "Nachricht zu deinem Kurs",
+            disabled: false,
+            variables: variables
+        };
+    }
 };

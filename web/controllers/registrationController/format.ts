@@ -6,13 +6,16 @@
  * @apiSuccess (Tutor Object) {string} lastname Last name
  * @apiSuccess (Tutor Object) {string} email E-Mail
  * @apiSuccess (Tutor Object) {bool} isTutor True, if eligible for one-on-one matching
+ * @apiSuccess (Tutor Object) {bool} isInstructor True, if eligible for course management
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutor Object) {bool} isOfficial True, if user is looking for something official
+ * @apiSuccess (Tutor Object) {string} state <em>required if</em> <code>isOfficial = true</code>: State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (Tutor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
- * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar"</code>
+ * @apiSuccess (Tutor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
  * @apiSuccess (Tutor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
  * @apiSuccess (Tutor Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutor Object) {string} msg Additional information
+ * @apiSuccess (Tutor Object) {string|undefined} redirectTo the page the user sees after registration
  *
  */
 export interface ApiAddTutor {
@@ -20,13 +23,16 @@ export interface ApiAddTutor {
     lastname: string,
     email: string
     isTutor: boolean,
+    isInstructor: boolean,
     subjects?: ApiAddTutorSubject[],
     isOfficial: boolean,
+    state?: string,
     university?: string,
     module?: string,
     hours?: number,
     newsletter: boolean,
-    msg: string
+    msg: string,
+    redirectTo?: string;
 }
 
 /**
@@ -43,7 +49,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutee Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutee Object) {string} msg Additional information
- *
+ * @apiSuccess (Tutee Object) {string|undefined} redirectTo the page the user sees after registration
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -55,7 +61,8 @@ export interface ApiAddTutee {
     isTutee: boolean,
     subjects?: ApiAddTuteeSubject[],
     newsletter: boolean,
-    msg: string
+    msg: string,
+    redirectTo?: string;
 }
 
 /**

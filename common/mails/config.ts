@@ -4,17 +4,18 @@ const mailjetSmtp = {
     secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.MAILJET_USER,
-        pass: process.env.MAILJET_PASSWORD,
+        pass: process.env.MAILJET_PASSWORD
     },
     tls: {
-        ciphers: "SSLv3",
-    },
+        ciphers: "SSLv3"
+    }
 };
 
 const DEFAULTSENDERS = {
     anmeldung: '"Corona School Team" <anmeldung@corona-school.de>',
     noreply: '"Corona School Team" <noreply@corona-school.de>',
     screening: '"Corona School Team" <screening@corona-school.de>',
+    support: '"Corona School Team" <support@corona-school.de>'
 };
 
 export { mailjetSmtp, DEFAULTSENDERS };

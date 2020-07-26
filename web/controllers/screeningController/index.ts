@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager } from "typeorm";
+import { getManager, Like, createQueryBuilder, getConnection } from "typeorm";
 import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentToScreen } from "../../../common/dto/StudentToScreen";
@@ -7,13 +7,16 @@ import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
 import {
     Student,
     getStudentByEmail,
-    getAllStudents
+    getAllStudents,
+    ScreeningStatus
 } from "../../../common/entity/Student";
 import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
+import { Course } from "../../../common/entity/Course";
+import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 
 const logger = getLogger();
 
@@ -299,5 +302,239 @@ export async function updateScreenerByMailHandler(
             logger.warn(err.message);
         }
         next();
+    }
+}
+
+/**
+ * @api {GET} /screening/courses getCourses
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Retrieves the first 20 courses that match the specified filters.
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getCourses
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/courses
+ *
+ * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
+ * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
+ */
+export async function getCourses(req: Request, res: Response) {
+    try {
+        const { courseState, search } = req.query;
+
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
+            return res.status(400).send("invalid value for parameter 'state'");
+
+        if (typeof search !== "undefined" && typeof search !== "string")
+            return res.status(400).send("invalid value for parameter 'search', must be string.");
+
+        const where = (courseState
+            ? (search
+                ? [{ courseState, name: Like(`%${search}%`) }, /* OR */ { courseState, description: Like(`%${search}%`) }]
+                : { courseState })
+            : (search
+                ? [{ name: Like(`%${search}%`) }, /* OR */ { description: Like(`%${search}%`) }]
+                : {})
+        );
+
+        const courses = await getManager().find(Course, {
+            where,
+            take: 20
+        });
+
+        return res.json({ courses });
+    } catch (error) {
+        logger.warn("/screening/courses failed with", error.message);
+        return res.status(500).send("internal server error");
+    }
+}
+
+/**
+ * @api {POST} /screening/course/:courseID/update updateCourse
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Updates a course
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName updateCourse
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/course/id/update
+ *
+ * @apiParam (JSON Body) {string|undefined} courseState the course state ("allowed", "denied", "cancelled") to update
+ * @apiParam (JSON Body) {string|undefined} name the new name
+ * @apiParam (JSON Body) {string|undefined} description the new description
+ * @apiParam (JSON Body) {string|undefined} outline the new outline
+ * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
+ * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
+ * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
+ * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
+ */
+export async function updateCourse(req: Request, res: Response) {
+    try {
+        const update = new ApiCourseUpdate(req.body);
+        const { id } = req.params;
+
+        if (typeof id !== "string" || !Number.isInteger(+id))
+            return res.status(400).send("Invalid course id!");
+        if (!update.isValid())
+            return res.status(400).send("Invalid course update!");
+
+        const course = await getManager().findOne(Course, { where: { id: +id } });
+
+        if (!course)
+            return res.status(404).send("Course not found");
+
+        await course.updateCourse(update);
+        await getManager().save(course);
+
+        return res.json({ course });
+    } catch (error) {
+        logger.warn("/screening/course/../update failed with", error);
+        return res.status(500).send("internal server error");
+    }
+}
+/**
+ * @api {GET} /screening/instructors getInstructors
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Retrieves the first 20 courses that match the specified filters.
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getInstructors
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/instructors
+ *
+ * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
+ * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email, supporting Postgres ILIKE syntax
+ */
+export async function getInstructors(req: Request, res: Response) {
+    try {
+        let { screeningStatus, search } = req.query;
+
+        if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
+            return res.status(400).send("invalid value for parameter 'screeningStatus'");
+
+        if (typeof search !== "string")
+            return res.status(400).send("invalid value for parameter 'search'");
+
+        search = `%${search}%`; // fuzzy search
+
+        let instructors: {}[];
+
+        if (screeningStatus === ScreeningStatus.Accepted) {
+            instructors = await getManager()
+                .createQueryBuilder(Student,"student")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
+                .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .take(20)
+                .getMany();
+        } else if (screeningStatus === ScreeningStatus.Rejected) {
+            instructors = await getManager()
+                .createQueryBuilder(Student, "student")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
+                .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .take(20)
+                .getMany();
+        } else if (screeningStatus === ScreeningStatus.Unscreened) {
+            instructors = await getManager()
+                .createQueryBuilder(Student,"student")
+                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
+                .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
+                .take(20)
+                .getMany();
+        }
+
+
+        return res.json({ instructors });
+    } catch (error) {
+        logger.warn("/screening/instructors failed with", error.message);
+        return res.status(500).send("internal server error");
+    }
+}
+/**
+ * @api {POST} /screening/instructor/:instructorID/update updateInstructor
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Updates an instructor
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName updateCourse
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/instructor/id/update
+ *
+ * @apiParam (JSON Body) {boolean} isStudent the instructors can also be students at the same time
+ * @apiParam (JSON Body) {boolean} verified wether the instructor gets verified
+ * @apiParam (JSON Body) {string|undefined} phone sets the instructors phone number
+ * @apiParam (JSON Body) {Date|undefined} birthday sets the instructors birthday
+ * @apiParam (JSON Body) {string|undefined} commentScreener adds a comment to the screening
+ * @apiParam (JSON Body) {string|undefined} knowscsfrom
+ * @apiParam (JSON Body) {string|undefined} screenerEmail
+ * @apiParam (JSON Body) {string|undefined} subjects
+ * @apiParam (JSON Body) {string|undefined} feedback
+ */
+export async function updateInstructor(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const { isStudent } = req.body;
+        const screeningResult = new ApiScreeningResult(req.body);
+
+        if (typeof id !== "string" || !Number.isInteger(+id))
+            return res.status(400).send("Invalid instructor id!");
+
+        if (!screeningResult.isValid() || !(isStudent === true || isStudent === false))
+            return res.status(400).send("Invalid instructor update!");
+
+        const instructor = await getManager().findOne(Student, { where: { id: +id, isInstructor: true } });
+
+        if (!instructor)
+            return res.status(404).send("Instructor not found");
+
+        await instructor.addInstructorScreeningResult(screeningResult);
+
+        instructor.isStudent = isStudent;
+
+        //also store a tutor screening in the database
+        if (await instructor.screeningStatus() === ScreeningStatus.Unscreened) { //do not overwrite existing tutor screenings
+            screeningResult.commentScreener = "Screened as part of an Instructor Screening";
+            screeningResult.verified = isStudent;
+
+            await instructor.addScreeningResult(screeningResult);
+        }
+
+        await getManager().save(Student, instructor);
+
+        return res.json({ instructor });
+    } catch (error) {
+        logger.warn("/screening/course/../update failed with", error);
+        return res.status(500).send("internal server error");
     }
 }

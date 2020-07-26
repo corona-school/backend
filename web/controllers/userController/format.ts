@@ -7,12 +7,16 @@
  * @apiSuccess (User Object) {string} lastname Last name
  * @apiSuccess (User Object) {string} email E-Mail address (unique)
  * @apiSuccess (User Object) {string} type Either <code>"pupil"</code> or <code>"student"</code>
+ * @apiSuccess (User Object) {string} isTutor <i>Only available for students:</i> User registered as Tutor for 1:1 matches
+ * @apiSuccess (User Object) {string} isInstructor <i>Only available for students:</i> User registered as Instructor for courses
  * @apiSuccess (User Object) {boolean} active An inactive user is not considered for new matches.
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
  * @apiSuccess (User Object) {string} screeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
+ * @apiSuccess (User Object) {string} instructorScreeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened for group courses with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
+ * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -40,6 +44,16 @@
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
  *                  "date": 1590834509
  *              }
+ *          ],
+ *          "dissolvedMatches": [
+ *              {
+ *                  "firstname": "John",
+ *                  "lastname": "Appleseed",
+ *                  "email": "john.appleseed@example.com",
+ *                  "uuid": "1a215b2f-ef17-44f8-a38d-6bcec820a8cf",
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-1a215b2f-ef17-44f8-a38d-6bcec820a8cf",
+ *                  "date": 1590834509
+ *              }
  *          ]
  *      }
  * @apiSuccessExample {json} Student
@@ -50,8 +64,11 @@
  *          "lastname": "Doe",
  *          "email": "jane.doe@example.com",
  *          "type": "student",
+ *          "isTutor": true,
+ *          "isInstructor": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
+ *          "instructorScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
  *          "subjects": [
  *              {
@@ -74,6 +91,21 @@
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-af7392d74-8d7f-9083-0973-fda9b8e0f9f",
  *                  "date": 1590834509
  *              }
+ *          ],
+ *          "dissolvedMatches": [
+ *              {
+ *                  "firstname": "Jane",
+ *                  "lastname": "Appleseed",
+ *                  "email": "jane.appleseed@example.com",
+ *                  "uuid": "24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
+ *                  "grade": 9,
+ *                  "subjects": [
+ *                      "Mathematik",
+ *                      "Englisch"
+ *                  ],
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
+ *                  "date": 1590834509
+ *              }
  *          ]
  *      }
  */
@@ -83,13 +115,16 @@ export class ApiGetUser {
     lastname: string;
     email: string;
     type: "student" | "pupil";
+    isTutor?: boolean;
+    isInstructor?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
     screeningStatus?: string;
+    instructorScreeningStatus?: string;
     subjects: ApiSubject[];
     matches: ApiMatch[];
-    dissolved_matches: ApiMatch[];
+    dissolvedMatches: ApiMatch[];
 }
 
 /**
@@ -152,6 +187,47 @@ export class ApiPutUser {
  */
 
 /**
+ * @apiDefine UserRoleTutorSubjects
+ * @apiVersion 1.0.1
+ *
+ * @apiParam (User Subjects) {Subject[]} root Array of subjects
+ *
+ * @apiParamExample {json} Example
+ *      [
+ *          {
+ *              "name": "Chemie",
+ *              "minGrade": 1,
+ *              "maxGrade": 4
+ *          },
+ *          {
+ *              "name": "Physik",
+ *              "minGrade": 10,
+ *              "maxGrade": 13
+ *          }
+ *      ]
+ */
+
+/**
+ * @apiDefine UserRoleInstructor
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Instructor Object) {bool} isOfficial True, if user is looking for something official
+ * @apiSuccess (Instructor Object) {string} state <em>required if</em> <code>isOfficial = true</code>: State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>)
+ * @apiSuccess (Instructor Object) {string} university <em>required if</em> <code>isOfficial = true</code>: University
+ * @apiSuccess (Instructor Object) {string} module <em>required if</em> <code>isOfficial = true</code>: Module, one of <code>"internship", "seminar", "other"</code>
+ * @apiSuccess (Instructor Object) {int} hours <em>required if</em> <code>isOfficial = true</code>: Hours needed > 0
+ * @apiSuccess (Instructor Object) {string} msg Additional information
+ */
+export class ApiUserRoleInstructor {
+    isOfficial: boolean;
+    state?: string;
+    university?: string;
+    module?: string;
+    hours?: number;
+    msg: string;
+}
+
+/**
  * @apiDefine Subject
  * @apiVersion 1.0.1
  *
@@ -163,6 +239,20 @@ export class ApiSubject {
     name: string;
     minGrade?: number;
     maxGrade?: number;
+}
+
+/**
+ * @apiDefine SubjectStudent
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subject Object) {string} name Name
+ * @apiSuccess (Subject Object) {number} minGrade
+ * @apiSuccess (Subject Object) {number} maxGrade
+ */
+export class ApiSubjectStudent {
+    name: string;
+    minGrade: number;
+    maxGrade: number;
 }
 
 /**
@@ -214,7 +304,7 @@ export function checkSubject(s: string): boolean {
             "spanisch",
             "italienisch",
             "russisch",
-            "niederländisch",
+            "niederländisch"
         ].indexOf(s.toLowerCase()) >= 0
     );
 }

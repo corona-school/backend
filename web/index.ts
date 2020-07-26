@@ -18,6 +18,7 @@ import { createConnection } from "typeorm";
 import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
+import * as tls from "tls";
 
 // Logger setup
 try {
@@ -93,6 +94,8 @@ createConnection().then(() => {
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
+        userApiRouter.post("/:id/role/instructor", userController.postUserRoleInstructorHandler);
+        userApiRouter.post("/:id/role/tutor", userController.postUserRoleTutorHandler);
         app.use("/api/user", userApiRouter);
     }
 
@@ -112,9 +115,12 @@ createConnection().then(() => {
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
+        //public routes
+        coursesRouter.use(authCheckFactory(true));
+        coursesRouter.get("/:id", courseController.getCourseHandler);
+        //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
-        coursesRouter.get("/:id", courseController.getCourseHandler);
         coursesRouter.put("/:id", courseController.putCourseHandler);
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
 
@@ -122,9 +128,17 @@ createConnection().then(() => {
         coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
         coursesRouter.delete("/:id/subcourse/:subid", courseController.deleteSubcourseHandler);
 
+        coursesRouter.post("/:id/subcourse/:subid/participants/:userid", courseController.joinSubcourseHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
+
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
+        coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
+
+        coursesRouter.get("/:id/meeting", courseController.getCourseMeetingHandler);
+        coursesRouter.get("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+
         app.use("/api/course", coursesRouter);
     }
 
@@ -166,6 +180,23 @@ createConnection().then(() => {
             "/screener/:email",
             screeningController.updateScreenerByMailHandler
         );
+        screenerApiRouter.get(
+            "/courses",
+            screeningController.getCourses
+        );
+        screenerApiRouter.post(
+            "/course/:id/update",
+            screeningController.updateCourse
+        );
+        screenerApiRouter.get(
+            "/instructors",
+            screeningController.getInstructors
+        );
+        screenerApiRouter.post(
+            "/instructor/:id/update",
+            screeningController.updateInstructor
+        );
+
         app.use("/api/screening", screenerApiRouter);
     }
 
@@ -186,38 +217,103 @@ createConnection().then(() => {
         app.use(participationCertificateRouter);
     }
 
+    function deployHTTPServer() {
+        const staticFolder = process.env.STATIC_HTTP_FILE_PATH;
+
+        const staticHTTPServer = express();
+
+        staticHTTPServer.use( (req, res, next) => {
+            const c = req.path.split("/").slice(0,3).join("/");
+            if (!staticFolder || c !== '/.well-known/acme-challenge') { //if no static folder, redirect as usual (but have no acme challenge support)
+                res.redirect(301, 'https://' + req.headers.host + req.url);
+            }
+            else {
+                next(); //otherwise static files
+            }
+        });
+
+        if (staticFolder) {
+            staticHTTPServer.use(express.static(staticFolder, {dotfiles: 'allow'}));
+        }
+        else {
+            logger.warn("Have no STATIC_HTTP_FILE_PATH set, thus no ACME challenge support. Only redirecting all HTTP to HTTPS...");
+        }
+
+        http.createServer(staticHTTPServer).listen(80);
+    }
+
+    function deployHTTPSServer() {
+        // Let's encrypt
+        const apiSSLFiles = { //API-Domain (necessary)
+            key: fs.readFileSync(
+                "/etc/letsencrypt/live/api.corona-school.de/privkey.pem"
+            ),
+            cert: fs.readFileSync(
+                "/etc/letsencrypt/live/api.corona-school.de/cert.pem"
+            ),
+            ca: fs.readFileSync(
+                "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
+            )
+        };
+
+
+        let verifyContext: tls.SecureContext;
+
+        try {
+            const verifySSLFiles = { //Certificate Verification Domain (recommended for a more beautiful certificate URL)
+                key: fs.readFileSync(
+                    "/etc/letsencrypt/live/verify.corona-school.de/privkey.pem"
+                ),
+                cert: fs.readFileSync(
+                    "/etc/letsencrypt/live/verify.corona-school.de/cert.pem"
+                ),
+                ca: fs.readFileSync(
+                    "/etc/letsencrypt/live/verify.corona-school.de/chain.pem"
+                )
+            };
+
+            //also have a second domain used for certificate verification on this server
+            verifyContext = tls.createSecureContext(verifySSLFiles);
+        }
+        catch (e) {
+            logger.warn("The SSL files for Certificate Verfication/Validation domain are missing: ", e);
+        }
+
+        const options = {
+            ...apiSSLFiles,
+            SNICallback: function (domain, cb) {
+                if (verifyContext && (domain === 'verify.corona-school.de' || domain === 'www.verify.corona-school.de')) {
+                    cb(null, verifyContext);
+                }
+                else {
+                    cb();
+                }
+            }
+        };
+
+        // Start listening
+        https.createServer(options, app).listen(443);
+    }
+
     function deployServer() {
         if (process.env.NODE_ENV == "dev") {
             setupDevDB().then(() => {
                 // Start listening
-                http.createServer(app).listen(5000, () =>
-                    logger.info("DEV server listening on port 5000")
+                http.createServer(app).listen(process.env.PORT || 5000, () =>
+                    logger.info("DEV server listening on port " + (process.env.PORT || 5000))
                 );
             });
         } else {
-            // Let's encrypt
-            const options = {
-                key: fs.readFileSync(
-                    "/etc/letsencrypt/live/api.corona-school.de/privkey.pem"
-                ),
-                cert: fs.readFileSync(
-                    "/etc/letsencrypt/live/api.corona-school.de/cert.pem"
-                ),
-                ca: fs.readFileSync(
-                    "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
-                )
-            };
+            // ---> HTTP
+            deployHTTPServer();
 
-            // Start listening
-            https.createServer(options, app).listen(443);
-
-            // Redirect on port 80 server
-            http.createServer(function(req, res) {
-                res.writeHead(301, {
-                    Location: "https://" + req.headers["host"] + req.url
-                });
-                res.end();
-            }).listen(80);
+            // ---> HTTPS
+            try {
+                deployHTTPSServer();
+            }
+            catch (e) {
+                logger.error("Cannot setup HTTPS Server, because an error occurred (most likely some certificates are missing). Please add the certificates and restart the server!", e);
+            }
         }
     }
 });
