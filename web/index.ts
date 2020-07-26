@@ -262,7 +262,7 @@ createConnection().then(() => {
         const options = {
             ...apiSSLFiles,
             SNICallback: function (domain, cb) {
-                if (verifyContext && domain === 'verify.corona-school.de') {
+                if (verifyContext && (domain === 'verify.corona-school.de' || domain === 'www.verify.corona-school.de')) {
                     cb(null, verifyContext);
                 }
                 else {
