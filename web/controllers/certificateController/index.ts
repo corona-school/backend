@@ -161,8 +161,8 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.medium = params.medium;
-    pc.endDate = params.endDate;
-    pc.startDate = params.endDate;
+    pc.startDate = match.createdAt;
+    pc.endDate = moment(params.endDate, "X").toDate();
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
@@ -215,7 +215,7 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
 
 async function viewParticipationCertificate(certificateId) {
     const entityManager = getManager();
-    let certificate = null;
+    let certificate: ParticipationCertificate = null;
     let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
     try {
         certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
@@ -227,9 +227,9 @@ async function viewParticipationCertificate(certificateId) {
         const screeningDate = (await certificate.student?.screening)?.createdAt;
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
-        html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));
-        html = html.replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"));
-        html = html.replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"));
+        html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate).format("D.M.YYYY"));
+        html = html.replace("%SCHUELERSTART%", moment(certificate.startDate).format("D.M.YYYY"));
+        html = html.replace("%SCHUELERENDE%", moment(certificate.endDate).format("D.M.YYYY"));
         html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
         html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
         html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));

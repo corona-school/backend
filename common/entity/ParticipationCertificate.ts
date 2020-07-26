@@ -25,13 +25,22 @@ export class ParticipationCertificate {
     @Column()
     categories: string;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @Column({
+        default: () => "now()",
+        nullable: false
+    })
     certificateDate: Date;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @Column({
+        default: () => "now()",
+        nullable: false
+    })
     startDate: Date;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @Column({
+        default: () => "now()",
+        nullable: false
+    })
     endDate: Date;
 
     @Column()
