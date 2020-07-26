@@ -17,6 +17,7 @@ import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
 import { setupDevDB } from "./dev";
+import * as favicon from "express-favicon";
 import * as tls from "tls";
 
 // Logger setup
@@ -39,10 +40,12 @@ createConnection().then(() => {
 
     // Express setup
     app.use(bodyParser.json());
+    app.use(favicon('./assets/favicon.ico'));
 
     addCorsMiddleware();
     addSecurityMiddleware();
 
+    configureParticipationCertificateAPI();
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
@@ -195,6 +198,23 @@ createConnection().then(() => {
         );
 
         app.use("/api/screening", screenerApiRouter);
+    }
+
+    function configureParticipationCertificateAPI() {
+        const participationCertificateRouter = express.Router();
+        participationCertificateRouter.get("/:certificateId", (req, res, next) => {
+            if (!req.subdomains.includes("verify")){
+                return next();
+            }
+            certificateController.confirmCertificateHandler(req, res);
+        });
+        participationCertificateRouter.use((req, res, next) =>{
+            if (req.subdomains.includes("verify")){
+                return res.status(404).end();
+            }
+            next();
+        });
+        app.use(participationCertificateRouter);
     }
 
     function deployHTTPServer() {

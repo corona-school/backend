@@ -49,6 +49,7 @@
     "escape-html": "^1.0.3",
     "esm": "^3.2.25",
     "express": "^4.15.2",
+    "express-favicon": "^2.0.1",
     "helmet": "^3.22.0",
     "hpp": "^0.2.3",
     "html-pdf": "^2.2.0",
