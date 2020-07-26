@@ -13,6 +13,7 @@ import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 import { randomBytes } from "crypto";
+import {parseDomain, ParseResultType} from "parse-domain";
 
 const logger = getLogger();
 
@@ -64,7 +65,16 @@ export async function certificateHandler(req: Request, res: Response) {
                 medium: req.query.medium as string || "Taschenrechner mit Programmierfunktion",
                 categories: req.query.categories as string || "Liste\nListe2\nListe3"
             };
-            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params, req.headers['host']);
+
+            //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
+            const parseResult = parseDomain(req.hostname);
+            let baseDomain = "corona-school.de"; //default
+            if (parseResult.type === ParseResultType.Listed) {
+                const {domain, topLevelDomains} = parseResult;
+                baseDomain = [domain, ...topLevelDomains].join(".");
+            }
+
+            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params, baseDomain);
             if (certificate.status == 200) {
                 res.writeHead(200, {
                     'Content-Type': 'application/pdf',
