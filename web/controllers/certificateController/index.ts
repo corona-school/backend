@@ -40,7 +40,7 @@ const logger = getLogger();
  * @apiGroup Certificate
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/00000000-0000-0002-0001-1b4c4c526364/00000000-0000-0001-0001-1b4c4c526364
+ * curl -k -i -X GET https://api.corona-school.de/api/certificate/00000000-0000-0002-0001-1b4c4c526364/00000000-0000-0001-0001-1b4c4c526364
  *
  * @apiUse Authentication
  *
@@ -109,7 +109,7 @@ export async function certificateHandler(req: Request, res: Response) {
  * @apiGroup Certificate
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://dashboard.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384
+ * curl -k -i -X GET https://api.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest

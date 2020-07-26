@@ -90,7 +90,7 @@ describe("Screening Invitation", () => {
         expect(spy).toBeCalledTimes(2);
 
         const dashboardURLUUIDMatchRegex = new RegExp(
-            /^https:\/\/dashboard.corona-school.de\/login\?token\=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+            /^https:\/\/my.corona-school.de\/login\?token\=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
         );
         expect(spy).toHaveBeenNthCalledWith(
             1,

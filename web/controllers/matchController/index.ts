@@ -27,7 +27,7 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>"-H "Content-Type: application/json"  https://dashboard.corona-school.de/api/user/<ID>/matches/<UUID>
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>"-H "Content-Type: application/json"  https://api.corona-school.de/api/user/<ID>/matches/<UUID>
  *
  * @apiParam (URL Parameter) {string} id User Id
  * @apiParam (URL Parameter) {string} uuid UUID of the Match
