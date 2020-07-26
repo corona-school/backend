@@ -210,7 +210,7 @@ createConnection().then(() => {
         });
         participationCertificateRouter.use((req, res, next) =>{
             if (req.subdomains.includes("verify")){
-                return res.status(404).end();
+                return res.redirect(`${req.protocol}://${req.hostname.split(".").slice(req.subdomains.length).join(".")}`);
             }
             next();
         });
