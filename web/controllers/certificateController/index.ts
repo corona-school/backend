@@ -214,6 +214,7 @@ async function viewParticipationCertificate(certificateId) {
             return "<h1>Zertifikatslink nicht valide.</h1>";
         }
 
+        const screeningDate = (await certificate.student?.screening)?.createdAt;
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
         html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));
@@ -224,6 +225,7 @@ async function viewParticipationCertificate(certificateId) {
         html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
         html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
         html = html.replace("%MEDIUM%", escape(certificate.medium));
+        html = html.replace("%SCREENINGDATUM%", escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"));
     }
     catch (e) {
         logger.error(e);
