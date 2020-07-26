@@ -209,6 +209,11 @@ async function viewParticipationCertificate(certificateId) {
     let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
     try {
         certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+
+        if (!certificate) {
+            return "<h1>Zertifikatslink nicht valide.</h1>";
+        }
+
         html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
         html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
         html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate, "X").format("D.M.YYYY"));
@@ -222,7 +227,7 @@ async function viewParticipationCertificate(certificateId) {
     }
     catch (e) {
         logger.error(e);
-        return "<h1>Zertifikatslink nicht valide.</h1>";
+        return "<h1>Ein Fehler ist aufgetreten... 😔</h1>";
     }
 
     return html;
