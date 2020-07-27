@@ -161,7 +161,7 @@ async function getCourses(student: Student | undefined,
     }
 
     if (participantId != undefined && authenticatedPupil && pupil.wix_id != participantId) {
-        logger.warn(`User (ID: ${student.wix_id}) tried to filter by participant id ${participantId}`);
+        logger.warn(`User (ID: ${pupil.wix_id}) tried to filter by participant id ${participantId}`);
         logger.debug(pupil, fields, participantId);
         return 403;
     }

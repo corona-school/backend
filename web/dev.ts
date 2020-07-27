@@ -1,10 +1,12 @@
 import { getConnection, getManager } from "typeorm";
-import { createHash } from "crypto";
+import { createHash, Certificate } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
 import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
+import { ParticipationCertificate } from "../common/entity/ParticipationCertificate";
+import { randomBytes } from "crypto";
 import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
 import { Course, CourseState } from "../common/entity/Course";
@@ -135,8 +137,23 @@ export async function setupDevDB() {
         console.log("Inserted Dev Match " + i);
     }
 
-    // course tags
+    let pc = new ParticipationCertificate();
+    pc.uuid = randomBytes(5).toString('hex').toUpperCase();
+    pc.pupil = pupils[0];
+    pc.student = students[0];
+    pc.subjects = "Englisch, Deutsch";
+    pc.certificateDate = new Date();
+    pc.startDate = new Date();
+    pc.endDate = new Date();
+    pc.categories = "xyzipd";
+    pc.hoursTotal = 8;
+    pc.medium = "PC";
+    pc.hoursPerWeek = 8;
 
+    await entityManager.save(ParticipationCertificate, pc);
+    console.log("Inserted a certificate with ID: " + pc.uuid);
+
+    // course tags
     const tags: CourseTag[] = [];
 
     let t = new CourseTag();

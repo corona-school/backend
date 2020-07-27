@@ -9,7 +9,7 @@ import {verifyToken} from "../../web/controllers/tokenController";
 
 // Skipped for CI because there is no DB setup. To run locally remove 'skip' from 'describe.skip'
 describe.skip("Screening Invitation", function() {
-    this.timeout(10000);
+    this.timeout(15000);
 
     // The connection that should be used for tests
     let connection: Connection;
@@ -71,7 +71,7 @@ describe.skip("Screening Invitation", function() {
                     assert.strictEqual(mailjetStub.callCount, 2);
 
                     const dashboardURLUUIDMatchRegex = new RegExp(
-                        /^https:\/\/dashboard.corona-school.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
+                        /^https:\/\/my.corona-school.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
                     );
 
                     assert.strictEqual(mailjetStub.getCall(0).args[0], "Corona School - Dein Account");

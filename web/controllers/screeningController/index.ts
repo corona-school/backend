@@ -34,7 +34,7 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/
  */
 export async function getStudents(
     req: Request,
@@ -70,7 +70,7 @@ export async function getStudents(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/<EMAIL>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
  */
@@ -119,7 +119,7 @@ export async function getStudentByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
  *
@@ -176,7 +176,7 @@ export async function updateStudentWithScreeningResultHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/<EMAIL>/<true|false>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/<EMAIL>/<true|false>
  *
  * @apiParam (URL Parameter) {string} email Screener's Email Address
  * @apiParam (URL Parameter) {string} includepassword Flag to include or exclude password hash from transmitted object
@@ -220,7 +220,7 @@ export async function getScreenerByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/"
  *
  */
 export async function addScreenerHandler(
@@ -264,7 +264,7 @@ export async function addScreenerHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/<EMAIL>
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Screener's Email Address
  */
