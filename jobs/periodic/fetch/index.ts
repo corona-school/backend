@@ -195,7 +195,7 @@ async function initModule() {
 
         if (x.length == 0) {
             lastFetch = new Date();
-            logger.warn(                "Can't get date of last fetch. Using now as last fetch date."            );
+            logger.warn("Can't get date of last fetch. Using now as last fetch date.");
         } else {
             lastFetch = new Date(x[0].latest_date);
             logger.info("Restored old last fetch date: ", lastFetch);
