@@ -3,15 +3,11 @@ import {
     CreateDateColumn,
     Entity,
     JoinColumn,
-    JoinTable,
-    ManyToMany,
     ManyToOne,
-    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
 import { Student } from "./Student";
-import { Pupil } from './Pupil';
 import { Subcourse } from './Subcourse';
 
 @Entity()

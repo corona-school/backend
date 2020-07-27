@@ -1,16 +1,14 @@
 import { getConnection, getManager } from "typeorm";
-import { createHash, Certificate } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
 import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
 import { ParticipationCertificate } from "../common/entity/ParticipationCertificate";
-import { randomBytes } from "crypto";
 import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
-import { Course, CourseState } from "../common/entity/Course";
-import { CourseCategory } from "../common/entity/Course";
+import { Course, CourseCategory, CourseState } from "../common/entity/Course";
 import { Subcourse } from "../common/entity/Subcourse";
 import { Lecture } from "../common/entity/Lecture";
 import { InstructorScreening } from "../common/entity/InstructorScreening";
@@ -488,7 +486,6 @@ export async function setupDevDB() {
         await entityManager.save(Screening, screenings[i]);
         console.log("Inserted Dev Screening " + i);
     }
-
 
 
     // instructor screening

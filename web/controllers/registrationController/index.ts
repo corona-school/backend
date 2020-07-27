@@ -41,21 +41,21 @@ export async function postTutorHandler(req: Request, res: Response) {
     try {
 
         if (typeof req.body.firstname == 'string' &&
-           typeof req.body.lastname == 'string' &&
-           typeof req.body.email == 'string' &&
-           typeof req.body.isTutor == 'boolean' &&
-           typeof req.body.isOfficial == 'boolean' &&
-           typeof req.body.isInstructor == 'boolean' &&
-           typeof req.body.newsletter == 'boolean' &&
-           typeof req.body.msg == 'string') {
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.isTutor == 'boolean' &&
+            typeof req.body.isOfficial == 'boolean' &&
+            typeof req.body.isInstructor == 'boolean' &&
+            typeof req.body.newsletter == 'boolean' &&
+            typeof req.body.msg == 'string') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
-                        if (typeof elem.name !== 'string'
-                        || typeof elem.minGrade !== 'number'
-                        || typeof elem.maxGrade !== 'number') {
+                        if (typeof elem.name !== 'string' ||
+                            typeof elem.minGrade !== 'number' ||
+                            typeof elem.maxGrade !== 'number') {
                             status = 400;
                             logger.error("Tutor registration with isTutor has malformed subjects.");
                         }
@@ -68,9 +68,9 @@ export async function postTutorHandler(req: Request, res: Response) {
 
             if (req.body.isOfficial) {
                 if (typeof req.body.university !== 'string' ||
-                typeof req.body.module !== 'string' ||
-                typeof req.body.hours !== 'number' ||
-                typeof req.body.state !== 'string') {
+                    typeof req.body.module !== 'string' ||
+                    typeof req.body.hours !== 'number' ||
+                    typeof req.body.state !== 'string') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
                 }
@@ -295,14 +295,14 @@ export async function postTuteeHandler(req: Request, res: Response) {
     try {
 
         if (typeof req.body.firstname == 'string' &&
-           typeof req.body.lastname == 'string' &&
-           typeof req.body.email == 'string' &&
-           typeof req.body.grade == 'number' &&
-           typeof req.body.state == 'string' &&
-           typeof req.body.school == 'string' &&
-           typeof req.body.isTutee == 'boolean' &&
-           typeof req.body.newsletter == 'boolean' &&
-           typeof req.body.msg == 'string') {
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.grade == 'number' &&
+            typeof req.body.state == 'string' &&
+            typeof req.body.school == 'string' &&
+            typeof req.body.isTutee == 'boolean' &&
+            typeof req.body.newsletter == 'boolean' &&
+            typeof req.body.msg == 'string') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {

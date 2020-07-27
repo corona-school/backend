@@ -12,37 +12,29 @@ export function buildQueryParam(date: Date) {
 
 export async function httpsGet(url: string) {
     return new Promise<string>((resolve, reject) => {
-        https
-            .get(
-                url,
-                {
-                    rejectUnauthorized: true
-                },
-                (res) => {
-                    let body = "";
+        https.get(url, { rejectUnauthorized: true }, (res) => {
+            let body = "";
 
-                    res.on("data", (chunk) => {
-                        body += chunk;
-                    });
-                    res.on("end", () => {
-                        if (res.statusCode >= 200 && res.statusCode < 300) {
-                            resolve(body);
-                        } else {
-                            reject([res.statusMessage, res.statusCode, body]);
-                        }
-                    });
-                    res.on("error", (err) => {
-                        logger.warn("https connection error: ", err.message);
-                        logger.debug(err);
-                    });
-                }
-            )
-            .on("error", (e) => {
-                //due to async nature of https.get, we need to add a way for async error handling...
-                logger.warn("https connection error: ", e.message);
-                logger.debug(e);
-                reject(e);
+            res.on("data", (chunk) => {
+                body += chunk;
             });
+            res.on("end", () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve(body);
+                } else {
+                    reject([res.statusMessage, res.statusCode, body]);
+                }
+            });
+            res.on("error", (err) => {
+                logger.warn("https connection error: ", err.message);
+                logger.debug(err);
+            });
+        }).on("error", (e) => {
+            //due to async nature of https.get, we need to add a way for async error handling...
+            logger.warn("https connection error: ", e.message);
+            logger.debug(e);
+            reject(e);
+        });
     });
 }
 

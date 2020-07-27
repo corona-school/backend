@@ -1,9 +1,9 @@
-import { ApiCourse, ApiLecture, ApiSubcourse } from "./format";
+import { ApiCourse, ApiSubcourse } from "./format";
 import * as moment from "moment-timezone";
 
 
-function getLecturesSorted(apiSubcourse: ApiSubcourse) {
-    return apiSubcourse.lectures?.sort( (l1, l2) => l1.start - l2.start) ?? [];
+function getLecturesSorted(apiSubcourse: ApiSubcourse) {
+    return apiSubcourse.lectures?.sort((l1, l2) => l1.start - l2.start) ?? [];
 }
 
 /// Assumes that this subcourse has at least one lecture

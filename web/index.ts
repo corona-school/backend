@@ -15,7 +15,7 @@ import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
-import { screenerAuthCheck, authCheckFactory } from "./middleware/auth";
+import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
@@ -203,13 +203,13 @@ createConnection().then(() => {
     function configureParticipationCertificateAPI() {
         const participationCertificateRouter = express.Router();
         participationCertificateRouter.get("/:certificateId", (req, res, next) => {
-            if (!req.subdomains.includes("verify")){
+            if (!req.subdomains.includes("verify")) {
                 return next();
             }
             certificateController.confirmCertificateHandler(req, res);
         });
-        participationCertificateRouter.use((req, res, next) =>{
-            if (req.subdomains.includes("verify")){
+        participationCertificateRouter.use((req, res, next) => {
+            if (req.subdomains.includes("verify")) {
                 return res.redirect(`${req.protocol}://${req.hostname.split(".").slice(req.subdomains.length).join(".")}`);
             }
             next();
@@ -222,20 +222,18 @@ createConnection().then(() => {
 
         const staticHTTPServer = express();
 
-        staticHTTPServer.use( (req, res, next) => {
-            const c = req.path.split("/").slice(0,3).join("/");
+        staticHTTPServer.use((req, res, next) => {
+            const c = req.path.split("/").slice(0, 3).join("/");
             if (!staticFolder || c !== '/.well-known/acme-challenge') { //if no static folder, redirect as usual (but have no acme challenge support)
                 res.redirect(301, 'https://' + req.headers.host + req.url);
-            }
-            else {
+            } else {
                 next(); //otherwise static files
             }
         });
 
         if (staticFolder) {
-            staticHTTPServer.use(express.static(staticFolder, {dotfiles: 'allow'}));
-        }
-        else {
+            staticHTTPServer.use(express.static(staticFolder, { dotfiles: 'allow' }));
+        } else {
             logger.warn("Have no STATIC_HTTP_FILE_PATH set, thus no ACME challenge support. Only redirecting all HTTP to HTTPS...");
         }
 
@@ -245,15 +243,9 @@ createConnection().then(() => {
     function deployHTTPSServer() {
         // Let's encrypt
         const apiSSLFiles = { //API-Domain (necessary)
-            key: fs.readFileSync(
-                "/etc/letsencrypt/live/api.corona-school.de/privkey.pem"
-            ),
-            cert: fs.readFileSync(
-                "/etc/letsencrypt/live/api.corona-school.de/cert.pem"
-            ),
-            ca: fs.readFileSync(
-                "/etc/letsencrypt/live/api.corona-school.de/chain.pem"
-            )
+            key: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/privkey.pem"),
+            cert: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/cert.pem"),
+            ca: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/chain.pem")
         };
 
 
@@ -261,31 +253,23 @@ createConnection().then(() => {
 
         try {
             const verifySSLFiles = { //Certificate Verification Domain (recommended for a more beautiful certificate URL)
-                key: fs.readFileSync(
-                    "/etc/letsencrypt/live/verify.corona-school.de/privkey.pem"
-                ),
-                cert: fs.readFileSync(
-                    "/etc/letsencrypt/live/verify.corona-school.de/cert.pem"
-                ),
-                ca: fs.readFileSync(
-                    "/etc/letsencrypt/live/verify.corona-school.de/chain.pem"
-                )
+                key: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/privkey.pem"),
+                cert: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/cert.pem"),
+                ca: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/chain.pem")
             };
 
             //also have a second domain used for certificate verification on this server
             verifyContext = tls.createSecureContext(verifySSLFiles);
-        }
-        catch (e) {
+        } catch (e) {
             logger.warn("The SSL files for Certificate Verfication/Validation domain are missing: ", e);
         }
 
         const options = {
             ...apiSSLFiles,
-            SNICallback: function (domain, cb) {
+            SNICallback: function(domain, cb) {
                 if (verifyContext && (domain === 'verify.corona-school.de' || domain === 'www.verify.corona-school.de')) {
                     cb(null, verifyContext);
-                }
-                else {
+                } else {
                     cb();
                 }
             }
@@ -310,8 +294,7 @@ createConnection().then(() => {
             // ---> HTTPS
             try {
                 deployHTTPSServer();
-            }
-            catch (e) {
+            } catch (e) {
                 logger.error("Cannot setup HTTPS Server, because an error occurred (most likely some certificates are missing). Please add the certificates and restart the server!", e);
             }
         }

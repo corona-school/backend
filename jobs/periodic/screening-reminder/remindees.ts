@@ -1,4 +1,4 @@
-import { EntityManager, Not, IsNull, Between } from "typeorm";
+import { EntityManager } from "typeorm";
 import { Student } from "../../../common/entity/Student";
 
 import { MAX_REMINDER_COUNT, REMINDER_INTERVALS } from "./constants";
@@ -31,7 +31,8 @@ async function getAllStudentsWithPendingReminders(manager: EntityManager) {
         .select("s")
         .from(Student, "s")
         .leftJoinAndSelect("s.screening", "sc")
-        .where("s.active IS TRUE AND s.isStudent IS TRUE AND s.verification IS NULL AND sc IS NULL AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }) //active | is tutor in 1-on-1 tutoring | email verified | never screened | everything less than 0 is meant to be: do not sent any screening reminders
+        .where("s.active IS TRUE AND s.isStudent IS TRUE AND s.verification IS NULL AND sc IS NULL AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp",
+            { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }) //active | is tutor in 1-on-1 tutoring | email verified | never screened | everything less than 0 is meant to be: do not sent any screening reminders
         .getMany();
 }
 

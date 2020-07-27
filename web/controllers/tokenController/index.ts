@@ -10,7 +10,10 @@ import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
-import { sendFirstScreeningInvitationToTutor, sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
+import {
+    sendFirstScreeningInvitationToInstructor,
+    sendFirstScreeningInvitationToTutor
+} from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -86,11 +89,8 @@ export async function verifyToken(token: string): Promise<string | null> {
                     // Invite to tutor screening
                     await sendFirstScreeningInvitationToTutor(entityManager, student);
                 }
-            }
-            catch (mailerror) {
-                logger.error(
-                    `Can't send emails to student ${student.email} after verification due to mail error...`
-                );
+            } catch (mailerror) {
+                logger.error(`Can't send emails to student ${student.email} after verification due to mail error...`);
                 logger.debug(mailerror);
             }
 
@@ -114,9 +114,7 @@ export async function verifyToken(token: string): Promise<string | null> {
             pupil.authTokenSent = new Date();
             pupil.authTokenUsed = false;
 
-            logger.info(
-                "Generated and sending UUID " + uuid + " to " + pupil.email
-            );
+            logger.info("Generated and sending UUID " + uuid + " to " + pupil.email);
 
             await sendLoginTokenMail(pupil, uuid);
             await entityManager.save(pupil);
@@ -168,10 +166,10 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             const entityManager = getManager();
             const transactionLog = getTransactionLog();
 
-            let person: (Pupil|Student);
-            person = await entityManager.findOne(Student, {email: email});
+            let person: (Pupil | Student);
+            person = await entityManager.findOne(Student, { email: email });
             if (person == undefined) {
-                person = await entityManager.findOne(Pupil, {email: email});
+                person = await entityManager.findOne(Pupil, { email: email });
             }
 
             if (person !== undefined) {
