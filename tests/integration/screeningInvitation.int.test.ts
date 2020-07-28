@@ -9,7 +9,7 @@ import {verifyToken} from "../../web/controllers/tokenController";
 
 // Skipped for CI because there is no DB setup. To run locally remove 'skip' from 'describe.skip'
 describe("Screening Invitation", function() {
-    this.timeout(15000);
+    this.timeout(30000);
 
     // The connection that should be used for tests
     let connection: Connection;
