@@ -8,7 +8,7 @@ import TestStudents from "../utils/TestStudents";
 import {verifyToken} from "../../web/controllers/tokenController";
 
 // Skipped for CI because there is no DB setup. To run locally remove 'skip' from 'describe.skip'
-describe.skip("Screening Invitation", function() {
+describe("Screening Invitation", function() {
     this.timeout(15000);
 
     // The connection that should be used for tests
