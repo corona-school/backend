@@ -1,7 +1,16 @@
 import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
-import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject, ApiSubjectStudent, ApiUserRoleInstructor } from "./format";
+import {
+    ApiGetUser,
+    ApiMatch,
+    ApiPutUser,
+    ApiSubject,
+    ApiSubjectStudent,
+    ApiUserRoleInstructor,
+    checkName,
+    checkSubject
+} from "./format";
 import { ScreeningStatus, Student, TeacherModule } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
@@ -227,14 +236,14 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         break;
                     }
                 } else if (typeof elem.name == "string" &&
-                        typeof elem.minGrade == "number" &&
-                        typeof elem.maxGrade == "number" &&
-                        elem.minGrade >= 1 &&
-                        elem.minGrade <= 13 &&
-                        elem.minGrade <= elem.maxGrade &&
-                        elem.maxGrade >= 1 &&
-                        elem.maxGrade <= 13 &&
-                        checkSubject(elem.name)) {
+                    typeof elem.minGrade == "number" &&
+                    typeof elem.maxGrade == "number" &&
+                    elem.minGrade >= 1 &&
+                    elem.minGrade <= 13 &&
+                    elem.minGrade <= elem.maxGrade &&
+                    elem.maxGrade >= 1 &&
+                    elem.maxGrade <= 13 &&
+                    checkSubject(elem.name)) {
 
                     let subject = new ApiSubject();
                     subject.name = elem.name;
@@ -401,8 +410,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(dissolvedMatches[i].pupil.subjects)
             );
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
@@ -432,8 +440,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(matches[i].student.subjects)
             );
             apiMatch.uuid = matches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
@@ -447,8 +454,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(dissolvedMatches[i].student.subjects)
             );
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
@@ -482,9 +488,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     person.lastname = req.lastname.trim();
 
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
-        logger.warn(
-            "Invalid names: " + person.firstname + " / " + person.lastname
-        );
+        logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
     }
 
     let type: ObjectType<Person>;
@@ -601,8 +605,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " + person.wix_id + " tried to access data from id " + wix_id);
+        logger.warn("Person with id " + person.wix_id + " tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -731,15 +734,15 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
  */
 export async function postUserRoleInstructorHandler(req: Request, res: Response) {
     let status = 204;
-    if (res.locals.user instanceof Student
-        && req.params.id != undefined
-        && typeof req.body.isOfficial == 'boolean'
-        && typeof req.body.msg == 'string') {
+    if (res.locals.user instanceof Student &&
+        req.params.id != undefined &&
+        typeof req.body.isOfficial == 'boolean' &&
+        typeof req.body.msg == 'string') {
 
         if (req.body.isOfficial) {
-            if (typeof req.body.university !== 'string'
-            || typeof req.body.module !== 'string'
-            || typeof req.body.hours !== 'number') {
+            if (typeof req.body.university !== 'string' ||
+                typeof req.body.module !== 'string' ||
+                typeof req.body.hours !== 'number') {
                 status = 400;
                 logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
             }
@@ -915,15 +918,16 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
         && req.body instanceof Array) {
         let subjects: ApiSubjectStudent[] = [];
         for (let testSubject of req.body) {
-            if (typeof testSubject.name == "string"
-                && checkSubject(testSubject.name)
-                && typeof testSubject.minGrade == "number"
-                && Number.isInteger(testSubject.minGrade)
-                && typeof testSubject.maxGrade == "number"
-                && Number.isInteger(testSubject.maxGrade)
-                && testSubject.minGrade >= 1 && testSubject.minGrade <= 13
-                && testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13
-                && testSubject.minGrade <= testSubject.maxGrade) {
+            if (typeof testSubject.name == "string" &&
+                checkSubject(testSubject.name) &&
+                typeof testSubject.minGrade == "number" &&
+                Number.isInteger(testSubject.minGrade) &&
+                typeof testSubject.maxGrade == "number" &&
+                Number.isInteger(testSubject.maxGrade) &&
+                testSubject.minGrade >= 1 && testSubject.minGrade <= 13 &&
+                testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13 &&
+                testSubject.minGrade <= testSubject.maxGrade) {
+
                 let newSubject = new ApiSubjectStudent;
                 newSubject.name = testSubject.name;
                 newSubject.minGrade = testSubject.minGrade;

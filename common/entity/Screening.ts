@@ -1,13 +1,13 @@
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
-    OneToOne,
-    JoinColumn,
-    UpdateDateColumn,
     CreateDateColumn,
+    Entity,
+    getManager,
+    JoinColumn,
     ManyToOne,
-    getManager
+    OneToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { getScreenerByEmail, Screener } from "./Screener";
@@ -50,21 +50,9 @@ export class Screening {
     student: Student;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
-        this.success =
-            screeningResult.verified === undefined
-                ? this.success
-                : screeningResult.verified;
-        this.comment =
-            screeningResult.commentScreener === undefined
-                ? this.comment
-                : screeningResult.commentScreener;
-        this.knowsCoronaSchoolFrom =
-            screeningResult.knowscsfrom === undefined
-                ? this.knowsCoronaSchoolFrom
-                : screeningResult.knowscsfrom;
-        this.screener = await getScreenerByEmail(
-            getManager(),
-            screeningResult.screenerEmail
-        );
+        this.success = screeningResult.verified === undefined ? this.success : screeningResult.verified;
+        this.comment = screeningResult.commentScreener === undefined ? this.comment : screeningResult.commentScreener;
+        this.knowsCoronaSchoolFrom = screeningResult.knowscsfrom === undefined ? this.knowsCoronaSchoolFrom : screeningResult.knowscsfrom;
+        this.screener = await getScreenerByEmail(getManager(), screeningResult.screenerEmail);
     }
 }

@@ -1,4 +1,4 @@
-import { mailjetSmtp, DEFAULTSENDERS } from "./config";
+import { mailjetSmtp } from "./config";
 import * as mailjetAPI from "node-mailjet";
 import { getLogger } from "log4js";
 
@@ -22,10 +22,7 @@ async function sendMail(
         sandboxMode = true;
     }
 
-    const mailjet = mailjetAPI.connect(
-        mailjetSmtp.auth.user,
-        mailjetSmtp.auth.pass
-    );
+    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
 
     //send actual email
     let requestOptions = {

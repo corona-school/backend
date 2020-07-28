@@ -1,8 +1,7 @@
-import { Column, Entity, EntityManager, Index, JoinTable, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany } from "typeorm";
 import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
-import { CourseTag } from './CourseTag';
 import { State } from './State';
 
 export enum SchoolType {

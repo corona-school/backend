@@ -1,4 +1,4 @@
-import { EntityManager, Not, IsNull, Between } from "typeorm";
+import { EntityManager } from "typeorm";
 import { Student } from "../../../common/entity/Student";
 
 import { MAX_REMINDER_COUNT, REMINDER_INTERVALS } from "./constants";
@@ -39,7 +39,7 @@ async function getAllStudentsWithPendingReminders(manager: EntityManager) {
 // FiLTER
 // ------------
 function filterStudentsToRemindAtDate(students: Student[], date: Date) {
-    return students.filter( s => {
+    return students.filter(s => {
         const remindDate = computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate);
 
         if (!remindDate) { //if remind date is no valid date, do not remind that student...

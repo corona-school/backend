@@ -64,13 +64,12 @@ function filterMatches(matches: Match[]): Match[] {
 
 async function sendFollowUpsToStudents(manager: EntityManager, matches: Match[]) {
     try {
-        for (const m of matches) {
+        for (const m of matches) {
             await sendMatchFollowUpStudent(m.student, m.pupil);
             m.followUpToStudentMail = true;
             await manager.save(Match, m);
         }
-    }
-    catch (e) {
+    } catch (e) {
         if (e.statusCode === mailjet.ErrorCodes.RATE_LIMIT) { //handle rate limit errors in mailjet
             logger.info("Hit rate limit while sending follow-ups to students -> the missing mails will be sent tomorrow...");
             return;
@@ -81,13 +80,12 @@ async function sendFollowUpsToStudents(manager: EntityManager, matches: Match[])
 
 async function sendFollowUpsToPupils(manager: EntityManager, matches: Match[]) {
     try {
-        for (const m of matches) {
+        for (const m of matches) {
             await sendMatchFollowUpPupil(m.student, m.pupil);
             m.followUpToPupilMail = true;
             await manager.save(Match, m);
         }
-    }
-    catch (e) {
+    } catch (e) {
         if (e.statusCode === mailjet.ErrorCodes.RATE_LIMIT) { //handle rate limit errors in mailjet
             logger.info("Hit rate limit while sending follow-ups to pupils -> the missing mails will be sent tomorrow...");
             return;
