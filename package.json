@@ -10,7 +10,7 @@
     "start": "echo Please be more specific what to start for now...",
     "build": "tsc",
     "build:clean": "rm -rf built && tsc",
-    "test": "mocha -r ts-node/register ./tests/**/*.test.ts --exit",
+    "test": "mocha -r ts-node/register './tests/**/*.test.ts' --exit",
     "test:debug": "npm run build && node --inspect --inspect-brk=9229 ./node_modules/.bin/jest --runInBand",
     "test:coverage": "nyc npm run test",
     "jobs": "node ./built/jobs/index.js",
