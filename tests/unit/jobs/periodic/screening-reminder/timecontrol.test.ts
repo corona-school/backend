@@ -1,7 +1,6 @@
 import * as _ from "lodash";
 import {shouldRemindAtDate} from "../../../../../jobs/periodic/screening-reminder/timecontrol";
-import * as assert from "assert";
-
+import {assert} from "chai";
 
 function createDateWithRandomTime(day, month, year) {
     if (!_.inRange(day, 0, 32) || !_.inRange(month, 1, 13)) {

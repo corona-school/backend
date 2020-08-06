@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import {assert} from "chai";
 import * as sinon from "sinon";
 import mailjet from "../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../common/mails/config";
