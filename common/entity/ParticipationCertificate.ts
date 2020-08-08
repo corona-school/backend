@@ -35,10 +35,14 @@ export class ParticipationCertificate {
     })
     endDate: Date;
 
-    @Column()
+    @Column({
+        type: "decimal"
+    })
     hoursPerWeek: number;
 
-    @Column()
+    @Column({
+        type: "decimal"
+    })
     hoursTotal: number;
 
     @Column()

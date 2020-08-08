@@ -60,8 +60,8 @@ export async function certificateHandler(req: Request, res: Response) {
             let params = {
                 endDate: req.query.endDate as string || moment().format("X") as string,
                 subjects: req.query.subjects as string || "Mathematik, Biologie, Altgriechisch",
-                hoursPerWeek: Number.parseInt(req.query.hoursPerWeek as string, 10) || 0,
-                hoursTotal: Number.parseInt(req.query.hoursTotal as string, 10) || 0,
+                hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
+                hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
                 medium: req.query.medium as string || "Taschenrechner mit Programmierfunktion",
                 categories: req.query.categories as string || "Liste\nListe2\nListe3"
             };
