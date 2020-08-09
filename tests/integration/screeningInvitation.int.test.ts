@@ -3,42 +3,29 @@ import * as sinon from "sinon";
 import mailjet from "../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../common/mails/config";
 import {Connection} from "typeorm";
-import {createTestingConnection, closeTestingConnection} from "../utils/typeorm";
 import TestStudents from "../utils/TestStudents";
 import {verifyToken} from "../../web/controllers/tokenController";
+import databaseHelper from "../utils/databaseHelper";
 
 describe("Screening Invitation", function() {
-    this.timeout(20000);
+    this.timeout(10000);
 
     // The connection that should be used for tests
     let connection: Connection;
     let sandbox = sinon.createSandbox();
 
-    beforeEach(() => {
-        return new Promise(resolve => {
-            createTestingConnection({
-                name: "default", //use the default name, because the function that we wanna test use the getConnection function
-                dropSchema: true //reset database before each test
-            }).then(result => {
-                connection = result;
-
-                // create tables etc.
-                connection.synchronize().then(() => {
-                    resolve();
-                });
-            });
+    before(() => {
+        return databaseHelper.createConnection().then(response => {
+            connection = response;
         });
     });
 
+    after(() => {
+        return databaseHelper.closeConnection(connection);
+    });
+
     afterEach(() => {
-        return new Promise(resolve => {
-            connection.dropDatabase().then(() => {
-                closeTestingConnection(connection).then(() => {
-                    sandbox.restore();
-                    resolve();
-                });
-            });
-        });
+        sandbox.restore();
     });
 
     // setup environment variables to not set mailjet api to live
