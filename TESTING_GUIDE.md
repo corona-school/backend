@@ -2,7 +2,7 @@
 ### Overview
 1. [Technology](#technology)
 2. [Structure](#test-structure)
-3. [Unit tests](#Unit tests)
+3. [Unit tests](#unit-tests)
 4. [Integration tests](#integration-tests)
     1. [Testing the API endpoints](#testing-api-endpoints)
     2. [Using the test database](#using-the-test-database)
