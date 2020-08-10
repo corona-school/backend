@@ -12,7 +12,7 @@
 Testing frameworks and their uses:
 - Tests: [Mocha](https://mochajs.org/)
 - Assertions: [Chai](https://www.chaijs.com/)
-- Creating mocks,spies and stubs: [Sinon](https://sinonjs.org/)
+- Creating mocks, spies and stubs: [Sinon](https://sinonjs.org/)
 
 All these frameworks are well documented.
 A guide on writing mocha tests can be found on the [getting started](https://mochajs.org/#getting-started) section.
@@ -23,7 +23,7 @@ This folder is split into unit and integration tests.
 Within the unit test folder the original project structure is mirrored.
 
 This means, when creating a test for the file `common/mails/screening/index.ts`,
-the test file has to be called `tests/unit/common/mails/screening/screening.test.js`.
+the test file has to be named `tests/unit/common/mails/screening/screening.test.js`.
 
 These rules do not apply for integration tests since they often access several files in different directories.
 Integration tests are placed in the `tests/integration` folder.
@@ -39,6 +39,8 @@ This can be done by writing a new test for each input variation of a function.
 
 ### Integration tests
 Integration tests are testing a set feature which can include several functions, files and even database interactions.
+It is often required to mock test data. This is done within the `beforeEach` function of a test module.
+An example for an integration test is testing an API endpoint by giving it the required parameters and checking if the result is correct.
 
 #### Testing API endpoints
 Coming soon.
@@ -76,5 +78,5 @@ A guide on using the connection object can be found in the [typeorm documentatio
 
 ### Running the tests
 Only tests which are located within the `/tests` directory and have the file ending `.test.js` are executed.
-All these tests are automatically executed when pushing to a remote branch using Github Actions.
+All these tests are automatically executed using Github Actions when pushing to a remote branch.
 The tests can also be executed locally using `npm run test`.
