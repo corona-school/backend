@@ -18,16 +18,16 @@ All these frameworks are well documented.
 A guide on writing mocha tests can be found on the [getting started](https://mochajs.org/#getting-started) section.
 
 ### Test structure
-All tests are placed in the "tests" folder and have the file ending `.test.js`.
+All tests are placed in the "tests" folder and have the file ending `.test.ts`.
 This folder is split into unit and integration tests.
 Within the unit test folder the original project structure is mirrored.
 
 This means, when creating a test for the file `common/mails/screening/index.ts`,
-the test file has to be named `tests/unit/common/mails/screening/screening.test.js`.
+the test file has to be named `tests/unit/common/mails/screening/screening.test.ts`.
 
 These rules do not apply for integration tests since they often access several files in different directories.
 Integration tests are placed in the `tests/integration` folder.
-The file ending of integration tests is `.int.test.js`.
+The file ending of integration tests is `.int.test.ts`.
 
 ### Unit tests
 Unit tests are testing one function only.
@@ -77,6 +77,6 @@ describe("some test module which requires the test database", function() {
 A guide on using the connection object can be found in the [typeorm documentation](https://typeorm.io/).
 
 ### Running the tests
-Only tests which are located within the `/tests` directory and have the file ending `.test.js` are executed.
+Only tests which are located within the `/tests` directory and have the file ending `.test.ts` are executed.
 All these tests are automatically executed using Github Actions when pushing to a remote branch.
 The tests can also be executed locally using `npm run test`.
