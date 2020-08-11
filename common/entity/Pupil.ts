@@ -1,8 +1,9 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne } from "typeorm";
 import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
 import { State } from './State';
+import {CourseAttendanceLogging} from "./CourseAttendanceLogging";
 
 export enum SchoolType {
     GRUNDSCHULE = "grundschule",
@@ -92,6 +93,9 @@ export class Pupil extends Person {
 
     @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
     subcourses: Subcourse[];
+
+    @OneToMany(type => CourseAttendanceLogging, courseAttendanceLogging => courseAttendanceLogging.pupil)
+    courseAttendanceLogging: CourseAttendanceLogging[];
 
     /*
      * Other data

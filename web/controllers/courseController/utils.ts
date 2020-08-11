@@ -1,6 +1,7 @@
-import { ApiCourse, ApiSubcourse } from "./format";
+import {ApiCourse, ApiSubcourse} from "./format";
 import * as moment from "moment-timezone";
-
+import fetch from 'node-fetch'
+import {log} from "util";
 
 function getLecturesSorted(apiSubcourse: ApiSubcourse) {
     return apiSubcourse.lectures?.sort((l1, l2) => l1.start - l2.start) ?? [];
@@ -39,10 +40,24 @@ function isJoinableCourse(apiCourse: ApiCourse): boolean {
     return apiCourse.subcourses?.some(isJoinableSubcourse) ?? false;
 }
 
+async function getUserIPv4() {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const json = await response.json();
+    return json.ip;
+}
+
+async function getUserIPv6() {
+    const response = await fetch('https://api64.ipify.org?format=json');
+    const json = await response.json();
+    return json.ip;
+}
+
 export {
     isJoinableCourse,
     isJoinableSubcourse,
     subcourseStarted,
     subcourseFinished,
-    getLecturesSorted
+    getLecturesSorted,
+    getUserIPv4,
+    getUserIPv6
 };

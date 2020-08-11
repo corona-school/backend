@@ -26,7 +26,12 @@ import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
 import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../../common/util/bbb';
-import { isJoinableCourse } from './utils';
+import {isJoinableCourse, getUserIPv4, getUserIPv6} from './utils';
+import ipify from "ipify";
+import * as assert from "assert";
+import {log} from "util";
+import {CourseAttendanceLogging} from "../../../common/entity/CourseAttendanceLogging";
+
 
 const logger = getLogger();
 
@@ -2328,7 +2333,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 }
 
 /**
- * @api {GET} /course/:id/meeting/join JoinCourseMeeting
+ * @api {POST} /course/:id/meeting/join JoinCourseMeeting
  * @apiVersion 1.1.0
  * @apiDescription
  * Joins the BBB-Meeting for a given course
@@ -2344,7 +2349,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse Course
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
@@ -2352,6 +2357,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse StatusInternalServerError
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
+    let courseId = req.body.courseId;
     let status = 200;
     let course: ApiCourse;
     let meeting: BBBMeeting;
@@ -2401,9 +2407,34 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
                             let user: Pupil = res.locals.user;
                             meeting = bbbMeetingCache.get(req.params.id);
+                            console.log(meeting.attendeeUrl(`${user.firstname}+${user.lastname}`));
                             res.send({
                                 url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
                             });
+
+                            // start logging
+                            const courseAttendanceLogging = new CourseAttendanceLogging();
+                            try {
+                                const entityManager = getManager();
+                                const ipv4 = await getUserIPv4();
+                                const ipv6 = await getUserIPv6();
+
+                                courseAttendanceLogging.ipv4 = ipv4;
+                                courseAttendanceLogging.ipv6 = ipv6;
+                                courseAttendanceLogging.pupil = await entityManager.findOne(Pupil,
+                                    { firstname: user.firstname, lastname: user.lastname });
+                                courseAttendanceLogging.course = await entityManager.findOne(Course, { id: courseId });
+
+                                await entityManager.save(CourseAttendanceLogging, courseAttendanceLogging);
+                                // await transactionLog.log(new CreateCourseEvent(student, course));
+                                logger.info("Successfully saved new Course Attendance");
+                            } catch (e) {
+                                logger.error("Can't save new course attendance: " + e.message);
+                                logger.debug(courseAttendanceLogging, e);
+                            }
+
+                            // end logging
+
                         } else {
                             status = 400;
                             logger.error("BBB-Meeting has not startet yet");
