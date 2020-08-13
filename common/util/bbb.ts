@@ -3,6 +3,11 @@ import { getLogger } from 'log4js';
 import axios from "axios";
 import { Parser } from "xml2js";
 import { Mutex } from "async-mutex";
+import {Pupil} from "../entity/Pupil";
+import {CourseAttendanceLogging} from "../entity/CourseAttendanceLogging";
+import {Course} from "../entity/Course";
+import {getManager} from "typeorm";
+import fetch from 'node-fetch'
 
 const parser = new Parser();
 const logger = getLogger();
@@ -144,5 +149,89 @@ export class BBBMeeting {
 
         this.attendeeUrl = attendeeUrl;
         this.moderatorUrl = moderatorUrl;
+    }
+}
+
+export class BBBMeetingInfo {
+    meetingID: string;
+    meetingName: string;
+    attendeePW: string;
+    moderatorPW: string;
+
+    attendeeUrl: (userName: string) => string;
+    moderatorUrl: (userName: string) => string;
+
+    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
+                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
+        this.meetingID = meetingID;
+        this.meetingName = meetingName;
+        this.attendeePW = attendeePW;
+        this.moderatorPW = moderatorPW;
+
+        this.attendeeUrl = attendeeUrl;
+        this.moderatorUrl = moderatorUrl;
+    }
+}
+
+export async function createBBBlog(user: Pupil, ip: string, courseId) {
+    const courseAttendanceLogging = new CourseAttendanceLogging();
+    const logger = getLogger();
+    const entityManager = getManager();
+
+    if (courseId == null) {
+        logger.error("Can't save new course attendance: courseId is null");
+        logger.debug(courseAttendanceLogging);
+    } else {
+        try {
+            courseAttendanceLogging.ip = ip;
+            courseAttendanceLogging.pupil = await entityManager.findOne(Pupil,
+                {firstname: user.firstname, lastname: user.lastname});
+            courseAttendanceLogging.course = await entityManager.findOne(Course, {id: courseId});
+
+            await entityManager.save(CourseAttendanceLogging, courseAttendanceLogging);
+            // await transactionLog.log(new CreateCourseEvent(student, course));
+            logger.info("Successfully saved new Course Attendance");
+        } catch (e) {
+            logger.error("Can't save new course attendance: " + e.message);
+            logger.debug(courseAttendanceLogging, e);
+        }
+    }
+}
+
+export async function getBBBMeetingInfo(): Promise<BBBMeeting[]> {
+    const callName = "getMeetingInfo";
+
+    try {
+        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        const jsonResponse = await parser.parseStringPromise(response.data);
+
+        // todo parse xml to json
+        return jsonResponse;
+
+        // return mapJSONtoBBBMeetings(jsonResponse);
+    }
+    catch (error) {
+        logger.debug(error);
+        return null;
+    }
+}
+
+export async function handleBBBMeetingInfo() {
+    const meetingInfo = await getBBBMeetingInfo();
+    console.log('meetingInfo: ', meetingInfo);
+}
+
+export async function createBBBWebhook(meetingID) {
+    const callName = "create";
+    const callbackURL = "http://localhost:5001/api/course/webhook";
+    const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}`);
+
+    try {
+        const response = await axios.post(`${baseUrl}hooks/${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        console.log('create webhook response: ', response);
+    }
+    catch (error) {
+        logger.debug(error);
+        return null;
     }
 }

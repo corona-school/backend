@@ -136,8 +136,9 @@ createConnection().then(() => {
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
-        coursesRouter.get("/:id/meeting", courseController.getCourseMeetingHandler);
-        coursesRouter.get("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+        coursesRouter.post("/:id/meeting", courseController.getCourseMeetingHandler);
+        coursesRouter.post("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+        coursesRouter.post("/webhook", courseController.getBBBWebhookCallback);
 
         app.use("/api/course", coursesRouter);
     }
