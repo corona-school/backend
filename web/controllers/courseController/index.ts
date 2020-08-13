@@ -32,7 +32,7 @@ import {
     BBBMeeting,
     createBBBlog,
     handleBBBMeetingInfo,
-    createBBBWebhook
+    createBBBWebhook, getBBBWebhooks
 } from '../../../common/util/bbb';
 import {isJoinableCourse} from './utils';
 
@@ -2385,6 +2385,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 
                         // create bbb webhook
                         await createBBBWebhook(req.params.id);
+                        // await getBBBWebhooks();
 
                         if (bbbMeetingCache.has(req.params.id)) {
                             meeting = bbbMeetingCache.get(req.params.id);
@@ -2533,35 +2534,6 @@ export async function getCourseMeetingHandler(req: Request, res: Response) {
  */
 export async function getBBBWebhookCallback(req: Request, res: Response) {
     let status = 200;
-    console.log('getBBBWebhookCallback: ', req.body);
-    // let meeting: BBBMeeting;
-    // try {
-    //     if (req.params.id != undefined) {
-    //         if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
-    //
-    //             meeting = bbbMeetingCache.get(req.params.id);
-    //
-    //             if (meeting) {
-    //                 res.json(meeting);
-    //             } else {
-    //                 status = 400;
-    //                 logger.error("No meeting was found for given id");
-    //             }
-    //
-    //         } else {
-    //             status = 403;
-    //             logger.warn("An unauthorized user requestes BBB-Meeting information");
-    //             logger.debug(res.locals.user);
-    //         }
-    //     } else {
-    //         status = 400;
-    //         logger.error("Expected id parameter on route");
-    //     }
-    //
-    // } catch (e) {
-    //     logger.error("Unexpected format of express request: " + e.message);
-    //     logger.debug(req, e);
-    //     status = 500;
-    // }
+    console.log('bbb webhook request body: ', req.body);
     res.status(status).end();
 }

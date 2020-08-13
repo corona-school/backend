@@ -222,13 +222,29 @@ export async function handleBBBMeetingInfo() {
 }
 
 export async function createBBBWebhook(meetingID) {
-    const callName = "create";
+    const callName = "hooks/create";
     const callbackURL = "http://localhost:5001/api/course/webhook";
-    const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}`);
+    const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}&getRaw=true`);
+    // const queryParams = encodeURI(`callbackURL=${callbackURL}`);
 
     try {
-        const response = await axios.post(`${baseUrl}hooks/${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
-        console.log('create webhook response: ', response);
+        const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        console.log('create webhook response: ', response.data);
+    }
+    catch (error) {
+        logger.debug(error);
+        return null;
+    }
+}
+
+export async function getBBBWebhooks() {
+    const callName = "hooks/list";
+    const callbackURL = "http://localhost:5001/api/course/webhook";
+    // const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}`);
+
+    try {
+        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        console.log('get webhooks response: ', response.data);
     }
     catch (error) {
         logger.debug(error);

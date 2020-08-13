@@ -118,6 +118,7 @@ createConnection().then(() => {
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.post("/webhook", courseController.getBBBWebhookCallback);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
@@ -138,7 +139,6 @@ createConnection().then(() => {
 
         coursesRouter.post("/:id/meeting", courseController.getCourseMeetingHandler);
         coursesRouter.post("/:id/meeting/join", courseController.joinCourseMeetingHandler);
-        coursesRouter.post("/webhook", courseController.getBBBWebhookCallback);
 
         app.use("/api/course", coursesRouter);
     }
