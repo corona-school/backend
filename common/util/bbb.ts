@@ -1,13 +1,13 @@
-import { hashToken } from "./hashing";
-import { getLogger } from 'log4js';
-import axios from "axios";
-import { Parser } from "xml2js";
-import { Mutex } from "async-mutex";
+import {hashToken} from "./hashing";
+import {getLogger} from 'log4js';
+import axios, {AxiosResponse} from "axios";
+import {Parser} from "xml2js";
+import {Mutex} from "async-mutex";
 import {Pupil} from "../entity/Pupil";
 import {CourseAttendanceLogging} from "../entity/CourseAttendanceLogging";
 import {Course} from "../entity/Course";
-import {getManager} from "typeorm";
-import fetch from 'node-fetch'
+import {getManager, getRepository} from "typeorm";
+import {log} from "util";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -34,8 +34,8 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
         const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
         if (response.status === 200) {
             const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
-                                                 (userName: string): string => getMeetingUrl(id, userName, attendeePW),
-                                                 (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
+                (userName: string): string => getMeetingUrl(id, userName, attendeePW),
+                (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
             bbbMeetingCache.set(m.meetingID, m);
 
             release();
@@ -94,8 +94,7 @@ export async function getBBBMeetings(): Promise<BBBMeeting[]> {
 
 
         return mapJSONtoBBBMeetings(jsonResponse);
-    }
-    catch (error) {
+    } catch (error) {
         logger.debug(error);
         return null;
     }
@@ -122,13 +121,13 @@ function mapJSONtoBBBMeetings(json: any): BBBMeeting[] {
 
 function mapJSONtoBBBMeeting(o: any): BBBMeeting {
     return new BBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
-                          o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
-                          o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
-                          o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-                          (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                      o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0]),
-                          (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                      o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
+        o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
+        o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+        o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
+        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+            o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0]),
+        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+            o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
 export class BBBMeeting {
@@ -157,6 +156,8 @@ export class BBBMeetingInfo {
     meetingName: string;
     attendeePW: string;
     moderatorPW: string;
+    createTime: string;
+    createDate: string;
 
     attendeeUrl: (userName: string) => string;
     moderatorUrl: (userName: string) => string;
@@ -171,6 +172,41 @@ export class BBBMeetingInfo {
         this.attendeeUrl = attendeeUrl;
         this.moderatorUrl = moderatorUrl;
     }
+}
+
+export class Attendee {
+    userID: string;
+    fullName: string;
+    firstname: string;
+    lastname: string;
+    role: string;
+
+
+    constructor(userID: string, fullName: string, firstname: string, lastname: string, role: string) {
+        this.userID = userID;
+        this.fullName = fullName;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.role = role;
+    }
+}
+
+function mapJSONtoAttendees(json: any): Attendee[] {
+    if (json && json.response && json.response.attendees && json.response.attendees.length > 0 && json.response.attendees[0] &&
+        json.response.attendees[0].attendee && json.response.attendees[0].attendee.length > 0) {
+        return json.response.attendees[0].attendee.map(o => mapJSONtoAttendee(o));
+    }
+    return [];
+}
+
+function mapJSONtoAttendee(o: any): Attendee {
+    const name = o.fullName[0].split(" ");
+    const firstname = name[0];
+    const lastname = name[name.length - 1];
+
+    return new Attendee(o && o.userID && o.userID.length > 0 && o.userID[0],
+        o && o.fullName && o.fullName.length > 0 && o.fullName[0],
+        firstname, lastname, o && o.role && o.role.length > 0 && o.role[0]);
 }
 
 export async function createBBBlog(user: Pupil, ip: string, courseId) {
@@ -198,56 +234,67 @@ export async function createBBBlog(user: Pupil, ip: string, courseId) {
     }
 }
 
-export async function getBBBMeetingInfo(): Promise<BBBMeeting[]> {
+export async function updateBBBlog(user: Attendee, ip: string, courseId) {
+    const courseAttendanceLogging = new CourseAttendanceLogging();
+    const logger = getLogger();
+    const entityManager = getManager();
+    const repository = getRepository("CourseAttendanceLogging");
+
+    if (courseId == null) {
+        logger.error("Can't save new course attendance: courseId is null");
+        logger.debug(courseAttendanceLogging);
+    } else {
+        try {
+            // courseAttendanceLogging.ip = ip;
+            // courseAttendanceLogging.pupil = await entityManager.findOne(Pupil,
+            //     {firstname: user.firstname, lastname: user.lastname});
+            // courseAttendanceLogging.course = await entityManager.findOne(Course, {id: courseId});
+
+            console.log("repository.find(): ", await repository.findOne({ pupilId: 1}));
+            var dbEntry = await repository.findOne({ pupilId: 1});
+            // TODO: Update Entry in Database
+            // dbEntry.updatedAt: new Date();
+            // await repository.save(dbEntry);
+            // await entityManager.save(CourseAttendanceLogging, courseAttendanceLogging);
+            // await transactionLog.log(new CreateCourseEvent(student, course));
+            logger.info("Successfully updated Course Attendance from pupil");
+        } catch (e) {
+            logger.error("Can't save new course attendance: " + e.message);
+            logger.debug(courseAttendanceLogging, e);
+        }
+    }
+}
+
+export async function getBBBMeetingAttendees(meetingID): Promise<Attendee[]> {
     const callName = "getMeetingInfo";
-
-    try {
-        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
-        const jsonResponse = await parser.parseStringPromise(response.data);
-
-        // todo parse xml to json
-        return jsonResponse;
-
-        // return mapJSONtoBBBMeetings(jsonResponse);
-    }
-    catch (error) {
-        logger.debug(error);
-        return null;
-    }
-}
-
-export async function handleBBBMeetingInfo() {
-    const meetingInfo = await getBBBMeetingInfo();
-    console.log('meetingInfo: ', meetingInfo);
-}
-
-export async function createBBBWebhook(meetingID) {
-    const callName = "hooks/create";
-    const callbackURL = "http://localhost:5001/api/course/webhook";
-    const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}&getRaw=true`);
-    // const queryParams = encodeURI(`callbackURL=${callbackURL}`);
+    const queryParams = encodeURI(`meetingID=${meetingID}`);
 
     try {
         const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
-        console.log('create webhook response: ', response.data);
-    }
-    catch (error) {
+        const jsonResponse = await parser.parseStringPromise(response.data);
+        const mappedAttendees = mapJSONtoAttendees(jsonResponse);
+        // console.log(mappedAttendees);
+        return mappedAttendees;
+    } catch (error) {
         logger.debug(error);
         return null;
     }
 }
 
-export async function getBBBWebhooks() {
-    const callName = "hooks/list";
-    const callbackURL = "http://localhost:5001/api/course/webhook";
-    // const queryParams = encodeURI(`meetingID=${meetingID}&callbackURL=${callbackURL}`);
-
-    try {
-        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
-        console.log('get webhooks response: ', response.data);
-    }
-    catch (error) {
-        logger.debug(error);
-        return null;
+export async function handleBBBlog() {
+    const meetings = await getBBBMeetings();
+    for (const meeting of meetings) {
+        const meetingAttendees = await getBBBMeetingAttendees(meeting.meetingID);
+        console.log("Attendees of meeting with ID " + meeting.meetingID + ": ", meetingAttendees);
+        for (const attendee of meetingAttendees) {
+            if (attendee.role && attendee.role === "VIEWER") {
+                // TODO: IP-Adresse einfügen
+                updateBBBlog(attendee, "localhost", meeting.meetingID);
+            }
+        }
     }
 }
+
+setInterval(() => {
+    handleBBBlog();
+}, 15000);

@@ -3,9 +3,8 @@ import {
     CreateDateColumn,
     Entity,
     PrimaryGeneratedColumn,
-    OneToOne,
-    JoinColumn,
-    ManyToOne
+    ManyToOne,
+    UpdateDateColumn
 } from "typeorm";
 import {Student} from "./Student";
 import {Pupil} from "./Pupil";
@@ -18,6 +17,9 @@ export class CourseAttendanceLogging {
 
     @CreateDateColumn({ type: "timestamp" })
     createdAt: Date;
+
+    @UpdateDateColumn({ type: "timestamp" })
+    updatedAt: Date;
 
     @Column()
     ip: string;

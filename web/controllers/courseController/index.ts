@@ -30,9 +30,7 @@ import {
     createBBBMeeting,
     isBBBMeetingRunning,
     BBBMeeting,
-    createBBBlog,
-    handleBBBMeetingInfo,
-    createBBBWebhook, getBBBWebhooks
+    createBBBlog
 } from '../../../common/util/bbb';
 import {isJoinableCourse} from './utils';
 
@@ -2383,10 +2381,6 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                     if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
-                        // create bbb webhook
-                        await createBBBWebhook(req.params.id);
-                        // await getBBBWebhooks();
-
                         if (bbbMeetingCache.has(req.params.id)) {
                             meeting = bbbMeetingCache.get(req.params.id);
                             res.send({
@@ -2423,9 +2417,6 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 
                             // BBB logging
                             await createBBBlog(user, ip, courseId);
-
-                            // BBB meetingInfo
-                            // await handleBBBMeetingInfo();
 
                         } else {
                             status = 400;
