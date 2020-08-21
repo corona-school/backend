@@ -25,7 +25,7 @@ setInterval(() => {
 const sharedSecret = process.env.BBB_SECRET;
 const baseUrl = process.env.BBB_BASEURL;
 
-const courseAttendanceLogInterval = 15000;
+const courseAttendanceLogInterval = 600000;
 setInterval(() => {
     handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);

@@ -2414,7 +2414,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             res.send({
                                 url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id)
                             });
-                            
+
                             // BBB logging
                             await createOrUpdateCourseAttendanceLog(user, ip, subcourseId);
 
