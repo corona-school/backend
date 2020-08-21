@@ -3,7 +3,7 @@ import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
 import { State } from './State';
-import {CourseAttendanceLogging} from "./CourseAttendanceLogging";
+import {CourseAttendanceLog} from "./CourseAttendanceLog";
 
 export enum SchoolType {
     GRUNDSCHULE = "grundschule",
@@ -94,8 +94,8 @@ export class Pupil extends Person {
     @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
     subcourses: Subcourse[];
 
-    @OneToMany(type => CourseAttendanceLogging, courseAttendanceLogging => courseAttendanceLogging.pupil)
-    courseAttendanceLogging: CourseAttendanceLogging[];
+    @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.pupil)
+    courseAttendanceLog: CourseAttendanceLog[];
 
     /*
      * Other data

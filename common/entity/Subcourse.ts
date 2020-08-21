@@ -14,6 +14,7 @@ import { Student } from "./Student";
 import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
+import {CourseAttendanceLog} from "./CourseAttendanceLog";
 
 @Entity()
 export class Subcourse {
@@ -68,5 +69,8 @@ export class Subcourse {
         default: false
     })
     cancelled: boolean;
+
+    @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.subcourse)
+    courseAttendanceLog: CourseAttendanceLog[];
 
 }

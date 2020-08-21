@@ -30,7 +30,7 @@ import {
     createBBBMeeting,
     isBBBMeetingRunning,
     BBBMeeting,
-    createBBBlog
+    createCourseAttendanceLog
 } from '../../../common/util/bbb';
 import {isJoinableCourse} from './utils';
 
@@ -2359,7 +2359,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse StatusInternalServerError
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
-    let courseId = req.body.courseId ? req.body.courseId : null;
+    let subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
     let ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
     let status = 200;
     let course: ApiCourse;
@@ -2410,13 +2410,14 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
                             let user: Pupil = res.locals.user;
                             meeting = bbbMeetingCache.get(req.params.id);
-                            console.log(meeting.attendeeUrl(`${user.firstname}+${user.lastname}`));
-                            res.send({
-                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
-                            });
+                            console.log("subcourseId: ", subcourseId);
 
+                            console.log(meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id));
+                            res.send({
+                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id)
+                            });
                             // BBB logging
-                            await createBBBlog(user, ip, courseId);
+                            await createCourseAttendanceLog(user, ip, subcourseId);
 
                         } else {
                             status = 400;
@@ -2499,32 +2500,5 @@ export async function getCourseMeetingHandler(req: Request, res: Response) {
         logger.debug(req, e);
         status = 500;
     }
-    res.status(status).end();
-}
-
-/**
- * @api {POST} /course/webhook getBBBWebhookCallback
- * @apiVersion 1.1.0
- * @apiDescription
- * Get callback of a webhook from bbb
- *
- * This endpoint provides the callback of a webhook from bbb.
- *
- * @apiName getBBBWebhookCallback
- * @apiGroup Courses
- *
- * @apiUse Authentication
- *
- * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/webhook
- *
- * @apiUse StatusOk
- * @apiUse StatusBadRequest
- * @apiUse StatusForbidden
- * @apiUse StatusInternalServerError
- */
-export async function getBBBWebhookCallback(req: Request, res: Response) {
-    let status = 200;
-    console.log('bbb webhook request body: ', req.body);
     res.status(status).end();
 }

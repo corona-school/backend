@@ -1,13 +1,16 @@
 import {hashToken} from "./hashing";
 import {getLogger} from 'log4js';
-import axios, {AxiosResponse} from "axios";
+import axios from "axios";
 import {Parser} from "xml2js";
 import {Mutex} from "async-mutex";
 import {Pupil} from "../entity/Pupil";
-import {CourseAttendanceLogging} from "../entity/CourseAttendanceLogging";
+import {CourseAttendanceLog} from "../entity/CourseAttendanceLog";
 import {Course} from "../entity/Course";
-import {getManager, getRepository} from "typeorm";
-import {log} from "util";
+import {getManager, Raw, Not, getConnection, getRepository} from "typeorm";
+import {Subcourse} from "../entity/Subcourse";
+import {Lecture} from "../entity/Lecture";
+import {getTransactionLog} from "../transactionlog";
+import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -22,6 +25,11 @@ setInterval(() => {
 const sharedSecret = process.env.BBB_SECRET;
 const baseUrl = process.env.BBB_BASEURL;
 
+const courseAttendanceLogInterval = 15000;
+setInterval(() => {
+    handleBBBMeetingInfos();
+}, courseAttendanceLogInterval);
+
 export async function createBBBMeeting(name: string, id: string): Promise<BBBMeeting> {
     const attendeePW = hashToken('' + Math.random(), "sha1");
     const moderatorPW = hashToken('' + Math.random(), "sha1");
@@ -34,7 +42,7 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
         const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
         if (response.status === 200) {
             const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
-                (userName: string): string => getMeetingUrl(id, userName, attendeePW),
+                (userName: string, userID: string): string => getMeetingUrl(id, userName, attendeePW, userID),
                 (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
             bbbMeetingCache.set(m.meetingID, m);
 
@@ -49,9 +57,9 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
     }
 }
 
-export function getMeetingUrl(id: string, name: string, pw: string): string {
+export function getMeetingUrl(id: string, name: string, pw: string, userID?: string): string {
     const callName = 'join';
-    const queryParams = encodeURI(`fullName=${name}&meetingID=${id}&password=${pw}&redirect=true`);
+    const queryParams = encodeURI(`fullName=${name}&meetingID=${id}&password=${pw}&redirect=true&userID=${userID}`);
 
     return (`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
 }
@@ -124,8 +132,8 @@ function mapJSONtoBBBMeeting(o: any): BBBMeeting {
         o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
         o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
         o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-            o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0]),
+        (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+            o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
         (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
             o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
@@ -136,34 +144,11 @@ export class BBBMeeting {
     attendeePW: string;
     moderatorPW: string;
 
-    attendeeUrl: (userName: string) => string;
+    attendeeUrl: (userName: string, userID: string) => string;
     moderatorUrl: (userName: string) => string;
 
     constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
-        this.meetingID = meetingID;
-        this.meetingName = meetingName;
-        this.attendeePW = attendeePW;
-        this.moderatorPW = moderatorPW;
-
-        this.attendeeUrl = attendeeUrl;
-        this.moderatorUrl = moderatorUrl;
-    }
-}
-
-export class BBBMeetingInfo {
-    meetingID: string;
-    meetingName: string;
-    attendeePW: string;
-    moderatorPW: string;
-    createTime: string;
-    createDate: string;
-
-    attendeeUrl: (userName: string) => string;
-    moderatorUrl: (userName: string) => string;
-
-    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
+                attendeeUrl: (userName: string, userID: string) => string, moderatorUrl: (userName: string) => string) {
         this.meetingID = meetingID;
         this.meetingName = meetingName;
         this.attendeePW = attendeePW;
@@ -175,18 +160,14 @@ export class BBBMeetingInfo {
 }
 
 export class Attendee {
-    userID: string;
+    wix_id: string;
     fullName: string;
-    firstname: string;
-    lastname: string;
     role: string;
 
 
-    constructor(userID: string, fullName: string, firstname: string, lastname: string, role: string) {
-        this.userID = userID;
+    constructor(wix_id: string, fullName: string, role: string) {
+        this.wix_id = wix_id;
         this.fullName = fullName;
-        this.firstname = firstname;
-        this.lastname = lastname;
         this.role = role;
     }
 }
@@ -200,67 +181,116 @@ function mapJSONtoAttendees(json: any): Attendee[] {
 }
 
 function mapJSONtoAttendee(o: any): Attendee {
-    const name = o.fullName[0].split(" ");
-    const firstname = name[0];
-    const lastname = name[name.length - 1];
-
     return new Attendee(o && o.userID && o.userID.length > 0 && o.userID[0],
         o && o.fullName && o.fullName.length > 0 && o.fullName[0],
-        firstname, lastname, o && o.role && o.role.length > 0 && o.role[0]);
+        o && o.role && o.role.length > 0 && o.role[0]);
 }
 
-export async function createBBBlog(user: Pupil, ip: string, courseId) {
-    const courseAttendanceLogging = new CourseAttendanceLogging();
-    const logger = getLogger();
+function lessThanDate(date1: Date, date2: Date): boolean {
+    if (date1.getFullYear() < date2.getFullYear()) {
+        return true;
+    } else if (date1.getMonth() < date2.getMonth()) {
+        return true;
+    } else if (date1.getDate() < date2.getDate()) {
+        return true;
+    }
+    return false;
+}
+
+// Returns active lecture of the subcourse, assuming that there is only one active lecture of the subcourse
+async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture> {
     const entityManager = getManager();
+    const lectures = await entityManager
+        .createQueryBuilder(Lecture, "lecture")
+        .where("lecture.subcourse.id = :id", {id: subcourseId})
+        .getMany();
 
-    if (courseId == null) {
-        logger.error("Can't save new course attendance: courseId is null");
-        logger.debug(courseAttendanceLogging);
+    // check if lecture is running now (lecture.start + duration > now)
+    for (const lecture of lectures) {
+        if (!lessThanDate(lecture.start, new Date())
+            && (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
+            return lecture;
+        }
+    }
+    return null;
+}
+
+// Returns CourseAttendanceLog by lectureId and pupilId
+async function getCourseAttendanceLog(lectureId: number, pupilId: number): Promise<CourseAttendanceLog> {
+    const entityManager = getManager();
+    return await entityManager
+        .createQueryBuilder(CourseAttendanceLog, "courseAttendanceLog")
+        .where("courseAttendanceLog.lecture.id = :lectureId", {lectureId: lectureId})
+        .andWhere("courseAttendanceLog.pupil.id = :pupilId", {pupilId: pupilId})
+        .getOne();
+}
+
+// Creates new CourseAttendanceLog by pupil, ip and subcourseId
+export async function createCourseAttendanceLog(pupil: Pupil, ip: string, subcourseId) {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+    const courseAttendanceLog = new CourseAttendanceLog();
+
+    if (subcourseId == null) {
+        logger.error("Can't save new course attendance: subcourseId is null");
+        logger.debug(courseAttendanceLog);
     } else {
-        try {
-            courseAttendanceLogging.ip = ip;
-            courseAttendanceLogging.pupil = await entityManager.findOne(Pupil,
-                {firstname: user.firstname, lastname: user.lastname});
-            courseAttendanceLogging.course = await entityManager.findOne(Course, {id: courseId});
-
-            await entityManager.save(CourseAttendanceLogging, courseAttendanceLogging);
-            // await transactionLog.log(new CreateCourseEvent(student, course));
-            logger.info("Successfully saved new Course Attendance");
-        } catch (e) {
-            logger.error("Can't save new course attendance: " + e.message);
-            logger.debug(courseAttendanceLogging, e);
+        const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
+        if (activeLecture) {
+            const checkCourseAttendanceLog = await getCourseAttendanceLog(activeLecture.id, pupil.id);
+            if (checkCourseAttendanceLog) {
+                const attendee = new Attendee(pupil.wix_id.toString(), pupil.firstname + pupil.lastname, "VIEWER");
+                await updateCourseAttendanceLog(attendee, subcourseId, checkCourseAttendanceLog);
+            } else {
+                try {
+                    courseAttendanceLog.ip = ip;
+                    courseAttendanceLog.pupil = pupil;
+                    courseAttendanceLog.subcourse = await entityManager.findOne(Subcourse, {id: subcourseId});
+                    courseAttendanceLog.lecture = activeLecture;
+                    courseAttendanceLog.updatedAt = null;
+                    courseAttendanceLog.attendedTime = null;
+                    await entityManager.save(CourseAttendanceLog, courseAttendanceLog);
+                    await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
+                    logger.info("Successfully saved new Course Attendance to lecture with id ", activeLecture.id);
+                } catch (e) {
+                    logger.error("Can't save new course attendance: " + e.message);
+                    logger.debug(courseAttendanceLog, e);
+                }
+            }
+        } else {
+            logger.error("Can't save new course attendance: no active lecture");
         }
     }
 }
 
-export async function updateBBBlog(user: Attendee, ip: string, courseId) {
-    const courseAttendanceLogging = new CourseAttendanceLogging();
-    const logger = getLogger();
+export async function updateCourseAttendanceLog(attendee: Attendee, subcourseId, courseAttendanceLog?: CourseAttendanceLog) {
     const entityManager = getManager();
-    const repository = getRepository("CourseAttendanceLogging");
+    const transactionLog = getTransactionLog();
+    const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
+    const pupilFromDB = await entityManager.findOne(Pupil, {wix_id: attendee.wix_id});
 
-    if (courseId == null) {
-        logger.error("Can't save new course attendance: courseId is null");
-        logger.debug(courseAttendanceLogging);
+    if (!activeLecture || !pupilFromDB) {
+        logger.error("Can't save new course attendance: activeLecture or pupilFromDB is null");
     } else {
-        try {
-            // courseAttendanceLogging.ip = ip;
-            // courseAttendanceLogging.pupil = await entityManager.findOne(Pupil,
-            //     {firstname: user.firstname, lastname: user.lastname});
-            // courseAttendanceLogging.course = await entityManager.findOne(Course, {id: courseId});
+        const logToUpdate = courseAttendanceLog ? courseAttendanceLog : await getCourseAttendanceLog(activeLecture.id, pupilFromDB.id);
+        if (subcourseId == null) {
+            logger.error("Can't save new course attendance: courseId is null");
+        } else {
+            try {
+                if (logToUpdate) {
+                    logToUpdate.updatedAt = new Date();
+                    logToUpdate.attendedTime += courseAttendanceLogInterval;
+                    await entityManager.save(CourseAttendanceLog, logToUpdate);
+                    await transactionLog.log(new CreateCourseAttendanceLogEvent(pupilFromDB, logToUpdate));
+                    logger.info("Successfully updated log with id: ", logToUpdate.id);
+                } else {
+                    logger.error("User with id " + attendee.wix_id + " is in meeting " + subcourseId + " but log could not be found.");
+                }
 
-            console.log("repository.find(): ", await repository.findOne({ pupilId: 1}));
-            var dbEntry = await repository.findOne({ pupilId: 1});
-            // TODO: Update Entry in Database
-            // dbEntry.updatedAt: new Date();
-            // await repository.save(dbEntry);
-            // await entityManager.save(CourseAttendanceLogging, courseAttendanceLogging);
-            // await transactionLog.log(new CreateCourseEvent(student, course));
-            logger.info("Successfully updated Course Attendance from pupil");
-        } catch (e) {
-            logger.error("Can't save new course attendance: " + e.message);
-            logger.debug(courseAttendanceLogging, e);
+            } catch (e) {
+                logger.error("Can't save new course attendance: " + e.message);
+                logger.debug(logToUpdate, e);
+            }
         }
     }
 }
@@ -273,7 +303,6 @@ export async function getBBBMeetingAttendees(meetingID): Promise<Attendee[]> {
         const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
         const jsonResponse = await parser.parseStringPromise(response.data);
         const mappedAttendees = mapJSONtoAttendees(jsonResponse);
-        // console.log(mappedAttendees);
         return mappedAttendees;
     } catch (error) {
         logger.debug(error);
@@ -281,20 +310,14 @@ export async function getBBBMeetingAttendees(meetingID): Promise<Attendee[]> {
     }
 }
 
-export async function handleBBBlog() {
+export async function handleBBBMeetingInfos() {
     const meetings = await getBBBMeetings();
     for (const meeting of meetings) {
         const meetingAttendees = await getBBBMeetingAttendees(meeting.meetingID);
-        console.log("Attendees of meeting with ID " + meeting.meetingID + ": ", meetingAttendees);
         for (const attendee of meetingAttendees) {
             if (attendee.role && attendee.role === "VIEWER") {
-                // TODO: IP-Adresse einfügen
-                updateBBBlog(attendee, "localhost", meeting.meetingID);
+                updateCourseAttendanceLog(attendee, meeting.meetingID);
             }
         }
     }
 }
-
-setInterval(() => {
-    handleBBBlog();
-}, 15000);

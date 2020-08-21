@@ -118,7 +118,6 @@ createConnection().then(() => {
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
-        coursesRouter.post("/webhook", courseController.getBBBWebhookCallback);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);

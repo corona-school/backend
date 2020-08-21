@@ -12,7 +12,7 @@ import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
 import { ApiCourseUpdate } from "../../common/dto/ApiCourseUpdate";
-import {CourseAttendanceLogging} from "./CourseAttendanceLogging";
+import {CourseAttendanceLog} from "./CourseAttendanceLog";
 
 export enum CourseState {
     CREATED = "created",
@@ -92,9 +92,6 @@ export class Course {
         default: 0
     })
     publicRanking: number;
-
-    @OneToMany(type => CourseAttendanceLogging, courseAttendanceLogging => courseAttendanceLogging.course)
-    courseAttendanceLogging: CourseAttendanceLogging[];
 
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())
