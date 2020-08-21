@@ -225,8 +225,8 @@ async function getCourseAttendanceLog(lectureId: number, pupilId: number): Promi
         .getOne();
 }
 
-// Creates new CourseAttendanceLog by pupil, ip and subcourseId
-export async function createCourseAttendanceLog(pupil: Pupil, ip: string, subcourseId) {
+// Creates or updates a CourseAttendanceLog by pupil, ip (optional for update) and subcourseId
+export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string, subcourseId) {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
     const courseAttendanceLog = new CourseAttendanceLog();
@@ -237,12 +237,17 @@ export async function createCourseAttendanceLog(pupil: Pupil, ip: string, subcou
     } else {
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
-            const checkCourseAttendanceLog = await getCourseAttendanceLog(activeLecture.id, pupil.id);
-            if (checkCourseAttendanceLog) {
-                const attendee = new Attendee(pupil.wix_id.toString(), pupil.firstname + pupil.lastname, "VIEWER");
-                await updateCourseAttendanceLog(attendee, subcourseId, checkCourseAttendanceLog);
+            const logToUpdate = await getCourseAttendanceLog(activeLecture.id, pupil.id);
+            if (logToUpdate) {
+                // Update log
+                logToUpdate.updatedAt = new Date();
+                logToUpdate.attendedTime += courseAttendanceLogInterval;
+                await entityManager.save(CourseAttendanceLog, logToUpdate);
+                await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
+                logger.info("Successfully updated log with id: ", logToUpdate.id);
             } else {
                 try {
+                    // Create new log
                     courseAttendanceLog.ip = ip;
                     courseAttendanceLog.pupil = pupil;
                     courseAttendanceLog.subcourse = await entityManager.findOne(Subcourse, {id: subcourseId});
@@ -263,38 +268,6 @@ export async function createCourseAttendanceLog(pupil: Pupil, ip: string, subcou
     }
 }
 
-export async function updateCourseAttendanceLog(attendee: Attendee, subcourseId, courseAttendanceLog?: CourseAttendanceLog) {
-    const entityManager = getManager();
-    const transactionLog = getTransactionLog();
-    const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
-    const pupilFromDB = await entityManager.findOne(Pupil, {wix_id: attendee.wix_id});
-
-    if (!activeLecture || !pupilFromDB) {
-        logger.error("Can't save new course attendance: activeLecture or pupilFromDB is null");
-    } else {
-        const logToUpdate = courseAttendanceLog ? courseAttendanceLog : await getCourseAttendanceLog(activeLecture.id, pupilFromDB.id);
-        if (subcourseId == null) {
-            logger.error("Can't save new course attendance: courseId is null");
-        } else {
-            try {
-                if (logToUpdate) {
-                    logToUpdate.updatedAt = new Date();
-                    logToUpdate.attendedTime += courseAttendanceLogInterval;
-                    await entityManager.save(CourseAttendanceLog, logToUpdate);
-                    await transactionLog.log(new CreateCourseAttendanceLogEvent(pupilFromDB, logToUpdate));
-                    logger.info("Successfully updated log with id: ", logToUpdate.id);
-                } else {
-                    logger.error("User with id " + attendee.wix_id + " is in meeting " + subcourseId + " but log could not be found.");
-                }
-
-            } catch (e) {
-                logger.error("Can't save new course attendance: " + e.message);
-                logger.debug(logToUpdate, e);
-            }
-        }
-    }
-}
-
 export async function getBBBMeetingAttendees(meetingID): Promise<Attendee[]> {
     const callName = "getMeetingInfo";
     const queryParams = encodeURI(`meetingID=${meetingID}`);
@@ -311,12 +284,26 @@ export async function getBBBMeetingAttendees(meetingID): Promise<Attendee[]> {
 }
 
 export async function handleBBBMeetingInfos() {
+    const entityManager = getManager();
     const meetings = await getBBBMeetings();
     for (const meeting of meetings) {
         const meetingAttendees = await getBBBMeetingAttendees(meeting.meetingID);
+        const map = new Map();
+        const filteredMeetingAttendees: Attendee[] = [];
         for (const attendee of meetingAttendees) {
+            if(!map.has(attendee.wix_id)) {
+                map.set(attendee.wix_id, true);
+                filteredMeetingAttendees.push(attendee);
+            }
+        }
+        for (const attendee of filteredMeetingAttendees) {
             if (attendee.role && attendee.role === "VIEWER") {
-                updateCourseAttendanceLog(attendee, meeting.meetingID);
+                const pupilFromDB = await entityManager.findOne(Pupil, {wix_id: attendee.wix_id});
+                if (pupilFromDB) {
+                    createOrUpdateCourseAttendanceLog(pupilFromDB, null, meeting.meetingID);
+                } else {
+                    logger.error("Can't find attendee in db: " + attendee.fullName);
+                }
             }
         }
     }

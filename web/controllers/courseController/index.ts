@@ -30,7 +30,7 @@ import {
     createBBBMeeting,
     isBBBMeetingRunning,
     BBBMeeting,
-    createCourseAttendanceLog
+    createOrUpdateCourseAttendanceLog
 } from '../../../common/util/bbb';
 import {isJoinableCourse} from './utils';
 
@@ -2410,14 +2410,13 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
                             let user: Pupil = res.locals.user;
                             meeting = bbbMeetingCache.get(req.params.id);
-                            console.log("subcourseId: ", subcourseId);
 
-                            console.log(meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id));
                             res.send({
                                 url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id)
                             });
+                            
                             // BBB logging
-                            await createCourseAttendanceLog(user, ip, subcourseId);
+                            await createOrUpdateCourseAttendanceLog(user, ip, subcourseId);
 
                         } else {
                             status = 400;

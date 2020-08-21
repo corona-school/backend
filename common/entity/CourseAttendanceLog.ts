@@ -29,7 +29,7 @@ export class CourseAttendanceLog {
     @Column({ nullable: true })
     attendedTime: number;
 
-    @Column()
+    @Column({ nullable: true })
     ip: string;
 
     @ManyToOne(type => Pupil, pupil => pupil.courseAttendanceLog, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})

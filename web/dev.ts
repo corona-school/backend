@@ -584,16 +584,6 @@ export async function setupDevDB() {
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
         console.log("Inserted Dev CourseAttendanceLog " + i);
 
-        // pupil attended lecture in the past of subcourse 2, lecture 5
-        // const courseAttendanceLog2 = new CourseAttendanceLog();
-        // courseAttendanceLog2.createdAt = new Date("2020-06-05 14:30:00.983055");
-        // courseAttendanceLog2.ip = "localhost";
-        // courseAttendanceLog2.pupil = pupils[i];
-        // courseAttendanceLog2.subcourse = subcourse2;
-        // courseAttendanceLog2.lecture = lecture5;
-        // await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
-        // console.log("Inserted Dev CourseAttendanceLog " + i);
-
         // pupil attended lecture today of subcourse 5, lecture 9, but lecture is over now
         const courseAttendanceLog3 = new CourseAttendanceLog();
         courseAttendanceLog3.ip = "localhost";
