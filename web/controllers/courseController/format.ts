@@ -284,3 +284,43 @@ export interface ApiPostGroupMail {
     subject: string,
     body: string
 }
+
+/**
+ * @apiDefine BBBMeeting
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (BBBMeeting Object) {string} meetingID Unique identifier of this meeting
+ * @apiSuccess (BBBMeeting Object) {string} meetingName Name used for displaying in meeting
+ * @apiSuccess (BBBMeeting Object) {string} attendeePW Password for joining as an attendee
+ * @apiSuccess (BBBMeeting Object) {string} moderatorPW Password for joining as a moderator
+ * @apiSuccess (BBBMeeting Object) {string} attendeeUrl Url for joining as an attendee
+ * @apiSuccess (BBBMeeting Object) {string} moderatorUrl Url for joining as an moderator
+ */
+
+export class BBBMeeting {
+    meetingID: string;
+    meetingName: string;
+    attendeePW: string;
+    moderatorPW: string;
+
+    attendeeUrl: (userName: string) => string;
+    moderatorUrl: (userName: string) => string;
+
+    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
+                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
+        this.meetingID = meetingID;
+        this.meetingName = meetingName;
+        this.attendeePW = attendeePW;
+        this.moderatorPW = moderatorPW;
+
+        this.attendeeUrl = attendeeUrl;
+        this.moderatorUrl = moderatorUrl;
+    }
+}
+
+/**
+ * @apiDefine BBBMeetingReturn
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (BBBMeeting Return Object) {string} url Meeting url depending on whether it is an attendee or moderator
+ */

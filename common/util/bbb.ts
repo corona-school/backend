@@ -3,6 +3,7 @@ import { getLogger } from 'log4js';
 import axios from "axios";
 import { Parser } from "xml2js";
 import { Mutex } from "async-mutex";
+import {BBBMeeting} from "../../web/controllers/courseController/format";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -126,23 +127,4 @@ function mapJSONtoBBBMeeting(o: any): BBBMeeting {
                                                                       o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
-export class BBBMeeting {
-    meetingID: string;
-    meetingName: string;
-    attendeePW: string;
-    moderatorPW: string;
 
-    attendeeUrl: (userName: string) => string;
-    moderatorUrl: (userName: string) => string;
-
-    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-                attendeeUrl: (userName: string) => string, moderatorUrl: (userName: string) => string) {
-        this.meetingID = meetingID;
-        this.meetingName = meetingName;
-        this.attendeePW = attendeePW;
-        this.moderatorPW = moderatorPW;
-
-        this.attendeeUrl = attendeeUrl;
-        this.moderatorUrl = moderatorUrl;
-    }
-}

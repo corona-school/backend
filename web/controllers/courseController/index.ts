@@ -13,7 +13,7 @@ import {
     ApiEditSubcourse,
     ApiInstructor,
     ApiLecture,
-    ApiSubcourse
+    ApiSubcourse, BBBMeeting
 } from './format';
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
 import { getTransactionLog } from '../../../common/transactionlog';
@@ -25,7 +25,7 @@ import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
-import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning, BBBMeeting } from '../../../common/util/bbb';
+import { bbbMeetingCache, createBBBMeeting, isBBBMeetingRunning } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 
 const logger = getLogger();
@@ -2328,98 +2328,109 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 }
 
 /**
- * @api {GET} /course/:id/meeting/join JoinCourseMeeting
+ * @api {GET} /course/:id/subcourse/:subid/meeting/join JoinCourseMeeting
  * @apiVersion 1.1.0
  * @apiDescription
- * Joins the BBB-Meeting for a given course
+ * Joins the BBB-Meeting for a given subcourse
  *
- * This endpoint allows joining the BBB-Meeting of a course.
- * If the user is the instructor of the course the Meeting gets created with this call.
+ * This endpoint allows joining the BBB-Meeting of a subcourse.
+ * If the user is the instructor of the subcourse the Meeting gets created with this call.
  * The other participants can only join after the instructor created the meeting with this endpoint
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
  *
  * @apiName JoinCourseMeeting
  * @apiGroup Courses
  *
  * @apiUse Authentication
  * @apiUse Course
+ * @apiUse BBBMeeting
+ * @apiUse BBBMeetingReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting/join
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
- * @apiUse StatusForbidden
+ * @apiUse StatusUnauthorized
  * @apiUse StatusInternalServerError
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
     let status = 200;
     let course: ApiCourse;
     let meeting: BBBMeeting;
+
     try {
         if (req.params.id != undefined) {
-            let authenticatedStudent = false;
-            let authenticatedPupil = false;
-            if (res.locals.user instanceof Student) {
-                authenticatedStudent = true;
-            }
-            if (res.locals.user instanceof Pupil) {
-                authenticatedPupil = true;
-            }
-            try {
+            if (req.params.subid != undefined) {
+                let authenticatedStudent = false;
+                let authenticatedPupil = false;
+                if (res.locals.user instanceof Student) {
+                    authenticatedStudent = true;
+                }
+                if (res.locals.user instanceof Pupil) {
+                    authenticatedPupil = true;
+                }
+                try {
 
-                if (authenticatedPupil || authenticatedStudent) {
+                    if (authenticatedPupil || authenticatedStudent) {
 
-                    if (authenticatedStudent) {
-                        let user: Student = res.locals.user;
+                        if (authenticatedStudent) {
+                            let user: Student = res.locals.user;
 
-                        if (bbbMeetingCache.has(req.params.id)) {
-                            meeting = bbbMeetingCache.get(req.params.id);
-                            res.send({
-                                url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
-                            });
-                        } else {
-
-                            // todo this should get its own method and not use a method from some other route
-                            let obj = await getCourse(
-                                authenticatedStudent ? res.locals.user : undefined,
-                                authenticatedPupil ? res.locals.user : undefined,
-                                Number.parseInt(req.params.id, 10)
-                            );
-                            if (typeof obj == 'number') {
-                                status = obj;
-                            } else {
-                                course = obj;
-                                meeting = await createBBBMeeting(course.name, req.params.id);
+                            if (bbbMeetingCache.has(req.params.subid)) {
+                                meeting = bbbMeetingCache.get(req.params.subid);
                                 res.send({
                                     url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
                                 });
+                            } else {
+
+                                // todo this should get its own method and not use a method from some other route
+                                let obj = await getCourse(
+                                    authenticatedStudent ? res.locals.user : undefined,
+                                    authenticatedPupil ? res.locals.user : undefined,
+                                    Number.parseInt(req.params.subid, 10)
+                                );
+                                if (typeof obj == 'number') {
+                                    status = obj;
+                                } else {
+                                    course = obj;
+                                    meeting = await createBBBMeeting(course.name, req.params.subid);
+                                    res.send({
+                                        url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
+                                    });
+                                }
+                            }
+
+                        } else if (authenticatedPupil) {
+                            let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.subid);
+                            if (bbbMeetingCache.has(req.params.subid) && meetingIsRunning) {
+                                let user: Pupil = res.locals.user;
+                                meeting = bbbMeetingCache.get(req.params.subid);
+                                res.send({
+                                    url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
+                                });
+                            } else {
+                                status = 400;
+                                logger.error("BBB-Meeting has not startet yet");
                             }
                         }
 
-                    } else if (authenticatedPupil) {
-                        let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
-                        if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
-                            let user: Pupil = res.locals.user;
-                            meeting = bbbMeetingCache.get(req.params.id);
-                            res.send({
-                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`)
-                            });
-                        } else {
-                            status = 400;
-                            logger.error("BBB-Meeting has not startet yet");
-                        }
+                    } else {
+                        status = 403;
+                        logger.warn("An unauthorized user wanted to join a BBB-Meeting");
+                        logger.debug(res.locals.user);
                     }
 
-                } else {
-                    status = 403;
-                    logger.warn("An unauthorized user wanted to join a BBB-Meeting");
-                    logger.debug(res.locals.user);
+                } catch (e) {
+                    logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
+                    logger.debug(req, e);
+                    status = 500;
                 }
-
-            } catch (e) {
-                logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
-                logger.debug(req, e);
-                status = 500;
+            } else {
+                status = 400;
+                logger.error("Expected subid parameter on route");
             }
         } else {
             status = 400;
@@ -2434,24 +2445,29 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 }
 
 /**
- * @api {GET} /course/:id/meeting getCourseMeeting
+ * @api {GET} /course/:id/subcourse/:subid/meeting GetCourseMeeting
  * @apiVersion 1.1.0
  * @apiDescription
- * Get the BBB-Meeting for a given course
+ * Get the BBB-Meeting for a given subcourse
  *
- * This endpoint provides the BBB-Meeting of a course.
+ * This endpoint provides the BBB-Meeting of a subcourse.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
  *
  * @apiName GetCourseMeeting
  * @apiGroup Courses
  *
  * @apiUse Authentication
+ * @apiUse BBBMeeting
+ * @apiUse BBBMeetingReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
- * @apiUse StatusForbidden
+ * @apiUse StatusUnauthorized
  * @apiUse StatusInternalServerError
  */
 export async function getCourseMeetingHandler(req: Request, res: Response) {
@@ -2459,27 +2475,30 @@ export async function getCourseMeetingHandler(req: Request, res: Response) {
     let meeting: BBBMeeting;
     try {
         if (req.params.id != undefined) {
-            if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
+            if (req.params.subid != undefined) {
+                if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
 
-                meeting = bbbMeetingCache.get(req.params.id);
+                    meeting = bbbMeetingCache.get(req.params.subid);
 
-                if (meeting) {
-                    res.json(meeting);
+                    if (meeting) {
+                        res.json(meeting);
+                    } else {
+                        status = 400;
+                        logger.error("No meeting was found for given id");
+                    }
                 } else {
-                    status = 400;
-                    logger.error("No meeting was found for given id");
+                    status = 403;
+                    logger.warn("An unauthorized user requestes BBB-Meeting information");
+                    logger.debug(res.locals.user);
                 }
-
             } else {
-                status = 403;
-                logger.warn("An unauthorized user requestes BBB-Meeting information");
-                logger.debug(res.locals.user);
+                status = 400;
+                logger.error("Expected id parameter on route");
             }
         } else {
             status = 400;
             logger.error("Expected id parameter on route");
         }
-
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
         logger.debug(req, e);
