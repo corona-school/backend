@@ -1,7 +1,7 @@
-import {Request, Response} from 'express';
-import {getLogger} from 'log4js';
-import {getManager} from 'typeorm';
-import {ScreeningStatus, Student} from '../../../common/entity/Student';
+import { Request, Response } from 'express';
+import { getLogger } from 'log4js';
+import { getManager } from 'typeorm';
+import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import {
     ApiAddCourse,
     ApiAddLecture,
@@ -15,16 +15,16 @@ import {
     ApiLecture,
     ApiSubcourse
 } from './format';
-import {Course, CourseCategory, CourseState} from '../../../common/entity/Course';
-import {getTransactionLog} from '../../../common/transactionlog';
+import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
+import { getTransactionLog } from '../../../common/transactionlog';
 import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourseEvent';
 import CancelSubcourseEvent from '../../../common/transactionlog/types/CancelSubcourseEvent';
 import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourseEvent';
-import {CourseTag} from '../../../common/entity/CourseTag';
-import {Subcourse} from '../../../common/entity/Subcourse';
-import {Lecture} from '../../../common/entity/Lecture';
-import {Pupil} from '../../../common/entity/Pupil';
-import {sendSubcourseCancelNotifications, sendInstructorGroupMail} from '../../../common/mails/courses';
+import { CourseTag } from '../../../common/entity/CourseTag';
+import { Subcourse } from '../../../common/entity/Subcourse';
+import { Lecture } from '../../../common/entity/Lecture';
+import { Pupil } from '../../../common/entity/Pupil';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
 import {
     bbbMeetingCache,
     createBBBMeeting,
@@ -32,8 +32,7 @@ import {
     BBBMeeting,
     createOrUpdateCourseAttendanceLog
 } from '../../../common/util/bbb';
-import {isJoinableCourse} from './utils';
-
+import { isJoinableCourse } from './utils';
 
 const logger = getLogger();
 
@@ -228,16 +227,16 @@ async function getCourses(student: Student | undefined,
             .leftJoinAndSelect("lecture.instructor", "lecinstructor");
 
         if (instructorId) {
-            qb.where("instructor.wix_id = :id", {id: student.wix_id});
+            qb.where("instructor.wix_id = :id", { id: student.wix_id });
         } else if (participantId) {
-            qb.where("participant.wix_id = :id", {id: pupil.wix_id});
+            qb.where("participant.wix_id = :id", { id: pupil.wix_id });
         }
 
         if (stateFilters.length > 0) {
             if (instructorId || participantId) {
-                qb.andWhere("course.courseState IN (:...states)", {states: stateFilters});
+                qb.andWhere("course.courseState IN (:...states)", { states: stateFilters });
             } else {
-                qb.where("course.courseState IN (:...states)", {states: stateFilters});
+                qb.where("course.courseState IN (:...states)", { states: stateFilters });
             }
         }
 
@@ -462,7 +461,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
     let apiCourse: ApiCourse;
     try {
-        const course = await entityManager.findOne(Course, {id: course_id});
+        const course = await entityManager.findOne(Course, { id: course_id });
 
         if (authenticatedStudent) {
             for (let i = 0; i < course.instructors.length; i++) {
@@ -707,7 +706,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
             wix_id: apiCourse.instructors[i]
         });
     }
-    const instructors = await entityManager.find(Student, {where: filters});
+    const instructors = await entityManager.find(Student, { where: filters });
     if (instructors.length != apiCourse.instructors.length) {
         logger.warn(`Field 'instructors' contains invalid values: ${apiCourse.instructors.join(', ')}`);
         logger.debug(apiCourse);
@@ -757,7 +756,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
     }
     let tags: CourseTag[] = [];
     if (filters.length > 0) {
-        tags = await entityManager.find(CourseTag, {where: filters});
+        tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
             logger.debug(apiCourse, tags);
@@ -878,7 +877,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to add subcourse to non existent course (ID ${courseId})`);
         logger.debug(student, apiSubcourse);
@@ -905,7 +904,7 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
             wix_id: apiSubcourse.instructors[i]
         });
     }
-    const instructors = await entityManager.find(Student, {where: filters});
+    const instructors = await entityManager.find(Student, { where: filters });
     if (instructors.length == 0 || instructors.length != apiSubcourse.instructors.length) {
         logger.warn(`Field 'instructors' contains invalid values: ${apiSubcourse.instructors.join(', ')}`);
         logger.debug(apiSubcourse);
@@ -1040,14 +1039,14 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to add lecture to non-existent course (ID ${courseId})`);
         logger.debug(student, apiLecture);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn(`User tried to add lecture to non-existent subcourse (ID ${subcourseId})`);
         logger.debug(student, apiLecture);
@@ -1202,7 +1201,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
 
     // Check access right
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to edit non-existent course (ID ${courseId})`);
         logger.debug(student, apiCourse);
@@ -1235,7 +1234,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
             wix_id: apiCourse.instructors[i]
         });
     }
-    const instructors = await entityManager.find(Student, {where: filters});
+    const instructors = await entityManager.find(Student, { where: filters });
     if (instructors.length != apiCourse.instructors.length) {
         logger.warn(`Field 'instructors' contains invalid values: ${apiCourse.instructors.join(', ')}`);
         logger.debug(apiCourse);
@@ -1311,7 +1310,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
     let tags: CourseTag[] = [];
     if (filters.length > 0) {
-        tags = await entityManager.find(CourseTag, {where: filters});
+        tags = await entityManager.find(CourseTag, { where: filters });
         if (tags.length != apiCourse.tags.length) {
             logger.warn(`Field 'tags' contains invalid values: ${apiCourse.tags.join(', ')}`);
             logger.debug(apiCourse, tags);
@@ -1422,14 +1421,14 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to edit subcourse of non existent course (ID ${courseId})`);
         logger.debug(student, apiSubcourse);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn(`User tried to edit non-existent subcourse (ID ${subcourseId})`);
         logger.debug(student, apiSubcourse);
@@ -1456,7 +1455,7 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
             wix_id: apiSubcourse.instructors[i]
         });
     }
-    const instructors = await entityManager.find(Student, {where: filters});
+    const instructors = await entityManager.find(Student, { where: filters });
     if (instructors.length == 0 || instructors.length != apiSubcourse.instructors.length) {
         logger.warn(`Field 'instructors' contains invalid values: ${apiSubcourse.instructors.join(', ')}`);
         logger.debug(apiSubcourse);
@@ -1591,21 +1590,21 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to edit lecture of non-existent course (ID ${courseId})`);
         logger.debug(student, apiLecture);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn(`User tried to edit lecture of non-existent subcourse (ID ${subcourseId})`);
         logger.debug(student, apiLecture);
         return 404;
     }
 
-    const lecture = await entityManager.findOne(Lecture, {id: lectureId, subcourse: subcourse});
+    const lecture = await entityManager.findOne(Lecture, { id: lectureId, subcourse: subcourse });
     if (lecture == undefined) {
         logger.warn(`User tried to edit non-existent lecture (ID ${subcourseId})`);
         logger.debug(student, apiLecture);
@@ -1735,7 +1734,7 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
     }
 
     // Check access right
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to cancel non-existent course (ID ${courseId})`);
         logger.debug(student);
@@ -1856,14 +1855,14 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to cancel subcourse of non existent course (ID ${courseId})`);
         logger.debug(student);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn(`User tried to cancel non-existent subcourse (ID ${subcourseId})`);
         logger.debug(student);
@@ -1970,21 +1969,21 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
     }
 
     // Check access rights
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
         logger.warn(`User tried to delete a lecture of non-existent course (ID ${courseId})`);
         logger.debug(student);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn(`User tried to delete a lecture of non-existent subcourse (ID ${subcourseId})`);
         logger.debug(student);
         return 404;
     }
 
-    const lecture = await entityManager.findOne(Lecture, {id: lectureId, subcourse: subcourse});
+    const lecture = await entityManager.findOne(Lecture, { id: lectureId, subcourse: subcourse });
     if (lecture == undefined) {
         logger.warn(`User tried to delete non-existent lecture (ID ${subcourseId})`);
         logger.debug(student);
@@ -2095,8 +2094,8 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
     let status = 204;
     await entityManager.transaction(async em => {
         try {
-            const course = await em.findOneOrFail(Course, {id: courseId, courseState: CourseState.ALLOWED});
-            const subcourse = await em.findOneOrFail(Subcourse, {id: subcourseId, course: course, published: true});
+            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
 
             // Check if course is full
             if (subcourse.maxParticipants <= subcourse.participants.length) {
@@ -2205,8 +2204,8 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
     await entityManager.transaction(async em => {
         // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
         try {
-            const course = await em.findOneOrFail(Course, {id: courseId});
-            const subcourse = await em.findOneOrFail(Subcourse, {id: subcourseId, course: course});
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
 
             // Check if pupil is participant
             let index: number = undefined;
@@ -2295,14 +2294,14 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     const entityManager = getManager();
-    const course = await entityManager.findOne(Course, {id: courseId});
+    const course = await entityManager.findOne(Course, { id: courseId });
 
     if (course == undefined) {
         logger.warn("Tried to send group mail to invalid course");
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: subcourseId, course: course});
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
         logger.warn("Tried to send group mail to invalid subcourse");
         return 404;

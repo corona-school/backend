@@ -6,24 +6,19 @@ import {
     ManyToOne,
     UpdateDateColumn
 } from "typeorm";
-import {Student} from "./Student";
 import {Pupil} from "./Pupil";
-import {Course} from "./Course";
-import {Subcourse} from "./Subcourse";
 import {Lecture} from "./Lecture";
-import {JoinColumn, OneToOne} from "typeorm/index";
+import {JoinColumn} from "typeorm";
 
 @Entity()
 export class CourseAttendanceLog {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({
-        default: () => "NOW()"
-    })
+    @CreateDateColumn({ type: "timestamp" })
     createdAt: Date;
 
-    @Column({ type: "timestamp", nullable: true })
+    @UpdateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
     @Column({ nullable: true })
@@ -34,9 +29,6 @@ export class CourseAttendanceLog {
 
     @ManyToOne(type => Pupil, pupil => pupil.courseAttendanceLog, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})
     pupil: Pupil;
-
-    @ManyToOne(type => Subcourse, subcourse => subcourse.courseAttendanceLog, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})
-    subcourse: Subcourse;
 
     @ManyToOne(type => Lecture, lecture => lecture.courseAttendanceLog, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})
     @JoinColumn()

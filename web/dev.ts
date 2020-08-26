@@ -13,7 +13,6 @@ import { Subcourse } from "../common/entity/Subcourse";
 import { Lecture } from "../common/entity/Lecture";
 import { InstructorScreening } from "../common/entity/InstructorScreening";
 import {CourseAttendanceLog} from "../common/entity/CourseAttendanceLog";
-import {Attendee} from "../common/util/bbb";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -433,34 +432,34 @@ export async function setupDevDB() {
     lecture3.subcourse = subcourse2;
     lecture3.duration = 120;
     lecture3.start = new Date(year, month, day + 10, 19, 0, 0, 0);
-    lecture3.instructor = s1, s2;
+    lecture3.instructor = s1;
 
     const lecture4: Lecture = new Lecture();
     lecture4.subcourse = subcourse2;
     lecture4.duration = 120;
     lecture4.start = new Date(year, month, day + 14, 21, 0, 0, 0);
-    lecture4.instructor = s1, s2;
+    lecture4.instructor = s1;
 
     // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
     lecture5.subcourse = subcourse2;
     lecture5.duration = 120;
-    lecture5.start = new Date(year, month, day + 16, 4, 0, 0, 0);
-    lecture5.instructor = s1, s2;
+    lecture5.start = new Date(year, month, now.getDate(), 4, 0, 0, 0);
+    lecture5.instructor = s1;
 
     // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
     lecture6.subcourse = subcourse2;
     lecture6.duration = 60;
-    lecture6.start = new Date(year, month, day + 16, now.getHours(), now.getMinutes() - 1, 0, 0);
-    lecture6.instructor = s1, s2;
+    lecture6.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture6.instructor = s1;
 
     // today's second active lecture for courseAttendanceLog
     const lecture7: Lecture = new Lecture();
     lecture7.subcourse = subcourse5;
     lecture7.duration = 60;
-    lecture7.start = new Date(year, month, day + 16, now.getHours(), now.getMinutes() - 1, 0, 0);
-    lecture7.instructor = s1, s2;
+    lecture7.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture7.instructor = s1;
 
     const lecture8: Lecture = new Lecture();
     lecture8.subcourse = subcourse3;
@@ -472,7 +471,7 @@ export async function setupDevDB() {
     lecture9.subcourse = subcourse4;
     lecture9.duration = 120;
     lecture9.start = new Date(year, month, day + 15, 11, 0, 0, 0);
-    lecture9.instructor = s1, s2;
+    lecture9.instructor = s1;
 
     lectures.push(lecture1, lecture2, lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9);
 
@@ -574,23 +573,21 @@ export async function setupDevDB() {
     // Test data for course attendance log
 
     for (let i = 0; i < pupils.length; i++) {
-        // pupil attended lecture in the past of subcourse 2, lecture 3
+        // pupil attended lecture in the past
         const courseAttendanceLog1 = new CourseAttendanceLog();
         courseAttendanceLog1.createdAt = new Date("2020-08-10 08:00:00.983055");
         courseAttendanceLog1.ip = "localhost";
         courseAttendanceLog1.pupil = pupils[i];
-        courseAttendanceLog1.subcourse = subcourse2;
         courseAttendanceLog1.lecture = lecture3;
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
         console.log("Inserted Dev CourseAttendanceLog " + i);
 
-        // pupil attended lecture today of subcourse 5, lecture 9, but lecture is over now
-        const courseAttendanceLog3 = new CourseAttendanceLog();
-        courseAttendanceLog3.ip = "localhost";
-        courseAttendanceLog3.pupil = pupils[i];
-        courseAttendanceLog3.subcourse = subcourse5;
-        courseAttendanceLog3.lecture = lecture5;
-        await entityManager.save(CourseAttendanceLog, courseAttendanceLog3);
+        // pupil attended today's lecture, which is already over
+        const courseAttendanceLog2 = new CourseAttendanceLog();
+        courseAttendanceLog2.ip = "localhost";
+        courseAttendanceLog2.pupil = pupils[i];
+        courseAttendanceLog2.lecture = lecture5;
+        await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
         console.log("Inserted Dev CourseAttendanceLog " + i);
     }
 
