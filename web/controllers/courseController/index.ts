@@ -446,7 +446,7 @@ export async function getCourseHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getCourse(student: Student | undefined, pupil: Pupil | undefined, course_id: number): Promise<ApiCourse | number> {
+async function getCourse(student: Student | undefined, pupil: Pupil | undefined, courseId: number): Promise<ApiCourse | number> {
     const entityManager = getManager();
 
     let authenticatedStudent = false;
@@ -461,7 +461,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
     let apiCourse: ApiCourse;
     try {
-        const course = await entityManager.findOne(Course, { id: course_id });
+        const course = await entityManager.findOne(Course, { id: courseId });
 
         if (authenticatedStudent) {
             for (let i = 0; i < course.instructors.length; i++) {
