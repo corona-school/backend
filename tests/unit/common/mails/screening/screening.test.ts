@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import {assert} from "chai";
 import * as sinon from "sinon";
 import * as screening from "../../../../../common/mails/screening";
 import * as mailHandler from "../../../../../common/mails";

@@ -52,6 +52,23 @@ export async function setupDevDB() {
     p.openMatchRequestCount = 0;
     pupils.push(p);
 
+    p = new Pupil();
+    p.firstname = "Tom";
+    p.lastname = "Müller2";
+    p.isParticipant = true;
+    p.isPupil = false;
+    p.active = true;
+    p.email = "müller2@hotmail.de";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 200000);
+    p.authToken = sha512("authtokenP3");
+    p.wix_id = "00000000-0000-0001-0002-1b4c4c526365";
+    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
+    p.subjects = JSON.stringify(["Spanisch", "Deutsch"]);
+    p.grade = "6. Klasse";
+    p.openMatchRequestCount = 0;
+    pupils.push(p);
+
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
         console.log("Inserted Dev Pupil " + i);
@@ -113,6 +130,44 @@ export async function setupDevDB() {
     ]);
     s3.openMatchRequestCount = 1;
     students.push(s3);
+
+    const s4 = new Student();
+    s4.firstname = "Leon2";
+    s4.lastname = "Erath2";
+    s4.active = true;
+    s4.email = "leon-erath@test.de2";
+    s4.isInstructor = true;
+    s4.isStudent = false;
+    s4.verification = null;
+    s4.verifiedAt = new Date(new Date().getTime() - 110000);
+    s4.authToken = sha512("authtokenS4");
+    s4.wix_id = "00000000-0000-0002-0001-1b4c4c5263126";
+    s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s4.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
+    s4.openMatchRequestCount = 1;
+    students.push(s4);
+
+    const s5 = new Student();
+    s5.firstname = "Leon5";
+    s5.lastname = "Erath5";
+    s5.active = true;
+    s5.email = "leon-erath@test.de5";
+    s5.isInstructor = false;
+    s5.isStudent = true;
+    s5.verification = null;
+    s5.verifiedAt = new Date(new Date().getTime() - 110000);
+    s5.authToken = sha512("authtokenS5");
+    s5.wix_id = "00000000-0000-0002-0001-1b4c4c5263213132";
+    s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s5.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
+    s5.openMatchRequestCount = 1;
+    students.push(s5);
 
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
@@ -358,7 +413,7 @@ export async function setupDevDB() {
 
     const subcourse2 = new Subcourse();
     subcourse2.course = course2;
-    subcourse2.joinAfterStart = true;
+    subcourse2.joinAfterStart = false;
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];

@@ -1,5 +1,5 @@
 import mailjet from "../../../../common/mails/mailjet";
-import * as assert from "assert";
+import {assert} from "chai";
 
 describe("The mailjet API", function () {
     it("sends mail via mailjet API", function () {
