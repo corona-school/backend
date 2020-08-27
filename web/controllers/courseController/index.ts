@@ -2349,6 +2349,8 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse Authentication
  * @apiUse Course
  *
+ * @apiParam (JSON Body) {int} subcourseId ID of the subcourse of the course that should be joined
+ *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
  *
