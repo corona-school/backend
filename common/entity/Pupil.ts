@@ -1,4 +1,4 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany } from "typeorm";
 import { Match } from "./Match";
 import { Person } from "./Person";
 import { Subcourse } from './Subcourse';
