@@ -12,7 +12,6 @@ import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
 import { ApiCourseUpdate } from "../../common/dto/ApiCourseUpdate";
-import {CourseAttendanceLog} from "./CourseAttendanceLog";
 
 export enum CourseState {
     CREATED = "created",
