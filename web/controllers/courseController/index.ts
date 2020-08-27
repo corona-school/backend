@@ -2366,7 +2366,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
     let course: ApiCourse;
     let meeting: BBBMeeting;
     try {
-        if (req.params.id != undefined) {
+        if (subcourseId != null) {
             let authenticatedStudent = false;
             let authenticatedPupil = false;
             if (res.locals.user instanceof Student) {
@@ -2382,8 +2382,8 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                     if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
-                        if (bbbMeetingCache.has(req.params.id)) {
-                            meeting = bbbMeetingCache.get(req.params.id);
+                        if (bbbMeetingCache.has(subcourseId)) {
+                            meeting = bbbMeetingCache.get(subcourseId);
                             res.send({
                                 url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
                             });
@@ -2393,13 +2393,13 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             let obj = await getCourse(
                                 authenticatedStudent ? res.locals.user : undefined,
                                 authenticatedPupil ? res.locals.user : undefined,
-                                Number.parseInt(req.params.id, 10)
+                                Number.parseInt(subcourseId, 10)
                             );
                             if (typeof obj == 'number') {
                                 status = obj;
                             } else {
                                 course = obj;
-                                meeting = await createBBBMeeting(course.name, req.params.id);
+                                meeting = await createBBBMeeting(course.name, subcourseId);
                                 res.send({
                                     url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
                                 });
@@ -2407,10 +2407,10 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         }
 
                     } else if (authenticatedPupil) {
-                        let meetingIsRunning: boolean = await isBBBMeetingRunning(req.params.id);
-                        if (bbbMeetingCache.has(req.params.id) && meetingIsRunning) {
+                        let meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
+                        if (bbbMeetingCache.has(subcourseId) && meetingIsRunning) {
                             let user: Pupil = res.locals.user;
-                            meeting = bbbMeetingCache.get(req.params.id);
+                            meeting = bbbMeetingCache.get(subcourseId);
 
                             res.send({
                                 url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id)
@@ -2438,7 +2438,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
             }
         } else {
             status = 400;
-            logger.error("Expected id parameter on route");
+            logger.error("Expected subcourseId in request body");
         }
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
@@ -2449,7 +2449,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 }
 
 /**
- * @api {GET} /course/:id/meeting getCourseMeeting
+ * @api {POST} /course/:id/meeting getCourseMeeting
  * @apiVersion 1.1.0
  * @apiDescription
  * Get the BBB-Meeting for a given course
@@ -2470,13 +2470,14 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  * @apiUse StatusInternalServerError
  */
 export async function getCourseMeetingHandler(req: Request, res: Response) {
+    let subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
     let status = 200;
     let meeting: BBBMeeting;
     try {
-        if (req.params.id != undefined) {
+        if (subcourseId != null) {
             if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
 
-                meeting = bbbMeetingCache.get(req.params.id);
+                meeting = bbbMeetingCache.get(subcourseId);
 
                 if (meeting) {
                     res.json(meeting);
@@ -2492,7 +2493,7 @@ export async function getCourseMeetingHandler(req: Request, res: Response) {
             }
         } else {
             status = 400;
-            logger.error("Expected id parameter on route");
+            logger.error("Expected subcourseId in request body");
         }
 
     } catch (e) {
