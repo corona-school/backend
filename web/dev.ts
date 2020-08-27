@@ -455,6 +455,31 @@ export async function setupDevDB() {
 
     subcourses.push(subcourse5);
 
+    const subcourse6 = new Subcourse();
+    subcourse6.course = course5;
+    subcourse6.joinAfterStart = true;
+    subcourse6.minGrade = 3;
+    subcourse6.maxGrade = 10;
+    subcourse6.instructors = [s1, s2];
+    subcourse6.maxParticipants = 10;
+    subcourse6.published = true;
+    subcourse6.participants = pupils;
+
+    subcourses.push(subcourse6);
+
+    // courseId and subcourseId should be different. Used for testing courseAttendanceLog
+    const subcourse7 = new Subcourse();
+    subcourse7.course = course5;
+    subcourse7.joinAfterStart = true;
+    subcourse7.minGrade = 3;
+    subcourse7.maxGrade = 10;
+    subcourse7.instructors = [s1, s2];
+    subcourse7.maxParticipants = 10;
+    subcourse7.published = true;
+    subcourse7.participants = pupils;
+
+    subcourses.push(subcourse7);
+
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
         console.log("Inserted SubCourse.");
@@ -509,7 +534,7 @@ export async function setupDevDB() {
 
     // today's second active lecture for courseAttendanceLog
     const lecture7: Lecture = new Lecture();
-    lecture7.subcourse = subcourse5;
+    lecture7.subcourse = subcourse7;
     lecture7.duration = 60;
     lecture7.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
     lecture7.instructor = s1;

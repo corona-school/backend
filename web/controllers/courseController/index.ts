@@ -2360,13 +2360,15 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse StatusInternalServerError
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
-    let subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
-    let ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
+    const courseId = req.params.id ? req.params.id : null;
+    const subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
+    const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
     let status = 200;
     let course: ApiCourse;
     let meeting: BBBMeeting;
+
     try {
-        if (subcourseId != null) {
+        if (courseId != null && subcourseId != null) {
             let authenticatedStudent = false;
             let authenticatedPupil = false;
             if (res.locals.user instanceof Student) {
@@ -2393,8 +2395,9 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             let obj = await getCourse(
                                 authenticatedStudent ? res.locals.user : undefined,
                                 authenticatedPupil ? res.locals.user : undefined,
-                                Number.parseInt(subcourseId, 10)
+                                Number.parseInt(courseId, 10)
                             );
+
                             if (typeof obj == 'number') {
                                 status = obj;
                             } else {
@@ -2438,7 +2441,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
             }
         } else {
             status = 400;
-            logger.error("Expected subcourseId in request body");
+            logger.error("Expected courseId is not on route or subcourseId is not in request body");
         }
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
