@@ -430,7 +430,7 @@ export async function setupDevDB() {
     subcourse3.maxParticipants = 10;
     subcourse3.published = true;
 
-    subcourses.push(subcourse2);
+    subcourses.push(subcourse3);
 
     const subcourse4 = new Subcourse();
     subcourse4.course = course4;
