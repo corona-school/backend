@@ -22,6 +22,7 @@ import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubj
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
 import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
+import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 
 const logger = getLogger();
 
@@ -378,6 +379,8 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
+        apiResponse.university = person.university;
+        apiResponse.state = person.state;
 
         let matches = await entityManager.find(Match, {
             student: person,
@@ -422,6 +425,8 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
+        apiResponse.state = person.state;
+        apiResponse.schoolType = person.schooltype;
 
         let matches = await entityManager.find(Match, {
             pupil: person,
@@ -493,6 +498,8 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
     let type: ObjectType<Person>;
     if (person instanceof Student) {
+        type = Student;
+        // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
         if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
@@ -502,8 +509,22 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         }
 
         person.openMatchRequestCount = req.matchesRequested;
-        type = Student;
+
+        // ++++ UNIVERSITY ++++
+        person.university = req.university;
+
+        // ++++ STATE ++++
+        const state = EnumReverseMappings.State(req.state);
+        if (!state) {
+            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+            return 400;
+        }
+        person.state = state;
+
     } else if (person instanceof Pupil) {
+        type = Pupil;
+
+        // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, {
             pupil: person,
@@ -520,13 +541,28 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         person.openMatchRequestCount = req.matchesRequested;
 
+        // ++++ GRADE ++++
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
             person.grade = req.grade + ". Klasse";
         } else {
             logger.warn("User who is a pupil wants to set an invalid grade o! It is ignored.");
         }
 
-        type = Pupil;
+        // ++++ SCHOOL TYPE ++++
+        const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
+        if (!schoolType) {
+            logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
+            return 400;
+        }
+        person.schooltype = schoolType;
+
+        // ++++ STATE ++++
+        const state = EnumReverseMappings.State(req.state);
+        if (!state) {
+            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+            return 400;
+        }
+        person.state = state;
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);
