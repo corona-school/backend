@@ -23,6 +23,7 @@ import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEven
 import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
+import * as moment from "moment-timezone";
 
 const logger = getLogger();
 
@@ -381,6 +382,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
         apiResponse.university = person.university;
         apiResponse.state = person.state;
+        apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
 
         let matches = await entityManager.find(Match, {
             student: person,
@@ -427,6 +429,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
+        apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
 
         let matches = await entityManager.find(Match, {
             pupil: person,
@@ -521,6 +524,13 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         }
         person.state = state;
 
+        // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
+        if (req.lastUpdatedSettingsViaBlocker) {
+            person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
+        }
+        else {
+            person.lastUpdatedSettingsViaBlocker = null;
+        }
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -563,6 +573,14 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
             return 400;
         }
         person.state = state;
+
+        // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
+        if (req.lastUpdatedSettingsViaBlocker) {
+            person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
+        }
+        else {
+            person.lastUpdatedSettingsViaBlocker = null;
+        }
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);

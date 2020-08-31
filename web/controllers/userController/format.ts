@@ -17,6 +17,7 @@
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
+ * @apiSuccess (User Object) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") in the frontend
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -128,6 +129,7 @@ export class ApiGetUser {
     state?: string;
     university?: string;
     schoolType?: string;
+    lastUpdatedSettingsViaBlocker: number;
 }
 
 /**
@@ -141,6 +143,7 @@ export class ApiGetUser {
  * @apiParam (User Personal) {string} state the student's/pupil's state
  * @apiParam (User Personal) {string} university <i>Only for students:</i> student's university
  * @apiParam (User Personal) {string} schoolType <i>Only for pupils:</i> School Type of the pupil
+ * @apiParam (User Personal) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") that should be set by the frontend
  * @apiParamExample {json} Pupil
  *      {
  *          "firstname": "John",
@@ -163,6 +166,7 @@ export class ApiPutUser {
     state?: string;
     university?: string;
     schoolType?: string;
+    lastUpdatedSettingsViaBlocker: number;
 }
 
 /**
