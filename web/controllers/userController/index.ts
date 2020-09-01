@@ -369,6 +369,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     apiResponse.lastname = person.lastname;
     apiResponse.email = person.email;
     apiResponse.active = person.active;
+    apiResponse.registrationDate = moment(person.wix_creation_date).unix();
 
     if (person instanceof Student) {
         apiResponse.type = "student";

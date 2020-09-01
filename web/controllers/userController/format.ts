@@ -18,6 +18,7 @@
  * @apiSuccess (User Object) {Match[]} matches List of current matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
  * @apiSuccess (User Object) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") in the frontend
+ * @apiSuccess (User Object) {number} registrationDate The unix timestamp of when the user registered
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -130,6 +131,7 @@ export class ApiGetUser {
     university?: string;
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
+    registrationDate: number;
 }
 
 /**
