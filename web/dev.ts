@@ -13,6 +13,7 @@ import { Subcourse } from "../common/entity/Subcourse";
 import { Lecture } from "../common/entity/Lecture";
 import { InstructorScreening } from "../common/entity/InstructorScreening";
 import {CourseAttendanceLog} from "../common/entity/CourseAttendanceLog";
+import { Division, Expertise, Mentor } from "../common/entity/Mentor";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -206,6 +207,33 @@ export async function setupDevDB() {
 
     await entityManager.save(ParticipationCertificate, pc);
     console.log("Inserted a certificate with ID: " + pc.uuid);
+
+    // mentor
+
+    const mentors: Mentor[] = [];
+
+    const mentor1 = new Mentor();
+    mentor1.firstname = "Aurelie";
+    mentor1.lastname = "Streich";
+    mentor1.active = true;
+    mentor1.email = "aurelie.streich@example.com";
+    mentor1.verification = null;
+    mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
+    mentor1.authToken = sha512("authtokenM3");
+    mentor1.division = [Division.EVENTS, Division.FACEBOOK];
+    mentor1.expertise = [Expertise.SPECIALIZED];
+    mentor1.subjects = null;
+    mentor1.teachingExperience = null;
+    mentor1.message = "text";
+    mentor1.description ="text";
+    mentor1.imageUrl = null;
+
+    mentors.push(mentor1);
+
+    for (let i = 0; i < mentors.length; i++) {
+        await entityManager.save(Mentor, mentors[i]);
+        console.log("Inserted Dev Mentor " + i);
+    }
 
     // course tags
     const tags: CourseTag[] = [];
