@@ -29,10 +29,10 @@ import {
     bbbMeetingCache,
     createBBBMeeting,
     isBBBMeetingRunning,
-    BBBMeeting,
     createOrUpdateCourseAttendanceLog
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
+import {BBBMeeting} from "../userController/format";
 
 const logger = getLogger();
 
@@ -2334,34 +2334,34 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 }
 
 /**
- * @api {POST} /course/:id/meeting/join JoinCourseMeeting
+ * @api {GET} /course/:id/subcourse/:subid/meeting GetCourseMeeting
  * @apiVersion 1.1.0
  * @apiDescription
- * Joins the BBB-Meeting for a given course
+ * Get the BBB-Meeting for a given subcourse
  *
- * This endpoint allows joining the BBB-Meeting of a course.
- * If the user is the instructor of the course the Meeting gets created with this call.
- * The other participants can only join after the instructor created the meeting with this endpoint
+ * This endpoint provides the BBB-Meeting of a subcourse.
  *
- * @apiName JoinCourseMeeting
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName GetCourseMeeting
  * @apiGroup Courses
  *
  * @apiUse Authentication
- * @apiUse Course
- *
- * @apiParam (JSON Body) {int} subcourseId ID of the subcourse of the course that should be joined
+ * @apiUse BBBMeeting
+ * @apiUse BBBMeetingReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/meeting/join
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
- * @apiUse StatusForbidden
+ * @apiUse StatusUnauthorized
  * @apiUse StatusInternalServerError
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
     const courseId = req.params.id ? req.params.id : null;
-    const subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
+    const subcourseId = req.params.subid ? req.params.subid : null;
     const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
     let status = 200;
     let course: ApiCourse;

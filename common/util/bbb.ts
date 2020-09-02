@@ -9,6 +9,7 @@ import {getManager} from "typeorm";
 import {Lecture} from "../entity/Lecture";
 import {getTransactionLog} from "../transactionlog";
 import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
+import {BBBMeeting} from "../../web/controllers/userController/format";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -136,27 +137,6 @@ function mapJSONtoBBBMeeting(o: any): BBBMeeting {
                                                                       o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
-export class BBBMeeting {
-    meetingID: string;
-    meetingName: string;
-    attendeePW: string;
-    moderatorPW: string;
-
-    attendeeUrl: (userName: string, userID: string) => string;
-    moderatorUrl: (userName: string) => string;
-
-    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-                attendeeUrl: (userName: string, userID: string) => string, moderatorUrl: (userName: string) => string) {
-        this.meetingID = meetingID;
-        this.meetingName = meetingName;
-        this.attendeePW = attendeePW;
-        this.moderatorPW = moderatorPW;
-
-        this.attendeeUrl = attendeeUrl;
-        this.moderatorUrl = moderatorUrl;
-    }
-}
-
 export class Attendee {
     wix_id: string;
     fullName: string;
@@ -184,17 +164,6 @@ function mapJSONtoAttendee(o: any): Attendee {
                         o && o.role && o.role.length > 0 && o.role[0]);
 }
 
-function lessThanDate(date1: Date, date2: Date): boolean {
-    if (date1.getFullYear() < date2.getFullYear()) {
-        return true;
-    } else if (date1.getMonth() < date2.getMonth()) {
-        return true;
-    } else if (date1.getDate() < date2.getDate()) {
-        return true;
-    }
-    return false;
-}
-
 // Returns active lecture of the subcourse, assuming that there is only one active lecture of the subcourse
 async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture> {
     const entityManager = getManager();
@@ -202,11 +171,14 @@ async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture
         .createQueryBuilder(Lecture, "lecture")
         .where("lecture.subcourse.id = :id", {id: subcourseId})
         .getMany();
-
+    const now = new Date();
     // check if lecture is running now (lecture.start + duration > now)
     for (const lecture of lectures) {
-        if (!lessThanDate(lecture.start, new Date())
-            && (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
+
+        if (lecture.start.getFullYear() == now.getFullYear() &&
+            lecture.start.getMonth() == now.getMonth() &&
+            lecture.start.getDate() == now .getDate() &&
+            (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
             return lecture;
         }
     }
@@ -228,7 +200,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
     const courseAttendanceLog = new CourseAttendanceLog();
-
+    const now = new Date();
     if (subcourseId == null) {
         logger.error("Can't save new course attendance: subcourseId is null");
         logger.debug(courseAttendanceLog);
@@ -236,9 +208,18 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
             const logToUpdate = await getCourseAttendanceLog(activeLecture.id, pupil.id);
+            // Update log
             if (logToUpdate) {
-                // Update log
-                logToUpdate.attendedTime += courseAttendanceLogInterval;
+                // To prevent a high attendance time through rejoining check the absence time
+                // If absence time (difference between now and updatedAt) is shorter than interval time, add abscence time to attended time
+                // Else add courseAttendanceLogInterval to attendedTime
+                const absenceTime = now.getTime() - logToUpdate.updatedAt.getTime();
+                if (absenceTime < courseAttendanceLogInterval) {
+                    logToUpdate.attendedTime += absenceTime;
+                } else {
+                    logToUpdate.attendedTime += courseAttendanceLogInterval;
+                }
+
                 await entityManager.save(CourseAttendanceLog, logToUpdate);
                 await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
                 logger.info("Successfully updated log with id: ", logToUpdate.id);
