@@ -26,6 +26,10 @@
  *          "lastname": "Doe",
  *          "email": "john.doe@example.com",
  *          "type": "pupil",
+ *          "isTutor": false,
+ *          "isInstructor": false,
+ *          "isPupil": true,
+ *          "isParticipant": false,
  *          "active": true,
  *          "grade": 7,
  *          "subjects": [
@@ -66,6 +70,8 @@
  *          "type": "student",
  *          "isTutor": true,
  *          "isInstructor": false,
+ *          "isPupil": false,
+ *          "isParticipant": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
  *          "instructorScreeningStatus": "ACCEPTED",
@@ -117,6 +123,8 @@ export class ApiGetUser {
     type: "student" | "pupil";
     isTutor?: boolean;
     isInstructor?: boolean;
+    isPupil?: boolean;
+    isParticipant?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
