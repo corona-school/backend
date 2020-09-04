@@ -33,8 +33,8 @@ export class AddMentor1599052171950 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP TABLE "mentor"`, undefined)
-        await queryRunner.query(`DROP TYPE "mentor_expertise_enum"`, undefined)
-        await queryRunner.query(`DROP TYPE "mentor_division_enum"`, undefined)
+        await queryRunner.query(`DROP TABLE "mentor"`, undefined);
+        await queryRunner.query(`DROP TYPE "mentor_expertise_enum"`, undefined);
+        await queryRunner.query(`DROP TYPE "mentor_division_enum"`, undefined);
     }
 }
