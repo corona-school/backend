@@ -13,7 +13,7 @@ export enum Expertise {
     LANGUAGE = "language difficulties and communication",
     SPECIALIZED = "specialized expertise in subjects",
     EDUCATIONAL = "educational and didactic expertise",
-    SUPPORT = "technical support",
+    TECHSUPPORT = "technical support",
     SELFORGANIZATION = "self-organization"
 }
 

@@ -1,6 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class AddMentor1599052171950 implements MigrationInterface {
+    name = 'AddMentor1599052171950';
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`CREATE TYPE "mentor_division_enum" AS ENUM ('facebook', 'email', 'events', 'video', 'supervision')`, undefined);
