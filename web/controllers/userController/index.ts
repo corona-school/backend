@@ -423,6 +423,8 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         }
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
+        apiResponse.isPupil = person.isPupil;
+        apiResponse.isParticipant = person.isParticipant;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
