@@ -29,10 +29,10 @@ import {
     bbbMeetingCache,
     createBBBMeeting,
     isBBBMeetingRunning,
-    createOrUpdateCourseAttendanceLog
+    createOrUpdateCourseAttendanceLog,
+    BBBMeeting
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
-import {BBBMeeting} from "../userController/format";
 
 const logger = getLogger();
 
@@ -2348,8 +2348,6 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiGroup Courses
  *
  * @apiUse Authentication
- * @apiUse BBBMeeting
- * @apiUse BBBMeetingReturn
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting

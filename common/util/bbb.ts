@@ -9,7 +9,6 @@ import {getManager} from "typeorm";
 import {Lecture} from "../entity/Lecture";
 import {getTransactionLog} from "../transactionlog";
 import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
-import {BBBMeeting} from "../../web/controllers/userController/format";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -137,6 +136,27 @@ function mapJSONtoBBBMeeting(o: any): BBBMeeting {
                                                                       o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
+export class BBBMeeting {
+    meetingID: string;
+    meetingName: string;
+    attendeePW: string;
+    moderatorPW: string;
+
+    attendeeUrl: (userName: string, userID: string) => string;
+    moderatorUrl: (userName: string) => string;
+
+    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
+                attendeeUrl: (userName: string, userID: string) => string, moderatorUrl: (userName: string) => string) {
+        this.meetingID = meetingID;
+        this.meetingName = meetingName;
+        this.attendeePW = attendeePW;
+        this.moderatorPW = moderatorPW;
+
+        this.attendeeUrl = attendeeUrl;
+        this.moderatorUrl = moderatorUrl;
+    }
+}
+
 export class Attendee {
     wix_id: string;
     fullName: string;
@@ -178,7 +198,7 @@ async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture
         if (lecture.start.getFullYear() == now.getFullYear() &&
             lecture.start.getMonth() == now.getMonth() &&
             lecture.start.getDate() == now .getDate() &&
-            (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
+            (lecture.start.getTime() + (lecture.duration * 60000)) > now.getTime()) {
             return lecture;
         }
     }
