@@ -411,7 +411,7 @@ export async function setupDevDB() {
 
     const subcourse2 = new Subcourse();
     subcourse2.course = course2;
-    subcourse2.joinAfterStart = false;
+    subcourse2.joinAfterStart = true;
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];
@@ -492,63 +492,65 @@ export async function setupDevDB() {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
-    const day = now.getDay();
+    const date = now.getDate();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
 
     const lecture1: Lecture = new Lecture();
     lecture1.subcourse = subcourse1;
     lecture1.duration = 45;
-    lecture1.start = new Date(year, month, day + 5, 20, 0, 0, 0);
+    lecture1.start = new Date(year, month, date + 5, 20, 0, 0, 0);
     lecture1.instructor = s1;
 
     const lecture2: Lecture = new Lecture();
     lecture2.subcourse = subcourse1;
     lecture2.duration = 45;
-    lecture2.start = new Date(year, month, day + 6, 20, 0, 0, 0);
+    lecture2.start = new Date(year, month, date + 6, 20, 0, 0, 0);
     lecture2.instructor = s1;
 
     const lecture3: Lecture = new Lecture();
     lecture3.subcourse = subcourse2;
     lecture3.duration = 120;
-    lecture3.start = new Date(year, month, day + 10, 19, 0, 0, 0);
+    lecture3.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture3.instructor = s1;
 
     const lecture4: Lecture = new Lecture();
     lecture4.subcourse = subcourse2;
     lecture4.duration = 120;
-    lecture4.start = new Date(year, month, day + 14, 21, 0, 0, 0);
+    lecture4.start = new Date(year, month, date + 14, 21, 0, 0, 0);
     lecture4.instructor = s1;
 
     // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
     lecture5.subcourse = subcourse2;
     lecture5.duration = 120;
-    lecture5.start = new Date(year, month, now.getDate(), 4, 0, 0, 0);
+    lecture5.start = new Date(year, month, date, 4, 0, 0, 0);
     lecture5.instructor = s1;
 
     // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
     lecture6.subcourse = subcourse2;
     lecture6.duration = 60;
-    lecture6.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture6.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture6.instructor = s1;
 
     // today's second active lecture for courseAttendanceLog
     const lecture7: Lecture = new Lecture();
     lecture7.subcourse = subcourse7;
     lecture7.duration = 60;
-    lecture7.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture7.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture7.instructor = s1;
 
     const lecture8: Lecture = new Lecture();
     lecture8.subcourse = subcourse3;
     lecture8.duration = 90;
-    lecture8.start = new Date(year, month, day + 5, 10, 0, 0, 0);
+    lecture8.start = new Date(year, month, date + 5, 10, 0, 0, 0);
     lecture8.instructor = s2;
 
     const lecture9: Lecture = new Lecture();
     lecture9.subcourse = subcourse4;
     lecture9.duration = 120;
-    lecture9.start = new Date(year, month, day + 15, 11, 0, 0, 0);
+    lecture9.start = new Date(year, month, date + 15, 11, 0, 0, 0);
     lecture9.instructor = s2;
 
     lectures.push(lecture1, lecture2, lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9);
