@@ -162,6 +162,13 @@ export class Student extends Person {
     })
     lastSentInstructorScreeningInvitationDate: Date;
 
+    //Pupils have the same column
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastUpdatedSettingsViaBlocker: Date;
+
     async addScreeningResult(screeningResult: ApiScreeningResult) {
         this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
         this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;

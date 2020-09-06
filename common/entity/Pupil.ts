@@ -105,6 +105,14 @@ export class Pupil extends Person {
         default: 0 //everyone is default 0, i.e no priority
     })
     matchingPriority: number;
+
+    // Holds the date of when some settings were last updated by a blocking popup (aka "blocker") in the frontend.
+    // The frontend should set this value. It may be null, if it was never used by the frontend
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastUpdatedSettingsViaBlocker: Date;
 }
 
 export function getPupilWithEmail(manager: EntityManager, email: string) {
