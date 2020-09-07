@@ -63,7 +63,8 @@ createConnection().then(() => {
             origins = [
                 "http://localhost:3000",
                 "https://web-user-app-live.herokuapp.com",
-                "https://web-user-app-dev.herokuapp.com"
+                "https://web-user-app-dev.herokuapp.com",
+                /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/
             ];
         } else {
             origins = [

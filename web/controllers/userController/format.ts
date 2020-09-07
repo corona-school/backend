@@ -17,6 +17,8 @@
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
+ * @apiSuccess (User Object) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") in the frontend
+ * @apiSuccess (User Object) {number} registrationDate The unix timestamp of when the user registered
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -26,6 +28,10 @@
  *          "lastname": "Doe",
  *          "email": "john.doe@example.com",
  *          "type": "pupil",
+ *          "isTutor": false,
+ *          "isInstructor": false,
+ *          "isPupil": true,
+ *          "isParticipant": false,
  *          "active": true,
  *          "grade": 7,
  *          "subjects": [
@@ -66,6 +72,8 @@
  *          "type": "student",
  *          "isTutor": true,
  *          "isInstructor": false,
+ *          "isPupil": false,
+ *          "isParticipant": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
  *          "instructorScreeningStatus": "ACCEPTED",
@@ -117,6 +125,8 @@ export class ApiGetUser {
     type: "student" | "pupil";
     isTutor?: boolean;
     isInstructor?: boolean;
+    isPupil?: boolean;
+    isParticipant?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
@@ -125,6 +135,11 @@ export class ApiGetUser {
     subjects: ApiSubject[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
+    state?: string;
+    university?: string;
+    schoolType?: string;
+    lastUpdatedSettingsViaBlocker: number;
+    registrationDate: number;
 }
 
 /**
@@ -135,6 +150,10 @@ export class ApiGetUser {
  * @apiParam (User Personal) {string} lastname Last name
  * @apiParam (User Personal) {number} grade <i>Only for pupils:</i> Grade of the pupil
  * @apiParam (User Personal) {number} matchesRequested <i>Only for students:</i> Number of total match requests. A student may request at most 2 matches at a time and may have at most a total of 4 matches at the same time
+ * @apiParam (User Personal) {string} state the student's/pupil's state
+ * @apiParam (User Personal) {string} university <i>Only for students:</i> student's university
+ * @apiParam (User Personal) {string} schoolType <i>Only for pupils:</i> School Type of the pupil
+ * @apiParam (User Personal) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") that should be set by the frontend
  * @apiParamExample {json} Pupil
  *      {
  *          "firstname": "John",
@@ -154,6 +173,10 @@ export class ApiPutUser {
     lastname: string;
     grade?: number;
     matchesRequested?: number;
+    state?: string;
+    university?: string;
+    schoolType?: string;
+    lastUpdatedSettingsViaBlocker: number;
 }
 
 /**
