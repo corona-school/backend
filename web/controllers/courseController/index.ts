@@ -2334,7 +2334,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 }
 
 /**
- * @api {GET} /course/:id/subcourse/:subid/meeting GetCourseMeeting
+ * @api {GET} /course/:id/subcourse/:subid/meeting/join JoinCourseMeetingHandler
  * @apiVersion 1.1.0
  * @apiDescription
  * Get the BBB-Meeting for a given subcourse
@@ -2348,9 +2348,10 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiGroup Courses
  *
  * @apiUse Authentication
+ * @apiUse BBBMeetingReturn
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting/join
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
