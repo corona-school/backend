@@ -1,17 +1,18 @@
 import { getConnection, getManager } from "typeorm";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
 import { Student } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
+import { ParticipationCertificate } from "../common/entity/ParticipationCertificate";
 import { hashPassword } from "../common/util/hashing";
 import { CourseTag } from "../common/entity/CourseTag";
-import { Course, CourseState } from "../common/entity/Course";
-import { CourseCategory } from "../common/entity/Course";
+import { Course, CourseCategory, CourseState } from "../common/entity/Course";
 import { Subcourse } from "../common/entity/Subcourse";
 import { Lecture } from "../common/entity/Lecture";
 import { InstructorScreening } from "../common/entity/InstructorScreening";
+import {CourseAttendanceLog} from "../common/entity/CourseAttendanceLog";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -45,6 +46,23 @@ export async function setupDevDB() {
     p.verifiedAt = new Date(new Date().getTime() - 200000);
     p.authToken = sha512("authtokenP2");
     p.wix_id = "00000000-0000-0001-0002-1b4c4c526364";
+    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
+    p.subjects = JSON.stringify(["Spanisch", "Deutsch"]);
+    p.grade = "6. Klasse";
+    p.openMatchRequestCount = 0;
+    pupils.push(p);
+
+    p = new Pupil();
+    p.firstname = "Tom";
+    p.lastname = "Müller2";
+    p.isParticipant = true;
+    p.isPupil = false;
+    p.active = true;
+    p.email = "müller2@hotmail.de";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 200000);
+    p.authToken = sha512("authtokenP3");
+    p.wix_id = "00000000-0000-0001-0002-1b4c4c526365";
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify(["Spanisch", "Deutsch"]);
     p.grade = "6. Klasse";
@@ -111,6 +129,44 @@ export async function setupDevDB() {
     s3.openMatchRequestCount = 1;
     students.push(s3);
 
+    const s4 = new Student();
+    s4.firstname = "Leon2";
+    s4.lastname = "Erath2";
+    s4.active = true;
+    s4.email = "leon-erath@test.de2";
+    s4.isInstructor = true;
+    s4.isStudent = false;
+    s4.verification = null;
+    s4.verifiedAt = new Date(new Date().getTime() - 110000);
+    s4.authToken = sha512("authtokenS4");
+    s4.wix_id = "00000000-0000-0002-0001-1b4c4c5263126";
+    s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s4.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
+    s4.openMatchRequestCount = 1;
+    students.push(s4);
+
+    const s5 = new Student();
+    s5.firstname = "Leon5";
+    s5.lastname = "Erath5";
+    s5.active = true;
+    s5.email = "leon-erath@test.de5";
+    s5.isInstructor = false;
+    s5.isStudent = true;
+    s5.verification = null;
+    s5.verifiedAt = new Date(new Date().getTime() - 110000);
+    s5.authToken = sha512("authtokenS5");
+    s5.wix_id = "00000000-0000-0002-0001-1b4c4c5263213132";
+    s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
+    s5.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
+    s5.openMatchRequestCount = 1;
+    students.push(s5);
+
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
         console.log("Inserted Dev Student " + i);
@@ -135,8 +191,23 @@ export async function setupDevDB() {
         console.log("Inserted Dev Match " + i);
     }
 
-    // course tags
+    let pc = new ParticipationCertificate();
+    pc.uuid = randomBytes(5).toString('hex').toUpperCase();
+    pc.pupil = pupils[0];
+    pc.student = students[0];
+    pc.subjects = "Englisch, Deutsch";
+    pc.certificateDate = new Date();
+    pc.startDate = new Date();
+    pc.endDate = new Date();
+    pc.categories = "xyzipd";
+    pc.hoursTotal = 8;
+    pc.medium = "PC";
+    pc.hoursPerWeek = 8;
 
+    await entityManager.save(ParticipationCertificate, pc);
+    console.log("Inserted a certificate with ID: " + pc.uuid);
+
+    // course tags
     const tags: CourseTag[] = [];
 
     let t = new CourseTag();
@@ -199,7 +270,7 @@ export async function setupDevDB() {
     t.category = "club";
     tags.push(t);
 
-    t = new CourseTag();
+    const music = (t = new CourseTag());
     t.name = "Musik";
     t.identifier = "music";
     t.category = "club";
@@ -301,6 +372,22 @@ export async function setupDevDB() {
 
     courses.push(course4);
 
+    // for testing courseAttendanceLog
+    let course5 = new Course();
+    course5.instructors = [s1, s2];
+    course5.name =
+        "Gitarre lernen für Anfänger";
+    course5.outline = "Mit 3 Akkorden zum ersten Song";
+    course5.description =
+        "In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!";
+    course5.imageUrl = null;
+    course5.category = CourseCategory.CLUB;
+    course5.tags = [music];
+    course5.subcourses = [];
+    course5.courseState = CourseState.ALLOWED;
+
+    courses.push(course5);
+
     for (const course of courses) {
         await entityManager.save(Course, course);
 
@@ -324,12 +411,13 @@ export async function setupDevDB() {
 
     const subcourse2 = new Subcourse();
     subcourse2.course = course2;
-    subcourse2.joinAfterStart = true;
+    subcourse2.joinAfterStart = false;
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];
     subcourse2.maxParticipants = 10;
     subcourse2.published = true;
+    subcourse2.participants = pupils;
 
     subcourses.push(subcourse2);
 
@@ -345,7 +433,7 @@ export async function setupDevDB() {
     subcourses.push(subcourse2);
 
     const subcourse4 = new Subcourse();
-    subcourse4.course = course3;
+    subcourse4.course = course4;
     subcourse4.joinAfterStart = false;
     subcourse4.minGrade = 8;
     subcourse4.maxGrade = 11;
@@ -354,6 +442,43 @@ export async function setupDevDB() {
     subcourse4.published = true;
 
     subcourses.push(subcourse4);
+
+    const subcourse5 = new Subcourse();
+    subcourse5.course = course5;
+    subcourse5.joinAfterStart = true;
+    subcourse5.minGrade = 3;
+    subcourse5.maxGrade = 10;
+    subcourse5.instructors = [s1, s2];
+    subcourse5.maxParticipants = 10;
+    subcourse5.published = true;
+    subcourse5.participants = pupils;
+
+    subcourses.push(subcourse5);
+
+    const subcourse6 = new Subcourse();
+    subcourse6.course = course5;
+    subcourse6.joinAfterStart = true;
+    subcourse6.minGrade = 3;
+    subcourse6.maxGrade = 10;
+    subcourse6.instructors = [s1, s2];
+    subcourse6.maxParticipants = 10;
+    subcourse6.published = true;
+    subcourse6.participants = pupils;
+
+    subcourses.push(subcourse6);
+
+    // courseId and subcourseId should be different. Used for testing courseAttendanceLog
+    const subcourse7 = new Subcourse();
+    subcourse7.course = course5;
+    subcourse7.joinAfterStart = true;
+    subcourse7.minGrade = 3;
+    subcourse7.maxGrade = 10;
+    subcourse7.instructors = [s1, s2];
+    subcourse7.maxParticipants = 10;
+    subcourse7.published = true;
+    subcourse7.participants = pupils;
+
+    subcourses.push(subcourse7);
 
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
@@ -381,8 +506,6 @@ export async function setupDevDB() {
     lecture2.start = new Date(year, month, day + 6, 20, 0, 0, 0);
     lecture2.instructor = s1;
 
-    lectures.push(lecture1, lecture2);
-
     const lecture3: Lecture = new Lecture();
     lecture3.subcourse = subcourse2;
     lecture3.duration = 120;
@@ -395,23 +518,40 @@ export async function setupDevDB() {
     lecture4.start = new Date(year, month, day + 14, 21, 0, 0, 0);
     lecture4.instructor = s1;
 
-    lectures.push(lecture3, lecture4);
-
+    // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
-    lecture5.subcourse = subcourse3;
-    lecture5.duration = 90;
-    lecture5.start = new Date(year, month, day + 5, 10, 0, 0, 0);
-    lecture5.instructor = s2;
+    lecture5.subcourse = subcourse2;
+    lecture5.duration = 120;
+    lecture5.start = new Date(year, month, now.getDate(), 4, 0, 0, 0);
+    lecture5.instructor = s1;
 
-    lectures.push(lecture5);
-
+    // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
-    lecture6.subcourse = subcourse4;
-    lecture6.duration = 120;
-    lecture6.start = new Date(year, month, day + 15, 11, 0, 0, 0);
-    lecture6.instructor = s2;
+    lecture6.subcourse = subcourse2;
+    lecture6.duration = 60;
+    lecture6.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture6.instructor = s1;
 
-    lectures.push(lecture6);
+    // today's second active lecture for courseAttendanceLog
+    const lecture7: Lecture = new Lecture();
+    lecture7.subcourse = subcourse7;
+    lecture7.duration = 60;
+    lecture7.start = new Date(year, month, now.getDate(), now.getHours(), now.getMinutes() - 1, 0, 0);
+    lecture7.instructor = s1;
+
+    const lecture8: Lecture = new Lecture();
+    lecture8.subcourse = subcourse3;
+    lecture8.duration = 90;
+    lecture8.start = new Date(year, month, day + 5, 10, 0, 0, 0);
+    lecture8.instructor = s2;
+
+    const lecture9: Lecture = new Lecture();
+    lecture9.subcourse = subcourse4;
+    lecture9.duration = 120;
+    lecture9.start = new Date(year, month, day + 15, 11, 0, 0, 0);
+    lecture9.instructor = s2;
+
+    lectures.push(lecture1, lecture2, lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9);
 
     for (const lecture of lectures) {
         await entityManager.save(Lecture, lecture);
@@ -473,7 +613,6 @@ export async function setupDevDB() {
     }
 
 
-
     // instructor screening
     const instructorScreenings: InstructorScreening[] = [];
 
@@ -508,6 +647,28 @@ export async function setupDevDB() {
         await entityManager.save(InstructorScreening, instructorScreenings[i]);
         console.log("Inserted Dev Instrcutor Screening " + i);
     }
+
+    // Test data for course attendance log
+
+    for (let i = 0; i < pupils.length; i++) {
+        // pupil attended lecture in the past
+        const courseAttendanceLog1 = new CourseAttendanceLog();
+        courseAttendanceLog1.createdAt = new Date("2020-08-10 08:00:00.983055");
+        courseAttendanceLog1.ip = "localhost";
+        courseAttendanceLog1.pupil = pupils[i];
+        courseAttendanceLog1.lecture = lecture3;
+        await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
+        console.log("Inserted Dev CourseAttendanceLog " + i);
+
+        // pupil attended today's lecture, which is already over
+        const courseAttendanceLog2 = new CourseAttendanceLog();
+        courseAttendanceLog2.ip = "localhost";
+        courseAttendanceLog2.pupil = pupils[i];
+        courseAttendanceLog2.lecture = lecture5;
+        await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
+        console.log("Inserted Dev CourseAttendanceLog " + i);
+    }
+
 }
 
 function sha512(input: string): string {

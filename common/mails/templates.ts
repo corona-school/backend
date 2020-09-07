@@ -287,7 +287,8 @@ export const mailjet = {
         };
     },
     COURSEINSTRUCTORGROUPMAIL: (variables: {
-        participantFirstname: string;
+        participantFirstName: string;
+        instructorFirstName: string;
         courseName: string;
         messageTitle: string;
         messageBody: string;

@@ -3,16 +3,14 @@ import {
     CreateDateColumn,
     Entity,
     JoinColumn,
-    JoinTable,
-    ManyToMany,
     ManyToOne,
-    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
 import { Student } from "./Student";
-import { Pupil } from './Pupil';
 import { Subcourse } from './Subcourse';
+import {CourseAttendanceLog} from "./CourseAttendanceLog";
+import {OneToMany} from "typeorm/index";
 
 @Entity()
 export class Lecture {
@@ -40,5 +38,8 @@ export class Lecture {
 
     @Column()
     duration: number;
+
+    @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.lecture)
+    courseAttendanceLog: CourseAttendanceLog[];
 
 }

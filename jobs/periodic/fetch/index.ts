@@ -126,19 +126,12 @@ export default async function fetchFromWixToDb() {
                     await transactionLog.log(new FetchedFromWixEvent(student));
                     totalNewStudents++;
                     await sendVerificationMail(student);
-                    await transactionLog.log(
-                        new VerificationRequestEvent(student)
-                    );
+                    await transactionLog.log(new VerificationRequestEvent(student));
                 } catch (e) {
                     logger.debug("Can't save student: ", e.message);
                     logger.trace(e);
                 }
-                latestFetchStudent = new Date(
-                    latestFetchStudent.getTime() >
-                    student.wix_creation_date.getTime()
-                        ? latestFetchStudent.getTime()
-                        : student.wix_creation_date.getTime()
-                );
+                latestFetchStudent = new Date(latestFetchStudent.getTime() > student.wix_creation_date.getTime() ? latestFetchStudent.getTime() : student.wix_creation_date.getTime());
                 count++;
             }
         } catch (e) {
@@ -176,12 +169,7 @@ export default async function fetchFromWixToDb() {
                     logger.debug("Can't save pupil: ", e.message);
                     logger.trace(e);
                 }
-                latestFetchPupil = new Date(
-                    latestFetchPupil.getTime() >
-                    pupil.wix_creation_date.getTime()
-                        ? latestFetchPupil.getTime()
-                        : pupil.wix_creation_date.getTime()
-                );
+                latestFetchPupil = new Date(latestFetchPupil.getTime() > pupil.wix_creation_date.getTime() ? latestFetchPupil.getTime() : pupil.wix_creation_date.getTime());
                 count++;
             }
         } catch (e) {
@@ -191,10 +179,7 @@ export default async function fetchFromWixToDb() {
     } while (count >= apiMaxResults);
     logger.info("Fetched " + totalNewPupils + " new pupils");
 
-    let lastFetchTime =
-        latestFetchPupil.getTime() > latestFetchStudent.getTime()
-            ? latestFetchPupil.getTime()
-            : latestFetchStudent.getTime();
+    let lastFetchTime = latestFetchPupil.getTime() > latestFetchStudent.getTime() ? latestFetchPupil.getTime() : latestFetchStudent.getTime();
     lastFetch = new Date(lastFetchTime);
 }
 
@@ -202,19 +187,15 @@ async function initModule() {
     try {
         const conn = getConnection();
 
-        let x = await conn.query(
-            "SELECT wix_creation_date AS latest_date FROM (" +
-                "(SELECT wix_creation_date FROM pupil ORDER BY wix_creation_date DESC LIMIT 1) " +
-                "UNION " +
-                "(SELECT wix_creation_date FROM student ORDER BY wix_creation_date DESC LIMIT 1)" +
-                ") t ORDER BY latest_date DESC LIMIT 1;"
-        );
+        let x = await conn.query("SELECT wix_creation_date AS latest_date FROM (" +
+            "(SELECT wix_creation_date FROM pupil ORDER BY wix_creation_date DESC LIMIT 1) " +
+            "UNION " +
+            "(SELECT wix_creation_date FROM student ORDER BY wix_creation_date DESC LIMIT 1)" +
+            ") t ORDER BY latest_date DESC LIMIT 1;");
 
         if (x.length == 0) {
             lastFetch = new Date();
-            logger.warn(
-                "Can't get date of last fetch. Using now as last fetch date."
-            );
+            logger.warn("Can't get date of last fetch. Using now as last fetch date.");
         } else {
             lastFetch = new Date(x[0].latest_date);
             logger.info("Restored old last fetch date: ", lastFetch);

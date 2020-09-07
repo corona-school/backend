@@ -1,15 +1,4 @@
-import {
-    Column,
-    Entity,
-    EntityManager,
-    Index,
-    JoinColumn,
-    JoinTable,
-    ManyToMany,
-    ManyToOne,
-    OneToMany,
-    OneToOne
-} from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
@@ -43,11 +32,6 @@ export class Student extends Person {
     /*
      * General data
      */
-    @Column({
-        nullable: true
-    })
-    msg: string;
-
     @Column({
         nullable: true
     })
@@ -104,8 +88,13 @@ export class Student extends Person {
     @OneToMany(type => Lecture, lecture => lecture.instructor)
     lectures: Lecture[];
 
+    @Column({
+        nullable: true
+    })
+    msg: string;
+
     /*
-     * Teacher data
+     * Intern data
      */
     @Column({
         type: 'enum',
@@ -174,18 +163,9 @@ export class Student extends Person {
     lastSentInstructorScreeningInvitationDate: Date;
 
     async addScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone =
-            screeningResult.phone === undefined
-                ? this.phone
-                : screeningResult.phone;
-        this.subjects =
-            screeningResult.subjects === undefined
-                ? this.subjects
-                : screeningResult.subjects;
-        this.feedback =
-            screeningResult.feedback === undefined
-                ? this.feedback
-                : screeningResult.feedback;
+        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
+        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
+        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
 
         let currentScreening = await this.screening;
 
@@ -197,18 +177,9 @@ export class Student extends Person {
     }
 
     async addInstructorScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone =
-            screeningResult.phone === undefined
-                ? this.phone
-                : screeningResult.phone;
-        this.subjects =
-            screeningResult.subjects === undefined
-                ? this.subjects
-                : screeningResult.subjects;
-        this.feedback =
-            screeningResult.feedback === undefined
-                ? this.feedback
-                : screeningResult.feedback;
+        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
+        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
+        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
 
         let currentScreening = await this.instructorScreening;
 
@@ -264,16 +235,11 @@ export enum ScreeningStatus {
     Rejected = "REJECTED",
 }
 
-export function getAllStudents(
-    manager: EntityManager
-): Promise<Student[]> | undefined {
+export function getAllStudents(manager: EntityManager): Promise<Student[]> | undefined {
     return manager.createQueryBuilder(Student, "s").getMany(); //case insensitive query
 }
 
-export function getStudentByEmail(
-    manager: EntityManager,
-    email: string
-): Promise<Student> | undefined {
+export function getStudentByEmail(manager: EntityManager, email: string): Promise<Student> | undefined {
     return manager
         .createQueryBuilder(Student, "s")
         .where("s.email ILIKE :email", { email: email })
@@ -285,16 +251,10 @@ export function getStudentByWixID(manager: EntityManager, wixID: string) {
     return manager.findOne(Student, { wix_id: wixID });
 }
 
-export async function activeMatchesOfStudent(
-    s: Student,
-    manager: EntityManager
-) {
+export async function activeMatchesOfStudent(s: Student, manager: EntityManager) {
     return (await s.matches).filter((m) => m.dissolved === false);
 }
 
-export async function activeMatchCountOfStudent(
-    s: Student,
-    manager: EntityManager
-) {
+export async function activeMatchCountOfStudent(s: Student, manager: EntityManager) {
     return (await activeMatchesOfStudent(s, manager)).length;
 }

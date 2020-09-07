@@ -27,7 +27,7 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>"-H "Content-Type: application/json"  https://dashboard.corona-school.de/api/user/<ID>/matches/<UUID>
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>"-H "Content-Type: application/json"  https://api.corona-school.de/api/user/<ID>/matches/<UUID>
  *
  * @apiParam (URL Parameter) {string} id User Id
  * @apiParam (URL Parameter) {string} uuid UUID of the Match
@@ -47,22 +47,15 @@ export async function deleteHandler(req: Request, res: Response) {
 
     try {
         let b = req.body;
-        if (
-            req.params.id != undefined &&
+        if (req.params.id != undefined &&
             req.params.uuid != undefined &&
             res.locals.user instanceof Person &&
             typeof b.reason == "number" &&
             Number.isInteger(b.reason) &&
             b.reason >= -1 &&
-            b.reason <= maxReason
-        ) {
+            b.reason <= maxReason) {
             try {
-                status = await del(
-                    req.params.id,
-                    req.params.uuid,
-                    b.reason,
-                    res.locals.user
-                );
+                status = await del(req.params.id, req.params.uuid, b.reason, res.locals.user);
             } catch (e) {
                 logger.warn("Error DELETE /match: " + e.message);
                 logger.debug(e);
@@ -79,12 +72,7 @@ export async function deleteHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function del(
-    wix_id: string,
-    uuid: string,
-    reason: number,
-    person: Pupil | Student
-): Promise<number> {
+async function del(wix_id: string, uuid: string, reason: number, person: Pupil | Student): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -94,12 +82,7 @@ async function del(
     }
     // Authorization
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " +
-                person.id +
-                " tried to access data from id " +
-                wix_id
-        );
+        logger.warn("Person with id " + person.id + " tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -124,30 +107,17 @@ async function del(
     try {
         let matches = await entityManager.find(Match, options);
         if (matches.length == 0) {
-            logger.warn(
-                "Person with id " +
-                    person.id +
-                    " tried to dissolve match (UUID " +
-                    uuid +
-                    "), " +
-                    "but he has no access or it doesn't exist."
-            );
+            logger.warn("Person with id " + person.id + " tried to dissolve match (UUID " + uuid + "), " + "but he has no access or it doesn't exist.");
             return 403;
         }
         if (matches.length > 1) {
-            logger.warn(
-                "Caution: Multiple matches with uuid " +
-                    uuid +
-                    " found. Using first"
-            );
+            logger.warn("Caution: Multiple matches with uuid " + uuid + " found. Using first");
         }
 
         await dissolveMatch(matches[0], reason, person);
         await transactionLog.log(new MatchDissolveEvent(person, matches[0]));
     } catch (e) {
-        logger.error(
-            "Can't use entity manager to find and delete: " + e.message
-        );
+        logger.error("Can't use entity manager to find and delete: " + e.message);
         logger.debug(e);
         return 500;
     }
@@ -155,11 +125,7 @@ async function del(
     return 204;
 }
 
-export async function dissolveMatch(
-    match: Match,
-    reason: number,
-    dissolver: Person
-) {
+export async function dissolveMatch(match: Match, reason: number, dissolver: Person) {
     const entityManager = getManager();
 
     match.dissolved = true;

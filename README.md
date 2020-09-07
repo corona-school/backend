@@ -11,7 +11,7 @@ It has the following functionalities:
 
 ### Usage
 
-If you want to run the backend you have to compile it first using `npm run build`.
+If you want to run the backend you have to compile it first using `npm run build`. Make sure to have all dependencies installed before building by using `npm install`. 
 You also need to set your environment accordingly (for further details see [.env.example](.env.example)) and set up a local database server.
 
 #### Web server
