@@ -153,6 +153,7 @@ createConnection().then(() => {
         const registrationRouter = express.Router();
         registrationRouter.post("/tutee", registrationController.postTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
+        registrationRouter.post("/mentor", registrationController.postMentorHandler);
         app.use("/api/register", registrationRouter);
     }
 

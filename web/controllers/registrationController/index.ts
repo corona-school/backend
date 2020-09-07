@@ -501,3 +501,87 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 500;
     }
 }
+
+/**
+ * @api {POST} /register/mentor RegisterMentor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Register a user as a mentor.
+ *
+ * @apiName RegisterMentor
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ * @apiUse AddMentor
+ * @apiUse AddMentorSubject
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/mentor -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function postMentorHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+
+        if (typeof req.body.firstname == 'string' &&
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.division == 'string' &&
+            typeof req.body.expertise == 'string' &&
+            typeof req.body.subjects == 'string' &&
+            typeof req.body.teachingExperience == 'boolean' &&
+            typeof req.body.message == 'string' &&
+            typeof req.body.description == 'string' &&
+            typeof req.body.imageUrl == 'string' &&
+            typeof req.body.isMentor == 'boolean') {
+
+            if (req.body.isMentor) {
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if (typeof elem.name !== 'string') {
+                            status = 400;
+                            logger.error("Mentor registration with isMentor has malformed subjects.");
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Mentor registration with isMentor is missing subjects.");
+                }
+            }
+
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
+
+            if (status < 300) {
+                // try registering
+                // status = await registerMentor(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for mentor registration");
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for mentor registration");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+// async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
+//
+// }
+
