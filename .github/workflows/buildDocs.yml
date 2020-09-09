@@ -21,7 +21,7 @@ jobs:
             
       - name: Extract escaped branch name 🎣
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//:/g)"
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//:/g')"
         id: extract_branch
 
       - name: Install SSH Client 🔑
