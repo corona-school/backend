@@ -1,0 +1,42 @@
+name: Build Docs and Deploy
+on: [push]
+jobs:
+  build-docs-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 🎵
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
+        run: |
+          npm ci
+          npm run web:docs
+            
+      - name: Extract escaped branch name 🎣
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//:/g)"
+        id: extract_branch
+
+      - name: Install SSH Client 🔑
+        uses: webfactory/ssh-agent@v0.2.0
+        with:
+          ssh-private-key: ${{ secrets.APIDOC_DEPLOY_KEY }}
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@3.5.9
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_NAME: corona-school/backend-apidoc
+          SSH: true
+          TARGET_FOLDER: docs/${{ steps.extract_branch.outputs.branch }}
+          BRANCH: master # The branch the action should deploy to.
+          FOLDER: web/public/docs # The folder the action should deploy.
+          CLEAN: true # Automatically remove deleted files from the deploy branch
+          GIT_CONFIG_NAME: corodoc-bot
