@@ -33,7 +33,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@3.5.9
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY_NAME: corona-school/backend-apidoc
+          REPOSITORY_NAME: corona-school/backend-apidocs
           SSH: true
           TARGET_FOLDER: docs/${{ steps.extract_branch.outputs.branch }}
           BRANCH: master # The branch the action should deploy to.
