@@ -13,6 +13,7 @@ import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
+import * as mentoringController from "./controllers/mentoringController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
@@ -53,6 +54,7 @@ createConnection().then(() => {
     configureScreenerAPI();
     configureCoursesAPI();
     configureRegistrationAPI();
+    configureMentoringAPI();
     deployServer();
 
     function addCorsMiddleware() {
@@ -215,6 +217,14 @@ createConnection().then(() => {
             next();
         });
         app.use(participationCertificateRouter);
+    }
+
+    function configureMentoringAPI() {
+        const mentoringRouter = express.Router();
+        mentoringRouter.use(authCheckFactory());
+        mentoringRouter.post("/contact", mentoringController.postContactMentorHandler);
+
+        app.use("/api/mentoring", mentoringRouter);
     }
 
     function deployHTTPServer() {

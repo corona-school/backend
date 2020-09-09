@@ -1,5 +1,6 @@
 import { State } from "../entity/State";
 import { SchoolType } from "../entity/Pupil";
+import { MentoringCategory } from "../mentoring/categories";
 
 const EnumReverseMappings = {
     State: (s: string) => {
@@ -24,6 +25,9 @@ const EnumReverseMappings = {
             default:
                 return undefined;
         }
+    },
+    MentoringCategory: (s: string) => {
+        return MentoringCategory[s.toUpperCase()];
     }
 };
 
