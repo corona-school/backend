@@ -227,6 +227,12 @@ export async function setupDevDB() {
     mentor1.message = "text";
     mentor1.description ="text";
     mentor1.imageUrl = null;
+    mentor1.wix_id = "00000000-0000-0001-0001-1b4c4c526364";
+    mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    mentor1.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
 
     mentors.push(mentor1);
 
