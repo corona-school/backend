@@ -2361,7 +2361,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
     const courseId = req.params.id ? req.params.id : null;
-    const subcourseId = req.body.subcourseId ? req.body.subcourseId : null;
+    const subcourseId = req.body.subcourseId ? String(req.body.subcourseId) : null;
     const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
     let status = 200;
     let course: ApiCourse;
