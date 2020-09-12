@@ -20,6 +20,7 @@ import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
+import { allStateCooperationSubdomains } from "../common/entity/State";
 
 // Logger setup
 try {
@@ -64,14 +65,17 @@ createConnection().then(() => {
         if (process.env.NODE_ENV == "dev") {
             origins = [
                 "http://localhost:3000",
+                ...allStateCooperationSubdomains.map(d => `http://${d}.localhost:3000`),
                 "https://web-user-app-live.herokuapp.com",
                 "https://web-user-app-dev.herokuapp.com",
-                /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/
+                /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/,
+                ...allStateCooperationSubdomains.map(d => `https://${d}.dev.corona-school.de`)
             ];
         } else {
             origins = [
                 "https://dashboard.corona-school.de",
-                "https://my.corona-school.de"
+                "https://my.corona-school.de",
+                ...allStateCooperationSubdomains.map(d => `https://${d}.corona-school.de`)
             ];
         }
 
@@ -154,6 +158,7 @@ createConnection().then(() => {
     function configureRegistrationAPI() {
         const registrationRouter = express.Router();
         registrationRouter.post("/tutee", registrationController.postTuteeHandler);
+        registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         app.use("/api/register", registrationRouter);
     }

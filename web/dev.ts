@@ -14,6 +14,9 @@ import { Lecture } from "../common/entity/Lecture";
 import { InstructorScreening } from "../common/entity/InstructorScreening";
 import {CourseAttendanceLog} from "../common/entity/CourseAttendanceLog";
 import { Division, Expertise, Mentor } from "../common/entity/Mentor";
+import { School } from "../common/entity/School";
+import { State } from "../common/entity/State";
+import { SchoolType } from "../common/entity/SchoolType";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -698,6 +701,26 @@ export async function setupDevDB() {
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
         console.log("Inserted Dev CourseAttendanceLog " + i);
     }
+
+
+    //Insert some schools
+    const schools: School[] = [];
+
+    const school1 = new School();
+    school1.name = "Corona School Germany";
+    school1.emailDomain = "corona-school.de";
+    school1.website = "https://corona-school.de";
+    school1.state = State.OTHER;
+    school1.schooltype = SchoolType.SONSTIGES;
+    school1.activeCooperation = true;
+
+    schools.push(school1);
+
+    for (let i = 0; i < schools.length; i++) {
+        await entityManager.save(schools[i]);
+        console.log("Inserted Dev School " + i);
+    }
+
 
 }
 

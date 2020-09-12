@@ -1,5 +1,5 @@
 import { State } from "../entity/State";
-import { SchoolType } from "../entity/Pupil";
+import { SchoolType } from "../entity/SchoolType";
 import { MentoringCategory } from "../mentoring/categories";
 
 const EnumReverseMappings = {

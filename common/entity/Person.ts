@@ -62,3 +62,9 @@ export abstract class Person {
     })
     authTokenSent: Date;
 }
+
+export enum RegistrationSource {
+    NORMAL,
+    COOPERATION,
+    OTHER
+}

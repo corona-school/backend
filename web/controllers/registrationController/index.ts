@@ -1,15 +1,20 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee } from './format';
+import { ApiAddTutor, ApiAddTutee, ApiAddStateTutee } from './format';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
 import VerificationRequestEvent from '../../../common/transactionlog/types/VerificationRequestEvent';
 import { checkSubject } from '../userController/format';
-import { Pupil, SchoolType } from '../../../common/entity/Pupil';
+import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
 import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
+import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
+import { Address } from "address-rfc2821";
+import { School } from '../../../common/entity/School';
+import { SchoolType } from '../../../common/entity/SchoolType';
+import { RegistrationSource } from '../../../common/entity/Person';
 
 const logger = getLogger();
 
@@ -498,6 +503,199 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 204;
     } catch (e) {
         logger.error("Unable to add Tutee to database: " + e.message);
+        return 500;
+    }
+}
+
+
+/**
+ * @api {POST} /register/tutee/state StateRegisterTutee
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Register a user as a tutee for a specific state cooperation
+ *
+ * @apiName StateRegisterTutee
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ * @apiUse AddStateTutee
+ * @apiUse AddTuteeSubject
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee/state -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function postStateTuteeHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+
+        if (typeof req.body.firstname == 'string' &&
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.grade == 'number' &&
+            typeof req.body.state == 'string' &&
+            typeof req.body.isTutee == 'boolean' &&
+            typeof req.body.newsletter == 'boolean' &&
+            typeof req.body.teacherEmail == 'string' &&
+            typeof req.body.msg == 'string') {
+
+            if (req.body.isTutor) {
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if (typeof elem.name !== 'string') {
+                            status = 400;
+                            logger.error("Tutee registration (for specific state) with isTutee has malformed subjects.");
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Tutee registration (for specific state) with isTutee missing subjects.");
+                }
+            }
+
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
+
+            if (status < 300) {
+                // try registering
+                status = await registerStateTutee(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for Tutee registration (for specific state)");
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for Tutee registration (for specific state)");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (apiStateTutee.firstname.length == 0 || apiStateTutee.firstname.length > 100) {
+        logger.error("apiStateTutee.firstname outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.lastname.length == 0 || apiStateTutee.lastname.length > 100) {
+        logger.error("apiStateTutee.lastname outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.email.length == 0 || apiStateTutee.email.length > 100) {
+        logger.error("apiStateTutee.email outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.msg.length > 3000) {
+        logger.error("apiStateTutee.msg outside of length restrictions");
+        return 400;
+    }
+
+    const tutee = new Pupil();
+    tutee.firstname = apiStateTutee.firstname;
+    tutee.lastname = apiStateTutee.lastname;
+    tutee.email = apiStateTutee.email.toLowerCase();
+    tutee.grade = apiStateTutee.grade + ". Klasse";
+
+    const parsedState = EnumReverseMappings.State(apiStateTutee.state);
+    if (!parsedState) {
+        logger.error("Invalid value for Tutee registration state (for specific state): " + apiStateTutee.state);
+        return 400;
+    }
+
+    tutee.newsletter = apiStateTutee.newsletter;
+    tutee.msg = apiStateTutee.msg;
+
+    tutee.isParticipant = true;
+    tutee.isPupil = false; //default value
+
+    tutee.wix_id = "Z-" + uuidv4();
+    tutee.wix_creation_date = new Date();
+    tutee.verification = generateToken();
+    tutee.subjects = JSON.stringify([]);
+
+    tutee.registrationSource = RegistrationSource.COOPERATION;
+
+    if (apiStateTutee.isTutee) {
+        if (apiStateTutee.subjects.length < 1) {
+            logger.error("Tutee subjects needs to contain at least one element.");
+            return 400;
+        }
+
+        for (let i = 0; i < apiStateTutee.subjects.length; i++) {
+            if (!checkSubject(apiStateTutee.subjects[i].name)) {
+                logger.error("Tutee subjects contain invalid subject " + apiStateTutee.subjects[i].name);
+                return 400;
+            }
+        }
+
+        tutee.isPupil = true;
+        tutee.subjects = JSON.stringify(apiStateTutee.subjects);
+    }
+
+    const result = await entityManager.findOne(Pupil, { email: tutee.email });
+    if (result !== undefined) {
+        logger.error("Tutee with given email already exists.");
+        return 409;
+    }
+
+    //check if teacher email address is valid
+    try {
+        tutee.teacherEmailAddress = apiStateTutee.teacherEmail.toLowerCase();
+
+        const teacherEmailAddress = new Address(tutee.teacherEmailAddress);
+
+        const school = await entityManager.findOne(School, {
+            where: {
+                emailDomain: teacherEmailAddress.host
+            }
+        });
+
+        if (!school || !school.activeCooperation) {
+            logger.error("Teacher email address is an address of a school we're not officially cooperating with!");
+            return 400;
+        }
+        tutee.school = school;
+        tutee.schooltype = school.schooltype;
+
+        //check if state is equal to that given in the request
+        if (parsedState !== school.state) {
+            logger.error(`Tutee wanted to register for state ${apiStateTutee.state} while using a school email from state ${school.state}!`);
+            return 400;
+        }
+        tutee.state = school.state;
+
+    }
+    catch {
+        logger.error("Invalid email address for teacher email during Tutee registration (for specific state)");
+        return 400;
+    }
+
+
+    try {
+        await entityManager.save(Pupil, tutee);
+        await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await transactionLog.log(new VerificationRequestEvent(tutee));
+        return 204;
+    } catch (e) {
+        logger.error("Unable to add Tutee (for specific state) to database: " + e.message);
         return 500;
     }
 }
