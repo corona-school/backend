@@ -2380,11 +2380,11 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
             try {
 
                 if (authenticatedPupil || authenticatedStudent) {
-
+                    let meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
                     if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
-                        if (bbbMeetingCache.has(subcourseId)) {
+                        if (bbbMeetingCache.has(subcourseId) && meetingIsRunning) {
                             meeting = bbbMeetingCache.get(subcourseId);
                             res.send({
                                 url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
@@ -2410,7 +2410,6 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         }
 
                     } else if (authenticatedPupil) {
-                        let meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
                         if (bbbMeetingCache.has(subcourseId) && meetingIsRunning) {
                             let user: Pupil = res.locals.user;
                             meeting = bbbMeetingCache.get(subcourseId);
