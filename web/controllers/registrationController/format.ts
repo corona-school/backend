@@ -120,3 +120,15 @@ export interface ApiAddTutorSubject {
 export interface ApiAddTuteeSubject {
     name: string
 }
+
+/**
+ * @apiDefine SchoolInfo
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (SchoolInfo Object) {string} name School's name
+ * @apiSuccess (SchoolInfo Object) {string} emailDomain School's email address domain
+ */
+export interface ApiSchoolInfo {
+    name: string,
+    emailDomain: string
+}

@@ -160,6 +160,8 @@ createConnection().then(() => {
         registrationRouter.post("/tutee", registrationController.postTuteeHandler);
         registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
+
+        registrationRouter.get("/:state/schools", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }
 

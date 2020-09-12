@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee, ApiAddStateTutee } from './format';
+import { ApiAddTutor, ApiAddTutee, ApiAddStateTutee, ApiSchoolInfo } from './format';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
@@ -698,4 +698,89 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         logger.error("Unable to add Tutee (for specific state) to database: " + e.message);
         return 500;
     }
+}
+
+
+
+/**
+ * @api {GET} /courses GetSchools
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Request a list of all available schools we're publicly cooperting with as part of the cooperations with several states in Germany.
+ *
+ * <p>This endpoint can be called without authentication.</p>
+ *
+ * @apiName GetSchools
+ * @apiGroup Registration
+ *
+ * @apiUse OptionalAuthentication
+ *
+ * @apiParam (Query Parameter) {string} state The state of Germany for which the cooperation schools should be returned.
+ *
+ * @apiUse SchoolInfo
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET "https://api.corona-school.de/api/register/:state/schools"
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getSchoolsHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (typeof req.params.state != 'string') {
+            logger.error("Missing required parameter state");
+            status = 400;
+        }
+        else {
+            //parse state
+            const state = EnumReverseMappings.State(req.params.state);
+
+            if (!state) {
+                logger.error(`Given State "${req.params.state}" is unknown`);
+                status = 400;
+            }
+            else {
+                let obj = await getSchools(state);
+
+                if (typeof obj == 'number') {
+                    status = obj;
+                } else {
+                    res.json(obj);
+                }
+            }
+        }
+    } catch (e) {
+        logger.error("An error occurred during GET /register/schools: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function getSchools(state: State): Promise<Array<ApiSchoolInfo> | number> {
+    const entityManager = getManager();
+
+    try {
+        const schools = await entityManager.find(School, {
+            where: {
+                state: state,
+                activeCooperation: true
+            }
+        });
+
+        return schools.map( s => {
+            return {
+                name: s.name,
+                emailDomain: s.emailDomain
+            };
+        });
+    } catch (e) {
+        logger.error("Can't fetch schools: " + e.message);
+        logger.debug(e);
+        return 500;
+    }
+
 }
