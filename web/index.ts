@@ -231,6 +231,7 @@ createConnection().then(() => {
         mentoringRouter.use(authCheckFactory());
         mentoringRouter.post("/contact", mentoringController.postContactMentorHandler);
         mentoringRouter.get("/material/playlist", mentoringController.getPlaylist);
+        mentoringRouter.get("/material/folder", mentoringController.getDriveFolder);
 
         app.use("/api/mentoring", mentoringRouter);
     }

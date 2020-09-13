@@ -10,7 +10,7 @@ import { MentoringCategory } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
-import {QueryPlaylistItems} from "../../../common/google/youtube";
+import {QueryFolderContent, QueryPlaylistItems} from "../../../common/google";
 import List = Mocha.reporters.List;
 
 
@@ -127,11 +127,35 @@ export async function getPlaylist(req: Request, res: Response) {
             }
         } else {
             status = 403;
-            logger.warn("A non-student wanted to contact a mentor");
+            logger.warn("A non-student wanted to access the mentoring playlist.");
             logger.debug(res.locals.user);
         }
     } catch (e) {
         logger.error("Error when querying for youtube playlist " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    return res.status(status);
+}
+
+export async function getDriveFolder(req: Request, res: Response){
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student){
+            if (typeof req.query.folderId === "string"){
+                let folder = await QueryFolderContent(req.query.folderId);
+                return res.status(status).json({ folder }).end();
+            } else {
+                status = 400;
+                logger.warn("Invalid request for GET /mentoring/material/folder");
+                logger.debug(req.query);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to access mentoring material.");
+        }
+    } catch (e) {
+        logger.error("Error when querying a drive folder: " + e.message);
         logger.debug(req, e);
         status = 500;
     }
