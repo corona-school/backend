@@ -1,21 +1,72 @@
-const {google} = require('googleapis');
+import {getLogger} from "log4js";
 
-export async function QueryPlaylistItems(playlistID: string) {
-    const service = google.youtube({version: 'v3', auth: process.env.GOOGLE_KEY});
-    return await service.playlistItems.list({part: 'snippet', playlistId: playlistID, maxResults: 50}).then(res => {
-        return Object
-            .values(res.data.items)
-            .map(v => ({
-                title: v["snippet"]["title"],
-                description: v["snippet"]["description"],
-                id: v["snippet"]["resourceId"]["videoId"]
-            }));
+const {google} = require('googleapis');
+const logger = getLogger();
+
+
+const parsePlaylistItem = (item) => {
+    return ({
+        title: item.snippet.title,
+        description: item.snippet.description,
+        id: item.snippet.resourceId.videoId
+    });
+};
+
+const parseFileData = (item) => {
+    return ({
+        name: item.name,
+        link: item.webViewLink
     });
 }
 
-export async function QueryFolderContent(folderID: string) {
-    const service = google.drive({version: 'v3', auth: process.env.GOOGLE_KEY});
+function queryPlaylistItems(query) {
+    return new Promise((resolve, reject) => {
+        const service = google.youtube({version: 'v3', auth: process.env.GOOGLE_KEY});
+        service.playlistItems.list(query, (err, res) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            if (!res.data.items) {
+                resolve ([]);
+                return;
+            }
+            resolve(res.data.items);
+        });
+    });
+}
 
-    return await service.files.list({q: `'${folderID}' in parents`, pageSize: 1000, fields: '*'}).then(res => {
-        return Object.values(res.data.files).map(f => ({name: f["name"], link: f["webViewLink"]}));});
+function queryFiles(query) {
+    return new Promise((resolve, reject) => {
+        const service = google.drive({version: 'v3', auth: process.env.GOOGLE_KEY});
+        service.files.list(query, (err, res) => {
+            if (err){
+                reject(err);
+                return;
+            }
+            if (!res.data.files) {
+                resolve([]);
+                return;
+            }
+            resolve(res.data.files);
+        });
+    });
+};
+
+export async function listVideos(playlistID: string) {
+    let videos = [];
+    await queryPlaylistItems({ part: 'snippet', playlistId: playlistID })
+        .then(JSON.stringify).then(JSON.parse).then(res => videos = res.map(parsePlaylistItem))
+        .catch(err => logger.warn("YouBube playlistItems query failed: " + err.message));
+
+    return videos;
+}
+
+export async function listFiles(folderID: string) {
+    let files = [];
+    await queryFiles({q: `'${folderID}' in parents`, pageSize: 1000, fields: '*'})
+        .then(JSON.stringify).then(JSON.parse).then(res => files = res.map(parseFileData))
+        .catch(err => logger.warn("Drive files query failed: " + err.message));
+
+    return files;
 }

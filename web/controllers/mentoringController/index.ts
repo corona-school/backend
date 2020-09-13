@@ -10,7 +10,7 @@ import { MentoringCategory } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
-import {QueryFolderContent, QueryPlaylistItems} from "../../../common/google";
+import {listFiles, listVideos} from "../../../common/google";
 import List = Mocha.reporters.List;
 
 
@@ -118,7 +118,7 @@ export async function getPlaylist(req: Request, res: Response) {
     try {
         if (res.locals.user instanceof Student) {
             if (typeof req.query.playlistId === 'string') {
-                let playlist = await QueryPlaylistItems(req.query.playlistId);
+                let playlist = await listVideos(req.query.playlistId);
                 return res.status(status).json({ playlist }).end();
             } else {
                 status = 400;
@@ -143,7 +143,7 @@ export async function getDriveFolder(req: Request, res: Response){
     try {
         if (res.locals.user instanceof Student){
             if (typeof req.query.folderId === "string"){
-                let folder = await QueryFolderContent(req.query.folderId);
+                let folder = await listFiles(req.query.folderId);
                 return res.status(status).json({ folder }).end();
             } else {
                 status = 400;
