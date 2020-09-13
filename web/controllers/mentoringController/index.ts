@@ -10,6 +10,8 @@ import { MentoringCategory } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
+import {QueryPlaylistItems} from "../../../common/google/youtube";
+import List = Mocha.reporters.List;
 
 
 const logger = getLogger();
@@ -109,4 +111,30 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
     }));
 
     return 200;
+}
+
+export async function getPlaylist(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (typeof req.query.playlistId === 'string') {
+                let playlist = await QueryPlaylistItems(req.query.playlistId);
+                console.log({ playlist });
+                return res.status(status).json({ playlist }).end();
+            } else {
+                status = 400;
+                logger.warn("Invalid request for GET /mentoring/material/playlist");
+                logger.debug(req.query);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to contact a mentor");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Error when querying for youtube playlist " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    return res.status(status);
 }
