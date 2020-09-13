@@ -13,9 +13,9 @@
             "runtimeArgs": [
                 "run-script", "web:debug"
             ],
-            "port": 9229,
             "envFile": "${workspaceRoot}/.env",
-            "outputCapture": "std"
+            "outputCapture": "std",
+            "timeout": 20000
         },
         {
             "name": "Jobs (Debug)",
@@ -28,7 +28,8 @@
             ],
             "port": 9229,
             "envFile": "${workspaceRoot}/.env",
-            "outputCapture": "std"
+            "outputCapture": "std",
+            "timeout": 20000
         },
         {
             "name": "Tests (Debug)",
@@ -37,11 +38,18 @@
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
-                "run-script", "test:debug"
+                "run-script", "test"
             ],
-            "port": 9229,
             "envFile": "${workspaceRoot}/.env",
             "outputCapture": "std"
+        },
+        {
+            "type": "node-terminal",
+            "name": "[TS-Node] Web (Debug)",
+            "request": "launch",
+            "command": "TYPEORM_URL=$DATABASE_URL TYPEORM_CONNECTION=postgres TYPEORM_ENTITIES=common/entity/*.ts ts-node ${workspaceRoot}/web/index.ts",
+            "outputCapture": "std",
+            "envFile": "${workspaceRoot}/.env",
         }
     ]
 }

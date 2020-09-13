@@ -48,7 +48,7 @@ describe("Screening Invitation", function() {
         return new Promise((resolve) => {
             manager.save(testStudent).then(() => {
                 //setup mailjetStub
-                const mailjetStub = sandbox.spy(mailjet, "send");
+                const mailjetStub = sandbox.spy(mailjet, "sendTemplate");
 
                 // Act
                 verifyToken(verificationToken).then(() => {
