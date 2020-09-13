@@ -119,7 +119,6 @@ export async function getPlaylist(req: Request, res: Response) {
         if (res.locals.user instanceof Student) {
             if (typeof req.query.playlistId === 'string') {
                 let playlist = await QueryPlaylistItems(req.query.playlistId);
-                console.log({ playlist });
                 return res.status(status).json({ playlist }).end();
             } else {
                 status = 400;
