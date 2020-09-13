@@ -135,3 +135,6 @@ web/public/docs/*
 
 # Ignore idea project files
 .idea
+
+# Mentoring material configuration file
+/mentoring-material.json

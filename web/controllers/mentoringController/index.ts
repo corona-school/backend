@@ -12,10 +12,9 @@ import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
 import {listFiles, listVideos} from "../../../common/google";
 import List = Mocha.reporters.List;
-
+import { materials } from "../../../mentoring-material.json";
 
 const logger = getLogger();
-
 
 /**
  * @api {POST} /mentoring/contact ContactMentor
@@ -113,51 +112,68 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
     return 200;
 }
 
-export async function getPlaylist(req: Request, res: Response) {
-    let status = 200;
-    try {
-        if (res.locals.user instanceof Student) {
-            if (typeof req.query.playlistId === 'string') {
-                let playlist = await listVideos(req.query.playlistId);
-                return res.status(status).json({ playlist }).end();
-            } else {
-                status = 400;
-                logger.warn("Invalid request for GET /mentoring/material/playlist");
-                logger.debug(req.query);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-student wanted to access the mentoring playlist.");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Error when querying for youtube playlist " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    return res.status(status);
-}
-
-export async function getDriveFolder(req: Request, res: Response){
+/**
+ * @api {GET} /mentoring/material GetMaterial
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Query for access data for supportive material for students
+ *
+ * @apiName GetMaterial
+ * @apiGroup Mentoring
+ *
+ * @apiParam (QueryParameter) {string} type The type of the queried ressource. Can be either 'files' or 'playlist'
+ * @apiParam (QueryParameter) {string} location The location key for the queried ressource. Possible keys are specified in the mentoring-material.json
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse GetMaterial
+ *
+ * @apiExample {curl} Curl
+ * curl GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/mentoring/material?type=files&location=pdf_entry"
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getMaterial(req: Request, res: Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student){
-            if (typeof req.query.folderId === "string"){
-                let folder = await listFiles(req.query.folderId);
-                return res.status(status).json({ folder }).end();
-            } else {
+            const { type, location } = req.query;
+            if (!(location in materials)) {
                 status = 400;
-                logger.warn("Invalid request for GET /mentoring/material/folder");
-                logger.debug(req.query);
+                logger.warn("Invalid location for mentoring materials in GET /mentoring/material");
+                logger.debug(location);
+                return res.status(status).end();
+            }
+
+            if (type === "files") {
+                let folder = await listFiles(materials[location]);
+                return res.status(status).json({ folder }).end();
+            }
+
+            if (type === "playlist") {
+                let playlist = await listVideos(materials[location]);
+                return res.status(status).json({ playlist }).end();
+            }
+
+            else {
+                status = 400;
+                logger.warn("Invalid material type in GET /mentoring/material");
+                logger.debug(location);
+                return res.status(status).end();
             }
         } else {
             status = 403;
             logger.warn("A non-student wanted to access mentoring material.");
+            return res.status(status).end();
         }
     } catch (e) {
-        logger.error("Error when querying a drive folder: " + e.message);
+        logger.error("Error when querying for mentoring material: " + e.message);
         logger.debug(req, e);
         status = 500;
     }
-    return res.status(status);
+    return res.status(status).end();
 }

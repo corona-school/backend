@@ -230,8 +230,7 @@ createConnection().then(() => {
         const mentoringRouter = express.Router();
         mentoringRouter.use(authCheckFactory());
         mentoringRouter.post("/contact", mentoringController.postContactMentorHandler);
-        mentoringRouter.get("/material/playlist", mentoringController.getPlaylist);
-        mentoringRouter.get("/material/folder", mentoringController.getDriveFolder);
+        mentoringRouter.get("/material", mentoringController.getMaterial);
 
         app.use("/api/mentoring", mentoringRouter);
     }
