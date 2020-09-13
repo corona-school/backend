@@ -1,9 +1,4 @@
-import {getLogger} from "log4js";
-import {throws} from "assert";
-
-
 const {google} = require('googleapis');
-const logger = getLogger();
 
 export async function QueryPlaylistItems(playlistID: string) {
     const service = google.youtube({version: 'v3', auth: process.env.GOOGLE_KEY});
@@ -21,11 +16,6 @@ export async function QueryPlaylistItems(playlistID: string) {
 export async function QueryFolderContent(folderID: string) {
     const service = google.drive({version: 'v3', auth: process.env.GOOGLE_KEY});
 
-    const GetWebLink = async (fileID: string) => {
-        return await service.files.get({fileId: fileID, fields: 'webViewLink'}).then(res => res.data.webViewLink);
-    };
-
-    return await service.files.list({q: `'${folderID}' in parents`, pageSize: 1000}).then(res => {
-        return Object.values(res.data.files).map(f => ({name: f["name"], link: GetWebLink(f["id"])}));
-    });
+    return await service.files.list({q: `'${folderID}' in parents`, pageSize: 1000, fields: '*'}).then(res => {
+        return Object.values(res.data.files).map(f => ({name: f["name"], link: f["webViewLink"]}));});
 }
