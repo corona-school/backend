@@ -151,12 +151,12 @@ export async function getMaterial(req: Request, res: Response) {
 
             if (type === "files") {
                 let folder = await listFiles(materials[location]);
-                return res.status(status).json({ folder }).end();
+                return res.status(status).json(folder).end();
             }
 
             if (type === "playlist") {
                 let playlist = await listVideos(materials[location]);
-                return res.status(status).json({ playlist }).end();
+                return res.status(status).json(playlist).end();
             }
 
             else {
