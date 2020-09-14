@@ -520,12 +520,14 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         person.university = req.university;
 
         // ++++ STATE ++++
-        const state = EnumReverseMappings.State(req.state);
-        if (!state) {
-            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
-            return 400;
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
         }
-        person.state = state;
 
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
@@ -558,24 +560,28 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
             person.grade = req.grade + ". Klasse";
         } else {
-            logger.warn("User who is a pupil wants to set an invalid grade o! It is ignored.");
+            logger.warn("User who is a pupil wants to set an invalid grade! It is ignored.");
         }
 
         // ++++ SCHOOL TYPE ++++
-        const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
-        if (!schoolType) {
-            logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
-            return 400;
+        if (req.schoolType) {
+            const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
+            if (!schoolType) {
+                logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
+                return 400;
+            }
+            person.schooltype = schoolType;
         }
-        person.schooltype = schoolType;
 
         // ++++ STATE ++++
-        const state = EnumReverseMappings.State(req.state);
-        if (!state) {
-            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
-            return 400;
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
         }
-        person.state = state;
 
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
