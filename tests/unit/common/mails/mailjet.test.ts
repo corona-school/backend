@@ -57,7 +57,7 @@ describe("The mailjet API", function () {
         };
 
         // Act
-        mailjet.send(
+        mailjet.sendTemplate(
             subject,
             sender,
             receiver,
