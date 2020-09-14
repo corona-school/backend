@@ -39,10 +39,10 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
     if (bbbMeetingCache.get(id) && meetingIsRunning) {
         return bbbMeetingCache.get(id);
     } else {
+        const release = await cacheUpdateMutex.acquire();
         if (bbbMeetingCache.get(id)) {
             bbbMeetingCache.delete(id);
         }
-        const release = await cacheUpdateMutex.acquire();
         const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
         if (response.status === 200) {
             const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
