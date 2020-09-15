@@ -12,7 +12,7 @@ import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
 import {listFiles, listVideos} from "../../../common/google";
 import List = Mocha.reporters.List;
-import { materials } from "../../../mentoring-material.json";
+import { material } from "../../../common/mentoring/material";
 
 const logger = getLogger();
 
@@ -122,7 +122,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
  * @apiGroup Mentoring
  *
  * @apiParam (QueryParameter) {string} type The type of the queried ressource. Can be either 'files' or 'playlist'
- * @apiParam (QueryParameter) {string} location The location key for the queried ressource. Possible keys are specified in the mentoring-material.json
+ * @apiParam (QueryParameter) {string} location The location key for the queried ressource. Possible keys are specified in /common/mentoring/material.ts
  *
  * @apiUse Authentication
  *
@@ -142,7 +142,7 @@ export async function getMaterial(req: Request, res: Response) {
     try {
         if (res.locals.user instanceof Student){
             const { type, location } = req.query;
-            if (!(location in materials)) {
+            if (!(location in material)) {
                 status = 400;
                 logger.warn("Invalid location for mentoring materials in GET /mentoring/material");
                 logger.debug(location);
@@ -150,12 +150,12 @@ export async function getMaterial(req: Request, res: Response) {
             }
 
             if (type === "files") {
-                let folder = await listFiles(materials[location]);
+                let folder = await listFiles(material[location]);
                 return res.status(status).json(folder).end();
             }
 
             if (type === "playlist") {
-                let playlist = await listVideos(materials[location]);
+                let playlist = await listVideos(material[location]);
                 return res.status(status).json(playlist).end();
             }
 
