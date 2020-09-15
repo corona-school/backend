@@ -10,7 +10,7 @@ import { MentoringCategory } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
-import {listFiles, listVideos} from "../../../common/google";
+import {getNextDueEvent, listFiles, listVideos} from "../../../common/google";
 import List = Mocha.reporters.List;
 import { material } from "../../../common/mentoring/material";
 
@@ -172,6 +172,25 @@ export async function getMaterial(req: Request, res: Response) {
         }
     } catch (e) {
         logger.error("Error when querying for mentoring material: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    return res.status(status).end();
+}
+
+export async function getFeedbackCallData(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student){
+            let date = await getNextDueEvent(material.call_calendar);
+            return res.status(status).json(date).end();
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to access student feedback call data.");
+            return res.status(status).end();
+        }
+    } catch (e) {
+        logger.error("Error when querying for mentoring feedback call data: " + e.message);
         logger.debug(req, e);
         status = 500;
     }

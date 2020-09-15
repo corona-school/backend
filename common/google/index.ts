@@ -1,4 +1,6 @@
 import {getLogger} from "log4js";
+import moment from "moment";
+import {throws} from "assert";
 
 const {google} = require('googleapis');
 const logger = getLogger();
@@ -17,7 +19,14 @@ const parseFileData = (item) => {
         name: item.name,
         link: item.webViewLink
     });
-}
+};
+
+const parseEvent = (event) => {
+    return ({
+        time: event.start.dateTime,
+        link: event.summary.match(/https?:[^\s]+/)[0]
+    });
+};
 
 function queryPlaylistItems(query) {
     return new Promise((resolve, reject) => {
@@ -53,6 +62,23 @@ function queryFiles(query) {
     });
 };
 
+function queryEvents(query) {
+    return new Promise((resolve, reject) => {
+        const service = google.calendar({version: 'v3', auth: process.env.GOOGLE_KEY});
+        service.events.list(query, (err, res) => {
+            if (err){
+                reject(err);
+                return;
+            }
+            if (!res.data.items){
+                resolve([]);
+                return;
+            }
+            resolve(res.data.items);
+        });
+    });
+}
+
 export async function listVideos(playlistID: string) {
     let videos = [];
     await queryPlaylistItems({ part: 'snippet', playlistId: playlistID })
@@ -69,4 +95,27 @@ export async function listFiles(folderID: string) {
         .catch(err => logger.warn("Drive files query failed: " + err.message));
 
     return files;
+}
+
+export async function getNextDueEvent(calendarID: string){
+    let event = {};
+    await queryEvents({calendarId: calendarID, maxResults: 1, orderBy: "startTime", singleEvents: true, timeMin: new Date().toISOString() })
+        .then(JSON.stringify).then(JSON.parse).then(res => {
+            if (res.length !== 1) {
+                throw new Error("Calendar query returned no or more than one events.");
+            } else {
+                return res;
+            }
+        })
+        .then(res => parseEvent(res[0]))
+        .then(res => {
+            if (!res.link){
+                throw new Error("No valid link extracted from calendar event.");
+            } else {
+                event = res;
+            }
+        })
+        .catch(err => logger.warn("Calendar query failed: " + err.message));
+
+    return event;
 }
