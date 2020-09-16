@@ -60,7 +60,7 @@ function queryFiles(query) {
             resolve(res.data.files);
         });
     });
-};
+}
 
 function queryEvents(query) {
     return new Promise((resolve, reject) => {
