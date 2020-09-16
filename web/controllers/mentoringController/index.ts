@@ -126,8 +126,6 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
  *
  * @apiUse Authentication
  *
- * @apiUse GetMaterial
- *
  * @apiExample {curl} Curl
  * curl GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/mentoring/material?type=files&location=pdf_entry"
  *
