@@ -81,7 +81,7 @@ function queryEvents(query) {
 
 export async function listVideos(playlistID: string) {
     let videos = [];
-    await queryPlaylistItems({ part: 'snippet', playlistId: playlistID })
+    await queryPlaylistItems({ part: 'snippet', playlistId: playlistID, maxResults: 50 })
         .then(JSON.stringify).then(JSON.parse).then(res => videos = res.map(parsePlaylistItem))
         .catch(err => logger.warn("YouBube playlistItems query failed: " + err.message));
 
