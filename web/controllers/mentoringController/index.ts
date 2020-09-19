@@ -176,6 +176,25 @@ export async function getMaterial(req: Request, res: Response) {
     return res.status(status).end();
 }
 
+/**
+ * @api {GET} /mentoring/feedbackCall GetFeedbackCallLink
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Query for the next feedback call date and its meeting link
+ *
+ * @apiName GetFeedbackCallLink
+ * @apiGroup Mentoring
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/mentoring/feedbackCall"
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
 export async function getFeedbackCallData(req: Request, res: Response) {
     let status = 200;
     try {
