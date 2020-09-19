@@ -1,7 +1,6 @@
 {
 	"version": "2.4.2",
 	"compilerOptions": {
-        "resolveJsonModule": true,
 		"lib": ["es5", "es6", "DOM"],
 		"target": "es6",
 		"outDir": "./built",
