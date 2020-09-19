@@ -22,9 +22,11 @@ const parseFileData = (item) => {
 };
 
 const parseEvent = (event) => {
+    const linkFromConferenceData = event.conferenceData?.entryPoints?.find(e => e.entryPointType == "video")?.uri;
+
     return ({
         time: event.start.dateTime,
-        link: event.summary.match(/https?:[^\s]+/)[0]
+        link: linkFromConferenceData ?? event.summary.match(/https?:[^\s]+/)[0]
     });
 };
 
@@ -37,7 +39,7 @@ function queryPlaylistItems(query) {
                 return;
             }
             if (!res.data.items) {
-                resolve ([]);
+                resolve([]);
                 return;
             }
             resolve(res.data.items);
@@ -49,7 +51,7 @@ function queryFiles(query) {
     return new Promise((resolve, reject) => {
         const service = google.drive({version: 'v3', auth: process.env.GOOGLE_KEY});
         service.files.list(query, (err, res) => {
-            if (err){
+            if (err) {
                 reject(err);
                 return;
             }
@@ -66,11 +68,11 @@ function queryEvents(query) {
     return new Promise((resolve, reject) => {
         const service = google.calendar({version: 'v3', auth: process.env.GOOGLE_KEY});
         service.events.list(query, (err, res) => {
-            if (err){
+            if (err) {
                 reject(err);
                 return;
             }
-            if (!res.data.items){
+            if (!res.data.items) {
                 resolve([]);
                 return;
             }
@@ -81,7 +83,7 @@ function queryEvents(query) {
 
 export async function listVideos(playlistID: string) {
     let videos = [];
-    await queryPlaylistItems({ part: 'snippet', playlistId: playlistID, maxResults: 50 })
+    await queryPlaylistItems({part: 'snippet', playlistId: playlistID, maxResults: 50})
         .then(JSON.stringify).then(JSON.parse).then(res => videos = res.map(parsePlaylistItem))
         .catch(err => logger.warn("YouBube playlistItems query failed: " + err.message));
 
@@ -97,9 +99,15 @@ export async function listFiles(folderID: string) {
     return files;
 }
 
-export async function getNextDueEvent(calendarID: string){
+export async function getNextDueEvent(calendarID: string) {
     let event = {};
-    await queryEvents({calendarId: calendarID, maxResults: 1, orderBy: "startTime", singleEvents: true, timeMin: new Date().toISOString() })
+    await queryEvents({
+        calendarId: calendarID,
+        maxResults: 1,
+        orderBy: "startTime",
+        singleEvents: true,
+        timeMin: new Date().toISOString()
+    })
         .then(JSON.stringify).then(JSON.parse).then(res => {
             if (res.length !== 1) {
                 throw new Error("Calendar query returned no or more than one events.");
@@ -109,7 +117,7 @@ export async function getNextDueEvent(calendarID: string){
         })
         .then(res => parseEvent(res[0]))
         .then(res => {
-            if (!res.link){
+            if (!res.link) {
                 throw new Error("No valid link extracted from calendar event.");
             } else {
                 event = res;
