@@ -1,14 +1,4 @@
-import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    OneToOne,
-    JoinColumn,
-    Index,
-    UpdateDateColumn,
-    CreateDateColumn,
-    OneToMany
-} from "typeorm";
+import { Column, CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export abstract class Person {
     @PrimaryGeneratedColumn()
@@ -71,4 +61,10 @@ export abstract class Person {
         default: null
     })
     authTokenSent: Date;
+}
+
+export enum RegistrationSource {
+    NORMAL,
+    COOPERATION,
+    OTHER
 }

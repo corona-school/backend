@@ -1,6 +1,6 @@
 import * as Holidays from "date-holidays";
 import { getLogger } from "log4js";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 
 const logger = getLogger();
 
@@ -34,7 +34,7 @@ function isCommonHolidayInAnyStateOfGermany(date: Date): Holidays.Holiday | fals
     const allStates = Object.keys(new Holidays().getStates(de));
 
     //all holidays is each state of Germany in the year of the date
-    const allHolidays: Holidays.Holiday[] = allStates.reduce( (a, s) => a.concat(...(new Holidays(de, s).getHolidays(date.getFullYear()))), []);
+    const allHolidays: Holidays.Holiday[] = allStates.reduce((a, s) => a.concat(...(new Holidays(de, s).getHolidays(date.getFullYear()))), []);
 
     return allHolidays.find( hd => isHolidayAtDate(hd, date));
 }

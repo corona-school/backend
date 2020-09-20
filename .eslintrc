@@ -9,7 +9,7 @@
     ],
     "rules": {
         "block-scoped-var": "error",
-        "camelcase": "warn",
+        "camelcase": ["warn", {"allow": ["wix_id", "wix_creation_date"]}],
         "comma-dangle": "error",
         "indent": ["error", 4, {
             "SwitchCase": 1,

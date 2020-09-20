@@ -1,16 +1,5 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity, Index,
-    JoinTable,
-    ManyToMany,
-    PrimaryGeneratedColumn, Unique,
-    UpdateDateColumn
-} from "typeorm";
-import { Student } from "./Student";
-import { Subcourse } from './Subcourse';
+import { Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Course } from './Course';
-import { Pupil } from './Pupil';
 
 @Entity()
 export class CourseTag {

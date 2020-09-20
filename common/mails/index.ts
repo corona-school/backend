@@ -1,6 +1,6 @@
 import * as nodemailer from "nodemailer";
-import { mailjetSmtp, DEFAULTSENDERS } from "./config";
-import { TemplateMail, mailjet as mailjetTemplates } from "./templates";
+import { mailjetSmtp } from "./config";
+import { mailjet as mailjetTemplates, TemplateMail } from "./templates";
 import mailjet from "./mailjet";
 
 import * as fs from "fs";
@@ -19,14 +19,7 @@ function formatDate(d: Date): string {
     ].join("-");
 }
 
-function saveMail(
-    recipient: string,
-    subject: string,
-    sender: string,
-    text: string,
-    html: string,
-    saveHTMLseparate: boolean = true
-) {
+function saveMail(recipient: string, subject: string, sender: string, text: string, html: string, saveHTMLseparate: boolean = true) {
     const t = `
     FROM: ${sender}
     TO: ${recipient} \n\n\n
@@ -38,13 +31,8 @@ function saveMail(
     `;
 
     try {
-        const mailStorage =
-            typeof process.env.TEST_MAIL_STORAGE != "undefined"
-                ? process.env.TEST_MAIL_STORAGE
-                : "mailstore";
-        const baseFileName = `${mailStorage}/sent/${recipient}-${formatDate(
-            new Date()
-        )}`;
+        const mailStorage = typeof process.env.TEST_MAIL_STORAGE != "undefined" ? process.env.TEST_MAIL_STORAGE : "mailstore";
+        const baseFileName = `${mailStorage}/sent/${recipient}-${formatDate(new Date())}`;
 
         fs.writeFileSync(`${baseFileName}.txt`, t);
 
@@ -57,14 +45,7 @@ function saveMail(
     }
 }
 
-async function sendMailTo(
-    recipient: string,
-    subject: string,
-    text: string,
-    html: string,
-    sender: string,
-    debug: boolean = true
-) {
+async function sendMailTo(recipient: string, subject: string, text: string, html: string, sender: string, debug: boolean = true) {
     if (debug) {
         //just save the mail to the log directory
         saveMail(recipient, subject, sender, text, html);
@@ -87,13 +68,11 @@ async function sendMailTo(
 
 async function sendTemplateMail(templateMail: TemplateMail, recipient: string, replyTo?: string) {
     if (templateMail.disabled) {
-        logger.warn(
-            "Send Mail: The template is disabled – not sending that mail."
-        );
+        logger.warn("Send Mail: The template is disabled – not sending that mail.");
     }
 
     try {
-        const result = await mailjet.send(
+        const result = await mailjet.sendTemplate(
             templateMail.title,
             templateMail.sender,
             recipient,
@@ -103,20 +82,10 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
             replyTo ? replyTo : undefined
         );
 
-        logger.info(
-            "E-Mail (type " + templateMail.type + ") was sent to " + recipient,
-            JSON.stringify(result.body)
-        );
+        logger.info("E-Mail (type " + templateMail.type + ") was sent to " + recipient, JSON.stringify(result.body));
         return result;
     } catch (e) {
-        logger.warn(
-            "Unable to send mail (type " +
-                templateMail.type +
-                ") to " +
-                recipient +
-                ": Status code " +
-                e.statusCode
-        );
+        logger.warn("Unable to send mail (type " + templateMail.type + ") to " + recipient + ": Status code " + e.statusCode);
         throw e;
     }
 }

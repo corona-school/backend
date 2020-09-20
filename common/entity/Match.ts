@@ -1,23 +1,18 @@
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
-    OneToOne,
-    JoinColumn,
-    Index,
-    UpdateDateColumn,
     CreateDateColumn,
-    OneToMany,
+    Entity,
+    EntityManager,
+    Index,
+    JoinColumn,
     ManyToOne,
+    PrimaryGeneratedColumn,
     Unique,
-    EntityManager
+    UpdateDateColumn
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
-import {
-    intersectionWithRespectToGrade,
-    subjectsAsArray
-} from "../util/subjectsutils";
+import { intersectionWithRespectToGrade, subjectsAsArray } from "../util/subjectsutils";
 import { gradeAsInt } from "../util/gradestrings";
 
 export enum SourceType {
@@ -111,31 +106,12 @@ export function subjectIntersectionOfMatch(m: Match) {
     );
 }
 
-export async function haveDissolvedMatch(
-    s: Student,
-    p: Pupil,
-    manager: EntityManager
-) {
-    return (
-        (
-            await manager.find(Match, {
-                student: s,
-                pupil: p,
-                dissolved: true
-            })
-        ).length > 0
-    );
+export async function haveDissolvedMatch(s: Student, p: Pupil, manager: EntityManager) {
+    return (await manager.find(Match, { student: s, pupil: p, dissolved: true })).length > 0;
 }
 
-export async function alreadyMatched(
-    s: Student,
-    p: Pupil,
-    manager: EntityManager
-) {
-    const matches = manager.find(Match, {
-        student: s,
-        pupil: p
-    });
+export async function alreadyMatched(s: Student, p: Pupil, manager: EntityManager) {
+    const matches = manager.find(Match, { student: s, pupil: p });
 
     return (await matches).length !== 0;
 }

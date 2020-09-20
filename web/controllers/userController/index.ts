@@ -1,7 +1,16 @@
 import { getLogger } from "log4js";
 import { getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
-import { ApiGetUser, ApiMatch, ApiPutUser, ApiSubject, checkName, checkSubject, ApiSubjectStudent, ApiUserRoleInstructor } from "./format";
+import {
+    ApiGetUser,
+    ApiMatch,
+    ApiPutUser,
+    ApiSubject,
+    ApiSubjectStudent,
+    ApiUserRoleInstructor,
+    checkName,
+    checkSubject
+} from "./format";
 import { ScreeningStatus, Student, TeacherModule } from "../../../common/entity/Student";
 import { Pupil } from "../../../common/entity/Pupil";
 import { Person } from "../../../common/entity/Person";
@@ -13,6 +22,8 @@ import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubj
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
 import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
+import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
+import * as moment from "moment-timezone";
 
 const logger = getLogger();
 
@@ -227,14 +238,14 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                         break;
                     }
                 } else if (typeof elem.name == "string" &&
-                        typeof elem.minGrade == "number" &&
-                        typeof elem.maxGrade == "number" &&
-                        elem.minGrade >= 1 &&
-                        elem.minGrade <= 13 &&
-                        elem.minGrade <= elem.maxGrade &&
-                        elem.maxGrade >= 1 &&
-                        elem.maxGrade <= 13 &&
-                        checkSubject(elem.name)) {
+                    typeof elem.minGrade == "number" &&
+                    typeof elem.maxGrade == "number" &&
+                    elem.minGrade >= 1 &&
+                    elem.minGrade <= 13 &&
+                    elem.minGrade <= elem.maxGrade &&
+                    elem.maxGrade >= 1 &&
+                    elem.maxGrade <= 13 &&
+                    checkSubject(elem.name)) {
 
                     let subject = new ApiSubject();
                     subject.name = elem.name;
@@ -358,6 +369,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     apiResponse.lastname = person.lastname;
     apiResponse.email = person.email;
     apiResponse.active = person.active;
+    apiResponse.registrationDate = moment(person.wix_creation_date).unix();
 
     if (person instanceof Student) {
         apiResponse.type = "student";
@@ -369,6 +381,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
+        apiResponse.university = person.university;
+        apiResponse.state = person.state;
+        apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
 
         let matches = await entityManager.find(Match, {
             student: person,
@@ -401,19 +416,23 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(dissolvedMatches[i].pupil.subjects)
             );
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
         }
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
+        apiResponse.isPupil = person.isPupil;
+        apiResponse.isParticipant = person.isParticipant;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
+        apiResponse.state = person.state;
+        apiResponse.schoolType = person.schooltype;
+        apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
 
         let matches = await entityManager.find(Match, {
             pupil: person,
@@ -432,8 +451,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(matches[i].student.subjects)
             );
             apiMatch.uuid = matches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
@@ -447,8 +465,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 JSON.parse(dissolvedMatches[i].student.subjects)
             );
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink =
-                "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
@@ -482,24 +499,47 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     person.lastname = req.lastname.trim();
 
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
-        logger.warn(
-            "Invalid names: " + person.firstname + " / " + person.lastname
-        );
+        logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
     }
 
     let type: ObjectType<Person>;
     if (person instanceof Student) {
+        type = Student;
+        // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
         if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
-            || (req.matchesRequested > 0 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
+            || (req.matchesRequested > 1 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
             logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
             return 400;
         }
 
         person.openMatchRequestCount = req.matchesRequested;
-        type = Student;
+
+        // ++++ UNIVERSITY ++++
+        person.university = req.university;
+
+        // ++++ STATE ++++
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
+        }
+
+        // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
+        if (req.lastUpdatedSettingsViaBlocker) {
+            person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
+        }
+        else {
+            person.lastUpdatedSettingsViaBlocker = null;
+        }
     } else if (person instanceof Pupil) {
+        type = Pupil;
+
+        // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, {
             pupil: person,
@@ -516,13 +556,40 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         person.openMatchRequestCount = req.matchesRequested;
 
+        // ++++ GRADE ++++
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
             person.grade = req.grade + ". Klasse";
         } else {
-            logger.warn("User who is a pupil wants to set an invalid grade o! It is ignored.");
+            logger.warn("User who is a pupil wants to set an invalid grade! It is ignored.");
         }
 
-        type = Pupil;
+        // ++++ SCHOOL TYPE ++++
+        if (req.schoolType) {
+            const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
+            if (!schoolType) {
+                logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
+                return 400;
+            }
+            person.schooltype = schoolType;
+        }
+
+        // ++++ STATE ++++
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
+        }
+
+        // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
+        if (req.lastUpdatedSettingsViaBlocker) {
+            person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
+        }
+        else {
+            person.lastUpdatedSettingsViaBlocker = null;
+        }
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);
@@ -601,8 +668,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn(
-            "Person with id " + person.wix_id + " tried to access data from id " + wix_id);
+        logger.warn("Person with id " + person.wix_id + " tried to access data from id " + wix_id);
         return 403;
     }
 
@@ -731,15 +797,15 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
  */
 export async function postUserRoleInstructorHandler(req: Request, res: Response) {
     let status = 204;
-    if (res.locals.user instanceof Student
-        && req.params.id != undefined
-        && typeof req.body.isOfficial == 'boolean'
-        && typeof req.body.msg == 'string') {
+    if (res.locals.user instanceof Student &&
+        req.params.id != undefined &&
+        typeof req.body.isOfficial == 'boolean' &&
+        typeof req.body.msg == 'string') {
 
         if (req.body.isOfficial) {
-            if (typeof req.body.university !== 'string'
-            || typeof req.body.module !== 'string'
-            || typeof req.body.hours !== 'number') {
+            if (typeof req.body.university !== 'string' ||
+                typeof req.body.module !== 'string' ||
+                typeof req.body.hours !== 'number') {
                 status = 400;
                 logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
             }
@@ -915,15 +981,16 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
         && req.body instanceof Array) {
         let subjects: ApiSubjectStudent[] = [];
         for (let testSubject of req.body) {
-            if (typeof testSubject.name == "string"
-                && checkSubject(testSubject.name)
-                && typeof testSubject.minGrade == "number"
-                && Number.isInteger(testSubject.minGrade)
-                && typeof testSubject.maxGrade == "number"
-                && Number.isInteger(testSubject.maxGrade)
-                && testSubject.minGrade >= 1 && testSubject.minGrade <= 13
-                && testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13
-                && testSubject.minGrade <= testSubject.maxGrade) {
+            if (typeof testSubject.name == "string" &&
+                checkSubject(testSubject.name) &&
+                typeof testSubject.minGrade == "number" &&
+                Number.isInteger(testSubject.minGrade) &&
+                typeof testSubject.maxGrade == "number" &&
+                Number.isInteger(testSubject.maxGrade) &&
+                testSubject.minGrade >= 1 && testSubject.minGrade <= 13 &&
+                testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13 &&
+                testSubject.minGrade <= testSubject.maxGrade) {
+
                 let newSubject = new ApiSubjectStudent;
                 newSubject.name = testSubject.name;
                 newSubject.minGrade = testSubject.minGrade;

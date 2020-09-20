@@ -1,10 +1,73 @@
-import { mailjetSmtp, DEFAULTSENDERS } from "./config";
+import { mailjetSmtp } from "./config";
 import * as mailjetAPI from "node-mailjet";
 import { getLogger } from "log4js";
 
 const logger = getLogger();
 
-async function sendMail(
+async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox: boolean = false) {
+    //determine whether we have sandbox mode or not...
+    let sandboxMode = sandbox;
+
+    //if mailjet is not set to live (via envs), always switch to sandbox, no matter what the sandbox-Parameter is set to
+    if (process.env.MAILJET_LIVE != "1") {
+        logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
+        sandboxMode = true;
+    }
+
+    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
+
+    //send actual email
+    let requestOptions: mailjetAPI.Email.SendParams = {
+        SandboxMode: sandboxMode,
+        Messages: [
+            message
+        ]
+    };
+
+    //log what is sent to mailjet, so we can better debug some problems with mails
+    logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
+
+    return await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+}
+
+async function sendMailPure(
+    subject: string,
+    text: string,
+    senderAddress: string,
+    receiverAddress: string,
+    senderName?: string,
+    receiverName?: string,
+    replyToAddress?: string,
+    replyToName?: string,
+    sandbox: boolean = false
+) {
+    // construct mailjet API message
+    const message: mailjetAPI.Email.SendParamsMessage = {
+        From: {
+            Email: senderAddress,
+            Name: senderName
+        },
+        To: [
+            {
+                Email: receiverAddress,
+                Name: receiverName
+            }
+        ],
+        Subject: subject,
+        TextPart: text
+    };
+
+    if (replyToAddress) {
+        message.ReplyTo = {
+            Email: replyToAddress,
+            Name: replyToName
+        };
+    }
+
+    return await sendMessage(message, sandbox);
+}
+
+async function sendMailTemplate(
     subject: string,
     senderAddress: string,
     receiverAddress: string,
@@ -13,50 +76,28 @@ async function sendMail(
     sandbox: boolean = false,
     replyToAddress?: string
 ) {
-    //determine whether we have sandbox mode or not...
-    let sandboxMode = sandbox;
-
-    //if mailjet is not set to live (via envs), always switch to sendbox, no matter what the sandbox-Parameter is set to
-    if (process.env.MAILJET_LIVE != "1") {
-        logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
-        sandboxMode = true;
-    }
-
-    const mailjet = mailjetAPI.connect(
-        mailjetSmtp.auth.user,
-        mailjetSmtp.auth.pass
-    );
-
-    //send actual email
-    let requestOptions = {
-        SandboxMode: sandboxMode,
-        Messages: [
+    const message: mailjetAPI.Email.SendParamsMessage = {
+        From: {
+            Email: senderAddress
+        },
+        To: [
             {
-                From: {
-                    Email: senderAddress
-                },
-                To: [
-                    {
-                        Email: receiverAddress
-                    }
-                ],
-                TemplateID: templateID,
-                TemplateLanguage: true,
-                Variables: variables,
-                Subject: subject
+                Email: receiverAddress
             }
-        ]
+        ],
+        TemplateID: templateID,
+        TemplateLanguage: true,
+        Variables: variables,
+        Subject: subject
     };
 
-    if (replyToAddress != undefined) {
-        requestOptions.Messages[0]['ReplyTo'] = {
+    if (replyToAddress) {
+        message.ReplyTo = {
             Email: replyToAddress
         };
     }
 
-    const request = mailjet.post("send", { version: "v3.1" }).request(requestOptions);
-
-    return await request;
+    return await sendMessage(message, sandbox);
 }
 
 const ErrorCodes = {
@@ -65,6 +106,7 @@ const ErrorCodes = {
 };
 
 export default {
-    send: sendMail,
+    sendTemplate: sendMailTemplate,
+    sendPure: sendMailPure,
     ErrorCodes: ErrorCodes
 };

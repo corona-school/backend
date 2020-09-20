@@ -35,56 +35,32 @@ export class Screener extends Person {
     }
 
     async updateWithScreenerDTO(screenerDTO: ScreenerDTO) {
-        this.firstname =
-            screenerDTO.firstname === undefined
-                ? this.firstname
-                : screenerDTO.firstname;
-        this.lastname =
-            screenerDTO.lastname === undefined
-                ? this.lastname
-                : screenerDTO.lastname;
-        this.email =
-            screenerDTO.email === undefined ? this.email : screenerDTO.email;
-        this.password =
-            screenerDTO.passwordHash === undefined
-                ? this.password
-                : screenerDTO.passwordHash;
-        this.verified =
-            screenerDTO.verified === undefined
-                ? this.verified
-                : screenerDTO.verified;
-        this.active =
-            screenerDTO.active === undefined ? this.active : screenerDTO.active;
+        this.firstname = screenerDTO.firstname === undefined ? this.firstname : screenerDTO.firstname;
+        this.lastname = screenerDTO.lastname === undefined ? this.lastname : screenerDTO.lastname;
+        this.email = screenerDTO.email === undefined ? this.email : screenerDTO.email;
+        this.password = screenerDTO.passwordHash === undefined ? this.password : screenerDTO.passwordHash;
+        this.verified = screenerDTO.verified === undefined ? this.verified : screenerDTO.verified;
+        this.active = screenerDTO.active === undefined ? this.active : screenerDTO.active;
     }
 }
-export function getScreenerByEmail(
-    manager: EntityManager,
-    email: string
-): Promise<Screener> | undefined {
+
+export function getScreenerByEmail(manager: EntityManager, email: string): Promise<Screener> | undefined {
     return manager.findOne(Screener, { email: email });
 }
 
-export function getScreenerWithNumberFromOldDB(
-    manager: EntityManager,
-    screenerNumber: number
-) {
+export function getScreenerWithNumberFromOldDB(manager: EntityManager, screenerNumber: number) {
     return manager.findOne(Screener, { oldNumberID: screenerNumber });
 }
 
-export function getScreenersWithFirstname(
-    manager: EntityManager,
-    firstname: string
-) {
+export function getScreenersWithFirstname(manager: EntityManager, firstname: string) {
     return manager.find(Screener, { firstname: firstname });
 }
 
 const DEFAULT_SCREENER_FIRSTNAME = "DEFAULT_SCREENER";
 const DEFAULT_SCREENER_NUMBER_ID = -1;
+
 export async function getDefaultScreener(manager: EntityManager) {
-    let defaultScreener = await getScreenerWithNumberFromOldDB(
-        manager,
-        DEFAULT_SCREENER_NUMBER_ID
-    );
+    let defaultScreener = await getScreenerWithNumberFromOldDB(manager, DEFAULT_SCREENER_NUMBER_ID);
 
     if (!defaultScreener) {
         defaultScreener = new Screener();

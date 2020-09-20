@@ -1,16 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager, Like, createQueryBuilder, getConnection } from "typeorm";
+import { getManager, Like } from "typeorm";
 import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
 import { ApiCreateLecture } from "../../../common/dto/ApiCreateLecture";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentToScreen } from "../../../common/dto/StudentToScreen";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
-import {
-    Student,
-    getStudentByEmail,
-    getAllStudents,
-    ScreeningStatus
-} from "../../../common/entity/Student";
+import { getAllStudents, getStudentByEmail, ScreeningStatus, Student } from "../../../common/entity/Student";
 import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
@@ -37,13 +32,9 @@ const logger = getLogger();
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/
  */
-export async function getStudents(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function getStudents(req: Request, res: Response, next: NextFunction) {
     const transactionLog = getTransactionLog();
 
     try {
@@ -73,33 +64,21 @@ export async function getStudents(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/<EMAIL>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
  */
-export async function getStudentByMailHandler(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function getStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
     const transactionLog = getTransactionLog();
 
     try {
-        const student: Student | undefined = await getStudentByEmail(
-            getManager(),
-            req.params.email
-        );
+        const student: Student | undefined = await getStudentByEmail(getManager(), req.params.email);
 
         if (student instanceof Student) {
             const screening: Screening = await student.screening;
-            const studentToScreen: StudentToScreen = new StudentToScreen(
-                student,
-                screening
-            );
+            const studentToScreen: StudentToScreen = new StudentToScreen(student, screening);
             res.json(studentToScreen);
-            await transactionLog.log(
-                new AccessedByScreenerEvent(student, "unknown")
-            ); // todo set screener to the name of the screener
+            await transactionLog.log(new AccessedByScreenerEvent(student, "unknown")); // todo set screener to the name of the screener
         } else {
             res.status(404).send("no student with given email address found");
         }
@@ -122,40 +101,27 @@ export async function getStudentByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
  *
  * @apiUse ScreeningResult
  */
-export async function updateStudentWithScreeningResultHandler(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function updateStudentWithScreeningResultHandler(req: Request, res: Response, next: NextFunction) {
     const transactionLog = getTransactionLog();
 
     try {
-        const screenedStudent: Student = await getStudentByEmail(
-            getManager(),
-            req.params.email
-        );
+        const screenedStudent: Student = await getStudentByEmail(getManager(), req.params.email);
         if (screenedStudent instanceof Student) {
-            const screeningResult: ApiScreeningResult = new ApiScreeningResult(
-                req.body
-            );
+            const screeningResult: ApiScreeningResult = new ApiScreeningResult(req.body);
             if (screeningResult.isValid()) {
                 await screenedStudent.addScreeningResult(screeningResult);
                 await getManager().save(screenedStudent);
-                await transactionLog.log(
-                    new UpdatedByScreenerEvent(screenedStudent, "unknown")
-                ); // todo set screener to the name of the screener
+                await transactionLog.log(new UpdatedByScreenerEvent(screenedStudent, "unknown")); // todo set screener to the name of the screener
 
                 res.status(200).end();
             } else {
-                res.status(400).send(
-                    "the necessary screening results are missing"
-                );
+                res.status(400).send("the necessary screening results are missing");
             }
         } else {
             res.status(404).send("no student with given email address found");
@@ -179,21 +145,14 @@ export async function updateStudentWithScreeningResultHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/<EMAIL>/<true|false>
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/<EMAIL>/<true|false>
  *
  * @apiParam (URL Parameter) {string} email Screener's Email Address
  * @apiParam (URL Parameter) {string} includepassword Flag to include or exclude password hash from transmitted object
  */
-export async function getScreenerByMailHandler(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function getScreenerByMailHandler(req: Request, res: Response, next: NextFunction) {
     try {
-        const screener: Screener | undefined = await getScreenerByEmail(
-            getManager(),
-            req.params.email
-        );
+        const screener: Screener | undefined = await getScreenerByEmail(getManager(), req.params.email);
 
         if (screener instanceof Screener) {
             const screenerDTO: ScreenerDTO = new ScreenerDTO(screener);
@@ -223,19 +182,15 @@ export async function getScreenerByMailHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/"
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/"
  *
  */
-export async function addScreenerHandler(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function addScreenerHandler(req: Request, res: Response, next: NextFunction) {
     try {
         const screenerDTO: ScreenerDTO = new ScreenerDTO(req.body);
         if (screenerDTO.isValid()) {
             const screener: Screener = new Screener();
-            screener.addScreenerDTO(screenerDTO);
+            await screener.addScreenerDTO(screenerDTO);
             await getManager().save(screener);
             res.status(200).end();
         } else {
@@ -243,9 +198,7 @@ export async function addScreenerHandler(
         }
     } catch (err) {
         if (err.code == "23505") {
-            res.status(400).send(
-                "a screener with this email address already exists"
-            );
+            res.status(400).send("a screener with this email address already exists");
         } else {
             logger.warn(err.message);
         }
@@ -267,40 +220,29 @@ export async function addScreenerHandler(
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://dashboard.corona-school.de/api/screener/<EMAIL>
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/screener/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Screener's Email Address
  */
-export async function updateScreenerByMailHandler(
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
+export async function updateScreenerByMailHandler(req: Request, res: Response, next: NextFunction) {
     try {
-        const screener: Screener | undefined = await getScreenerByEmail(
-            getManager(),
-            req.params.email
-        );
+        const screener: Screener | undefined = await getScreenerByEmail(getManager(), req.params.email);
 
         if (screener instanceof Screener) {
             const screenerDTO: ScreenerDTO = new ScreenerDTO(req.body);
             if (screenerDTO.isValid()) {
-                screener.updateWithScreenerDTO(screenerDTO);
+                await screener.updateWithScreenerDTO(screenerDTO);
                 await getManager().save(screener);
                 res.status(200).end();
             } else {
-                res.status(400).send(
-                    "some necessary screener fields are missing"
-                );
+                res.status(400).send("some necessary screener fields are missing");
             }
         } else {
             res.status(404).send("no screener with given email address found");
         }
     } catch (err) {
         if (err.code == "23505") {
-            res.status(400).send(
-                "cannot change email address: a screener with this email address already exists"
-            );
+            res.status(400).send("cannot change email address: a screener with this email address already exists");
         } else {
             logger.warn(err.message);
         }
@@ -339,19 +281,15 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
-        const where = (courseState
-            ? (search
-                ? [{ courseState, name: Like(`%${search}%`) }, /* OR */ { courseState, description: Like(`%${search}%`) }]
-                : { courseState })
-            : (search
-                ? [{ name: Like(`%${search}%`) }, /* OR */ { description: Like(`%${search}%`) }]
-                : {})
-        );
+        const where = (courseState ? (search ? [
+            { courseState, name: Like(`%${search}%`) }, /* OR */
+            { courseState, description: Like(`%${search}%`) }
+        ] : { courseState }) : (search ? [
+            { name: Like(`%${search}%`) }, /* OR */
+            { description: Like(`%${search}%`) }
+        ] : {}));
 
-        const courses = await getManager().find(Course, {
-            where,
-            take: 20
-        });
+        const courses = await getManager().find(Course, { where, take: 20 });
 
         return res.json({ courses });
     } catch (error) {
@@ -384,7 +322,8 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|undefined} outline the new outline
  * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
- * @apiParam (JSON Body) {{ id: number }[]|undefined} instructors the instructor ids of this course
+ * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
+ * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
@@ -493,7 +432,7 @@ export async function getInstructors(req: Request, res: Response) {
 
         if (screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
-                .createQueryBuilder(Student,"student")
+                .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
@@ -507,7 +446,7 @@ export async function getInstructors(req: Request, res: Response) {
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
-                .createQueryBuilder(Student,"student")
+                .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
                 .take(20)
@@ -521,6 +460,7 @@ export async function getInstructors(req: Request, res: Response) {
         return res.status(500).send("internal server error");
     }
 }
+
 /**
  * @api {POST} /screening/instructor/:instructorID/update updateInstructor
  * @apiVersion 1.0.1

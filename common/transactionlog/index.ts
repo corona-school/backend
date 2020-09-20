@@ -12,7 +12,7 @@ class TransactionLog {
     async log(logEvent: LogEvent) {
         const log = new Log();
         log.logtype = logEvent.logType;
-        log.user = logEvent.user_id;
+        log.user = logEvent.userId;
         log.data = JSON.stringify(logEvent.data);
 
         await this.logs.save(log);

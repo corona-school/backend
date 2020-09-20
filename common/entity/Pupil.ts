@@ -1,19 +1,11 @@
-import { Column, Entity, EntityManager, Index, JoinTable, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 import { Match } from "./Match";
-import { Person } from "./Person";
+import { Person, RegistrationSource } from "./Person";
 import { Subcourse } from './Subcourse';
-import { CourseTag } from './CourseTag';
 import { State } from './State';
-
-export enum SchoolType {
-    GRUNDSCHULE = "grundschule",
-    GESAMTSCHULE = "gesamtschule",
-    HAUPTSCHULE = "hauptschule",
-    REALSCHULE = "realschule",
-    GYMNASIUM = "gymnasium",
-    FOERDERSCHULE = "förderschule",
-    SONSTIGES = "other"
-}
+import { School } from './School';
+import {CourseAttendanceLog} from "./CourseAttendanceLog";
+import { SchoolType } from "./SchoolType";
 
 @Entity()
 export class Pupil extends Person {
@@ -94,6 +86,9 @@ export class Pupil extends Person {
     @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
     subcourses: Subcourse[];
 
+    @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.pupil)
+    courseAttendanceLog: CourseAttendanceLog[];
+
     /*
      * Other data
      */
@@ -102,6 +97,34 @@ export class Pupil extends Person {
         default: 0 //everyone is default 0, i.e no priority
     })
     matchingPriority: number;
+
+    // Holds the date of when some settings were last updated by a blocking popup (aka "blocker") in the frontend.
+    // The frontend should set this value. It may be null, if it was never used by the frontend
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastUpdatedSettingsViaBlocker: Date;
+
+    @ManyToOne((type) => School, (school) => school.pupils, {
+        eager: true,
+        nullable: true
+    })
+    @JoinColumn()
+    school: School;
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    teacherEmailAddress: string;
+
+    @Column({
+        type: 'enum',
+        enum: RegistrationSource,
+        default: RegistrationSource.NORMAL
+    })
+    registrationSource: RegistrationSource;
 }
 
 export function getPupilWithEmail(manager: EntityManager, email: string) {

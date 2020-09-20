@@ -10,7 +10,10 @@ import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
-import { sendFirstScreeningInvitationToTutor, sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
+import {
+    sendFirstScreeningInvitationToInstructor,
+    sendFirstScreeningInvitationToTutor
+} from "../../../common/administration/screening/initial-invitations";
 
 const logger = getLogger();
 
@@ -26,7 +29,7 @@ const logger = getLogger();
  * @apiGroup Token
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Content-Type: application/json" https://dashboard.corona-school.de/api/token/ -d "<REQUEST>"
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/token/ -d "<REQUEST>"
  *
  * @apiUse ContentType
  * @apiUse VerifyToken
@@ -86,11 +89,8 @@ export async function verifyToken(token: string): Promise<string | null> {
                     // Invite to tutor screening
                     await sendFirstScreeningInvitationToTutor(entityManager, student);
                 }
-            }
-            catch (mailerror) {
-                logger.error(
-                    `Can't send emails to student ${student.email} after verification due to mail error...`
-                );
+            } catch (mailerror) {
+                logger.error(`Can't send emails to student ${student.email} after verification due to mail error...`);
                 logger.debug(mailerror);
             }
 
@@ -114,9 +114,7 @@ export async function verifyToken(token: string): Promise<string | null> {
             pupil.authTokenSent = new Date();
             pupil.authTokenUsed = false;
 
-            logger.info(
-                "Generated and sending UUID " + uuid + " to " + pupil.email
-            );
+            logger.info("Generated and sending UUID " + uuid + " to " + pupil.email);
 
             await sendLoginTokenMail(pupil, uuid);
             await entityManager.save(pupil);
@@ -147,9 +145,10 @@ export async function verifyToken(token: string): Promise<string | null> {
  * @apiGroup Token
  *
  * @apiParam (Query Parameter) {string} email Email address of the user (case insensitive)
+ * @apiParam (Query Parameter) {string} redirectTo route to the page the Token-Link shall lead to (optional)
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET "https://dashboard.corona-school.de/api/token?email=info%40example.org"
+ * curl -k -i -X GET "https://api.corona-school.de/api/token?email=info%40example.org&path=/courses/2"
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -167,14 +166,17 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             const entityManager = getManager();
             const transactionLog = getTransactionLog();
 
-            let person: (Pupil|Student);
-            person = await entityManager.findOne(Student, {email: email});
+            let person: (Pupil | Student);
+            person = await entityManager.findOne(Student, { email: email });
             if (person == undefined) {
-                person = await entityManager.findOne(Pupil, {email: email});
+                person = await entityManager.findOne(Pupil, { email: email });
             }
 
             if (person !== undefined) {
                 if (allowedToRequestToken(person)) {
+                    if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string")
+                        status = 400;
+
                     logger.info("Sending new auth token to user", person.id);
 
                     // Generate a new UUID
@@ -184,7 +186,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authTokenUsed = false;
 
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
-                    await sendLoginTokenMail(person, uuid);
+                    await sendLoginTokenMail(person, uuid, req.query.redirectTo);
 
 
                     // Save new token to database and log action
@@ -237,8 +239,11 @@ function allowedToRequestToken(person: Person): boolean {
     return true;
 }
 
-export async function sendLoginTokenMail(person: Person, token: string) {
-    const dashboardURL = "https://dashboard.corona-school.de/login?token=" + token;
+export async function sendLoginTokenMail(person: Person, token: string, redirectTo?: string) {
+    const dashboardURL = `https://my.corona-school.de/login?token=${token}&path=${redirectTo ?? ""}`;
+
+    console.log(dashboardURL);
+
     try {
         const mail = mailjetTemplates.LOGINTOKEN({
             personFirstname: person.firstname,

@@ -284,3 +284,10 @@ export interface ApiPostGroupMail {
     subject: string,
     body: string
 }
+
+/**
+ * @apiDefine BBBMeetingReturn
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (BBBMeeting Return Object) {string} url Meeting url depending on whether it is an attendee or moderator
+ */
