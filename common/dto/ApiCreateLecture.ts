@@ -7,16 +7,16 @@ export class ApiCreateLecture {
     duration: number;
 
     constructor({subcourse, instructor, start, duration }: any) {
-        this.subcourse = subcourse;
-        this.instructor = instructor;
-        this.start = start;
+        this.subcourse = { id: subcourse.id };
+        this.instructor = { id: instructor.id };
+        this.start = new Date(start);
         this.duration = duration;
     }
 
     isValid () {
         return is<ApiCreateLecture>(
-            value => typeof value.subcourse === "number",
-            value => typeof value.instructor === "number",
+            value => typeof value.subcourse.id === "number",
+            value => typeof value.instructor.id === "number",
             value => isDate(value.start),
             value => typeof value.duration === "number"
         );

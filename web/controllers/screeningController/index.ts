@@ -1,18 +1,18 @@
-import { NextFunction, Request, Response } from "express";
-import { getManager, Like } from "typeorm";
-import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
-import { ApiCreateLecture } from "../../../common/dto/ApiCreateLecture";
-import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
-import { StudentToScreen } from "../../../common/dto/StudentToScreen";
-import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
-import { getAllStudents, getStudentByEmail, ScreeningStatus, Student } from "../../../common/entity/Student";
-import { getTransactionLog } from "../../../common/transactionlog";
+import {NextFunction, Request, Response} from "express";
+import {getManager, Like} from "typeorm";
+import {ApiScreeningResult} from "../../../common/dto/ApiScreeningResult";
+import {ApiCreateLecture} from "../../../common/dto/ApiCreateLecture";
+import {ScreenerDTO} from "../../../common/dto/ScreenerDTO";
+import {StudentToScreen} from "../../../common/dto/StudentToScreen";
+import {getScreenerByEmail, Screener} from "../../../common/entity/Screener";
+import {getAllStudents, getStudentByEmail, ScreeningStatus, Student} from "../../../common/entity/Student";
+import {getTransactionLog} from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
-import { getLogger } from "log4js";
-import { Screening } from "../../../common/entity/Screening";
-import { Course } from "../../../common/entity/Course";
-import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
+import {getLogger} from "log4js";
+import {Screening} from "../../../common/entity/Screening";
+import {Course} from "../../../common/entity/Course";
+import {ApiCourseUpdate} from "../../../common/dto/ApiCourseUpdate";
 import {Lecture} from "../../../common/entity/Lecture";
 import {Subcourse} from "../../../common/entity/Subcourse";
 
@@ -358,17 +358,31 @@ export async function postLecture(req: Request, res: Response) {
         if (!lectureParams.isValid())
             return res.status(400).send("Invalid lecture data.");
 
+        const subcourse = await entityManager.findOne(Subcourse, { id: lectureParams.subcourse.id });
+        if (subcourse === undefined) {
+            return res.status(400).send(`There is no subcourse with ID ${lectureParams.subcourse.id}`);
+        }
+
+        const instructor = await entityManager.findOne(Student, { id: lectureParams.instructor.id });
+        if (instructor === undefined || !instructor.isInstructor || await instructor.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+            return res.status(400).send(`${lectureParams.instructor.id} is no instructor.`);
+        }
+
+        if (subcourse.instructors.indexOf(instructor) === -1) {
+            return res.status(400).send(`Instructor ${instructor.id} is no instructor of subcourse ${subcourse.id}`);
+        }
+
         const newLecture = new Lecture();
-        newLecture.subcourse = await entityManager.findOne(Subcourse, { id: lectureParams.subcourse.id });
-        newLecture.instructor = await entityManager.findOne(Student, { id: lectureParams.instructor.id });
+        newLecture.subcourse = subcourse;
+        newLecture.instructor = instructor;
         newLecture.start = lectureParams.start;
         newLecture.duration = lectureParams.duration;
 
         await entityManager.save(Lecture, newLecture);
 
-        return res.json({ newLecture });
+        return res.json({ id: newLecture.id });
     } catch (error) {
-        logger.warn("/screening/course/../postLecture failed with", error);
+        logger.warn("/screening/lectures/create failed with", error);
         return res.status(500).send("internal service error");
     }
 }
@@ -381,7 +395,6 @@ export async function deleteLecture(req: Request, res: Response) {
             return res.status(400).send("Invalid lecture id.");
 
         const lecture = await getManager().findOne(Lecture, { id: +id });
-
         if (lecture === undefined)
             return res.status(400).send("Cannot find lecture with given id.");
 
