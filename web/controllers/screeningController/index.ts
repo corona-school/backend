@@ -350,6 +350,30 @@ export async function updateCourse(req: Request, res: Response) {
     }
 }
 
+
+/**
+ * @api {POST} /screening/lectures/create createLecture
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Creates a new lecture
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName createLecture
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/lectures/create
+ *
+ * @apiParam (JSON Body) {Object} subcourse the new lecture will belong to
+ * @apiParam (JSON Body) {Object} instructor of the new lecture
+ * @apiParam (JSON Body) {number} starttime of the lecture
+ * @apiParam (JSON Body) {number} duration in minutes
+ */
 export async function postLecture(req: Request, res: Response) {
     try {
         const lectureParams = new ApiCreateLecture(req.body);
@@ -387,6 +411,27 @@ export async function postLecture(req: Request, res: Response) {
     }
 }
 
+/**
+ * @api {DELETE} /screening/lectures/:id/delete DeleteLecture
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Delete a lecture.
+ *
+ * This endpoint allows deleting a lecture.
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the lecture
+ *
+ * @apiName deleteLecture
+ * @apiGroup Screening
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" [host]/api/screening/lectures/<ID>/delete
+ */
 export async function deleteLecture(req: Request, res: Response) {
     try {
         const { id } = req.params;
