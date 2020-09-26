@@ -1,6 +1,4 @@
 import {getLogger} from "log4js";
-import moment from "moment";
-import {throws} from "assert";
 
 const {google} = require('googleapis');
 const logger = getLogger();
@@ -26,7 +24,7 @@ const parseEvent = (event) => {
 
     return ({
         time: event.start.dateTime,
-        link: linkFromConferenceData ?? event.summary.match(/https?:[^\s]+/)[0]
+        link: linkFromConferenceData ?? event.summary?.match(/https?:[^\s]+/)[0]
     });
 };
 
@@ -118,10 +116,9 @@ export async function getNextDueEvent(calendarID: string) {
         .then(res => parseEvent(res[0]))
         .then(res => {
             if (!res.link) {
-                throw new Error("No valid link extracted from calendar event.");
-            } else {
-                event = res;
+                logger.warn("No valid link extracted from calendar event.");
             }
+            event = res;
         })
         .catch(err => logger.warn("Calendar query failed: " + err.message));
 
