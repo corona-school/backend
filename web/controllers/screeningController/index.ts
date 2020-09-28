@@ -336,12 +336,10 @@ export async function updateCourse(req: Request, res: Response) {
             return res.status(400).send("Invalid course update!");
 
         if (removeLectures !== undefined) {
-            if (Array.isArray(removeLectures)) {
-                for (let i=0; i<removeLectures.length; i++) {
-                    const status = await handleDeleteLecture(removeLectures[i]);
-                    if (status != 204) {
-                        return res.status(status).send("Deleting lecture failed.");
-                    }
+            if (Array.isArray(removeLectures) && removeLectures.every(l => Number.isInteger(l.id))) {
+                const status = await handleDeleteLectures(removeLectures, +id);
+                if (status != 204) {
+                    return res.status(status).send("Deleting lecture failed.");
                 }
             } else {
                 return res.status(400).send("Invalid delete lecture request!");
@@ -404,23 +402,25 @@ async function handleNewLectures(lectures: { subcourse: { id: number }, start: D
     return 200;
 }
 
-async function handleDeleteLecture(removeLecture: { id: number }) {
+async function handleDeleteLectures(lectures: { id: number }[], courseId: number) {
     const entityManager = getManager();
 
-    const lecture = await entityManager.findOne(Lecture, {id: removeLecture.id});
-    if (lecture == undefined) {
-        logger.warn(`Lecture with ID ${removeLecture.id} was not found.`);
-        return 404;
-    }
+    for (let i=0; i<lectures.length; i++) {
+        const lecture = await entityManager.findOne(Lecture, { id: lectures[i].id });
+        if (lecture == undefined) {
+            logger.warn(`Lecture with ID ${lectures[i].id} was not found.`);
+            return 404;
+        }
 
-    try {
-        await entityManager.remove(Lecture, lecture);
-        logger.info("Successfully deleted lecture.");
-        return 204;
-    } catch (error) {
-        logger.warn("Deleting lecture failed with", error);
-        return 500;
+        try {
+            await entityManager.remove(Lecture, lecture);
+            logger.info("Successfully deleted lecture.");
+        } catch (error) {
+            logger.warn("Deleting lecture failed with", error);
+            return 500;
+        }
     }
+    return 204;
 }
 
 /**
