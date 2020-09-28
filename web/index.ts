@@ -230,6 +230,8 @@ createConnection().then(() => {
         const mentoringRouter = express.Router();
         mentoringRouter.use(authCheckFactory());
         mentoringRouter.post("/contact", mentoringController.postContactMentorHandler);
+        mentoringRouter.get("/material", mentoringController.getMaterial);
+        mentoringRouter.get("/feedbackCall", mentoringController.getFeedbackCallData);
 
         app.use("/api/mentoring", mentoringRouter);
     }
