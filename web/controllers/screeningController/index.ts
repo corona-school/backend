@@ -335,19 +335,6 @@ export async function updateCourse(req: Request, res: Response) {
         if (!update.isValid())
             return res.status(400).send("Invalid course update!");
 
-        if (newLectures !== undefined) {
-            if (Array.isArray(newLectures)) {
-                for (let i=0; i<newLectures.length; i++){
-                    const status = await handleAddLecture(newLectures[i]);
-                    if (status != 200) {
-                        return res.status(status).send("Saving lectures failed.");
-                    }
-                }
-            } else {
-                return res.status(400).send("Invalid new lecture request!");
-            }
-        }
-
         if (removeLectures !== undefined) {
             if (Array.isArray(removeLectures)) {
                 for (let i=0; i<removeLectures.length; i++) {
@@ -358,6 +345,17 @@ export async function updateCourse(req: Request, res: Response) {
                 }
             } else {
                 return res.status(400).send("Invalid delete lecture request!");
+            }
+        }
+
+        if (newLectures !== undefined) {
+            if (Array.isArray(newLectures) && newLectures.every(l => (Number.isInteger(l.subcourse.id) && !!Date.parse(l.start) && Number.isInteger(l.duration)))) {
+                const status = await handleNewLectures(newLectures, +id);
+                if (status != 200) {
+                    return res.status(status).send("Adding lectures failed.");
+                }
+            } else {
+                return res.status(400).send("Invalid new lectures request.");
             }
         }
 
@@ -376,27 +374,34 @@ export async function updateCourse(req: Request, res: Response) {
     }
 }
 
-async function handleAddLecture(newLecture: { subcourse: { id: number }, start: Date, duration: number }) {
+async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number }[], courseId: number) {
     const entityManager = getManager();
 
-    const subcourse = await entityManager.findOne(Subcourse, {id: newLecture.subcourse.id});
-    if (subcourse == undefined) {
-        logger.warn(`Subcourse with ID ${newLecture.subcourse.id} not found`);
-        return 404;
-    }
+    for (let i=0; i<lectures.length; i++){
+        const course = await entityManager.findOne(Course, { id: courseId });
+        if (course == undefined) {
+            logger.warn(`No course found with ID ${courseId}`);
+            return 404;
+        }
+        const subcourse = await entityManager.findOne(Subcourse, { id: lectures[i].subcourse.id, course: course });
+        if (subcourse == undefined) {
+            logger.warn(`No subcourse found with ID ${lectures[i].subcourse.id}`);
+            return 404;
+        }
 
-    const lecture = new Lecture();
-    lecture.subcourse = subcourse;
-    lecture.start = newLecture.start;
-    lecture.duration = newLecture.duration;
+        const lecture = new Lecture();
+        lecture.subcourse = subcourse;
+        lecture.start = lectures[i].start;
+        lecture.duration = lectures[i].duration;
 
-    try {
-        await entityManager.save(Lecture, lecture);
-        return 200;
-    } catch (error) {
-        logger.warn("Saving lecture failed with", error);
-        return 500;
+        try {
+            await entityManager.save(Lecture, lecture);
+        } catch (error) {
+            logger.warn("Saving lecture failed with", error);
+            return 500;
+        }
     }
+    return 200;
 }
 
 async function handleDeleteLecture(removeLecture: { id: number }) {
