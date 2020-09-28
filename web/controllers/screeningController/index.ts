@@ -12,6 +12,9 @@ import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
 import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
+import {Subcourse} from "../../../common/entity/Subcourse";
+import {Lecture} from "../../../common/entity/Lecture";
+import {start} from "repl";
 
 const logger = getLogger();
 
@@ -325,12 +328,38 @@ export async function getCourses(req: Request, res: Response) {
 export async function updateCourse(req: Request, res: Response) {
     try {
         const update = new ApiCourseUpdate(req.body);
+        const { newLectures, removeLectures } = req.body;
         const { id } = req.params;
-
         if (typeof id !== "string" || !Number.isInteger(+id))
             return res.status(400).send("Invalid course id!");
         if (!update.isValid())
             return res.status(400).send("Invalid course update!");
+
+        if (newLectures !== undefined) {
+            if (Array.isArray(newLectures)) {
+                for (let i=0; i<newLectures.length; i++){
+                    const status = await handleAddLecture(newLectures[i]);
+                    if (status != 200) {
+                        return res.status(status).send("Saving lectures failed.");
+                    }
+                }
+            } else {
+                return res.status(400).send("Invalid new lecture request!");
+            }
+        }
+
+        if (removeLectures !== undefined) {
+            if (Array.isArray(removeLectures)) {
+                for (let i=0; i<removeLectures.length; i++) {
+                    const status = await handleDeleteLecture(removeLectures[i]);
+                    if (status != 204) {
+                        return res.status(status).send("Deleting lecture failed.");
+                    }
+                }
+            } else {
+                return res.status(400).send("Invalid delete lecture request!");
+            }
+        }
 
         const course = await getManager().findOne(Course, { where: { id: +id } });
 
@@ -344,6 +373,48 @@ export async function updateCourse(req: Request, res: Response) {
     } catch (error) {
         logger.warn("/screening/course/../update failed with", error);
         return res.status(500).send("internal server error");
+    }
+}
+
+async function handleAddLecture(newLecture: { subcourse: { id: number }, start: Date, duration: number }) {
+    const entityManager = getManager();
+
+    const subcourse = await entityManager.findOne(Subcourse, {id: newLecture.subcourse.id});
+    if (subcourse == undefined) {
+        logger.warn(`Subcourse with ID ${newLecture.subcourse.id} not found`);
+        return 404;
+    }
+
+    const lecture = new Lecture();
+    lecture.subcourse = subcourse;
+    lecture.start = newLecture.start;
+    lecture.duration = newLecture.duration;
+
+    try {
+        await entityManager.save(Lecture, lecture);
+        return 200;
+    } catch (error) {
+        logger.warn("Saving lecture failed with", error);
+        return 500;
+    }
+}
+
+async function handleDeleteLecture(removeLecture: { id: number }) {
+    const entityManager = getManager();
+
+    const lecture = await entityManager.findOne(Lecture, {id: removeLecture.id});
+    if (lecture == undefined) {
+        logger.warn(`Lecture with ID ${removeLecture.id} was not found.`);
+        return 404;
+    }
+
+    try {
+        await entityManager.remove(Lecture, lecture);
+        logger.info("Successfully deleted lecture.");
+        return 204;
+    } catch (error) {
+        logger.warn("Deleting lecture failed with", error);
+        return 500;
     }
 }
 
