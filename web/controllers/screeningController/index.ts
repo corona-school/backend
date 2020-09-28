@@ -347,7 +347,7 @@ export async function updateCourse(req: Request, res: Response) {
         }
 
         if (newLectures !== undefined) {
-            if (Array.isArray(newLectures) && newLectures.every(l => (Number.isInteger(l.subcourse.id) && !!Date.parse(l.start) && Number.isInteger(l.duration)))) {
+            if (Array.isArray(newLectures) && newLectures.every(l => (Number.isInteger(l.subcourse.id) && !!Date.parse(l.start) && Number.isInteger(l.duration) && Number.isInteger(l.instructor.id)))) {
                 const status = await handleNewLectures(newLectures, +id);
                 if (status != 200) {
                     return res.status(status).send("Adding lectures failed.");
@@ -372,7 +372,7 @@ export async function updateCourse(req: Request, res: Response) {
     }
 }
 
-async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number }[], courseId: number) {
+async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
     const entityManager = getManager();
 
     for (let i=0; i<lectures.length; i++){
@@ -386,11 +386,21 @@ async function handleNewLectures(lectures: { subcourse: { id: number }, start: D
             logger.warn(`No subcourse found with ID ${lectures[i].subcourse.id}`);
             return 404;
         }
+        const instructor = await entityManager.findOne(Student, { id: lectures[i].instructor.id });
+        if (instructor == undefined) {
+            logger.warn(`No instructor with ID ${lectures[i].instructor.id}`);
+            return 404;
+        }
+        if (subcourse.instructors.findIndex(i => i.id === instructor.id) == -1){
+            logger.warn(`Instructor with ID ${lectures[i].instructor.id} is not in subcourse ${subcourse.id}`);
+            return 403;
+        }
 
         const lecture = new Lecture();
         lecture.subcourse = subcourse;
         lecture.start = lectures[i].start;
         lecture.duration = lectures[i].duration;
+        lecture.instructor = instructor;
 
         try {
             await entityManager.save(Lecture, lecture);
