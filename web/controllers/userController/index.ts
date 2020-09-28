@@ -429,7 +429,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
-        apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
+        apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
@@ -768,6 +768,14 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
         }
     }
     return stringSubjects;
+}
+
+function toPupilSubjectFormat(subjects: {name: string, minGrade?: number, maxGrade?: number}[]): {name: string}[] {
+    return subjects.map(v => {
+        return {
+            name: v.name
+        };
+    });
 }
 
 /**
