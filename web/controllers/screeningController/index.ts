@@ -324,6 +324,8 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
  * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
  * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
+ * @apiParam (JSON Body) {Object[]|undefined} newLectures the new lectures of this course after the update
+ * @apiParam (JSON Body) {Object[]|undefined} removeLectures the lectures that should be removed from the course
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
