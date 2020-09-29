@@ -2395,7 +2395,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             status = obj;
                         } else {
                             course = obj;
-                            meeting = await createBBBMeeting(course.name, subcourseId);
+                            meeting = await createBBBMeeting(course.name, subcourseId, res.locals.user);
                         }
                     }
 

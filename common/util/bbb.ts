@@ -9,6 +9,8 @@ import {Lecture} from "../entity/Lecture";
 import {getTransactionLog} from "../transactionlog";
 import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
 import {BBBMeeting} from "../entity/BBBMeeting";
+import CreateBBBMeetingEvent from "../transactionlog/types/CreateBBBMeetingEvent";
+import {Student} from "../entity/Student";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -32,8 +34,9 @@ export async function getBBBMeetingFromDB(id: string): Promise<BBBMeeting> {
     return await entityManager.findOne(BBBMeeting, {meetingID: id});
 }
 
-export async function createBBBMeeting(name: string, id: string): Promise<BBBMeeting> {
+export async function createBBBMeeting(name: string, id: string, user: Pupil | Student): Promise<BBBMeeting> {
     const entityManager = getManager();
+    const transactionLog = getTransactionLog();
     const attendeePW = hashToken('' + Math.random(), "sha1");
     const moderatorPW = hashToken('' + Math.random(), "sha1");
     const bbbMeeting = new BBBMeeting();
@@ -45,9 +48,8 @@ export async function createBBBMeeting(name: string, id: string): Promise<BBBMee
         bbbMeeting.moderatorPW = moderatorPW;
         bbbMeeting.attendeePW = attendeePW;
         await entityManager.save(BBBMeeting, bbbMeeting);
-        //TODO: transaction log hinzufügen
         //TODO: db migration erstellen
-        // await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
+        await transactionLog.log(new CreateBBBMeetingEvent(user, bbbMeeting));
         logger.info("Successfully saved new bbb meeting with id ", bbbMeeting.meetingID);
         return bbbMeeting;
     } catch (e) {
