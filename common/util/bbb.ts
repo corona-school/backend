@@ -48,7 +48,6 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         bbbMeeting.moderatorPW = moderatorPW;
         bbbMeeting.attendeePW = attendeePW;
         await entityManager.save(BBBMeeting, bbbMeeting);
-        //TODO: db migration erstellen
         await transactionLog.log(new CreateBBBMeetingEvent(user, bbbMeeting));
         logger.info("Successfully saved new bbb meeting with id ", bbbMeeting.meetingID);
         return bbbMeeting;
@@ -85,7 +84,7 @@ export async function isBBBMeetingRunning(id: string): Promise<boolean> {
             jsonResponse.response.running.length > 0 && jsonResponse.response.running[0] === "true")
         .catch(error => {
             logger.debug(error);
-            return Promise.reject("An error occured.");
+            return Promise.reject("An error occurred.");
         });
 }
 

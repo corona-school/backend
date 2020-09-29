@@ -868,7 +868,7 @@ export async function postSubcourseHandler(req: Request, res: Response) {
 
 async function postSubcourse(student: Student, courseId: number, apiSubcourse: ApiAddSubcourse): Promise<ApiSubcourse | number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add an subcourse, but is no instructor.`);
@@ -1030,7 +1030,7 @@ export async function postLectureHandler(req: Request, res: Response) {
 
 async function postLecture(student: Student, courseId: number, subcourseId: number, apiLecture: ApiAddLecture): Promise<{ id: number } | number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
@@ -1192,7 +1192,7 @@ export async function putCourseHandler(req: Request, res: Response) {
 
 async function putCourse(student: Student, courseId: number, apiCourse: ApiEditCourse): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
@@ -1412,7 +1412,7 @@ export async function putSubcourseHandler(req: Request, res: Response) {
 
 async function putSubcourse(student: Student, courseId: number, subcourseId: number, apiSubcourse: ApiEditSubcourse): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to edit a subcourse, but is no instructor.`);
@@ -1581,7 +1581,7 @@ export async function putLectureHandler(req: Request, res: Response) {
 
 async function putLecture(student: Student, courseId: number, subcourseId: number, lectureId: number, apiLecture: ApiEditLecture): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
@@ -1960,7 +1960,7 @@ export async function deleteLectureHandler(req: Request, res: Response) {
 
 async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to delete a lecture, but is no instructor.`);
@@ -2081,7 +2081,7 @@ export async function joinSubcourseHandler(req: Request, res: Response) {
 
 async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2190,7 +2190,7 @@ export async function leaveSubcourseHandler(req: Request, res: Response) {
 
 async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2362,7 +2362,6 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
     const courseId = req.params.id ? req.params.id : null;
     const subcourseId = req.params.subid ? String(req.params.subid) : null;
     const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
-    const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
     const meetingInDB: boolean = await isBBBMeetingInDB(subcourseId);
     let status = 200;
     let course: ApiCourse;
@@ -2402,18 +2401,14 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                     if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
-                        if (meetingIsRunning) {
-                            res.send({
-                                url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
-                            });
-                        } else {
-                            await startBBBMeeting(meeting);
-                            res.send({
-                                url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
-                            });
-                        }
+                        await startBBBMeeting(meeting);
+
+                        res.send({
+                            url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
+                        });
 
                     } else if (authenticatedPupil) {
+                        const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
                         if (meetingIsRunning) {
                             let user: Pupil = res.locals.user;
 
