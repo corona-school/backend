@@ -388,24 +388,10 @@ async function handleNewLectures(lectures: { subcourse: { id: number }, start: D
             logger.warn(`No subcourse found with ID ${lecture.subcourse.id}`);
             return 404;
         }
-        const instructor = await entityManager.findOne(Student, { id: lecture.instructor.id });
-        if (instructor == undefined) {
-            logger.warn(`No instructor with ID ${lecture.instructor.id}`);
-            return 404;
-        }
-        if (!subcourse.instructors.some(it => it.id === instructor.id)){
-            logger.warn(`Instructor with ID ${lecture.instructor.id} is not in subcourse ${subcourse.id}`);
-            return 403;
-        }
-
-        const newLecture = new Lecture();
-        newLecture.subcourse = subcourse;
-        newLecture.start = lecture.start;
-        newLecture.duration = lecture.duration;
-        newLecture.instructor = instructor;
 
         try {
-            await entityManager.save(Lecture, newLecture);
+            await subcourse.addLecture(lecture);
+            await entityManager.save(subcourse);
         } catch (error) {
             logger.warn("Saving lecture failed with", error);
             return 500;
