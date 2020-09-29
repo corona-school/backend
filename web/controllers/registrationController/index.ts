@@ -537,10 +537,6 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
         logger.warn("apiMentor.description is outside of length restrictions");
         return 400;
     }
-    if (apiMentor.imageUrl && apiMentor.imageUrl.length > 250) {
-        logger.warn("apiMentor.imageUrl is outside of length restrictions");
-        return 400;
-    }
     if (apiMentor.division.length == 0 || apiMentor.expertise.length == 0) {
         logger.warn("apiMentor.division and apiMentor.expertise are mandatory");
         return 400;
@@ -559,7 +555,6 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.email = apiMentor.email;
     mentor.description = apiMentor.description;
     mentor.message = apiMentor.message;
-    mentor.imageUrl = apiMentor.imageUrl;
     mentor.teachingExperience = apiMentor.teachingExperience;
     mentor.wix_id = "Z-" + uuidv4();
     mentor.wix_creation_date = new Date();

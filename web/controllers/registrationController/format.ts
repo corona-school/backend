@@ -134,7 +134,6 @@ export interface ApiAddTuteeSubject {
  * @apiSuccess (Mentor Object) {bool} teachingExperience User reports existing teaching experience
  * @apiSuccess (Mentor Object) {string} message Additional message
  * @apiSuccess (Mentor Object) {string} description Additional description
- * @apiSuccess (Mentor Object) {string} imageUrl Url to mentor's image
  * @apiSuccess (Mentor Object) {string|undefined} redirectTo the page the user sees after registration
  *
  */
@@ -148,7 +147,6 @@ export interface ApiAddMentor {
     teachingExperience?: boolean,
     message: string,
     description: string,
-    imageUrl: string,
     redirectTo?: string;
 }
 
