@@ -377,35 +377,35 @@ export async function updateCourse(req: Request, res: Response) {
 async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
     const entityManager = getManager();
 
-    for (let i=0; i<lectures.length; i++){
+    for (let lecture of lectures){
         const course = await entityManager.findOne(Course, { id: courseId });
         if (course == undefined) {
             logger.warn(`No course found with ID ${courseId}`);
             return 404;
         }
-        const subcourse = await entityManager.findOne(Subcourse, { id: lectures[i].subcourse.id, course: course });
+        const subcourse = await entityManager.findOne(Subcourse, { id: lecture.subcourse.id, course: course });
         if (subcourse == undefined) {
-            logger.warn(`No subcourse found with ID ${lectures[i].subcourse.id}`);
+            logger.warn(`No subcourse found with ID ${lecture.subcourse.id}`);
             return 404;
         }
-        const instructor = await entityManager.findOne(Student, { id: lectures[i].instructor.id });
+        const instructor = await entityManager.findOne(Student, { id: lecture.instructor.id });
         if (instructor == undefined) {
-            logger.warn(`No instructor with ID ${lectures[i].instructor.id}`);
+            logger.warn(`No instructor with ID ${lecture.instructor.id}`);
             return 404;
         }
-        if (subcourse.instructors.findIndex(i => i.id === instructor.id) == -1){
-            logger.warn(`Instructor with ID ${lectures[i].instructor.id} is not in subcourse ${subcourse.id}`);
+        if (!subcourse.instructors.some(it => it.id === instructor.id)){
+            logger.warn(`Instructor with ID ${lecture.instructor.id} is not in subcourse ${subcourse.id}`);
             return 403;
         }
 
-        const lecture = new Lecture();
-        lecture.subcourse = subcourse;
-        lecture.start = lectures[i].start;
-        lecture.duration = lectures[i].duration;
-        lecture.instructor = instructor;
+        const newLecture = new Lecture();
+        newLecture.subcourse = subcourse;
+        newLecture.start = lecture.start;
+        newLecture.duration = lecture.duration;
+        newLecture.instructor = instructor;
 
         try {
-            await entityManager.save(Lecture, lecture);
+            await entityManager.save(Lecture, newLecture);
         } catch (error) {
             logger.warn("Saving lecture failed with", error);
             return 500;
@@ -417,15 +417,15 @@ async function handleNewLectures(lectures: { subcourse: { id: number }, start: D
 async function handleDeleteLectures(lectures: { id: number }[]) {
     const entityManager = getManager();
 
-    for (let i=0; i<lectures.length; i++) {
-        const lecture = await entityManager.findOne(Lecture, { id: lectures[i].id });
-        if (lecture == undefined) {
-            logger.warn(`Lecture with ID ${lectures[i].id} was not found.`);
+    for (const lecture of lectures) {
+        const lectureObject = await entityManager.findOne(Lecture, { id: lecture.id });
+        if (lectureObject == undefined) {
+            logger.warn(`Lecture with ID ${lecture.id} was not found.`);
             return 404;
         }
 
         try {
-            await entityManager.remove(Lecture, lecture);
+            await entityManager.remove(Lecture, lectureObject);
             logger.info("Successfully deleted lecture.");
         } catch (error) {
             logger.warn("Deleting lecture failed with", error);
