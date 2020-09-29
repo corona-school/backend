@@ -339,7 +339,7 @@ export async function updateCourse(req: Request, res: Response) {
 
         if (removeLectures !== undefined) {
             if (Array.isArray(removeLectures) && removeLectures.every(l => Number.isInteger(l.id))) {
-                const status = await handleDeleteLectures(removeLectures, +id);
+                const status = await handleDeleteLectures(removeLectures);
                 if (status != 204) {
                     return res.status(status).send("Deleting lecture failed.");
                 }
@@ -414,7 +414,7 @@ async function handleNewLectures(lectures: { subcourse: { id: number }, start: D
     return 200;
 }
 
-async function handleDeleteLectures(lectures: { id: number }[], courseId: number) {
+async function handleDeleteLectures(lectures: { id: number }[]) {
     const entityManager = getManager();
 
     for (let i=0; i<lectures.length; i++) {
