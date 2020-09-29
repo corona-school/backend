@@ -13,12 +13,14 @@ import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
+import * as mentoringController from "./controllers/mentoringController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
+import { allStateCooperationSubdomains } from "../common/entity/State";
 
 // Logger setup
 try {
@@ -53,6 +55,7 @@ createConnection().then(() => {
     configureScreenerAPI();
     configureCoursesAPI();
     configureRegistrationAPI();
+    configureMentoringAPI();
     deployServer();
 
     function addCorsMiddleware() {
@@ -62,14 +65,17 @@ createConnection().then(() => {
         if (process.env.NODE_ENV == "dev") {
             origins = [
                 "http://localhost:3000",
+                ...allStateCooperationSubdomains.map(d => `http://${d}.localhost:3000`),
                 "https://web-user-app-live.herokuapp.com",
                 "https://web-user-app-dev.herokuapp.com",
-                /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/
+                /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/,
+                ...allStateCooperationSubdomains.map(d => `https://${d}.dev.corona-school.de`)
             ];
         } else {
             origins = [
                 "https://dashboard.corona-school.de",
-                "https://my.corona-school.de"
+                "https://my.corona-school.de",
+                ...allStateCooperationSubdomains.map(d => `https://${d}.corona-school.de`)
             ];
         }
 
@@ -137,7 +143,7 @@ createConnection().then(() => {
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
-        coursesRouter.post("/:id/meeting/join", courseController.joinCourseMeetingHandler);
+        coursesRouter.get("/:id/subcourse/:subid/meeting/join", courseController.joinCourseMeetingHandler);
 
         app.use("/api/course", coursesRouter);
     }
@@ -152,8 +158,10 @@ createConnection().then(() => {
     function configureRegistrationAPI() {
         const registrationRouter = express.Router();
         registrationRouter.post("/tutee", registrationController.postTuteeHandler);
+        registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         registrationRouter.post("/mentor", registrationController.postMentorHandler);
+        registrationRouter.get("/:state/schools", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }
 
@@ -216,6 +224,16 @@ createConnection().then(() => {
             next();
         });
         app.use(participationCertificateRouter);
+    }
+
+    function configureMentoringAPI() {
+        const mentoringRouter = express.Router();
+        mentoringRouter.use(authCheckFactory());
+        mentoringRouter.post("/contact", mentoringController.postContactMentorHandler);
+        mentoringRouter.get("/material", mentoringController.getMaterial);
+        mentoringRouter.get("/feedbackCall", mentoringController.getFeedbackCallData);
+
+        app.use("/api/mentoring", mentoringRouter);
     }
 
     function deployHTTPServer() {

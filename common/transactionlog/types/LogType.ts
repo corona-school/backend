@@ -14,7 +14,8 @@ enum LogType {
     CERTIFICATE_REQUEST = "certificateRequest",
     CANCELLED_COURSE = "cancelledCourse",
     CANCELLED_SUBCOURSE = "cancelledSubcourse",
-    CREATED_COURSE_ATTENDANCE_LOG = "createdCourseAttendanceLog"
+    CREATED_COURSE_ATTENDANCE_LOG = "createdCourseAttendanceLog",
+    CONTACT_MENTOR = "contactMentor"
 }
 
 export default LogType;

@@ -429,7 +429,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
-        apiResponse.subjects = convertSubjects(JSON.parse(person.subjects), false);
+        apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
@@ -520,12 +520,14 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         person.university = req.university;
 
         // ++++ STATE ++++
-        const state = EnumReverseMappings.State(req.state);
-        if (!state) {
-            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
-            return 400;
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
         }
-        person.state = state;
 
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
@@ -558,24 +560,28 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
             person.grade = req.grade + ". Klasse";
         } else {
-            logger.warn("User who is a pupil wants to set an invalid grade o! It is ignored.");
+            logger.warn("User who is a pupil wants to set an invalid grade! It is ignored.");
         }
 
         // ++++ SCHOOL TYPE ++++
-        const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
-        if (!schoolType) {
-            logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
-            return 400;
+        if (req.schoolType) {
+            const schoolType = EnumReverseMappings.SchoolType(req.schoolType);
+            if (!schoolType) {
+                logger.warn(`User wants to set an invalid value "${req.schoolType}" for schoolType`);
+                return 400;
+            }
+            person.schooltype = schoolType;
         }
-        person.schooltype = schoolType;
 
         // ++++ STATE ++++
-        const state = EnumReverseMappings.State(req.state);
-        if (!state) {
-            logger.warn(`User wants to set an invalid value "${req.state}" for state`);
-            return 400;
+        if (req.state) {
+            const state = EnumReverseMappings.State(req.state);
+            if (!state) {
+                logger.warn(`User wants to set an invalid value "${req.state}" for state`);
+                return 400;
+            }
+            person.state = state;
         }
-        person.state = state;
 
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
@@ -762,6 +768,14 @@ function subjectsToStringArray(subjects: Array<any>): string[] {
         }
     }
     return stringSubjects;
+}
+
+function toPupilSubjectFormat(subjects: {name: string, minGrade?: number, maxGrade?: number}[]): {name: string}[] {
+    return subjects.map(v => {
+        return {
+            name: v.name
+        };
+    });
 }
 
 /**

@@ -1,16 +1,21 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee, ApiAddMentor } from './format';
+import { ApiAddTutor, ApiAddTutee, ApiAddMentor, ApiAddStateTutee, ApiSchoolInfo } from './format';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
 import VerificationRequestEvent from '../../../common/transactionlog/types/VerificationRequestEvent';
 import { checkSubject } from '../userController/format';
-import { Pupil, SchoolType } from '../../../common/entity/Pupil';
+import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
 import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
 import { Division, Expertise, Mentor } from "../../../common/entity/Mentor";
+import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
+import { Address } from "address-rfc2821";
+import { School } from '../../../common/entity/School';
+import { SchoolType } from '../../../common/entity/SchoolType';
+import { RegistrationSource } from '../../../common/entity/Person';
 
 const logger = getLogger();
 
@@ -48,7 +53,9 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isOfficial == 'boolean' &&
             typeof req.body.isInstructor == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
-            typeof req.body.msg == 'string') {
+            typeof req.body.msg == 'string' &&
+            typeof req.body.university == 'string' &&
+            typeof req.body.state == 'string') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -68,10 +75,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             }
 
             if (req.body.isOfficial) {
-                if (typeof req.body.university !== 'string' ||
-                    typeof req.body.module !== 'string' ||
-                    typeof req.body.hours !== 'number' ||
-                    typeof req.body.state !== 'string') {
+                if (typeof req.body.module !== 'string' ||
+                    typeof req.body.hours !== 'number') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
                 }
@@ -126,12 +131,23 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         return 400;
     }
 
+    if (apiTutor.university.length == 0 || apiTutor.university.length > 100) {
+        logger.warn("apiTutor.university outside of length restrictions");
+        return 400;
+    }
+    if (!EnumReverseMappings.State(apiTutor.state)) {
+        logger.error("Invalid value for Tutor registration state: " + apiTutor.state);
+        return 400;
+    }
+
     const tutor = new Student();
     tutor.firstname = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
     tutor.email = apiTutor.email.toLowerCase();
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
+    tutor.university = apiTutor.university;
+    tutor.state = EnumReverseMappings.State(apiTutor.state);
 
     tutor.isStudent = false;
     tutor.isInstructor = false;
@@ -164,72 +180,9 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     }
 
     if (apiTutor.isOfficial) {
-
-        if (apiTutor.university.length == 0 || apiTutor.university.length > 100) {
-            logger.warn("apiTutor.university outside of length restrictions");
-            return 400;
-        }
-
         if (apiTutor.hours == 0 || apiTutor.hours > 1000) {
             logger.warn("apiTutor.hours outside of size restrictions");
             return 400;
-        }
-
-        switch (apiTutor.state) {
-            case "bw":
-                tutor.state = State.BW;
-                break;
-            case "by":
-                tutor.state = State.BY;
-                break;
-            case "be":
-                tutor.state = State.BE;
-                break;
-            case "bb":
-                tutor.state = State.BB;
-                break;
-            case "hb":
-                tutor.state = State.HB;
-                break;
-            case "hh":
-                tutor.state = State.HH;
-                break;
-            case "he":
-                tutor.state = State.HE;
-                break;
-            case "mv":
-                tutor.state = State.MV;
-                break;
-            case "ni":
-                tutor.state = State.NI;
-                break;
-            case "nw":
-                tutor.state = State.NW;
-                break;
-            case "rp":
-                tutor.state = State.RP;
-                break;
-            case "sl":
-                tutor.state = State.SL;
-                break;
-            case "sn":
-                tutor.state = State.SN;
-                break;
-            case "st":
-                tutor.state = State.ST;
-                break;
-            case "sh":
-                tutor.state = State.SH;
-                break;
-            case "th":
-                tutor.state = State.TH;
-                break;
-            case "other":
-                tutor.state = State.OTHER;
-                break;
-            default:
-                logger.error("Invalid value for Tutor registration state: " + apiTutor.state);
-                return 400;
         }
 
         switch (apiTutor.module) {
@@ -247,7 +200,6 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
                 return 400;
         }
 
-        tutor.university = apiTutor.university;
         tutor.moduleHours = apiTutor.hours;
     }
 
@@ -667,3 +619,281 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     }
 }
 
+
+
+/**
+ * @api {POST} /register/tutee/state StateRegisterTutee
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Register a user as a tutee for a specific state cooperation
+ *
+ * @apiName StateRegisterTutee
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ * @apiUse AddStateTutee
+ * @apiUse AddTuteeSubject
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee/state -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function postStateTuteeHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+
+        if (typeof req.body.firstname == 'string' &&
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.grade == 'number' &&
+            typeof req.body.state == 'string' &&
+            typeof req.body.isTutee == 'boolean' &&
+            typeof req.body.newsletter == 'boolean' &&
+            typeof req.body.teacherEmail == 'string' &&
+            typeof req.body.msg == 'string') {
+
+            if (req.body.isTutor) {
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if (typeof elem.name !== 'string') {
+                            status = 400;
+                            logger.error("Tutee registration (for specific state) with isTutee has malformed subjects.");
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Tutee registration (for specific state) with isTutee missing subjects.");
+                }
+            }
+
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+                status = 400;
+
+            if (status < 300) {
+                // try registering
+                status = await registerStateTutee(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for Tutee registration (for specific state)");
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for Tutee registration (for specific state)");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (apiStateTutee.firstname.length == 0 || apiStateTutee.firstname.length > 100) {
+        logger.error("apiStateTutee.firstname outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.lastname.length == 0 || apiStateTutee.lastname.length > 100) {
+        logger.error("apiStateTutee.lastname outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.email.length == 0 || apiStateTutee.email.length > 100) {
+        logger.error("apiStateTutee.email outside of length restrictions");
+        return 400;
+    }
+
+    if (apiStateTutee.msg.length > 3000) {
+        logger.error("apiStateTutee.msg outside of length restrictions");
+        return 400;
+    }
+
+    const tutee = new Pupil();
+    tutee.firstname = apiStateTutee.firstname;
+    tutee.lastname = apiStateTutee.lastname;
+    tutee.email = apiStateTutee.email.toLowerCase();
+    tutee.grade = apiStateTutee.grade + ". Klasse";
+
+    const parsedState = EnumReverseMappings.State(apiStateTutee.state);
+    if (!parsedState) {
+        logger.error("Invalid value for Tutee registration state (for specific state): " + apiStateTutee.state);
+        return 400;
+    }
+
+    tutee.newsletter = apiStateTutee.newsletter;
+    tutee.msg = apiStateTutee.msg;
+
+    tutee.isParticipant = true;
+    tutee.isPupil = false; //default value
+
+    tutee.wix_id = "Z-" + uuidv4();
+    tutee.wix_creation_date = new Date();
+    tutee.verification = generateToken();
+    tutee.subjects = JSON.stringify([]);
+
+    tutee.registrationSource = RegistrationSource.COOPERATION;
+
+    if (apiStateTutee.isTutee) {
+        if (apiStateTutee.subjects.length < 1) {
+            logger.error("Tutee subjects needs to contain at least one element.");
+            return 400;
+        }
+
+        for (let i = 0; i < apiStateTutee.subjects.length; i++) {
+            if (!checkSubject(apiStateTutee.subjects[i].name)) {
+                logger.error("Tutee subjects contain invalid subject " + apiStateTutee.subjects[i].name);
+                return 400;
+            }
+        }
+
+        tutee.isPupil = true;
+        tutee.subjects = JSON.stringify(apiStateTutee.subjects);
+    }
+
+    const result = await entityManager.findOne(Pupil, { email: tutee.email });
+    if (result !== undefined) {
+        logger.error("Tutee with given email already exists.");
+        return 409;
+    }
+
+    //check if teacher email address is valid
+    try {
+        tutee.teacherEmailAddress = apiStateTutee.teacherEmail.toLowerCase();
+
+        const teacherEmailAddress = new Address(tutee.teacherEmailAddress);
+
+        const school = await entityManager.findOne(School, {
+            where: {
+                emailDomain: teacherEmailAddress.host
+            }
+        });
+
+        if (!school || !school.activeCooperation) {
+            logger.error("Teacher email address is an address of a school we're not officially cooperating with!");
+            return 400;
+        }
+        tutee.school = school;
+        tutee.schooltype = school.schooltype;
+
+        //check if state is equal to that given in the request
+        if (parsedState !== school.state) {
+            logger.error(`Tutee wanted to register for state ${apiStateTutee.state} while using a school email from state ${school.state}!`);
+            return 400;
+        }
+        tutee.state = school.state;
+
+    }
+    catch {
+        logger.error("Invalid email address for teacher email during Tutee registration (for specific state)");
+        return 400;
+    }
+
+
+    try {
+        await entityManager.save(Pupil, tutee);
+        await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await transactionLog.log(new VerificationRequestEvent(tutee));
+        return 204;
+    } catch (e) {
+        logger.error("Unable to add Tutee (for specific state) to database: " + e.message);
+        return 500;
+    }
+}
+
+
+
+/**
+ * @api {GET} /courses GetSchools
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Request a list of all available schools we're publicly cooperting with as part of the cooperations with several states in Germany.
+ *
+ * <p>This endpoint can be called without authentication.</p>
+ *
+ * @apiName GetSchools
+ * @apiGroup Registration
+ *
+ * @apiUse OptionalAuthentication
+ *
+ * @apiParam (Query Parameter) {string} state The state of Germany for which the cooperation schools should be returned.
+ *
+ * @apiUse SchoolInfo
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET "https://api.corona-school.de/api/register/:state/schools"
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getSchoolsHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (typeof req.params.state != 'string') {
+            logger.error("Missing required parameter state");
+            status = 400;
+        }
+        else {
+            //parse state
+            const state = EnumReverseMappings.State(req.params.state);
+
+            if (!state) {
+                logger.error(`Given State "${req.params.state}" is unknown`);
+                status = 400;
+            }
+            else {
+                let obj = await getSchools(state);
+
+                if (typeof obj == 'number') {
+                    status = obj;
+                } else {
+                    res.json(obj);
+                }
+            }
+        }
+    } catch (e) {
+        logger.error("An error occurred during GET /register/schools: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function getSchools(state: State): Promise<Array<ApiSchoolInfo> | number> {
+    const entityManager = getManager();
+
+    try {
+        const schools = await entityManager.find(School, {
+            where: {
+                state: state,
+                activeCooperation: true
+            }
+        });
+
+        return schools.map( s => {
+            return {
+                name: s.name,
+                emailDomain: s.emailDomain
+            };
+        });
+    } catch (e) {
+        logger.error("Can't fetch schools: " + e.message);
+        logger.debug(e);
+        return 500;
+    }
+
+}

@@ -72,7 +72,7 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
     }
 
     try {
-        const result = await mailjet.send(
+        const result = await mailjet.sendTemplate(
             templateMail.title,
             templateMail.sender,
             recipient,
