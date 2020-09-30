@@ -229,7 +229,12 @@ export async function setupDevDB() {
     mentor1.teachingExperience = null;
     mentor1.message = "text";
     mentor1.description ="text";
-    mentor1.imageUrl = null;
+    mentor1.wix_id = "00000000-0000-0001-0001-1b4c4c526364";
+    mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    mentor1.subjects = JSON.stringify([
+        { name: "Englisch", minGrade: 1, maxGrade: 8 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+    ]);
 
     mentors.push(mentor1);
 
@@ -352,7 +357,6 @@ export async function setupDevDB() {
     course1.outline = "E(m) = m * c * c";
     course1.description =
         "Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.";
-    course1.imageUrl = null;
     course1.category = CourseCategory.COACHING;
     course1.tags = [preparation, science];
     course1.subcourses = [];
@@ -367,7 +371,6 @@ export async function setupDevDB() {
     course2.outline = "Mit lebenden Exemplaren zum anschauen";
     course2.description =
         "COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.";
-    course2.imageUrl = null;
     course2.category = CourseCategory.CLUB;
     course2.tags = [science];
     course2.subcourses = [];
@@ -381,7 +384,6 @@ export async function setupDevDB() {
     course3.outline = "(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0";
     course3.description =
         "Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...";
-    course3.imageUrl = null;
     course3.category = CourseCategory.REVISION;
     course3.tags = [preparation, science];
     course3.subcourses = [];
@@ -395,7 +397,6 @@ export async function setupDevDB() {
     course4.outline = "Die Musik des neuen Jahrtausends";
     course4.description =
         "Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.";
-    course4.imageUrl = null;
     course4.category = CourseCategory.REVISION;
     course4.tags = [preparation, science];
     course4.subcourses = [];
@@ -411,7 +412,6 @@ export async function setupDevDB() {
     course5.outline = "Mit 3 Akkorden zum ersten Song";
     course5.description =
         "In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!";
-    course5.imageUrl = null;
     course5.category = CourseCategory.CLUB;
     course5.tags = [music];
     course5.subcourses = [];

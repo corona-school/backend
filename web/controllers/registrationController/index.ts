@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee, ApiAddStateTutee, ApiSchoolInfo } from './format';
+import { ApiAddTutor, ApiAddTutee, ApiAddMentor, ApiAddStateTutee, ApiSchoolInfo } from './format';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
@@ -10,6 +10,7 @@ import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
 import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
+import { Division, Expertise, Mentor } from "../../../common/entity/Mentor";
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
@@ -453,6 +454,166 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 500;
     }
 }
+
+/**
+ * @api {POST} /register/mentor RegisterMentor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Register a user as a mentor.
+ *
+ * @apiName RegisterMentor
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ * @apiUse AddMentor
+ * @apiUse AddMentorSubject
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/mentor -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function postMentorHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+
+        if (typeof req.body.firstname == 'string' &&
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            req.body.division instanceof Array &&
+            req.body.expertise instanceof Array &&
+            req.body.subjects instanceof Array) {
+
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
+
+            if (status < 300) {
+                status = await registerMentor(req.body);
+            } else {
+                logger.error("Malformed parameters in optional fields for mentor registration");
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for mentor registration");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
+async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (apiMentor.firstname.length == 0 || apiMentor.firstname.length > 100) {
+        logger.warn("apiMentor.firstname is outside of length restrictions");
+        return 400;
+    }
+    if (apiMentor.lastname.length == 0 || apiMentor.lastname.length > 100) {
+        logger.warn("apiMentor.lastname is outside of length restrictions");
+        return 400;
+    }
+    if (apiMentor.email.length == 0 || apiMentor.email.length > 100) {
+        logger.warn("apiMentor.email is outside of length restrictions");
+        return 400;
+    }
+    if (apiMentor.message && apiMentor.message.length > 100) {
+        logger.warn("apiMentor.message is outside of length restrictions");
+        return 400;
+    }
+    if (apiMentor.description && apiMentor.description.length > 250) {
+        logger.warn("apiMentor.description is outside of length restrictions");
+        return 400;
+    }
+    if (apiMentor.division.length == 0 || apiMentor.expertise.length == 0) {
+        logger.warn("apiMentor.division and apiMentor.expertise are mandatory");
+        return 400;
+    } else if (apiMentor.division.indexOf('supervision') > -1 ||
+            apiMentor.expertise.indexOf('specialized expertise in subjects') > -1) {
+        if (apiMentor.subjects.length == 0 ||
+                apiMentor.teachingExperience == undefined) {
+            logger.warn("apiMentor.subjects and apiMentor.teachingExperience are mandatory");
+            return 400;
+        }
+    }
+
+    const mentor = new Mentor();
+    mentor.firstname = apiMentor.firstname;
+    mentor.lastname = apiMentor.lastname;
+    mentor.email = apiMentor.email;
+    mentor.description = apiMentor.description;
+    mentor.message = apiMentor.message;
+    mentor.teachingExperience = apiMentor.teachingExperience;
+    mentor.wix_id = "Z-" + uuidv4();
+    mentor.wix_creation_date = new Date();
+    mentor.verification = generateToken();
+
+    if (apiMentor.subjects.length > 0) {
+        for (let i = 0; i < apiMentor.subjects.length; i++) {
+            if (!checkSubject(apiMentor.subjects[i].name)) {
+                logger.warn("Subjects contain invalid subject " + apiMentor.subjects[i].name);
+                return 400;
+            }
+        }
+        mentor.subjects = JSON.stringify(apiMentor.subjects);
+    }
+
+    if (apiMentor.division.length > 0) {
+        mentor.division = [];
+        for (let i = 0; i < apiMentor.division.length; i++) {
+            if (apiMentor.division[i].toUpperCase() in Division) {
+                mentor.division.push(Division[apiMentor.division[i].toUpperCase()]);
+            } else {
+                logger.warn("Division '" + apiMentor.division[i] + "' is not a correct division");
+                return 400;
+            }
+        }
+    }
+
+    if (apiMentor.expertise.length > 0) {
+        mentor.expertise = [];
+        const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]).filter(k => !(parseInt(k) >= 0));
+
+        for (let expertise of apiMentor.expertise) {
+            if (expertiseValues.indexOf(expertise) > -1) {
+                const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === expertise);
+                mentor.expertise.push(Expertise[expertiseKey[0]]);
+            } else {
+                logger.warn("Expertise '" + expertise + "' is not a correct expertise");
+                return 400;
+            }
+        }
+    }
+
+    const result = await entityManager.findOne(Mentor, {email: mentor.email});
+    if (result !== undefined) {
+        logger.error("Mentor with given email already exists");
+        return 409;
+    }
+
+    try {
+        await entityManager.save(Mentor, mentor);
+        await sendVerificationMail(mentor, apiMentor.redirectTo);
+        await transactionLog.log(new VerificationRequestEvent(mentor));
+        return 204;
+    } catch (e) {
+        logger.error("Unable to add Mentor to database: " + e.message);
+        return 500;
+    }
+}
+
 
 
 /**

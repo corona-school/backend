@@ -11,7 +11,6 @@ import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
 import {getNextDueEvent, listFiles, listVideos} from "../../../common/google";
-import List = Mocha.reporters.List;
 import { material } from "../../../common/mentoring/material";
 
 const logger = getLogger();
