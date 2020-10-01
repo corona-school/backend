@@ -114,13 +114,13 @@ function mapJSONtoApiBBBMeetings(json: any): ApiBBBMeeting[] {
 
 function mapJSONtoApiBBBMeeting(o: any): ApiBBBMeeting {
     return new ApiBBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
-        o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
-        o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
-        o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-        (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-            o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
-        (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-            o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
+                             o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
+                             o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+                             o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
+                             (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                                         o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
+                             (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                         o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
 export class ApiBBBMeeting {
@@ -167,8 +167,8 @@ function mapJSONtoAttendees(json: any): Attendee[] {
 
 function mapJSONtoAttendee(o: any): Attendee {
     return new Attendee(o && o.userID && o.userID.length > 0 && o.userID[0],
-        o && o.fullName && o.fullName.length > 0 && o.fullName[0],
-        o && o.role && o.role.length > 0 && o.role[0]);
+                        o && o.fullName && o.fullName.length > 0 && o.fullName[0],
+                        o && o.role && o.role.length > 0 && o.role[0]);
 }
 
 function lessThanDate(date1: Date, date2: Date): boolean {
