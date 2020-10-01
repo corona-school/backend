@@ -14,7 +14,6 @@ import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
-import {start} from "repl";
 
 const logger = getLogger();
 
