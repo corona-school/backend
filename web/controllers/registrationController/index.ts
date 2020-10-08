@@ -55,7 +55,6 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isInstructor == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
-            typeof req.body.university == 'string' &&
             typeof req.body.state == 'string') {
 
             if (req.body.isTutor) {
@@ -132,7 +131,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         return 400;
     }
 
-    if (apiTutor.university.length == 0 || apiTutor.university.length > 100) {
+    if (apiTutor.university && (apiTutor.university.length == 0 || apiTutor.university.length > 100)) {
         logger.warn("apiTutor.university outside of length restrictions");
         return 400;
     }

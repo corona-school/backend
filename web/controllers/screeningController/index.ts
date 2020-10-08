@@ -12,6 +12,8 @@ import { getLogger } from "log4js";
 import { Screening } from "../../../common/entity/Screening";
 import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
+import {Subcourse} from "../../../common/entity/Subcourse";
+import {Lecture} from "../../../common/entity/Lecture";
 
 const logger = getLogger();
 
@@ -321,16 +323,40 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
  * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
  * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
+ * @apiParam (JSON Body) {Object[]|undefined} newLectures the new lectures of this course after the update
+ * @apiParam (JSON Body) {Object[]|undefined} removeLectures the lectures that should be removed from the course
  */
 export async function updateCourse(req: Request, res: Response) {
     try {
         const update = new ApiCourseUpdate(req.body);
+        const { newLectures, removeLectures } = req.body;
         const { id } = req.params;
-
         if (typeof id !== "string" || !Number.isInteger(+id))
             return res.status(400).send("Invalid course id!");
         if (!update.isValid())
             return res.status(400).send("Invalid course update!");
+
+        if (removeLectures !== undefined) {
+            if (Array.isArray(removeLectures) && removeLectures.every(l => Number.isInteger(l.id))) {
+                const status = await handleDeleteLectures(removeLectures);
+                if (status != 204) {
+                    return res.status(status).send("Deleting lecture failed.");
+                }
+            } else {
+                return res.status(400).send("Invalid delete lecture request!");
+            }
+        }
+
+        if (newLectures !== undefined) {
+            if (Array.isArray(newLectures) && newLectures.every(l => (Number.isInteger(l.subcourse.id) && !!Date.parse(l.start) && Number.isInteger(l.duration) && Number.isInteger(l.instructor.id)))) {
+                const status = await handleNewLectures(newLectures, +id);
+                if (status != 200) {
+                    return res.status(status).send("Adding lectures failed.");
+                }
+            } else {
+                return res.status(400).send("Invalid new lectures request.");
+            }
+        }
 
         const course = await getManager().findOne(Course, { where: { id: +id } });
 
@@ -345,6 +371,53 @@ export async function updateCourse(req: Request, res: Response) {
         logger.warn("/screening/course/../update failed with", error);
         return res.status(500).send("internal server error");
     }
+}
+
+async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
+    const entityManager = getManager();
+
+    for (let lecture of lectures){
+        const course = await entityManager.findOne(Course, { id: courseId });
+        if (course == undefined) {
+            logger.warn(`No course found with ID ${courseId}`);
+            return 404;
+        }
+        const subcourse = await entityManager.findOne(Subcourse, { id: lecture.subcourse.id, course: course });
+        if (subcourse == undefined) {
+            logger.warn(`No subcourse found with ID ${lecture.subcourse.id}`);
+            return 404;
+        }
+
+        try {
+            await subcourse.addLecture(lecture);
+            await entityManager.save(subcourse);
+        } catch (error) {
+            logger.warn("Saving lecture failed with", error);
+            return 500;
+        }
+    }
+    return 200;
+}
+
+async function handleDeleteLectures(lectures: { id: number }[]) {
+    const entityManager = getManager();
+
+    for (const lecture of lectures) {
+        const lectureObject = await entityManager.findOne(Lecture, { id: lecture.id });
+        if (lectureObject == undefined) {
+            logger.warn(`Lecture with ID ${lecture.id} was not found.`);
+            return 404;
+        }
+
+        try {
+            await entityManager.remove(Lecture, lectureObject);
+            logger.info("Successfully deleted lecture.");
+        } catch (error) {
+            logger.warn("Deleting lecture failed with", error);
+            return 500;
+        }
+    }
+    return 204;
 }
 
 /**
