@@ -226,7 +226,7 @@ export async function setupDevDB() {
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
     mentor1.expertise = [Expertise.SPECIALIZED];
     mentor1.subjects = null;
-    mentor1.teachingExperience = null;
+    mentor1.teachingExperience = true;
     mentor1.message = "text";
     mentor1.description ="text";
     mentor1.wix_id = "00000000-0000-0001-0001-1b4c4c526364";

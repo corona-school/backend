@@ -2,9 +2,10 @@ import LogUserEvent from "./LogUserEvent";
 import LogType from "./LogType";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
+import {Mentor} from "../../entity/Mentor";
 
 export default class UpdatePersonalEvent extends LogUserEvent {
-    constructor(user: Pupil | Student, oldUser: Pupil | Student) {
+    constructor(user: Pupil | Student | Mentor, oldUser: Pupil | Student | Mentor) {
         super(
             LogType.UPDATE_PERSONAL,
             user,

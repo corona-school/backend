@@ -4,6 +4,7 @@ import { Student } from "../../common/entity/Student";
 import { Pupil } from "../../common/entity/Pupil";
 import { hashToken } from "../../common/util/hashing";
 import { getLogger } from 'log4js';
+import {Mentor} from "../../common/entity/Mentor";
 
 const logger = getLogger();
 
@@ -61,6 +62,30 @@ export function authCheckFactory(optional = false) {
 
                 res.locals.user = pupil;
                 res.locals.userType = "pupil";
+                return next();
+            }
+
+            // Try to find mentor and continue request
+            const mentor = await entityManager.findOne(Mentor, {
+                where: [
+                    {
+                        authToken: hashToken(token),
+                        active: true
+                    },
+                    {
+                        authToken: token,
+                        active: true
+                    }
+                ]
+            });
+            if (mentor instanceof Mentor) {
+                mentor.authTokenUsed = true;
+                console.log(mentor);
+                //TODO: Find out why enum expertise is in " " and division is not
+                await entityManager.save(mentor);
+
+                res.locals.user = mentor;
+                res.locals.userType = "mentor";
                 return next();
             }
 
