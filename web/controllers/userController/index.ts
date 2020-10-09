@@ -24,7 +24,7 @@ import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import * as moment from "moment-timezone";
 import {Mentor} from "../../../common/entity/Mentor";
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
-import {ApiAddSubject} from "../format";
+import {ApiSubject} from "../format";
 
 const logger = getLogger();
 
@@ -48,8 +48,6 @@ const logger = getLogger();
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user
  *
  * @apiUse User
- * @apiUse Subject
- * @apiUse Match
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -83,8 +81,6 @@ export async function getSelfHandler(req: Request, res: Response) {
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>
  *
  * @apiUse User
- * @apiUse Subject
- * @apiUse Match
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -229,7 +225,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                 if (subjectType == 0) {
                     if (typeof elem.name == "string" && checkSubject(elem.name)
                     ) {
-                        let subject: ApiAddSubject = {
+                        let subject: ApiSubject = {
                             name: elem.name
                         };
                         subjects.push(subject);
@@ -249,7 +245,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                     elem.maxGrade <= 13 &&
                     checkSubject(elem.name)) {
 
-                    let subject: ApiAddSubject = {
+                    let subject: ApiSubject = {
                         name: elem.name,
                         minGrade: elem.minGrade,
                         maxGrade: elem.maxGrade
@@ -650,7 +646,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     return 204;
 }
 
-async function putSubjects(wix_id: string, req: ApiAddSubject[], person: Pupil | Student): Promise<number> {
+async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | Student): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -769,11 +765,11 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
 }
 
 // Support for legacy formats
-function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): ApiAddSubject[] {
+function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): ApiSubject[] {
     let subjects = [];
     for (let i = 0; i < oldSubjects.length; i++) {
         if (typeof oldSubjects[i] == "string") {
-            let s: ApiAddSubject = {
+            let s: ApiSubject = {
                 name: oldSubjects[i].replace(/[1234567890:]+$/g, "")
             };
             if (longtype) {
@@ -1014,8 +1010,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
- * @apiUse UserRoleTutorSubjects
- * @apiUse SubjectStudent
+ * @apiUse Subject
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -1028,7 +1023,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     if (res.locals.user instanceof Student
         && req.params.id != undefined
         && req.body instanceof Array) {
-        let subjects: ApiAddSubject[] = [];
+        let subjects: ApiSubject[] = [];
         for (let testSubject of req.body) {
             if (typeof testSubject.name == "string" &&
                 checkSubject(testSubject.name) &&
@@ -1040,7 +1035,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
                 testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13 &&
                 testSubject.minGrade <= testSubject.maxGrade) {
 
-                let newSubject: ApiAddSubject = {
+                let newSubject: ApiSubject = {
                     name: testSubject.name,
                     minGrade: testSubject.minGrade,
                     maxGrade: testSubject.maxGrade
@@ -1064,7 +1059,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiAddSubject[]): Promise<number> {
+async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiSubject[]): Promise<number> {
     if (wixId != student.wix_id) {
         logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
         return 403;

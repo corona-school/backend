@@ -32,7 +32,7 @@ const logger = getLogger();
  * @apiUse ContentType
  *
  * @apiUse AddTutor
- * @apiUse AddTutorSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutor -d "<REQUEST>"
@@ -232,7 +232,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddTutee
- * @apiUse AddTuteeSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee -d "<REQUEST>"
@@ -467,7 +467,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddMentor
- * @apiUse AddMentorSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/mentor -d "<REQUEST>"
@@ -616,7 +616,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddStateTutee
- * @apiUse AddTuteeSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee/state -d "<REQUEST>"

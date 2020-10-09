@@ -1,11 +1,11 @@
 import {Division, Expertise} from "../../common/entity/Mentor";
 import {getLogger} from "log4js";
-import {ApiAddSubject} from "./format";
+import {ApiSubject} from "./format";
 import {checkSubject} from "./userController/format";
 
 const logger = getLogger();
 
-export function checkSubjects(subjects: ApiAddSubject[]) {
+export function checkSubjects(subjects: ApiSubject[]) {
     if (subjects.length > 0) {
         for (let i = 0; i < subjects.length; i++) {
             if (!checkSubject(subjects[i].name)) {

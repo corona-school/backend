@@ -18,7 +18,7 @@
  * @apiSuccess (Tutor Object) {string|undefined} redirectTo the page the user sees after registration
  *
  */
-import {ApiAddSubject} from "../format";
+import {ApiSubject} from "../format";
 
 export interface ApiAddTutor {
     firstname: string,
@@ -26,7 +26,7 @@ export interface ApiAddTutor {
     email: string
     isTutor: boolean,
     isInstructor: boolean,
-    subjects?: ApiAddSubject[],
+    subjects?: ApiSubject[],
     isOfficial: boolean,
     state?: string,
     university?: string,
@@ -61,7 +61,7 @@ export interface ApiAddTutee {
     state: string,
     school: string,
     isTutee: boolean,
-    subjects?: ApiAddSubject[],
+    subjects?: ApiSubject[],
     newsletter: boolean,
     msg: string,
     redirectTo?: string;
@@ -90,7 +90,7 @@ export interface ApiAddStateTutee {
     grade: number,
     state: string,
     isTutee: boolean,
-    subjects?: ApiAddSubject[],
+    subjects?: ApiSubject[],
     newsletter: boolean,
     msg: string,
     teacherEmail: string,
@@ -119,7 +119,7 @@ export interface ApiAddMentor {
     email: string,
     division: string[],
     expertise: string[],
-    subjects?: ApiAddSubject[],
+    subjects?: ApiSubject[],
     teachingExperience?: boolean,
     message: string,
     description: string,

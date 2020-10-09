@@ -117,7 +117,7 @@
  *          ]
  *      }
  */
-import {ApiAddSubject} from "../format";
+import {ApiSubject} from "../format";
 
 export class ApiGetUser {
     id: string;
@@ -134,7 +134,7 @@ export class ApiGetUser {
     matchesRequested?: number;
     screeningStatus?: string;
     instructorScreeningStatus?: string;
-    subjects: ApiAddSubject[];
+    subjects: ApiSubject[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
     state?: string;
@@ -198,7 +198,7 @@ export class ApiPutUser {
     lastUpdatedSettingsViaBlocker: number;
     division?: string[];
     expertise?: string[];
-    subjects?: ApiAddSubject[];
+    subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
 }
@@ -219,27 +219,6 @@ export class ApiPutUser {
  *      ]
  *
  * @apiParamExample {json} Student
- *      [
- *          {
- *              "name": "Chemie",
- *              "minGrade": 1,
- *              "maxGrade": 4
- *          },
- *          {
- *              "name": "Physik",
- *              "minGrade": 10,
- *              "maxGrade": 13
- *          }
- *      ]
- */
-
-/**
- * @apiDefine UserRoleTutorSubjects
- * @apiVersion 1.0.1
- *
- * @apiParam (User Subjects) {Subject[]} root Array of subjects
- *
- * @apiParamExample {json} Example
  *      [
  *          {
  *              "name": "Chemie",
