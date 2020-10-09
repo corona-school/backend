@@ -4,7 +4,7 @@ import { Student } from "../../common/entity/Student";
 import { Pupil } from "../../common/entity/Pupil";
 import { hashToken } from "../../common/util/hashing";
 import { getLogger } from 'log4js';
-import {Mentor} from "../../common/entity/Mentor";
+import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
 
@@ -80,8 +80,31 @@ export function authCheckFactory(optional = false) {
             });
             if (mentor instanceof Mentor) {
                 mentor.authTokenUsed = true;
-                console.log(mentor);
-                //TODO: Find out why enum expertise is in " " and division is not
+
+                // TODO: Workaround to prevent adding wrong " " to enums with spaces through TypeORM.
+                // Enum expertise contains values with spaces. Division not.
+                // See https://github.com/corona-school/backend/issues/138
+
+                let convertedExpertises: Expertise[] = [];
+                if (mentor.expertise.length > 0) {
+                    const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]).filter(k => !(parseInt(k) >= 0));
+                    for (let expertise of mentor.expertise) {
+                        let replacedString = expertise.toString().replace(/"/g,"");
+                        if (expertiseValues.indexOf(replacedString) > -1) {
+                            const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === replacedString);
+                            convertedExpertises.push(Expertise[expertiseKey[0]]);
+                        } else {
+                            logger.warn("Expertise '" + expertise.toString() + "' is not a correct expertise");
+                        }
+                    }
+                    if (mentor.expertise.length != convertedExpertises.length) {
+                        logger.warn("Some expertises couldn't be saved.");
+                        res.status(500).send("Error while saving updates.").end();
+                    } else {
+                        mentor.expertise = convertedExpertises;
+                    }
+                }
+
                 await entityManager.save(mentor);
 
                 res.locals.user = mentor;

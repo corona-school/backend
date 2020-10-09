@@ -224,7 +224,7 @@ export async function setupDevDB() {
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
     mentor1.authToken = sha512("authtokenM3");
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
-    mentor1.expertise = [Expertise.SPECIALIZED];
+    mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
     mentor1.subjects = null;
     mentor1.teachingExperience = true;
     mentor1.message = "text";
