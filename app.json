@@ -1,0 +1,37 @@
+{
+    "name": "Corona School Backend",
+    "description": "The backend of Corona School",
+    "keywords": [
+        "coronaschool",
+        "node",
+        "typescript"
+    ],
+    "website": "https://corona-school.de/",
+    "repository": "https://github.com/corona-school/backend/",
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "hobby"
+        }
+    },
+    "addons": [
+        {
+            "plan": "heroku-postgresql",
+            "as": "DATABASE_URL"
+        }
+    ],
+    "environments": {
+        "review": {
+            "env": {
+                "NODE_ENV": "dev",
+                "MAILJET_LIVE": "0"
+            },
+            "addons": [
+                {
+                    "plan": "heroku-postgresql:hobby-dev",
+                    "as": "DATABASE_URL"
+                }
+            ]
+        }
+    }
+}
