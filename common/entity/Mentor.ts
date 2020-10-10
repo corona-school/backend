@@ -1,5 +1,5 @@
 import {Person} from "./Person";
-import {Column, Entity} from "typeorm";
+import {Column, Entity, Index} from "typeorm";
 
 export enum Division {
     FACEBOOK = "facebook",
@@ -19,6 +19,15 @@ export enum Expertise {
 
 @Entity()
 export class Mentor extends Person {
+
+    @Column()
+    @Index({
+        unique: true
+    })
+    wix_id: string;
+
+    @Column()
+    wix_creation_date: Date;
 
     @Column({
         name: "division",
