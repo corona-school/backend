@@ -224,8 +224,16 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
         if (activeLecture) {
             const logToUpdate = await getCourseAttendanceLog(activeLecture.id, pupil.id);
             if (logToUpdate) {
+                // To prevent a high attendance time through rejoining check the absence time
+                // If absence time (difference between now and updatedAt) is shorter than interval time, add abscence time to attended time
+                // Else add courseAttendanceLogInterval to attendedTime
+                const absenceTime = new Date().getTime() - logToUpdate.updatedAt.getTime();
+                if (absenceTime < courseAttendanceLogInterval) {
+                    logToUpdate.attendedTime += absenceTime;
+                } else {
+                    logToUpdate.attendedTime += courseAttendanceLogInterval;
+                }
                 // Update log
-                logToUpdate.attendedTime += courseAttendanceLogInterval;
                 await entityManager.save(CourseAttendanceLog, logToUpdate);
                 await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
                 logger.info("Successfully updated log with id: ", logToUpdate.id);
