@@ -16,8 +16,7 @@
     },
     "addons": [
         {
-            "plan": "heroku-postgresql",
-            "as": "DATABASE_URL"
+            "plan": "heroku-postgresql"
         }
     ],
     "environments": {
@@ -27,10 +26,7 @@
                 "MAILJET_LIVE": "0"
             },
             "addons": [
-                {
-                    "plan": "heroku-postgresql:hobby-dev",
-                    "as": "DATABASE_URL"
-                }
+                "heroku-postgresql:hobby-dev"
             ]
         }
     }

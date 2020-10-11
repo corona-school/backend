@@ -2,23 +2,18 @@ import {hashToken} from "./hashing";
 import {getLogger} from 'log4js';
 import axios from "axios";
 import {Parser} from "xml2js";
-import {Mutex} from "async-mutex";
 import {Pupil} from "../entity/Pupil";
 import {CourseAttendanceLog} from "../entity/CourseAttendanceLog";
 import {getManager} from "typeorm";
 import {Lecture} from "../entity/Lecture";
 import {getTransactionLog} from "../transactionlog";
 import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
+import {BBBMeeting} from "../entity/BBBMeeting";
+import CreateBBBMeetingEvent from "../transactionlog/types/CreateBBBMeetingEvent";
+import {Student} from "../entity/Student";
 
 const parser = new Parser();
 const logger = getLogger();
-
-const cacheUpdateMutex = new Mutex();
-export const bbbMeetingCache: Map<string, BBBMeeting> = new Map<string, BBBMeeting>();
-updateBBBMeetingCache();
-setInterval(() => {
-    updateBBBMeetingCache();
-}, 840000);
 
 const sharedSecret = process.env.BBB_SECRET;
 const baseUrl = process.env.BBB_BASEURL;
@@ -28,30 +23,47 @@ setInterval(() => {
     handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);
 
-export async function createBBBMeeting(name: string, id: string): Promise<BBBMeeting> {
+export async function isBBBMeetingInDB(id: string): Promise<boolean> {
+    const entityManager = getManager();
+    const meeting = await entityManager.findOne(BBBMeeting, {meetingID: id});
+    return !!meeting;
+}
+
+export async function getBBBMeetingFromDB(id: string): Promise<BBBMeeting> {
+    const entityManager = getManager();
+    return await entityManager.findOne(BBBMeeting, {meetingID: id});
+}
+
+export async function createBBBMeeting(name: string, id: string, user: Pupil | Student): Promise<BBBMeeting> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
     const attendeePW = hashToken('' + Math.random(), "sha1");
     const moderatorPW = hashToken('' + Math.random(), "sha1");
+    const bbbMeeting = new BBBMeeting();
 
+    try {
+        // Create new BBBMeeting
+        bbbMeeting.meetingID = id;
+        bbbMeeting.meetingName = name;
+        bbbMeeting.moderatorPW = moderatorPW;
+        bbbMeeting.attendeePW = attendeePW;
+        await entityManager.save(BBBMeeting, bbbMeeting);
+        await transactionLog.log(new CreateBBBMeetingEvent(user, bbbMeeting));
+        logger.info("Successfully saved new bbb meeting with id ", bbbMeeting.meetingID);
+        return bbbMeeting;
+    } catch (e) {
+        logger.error("Can't save new bbb meeting: " + e.message);
+        logger.debug(bbbMeeting, e);
+    }
+}
+
+export async function startBBBMeeting(meeting: BBBMeeting) {
     const callName = 'create';
-    const queryParams = encodeURI(`attendeePW=${attendeePW}&meetingID=${id}&moderatorPW=${moderatorPW}&name=${name}&record=false`);
+    const queryParams = encodeURI(`attendeePW=${meeting.attendeePW}&meetingID=${meeting.meetingID}&moderatorPW=${meeting.moderatorPW}&name=${meeting.meetingName}&record=false`);
 
-    if (!bbbMeetingCache.has(id)) {
-        const release = await cacheUpdateMutex.acquire();
-        const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
-        if (response.status === 200) {
-            const m: BBBMeeting = new BBBMeeting(id, name, attendeePW, moderatorPW,
-                                                 (userName: string, userID: string): string => getMeetingUrl(id, userName, attendeePW, userID),
-                                                 (userName: string): string => getMeetingUrl(id, userName, moderatorPW));
-            bbbMeetingCache.set(m.meetingID, m);
-
-            release();
-            return m;
-        } else {
-            release();
-            throw new Error("Status code: " + response.status);
-        }
-    } else {
-        return bbbMeetingCache.get(id);
+    const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+    if (response.status !== 200) {
+        throw new Error("Status code: " + response.status);
     }
 }
 
@@ -72,25 +84,11 @@ export async function isBBBMeetingRunning(id: string): Promise<boolean> {
             jsonResponse.response.running.length > 0 && jsonResponse.response.running[0] === "true")
         .catch(error => {
             logger.debug(error);
-            return Promise.reject("An error occured.");
+            return Promise.reject("An error occurred.");
         });
 }
 
-export async function endBBBMeeting(id: string, moderatorPW: string): Promise<boolean> {
-    const callName = "end";
-    const queryParams = encodeURI(`meetingID=${id}&password=${moderatorPW}`);
-
-    return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
-        .then(response => parser.parseStringPromise(response.data))
-        .then(jsonResponse => jsonResponse && jsonResponse.response && jsonResponse.response.returncode &&
-            jsonResponse.response.returncode.length > 0 && jsonResponse.response.returncode[0] === "SUCCESS")
-        .catch(error => {
-            logger.debug(error);
-            return Promise.reject("An error occured.");
-        });
-}
-
-export async function getBBBMeetings(): Promise<BBBMeeting[]> {
+export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
     const callName = "getMeetings";
 
 
@@ -99,44 +97,33 @@ export async function getBBBMeetings(): Promise<BBBMeeting[]> {
         const jsonResponse = await parser.parseStringPromise(response.data);
 
 
-        return mapJSONtoBBBMeetings(jsonResponse);
+        return mapJSONtoApiBBBMeetings(jsonResponse);
     } catch (error) {
         logger.debug(error);
         return null;
     }
 }
 
-export async function updateBBBMeetingCache(): Promise<void> {
-    const release = await cacheUpdateMutex.acquire();
-
-    bbbMeetingCache.clear();
-
-    const meetings = await getBBBMeetings();
-    meetings?.forEach(meeting => bbbMeetingCache.set(meeting.meetingID, meeting));
-
-    release();
-}
-
-function mapJSONtoBBBMeetings(json: any): BBBMeeting[] {
+function mapJSONtoApiBBBMeetings(json: any): ApiBBBMeeting[] {
     if (json && json.response && json.response.meetings && json.response.meetings.length > 0 && json.response.meetings[0] &&
         json.response.meetings[0].meeting && json.response.meetings[0].meeting.length > 0) {
-        return json.response.meetings[0].meeting.map(o => mapJSONtoBBBMeeting(o));
+        return json.response.meetings[0].meeting.map(o => mapJSONtoApiBBBMeeting(o));
     }
     return [];
 }
 
-function mapJSONtoBBBMeeting(o: any): BBBMeeting {
-    return new BBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
-                          o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
-                          o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
-                          o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-                          (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                                      o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
-                          (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                      o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
+function mapJSONtoApiBBBMeeting(o: any): ApiBBBMeeting {
+    return new ApiBBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
+                             o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
+                             o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+                             o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
+                             (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                                         o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
+                             (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
+                                                                         o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
 }
 
-export class BBBMeeting {
+export class ApiBBBMeeting {
     meetingID: string;
     meetingName: string;
     attendeePW: string;
@@ -184,6 +171,17 @@ function mapJSONtoAttendee(o: any): Attendee {
                         o && o.role && o.role.length > 0 && o.role[0]);
 }
 
+function lessThanDate(date1: Date, date2: Date): boolean {
+    if (date1.getFullYear() < date2.getFullYear()) {
+        return true;
+    } else if (date1.getMonth() < date2.getMonth()) {
+        return true;
+    } else if (date1.getDate() < date2.getDate()) {
+        return true;
+    }
+    return false;
+}
+
 // Returns active lecture of the subcourse, assuming that there is only one active lecture of the subcourse
 async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture> {
     const entityManager = getManager();
@@ -191,14 +189,11 @@ async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture
         .createQueryBuilder(Lecture, "lecture")
         .where("lecture.subcourse.id = :id", {id: subcourseId})
         .getMany();
-    const now = new Date();
+
     // check if lecture is running now (lecture.start + duration > now)
     for (const lecture of lectures) {
-
-        if (lecture.start.getFullYear() == now.getFullYear() &&
-            lecture.start.getMonth() == now.getMonth() &&
-            lecture.start.getDate() == now .getDate() &&
-            (lecture.start.getTime() + (lecture.duration * 60000)) > now.getTime()) {
+        if (!lessThanDate(lecture.start, new Date())
+            && (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
             return lecture;
         }
     }
@@ -220,7 +215,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
     const courseAttendanceLog = new CourseAttendanceLog();
-    const now = new Date();
+
     if (subcourseId == null) {
         logger.error("Can't save new course attendance: subcourseId is null");
         logger.debug(courseAttendanceLog);
@@ -228,18 +223,17 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
             const logToUpdate = await getCourseAttendanceLog(activeLecture.id, pupil.id);
-            // Update log
             if (logToUpdate) {
                 // To prevent a high attendance time through rejoining check the absence time
                 // If absence time (difference between now and updatedAt) is shorter than interval time, add abscence time to attended time
                 // Else add courseAttendanceLogInterval to attendedTime
-                const absenceTime = now.getTime() - logToUpdate.updatedAt.getTime();
+                const absenceTime = new Date().getTime() - logToUpdate.updatedAt.getTime();
                 if (absenceTime < courseAttendanceLogInterval) {
                     logToUpdate.attendedTime += absenceTime;
                 } else {
                     logToUpdate.attendedTime += courseAttendanceLogInterval;
                 }
-
+                // Update log
                 await entityManager.save(CourseAttendanceLog, logToUpdate);
                 await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
                 logger.info("Successfully updated log with id: ", logToUpdate.id);
@@ -264,7 +258,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
     }
 }
 
-export async function getBBBMeetingAttendees(meetingID: string): Promise<Attendee[]> {
+export async function getRunningBBBMeetingAttendees(meetingID: string): Promise<Attendee[]> {
     const callName = "getMeetingInfo";
     const queryParams = encodeURI(`meetingID=${meetingID}`);
 
@@ -280,10 +274,10 @@ export async function getBBBMeetingAttendees(meetingID: string): Promise<Attende
 
 export async function handleBBBMeetingInfos() {
     const entityManager = getManager();
-    const meetings = await getBBBMeetings();
+    const meetings = await getRunningBBBMeetings();
     if (meetings != null) {
         for (const meeting of meetings) {
-            const meetingAttendees = await getBBBMeetingAttendees(meeting.meetingID);
+            const meetingAttendees = await getRunningBBBMeetingAttendees(meeting.meetingID);
             if (meetingAttendees != null) {
                 const map = new Map();
                 const filteredMeetingAttendees: Attendee[] = [];
@@ -297,7 +291,7 @@ export async function handleBBBMeetingInfos() {
                     if (attendee.role && attendee.role === "VIEWER") {
                         const pupilFromDB = await entityManager.findOne(Pupil, {wix_id: attendee.wix_id});
                         if (pupilFromDB) {
-                            createOrUpdateCourseAttendanceLog(pupilFromDB, null, meeting.meetingID);
+                            await createOrUpdateCourseAttendanceLog(pupilFromDB, null, meeting.meetingID);
                         } else {
                             logger.error("Can't find attendee in db: " + attendee.fullName);
                         }

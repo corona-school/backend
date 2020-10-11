@@ -86,4 +86,7 @@ We have some coding style guidelines you will need to follow when contributing.
   - Use self-explaining variable names
   - Comment your code where necessary. No one needs comments for trivial things. However if you have a clever idea, write it down, so others can see how intelligent you are.
 
-
+#### Other README files
+- [Guide for writing automated tests](TESTING_GUIDE.md)
+- [How-to migrate db with TypeORM](common/migration/HOW-TO-MIGRATE-README.md)
+- [Administration stuff / business logic](common/administration/README.md)

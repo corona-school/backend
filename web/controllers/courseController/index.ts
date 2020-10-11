@@ -26,13 +26,13 @@ import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
 import {
-    bbbMeetingCache,
     createBBBMeeting,
     isBBBMeetingRunning,
     createOrUpdateCourseAttendanceLog,
-    BBBMeeting
+    getBBBMeetingFromDB, isBBBMeetingInDB, getMeetingUrl, startBBBMeeting
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
+import {BBBMeeting} from "../../../common/entity/BBBMeeting";
 
 const logger = getLogger();
 
@@ -868,7 +868,7 @@ export async function postSubcourseHandler(req: Request, res: Response) {
 
 async function postSubcourse(student: Student, courseId: number, apiSubcourse: ApiAddSubcourse): Promise<ApiSubcourse | number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add an subcourse, but is no instructor.`);
@@ -1030,7 +1030,7 @@ export async function postLectureHandler(req: Request, res: Response) {
 
 async function postLecture(student: Student, courseId: number, subcourseId: number, apiLecture: ApiAddLecture): Promise<{ id: number } | number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
@@ -1192,7 +1192,7 @@ export async function putCourseHandler(req: Request, res: Response) {
 
 async function putCourse(student: Student, courseId: number, apiCourse: ApiEditCourse): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
@@ -1412,7 +1412,7 @@ export async function putSubcourseHandler(req: Request, res: Response) {
 
 async function putSubcourse(student: Student, courseId: number, subcourseId: number, apiSubcourse: ApiEditSubcourse): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to edit a subcourse, but is no instructor.`);
@@ -1581,7 +1581,7 @@ export async function putLectureHandler(req: Request, res: Response) {
 
 async function putLecture(student: Student, courseId: number, subcourseId: number, lectureId: number, apiLecture: ApiEditLecture): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
@@ -1960,7 +1960,7 @@ export async function deleteLectureHandler(req: Request, res: Response) {
 
 async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to delete a lecture, but is no instructor.`);
@@ -2081,7 +2081,7 @@ export async function joinSubcourseHandler(req: Request, res: Response) {
 
 async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2190,7 +2190,7 @@ export async function leaveSubcourseHandler(req: Request, res: Response) {
 
 async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2362,6 +2362,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
     const courseId = req.params.id ? req.params.id : null;
     const subcourseId = req.params.subid ? String(req.params.subid) : null;
     const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
+    const meetingInDB: boolean = await isBBBMeetingInDB(subcourseId);
     let status = 200;
     let course: ApiCourse;
     let meeting: BBBMeeting;
@@ -2379,43 +2380,40 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
             try {
 
                 if (authenticatedPupil || authenticatedStudent) {
+                    if (meetingInDB) {
+                        meeting = await getBBBMeetingFromDB(subcourseId);
+                    } else {
+                        // todo this should get its own method and not use a method from some other route
+                        let obj = await getCourse(
+                            authenticatedStudent ? res.locals.user : undefined,
+                            authenticatedPupil ? res.locals.user : undefined,
+                            Number.parseInt(courseId, 10)
+                        );
+
+                        if (typeof obj == 'number') {
+                            status = obj;
+                        } else {
+                            course = obj;
+                            meeting = await createBBBMeeting(course.name, subcourseId, res.locals.user);
+                        }
+                    }
 
                     if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
-                        if (bbbMeetingCache.has(subcourseId)) {
-                            meeting = bbbMeetingCache.get(subcourseId);
-                            res.send({
-                                url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
-                            });
-                        } else {
+                        await startBBBMeeting(meeting);
 
-                            // todo this should get its own method and not use a method from some other route
-                            let obj = await getCourse(
-                                authenticatedStudent ? res.locals.user : undefined,
-                                authenticatedPupil ? res.locals.user : undefined,
-                                Number.parseInt(courseId, 10)
-                            );
-
-                            if (typeof obj == 'number') {
-                                status = obj;
-                            } else {
-                                course = obj;
-                                meeting = await createBBBMeeting(course.name, subcourseId);
-                                res.send({
-                                    url: meeting.moderatorUrl(`${user.firstname}+${user.lastname}`)
-                                });
-                            }
-                        }
+                        res.send({
+                            url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
+                        });
 
                     } else if (authenticatedPupil) {
-                        let meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
-                        if (bbbMeetingCache.has(subcourseId) && meetingIsRunning) {
+                        const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
+                        if (meetingIsRunning) {
                             let user: Pupil = res.locals.user;
-                            meeting = bbbMeetingCache.get(subcourseId);
 
                             res.send({
-                                url: meeting.attendeeUrl(`${user.firstname}+${user.lastname}`, user.wix_id)
+                                url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.attendeePW, user.wix_id)
                             });
 
                             // BBB logging
@@ -2434,7 +2432,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                 }
 
             } catch (e) {
-                logger.error("An error occurred during GET /course/:id/meeting/join: " + e.message);
+                logger.error("An error occurred during GET /course/:id/subcourse/:subid/meeting/join: " + e.message);
                 logger.debug(req, e);
                 status = 500;
             }
