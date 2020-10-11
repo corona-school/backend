@@ -27,10 +27,7 @@
                 "MAILJET_LIVE": "0"
             },
             "addons": [
-                {
-                    "plan": "heroku-postgresql:hobby-dev",
-                    "as": "DATABASE_URL"
-                }
+                "heroku-postgresql:hobby-dev"
             ]
         }
     }
