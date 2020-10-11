@@ -16,8 +16,7 @@
     },
     "addons": [
         {
-            "plan": "heroku-postgresql",
-            "as": "DATABASE_URL"
+            "plan": "heroku-postgresql"
         }
     ],
     "environments": {
