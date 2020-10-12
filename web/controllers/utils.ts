@@ -35,7 +35,7 @@ export function checkDivisions(divisions: string[]) {
 export function checkExpertises(expertises: string[]) {
     let result: Expertise[] = [];
     if (expertises.length > 0) {
-        const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]).filter(k => !(parseInt(k) >= 0));
+        const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]);
         for (let expertise of expertises) {
             if (expertiseValues.indexOf(expertise) > -1) {
                 const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === expertise);

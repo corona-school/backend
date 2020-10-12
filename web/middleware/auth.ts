@@ -87,7 +87,7 @@ export function authCheckFactory(optional = false) {
 
                 let convertedExpertises: Expertise[] = [];
                 if (mentor.expertise.length > 0) {
-                    const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]).filter(k => !(parseInt(k) >= 0));
+                    const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]);
                     for (let expertise of mentor.expertise) {
                         let replacedString = expertise.toString().replace(/"/g,"");
                         if (expertiseValues.indexOf(replacedString) > -1) {
