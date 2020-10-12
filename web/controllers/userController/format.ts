@@ -180,11 +180,13 @@ export class ApiGetUser {
  *      {
  *          "firstname": "Frank N.",
  *          "lastname": "Stein",
- *          "division": "",
- *          "expertise": "",
- *          "subjects": "",
- *          "teachingExperience": "true",
- *          "description": ""
+ *          "division": ["video", "supervision"],
+ *          "expertise": ["technical support"],
+ *          "subjects": [
+ *              {"name": "Englisch", "minGrade": 1, "maxGrade": 13}
+ *          ],
+ *          "teachingExperience": false,
+ *          "description": "I like trains"
  *      }
  */
 export class ApiPutUser {
