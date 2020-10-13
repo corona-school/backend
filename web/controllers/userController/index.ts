@@ -48,6 +48,8 @@ const logger = getLogger();
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user
  *
  * @apiUse User
+ * @apiUse Subject
+ * @apiUse Match
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -81,6 +83,8 @@ export async function getSelfHandler(req: Request, res: Response) {
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>
  *
  * @apiUse User
+ * @apiUse Subject
+ * @apiUse Match
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
