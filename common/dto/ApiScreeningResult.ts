@@ -1,5 +1,3 @@
-import { ApiSubject } from "../../web/controllers/userController/format";
-
 /**
  * @apiDefine ScreeningResult
  * @apiVersion 1.0.1

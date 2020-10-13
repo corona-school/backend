@@ -5,8 +5,6 @@ import {
     ApiGetUser,
     ApiMatch,
     ApiPutUser,
-    ApiSubject,
-    ApiSubjectStudent,
     ApiUserRoleInstructor,
     checkName,
     checkSubject
@@ -24,6 +22,9 @@ import { sendFirstScreeningInvitationToInstructor } from "../../../common/admini
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import * as moment from "moment-timezone";
+import {Mentor} from "../../../common/entity/Mentor";
+import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
+import {ApiSubject} from "../format";
 
 const logger = getLogger();
 
@@ -228,8 +229,9 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                 if (subjectType == 0) {
                     if (typeof elem.name == "string" && checkSubject(elem.name)
                     ) {
-                        let subject = new ApiSubject();
-                        subject.name = elem.name;
+                        let subject: ApiSubject = {
+                            name: elem.name
+                        };
                         subjects.push(subject);
                     } else {
                         logger.error("Invalid format for shortType subjects: Missing or wrongly typed properties in ", elem);
@@ -247,10 +249,11 @@ export async function putSubjectsHandler(req: Request, res: Response) {
                     elem.maxGrade <= 13 &&
                     checkSubject(elem.name)) {
 
-                    let subject = new ApiSubject();
-                    subject.name = elem.name;
-                    subject.minGrade = elem.minGrade;
-                    subject.maxGrade = elem.maxGrade;
+                    let subject: ApiSubject = {
+                        name: elem.name,
+                        minGrade: elem.minGrade,
+                        maxGrade: elem.maxGrade
+                    };
                     subjects.push(subject);
 
                 } else {
@@ -480,7 +483,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     return apiResponse;
 }
 
-async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Student): Promise<number> {
+async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Student | Mentor): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -590,6 +593,43 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         else {
             person.lastUpdatedSettingsViaBlocker = null;
         }
+    } else if (person instanceof Mentor) {
+        type = Mentor;
+
+        if (req.division) {
+            let division = checkDivisions(req.division);
+            if (division === null) {
+                return 400;
+            }
+            person.division = division;
+        }
+
+        if (req.expertise) {
+            let expertise = checkExpertises(req.expertise);
+            if (expertise === null) {
+                return 400;
+            }
+            person.expertise = expertise;
+        }
+
+        if (req.subjects) {
+            let subjects = checkSubjects(req.subjects);
+            if (subjects === null) {
+                return 400;
+            }
+            person.subjects = subjects;
+        }
+
+        if (typeof req.teachingExperience === 'boolean') {
+            person.teachingExperience = req.teachingExperience;
+        } else if (req.teachingExperience !== undefined) {
+            return 400;
+        }
+
+        if (req.description) {
+            person.description = req.description.trim();
+        }
+
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);
@@ -733,8 +773,9 @@ function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): Api
     let subjects = [];
     for (let i = 0; i < oldSubjects.length; i++) {
         if (typeof oldSubjects[i] == "string") {
-            let s = new ApiSubject();
-            s.name = oldSubjects[i].replace(/[1234567890:]+$/g, "");
+            let s: ApiSubject = {
+                name: oldSubjects[i].replace(/[1234567890:]+$/g, "")
+            };
             if (longtype) {
                 let matches = oldSubjects[i].match(
                     /([0-9]{1,2}):([0-9]{1,2})$/
@@ -845,7 +886,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
     }
 
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     student.isInstructor = true;
 
@@ -973,8 +1014,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
- * @apiUse UserRoleTutorSubjects
- * @apiUse SubjectStudent
+ * @apiUse Subject
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -987,7 +1027,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     if (res.locals.user instanceof Student
         && req.params.id != undefined
         && req.body instanceof Array) {
-        let subjects: ApiSubjectStudent[] = [];
+        let subjects: ApiSubject[] = [];
         for (let testSubject of req.body) {
             if (typeof testSubject.name == "string" &&
                 checkSubject(testSubject.name) &&
@@ -999,10 +1039,11 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
                 testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13 &&
                 testSubject.minGrade <= testSubject.maxGrade) {
 
-                let newSubject = new ApiSubjectStudent;
-                newSubject.name = testSubject.name;
-                newSubject.minGrade = testSubject.minGrade;
-                newSubject.maxGrade = testSubject.maxGrade;
+                let newSubject: ApiSubject = {
+                    name: testSubject.name,
+                    minGrade: testSubject.minGrade,
+                    maxGrade: testSubject.maxGrade
+                };
                 subjects.push(newSubject);
             } else {
                 logger.warn("Invalid format for subject data element.");
@@ -1022,7 +1063,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiSubjectStudent[]): Promise<number> {
+async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiSubject[]): Promise<number> {
     if (wixId != student.wix_id) {
         logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
         return 403;
@@ -1034,7 +1075,7 @@ async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiS
     }
 
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
+    //TODO: Implement transactionLog
 
     try {
         student.isStudent = true;
