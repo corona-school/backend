@@ -16,6 +16,7 @@ import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
+import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
 
 const logger = getLogger();
 
@@ -54,7 +55,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isInstructor == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
-            typeof req.body.state == 'string') {
+            typeof req.body.state == 'string' &&
+            typeof req.body.isProjectCoach == 'boolean') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -78,6 +80,32 @@ export async function postTutorHandler(req: Request, res: Response) {
                     typeof req.body.hours !== 'number') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
+                }
+            }
+
+            if (req.body.isProjectCoach) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.wasJufoParticipant === "string"
+                    && typeof req.body.isUniversityStudent === "boolean") {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutor registration with isProjectCoach expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK wasJufoParticipant for validity
+                    if (!EnumReverseMappings.TutorJufoParticipationIndication(req.body.wasJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach has invalid value for jufo participation: '${req.body.wasJufoParticipant}'`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutor registration with isProjectCoach has invalid parameters");
                 }
             }
 
@@ -202,6 +230,20 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         tutor.moduleHours = apiTutor.hours;
     }
 
+    // Project coaching
+    if (apiTutor.isProjectCoach) {
+        tutor.isProjectCoach = apiTutor.isProjectCoach;
+        tutor.projectFields = apiTutor.projectFields;
+
+        //expect tutors to be at least a past jufo participant or a university student
+        if (apiTutor.wasJufoParticipant !== TutorJufoParticipationIndication.YES && !apiTutor.isUniversityStudent) {
+            logger.warn("Tutor registration failed, because the tutor tried to register without beeing either a university student or a past Jufo participant!");
+            return 400;
+        }
+        tutor.wasJufoParticipant = apiTutor.wasJufoParticipant;
+        tutor.isUniversityStudent = apiTutor.isUniversityStudent;
+    }
+
     const result = await entityManager.findOne(Student, { email: tutor.email });
     if (result !== undefined) {
         logger.error("Tutor with given email already exists");
@@ -254,9 +296,10 @@ export async function postTuteeHandler(req: Request, res: Response) {
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
-            typeof req.body.msg == 'string') {
+            typeof req.body.msg == 'string' &&
+            typeof req.body.isProjectMentee == "boolean") {
 
-            if (req.body.isTutor) {
+            if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
@@ -271,6 +314,31 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 }
             }
 
+            if (req.body.isProjectMentee) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.isJufoParticipant === "string") {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutee registration with isProjectMentee expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectMentee has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK isJufoParticipant for validity
+                    if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectMentee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutee registration with isProjectMentee has invalid parameters");
+                }
+            }
+
             if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
                 status = 400;
 
@@ -278,7 +346,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 // try registering
                 status = await registerTutee(req.body);
             } else {
-                logger.error("Malformed parameters in optional fields for Tutor registration");
+                logger.error("Malformed parameters in optional fields for Tutee registration");
                 status = 400;
             }
 
@@ -435,6 +503,13 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
         tutee.isPupil = true;
         tutee.subjects = JSON.stringify(apiTutee.subjects);
+    }
+
+    // Project coaching
+    if (apiTutee.isProjectMentee) {
+        tutee.isProjectMentee = apiTutee.isProjectMentee;
+        tutee.projectFields = apiTutee.projectFields;
+        tutee.isJufoParticipant = apiTutee.isJufoParticipant;
     }
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });

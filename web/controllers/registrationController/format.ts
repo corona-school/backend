@@ -1,3 +1,6 @@
+import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import { ProjectField } from "../../../common/jufo/projectFields";
+
 /**
  * @apiDefine AddTutor
  * @apiVersion 1.1.0
@@ -16,6 +19,10 @@
  * @apiSuccess (Tutor Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutor Object) {string} msg Additional information
  * @apiSuccess (Tutor Object) {string|undefined} redirectTo the page the user sees after registration
+ * @apiSuccess (Tutor Object) {bool} isProjectCoach True, if eligible for project coaching
+ * @apiSuccess (Tutor Object) {bool} [isUniversityStudent] (for project coaching required) True, if tutor is a university student
+ * @apiSuccess (Tutor Object) {string[]} [wasJufoParticipant] (for project coaching required) One of <code> "yes", "no", "idk" </code>
+ * @apiSuccess (Tutor Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  *
  */
 export interface ApiAddTutor {
@@ -33,6 +40,10 @@ export interface ApiAddTutor {
     newsletter: boolean,
     msg: string,
     redirectTo?: string;
+    isProjectCoach: boolean,
+    isUniversityStudent?: boolean,
+    projectFields?: ProjectField[],
+    wasJufoParticipant?: TutorJufoParticipationIndication
 }
 
 /**
@@ -50,6 +61,9 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {bool} newsletter Opt-in for newsletter
  * @apiSuccess (Tutee Object) {string} msg Additional information
  * @apiSuccess (Tutee Object) {string|undefined} redirectTo the page the user sees after registration
+ * @apiSuccess (Tutee Object) {bool} isProjectMentee True, if participating in project coaching
+ * @apiSuccess (Tutee Object) {string[]} [isJufoParticipant] (for project coaching required) One of <code> "yes", "no", "unsure", "neverheard" </code>
+ * @apiSuccess (Tutee Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectMentee is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -63,6 +77,9 @@ export interface ApiAddTutee {
     newsletter: boolean,
     msg: string,
     redirectTo?: string;
+    isProjectMentee: boolean;
+    projectFields?: ProjectField[];
+    isJufoParticipant?: TuteeJufoParticipationIndication;
 }
 
 /**

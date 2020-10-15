@@ -8,6 +8,8 @@ import { Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
 import { InstructorScreening } from "./InstructorScreening";
+import { ProjectField } from "../jufo/projectFields";
+import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -122,6 +124,42 @@ export class Student extends Person {
         nullable: true
     })
     moduleHours: number;
+
+    /*
+     * Project Coaching data
+     */
+    @Column({
+        default: false,
+        nullable: false
+    })
+    isProjectCoach: boolean;
+
+    @Column({
+        type: "enum",
+        enum: ProjectField,
+        default: [],
+        nullable: false,
+        array: true
+    })
+    projectFields: ProjectField[];
+
+    @Column({
+        default: TutorJufoParticipationIndication.IDK,
+        nullable: false
+    })
+    wasJufoParticipant: TutorJufoParticipationIndication;
+
+    @Column({
+        default: true,
+        nullable: false
+    })
+    isUniversityStudent: boolean;
+
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    openProjectMatchRequestCount: number;
 
     /*
      * Other data

@@ -6,6 +6,8 @@ import { State } from './State';
 import { School } from './School';
 import {CourseAttendanceLog} from "./CourseAttendanceLog";
 import { SchoolType } from "./SchoolType";
+import { ProjectField } from "../jufo/projectFields";
+import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 
 @Entity()
 export class Pupil extends Person {
@@ -88,6 +90,36 @@ export class Pupil extends Person {
 
     @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.pupil)
     courseAttendanceLog: CourseAttendanceLog[];
+
+    /*
+     * Project Coaching data
+     */
+    @Column({
+        default: false,
+        nullable: false
+    })
+    isProjectMentee: boolean;
+
+    @Column({
+        type: "enum",
+        enum: ProjectField,
+        default: [],
+        nullable: false,
+        array: true
+    })
+    projectFields: ProjectField[];
+
+    @Column({
+        default: TuteeJufoParticipationIndication.UNSURE,
+        nullable: false
+    })
+    isJufoParticipant: TuteeJufoParticipationIndication;
+
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    openProjectMatchRequestCount: number;
 
     /*
      * Other data
