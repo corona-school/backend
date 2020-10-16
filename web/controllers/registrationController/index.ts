@@ -316,7 +316,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
 
             if (req.body.isProjectMentee) {
                 if (req.body.projectFields instanceof Array
-                    && typeof req.body.isJufoParticipant === "string" 
+                    && typeof req.body.isJufoParticipant === "string"
                     && typeof req.body.projectMemberCount === "number") {
                     // CHECK project fields for validity
                     if (req.body.projectFields.length <= 0) {
