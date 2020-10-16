@@ -121,6 +121,12 @@ export class Pupil extends Person {
     })
     openProjectMatchRequestCount: number;
 
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    projectMemberCount: number;
+
     /*
      * Other data
      */

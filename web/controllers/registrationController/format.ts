@@ -64,6 +64,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {bool} isProjectMentee True, if participating in project coaching
  * @apiSuccess (Tutee Object) {string[]} [isJufoParticipant] (for project coaching required) One of <code> "yes", "no", "unsure", "neverheard" </code>
  * @apiSuccess (Tutee Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectMentee is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
+ * @apiSuccess (Tutee Object) {number} [projectMemberCount] (for project coaching required) A number of persons that are making the project together. Values between 1 and 3 are allowed.
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -80,6 +81,7 @@ export interface ApiAddTutee {
     isProjectMentee: boolean;
     projectFields?: ProjectField[];
     isJufoParticipant?: TuteeJufoParticipationIndication;
+    projectMemberCount?: number;
 }
 
 /**

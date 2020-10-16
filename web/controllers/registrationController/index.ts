@@ -316,7 +316,8 @@ export async function postTuteeHandler(req: Request, res: Response) {
 
             if (req.body.isProjectMentee) {
                 if (req.body.projectFields instanceof Array
-                    && typeof req.body.isJufoParticipant === "string") {
+                    && typeof req.body.isJufoParticipant === "string" 
+                    && typeof req.body.projectMemberCount === "number") {
                     // CHECK project fields for validity
                     if (req.body.projectFields.length <= 0) {
                         status = 400;
@@ -331,6 +332,12 @@ export async function postTuteeHandler(req: Request, res: Response) {
                     if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
                         status = 400;
                         logger.error(`Tutee registration with isProjectMentee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                    }
+                    // CHECK projectMemberCount for validity
+                    const projectMemberCount: number = req.body.projectMemberCount;
+                    if (projectMemberCount < 1 || projectMemberCount > 3) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectMentee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
                 }
                 else {
@@ -510,6 +517,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.isProjectMentee = apiTutee.isProjectMentee;
         tutee.projectFields = apiTutee.projectFields;
         tutee.isJufoParticipant = apiTutee.isJufoParticipant;
+        tutee.projectMemberCount = apiTutee.projectMemberCount;
     }
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
