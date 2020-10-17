@@ -17,6 +17,7 @@ import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
+import { ProjectFieldWithGradeRestriction } from '../../../common/entity/ProjectFieldWithGradeRestriction';
 
 const logger = getLogger();
 
@@ -233,7 +234,9 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     // Project coaching
     if (apiTutor.isProjectCoach) {
         tutor.isProjectCoach = apiTutor.isProjectCoach;
-        tutor.projectFields = apiTutor.projectFields;
+        await tutor.setProjectFields(apiTutor.projectFields.map(pf => {
+            return {name: pf};
+        }));
 
         //expect tutors to be at least a past jufo participant or a university student
         if (apiTutor.wasJufoParticipant !== TutorJufoParticipationIndication.YES && !apiTutor.isUniversityStudent) {

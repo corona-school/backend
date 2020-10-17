@@ -1,4 +1,4 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
+import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
 import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
@@ -10,6 +10,7 @@ import { Subcourse } from "./Subcourse";
 import { InstructorScreening } from "./InstructorScreening";
 import { ProjectField } from "../jufo/projectFields";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
+import { ProjectFieldWithGradeRestriction } from "./ProjectFieldWithGradeRestriction";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -134,14 +135,10 @@ export class Student extends Person {
     })
     isProjectCoach: boolean;
 
-    @Column({
-        type: "enum",
-        enum: ProjectField,
-        default: [],
-        nullable: false,
-        array: true
+    @OneToMany(type => ProjectFieldWithGradeRestriction, field => field.student, {
+        cascade: true
     })
-    projectFields: ProjectField[];
+    projectFields: Promise<ProjectFieldWithGradeRestriction[]>;
 
     @Column({
         default: TutorJufoParticipationIndication.IDK,
@@ -233,6 +230,17 @@ export class Student extends Person {
         }
         await currentScreening.addScreeningResult(screeningResult);
         this.instructorScreening = Promise.resolve(currentScreening);
+    }
+
+    // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors
+    // also see https://github.com/typeorm/typeorm/issues/3801
+    async setProjectFields(fields: {name: ProjectField, min?: number, max?: number}[]) {
+        //delete old project fields to prevent errors
+        for (const pf of await this.projectFields ?? []) {
+            await getManager().remove(pf);
+        }
+        //set new values
+        this.projectFields = Promise.resolve(fields.map( f => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
     }
 
     async screeningStatus(): Promise<ScreeningStatus> {
