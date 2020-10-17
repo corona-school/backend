@@ -292,6 +292,26 @@ export class Student extends Person {
         }
     }
 
+    async projectCoachingScreeningStatus(): Promise<ScreeningStatus> {
+        const projectCoachingScreening = await this.projectCoachingScreening;
+        const studentScreening = await this.screening;
+
+        if (!projectCoachingScreening && !studentScreening) {
+            return ScreeningStatus.Unscreened;
+        }
+        //if someone is explicitly not allowed for project coaching, don't care whether he was accepted as a student for 1-on-1 tutoring
+        if (projectCoachingScreening?.success === false) {
+            return ScreeningStatus.Rejected;
+        }
+
+        //...otherwise beeing successfully screened as student is also sufficient.
+        if (projectCoachingScreening?.success || studentScreening?.success) {
+            return ScreeningStatus.Accepted;
+        }
+
+        return ScreeningStatus.Rejected;
+    }
+
     //Returns the URL that the student can use to get to his screening video call
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)

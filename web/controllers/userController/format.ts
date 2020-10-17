@@ -32,6 +32,7 @@
  *          "isInstructor": false,
  *          "isPupil": true,
  *          "isParticipant": false,
+ *          "isProjectCoachee": false,
  *          "active": true,
  *          "grade": 7,
  *          "subjects": [
@@ -74,9 +75,11 @@
  *          "isInstructor": false,
  *          "isPupil": false,
  *          "isParticipant": false,
+ *          "isProjectCoach": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
  *          "instructorScreeningStatus": "ACCEPTED",
+ *          "projectCoachingScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
  *          "subjects": [
  *              {
@@ -125,14 +128,18 @@ export class ApiGetUser {
     type: "student" | "pupil";
     isTutor?: boolean;
     isInstructor?: boolean;
+    isProjectCoach?: boolean;
     isPupil?: boolean;
     isParticipant?: boolean;
+    isProjectCoachee?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
     screeningStatus?: string;
     instructorScreeningStatus?: string;
+    projectCoachingScreeningStatus?: string;
     subjects: ApiSubject[];
+    projectFields: ApiProjectFieldInfo[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
     state?: string;
@@ -262,6 +269,12 @@ export class ApiSubject {
     name: string;
     minGrade?: number;
     maxGrade?: number;
+}
+
+export class ApiProjectFieldInfo {
+    name: string;
+    min?: number;
+    max?: number;
 }
 
 /**
