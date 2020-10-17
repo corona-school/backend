@@ -205,6 +205,10 @@ createConnection().then(() => {
             "/instructor/:id/update",
             screeningController.updateInstructor
         );
+        screenerApiRouter.put(
+            "/projectCoaches/:email",
+            screeningController.updateStudentWithProjectCoachingScreeningResultHandler
+        );
 
         app.use("/api/screening", screenerApiRouter);
     }

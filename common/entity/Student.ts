@@ -11,6 +11,8 @@ import { InstructorScreening } from "./InstructorScreening";
 import { ProjectField } from "../jufo/projectFields";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectFieldWithGradeRestriction } from "./ProjectFieldWithGradeRestriction";
+import { ProjectCoachingScreening } from "./ProjectCoachingScreening";
+import { ApiProjectCoachingScreeningResult } from "../dto/ApiProjectCoachingScreeningResult";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -158,6 +160,12 @@ export class Student extends Person {
     })
     openProjectMatchRequestCount: number;
 
+    @OneToOne((type) => ProjectCoachingScreening, (projectCoachingScreening) => projectCoachingScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    projectCoachingScreening: Promise<ProjectCoachingScreening>;
+
     /*
      * Other data
      */
@@ -232,6 +240,19 @@ export class Student extends Person {
         this.instructorScreening = Promise.resolve(currentScreening);
     }
 
+    async addProjectCoachingScreeningResult(screeningResult: ApiProjectCoachingScreeningResult) {
+        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
+        //update project fields metadata/restrictions
+        await this.setProjectFields(screeningResult.projectFields);
+
+        let currentScreening = await this.projectCoachingScreening;
+
+        if (!currentScreening) {
+            currentScreening = new ProjectCoachingScreening();
+        }
+        await currentScreening.addScreeningResult(screeningResult);
+        this.projectCoachingScreening = Promise.resolve(currentScreening);
+    }
     // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors
     // also see https://github.com/typeorm/typeorm/issues/3801
     async setProjectFields(fields: {name: ProjectField, min?: number, max?: number}[]) {

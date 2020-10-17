@@ -14,6 +14,7 @@ import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
+import { ApiProjectCoachingScreeningResult } from "../../../common/dto/ApiProjectCoachingScreeningResult";
 
 const logger = getLogger();
 
@@ -121,6 +122,54 @@ export async function updateStudentWithScreeningResultHandler(req: Request, res:
                 res.status(200).end();
             } else {
                 res.status(400).send("the necessary screening results are missing");
+            }
+        } else {
+            res.status(404).send("no student with given email address found");
+        }
+    } catch (err) {
+        next();
+    }
+}
+
+/**
+ * @api {PUT} /student/:email updateStudentWithProjectCoachingScreeningResult
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * Update a student by her/his email address
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName updateStudentWithProjectCoachingScreeningResult
+ * @apiGroup Student
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
+ *
+ * @apiParam (URL Parameter) {string} email Student Email Address
+ *
+ * @apiUse ProjectCoachingScreeningResult
+ *
+ * @apiUse ProjectFieldInfo
+ */
+export async function updateStudentWithProjectCoachingScreeningResultHandler(req: Request, res: Response, next: NextFunction) {
+    const transactionLog = getTransactionLog();
+
+    try {
+        const screenedStudent: Student = await getStudentByEmail(getManager(), req.params.email);
+        if (screenedStudent instanceof Student) {
+            const screeningResult: ApiProjectCoachingScreeningResult = Object.assign(new ApiProjectCoachingScreeningResult(), req.body);
+            if (screeningResult.isValid()) {
+                await screenedStudent.addProjectCoachingScreeningResult(screeningResult);
+                await getManager().save(screenedStudent);
+                await transactionLog.log(new UpdatedByScreenerEvent(screenedStudent, "unknown")); // todo set screener to the name of the screener
+
+                logger.info(`Successfully screened ${screenedStudent.email} with result ${JSON.stringify(screeningResult)}`);
+
+                res.status(200).end();
+            } else {
+                res.status(400).send("the necessary project coaching screening results are missing");
             }
         } else {
             res.status(404).send("no student with given email address found");
