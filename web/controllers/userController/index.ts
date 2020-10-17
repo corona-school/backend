@@ -429,7 +429,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.type = "pupil";
         apiResponse.isPupil = person.isPupil;
         apiResponse.isParticipant = person.isParticipant;
-        apiResponse.isProjectCoachee = person.isProjectMentee;
+        apiResponse.isProjectCoachee = person.isProjectCoachee;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];

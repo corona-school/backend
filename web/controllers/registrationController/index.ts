@@ -300,7 +300,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
-            typeof req.body.isProjectMentee == "boolean") {
+            typeof req.body.isProjectCoachee == "boolean") {
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -317,35 +317,35 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 }
             }
 
-            if (req.body.isProjectMentee) {
+            if (req.body.isProjectCoachee) {
                 if (req.body.projectFields instanceof Array
                     && typeof req.body.isJufoParticipant === "string"
                     && typeof req.body.projectMemberCount === "number") {
                     // CHECK project fields for validity
                     if (req.body.projectFields.length <= 0) {
                         status = 400;
-                        logger.error("Tutee registration with isProjectMentee expects projectFields");
+                        logger.error("Tutee registration with isProjectCoachee expects projectFields");
                     }
                     const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
                     if (unknownProjectField) {
                         status = 400;
-                        logger.error(`Tutee registration with isProjectMentee has invalid project field '${unknownProjectField}'`);
+                        logger.error(`Tutee registration with isProjectCoachee has invalid project field '${unknownProjectField}'`);
                     }
                     // CHECK isJufoParticipant for validity
                     if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
                         status = 400;
-                        logger.error(`Tutee registration with isProjectMentee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                        logger.error(`Tutee registration with isProjectCoachee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
                     }
                     // CHECK projectMemberCount for validity
                     const projectMemberCount: number = req.body.projectMemberCount;
                     if (projectMemberCount < 1 || projectMemberCount > 3) {
                         status = 400;
-                        logger.error(`Tutee registration with isProjectMentee has invalid value for projectMemberCount: ${projectMemberCount}`);
+                        logger.error(`Tutee registration with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
                 }
                 else {
                     status = 400;
-                    logger.error("Tutee registration with isProjectMentee has invalid parameters");
+                    logger.error("Tutee registration with isProjectCoachee has invalid parameters");
                 }
             }
 
@@ -516,8 +516,8 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     }
 
     // Project coaching
-    if (apiTutee.isProjectMentee) {
-        tutee.isProjectMentee = apiTutee.isProjectMentee;
+    if (apiTutee.isProjectCoachee) {
+        tutee.isProjectCoachee = apiTutee.isProjectCoachee;
         tutee.projectFields = apiTutee.projectFields;
         tutee.isJufoParticipant = apiTutee.isJufoParticipant;
         tutee.projectMemberCount = apiTutee.projectMemberCount;

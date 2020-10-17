@@ -98,7 +98,7 @@ export class Pupil extends Person {
         default: false,
         nullable: false
     })
-    isProjectMentee: boolean;
+    isProjectCoachee: boolean;
 
     @Column({
         type: "enum",
