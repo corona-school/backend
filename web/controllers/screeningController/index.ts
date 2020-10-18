@@ -15,6 +15,7 @@ import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
 import { ApiProjectCoachingScreeningResult } from "../../../common/dto/ApiProjectCoachingScreeningResult";
+import { ProjectCoachingScreening } from "../../../common/entity/ProjectCoachingScreening";
 
 const logger = getLogger();
 
@@ -76,7 +77,9 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
 
         if (student instanceof Student) {
             const screening: Screening = await student.screening;
-            const studentToScreen: StudentToScreen = new StudentToScreen(student, screening);
+            const projectCoachingScreening: ProjectCoachingScreening = await student.projectCoachingScreening;
+            const projectFields = await student.projectFields;
+            const studentToScreen: StudentToScreen = new StudentToScreen(student, screening, projectCoachingScreening, projectFields);
             res.json(studentToScreen);
             await transactionLog.log(new AccessedByScreenerEvent(student, "unknown")); // todo set screener to the name of the screener
         } else {
