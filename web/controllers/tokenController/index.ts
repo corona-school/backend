@@ -12,6 +12,7 @@ import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
 import * as moment from "moment";
 import {
     sendFirstScreeningInvitationToInstructor,
+    sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
 
@@ -85,6 +86,10 @@ export async function verifyToken(token: string): Promise<string | null> {
                 if (student.isInstructor) {
                     // Invite to instructor screening
                     await sendFirstScreeningInvitationToInstructor(entityManager, student);
+                }
+                else if (student.isProjectCoach && !student.isStudent && !student.isUniversityStudent) {
+                    //... then the only way of beeing part of Corona School is as a Jufo alumni, so send them this invitation
+                    await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
                 } else {
                     // Invite to tutor screening
                     await sendFirstScreeningInvitationToTutor(entityManager, student);

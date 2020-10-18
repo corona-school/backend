@@ -172,6 +172,18 @@ export class Student extends Person {
     })
     projectCoachingScreening: Promise<ProjectCoachingScreening>;
 
+    @Column({
+        nullable: false,
+        default: 0
+    })
+    sentJufoAlumniScreeningReminderCount: number; //a counter for counting the screening reminders sent to Jufo alumni (which are not offically registered university students)
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastSentJufoAlumniScreeningInvitationDate: Date;
+
     /*
      * Other data
      */

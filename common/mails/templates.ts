@@ -174,6 +174,19 @@ export const mailjet = {
             variables: variables
         };
     },
+    INSTRUCTORSCREENINGREMINDER: (variables: {
+        instructorFirstName: string;
+        selectAppointmentURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "instructorscreeningreminder",
+            id: 1803949,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
     COURSESCANCELLED: (variables: {
         participantFirstname: string;
         courseName: string;
@@ -299,6 +312,32 @@ export const mailjet = {
             id: 1518580,
             sender: DEFAULTSENDERS.support,
             title: "Nachricht zu deinem Kurs",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "projectcoachjufoalumnifirstscreenininvitation",
+            id: 1803499,
+            sender: DEFAULTSENDERS.screening,
+            title: "Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PROJECTCOACHJUFOALUMNISCREENINGREMINDER: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'projectcoachjufoalumniscreeningreminder',
+            id: 1803498,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
         };
