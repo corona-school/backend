@@ -103,6 +103,11 @@ export async function postTutorHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutor registration with isProjectCoach has invalid value for jufo participation: '${req.body.wasJufoParticipant}'`);
                     }
+                    // CHECK hasJufoCertificate for validity
+                    if (req.body.wasJufoParticipant === "yes" && req.body.isUniversityStudent === false && typeof req.body.hasJufoCertificate !== "boolean") {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach (for a non university-student, but ex-jufo-participant) requires indication of whether the person has a Jufo certificate or not.`);
+                    }
                 }
                 else {
                     status = 400;
@@ -245,6 +250,10 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         }
         tutor.wasJufoParticipant = apiTutor.wasJufoParticipant;
         tutor.isUniversityStudent = apiTutor.isUniversityStudent;
+
+        if (apiTutor.wasJufoParticipant === TutorJufoParticipationIndication.YES && apiTutor.isUniversityStudent === false) {
+            tutor.hasJufoCertificate = apiTutor.hasJufoCertificate;
+        }
     }
 
     const result = await entityManager.findOne(Student, { email: tutor.email });

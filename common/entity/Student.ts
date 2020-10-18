@@ -149,6 +149,12 @@ export class Student extends Person {
     wasJufoParticipant: TutorJufoParticipationIndication;
 
     @Column({
+        default: null,
+        nullable: true
+    })
+    hasJufoCertificate: boolean;
+
+    @Column({
         default: true,
         nullable: false
     })
