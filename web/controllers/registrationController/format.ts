@@ -21,8 +21,8 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {string|undefined} redirectTo the page the user sees after registration
  * @apiSuccess (Tutor Object) {bool} isProjectCoach True, if eligible for project coaching
  * @apiSuccess (Tutor Object) {bool} [isUniversityStudent] (for project coaching required) True, if tutor is a university student
- * @apiSuccess (Tutor Object) {string[]} [wasJufoParticipant] (for project coaching required) One of <code> "yes", "no", "idk" </code>
- * @apiSuccess (Tutor Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
+ * @apiSuccess (Tutor Object) {string} [wasJufoParticipant] (for project coaching required) One of <code> "yes", "no", "idk" </code>
+ * @apiSuccess (Tutor Object) {string[]} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  *
  */
 export interface ApiAddTutor {
