@@ -175,7 +175,7 @@ createConnection().then(() => {
         );
         screenerApiRouter.put(
             "/student/:email",
-            screeningController.updateStudentWithScreeningResultHandler
+            screeningController.updateStudentByMailHandler
         );
         screenerApiRouter.get(
             "/screener/:email/:includepassword",
@@ -200,14 +200,6 @@ createConnection().then(() => {
         screenerApiRouter.get(
             "/instructors",
             screeningController.getInstructors
-        );
-        screenerApiRouter.post(
-            "/instructor/:id/update",
-            screeningController.updateInstructor
-        );
-        screenerApiRouter.put(
-            "/projectCoaches/:email",
-            screeningController.updateStudentWithProjectCoachingScreeningResultHandler
         );
 
         app.use("/api/screening", screenerApiRouter);

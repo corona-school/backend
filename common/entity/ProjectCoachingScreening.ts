@@ -2,15 +2,14 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    getManager,
     JoinColumn,
     ManyToOne,
     OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
-import { ApiScreeningResult } from "../dto/ApiScreeningResult";
-import { getScreenerByEmail, Screener } from "./Screener";
+import { ScreeningInfo } from "../util/screening";
+import { Screener } from "./Screener";
 import { Student } from "./Student";
 
 @Entity()
@@ -49,10 +48,10 @@ export class ProjectCoachingScreening {
     @JoinColumn()
     student: Student;
 
-    async addScreeningResult(screeningResult: ApiScreeningResult) {
-        this.success = screeningResult.verified === undefined ? this.success : screeningResult.verified;
-        this.comment = screeningResult.commentScreener === undefined ? this.comment : screeningResult.commentScreener;
-        this.knowsCoronaSchoolFrom = screeningResult.knowscsfrom === undefined ? this.knowsCoronaSchoolFrom : screeningResult.knowscsfrom;
-        this.screener = await getScreenerByEmail(getManager(), screeningResult.screenerEmail);
+    async updateScreeningInfo(screeningInfo: ScreeningInfo, screener?: Screener) {
+        this.success = screeningInfo.verified ?? this.success;
+        this.comment = screeningInfo.comment ?? this.comment;
+        this.knowsCoronaSchoolFrom = screeningInfo.knowsCoronaSchoolFrom ?? this.knowsCoronaSchoolFrom;
+        this.screener = screener ?? this.screener;
     }
 }

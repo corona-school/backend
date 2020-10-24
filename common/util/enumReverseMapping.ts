@@ -3,6 +3,7 @@ import { SchoolType } from "../entity/SchoolType";
 import { MentoringCategory } from "../mentoring/categories";
 import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../jufo/participationIndication";
+import { TeacherModule } from "../entity/Student";
 
 
 const EnumReverseMappings = {
@@ -11,7 +12,8 @@ const EnumReverseMappings = {
     MentoringCategory: reverseMappingForStringEnum(MentoringCategory),
     ProjectField: reverseMappingForStringEnum(ProjectField),
     TutorJufoParticipationIndication: reverseMappingForStringEnum(TutorJufoParticipationIndication),
-    TuteeJufoParticipationIndication: reverseMappingForStringEnum(TuteeJufoParticipationIndication)
+    TuteeJufoParticipationIndication: reverseMappingForStringEnum(TuteeJufoParticipationIndication),
+    TeacherModule: reverseMappingForStringEnum(TeacherModule)
 };
 
 function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {

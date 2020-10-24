@@ -12,7 +12,6 @@ import {
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
-import { intersectionWithRespectToGrade, subjectsAsArray } from "../util/subjectsutils";
 import { gradeAsInt } from "../util/gradestrings";
 
 export enum SourceType {
@@ -98,13 +97,6 @@ export class Match {
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 }
 
-export function subjectIntersectionOfMatch(m: Match) {
-    return intersectionWithRespectToGrade(
-        subjectsAsArray(m.student.subjects),
-        subjectsAsArray(m.pupil.subjects),
-        gradeAsInt(m.pupil.grade)
-    );
-}
 
 export async function haveDissolvedMatch(s: Student, p: Pupil, manager: EntityManager) {
     return (await manager.find(Match, { student: s, pupil: p, dissolved: true })).length > 0;

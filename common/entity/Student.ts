@@ -1,5 +1,4 @@
 import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
-import { ApiScreeningResult } from "../dto/ApiScreeningResult";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
@@ -8,11 +7,13 @@ import { Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
 import { InstructorScreening } from "./InstructorScreening";
-import { ProjectField } from "../jufo/projectFields";
+import { ProjectFieldWithGradeInfoType } from "../jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectFieldWithGradeRestriction } from "./ProjectFieldWithGradeRestriction";
 import { ProjectCoachingScreening } from "./ProjectCoachingScreening";
-import { ApiProjectCoachingScreeningResult } from "../dto/ApiProjectCoachingScreeningResult";
+import { parseSubjectString, Subject, toStudentSubjectDatabaseFormat } from "../util/subjectsutils";
+import { ScreeningInfo } from "../util/screening";
+import { Screener } from "./Screener";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -230,56 +231,78 @@ export class Student extends Person {
     })
     lastUpdatedSettingsViaBlocker: Date;
 
-    async addScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
-        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
-        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
-
+    async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.screening = Promise.resolve(undefined);
+            }
+            return;
+        }
 
         if (!currentScreening) {
             currentScreening = new Screening();
         }
-        await currentScreening.addScreeningResult(screeningResult);
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
     }
 
-    async addInstructorScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
-        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
-        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
-
+    async setInstructorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.instructorScreening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.instructorScreening = Promise.resolve(undefined);
+            }
+            return;
+        }
 
         if (!currentScreening) {
             currentScreening = new InstructorScreening();
         }
-        await currentScreening.addScreeningResult(screeningResult);
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.instructorScreening = Promise.resolve(currentScreening);
     }
 
-    async addProjectCoachingScreeningResult(screeningResult: ApiProjectCoachingScreeningResult) {
-        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
-        //update project fields metadata/restrictions
-        await this.setProjectFields(screeningResult.projectFields);
-
+    async setProjectCoachingScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.projectCoachingScreening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.projectCoachingScreening = Promise.resolve(undefined);
+            }
+            return;
+        }
 
         if (!currentScreening) {
             currentScreening = new ProjectCoachingScreening();
         }
-        await currentScreening.addScreeningResult(screeningResult);
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.projectCoachingScreening = Promise.resolve(currentScreening);
     }
+
     // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors
     // also see https://github.com/typeorm/typeorm/issues/3801
-    async setProjectFields(fields: {name: ProjectField, min?: number, max?: number}[]) {
+    async setProjectFields(fields: ProjectFieldWithGradeInfoType[]) {
         //delete old project fields to prevent errors
         for (const pf of await this.projectFields ?? []) {
             await getManager().remove(pf);
         }
         //set new values
         this.projectFields = Promise.resolve(fields.map( f => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
+    }
+    async getProjectFields(): Promise<ProjectFieldWithGradeInfoType[]> {
+        return (await this.projectFields).map(pf => {
+            return {
+                name: pf.projectField,
+                min: pf.min,
+                max: pf.max
+            };
+        });
     }
 
     async screeningStatus(): Promise<ScreeningStatus> {
@@ -339,7 +362,23 @@ export class Student extends Person {
     instructorScreeningURL(): string {
         return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
     }
+
+    // Return the subjects formatted in the Subject Format
+    getSubjectsFormatted(): Subject[] {
+        try {
+            return parseSubjectString(this.subjects);
+        }
+        catch (e) {
+            throw new Error(`Invalid subject format string "${this.subjects}" for student with email ${this.email} found!`);
+        }
+    }
+    setSubjectsFormatted(subjects: Subject[]) {
+        this.subjects = JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat));
+    }
 }
+
+//re-export
+export { Subject };
 
 export enum ScreeningStatus {
     Unscreened = "UNSCREENED",

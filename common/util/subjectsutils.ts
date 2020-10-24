@@ -1,91 +1,84 @@
-import { splitAtIndex, intersection } from "./basic";
 
-//subject string to array
-function subjectsAsArray(subjectsString: string): string[] {
-    if (subjectsString === undefined) {
-        return []; //empty array only
-    }
+export type Subject = {
+    name: string;
+    gradeInfo?: {
+        min: number;
+        max: number;
+    };
+};
 
-    return JSON.parse(subjectsString);
+export function isValidSubject(s: Subject) {
+    return typeof s.name === "string"
+            && (!s.gradeInfo || (typeof s.gradeInfo.max === "number" && typeof s.gradeInfo.min === "number"));
 }
 
-function isSubjectWithGradeDetail(subject: string) {
-    return subject.includes(":");
-}
-
-const defaultLowerGrade = 1;
-const defaultUpperGrade = 13;
-function addDefaultGradeDetailToSubjectIfPossible(subject: string) {
-    if (isSubjectWithGradeDetail(subject)) {
-        return subject; //nothing to do
-    }
-    return `${subject}${defaultLowerGrade}:${defaultUpperGrade}`;
-}
-
-function convertToSubjectWithGradeDetail(extendedSubjectString: string) {
-    //if it contains a grade / if it really is an extended subject string
-    let name = extendedSubjectString;
-    let grade = null; //per default
-
-    if (isSubjectWithGradeDetail(name)) {
-        //parse extended subject string
-        const firstDigitIndex = name.search(/\d/);
-        const r = splitAtIndex(name, firstDigitIndex);
-        name = r[0];
-        const limits = r[1].split(":");
-        grade = {
-            lower: parseInt(limits[0]),
-            upper: parseInt(limits[1])
-        };
-    }
-
-    //return the subject-with-grade-detail-object
+// The format how subjects are stored in the database
+export function toStudentSubjectDatabaseFormat(s: Subject) {
     return {
-        name: name,
-        grade: grade
+        name: s.name,
+        maxGrade: s.gradeInfo?.max,
+        minGrade: s.gradeInfo?.min
     };
 }
 
-///transforms a given array of subjects into a unified form
-///if it is invalid, it will throw an error
-function unifiedFormOfSubjects(subjects: string[]) {
-    return subjects.map(addDefaultGradeDetailToSubjectIfPossible);
+function parseJSONObjectFormatGradeArray(parsedArray: any[]) {
+    return parsedArray.flatMap( s => {
+        if (typeof s.name !== "string") return [];
+        if ((typeof s.minGrade === "number" && typeof s.maxGrade !== "number") || (typeof s.maxGrade === "number" && typeof s.minGrade !== "number")) return [];
+        return {
+            name: s.name,
+            grade: s.minGrade ? {
+                min: s.minGrade,
+                max: s.maxGrade
+            } : undefined
+        };
+    });
 }
 
-//at the moment, it is possible (not always the case) that the subjects for the student will contain the grades in a format like ["Biologie1:13","Politik1:13"]
-function intersectionWithRespectToGrade(
-    subjectsStudent,
-    subjectsPupil,
-    gradePupil
-) {
-    //extract grade details
-    let detailedSubjectsStudent = subjectsStudent.map(
-        convertToSubjectWithGradeDetail
-    );
-
-    //remove those subject of the students that don't fit to the grade of the pupil
-    detailedSubjectsStudent = detailedSubjectsStudent.filter((s) => {
-        return (
-            s.grade === null ||
-            (s.grade !== null &&
-                s.grade.lower <= gradePupil &&
-                gradePupil <= s.grade.upper)
-        );
-    }); //if grade null, the grade doesn't matter for the student
-
-    //normal intersection
-    return intersection(
-        subjectsPupil,
-        detailedSubjectsStudent.map((s) => {
-            return s.name;
-        })
-    );
+function parseMatlabFormatGradeArray(parsedArray: any[]) {
+    return parsedArray.flatMap( s => {
+        const matches = s.match(/^([a-zA-Zäöüß]+)(([0-9]+):([0-9]+))*$/);
+        if (!matches) return [];
+        if (matches[1] && matches[2]) return {
+            name: matches[1],
+            grade: {
+                min: +matches[3],
+                max: +matches[4]
+            }
+        };
+        if (matches[1] && !matches[2]) return {
+            name: matches[1]
+        };
+        return [];
+    });
 }
 
-export {
-    subjectsAsArray,
-    convertToSubjectWithGradeDetail,
-    intersectionWithRespectToGrade,
-    addDefaultGradeDetailToSubjectIfPossible,
-    unifiedFormOfSubjects
-};
+export function parseSubjectString(subjects: string): Subject[] {
+    if (!subjects) {
+        return [];
+    }
+
+    //check if is array
+    const parsedArray: any[] = JSON.parse(subjects);
+    if (!Array.isArray(parsedArray)) {
+        throw new Error(`Invalid subject format string "${subjects}". Cannot parse this!`);
+    }
+
+    //check if every element is in the grade format
+    const parsedJSONObjectFormatGradeArray = parseJSONObjectFormatGradeArray(parsedArray);
+
+    //alternatively check if every element is in the matlab format
+    if (parsedJSONObjectFormatGradeArray.length === parsedArray.length) {
+        //return the parsed result
+        return parsedJSONObjectFormatGradeArray;
+    }
+
+    //try to check the matlab format
+    const parsedMatlabFormatGradeArray = parseMatlabFormatGradeArray(parsedArray);
+
+    if (parsedMatlabFormatGradeArray.length === parsedArray.length) {
+        return parsedMatlabFormatGradeArray;
+    }
+
+    return undefined;
+}
