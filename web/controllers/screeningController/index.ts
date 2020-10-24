@@ -66,6 +66,59 @@ export async function getStudents(req: Request, res: Response, next: NextFunctio
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
+ *
+ *
+ * @apiSuccessExample {json} Response Example
+ * {
+ *    "firstName": "Leon",
+ *    "lastName": "Jackson",
+ *    "email": "leon-jackson@t-online.de",
+ *    "feedback": null,
+ *    "phone": null,
+ *    "newsletter": false,
+ *    "msg": null,
+ *    "university": null,
+ *    "state": "other",
+ *    "isUniversityStudent": true,
+ *    "isTutor": true,
+ *    "isInstructor": true,
+ *    "isProjectCoach": false,
+ *    "subjects": [
+ *        {
+ *            "name": "Englisch",
+ *            "grade": {
+ *                "min": 1,
+ *                "max": 8
+ *            }
+ *        },
+ *        {
+ *            "name": "Spanisch",
+ *            "grade": {
+ *                "min": 6,
+ *                "max": 10
+ *            }
+ *        }
+ *    ],
+ *    "projectFields": [],
+ *    "screenings": {
+ *        "tutor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "instructor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "projectCoach": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Instagram"
+ *        }
+ *    }
+ * }
+ *
  */
 export async function getStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
     const transactionLog = getTransactionLog();
@@ -106,7 +159,59 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
  * @apiParam (URL Parameter) {string} email Student Email Address
  * @apiParam (Body Parameter) {string} screenerEmail Screener's Email Address the change should be associated with
  *
- * @apiUse ScreeningResult
+ * @apiUse StudentEditableInfo
+ *
+ * @apiParamExample Example Body
+ *
+ * {
+ *    "screenerEmail": "maxi-screening@example.org",
+ *    "feedback": null,
+ *    "phone": null,
+ *    "newsletter": false,
+ *    "msg": null,
+ *    "university": null,
+ *    "state": "nw",
+ *    "isUniversityStudent": true,
+ *    "isTutor": true,
+ *    "isInstructor": true,
+ *    "isProjectCoach": false,
+ *    "subjects": [
+ *        {
+ *            "name": "Englisch",
+ *            "grade": {
+ *                "min": 1,
+ *                "max": 8
+ *            }
+ *        },
+ *        {
+ *            "name": "Spanisch",
+ *            "grade": {
+ *                "min": 6,
+ *                "max": 10
+ *            }
+ *        }
+ *    ],
+ *    "projectFields": [
+ *        {
+ *            "name": "Arbeitswelt",
+ *            "min": 1,
+ *            "max": 9
+ *        }
+ *    ],
+ *    "screenings": {
+ *        "tutor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "instructor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        }
+ *    }
+ * }
+ *
  */
 export async function updateStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
     // SCREENER

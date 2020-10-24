@@ -4,6 +4,27 @@ import { EnumReverseMappings } from "../util/enumReverseMapping";
 import { hasRequiredScreeningInfo, ScreeningInfo } from "../util/screening";
 import { isValidSubject } from "../util/subjectsutils";
 
+
+/**
+ * @apiDefine StudentEditableInfo
+ * @apiVersion 1.0.0
+ *
+ * @apiParam (StudentEditableInfo) {boolean} isTutor whether is 1-on-1 learning tutor
+ * @apiParam (StudentEditableInfo) {boolean} isInstructor whether wants to give courses or not
+ * @apiParam (StudentEditableInfo) {boolean} isProjectCourse whether wants to give project coaching
+ * @apiParam (StudentEditableInfo) {Object} screenings Information on the available screenings. Only those are not null/undefined which exist/should exist
+ * @apiParam (StudentEditableInfo) {Object[]} projectFields All project fields for 1-on-1 project coaching
+ * @apiParam (StudentEditableInfo) {Object[]} subjects All subjects for 1-on-1 tutoring
+ * @apiParam (StudentEditableInfo) {string} [feedback] The student's feedback
+ * @apiParam (StudentEditableInfo) {string} [phone] The student's phone number
+ * @apiParam (StudentEditableInfo) {boolean} newsletter Student wanna subscribe newsletter or not
+ * @apiParam (StudentEditableInfo) {string} [msg] The student's message.
+ * @apiParam (StudentEditableInfo) {string} [university] The student's university.
+ * @apiParam (StudentEditableInfo) {string} [state] The student's state.
+ * @apiParam (StudentEditableInfo) {boolean} [isUniversityStudent] The student is official registered student (for jufo) or not.
+ * @apiParam (StudentEditableInfo) {Object} [official] Information on the student if official (internship/DLL);
+ *
+ */
 export class StudentEditableInfoDTO {
     isTutor: boolean;
     isInstructor: boolean;
