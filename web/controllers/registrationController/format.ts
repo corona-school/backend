@@ -55,7 +55,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {string} firstname First name
  * @apiSuccess (Tutee Object) {string} lastname Last name
  * @apiSuccess (Tutee Object) {string} email E-Mail
- * @apiSuccess (Tutee Object) {int} grade Grade of the pupil
+ * @apiSuccess (Tutee Object) {int} [grade] Grade of the pupil (required if not only registering for project coaching)
  * @apiSuccess (Tutee Object) {string} state State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (Tutee Object) {string} school School type, one of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "berufsschule", "other"</code>
  * @apiSuccess (Tutee Object) {bool} isTutee True, if eligible for one-on-one matching
@@ -72,7 +72,7 @@ export interface ApiAddTutee {
     firstname: string,
     lastname: string,
     email: string,
-    grade: number,
+    grade?: number,
     state: string,
     school: string,
     isTutee: boolean,

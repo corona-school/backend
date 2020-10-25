@@ -303,13 +303,13 @@ export async function postTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.grade == 'number' &&
             typeof req.body.state == 'string' &&
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
-            typeof req.body.isProjectCoachee == "boolean") {
+            typeof req.body.isProjectCoachee == "boolean" &&
+            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee))) {//require grade only if not only registering for project coaching
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -410,7 +410,9 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
-    tutee.grade = apiTutee.grade + ". Klasse";
+    if (apiTutee.grade) {
+        tutee.grade = apiTutee.grade + ". Klasse";
+    }
 
     switch (apiTutee.state) {
         case "bw":
