@@ -45,7 +45,9 @@ export interface ApiAddTutor {
     isUniversityStudent?: boolean,
     projectFields?: ProjectField[],
     wasJufoParticipant?: TutorJufoParticipationIndication,
-    hasJufoCertificate?: boolean
+    hasJufoCertificate?: boolean,
+    jufoParticipationYear?: number,
+    jufoParticipationTopic?: string
 }
 
 /**

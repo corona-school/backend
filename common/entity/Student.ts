@@ -156,6 +156,18 @@ export class Student extends Person {
     hasJufoCertificate: boolean;
 
     @Column({
+        default: null,
+        nullable: true
+    })
+    jufoParticipationYear: number;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    jufoParticipationTopic: string;
+
+    @Column({
         default: true,
         nullable: false
     })
