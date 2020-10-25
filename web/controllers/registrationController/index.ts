@@ -488,6 +488,9 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         case "förderschule":
             tutee.schooltype = SchoolType.FOERDERSCHULE;
             break;
+        case "berufsschule":
+            tutee.schooltype = SchoolType.BERUFSSCHULE;
+            break;
         case "other":
             tutee.schooltype = SchoolType.SONSTIGES;
             break;

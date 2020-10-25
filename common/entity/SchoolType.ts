@@ -5,5 +5,6 @@ export enum SchoolType {
     REALSCHULE = "realschule",
     GYMNASIUM = "gymnasium",
     FOERDERSCHULE = "förderschule",
+    BERUFSSCHULE = "berufsschule",
     SONSTIGES = "other"
 }

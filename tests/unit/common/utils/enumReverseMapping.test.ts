@@ -30,6 +30,7 @@ describe("Enum Reverse Mappings", function() {
         assert.strictEqual(reverseMapping("realschule"), SchoolType.REALSCHULE);
         assert.strictEqual(reverseMapping("gymnasium"), SchoolType.GYMNASIUM);
         assert.strictEqual(reverseMapping("förderschule"), SchoolType.FOERDERSCHULE);
+        assert.strictEqual(reverseMapping("berufsschule"), SchoolType.BERUFSSCHULE);
         assert.strictEqual(reverseMapping("other"), SchoolType.SONSTIGES);
 
         assert.isUndefined(reverseMapping("otherExpectedToBeUndefined"));

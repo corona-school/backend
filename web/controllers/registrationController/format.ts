@@ -57,7 +57,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {string} email E-Mail
  * @apiSuccess (Tutee Object) {int} grade Grade of the pupil
  * @apiSuccess (Tutee Object) {string} state State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
- * @apiSuccess (Tutee Object) {string} school School type, one of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "other"</code>
+ * @apiSuccess (Tutee Object) {string} school School type, one of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "berufsschule", "other"</code>
  * @apiSuccess (Tutee Object) {bool} isTutee True, if eligible for one-on-one matching
  * @apiSuccess (Tutee Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (Tutee Object) {bool} newsletter Opt-in for newsletter
