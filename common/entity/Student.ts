@@ -144,8 +144,8 @@ export class Student extends Person {
     projectFields: Promise<ProjectFieldWithGradeRestriction[]>;
 
     @Column({
-        default: TutorJufoParticipationIndication.IDK,
-        nullable: false
+        default: null,
+        nullable: true
     })
     wasJufoParticipant: TutorJufoParticipationIndication;
 
@@ -168,8 +168,8 @@ export class Student extends Person {
     jufoParticipationTopic: string;
 
     @Column({
-        default: true,
-        nullable: false
+        default: null,
+        nullable: true
     })
     isUniversityStudent: boolean;
 

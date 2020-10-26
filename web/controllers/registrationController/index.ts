@@ -87,7 +87,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             if (req.body.isProjectCoach) {
                 if (req.body.projectFields instanceof Array
                     && typeof req.body.wasJufoParticipant === "string"
-                    && typeof req.body.isUniversityStudent === "boolean") {
+                    && (req.body.isUniversityStudent == undefined || typeof req.body.isUniversityStudent === "boolean")) {
                     // CHECK project fields for validity
                     if (req.body.projectFields.length <= 0) {
                         status = 400;
@@ -104,7 +104,7 @@ export async function postTutorHandler(req: Request, res: Response) {
                         logger.error(`Tutor registration with isProjectCoach has invalid value for jufo participation: '${req.body.wasJufoParticipant}'`);
                     }
                     // CHECK hasJufoCertificate for validity
-                    if (req.body.wasJufoParticipant === "yes" && req.body.isUniversityStudent === false && typeof req.body.hasJufoCertificate !== "boolean") {
+                    if (!req.body.isTutor && req.body.wasJufoParticipant === "yes" && req.body.isUniversityStudent === false && typeof req.body.hasJufoCertificate !== "boolean") {
                         status = 400;
                         logger.error(`Tutor registration with isProjectCoach (for a non university-student, but ex-jufo-participant) requires indication of whether the person has a Jufo certificate or not.`);
                     }
@@ -199,6 +199,8 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.openMatchRequestCount = 0;
     tutor.subjects = JSON.stringify([]);
 
+    tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
+
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -250,8 +252,12 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         await tutor.setProjectFields(apiTutor.projectFields.map(pf => {
             return {name: pf};
         }));
+    }
+    if (apiTutor.isProjectCoach && !apiTutor.isTutor) {
+        //the following only applies if someone is not going to be registering for 1-on-1-tutoring as well (i.e. not a university student)
+        //-> therefore we need the info of isUniversityStudent, wasJufoParticipant, hasJufoCertificate ...
 
-        //expect tutors to be at least a past jufo participant or a university student
+        //expect tutors which are not registering for 1-on-1-tutoring to be at least a past jufo participant or a university student
         if (apiTutor.wasJufoParticipant !== TutorJufoParticipationIndication.YES && !apiTutor.isUniversityStudent) {
             logger.warn("Tutor registration failed, because the tutor tried to register without beeing either a university student or a past Jufo participant!");
             return 400;
