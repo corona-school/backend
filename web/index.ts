@@ -65,7 +65,7 @@ createConnection().then(() => {
         const allowedSubdomains = [
             ...allStateCooperationSubdomains,
             "jufo"
-        ]
+        ];
         if (process.env.NODE_ENV == "dev") {
             origins = [
                 "http://localhost:3000",
