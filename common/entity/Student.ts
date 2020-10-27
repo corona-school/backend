@@ -159,13 +159,7 @@ export class Student extends Person {
         default: null,
         nullable: true
     })
-    jufoParticipationYear: number;
-
-    @Column({
-        default: null,
-        nullable: true
-    })
-    jufoParticipationTopic: string;
+    jufoPastParticipationInfo: string;
 
     @Column({
         default: null,

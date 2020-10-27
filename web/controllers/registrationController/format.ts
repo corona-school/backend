@@ -24,6 +24,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {string} [wasJufoParticipant] (for project coaching required) One of <code> "yes", "no", "idk" </code>
  * @apiSuccess (Tutor Object) {boolean} [hasJufoCertificate] (for project coaching required) One of <code> "yes", "no", "idk" </code>
  * @apiSuccess (Tutor Object) {string[]} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
+ * @apiSuccess (Tutor Object) {string} [jufoPastParticipationInfo] (for project coaching sometimes required) An open text field that can be used to give any information on a past jufo participation in a very informal way.
  *
  */
 export interface ApiAddTutor {
@@ -46,8 +47,7 @@ export interface ApiAddTutor {
     projectFields?: ProjectField[],
     wasJufoParticipant?: TutorJufoParticipationIndication,
     hasJufoCertificate?: boolean,
-    jufoParticipationYear?: number,
-    jufoParticipationTopic?: string
+    jufoPastParticipationInfo?: string
 }
 
 /**

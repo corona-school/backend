@@ -108,13 +108,9 @@ export async function postTutorHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutor registration with isProjectCoach (for a non university-student, but ex-jufo-participant) requires indication of whether the person has a Jufo certificate or not.`);
                     }
-                    if (req.body.jufoParticipationYear && typeof req.body.jufoParticipationYear !== "number") {
+                    if (req.body.jufoPastParticipationInfo && typeof req.body.jufoPastParticipationInfo !== "string") {
                         status = 400;
-                        logger.error(`Tutor registration with jufoParticipationYear requires the jufo participation year to be a number`);
-                    }
-                    if (req.body.jufoParticipationTopic && typeof req.body.jufoParticipationTopic !== "string") {
-                        status = 400;
-                        logger.error(`Tutor registration with jufoParticipationTopic requires the jufo participation topic to be a string`);
+                        logger.error(`Tutor registration with jufoPastParticipationInfo requires the info on a past jufo participation to be a string`);
                     }
                 }
                 else {
@@ -265,15 +261,14 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         if (apiTutor.wasJufoParticipant === TutorJufoParticipationIndication.YES
             && !apiTutor.isUniversityStudent
             && !apiTutor.hasJufoCertificate
-            && (!apiTutor.jufoParticipationYear || !apiTutor.jufoParticipationTopic)) {
-            logger.warn("Tutor registration failed, because a tutor which was a past jufo participiant, has no certificate and is not a university student requires an indication of his jufo participation year and topic to verify his state with Jugend forscht!");
+            && !apiTutor.jufoPastParticipationInfo) {
+            logger.warn("Tutor registration failed, because a tutor which was a past jufo participiant, has no certificate and is not a university student requires information on his past jufo participation to verify his state with Jugend forscht!");
             return 400;
         }
 
         tutor.wasJufoParticipant = apiTutor.wasJufoParticipant;
         tutor.isUniversityStudent = apiTutor.isUniversityStudent;
-        tutor.jufoParticipationYear = apiTutor.jufoParticipationYear;
-        tutor.jufoParticipationTopic = apiTutor.jufoParticipationTopic;
+        tutor.jufoPastParticipationInfo = apiTutor.jufoPastParticipationInfo;
 
         if (apiTutor.wasJufoParticipant === TutorJufoParticipationIndication.YES && apiTutor.isUniversityStudent === false) {
             tutor.hasJufoCertificate = apiTutor.hasJufoCertificate;
