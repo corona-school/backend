@@ -680,6 +680,17 @@ export async function setupDevDB() {
 
     screeners.push(screener);
 
+    let screener2 = new Screener();
+    screener2.firstname = "Hanna";
+    screener2.lastname = "Falkland";
+    screener2.active = true;
+    screener2.email = "hanna@corona-school.de";
+    screener2.oldNumberID = -2;
+    screener2.password = await hashPassword("smsmsms"); //Don't be a fool, try Corona School ❤️
+    screener2.verified = true;
+
+    screeners.push(screener2);
+
     for (let i = 0; i < screeners.length; i++) {
         await entityManager.save(Screener, screeners[i]);
         console.log("Inserted Dev Screener " + i);
