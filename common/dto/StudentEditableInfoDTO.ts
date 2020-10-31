@@ -1,4 +1,5 @@
 import { Subject, TeacherModule } from "../entity/Student";
+import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { isValidProjectFieldWithGradeInfo, ProjectFieldWithGradeInfoType } from "../jufo/projectFieldWithGradeInfoType";
 import { EnumReverseMappings } from "../util/enumReverseMapping";
 import { hasRequiredScreeningInfo, ScreeningInfo } from "../util/screening";
@@ -23,6 +24,9 @@ import { isValidSubject } from "../util/subjectsutils";
  * @apiParam (StudentEditableInfo) {string} [state] The student's state.
  * @apiParam (StudentEditableInfo) {boolean} [isUniversityStudent] The student is official registered student (for jufo) or not.
  * @apiParam (StudentEditableInfo) {boolean} [jufoPastParticipationConfirmed] Can be one of null/true/false and indicates if Corona School has gotten information on whether a student was really a past jufo participant.
+ * @apiParam (StudentEditableInfo) {boolean} [wasJufoParticipant] One of "yes"/"no"/"idk". Indicates whether this person was a past jufo participant.
+ * @apiParam (StudentEditableInfo) {boolean} [hasJufoCertificate] Indicates if the person has a jufo certificate that can be shown in the screening interview.
+ * @apiParam (StudentEditableInfo) {boolean} [jufoPastParticipationInfo] A string with info on the person's past jufo participation.
  * @apiParam (StudentEditableInfo) {Object} [official] Information on the student if official (internship/DLL);
  *
  */
@@ -45,6 +49,9 @@ export class StudentEditableInfoDTO {
     state?: string;
     isUniversityStudent?: boolean;
     jufoPastParticipationConfirmed?: boolean;
+    wasJufoParticipant?: TutorJufoParticipationIndication;
+    hasJufoCertificate?: boolean;
+    jufoPastParticipationInfo?: string;
     official?: {
         hours: number;
         module: TeacherModule;
@@ -69,7 +76,10 @@ export class StudentEditableInfoDTO {
                                         && (this.msg ? typeof this.msg === "string" : true)
                                         && (this.university ? typeof this.university === "string" : true)
                                         && (this.isUniversityStudent ? typeof this.isUniversityStudent === "boolean" : true)
-                                        && (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === "boolean" : true);
+                                        && (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === "boolean" : true)
+                                        && (this.wasJufoParticipant ? (typeof this.wasJufoParticipant === "string" && EnumReverseMappings.TutorJufoParticipationIndication(this.wasJufoParticipant)) : true)
+                                        && (this.hasJufoCertificate ? typeof this.hasJufoCertificate === "boolean" : true)
+                                        && (this.jufoPastParticipationInfo ? typeof this.wasJufoParticipant === "string" : true);
 
         const checkState = this.state ? typeof this.state === "string" && !!EnumReverseMappings.State(this.state) : true;
 

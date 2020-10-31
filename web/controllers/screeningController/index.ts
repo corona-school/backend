@@ -14,6 +14,7 @@ import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
+import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 
 const logger = getLogger();
 
@@ -271,6 +272,9 @@ export async function updateStudentInformation(student: Student, info: StudentEd
     // -> remaining info
     student.isUniversityStudent = info.isUniversityStudent;
     student.jufoPastParticipationConfirmed = info.jufoPastParticipationConfirmed;
+    student.hasJufoCertificate = info.hasJufoCertificate;
+    student.wasJufoParticipant = info.wasJufoParticipant;
+    student.jufoPastParticipationInfo = info.jufoPastParticipationInfo;
     student.state = EnumReverseMappings.State(info.state);
     student.university = info.university;
     student.msg = info.msg;

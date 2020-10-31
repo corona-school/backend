@@ -22,6 +22,9 @@ export class StudentInfoDTO extends StudentEditableInfoDTO {
         s.state = student.state;
         s.isUniversityStudent = student.isUniversityStudent;
         s.jufoPastParticipationConfirmed = student.jufoPastParticipationConfirmed;
+        s.wasJufoParticipant = student.wasJufoParticipant;
+        s.hasJufoCertificate = student.hasJufoCertificate;
+        s.jufoPastParticipationInfo = student.jufoPastParticipationInfo;
 
         //official
         if (student.module && student.moduleHours) {
