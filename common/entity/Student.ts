@@ -165,6 +165,12 @@ export class Student extends Person {
         default: null,
         nullable: true
     })
+    jufoPastParticipationConfirmed: boolean;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
     isUniversityStudent: boolean;
 
     @Column({

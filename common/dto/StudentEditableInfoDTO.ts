@@ -22,6 +22,7 @@ import { isValidSubject } from "../util/subjectsutils";
  * @apiParam (StudentEditableInfo) {string} [university] The student's university.
  * @apiParam (StudentEditableInfo) {string} [state] The student's state.
  * @apiParam (StudentEditableInfo) {boolean} [isUniversityStudent] The student is official registered student (for jufo) or not.
+ * @apiParam (StudentEditableInfo) {boolean} [jufoPastParticipationConfirmed] Can be one of null/true/false and indicates if Corona School has gotten information on whether a student was really a past jufo participant.
  * @apiParam (StudentEditableInfo) {Object} [official] Information on the student if official (internship/DLL);
  *
  */
@@ -43,6 +44,7 @@ export class StudentEditableInfoDTO {
     university?: string;
     state?: string;
     isUniversityStudent?: boolean;
+    jufoPastParticipationConfirmed?: boolean;
     official?: {
         hours: number;
         module: TeacherModule;
@@ -66,7 +68,8 @@ export class StudentEditableInfoDTO {
                                         && typeof this.newsletter === "boolean"
                                         && (this.msg ? typeof this.msg === "string" : true)
                                         && (this.university ? typeof this.university === "string" : true)
-                                        && (this.isUniversityStudent ? typeof this.isUniversityStudent === "boolean" : true);
+                                        && (this.isUniversityStudent ? typeof this.isUniversityStudent === "boolean" : true)
+                                        && (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === "boolean" : true);
 
         const checkState = this.state ? typeof this.state === "string" && !!EnumReverseMappings.State(this.state) : true;
 

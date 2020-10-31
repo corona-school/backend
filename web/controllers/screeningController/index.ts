@@ -270,6 +270,7 @@ export async function updateStudentInformation(student: Student, info: StudentEd
 
     // -> remaining info
     student.isUniversityStudent = info.isUniversityStudent;
+    student.jufoPastParticipationConfirmed = info.jufoPastParticipationConfirmed;
     student.state = EnumReverseMappings.State(info.state);
     student.university = info.university;
     student.msg = info.msg;
