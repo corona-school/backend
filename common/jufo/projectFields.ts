@@ -7,3 +7,23 @@ export enum ProjectField {
     PHYSIK = "Physik",
     TECHNIK = "Technik"
 }
+
+
+export function getOfficialProjectFieldName(pf: ProjectField) {
+    switch (pf) {
+        case ProjectField.ARBEITSWELT:
+            return "Arbeitswelt";
+        case ProjectField.BIOLOGIE:
+            return "Biologie";
+        case ProjectField.CHEMIE:
+            return "Chemie";
+        case ProjectField.GEO_RAUM:
+            return "Geo- und Raumwissenschaften";
+        case ProjectField.MATHE_INFO:
+            return "Mathematik/Informatik";
+        case ProjectField.PHYSIK:
+            return "Physik";
+        case ProjectField.TECHNIK:
+            return "Technik";
+    }
+}

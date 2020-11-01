@@ -7,6 +7,11 @@ export type TemplateMail = {
     title: string;
     disabled: boolean;
     variables: object;
+    attachements?: {
+        contentType: string,
+        filename: string,
+        base64Content: string
+    }[]
 };
 
 export const mailjet = {
@@ -340,6 +345,21 @@ export const mailjet = {
             title: "Erinnerung: Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
+        };
+    },
+    JUFOALUMNITOVERIFY: (csvBase64: string) => {
+        return <TemplateMail>{
+            type: 'jufoalumnitoverify',
+            id: 1848109,
+            sender: DEFAULTSENDERS.noreply,
+            title: "[Jufo-Verifizierung] Tägliche Neuregistrierungen",
+            disabled: false,
+            variables: {},
+            attachements: [{
+                contentType: "text/csv",
+                filename: "AlumnsToVerify.csv",
+                base64Content: csvBase64
+            }]
         };
     }
 };

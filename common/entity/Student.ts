@@ -14,6 +14,7 @@ import { ProjectCoachingScreening } from "./ProjectCoachingScreening";
 import { parseSubjectString, Subject, toStudentSubjectDatabaseFormat } from "../util/subjectsutils";
 import { ScreeningInfo } from "../util/screening";
 import { Screener } from "./Screener";
+import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -196,6 +197,12 @@ export class Student extends Person {
         default: null
     })
     lastSentJufoAlumniScreeningInvitationDate: Date;
+
+    @OneToOne((type) => JufoVerificationTransmission, (jufoVerificationTransmission) => jufoVerificationTransmission.student, {
+        nullable: true,
+        cascade: true
+    })
+    jufoVerificationTransmission: JufoVerificationTransmission;
 
     /*
      * Other data
