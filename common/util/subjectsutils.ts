@@ -1,7 +1,7 @@
 
 export type Subject = {
     name: string;
-    gradeInfo?: {
+    grade?: {
         min: number;
         max: number;
     };
@@ -9,15 +9,15 @@ export type Subject = {
 
 export function isValidSubject(s: Subject) {
     return typeof s.name === "string"
-            && (!s.gradeInfo || (typeof s.gradeInfo.max === "number" && typeof s.gradeInfo.min === "number"));
+            && (!s.grade || (typeof s.grade.max === "number" && typeof s.grade.min === "number"));
 }
 
 // The format how subjects are stored in the database
 export function toStudentSubjectDatabaseFormat(s: Subject) {
     return {
         name: s.name,
-        maxGrade: s.gradeInfo?.max,
-        minGrade: s.gradeInfo?.min
+        maxGrade: s.grade?.max,
+        minGrade: s.grade?.min
     };
 }
 
