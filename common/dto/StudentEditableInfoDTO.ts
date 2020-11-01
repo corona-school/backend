@@ -79,7 +79,7 @@ export class StudentEditableInfoDTO {
                                         && (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === "boolean" : true)
                                         && (this.wasJufoParticipant ? (typeof this.wasJufoParticipant === "string" && EnumReverseMappings.TutorJufoParticipationIndication(this.wasJufoParticipant)) : true)
                                         && (this.hasJufoCertificate ? typeof this.hasJufoCertificate === "boolean" : true)
-                                        && (this.jufoPastParticipationInfo ? typeof this.wasJufoParticipant === "string" : true);
+                                        && (this.jufoPastParticipationInfo ? typeof this.jufoPastParticipationInfo === "string" : true);
 
         const checkState = this.state ? typeof this.state === "string" && !!EnumReverseMappings.State(this.state) : true;
 
