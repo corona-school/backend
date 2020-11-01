@@ -117,7 +117,7 @@ export async function setupDevDB() {
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s1.openMatchRequestCount = 1;
     students.push(s1);
@@ -152,7 +152,7 @@ export async function setupDevDB() {
     s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s3.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s3.openMatchRequestCount = 1;
     students.push(s3);
@@ -171,7 +171,7 @@ export async function setupDevDB() {
     s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s4.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s4.openMatchRequestCount = 1;
     students.push(s4);
@@ -190,7 +190,7 @@ export async function setupDevDB() {
     s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s5.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s5.openMatchRequestCount = 1;
     students.push(s5);
@@ -204,7 +204,7 @@ export async function setupDevDB() {
     s6.isProjectCoach = true;
     s6.isStudent = false;
     await s6.setProjectFields([
-        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 },
+        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 }
     ]);
     s6.verification = null;
     s6.verifiedAt = new Date(new Date().getTime() - 110000);
@@ -231,7 +231,7 @@ export async function setupDevDB() {
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s7.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s7.openMatchRequestCount = 1;
     students.push(s7);
@@ -298,7 +298,7 @@ export async function setupDevDB() {
     mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
     mentor1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
 
     mentors.push(mentor1);
