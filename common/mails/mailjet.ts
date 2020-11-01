@@ -8,8 +8,12 @@ async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox:
     //determine whether we have sandbox mode or not...
     let sandboxMode = sandbox;
 
+    if (process.env.MAILJET_LIVE === "TEST") {
+        message.Subject = `[TEST] ${message.Subject}`;
+        logger.warn("Mailjet API sending in TEST/DEV MODE!");
+    }
     //if mailjet is not set to live (via envs), always switch to sandbox, no matter what the sandbox-Parameter is set to
-    if (process.env.MAILJET_LIVE != "1") {
+    else if (process.env.MAILJET_LIVE != "1") {
         logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
         sandboxMode = true;
     }
@@ -74,7 +78,12 @@ async function sendMailTemplate(
     templateID: number,
     variables: object,
     sandbox: boolean = false,
-    replyToAddress?: string
+    replyToAddress?: string,
+    attachements?: {
+        ContentType: string,
+        Filename: string,
+        Base64Content: string
+    }[]
 ) {
     const message: mailjetAPI.Email.SendParamsMessage = {
         From: {
@@ -88,7 +97,8 @@ async function sendMailTemplate(
         TemplateID: templateID,
         TemplateLanguage: true,
         Variables: variables,
-        Subject: subject
+        Subject: subject,
+        Attachments: attachements
     };
 
     if (replyToAddress) {

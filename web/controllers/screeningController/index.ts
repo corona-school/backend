@@ -1,19 +1,20 @@
 import { NextFunction, Request, Response } from "express";
 import { getManager, Like } from "typeorm";
-import { ApiScreeningResult } from "../../../common/dto/ApiScreeningResult";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
-import { StudentToScreen } from "../../../common/dto/StudentToScreen";
+import { StudentInfoDTO } from "../../../common/dto/StudentInfoDTO";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
 import { getAllStudents, getStudentByEmail, ScreeningStatus, Student } from "../../../common/entity/Student";
 import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import { Screening } from "../../../common/entity/Screening";
 import { Course } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
+import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
+import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
+import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 
 const logger = getLogger();
 
@@ -66,6 +67,59 @@ export async function getStudents(req: Request, res: Response, next: NextFunctio
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL>
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
+ *
+ *
+ * @apiSuccessExample {json} Response Example
+ * {
+ *    "firstName": "Leon",
+ *    "lastName": "Jackson",
+ *    "email": "leon-jackson@t-online.de",
+ *    "feedback": null,
+ *    "phone": null,
+ *    "newsletter": false,
+ *    "msg": null,
+ *    "university": null,
+ *    "state": "other",
+ *    "isUniversityStudent": true,
+ *    "isTutor": true,
+ *    "isInstructor": true,
+ *    "isProjectCoach": false,
+ *    "subjects": [
+ *        {
+ *            "name": "Englisch",
+ *            "grade": {
+ *                "min": 1,
+ *                "max": 8
+ *            }
+ *        },
+ *        {
+ *            "name": "Spanisch",
+ *            "grade": {
+ *                "min": 6,
+ *                "max": 10
+ *            }
+ *        }
+ *    ],
+ *    "projectFields": [],
+ *    "screenings": {
+ *        "tutor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "instructor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "projectCoach": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Instagram"
+ *        }
+ *    }
+ * }
+ *
  */
 export async function getStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
     const transactionLog = getTransactionLog();
@@ -74,8 +128,7 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
         const student: Student | undefined = await getStudentByEmail(getManager(), req.params.email);
 
         if (student instanceof Student) {
-            const screening: Screening = await student.screening;
-            const studentToScreen: StudentToScreen = new StudentToScreen(student, screening);
+            const studentToScreen: StudentInfoDTO = await StudentInfoDTO.buildFrom(student);
             res.json(studentToScreen);
             await transactionLog.log(new AccessedByScreenerEvent(student, "unknown")); // todo set screener to the name of the screener
         } else {
@@ -87,14 +140,16 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
 }
 
 /**
- * @api {PUT} /student/:email updateStudentWithScreeningResult
+ * @api {PUT} /student/:email updateStudentByMailHandler
  * @apiVersion 1.0.1
  * @apiDescription
- * Update a student by her/his email address
+ * Update a student by her/his email address.
+ *
+ * Can be used to update most of the important settings (including the screenings) of a user.
  *
  * Only screeners with a valid token in the request header can use the API.
  *
- * @apiName updateStudentWithScreeningResult
+ * @apiName updateStudentByMailHandler
  * @apiGroup Student
  *
  * @apiUse Authentication
@@ -103,31 +158,141 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
  * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/student/<EMAIL> -d "<REQUEST>"
  *
  * @apiParam (URL Parameter) {string} email Student Email Address
+ * @apiParam (Body Parameter) {string} screenerEmail Screener's Email Address the change should be associated with
  *
- * @apiUse ScreeningResult
+ * @apiUse StudentEditableInfo
+ *
+ * @apiParamExample Example Body
+ *
+ * {
+ *    "screenerEmail": "maxi-screening@example.org",
+ *    "feedback": null,
+ *    "phone": null,
+ *    "newsletter": false,
+ *    "msg": null,
+ *    "university": null,
+ *    "state": "nw",
+ *    "isUniversityStudent": true,
+ *    "isTutor": true,
+ *    "isInstructor": true,
+ *    "isProjectCoach": false,
+ *    "subjects": [
+ *        {
+ *            "name": "Englisch",
+ *            "grade": {
+ *                "min": 1,
+ *                "max": 8
+ *            }
+ *        },
+ *        {
+ *            "name": "Spanisch",
+ *            "grade": {
+ *                "min": 6,
+ *                "max": 10
+ *            }
+ *        }
+ *    ],
+ *    "projectFields": [
+ *        {
+ *            "name": "Arbeitswelt",
+ *            "min": 1,
+ *            "max": 9
+ *        }
+ *    ],
+ *    "screenings": {
+ *        "tutor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        },
+ *        "instructor": {
+ *            "verified": true,
+ *            "comment": "🎉",
+ *            "knowsCoronaSchoolFrom": "Internet"
+ *        }
+ *    }
+ * }
+ *
  */
-export async function updateStudentWithScreeningResultHandler(req: Request, res: Response, next: NextFunction) {
-    const transactionLog = getTransactionLog();
-
-    try {
-        const screenedStudent: Student = await getStudentByEmail(getManager(), req.params.email);
-        if (screenedStudent instanceof Student) {
-            const screeningResult: ApiScreeningResult = new ApiScreeningResult(req.body);
-            if (screeningResult.isValid()) {
-                await screenedStudent.addScreeningResult(screeningResult);
-                await getManager().save(screenedStudent);
-                await transactionLog.log(new UpdatedByScreenerEvent(screenedStudent, "unknown")); // todo set screener to the name of the screener
-
-                res.status(200).end();
-            } else {
-                res.status(400).send("the necessary screening results are missing");
-            }
-        } else {
-            res.status(404).send("no student with given email address found");
-        }
-    } catch (err) {
-        next();
+export async function updateStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
+    // SCREENER
+    const screenerEmail = req.body.screenerEmail;
+    if (typeof screenerEmail !== "string") {
+        res.status(400).send("Missing/malformed screener who wants to perform the student update.");
     }
+
+    const screener: Screener = await getScreenerByEmail(getManager(), screenerEmail);
+    if (!screener) {
+        res.status(404).send(`Screener with email ${screenerEmail} wasn't found for updating a student!`);
+    }
+
+    // STUDENT
+    const student: Student = await getStudentByEmail(getManager(), req.params.email);
+    if (!student) {
+        res.status(404).send(`Student with email ${req.params.email} wasn't found...`);
+        return;
+    }
+
+    const studentInfo: StudentEditableInfoDTO = Object.assign(new StudentEditableInfoDTO(), req.body);
+    if (studentInfo.isValid()) {
+        //save old state of student info
+        const prevState = await StudentInfoDTO.buildFrom(student);
+
+        //update student info
+        await updateStudentInformation(student, studentInfo, screener);
+
+        //get updated new student info
+        const newState = await StudentInfoDTO.buildFrom(student);
+
+        //save changes
+        getManager().save(student);
+
+        //update transaction log
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, {prev: prevState, new: newState}));
+
+        res.status(200).send("Student updated successfully!");
+    }
+    else {
+        res.status(400).send("Given student info is invalid!");
+    }
+}
+
+
+export async function updateStudentInformation(student: Student, info: StudentEditableInfoDTO, screener: Screener) {
+    //update static fields on student
+    // -> roles
+    student.isStudent = info.isTutor;
+    student.isInstructor = info.isInstructor;
+    student.isProjectCoach = info.isProjectCoach;
+
+    // -> official
+    student.moduleHours = info.official?.hours;
+    student.module = info.official?.module;
+
+    // -> remaining info
+    student.isUniversityStudent = info.isUniversityStudent;
+    student.jufoPastParticipationConfirmed = info.jufoPastParticipationConfirmed;
+    student.hasJufoCertificate = info.hasJufoCertificate;
+    student.wasJufoParticipant = info.wasJufoParticipant;
+    student.jufoPastParticipationInfo = info.jufoPastParticipationInfo;
+    student.state = EnumReverseMappings.State(info.state);
+    student.university = info.university;
+    student.msg = info.msg;
+    student.newsletter = info.newsletter;
+    student.phone = info.phone;
+    student.feedback = info.feedback;
+
+    // -> subjects
+    student.setSubjectsFormatted(info.subjects);
+    await student.setProjectFields(info.projectFields);
+
+    // -> screenings (if corresponding screening is empty, this will remove the screening at all)
+    // --> Tutor screening
+    await student.setTutorScreeningResult(info.screenings.tutor, screener);
+    // --> Instructor screening
+    await student.setInstructorScreeningResult(info.screenings.instructor, screener);
+    // --> Project Coach screening
+    await student.setProjectCoachingScreeningResult(info.screenings.projectCoach, screener);
 }
 
 /**
@@ -482,72 +647,6 @@ export async function getInstructors(req: Request, res: Response) {
         return res.json({ instructors });
     } catch (error) {
         logger.warn("/screening/instructors failed with", error.message);
-        return res.status(500).send("internal server error");
-    }
-}
-
-/**
- * @api {POST} /screening/instructor/:instructorID/update updateInstructor
- * @apiVersion 1.0.1
- * @apiDescription
- *
- * Updates an instructor
- *
- *
- * Only screeners with a valid token in the request header can use the API.
- *
- * @apiName updateCourse
- * @apiGroup Screener
- *
- * @apiUse Authentication
- *
- * @apiExample {curl} Curl
- * curl -k -i -X POST -H "Token: <AUTHTOKEN>" [host]/api/screening/instructor/id/update
- *
- * @apiParam (JSON Body) {boolean} isStudent the instructors can also be students at the same time
- * @apiParam (JSON Body) {boolean} verified wether the instructor gets verified
- * @apiParam (JSON Body) {string|undefined} phone sets the instructors phone number
- * @apiParam (JSON Body) {Date|undefined} birthday sets the instructors birthday
- * @apiParam (JSON Body) {string|undefined} commentScreener adds a comment to the screening
- * @apiParam (JSON Body) {string|undefined} knowscsfrom
- * @apiParam (JSON Body) {string|undefined} screenerEmail
- * @apiParam (JSON Body) {string|undefined} subjects
- * @apiParam (JSON Body) {string|undefined} feedback
- */
-export async function updateInstructor(req: Request, res: Response) {
-    try {
-        const { id } = req.params;
-        const { isStudent } = req.body;
-        const screeningResult = new ApiScreeningResult(req.body);
-
-        if (typeof id !== "string" || !Number.isInteger(+id))
-            return res.status(400).send("Invalid instructor id!");
-
-        if (!screeningResult.isValid() || !(isStudent === true || isStudent === false))
-            return res.status(400).send("Invalid instructor update!");
-
-        const instructor = await getManager().findOne(Student, { where: { id: +id, isInstructor: true } });
-
-        if (!instructor)
-            return res.status(404).send("Instructor not found");
-
-        await instructor.addInstructorScreeningResult(screeningResult);
-
-        instructor.isStudent = isStudent;
-
-        //also store a tutor screening in the database
-        if (await instructor.screeningStatus() === ScreeningStatus.Unscreened) { //do not overwrite existing tutor screenings
-            screeningResult.commentScreener = "Screened as part of an Instructor Screening";
-            screeningResult.verified = isStudent;
-
-            await instructor.addScreeningResult(screeningResult);
-        }
-
-        await getManager().save(Student, instructor);
-
-        return res.json({ instructor });
-    } catch (error) {
-        logger.warn("/screening/course/../update failed with", error);
         return res.status(500).send("internal server error");
     }
 }

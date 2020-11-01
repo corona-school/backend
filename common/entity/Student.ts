@@ -1,5 +1,4 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
-import { ApiScreeningResult } from "../dto/ApiScreeningResult";
+import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
@@ -8,6 +7,14 @@ import { Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from "./Subcourse";
 import { InstructorScreening } from "./InstructorScreening";
+import { ProjectFieldWithGradeInfoType } from "../jufo/projectFieldWithGradeInfoType";
+import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
+import { ProjectFieldWithGradeRestriction } from "./ProjectFieldWithGradeRestriction";
+import { ProjectCoachingScreening } from "./ProjectCoachingScreening";
+import { parseSubjectString, Subject, toStudentSubjectDatabaseFormat } from "../util/subjectsutils";
+import { ScreeningInfo } from "../util/screening";
+import { Screener } from "./Screener";
+import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -124,6 +131,80 @@ export class Student extends Person {
     moduleHours: number;
 
     /*
+     * Project Coaching data
+     */
+    @Column({
+        default: false,
+        nullable: false
+    })
+    isProjectCoach: boolean;
+
+    @OneToMany(type => ProjectFieldWithGradeRestriction, field => field.student, {
+        cascade: true
+    })
+    projectFields: Promise<ProjectFieldWithGradeRestriction[]>;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    wasJufoParticipant: TutorJufoParticipationIndication;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    hasJufoCertificate: boolean;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    jufoPastParticipationInfo: string;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    jufoPastParticipationConfirmed: boolean;
+
+    @Column({
+        default: null,
+        nullable: true
+    })
+    isUniversityStudent: boolean;
+
+    @Column({
+        nullable: false,
+        default: 1
+    })
+    openProjectMatchRequestCount: number;
+
+    @OneToOne((type) => ProjectCoachingScreening, (projectCoachingScreening) => projectCoachingScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    projectCoachingScreening: Promise<ProjectCoachingScreening>;
+
+    @Column({
+        nullable: false,
+        default: 0
+    })
+    sentJufoAlumniScreeningReminderCount: number; //a counter for counting the screening reminders sent to Jufo alumni (which are not offically registered university students)
+
+    @Column({
+        nullable: true,
+        default: null
+    })
+    lastSentJufoAlumniScreeningInvitationDate: Date;
+
+    @OneToOne((type) => JufoVerificationTransmission, (jufoVerificationTransmission) => jufoVerificationTransmission.student, {
+        nullable: true,
+        cascade: true
+    })
+    jufoVerificationTransmission: JufoVerificationTransmission;
+
+    /*
      * Other data
      */
     @OneToOne((type) => Screening, (screening) => screening.student, {
@@ -169,32 +250,78 @@ export class Student extends Person {
     })
     lastUpdatedSettingsViaBlocker: Date;
 
-    async addScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
-        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
-        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
-
+    async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.screening = Promise.resolve(undefined);
+            }
+            return;
+        }
 
         if (!currentScreening) {
             currentScreening = new Screening();
         }
-        await currentScreening.addScreeningResult(screeningResult);
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
     }
 
-    async addInstructorScreeningResult(screeningResult: ApiScreeningResult) {
-        this.phone = screeningResult.phone === undefined ? this.phone : screeningResult.phone;
-        this.subjects = screeningResult.subjects === undefined ? this.subjects : screeningResult.subjects;
-        this.feedback = screeningResult.feedback === undefined ? this.feedback : screeningResult.feedback;
-
+    async setInstructorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.instructorScreening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.instructorScreening = Promise.resolve(undefined);
+            }
+            return;
+        }
 
         if (!currentScreening) {
             currentScreening = new InstructorScreening();
         }
-        await currentScreening.addScreeningResult(screeningResult);
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.instructorScreening = Promise.resolve(currentScreening);
+    }
+
+    async setProjectCoachingScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
+        let currentScreening = await this.projectCoachingScreening;
+
+        if (!screeningInfo) {
+            if (currentScreening) {
+                await getManager().remove(currentScreening);
+                this.projectCoachingScreening = Promise.resolve(undefined);
+            }
+            return;
+        }
+
+        if (!currentScreening) {
+            currentScreening = new ProjectCoachingScreening();
+        }
+        await currentScreening.updateScreeningInfo(screeningInfo, screener);
+        this.projectCoachingScreening = Promise.resolve(currentScreening);
+    }
+
+    // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors
+    // also see https://github.com/typeorm/typeorm/issues/3801
+    async setProjectFields(fields: ProjectFieldWithGradeInfoType[]) {
+        //delete old project fields to prevent errors
+        for (const pf of await this.projectFields ?? []) {
+            await getManager().remove(pf);
+        }
+        //set new values
+        this.projectFields = Promise.resolve(fields.map( f => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
+    }
+    async getProjectFields(): Promise<ProjectFieldWithGradeInfoType[]> {
+        return (await this.projectFields).map(pf => {
+            return {
+                name: pf.projectField,
+                min: pf.min,
+                max: pf.max
+            };
+        });
     }
 
     async screeningStatus(): Promise<ScreeningStatus> {
@@ -225,6 +352,26 @@ export class Student extends Person {
         }
     }
 
+    async projectCoachingScreeningStatus(): Promise<ScreeningStatus> {
+        const projectCoachingScreening = await this.projectCoachingScreening;
+        const studentScreening = await this.screening;
+
+        if (!projectCoachingScreening && !studentScreening) {
+            return ScreeningStatus.Unscreened;
+        }
+        //if someone is explicitly not allowed for project coaching, don't care whether he was accepted as a student for 1-on-1 tutoring
+        if (projectCoachingScreening?.success === false) {
+            return ScreeningStatus.Rejected;
+        }
+
+        //...otherwise beeing successfully screened as student is also sufficient.
+        if (projectCoachingScreening?.success || studentScreening?.success) {
+            return ScreeningStatus.Accepted;
+        }
+
+        return ScreeningStatus.Rejected;
+    }
+
     //Returns the URL that the student can use to get to his screening video call
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
@@ -234,7 +381,23 @@ export class Student extends Person {
     instructorScreeningURL(): string {
         return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
     }
+
+    // Return the subjects formatted in the Subject Format
+    getSubjectsFormatted(): Subject[] {
+        try {
+            return parseSubjectString(this.subjects);
+        }
+        catch (e) {
+            throw new Error(`Invalid subject format string "${this.subjects}" for student with email ${this.email} found!`);
+        }
+    }
+    setSubjectsFormatted(subjects: Subject[]) {
+        this.subjects = JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat));
+    }
 }
+
+//re-export
+export { Subject };
 
 export enum ScreeningStatus {
     Unscreened = "UNSCREENED",

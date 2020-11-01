@@ -62,20 +62,24 @@ createConnection().then(() => {
 
         let origins;
 
+        const allowedSubdomains = [
+            ...allStateCooperationSubdomains,
+            "jufo"
+        ];
         if (process.env.NODE_ENV == "dev") {
             origins = [
                 "http://localhost:3000",
-                ...allStateCooperationSubdomains.map(d => `http://${d}.localhost:3000`),
+                ...allowedSubdomains.map(d => `http://${d}.localhost:3000`),
                 "https://web-user-app-live.herokuapp.com",
                 "https://web-user-app-dev.herokuapp.com",
                 /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/,
-                ...allStateCooperationSubdomains.map(d => `https://${d}.dev.corona-school.de`)
+                ...allowedSubdomains.map(d => `https://${d}.dev.corona-school.de`)
             ];
         } else {
             origins = [
                 "https://dashboard.corona-school.de",
                 "https://my.corona-school.de",
-                ...allStateCooperationSubdomains.map(d => `https://${d}.corona-school.de`)
+                ...allowedSubdomains.map(d => `https://${d}.corona-school.de`)
             ];
         }
 
@@ -175,7 +179,7 @@ createConnection().then(() => {
         );
         screenerApiRouter.put(
             "/student/:email",
-            screeningController.updateStudentWithScreeningResultHandler
+            screeningController.updateStudentByMailHandler
         );
         screenerApiRouter.get(
             "/screener/:email/:includepassword",
@@ -200,10 +204,6 @@ createConnection().then(() => {
         screenerApiRouter.get(
             "/instructors",
             screeningController.getInstructors
-        );
-        screenerApiRouter.post(
-            "/instructor/:id/update",
-            screeningController.updateInstructor
         );
 
         app.use("/api/screening", screenerApiRouter);

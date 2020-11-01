@@ -1,19 +1,19 @@
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
-    OneToOne,
-    JoinColumn,
-    UpdateDateColumn,
     CreateDateColumn,
-    ManyToOne
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from "typeorm";
 import { ScreeningInfo } from "../util/screening";
 import { Screener } from "./Screener";
 import { Student } from "./Student";
 
 @Entity()
-export class InstructorScreening {
+export class ProjectCoachingScreening {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -42,7 +42,7 @@ export class InstructorScreening {
     @JoinColumn()
     screener: Screener;
 
-    @OneToOne((type) => Student, (student) => student.instructorScreening, {
+    @OneToOne((type) => Student, (student) => student.projectCoachingScreening, {
         eager: true
     })
     @JoinColumn()

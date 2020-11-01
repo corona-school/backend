@@ -32,6 +32,7 @@
  *          "isInstructor": false,
  *          "isPupil": true,
  *          "isParticipant": false,
+ *          "isProjectCoachee": false,
  *          "active": true,
  *          "grade": 7,
  *          "subjects": [
@@ -74,9 +75,11 @@
  *          "isInstructor": false,
  *          "isPupil": false,
  *          "isParticipant": false,
+ *          "isProjectCoach": false,
  *          "active": true,
  *          "screeningStatus": "ACCEPTED",
  *          "instructorScreeningStatus": "ACCEPTED",
+ *          "projectCoachingScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
  *          "subjects": [
  *              {
@@ -127,14 +130,18 @@ export class ApiGetUser {
     type: "student" | "pupil";
     isTutor?: boolean;
     isInstructor?: boolean;
+    isProjectCoach?: boolean;
     isPupil?: boolean;
     isParticipant?: boolean;
+    isProjectCoachee?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;
     screeningStatus?: string;
     instructorScreeningStatus?: string;
+    projectCoachingScreeningStatus?: string;
     subjects: ApiSubject[];
+    projectFields: ApiProjectFieldInfo[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
     state?: string;
@@ -253,6 +260,27 @@ export class ApiUserRoleInstructor {
     module?: string;
     hours?: number;
     msg: string;
+}
+
+
+export class ApiProjectFieldInfo {
+    name: string;
+    min?: number;
+    max?: number;
+}
+
+/**
+ * @apiDefine SubjectStudent
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Subject Object) {string} name Name
+ * @apiSuccess (Subject Object) {number} minGrade
+ * @apiSuccess (Subject Object) {number} maxGrade
+ */
+export class ApiSubjectStudent {
+    name: string;
+    minGrade: number;
+    maxGrade: number;
 }
 
 /**

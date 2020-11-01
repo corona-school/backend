@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import {
     ApiGetUser,
     ApiMatch,
+    ApiProjectFieldInfo,
     ApiPutUser,
     ApiUserRoleInstructor,
     checkName,
@@ -378,12 +379,15 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.type = "student";
         apiResponse.isTutor = person.isStudent;
         apiResponse.isInstructor = person.isInstructor;
+        apiResponse.isProjectCoach = person.isProjectCoach;
         apiResponse.screeningStatus = await person.screeningStatus();
         apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
+        apiResponse.projectCoachingScreeningStatus = await person.projectCoachingScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
+        apiResponse.projectFields = (await person.projectFields).map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf.projectField, min: pf.min, max: pf.max}));
         apiResponse.university = person.university;
         apiResponse.state = person.state;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
@@ -428,11 +432,13 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.type = "pupil";
         apiResponse.isPupil = person.isPupil;
         apiResponse.isParticipant = person.isParticipant;
+        apiResponse.isProjectCoachee = person.isProjectCoachee;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
         apiResponse.matches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
+        apiResponse.projectFields = person.projectFields.map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf}));
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();

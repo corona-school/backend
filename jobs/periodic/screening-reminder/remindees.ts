@@ -25,37 +25,85 @@ function computeNextScreeningReminderDate(sentReminderCount: number, lastInvitat
 // ------------
 // DaTABASE
 // ------------
-async function getAllStudentsWithPendingReminders(manager: EntityManager) {
+// All students who still need a tutor screening (and no Jufo-alumni screening or instructor screening)
+async function getAllStudentsWithPendingTutorScreening(manager: EntityManager) {
     return manager
         .createQueryBuilder()
         .select("s")
         .from(Student, "s")
         .leftJoinAndSelect("s.screening", "sc")
-        .where("s.active IS TRUE AND s.isStudent IS TRUE AND s.verification IS NULL AND sc IS NULL AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }) //active | is tutor in 1-on-1 tutoring | email verified | never screened | everything less than 0 is meant to be: do not sent any screening reminders
+        .leftJoinAndSelect("s.projectCoachingScreening", "pcsc")
+        .where("s.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS FALSE AND (s.isStudent IS TRUE OR (s.isProjectCoach IS TRUE AND s.isUniversityStudent IS TRUE)) AND (sc IS NULL AND pcsc IS NULL) AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
+        .getMany();
+}
+
+async function getAllStudentsWithPendingJufoAlumniScreening(manager: EntityManager) {
+    return manager
+        .createQueryBuilder()
+        .select("s")
+        .from(Student, "s")
+        .leftJoinAndSelect("s.projectCoachingScreening", "pcsc")
+        .where("s.active IS TRUE AND s.verification IS NULL AND (s.isInstructor IS FALSE AND s.isStudent IS FALSE AND s.isProjectCoach IS TRUE AND s.isUniversityStudent IS FALSE) AND pcsc IS NULL AND s.sentJufoAlumniScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
+        .getMany();
+}
+
+async function getAllStudentsWithPendingInstructorScreening(manager: EntityManager) {
+    return manager
+        .createQueryBuilder()
+        .select("s")
+        .from(Student, "s")
+        .leftJoinAndSelect("s.instructorScreening", "sc")
+        .where ("s.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS TRUE AND sc IS NULL AND s.sentInstructorScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
         .getMany();
 }
 
 // ------------
 // FiLTER
 // ------------
-function filterStudentsToRemindAtDate(students: Student[], date: Date) {
-    return students.filter(s => {
-        const remindDate = computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate);
+function filterToRemindAtDate(remindDateForStudent: (s: Student) => Date): (students: Student[], date: Date) => Student[] {
+    return (students: Student[], date: Date) => {
+        return students.filter(s => {
+            const remindDate = remindDateForStudent(s);
 
-        if (!remindDate) { //if remind date is no valid date, do not remind that student...
-            return false;
-        }
+            if (!remindDate) {
+                return false;
+            }
 
-        return remindDate <= date;
-    });
+            return remindDate <= date;
+        });
+    };
 }
+const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate) );
+const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate) );
+const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate) );
 
 // ------------------
 // StUDENTS TO REMIND
 // ------------------
-export async function getStudentsToRemindAtDate(manager: EntityManager, date: Date) {
-    const studentsWithPendingReminders = await getAllStudentsWithPendingReminders(manager);
-    const studentsToReallyRemind = filterStudentsToRemindAtDate(studentsWithPendingReminders, date); //filter out those, that shouldn't be reminded at the specified date
+export async function getStudentsForTutorScreeningReminderAtDate(manager: EntityManager, date: Date) {
+    const studentsWithPendingReminders = await getAllStudentsWithPendingTutorScreening(manager);
+    const studentsToReallyRemind = filterStudentsForTutorScreeningToRemindAtDate(studentsWithPendingReminders, date); //filter out those, that shouldn't be reminded at the specified date
 
     return studentsToReallyRemind;
+}
+
+export async function getStudentsForJufoAlumniScreeningReminderAtDate(manager: EntityManager, date: Date) {
+    const studentsWithPendingReminders = await getAllStudentsWithPendingJufoAlumniScreening(manager);
+    const studentsToReallyRemind = filterStudentsForJufoAlumniScreeningToRemindAtDate(studentsWithPendingReminders, date);
+
+    return studentsToReallyRemind;
+}
+
+export async function getStudentsForInstructorScreeningReminderAtDate(manager: EntityManager, date: Date) {
+    const studentsWithPendingReminders = await getAllStudentsWithPendingInstructorScreening(manager);
+    const studentsToReallyRemind = filterStudentsForInstructorScreeningToRemindAtDate(studentsWithPendingReminders, date);
+
+    return studentsToReallyRemind;
+}
+
+export async function getStudentsToRemindAtDate(manager: EntityManager, date: Date) {
+    const tutorsToRemind = await getStudentsForTutorScreeningReminderAtDate(manager, date);
+    const jufoAlumniToRemind = await getStudentsForJufoAlumniScreeningReminderAtDate(manager, date);
+    const instructorsToRemind = await getStudentsForInstructorScreeningReminderAtDate(manager, date);
+    return [...tutorsToRemind, ...jufoAlumniToRemind, ...instructorsToRemind]; //those are all disjunct by construction
 }

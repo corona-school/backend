@@ -79,7 +79,14 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
             templateMail.id,
             templateMail.variables,
             templateMail.disabled,
-            replyTo ? replyTo : undefined
+            replyTo ? replyTo : undefined,
+            templateMail.attachements?.map(a => {
+                return {
+                    ContentType: a.contentType,
+                    Filename: a.filename,
+                    Base64Content: a.base64Content
+                };
+            })
         );
 
         logger.info("E-Mail (type " + templateMail.type + ") was sent to " + recipient, JSON.stringify(result.body));

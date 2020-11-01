@@ -16,6 +16,7 @@ import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
+import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 
 const logger = getLogger();
@@ -55,7 +56,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isInstructor == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
-            typeof req.body.state == 'string') {
+            typeof req.body.state == 'string' &&
+            typeof req.body.isProjectCoach == 'boolean') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -79,6 +81,41 @@ export async function postTutorHandler(req: Request, res: Response) {
                     typeof req.body.hours !== 'number') {
                     status = 400;
                     logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
+                }
+            }
+
+            if (req.body.isProjectCoach) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.wasJufoParticipant === "string"
+                    && (req.body.isUniversityStudent == undefined || typeof req.body.isUniversityStudent === "boolean")) {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutor registration with isProjectCoach expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK wasJufoParticipant for validity
+                    if (!EnumReverseMappings.TutorJufoParticipationIndication(req.body.wasJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach has invalid value for jufo participation: '${req.body.wasJufoParticipant}'`);
+                    }
+                    // CHECK hasJufoCertificate for validity
+                    if (!req.body.isTutor && req.body.wasJufoParticipant === "yes" && req.body.isUniversityStudent === false && typeof req.body.hasJufoCertificate !== "boolean") {
+                        status = 400;
+                        logger.error(`Tutor registration with isProjectCoach (for a non university-student, but ex-jufo-participant) requires indication of whether the person has a Jufo certificate or not.`);
+                    }
+                    if (req.body.jufoPastParticipationInfo && typeof req.body.jufoPastParticipationInfo !== "string") {
+                        status = 400;
+                        logger.error(`Tutor registration with jufoPastParticipationInfo requires the info on a past jufo participation to be a string`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutor registration with isProjectCoach has invalid parameters");
                 }
             }
 
@@ -158,6 +195,8 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.openMatchRequestCount = 0;
     tutor.subjects = JSON.stringify([]);
 
+    tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
+
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -201,6 +240,39 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         }
 
         tutor.moduleHours = apiTutor.hours;
+    }
+
+    // Project coaching
+    if (apiTutor.isProjectCoach) {
+        tutor.isProjectCoach = apiTutor.isProjectCoach;
+        await tutor.setProjectFields(apiTutor.projectFields.map(pf => {
+            return {name: pf};
+        }));
+    }
+    if (apiTutor.isProjectCoach && !apiTutor.isTutor) {
+        //the following only applies if someone is not going to be registering for 1-on-1-tutoring as well (i.e. not a university student)
+        //-> therefore we need the info of isUniversityStudent, wasJufoParticipant, hasJufoCertificate ...
+
+        //expect tutors which are not registering for 1-on-1-tutoring to be at least a past jufo participant or a university student
+        if (apiTutor.wasJufoParticipant !== TutorJufoParticipationIndication.YES && !apiTutor.isUniversityStudent) {
+            logger.warn("Tutor registration failed, because the tutor tried to register without beeing either a university student or a past Jufo participant!");
+            return 400;
+        }
+        if (apiTutor.wasJufoParticipant === TutorJufoParticipationIndication.YES
+            && !apiTutor.isUniversityStudent
+            && !apiTutor.hasJufoCertificate
+            && !apiTutor.jufoPastParticipationInfo) {
+            logger.warn("Tutor registration failed, because a tutor which was a past jufo participiant, has no certificate and is not a university student requires information on his past jufo participation to verify his state with Jugend forscht!");
+            return 400;
+        }
+
+        tutor.wasJufoParticipant = apiTutor.wasJufoParticipant;
+        tutor.isUniversityStudent = apiTutor.isUniversityStudent;
+        tutor.jufoPastParticipationInfo = apiTutor.jufoPastParticipationInfo;
+
+        if (apiTutor.wasJufoParticipant === TutorJufoParticipationIndication.YES && apiTutor.isUniversityStudent === false) {
+            tutor.hasJufoCertificate = apiTutor.hasJufoCertificate;
+        }
     }
 
     const result = await entityManager.findOne(Student, { email: tutor.email });
@@ -250,14 +322,15 @@ export async function postTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.grade == 'number' &&
             typeof req.body.state == 'string' &&
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
-            typeof req.body.msg == 'string') {
+            typeof req.body.msg == 'string' &&
+            typeof req.body.isProjectCoachee == "boolean" &&
+            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee))) {//require grade only if not only registering for project coaching
 
-            if (req.body.isTutor) {
+            if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
                         let elem = req.body.subjects[i];
@@ -272,6 +345,38 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 }
             }
 
+            if (req.body.isProjectCoachee) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.isJufoParticipant === "string"
+                    && typeof req.body.projectMemberCount === "number") {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutee registration with isProjectCoachee expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectCoachee has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK isJufoParticipant for validity
+                    if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectCoachee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                    }
+                    // CHECK projectMemberCount for validity
+                    const projectMemberCount: number = req.body.projectMemberCount;
+                    if (projectMemberCount < 1 || projectMemberCount > 3) {
+                        status = 400;
+                        logger.error(`Tutee registration with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutee registration with isProjectCoachee has invalid parameters");
+                }
+            }
+
             if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
                 status = 400;
 
@@ -279,7 +384,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 // try registering
                 status = await registerTutee(req.body);
             } else {
-                logger.error("Malformed parameters in optional fields for Tutor registration");
+                logger.error("Malformed parameters in optional fields for Tutee registration");
                 status = 400;
             }
 
@@ -324,7 +429,9 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
-    tutee.grade = apiTutee.grade + ". Klasse";
+    if (apiTutee.grade) {
+        tutee.grade = apiTutee.grade + ". Klasse";
+    }
 
     switch (apiTutee.state) {
         case "bw":
@@ -402,6 +509,9 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         case "förderschule":
             tutee.schooltype = SchoolType.FOERDERSCHULE;
             break;
+        case "berufsschule":
+            tutee.schooltype = SchoolType.BERUFSSCHULE;
+            break;
         case "other":
             tutee.schooltype = SchoolType.SONSTIGES;
             break;
@@ -436,6 +546,14 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
         tutee.isPupil = true;
         tutee.subjects = JSON.stringify(apiTutee.subjects);
+    }
+
+    // Project coaching
+    if (apiTutee.isProjectCoachee) {
+        tutee.isProjectCoachee = apiTutee.isProjectCoachee;
+        tutee.projectFields = apiTutee.projectFields;
+        tutee.isJufoParticipant = apiTutee.isJufoParticipant;
+        tutee.projectMemberCount = apiTutee.projectMemberCount;
     }
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });

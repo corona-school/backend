@@ -245,7 +245,7 @@ export interface ApiInstructor {
  * @apiSuccess (Participant Object) {string} lastname Last name
  * @apiSuccess (Participant Object) {string} email E-Mail
  * @apiSuccess (Participant Object) {int} grade Grade
- * @apiSuccess (Participant Object) {string} schooltype School type. One of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "other"</code>
+ * @apiSuccess (Participant Object) {string} schooltype School type. One of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "berufsschule", "other"</code>
  *
  */
 export interface ApiParticipant {

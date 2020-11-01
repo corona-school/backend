@@ -7,6 +7,11 @@ export type TemplateMail = {
     title: string;
     disabled: boolean;
     variables: object;
+    attachements?: {
+        contentType: string,
+        filename: string,
+        base64Content: string
+    }[]
 };
 
 export const mailjet = {
@@ -174,6 +179,19 @@ export const mailjet = {
             variables: variables
         };
     },
+    INSTRUCTORSCREENINGREMINDER: (variables: {
+        instructorFirstName: string;
+        selectAppointmentURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "instructorscreeningreminder",
+            id: 1803949,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
     COURSESCANCELLED: (variables: {
         participantFirstname: string;
         courseName: string;
@@ -301,6 +319,47 @@ export const mailjet = {
             title: "Nachricht zu deinem Kurs",
             disabled: false,
             variables: variables
+        };
+    },
+    PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "projectcoachjufoalumnifirstscreenininvitation",
+            id: 1803499,
+            sender: DEFAULTSENDERS.screening,
+            title: "Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PROJECTCOACHJUFOALUMNISCREENINGREMINDER: (variables: {
+        personFirstname: string;
+        confirmationURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'projectcoachjufoalumniscreeningreminder',
+            id: 1803498,
+            sender: DEFAULTSENDERS.screening,
+            title: "Erinnerung: Wir möchten dich kennenlernen!",
+            disabled: false,
+            variables: variables
+        };
+    },
+    JUFOALUMNITOVERIFY: (csvBase64: string) => {
+        return <TemplateMail>{
+            type: 'jufoalumnitoverify',
+            id: 1848109,
+            sender: DEFAULTSENDERS.noreply,
+            title: "[Jufo-Verifizierung] Tägliche Neuregistrierungen",
+            disabled: false,
+            variables: {},
+            attachements: [{
+                contentType: "text/csv",
+                filename: "AlumnsToVerify.csv",
+                base64Content: csvBase64
+            }]
         };
     }
 };

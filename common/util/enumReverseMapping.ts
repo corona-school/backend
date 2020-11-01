@@ -1,37 +1,35 @@
 import { State } from "../entity/State";
 import { SchoolType } from "../entity/SchoolType";
 import { MentoringCategory } from "../mentoring/categories";
+import { ProjectField } from "../jufo/projectFields";
+import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../jufo/participationIndication";
+import { TeacherModule } from "../entity/Student";
+
 
 const EnumReverseMappings = {
-    State: (s: string) => {
-        return State[s.toUpperCase()];
-    },
-    SchoolType: (s: string) => {
-        switch (s.toLocaleLowerCase()) {
-            case "grundschule":
-                return SchoolType.GRUNDSCHULE;
-            case "gesamtschule":
-                return SchoolType.GESAMTSCHULE;
-            case "hauptschule":
-                return SchoolType.HAUPTSCHULE;
-            case "realschule":
-                return SchoolType.REALSCHULE;
-            case "gymnasium":
-                return SchoolType.GYMNASIUM;
-            case "förderschule":
-                return SchoolType.FOERDERSCHULE;
-            case "other":
-                return SchoolType.SONSTIGES;
-            default:
-                return undefined;
-        }
-    },
-    MentoringCategory: (s: string) => {
-        return MentoringCategory[s.toUpperCase()];
-    }
+    State: caseInsensitive(reverseMappingForStringEnum(State)),
+    SchoolType: caseInsensitive(reverseMappingForStringEnum(SchoolType)),
+    MentoringCategory: caseInsensitive(reverseMappingForStringEnum(MentoringCategory)),
+    ProjectField: reverseMappingForStringEnum(ProjectField),
+    TutorJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TutorJufoParticipationIndication)),
+    TuteeJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TuteeJufoParticipationIndication)),
+    TeacherModule: caseInsensitive(reverseMappingForStringEnum(TeacherModule))
 };
 
+function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {
+    //this would be equivalent to check whether `Object.values(ENUM)` contains `s` and then return s
+    return (s: string) => {
+        return Object.entries(e).find( ([, value]) => typeof value === "string" && value === s)?.[1];
+    };
+}
+
+function caseInsensitive<E>(reverseMappingFunction: (s: string) => E) {
+    return (s: string) => {
+        return reverseMappingFunction(s.toUpperCase()) || reverseMappingFunction(s.toLowerCase());
+    };
+}
 
 export {
-    EnumReverseMappings
+    EnumReverseMappings,
+    reverseMappingForStringEnum
 };
