@@ -27,13 +27,15 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {string} [jufoPastParticipationInfo] (for project coaching sometimes required) An open text field that can be used to give any information on a past jufo participation in a very informal way.
  *
  */
+import {ApiSubject} from "../format";
+
 export interface ApiAddTutor {
     firstname: string,
     lastname: string,
     email: string
     isTutor: boolean,
     isInstructor: boolean,
-    subjects?: ApiAddTutorSubject[],
+    subjects?: ApiSubject[],
     isOfficial: boolean,
     state?: string,
     university?: string,
@@ -78,7 +80,7 @@ export interface ApiAddTutee {
     state: string,
     school: string,
     isTutee: boolean,
-    subjects?: ApiAddTuteeSubject[],
+    subjects?: ApiSubject[],
     newsletter: boolean,
     msg: string,
     redirectTo?: string;
@@ -111,37 +113,11 @@ export interface ApiAddStateTutee {
     grade: number,
     state: string,
     isTutee: boolean,
-    subjects?: ApiAddTuteeSubject[],
+    subjects?: ApiSubject[],
     newsletter: boolean,
     msg: string,
     teacherEmail: string,
     redirectTo?: string;
-}
-
-/**
- * @apiDefine AddTutorSubject
- * @apiVersion 1.1.0
- *
- * @apiSuccess (Subject Object) {string} name Name of the subject
- * @apiSuccess (Subject Object) {int} minGrade Minimum grade
- * @apiSuccess (Subject Object) {int} maxGrade Maximum grade
- *
- */
-export interface ApiAddTutorSubject {
-    name: string,
-    minGrade: number,
-    maxGrade: number
-}
-
-/**
- * @apiDefine AddTuteeSubject
- * @apiVersion 1.1.0
- *
- * @apiSuccess (Subject Object) {string} name Name of the subject
- *
- */
-export interface ApiAddTuteeSubject {
-    name: string
 }
 
 /**
@@ -166,26 +142,12 @@ export interface ApiAddMentor {
     email: string,
     division: string[],
     expertise: string[],
-    subjects?: ApiAddMentorSubject[],
+    subjects?: ApiSubject[],
     teachingExperience?: boolean,
     message: string,
     description: string,
     redirectTo?: string;
 }
-
-/**
- * @apiDefine AddMentorSubject
- * @apiVersion 1.1.0
- *
- * @apiSuccess (Subject Object) {string} name Name of the subject
- *
- */
-export interface ApiAddMentorSubject {
-    name: string,
-    minGrade: number,
-    maxGrade: number
-}
-
 
 /**
  * @apiDefine SchoolInfo

@@ -10,14 +10,14 @@ import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
 import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
-import { Division, Expertise, Mentor } from "../../../common/entity/Mentor";
+import { Mentor } from "../../../common/entity/Mentor";
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
-import { ProjectFieldWithGradeRestriction } from '../../../common/entity/ProjectFieldWithGradeRestriction';
+import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 
 const logger = getLogger();
 
@@ -33,7 +33,7 @@ const logger = getLogger();
  * @apiUse ContentType
  *
  * @apiUse AddTutor
- * @apiUse AddTutorSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutor -d "<REQUEST>"
@@ -304,7 +304,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddTutee
- * @apiUse AddTuteeSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee -d "<REQUEST>"
@@ -585,7 +585,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddMentor
- * @apiUse AddMentorSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/mentor -d "<REQUEST>"
@@ -603,6 +603,7 @@ export async function postMentorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            typeof req.body.teachingExperience === 'boolean' &&
             req.body.division instanceof Array &&
             req.body.expertise instanceof Array &&
             req.body.subjects instanceof Array) {
@@ -679,40 +680,27 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.verification = generateToken();
 
     if (apiMentor.subjects.length > 0) {
-        for (let i = 0; i < apiMentor.subjects.length; i++) {
-            if (!checkSubject(apiMentor.subjects[i].name)) {
-                logger.warn("Subjects contain invalid subject " + apiMentor.subjects[i].name);
-                return 400;
-            }
+        let subjects = checkSubjects(apiMentor.subjects);
+        if (subjects === null) {
+            return 400;
         }
-        mentor.subjects = JSON.stringify(apiMentor.subjects);
+        mentor.subjects = subjects;
     }
 
     if (apiMentor.division.length > 0) {
-        mentor.division = [];
-        for (let i = 0; i < apiMentor.division.length; i++) {
-            if (apiMentor.division[i].toUpperCase() in Division) {
-                mentor.division.push(Division[apiMentor.division[i].toUpperCase()]);
-            } else {
-                logger.warn("Division '" + apiMentor.division[i] + "' is not a correct division");
-                return 400;
-            }
+        let division = checkDivisions(apiMentor.division);
+        if (division === null) {
+            return 400;
         }
+        mentor.division = division;
     }
 
     if (apiMentor.expertise.length > 0) {
-        mentor.expertise = [];
-        const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]).filter(k => !(parseInt(k) >= 0));
-
-        for (let expertise of apiMentor.expertise) {
-            if (expertiseValues.indexOf(expertise) > -1) {
-                const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === expertise);
-                mentor.expertise.push(Expertise[expertiseKey[0]]);
-            } else {
-                logger.warn("Expertise '" + expertise + "' is not a correct expertise");
-                return 400;
-            }
+        let expertise = checkExpertises(apiMentor.expertise);
+        if (expertise === null) {
+            return 400;
         }
+        mentor.expertise = expertise;
     }
 
     const result = await entityManager.findOne(Mentor, {email: mentor.email});
@@ -746,7 +734,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
  * @apiUse ContentType
  *
  * @apiUse AddStateTutee
- * @apiUse AddTuteeSubject
+ * @apiUse Subject
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee/state -d "<REQUEST>"

@@ -120,6 +120,8 @@
  *          ]
  *      }
  */
+import {ApiSubject} from "../format";
+
 export class ApiGetUser {
     id: string;
     firstname: string;
@@ -147,6 +149,7 @@ export class ApiGetUser {
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
+    //TODO: Um Mentor erweitern
 }
 
 /**
@@ -160,6 +163,11 @@ export class ApiGetUser {
  * @apiParam (User Personal) {string} state the student's/pupil's state
  * @apiParam (User Personal) {string} university <i>Only for students:</i> student's university
  * @apiParam (User Personal) {string} schoolType <i>Only for pupils:</i> School Type of the pupil
+ * @apiParam (User Personal) {string} division <i>Only for mentors:</i> Division of the mentor
+ * @apiParam (User Personal) {string} expertise <i>Only for mentors:</i> Expertise of the mentor
+ * @apiParam (User Personal) {string} subjects <i>Only for mentors:</i> Subjects of the mentor
+ * @apiParam (User Personal) {boolean} teachingExperience <i>Only for mentors:</i> Teaching experience of the mentor
+ * @apiParam (User Personal) {string} description <i>Only for mentors:</i> Description of the mentor
  * @apiParam (User Personal) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") that should be set by the frontend
  * @apiParamExample {json} Pupil
  *      {
@@ -174,6 +182,19 @@ export class ApiGetUser {
  *          "lastname": "Doe",
  *          "matchesRequested": 0
  *      }
+ *
+ * @apiParamExample {json} Mentor
+ *      {
+ *          "firstname": "Frank N.",
+ *          "lastname": "Stein",
+ *          "division": ["video", "supervision"],
+ *          "expertise": ["technical support"],
+ *          "subjects": [
+ *              {"name": "Englisch", "minGrade": 1, "maxGrade": 13}
+ *          ],
+ *          "teachingExperience": false,
+ *          "description": "I like trains"
+ *      }
  */
 export class ApiPutUser {
     firstname: string;
@@ -184,6 +205,11 @@ export class ApiPutUser {
     university?: string;
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
+    division?: string[];
+    expertise?: string[];
+    subjects?: ApiSubject[];
+    teachingExperience?: boolean;
+    description?: string;
 }
 
 /**
@@ -202,27 +228,6 @@ export class ApiPutUser {
  *      ]
  *
  * @apiParamExample {json} Student
- *      [
- *          {
- *              "name": "Chemie",
- *              "minGrade": 1,
- *              "maxGrade": 4
- *          },
- *          {
- *              "name": "Physik",
- *              "minGrade": 10,
- *              "maxGrade": 13
- *          }
- *      ]
- */
-
-/**
- * @apiDefine UserRoleTutorSubjects
- * @apiVersion 1.0.1
- *
- * @apiParam (User Subjects) {Subject[]} root Array of subjects
- *
- * @apiParamExample {json} Example
  *      [
  *          {
  *              "name": "Chemie",
@@ -257,19 +262,6 @@ export class ApiUserRoleInstructor {
     msg: string;
 }
 
-/**
- * @apiDefine Subject
- * @apiVersion 1.0.1
- *
- * @apiSuccess (Subject Object) {string} name Name
- * @apiSuccess (Subject Object) {number} minGrade <i>Only available for students:</i> Minimum grade they want to teach
- * @apiSuccess (Subject Object) {number} maxGrade <i>Only available for students:</i> Maximum grade they want to teach
- */
-export class ApiSubject {
-    name: string;
-    minGrade?: number;
-    maxGrade?: number;
-}
 
 export class ApiProjectFieldInfo {
     name: string;
