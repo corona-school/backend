@@ -78,7 +78,12 @@ async function sendMailTemplate(
     templateID: number,
     variables: object,
     sandbox: boolean = false,
-    replyToAddress?: string
+    replyToAddress?: string,
+    attachements?: {
+        ContentType: string,
+        Filename: string,
+        Base64Content: string
+    }[]
 ) {
     const message: mailjetAPI.Email.SendParamsMessage = {
         From: {
@@ -92,7 +97,8 @@ async function sendMailTemplate(
         TemplateID: templateID,
         TemplateLanguage: true,
         Variables: variables,
-        Subject: subject
+        Subject: subject,
+        Attachments: attachements
     };
 
     if (replyToAddress) {
