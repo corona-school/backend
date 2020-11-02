@@ -46,6 +46,7 @@ const logger = getLogger();
 export async function postTutorHandler(req: Request, res: Response) {
     let status = 204;
 
+    logger.info(`GOT TUTOR REGISTRATION \n\twith params: ${JSON.stringify(req.params)} \n\tand body: ${JSON.stringify(req.body)}`);
     try {
 
         if (typeof req.body.firstname == 'string' &&
@@ -317,6 +318,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 export async function postTuteeHandler(req: Request, res: Response) {
     let status = 204;
 
+    logger.info(`GOT TUTEE REGISTRATION \n\twith params: ${JSON.stringify(req.params)} \n\tand body: ${JSON.stringify(req.body)}`);
     try {
 
         if (typeof req.body.firstname == 'string' &&
