@@ -379,7 +379,7 @@ export class Student extends Person {
     }
 
     instructorScreeningURL(): string {
-        return "https://go.oncehub.com/CourseReview?name=" + encodeURIComponent(this.firstname) + "&email=" + encodeURIComponent(this.email) + "&skip=1";
+        return "https://authentication.corona-school.de/";
     }
 
     // Return the subjects formatted in the Subject Format
