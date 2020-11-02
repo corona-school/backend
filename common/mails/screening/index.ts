@@ -26,7 +26,7 @@ export async function sendScreeningInvitationReminderMail(student: Student) {
 export async function sendFirstInstructorScreeningInvitationMail(instructor: Student) {
     const mail = mailjetTemplates.INSTRUCTORFIRSTSCREENINGINVITATION({
         instructorFirstName: instructor.firstname,
-        selectAppointmentURL: instructor.instructorScreeningURL()
+        confirmationURL: instructor.instructorScreeningURL()
     });
     await sendTemplateMail(mail, instructor.email);
 }
@@ -34,7 +34,7 @@ export async function sendFirstInstructorScreeningInvitationMail(instructor: Stu
 export async function sendInstructorScreeningInvitationReminderMail(instructor: Student) {
     const mail = mailjetTemplates.INSTRUCTORSCREENINGREMINDER({
         instructorFirstName: instructor.firstname,
-        selectAppointmentURL: instructor.instructorScreeningURL()
+        confirmationURL: instructor.instructorScreeningURL()
     });
     await sendTemplateMail(mail, instructor.email);
 }

@@ -82,7 +82,7 @@ describe("The screening invitation mails", function() {
                         type: "instructorfirstscreeninginvitation",
                         variables: {
                             instructorFirstName: this.TestStudent.firstname,
-                            selectAppointmentURL: this.TestStudent.instructorScreeningURL()
+                            confirmationURL: this.TestStudent.instructorScreeningURL()
                         },
                         disabled: false
                     },

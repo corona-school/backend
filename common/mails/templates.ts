@@ -168,7 +168,7 @@ export const mailjet = {
     },
     INSTRUCTORFIRSTSCREENINGINVITATION: (variables: {
         instructorFirstName: string;
-        selectAppointmentURL: string;
+        confirmationURL: string;
     }) => {
         return <TemplateMail>{
             type: "instructorfirstscreeninginvitation",
@@ -181,7 +181,7 @@ export const mailjet = {
     },
     INSTRUCTORSCREENINGREMINDER: (variables: {
         instructorFirstName: string;
-        selectAppointmentURL: string;
+        confirmationURL: string;
     }) => {
         return <TemplateMail>{
             type: "instructorscreeningreminder",
