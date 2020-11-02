@@ -193,7 +193,6 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
-    tutor.openMatchRequestCount = 0;
     tutor.subjects = JSON.stringify([]);
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
