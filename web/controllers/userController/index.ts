@@ -1175,7 +1175,7 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
         }
         //if here, the info's isUniversityStudent is false
         if (!info.wasJufoParticipant) {
-            //then expect info on university student 
+            //then expect info on university student
             logger.warn(`User ${student.email} requires indication on jufo participation!`);
             return 400;
         }
