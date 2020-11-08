@@ -260,6 +260,8 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
 
 export async function updateStudentInformation(student: Student, info: StudentEditableInfoDTO, screener: Screener) {
     //update static fields on student
+    student.email = info.email.toLowerCase();
+
     // -> roles
     student.isStudent = info.isTutor;
     student.isInstructor = info.isInstructor;

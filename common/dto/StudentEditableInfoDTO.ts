@@ -31,6 +31,7 @@ import { isValidSubject } from "../util/subjectsutils";
  *
  */
 export class StudentEditableInfoDTO {
+    email: string;
     isTutor: boolean;
     isInstructor: boolean;
     isProjectCoach: boolean;
@@ -58,6 +59,8 @@ export class StudentEditableInfoDTO {
     };
 
     isValid(): boolean {
+        const validEmail = typeof this.email === "string";
+
         const validRoles = typeof this.isTutor === "boolean"
                             && typeof this.isInstructor === "boolean"
                             && typeof this.isProjectCoach === "boolean";
@@ -83,6 +86,6 @@ export class StudentEditableInfoDTO {
 
         const checkState = this.state ? typeof this.state === "string" && !!EnumReverseMappings.State(this.state) : true;
 
-        return validRoles && validScreenings && validProjectFields && validSubjects && isValidOfficial && validRemainingFields && checkState;
+        return validEmail && validRoles && validScreenings && validProjectFields && validSubjects && isValidOfficial && validRemainingFields && checkState;
     }
 }
