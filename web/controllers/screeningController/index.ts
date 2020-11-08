@@ -266,8 +266,8 @@ export async function updateStudentInformation(student: Student, info: StudentEd
     student.isProjectCoach = info.isProjectCoach;
 
     // -> official
-    student.moduleHours = info.official?.hours;
-    student.module = info.official?.module;
+    student.moduleHours = info.official?.hours || null;
+    student.module = info.official?.module || null;
 
     // -> remaining info
     student.isUniversityStudent = info.isUniversityStudent;
