@@ -7,6 +7,7 @@ import {
     ApiProjectFieldInfo,
     ApiPutUser,
     ApiUserRoleInstructor,
+    ApiUserRoleProjectCoach,
     checkName,
     checkSubject
 } from "./format";
@@ -26,6 +27,8 @@ import * as moment from "moment-timezone";
 import {Mentor} from "../../../common/entity/Mentor";
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 import {ApiSubject} from "../format";
+import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
+import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 
 const logger = getLogger();
 
@@ -1087,6 +1090,122 @@ async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiS
         student.isStudent = true;
         student.openMatchRequestCount = 1;
         student.subjects = JSON.stringify(subjects);
+        // TODO: transaction log
+        await entityManager.save(Student, student);
+    } catch (e) {
+        logger.error("Unable to update student status: " + e.message);
+        return 500;
+    }
+    return 204;
+}
+
+
+/**
+ * @api {POST} /user/:id/role/projectcoach postUserRoleProjectCoach
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add the project coach role to the current user by supplying project fields for matching.
+ *
+ * The user has to be authenticated.
+ *
+ * @apiName postUserRoleProjectCoach
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/projectcoach
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserRoleProjectCoach
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function postUserRoleProjectCoachHandler(req: Request, res: Response) {
+    let status = 204;
+
+    if (res.locals.user instanceof Student
+        && req.params.id != undefined
+        && req.body.projectFields instanceof Array
+        && req.body.projectFields.length > 0
+        && (req.body.wasJufoParticipant == null || (typeof req.body.wasJufoParticipant === "string" && EnumReverseMappings.TutorJufoParticipationIndication(req.body.wasJufoParticipant)))
+        && (req.body.isUniversityStudent == null || typeof req.body.isUniversityStudent === "boolean")
+        && (req.body.hasJufoCertificate == null || typeof req.body.hasJufoCertificate === "boolean")
+        && (req.body.jufoPastParticipationInfo == null || typeof req.body.jufoPastParticipationInfo === "string")) {
+
+        //check project fields for validity
+        const projectFields = req.body.projectFields as ApiProjectFieldInfo[];
+        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s.name));
+        if (unknownProjectField) {
+            status = 400;
+            logger.error(`Post User Role Project Coach has invalid project field '${JSON.stringify(unknownProjectField)}'`);
+        }
+
+        if (status < 300) {
+            status = await postUserRoleProjectCoach(req.params.id, res.locals.user, req.body);
+        }
+    } else {
+        logger.warn("Missing request parameters for roleProjectCoach.");
+        status = 400;
+    }
+
+    res.status(status).end();
+}
+
+async function postUserRoleProjectCoach(wixId: string, student: Student, info: ApiUserRoleProjectCoach): Promise<number> {
+    if (wixId != student.wix_id) {
+        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        return 403;
+    }
+
+    if (student.isProjectCoach) {
+        logger.warn("Current user already is a project coach");
+        return 400;
+    }
+
+    //other validity checks, only required if current user is no student
+    if (student.isStudent === false && !info.isUniversityStudent) {
+        if (info.isUniversityStudent == undefined) {
+            logger.warn(`User ${student.email} requires indication of whether or not s*he is a university student`);
+            return 400;
+        }
+        //if here, the info's isUniversityStudent is false
+        if (!info.wasJufoParticipant) {
+            //then expect info on university student 
+            logger.warn(`User ${student.email} requires indication on jufo participation!`);
+            return 400;
+        }
+        if (info.wasJufoParticipant === TutorJufoParticipationIndication.NO) {
+            logger.warn(`User ${student.email} cannot be no jufo participant and no university student at the same time!`);
+            return 400;
+        }
+        //if here, the user was a jufo participant
+        if (info.hasJufoCertificate == undefined) {
+            logger.warn(`User ${student.email} which was a jufo participant requires info on whether a jufo certificate exists!`);
+            return 400;
+        }
+        if (info.hasJufoCertificate === false && !info.jufoPastParticipationInfo) {
+            logger.warn(`User ${student.email} which was a jufo participant and which has no jufo certificate requires other information about her past jufo participation!`);
+            return 400;
+        }
+        //if here, the user is no student, no university student, was a past jufo participant and has a jufo certificate or provided some info on his past jufo participation -> that is valid
+    }
+
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    try {
+        student.isProjectCoach = true;
+        await student.setProjectFields(info.projectFields as ProjectFieldWithGradeInfoType[]);
+        student.wasJufoParticipant = info.wasJufoParticipant;
+        student.isUniversityStudent = info.isUniversityStudent;
+        student.hasJufoCertificate = info.hasJufoCertificate;
+        student.jufoPastParticipationInfo = info.jufoPastParticipationInfo;
+
         // TODO: transaction log
         await entityManager.save(Student, student);
     } catch (e) {

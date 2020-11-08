@@ -1,3 +1,4 @@
+import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 /**
  * @apiDefine User
  * @apiVersion 1.0.1
@@ -260,6 +261,25 @@ export class ApiUserRoleInstructor {
     module?: string;
     hours?: number;
     msg: string;
+}
+
+
+/**
+ * @apiDefine UserRoleProjectCoach
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Body) {object} projectFields Array of project field objects (can contain grade information in the usual format)
+ * @apiSuccess (Body) {string} [wasJufoParticipant] One of <code>"yes", "no", "idk"</code>
+ * @apiSuccess (Body) {bool} [isUniversityStudent] Indicates if officially enrolled in a university
+ * @apiSuccess (Body) {bool} [hasJufoCertificate] If <code>true</code> the person has a jufo certificate
+ * @apiSuccess (Body) {string} [jufoPastParticipationInfo] Info on the past jufo participation
+ */
+export class ApiUserRoleProjectCoach {
+    projectFields: ApiProjectFieldInfo[];
+    wasJufoParticipant?: TutorJufoParticipationIndication;
+    isUniversityStudent?: boolean;
+    hasJufoCertificate?: boolean;
+    jufoPastParticipationInfo?: string;
 }
 
 

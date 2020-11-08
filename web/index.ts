@@ -107,6 +107,7 @@ createConnection().then(() => {
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
         userApiRouter.post("/:id/role/instructor", userController.postUserRoleInstructorHandler);
         userApiRouter.post("/:id/role/tutor", userController.postUserRoleTutorHandler);
+        userApiRouter.post("/:id/role/projectCoach", userController.postUserRoleProjectCoachHandler);
         app.use("/api/user", userApiRouter);
     }
 
