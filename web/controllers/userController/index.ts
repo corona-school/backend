@@ -20,7 +20,7 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
-import { sendFirstScreeningInvitationToInstructor } from "../../../common/administration/screening/initial-invitations";
+import { sendFirstScreeningInvitationToInstructor, sendFirstScreeningInvitationToProjectCoachingJufoAlumni, sendFirstScreeningInvitationToTutor } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import * as moment from "moment-timezone";
@@ -1212,5 +1212,23 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
         logger.error("Unable to update student status: " + e.message);
         return 500;
     }
+
+    //send screening invitations, if necessary (it's necessary only if the person is not a student and not a person registered in a university while being a jufo participant without still having a certificate)
+    try {
+        if (!student.isStudent && !(student.isUniversityStudent === false && student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === false)) {
+            if (student.isUniversityStudent) {
+                //send usual tutor screening invitation
+                await sendFirstScreeningInvitationToTutor(entityManager, student);
+            }
+            else if (student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === true) {
+                //invite to jufo specific screening
+                await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
+            }
+        }
+    }
+    catch (e) {
+        logger.error(`Cannot send screening invitation (after adding role) to ${student.email}... ${e}`);
+    }
+
     return 204;
 }
