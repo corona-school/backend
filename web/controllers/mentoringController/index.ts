@@ -64,7 +64,7 @@ export async function postContactMentorHandler(req: Request, res: Response) {
                 }
             } else {
                 status = 400;
-                logger.warn("Invalid request for POST /course/:id/subcourse");
+                logger.warn("Invalid request for POST /mentoring/contact");
                 logger.debug(req.body);
             }
         } else {
