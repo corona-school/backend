@@ -234,6 +234,9 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
     }
 
     const studentInfo: StudentEditableInfoDTO = Object.assign(new StudentEditableInfoDTO(), req.body);
+
+    logger.info(`GOT REQUEST of screener ${screener.email} trying to update info of student ${student.email} with the following: ${JSON.stringify(studentInfo)}`);
+
     if (studentInfo.isValid()) {
         //save old state of student info
         const prevState = await StudentInfoDTO.buildFrom(student);
