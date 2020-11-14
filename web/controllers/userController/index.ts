@@ -162,7 +162,8 @@ export async function putHandler(req: Request, res: Response) {
         if (typeof b.firstname == "string" &&
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
-            (b.matchesRequested == undefined || typeof b.matchesRequested == "number")) {
+            (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
             if (req.params.id != undefined && res.locals.user instanceof Person) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
@@ -594,6 +595,17 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         else {
             person.lastUpdatedSettingsViaBlocker = null;
         }
+
+        // ++++ OPEN _PROJECT_ MATCH REQUEST COUNT ++++
+        // Check if number of requested project matches is valid
+        if (req.projectMatchesRequested != null) {
+            let projectMatchCount = await entityManager.count(ProjectMatch, { student: person, dissolved: false });
+            if (req.projectMatchesRequested > 3 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 6) {
+                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+                return 400;
+            }
+            person.openProjectMatchRequestCount = req.projectMatchesRequested;
+        }
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -647,6 +659,17 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         }
         else {
             person.lastUpdatedSettingsViaBlocker = null;
+        }
+
+        // ++++ OPEN _PROJECT_ MATCH REQUEST COUNT ++++
+        // Check if number of requested project matches is valid
+        if (req.projectMatchesRequested != null) {
+            let projectMatchCount = await entityManager.count(ProjectMatch, { pupil: person, dissolved: false });
+            if (req.projectMatchesRequested > 1 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 1) {
+                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+                return 400;
+            }
+            person.openProjectMatchRequestCount = req.projectMatchesRequested;
         }
     } else if (person instanceof Mentor) {
         type = Mentor;

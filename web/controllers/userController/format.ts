@@ -185,6 +185,7 @@ export class ApiGetUser {
  * @apiParam (User Personal) {string} lastname Last name
  * @apiParam (User Personal) {number} grade <i>Only for pupils:</i> Grade of the pupil
  * @apiParam (User Personal) {number} matchesRequested <i>Only for students:</i> Number of total match requests. A student may request at most 2 matches at a time and may have at most a total of 4 matches at the same time
+ * @apiParam (User Personal) {number} [projectMatchesRequested] Number of total project match requests. A student may request at most 2 matches at a time and may have at most a total of 4 matches at the same time
  * @apiParam (User Personal) {string} state the student's/pupil's state
  * @apiParam (User Personal) {string} university <i>Only for students:</i> student's university
  * @apiParam (User Personal) {string} schoolType <i>Only for pupils:</i> School Type of the pupil
@@ -226,6 +227,7 @@ export class ApiPutUser {
     lastname: string;
     grade?: number;
     matchesRequested?: number;
+    projectMatchesRequested?: number;
     state?: string;
     university?: string;
     schoolType?: string;
