@@ -8,6 +8,8 @@ import {CourseAttendanceLog} from "./CourseAttendanceLog";
 import { SchoolType } from "./SchoolType";
 import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
+import { ProjectMatch } from "./ProjectMatch";
+import { gradeAsInt } from "../util/gradestrings";
 
 @Entity()
 export class Pupil extends Person {
@@ -127,6 +129,9 @@ export class Pupil extends Person {
     })
     projectMemberCount: number;
 
+    @OneToMany(type => ProjectMatch, match => match.pupil, { nullable: true })
+    projectMatches: Promise<ProjectMatch[]>;
+
     /*
      * Other data
      */
@@ -163,6 +168,11 @@ export class Pupil extends Person {
         default: RegistrationSource.NORMAL
     })
     registrationSource: RegistrationSource;
+
+
+    gradeAsNumber(): number {
+        return gradeAsInt(this.grade);
+    }
 }
 
 export function getPupilWithEmail(manager: EntityManager, email: string) {

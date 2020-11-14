@@ -31,6 +31,7 @@ import {ApiSubject} from "../format";
 import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import { ProjectField } from "../../../common/jufo/projectFields";
+import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 
 const logger = getLogger();
 
@@ -389,7 +390,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.projectCoachingScreeningStatus = await person.projectCoachingScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
+        apiResponse.projectMatchesRequested = person.openProjectMatchRequestCount <= 3 ? person.openProjectMatchRequestCount : 3;
         apiResponse.matches = [];
+        apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
         apiResponse.projectFields = (await person.projectFields).map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf.projectField, min: pf.min, max: pf.max}));
@@ -433,6 +436,27 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.dissolvedMatches.push(apiMatch);
         }
+
+        // Project Coaching Matches
+        const projectCoachingMatches = await entityManager.find(ProjectMatch, {
+            student: person
+        });
+        apiResponse.projectMatches = projectCoachingMatches.map(m => {
+            return {
+                dissolved: m.dissolved,
+                firstname: m.pupil.firstname,
+                lastname: m.pupil.lastname,
+                email: m.pupil.email,
+                uuid: m.uuid,
+                grade: m.pupil.gradeAsNumber(),
+                projectFields: m.pupil.projectFields,
+                jitsilink: m.jitsiLink(),
+                date: m.createdAt.getTime(),
+                jufoParticipation: m.pupil.isJufoParticipant,
+                projectMemberCount: m.pupil.projectMemberCount
+            };
+        });
+
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
         apiResponse.isPupil = person.isPupil;
@@ -440,7 +464,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.isProjectCoachee = person.isProjectCoachee;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
+        apiResponse.projectMatchesRequested = person.openProjectMatchRequestCount <= 1 ? person.openProjectMatchRequestCount : 1;
         apiResponse.matches = [];
+        apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
         apiResponse.projectFields = person.projectFields.map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf}));
@@ -484,6 +510,24 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.dissolvedMatches.push(apiMatch);
         }
+
+        // Project Coaching Matches
+        const projectCoachingMatches = await entityManager.find(ProjectMatch, {
+            pupil: person
+        });
+        apiResponse.projectMatches = await Promise.all(projectCoachingMatches.map(async m => {
+            return {
+                dissolved: m.dissolved,
+                firstname: m.student.firstname,
+                lastname: m.student.lastname,
+                email: m.student.email,
+                uuid: m.uuid,
+                projectFields: (await m.student.getProjectFields()).map(p => p.name),
+                jitsilink: m.jitsiLink(),
+                date: m.createdAt.getTime(),
+                jufoParticipation: m.student.wasJufoParticipant
+            };
+        }));
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);

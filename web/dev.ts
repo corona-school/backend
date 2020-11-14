@@ -20,6 +20,7 @@ import { SchoolType } from "../common/entity/SchoolType";
 import { ProjectField } from "../common/jufo/projectFields";
 import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldWithGradeRestriction";
 import { TuteeJufoParticipationIndication } from "../common/jufo/participationIndication";
+import { ProjectMatch } from "../common/entity/ProjectMatch";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -258,6 +259,19 @@ export async function setupDevDB() {
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
         console.log("Inserted Dev Match " + i);
+    }
+
+    const projectMatches: ProjectMatch[] = [];
+
+    let pm = new ProjectMatch();
+    pm.uuid = "000000001-0000-0000-0001-2c5d5d637475";
+    pm.pupil = pupils[3];
+    pm.student = students[5];
+    projectMatches.push(pm);
+
+    for (let i = 0; i < projectMatches.length; i++) {
+        await entityManager.save(ProjectMatch, projectMatches[i]);
+        console.log("Inserted Dev ProjectMatch " + i);
     }
 
     let pc = new ParticipationCertificate();
