@@ -1,4 +1,5 @@
-import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import { ProjectField } from "../../../common/jufo/projectFields";
 /**
  * @apiDefine User
  * @apiVersion 1.0.1
@@ -280,6 +281,19 @@ export class ApiUserRoleProjectCoach {
     isUniversityStudent?: boolean;
     hasJufoCertificate?: boolean;
     jufoPastParticipationInfo?: string;
+}
+/**
+ * @apiDefine UserRoleProjectCoachee
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Body) {object} projectFields Array of project field identifiers, one of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
+ * @apiSuccess (Body) {string} isJufoParticipant One of <code>"yes", "no", "unsure", "neverheard"</code>
+ * @apiSuccess (Body) {number} projectMemberCount Number indicating the number of project members (can be either 1, or 2 or 3)
+ */
+export class ApiUserRoleProjectCoachee {
+    projectFields: ProjectField[];
+    isJufoParticipant: TuteeJufoParticipationIndication;
+    projectMemberCount: number;
 }
 
 

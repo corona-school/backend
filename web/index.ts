@@ -108,6 +108,7 @@ createConnection().then(() => {
         userApiRouter.post("/:id/role/instructor", userController.postUserRoleInstructorHandler);
         userApiRouter.post("/:id/role/tutor", userController.postUserRoleTutorHandler);
         userApiRouter.post("/:id/role/projectCoach", userController.postUserRoleProjectCoachHandler);
+        userApiRouter.post("/:id/role/projectCoachee", userController.postUserRoleProjectCoacheeHandler);
         app.use("/api/user", userApiRouter);
     }
 

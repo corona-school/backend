@@ -8,6 +8,7 @@ import {
     ApiPutUser,
     ApiUserRoleInstructor,
     ApiUserRoleProjectCoach,
+    ApiUserRoleProjectCoachee,
     checkName,
     checkSubject
 } from "./format";
@@ -29,6 +30,7 @@ import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 import {ApiSubject} from "../format";
 import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import { ProjectField } from "../../../common/jufo/projectFields";
 
 const logger = getLogger();
 
@@ -1228,6 +1230,105 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
     }
     catch (e) {
         logger.error(`Cannot send screening invitation (after adding role) to ${student.email}... ${e}`);
+    }
+
+    return 204;
+}
+
+/**
+ * @api {POST} /user/:id/role/projectcoachee postUserRoleProjectCoachee
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add the project coachee role to the current user by supplying project fields for matching.
+ *
+ * The user has to be authenticated.
+ *
+ * @apiName postUserRoleProjectCoachee
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/user/<ID>/role/projectcoachee
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse UserRoleProjectCoachee
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function postUserRoleProjectCoacheeHandler(req: Request, res: Response) {
+    let status = 204;
+
+    if (res.locals.user instanceof Pupil
+        && req.params.id != undefined
+        && req.body.projectFields instanceof Array
+        && typeof req.body.isJufoParticipant === "string"
+        && typeof req.body.projectMemberCount === "number") {
+
+        //check projectFields for validity
+        if (req.body.projectFields.length <= 0) {
+            status = 400;
+            logger.error("Post User Role Project Coachee expects projectFields");
+        }
+        const projectFields = req.body.projectFields as string[];
+        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s));
+        if (unknownProjectField) {
+            status = 400;
+            logger.error(`Post User Role Project Coachee has invalid project field ${JSON.stringify(unknownProjectField)}`);
+        }
+
+        // check isJufoParticipant for validity
+        if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
+            status = 400;
+            logger.error(`Post User Role Project Coachee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+        }
+
+        //check projectMemberCount for validity
+        const projectMemberCount: number = req.body.projectMemberCount;
+        if (projectMemberCount < 1 || projectMemberCount > 3) {
+            status = 400;
+            logger.error(`Post User Role Project Coachee has invalid value for projectMemberCount: ${projectMemberCount}`);
+        }
+
+        if (status < 300) {
+            status = await postUserRoleProjectCoachee(req.params.id, res.locals.user, req.body);
+        }
+    } else {
+        logger.warn("Missing request parameters for roleProjectCoachee.");
+        status = 400;
+    }
+
+    res.status(status).end();
+}
+
+async function postUserRoleProjectCoachee(wixId: string, pupil: Pupil, info: ApiUserRoleProjectCoachee): Promise<number> {
+    if (wixId != pupil.wix_id) {
+        logger.warn("Person with id " + pupil.wix_id + " tried to access data from id " + wixId);
+        return 403;
+    }
+
+    if (pupil.isProjectCoachee) {
+        logger.warn("Current user already is a project coachee");
+        return 400;
+    }
+
+    const entityManager = getManager();
+
+    try {
+        pupil.isProjectCoachee = true;
+        pupil.projectFields = info.projectFields;
+        pupil.isJufoParticipant = info.isJufoParticipant;
+        pupil.projectMemberCount = info.projectMemberCount;
+
+        // TODO: transaction log
+        await entityManager.save(Pupil, pupil);
+    } catch (e) {
+        logger.error("Unable to update pupil status: " + e.message);
+        return 500;
     }
 
     return 204;
