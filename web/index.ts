@@ -104,6 +104,7 @@ createConnection().then(() => {
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
+        userApiRouter.put("/:id/projectFields", userController.putProjectFieldsHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
         userApiRouter.delete("/:id/projectMatches/:uuid", projectMatchController.deleteHandler);

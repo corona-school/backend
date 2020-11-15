@@ -8,6 +8,7 @@ enum LogType {
     DEACTIVATE = "deActivate",
     UPDATE_PERSONAL = "updatePersonal",
     UPDATE_SUBJECTS = "updateSubjects",
+    UPDATE_PROJECTFIELDS = "updateProjectFields",
     ACCESSED_BY_SCREENER = "accessedByScreener",
     UPDATED_BY_SCREENER = "updatedByScreener",
     UPDATE_STUDENT_DESCRIPTION = "updateStudentDescription",
