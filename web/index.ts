@@ -9,6 +9,7 @@ import * as cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
+import * as projectMatchController from "./controllers/projectMatchController";
 import * as screeningController from "./controllers/screeningController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
@@ -105,6 +106,7 @@ createConnection().then(() => {
         userApiRouter.put("/:id/subjects", userController.putSubjectsHandler);
         userApiRouter.put("/:id/active/:active", userController.putActiveHandler);
         userApiRouter.delete("/:id/matches/:uuid", matchController.deleteHandler);
+        userApiRouter.delete("/:id/projectMatches/:uuid", projectMatchController.deleteHandler);
         userApiRouter.post("/:id/role/instructor", userController.postUserRoleInstructorHandler);
         userApiRouter.post("/:id/role/tutor", userController.postUserRoleTutorHandler);
         userApiRouter.post("/:id/role/projectCoach", userController.postUserRoleProjectCoachHandler);

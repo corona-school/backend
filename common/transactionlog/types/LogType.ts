@@ -3,6 +3,7 @@ enum LogType {
     VERIFICATION_REQUEST = "verificationRequets",
     VERIFIED = "verified",
     MATCH_DISSOLVE = "matchDissolve",
+    PROJECT_MATCH_DISSOLVE = "projectMatchDissolve",
     FETCHED_FROM_WIX = "fetchedFromWix",
     DEACTIVATE = "deActivate",
     UPDATE_PERSONAL = "updatePersonal",
