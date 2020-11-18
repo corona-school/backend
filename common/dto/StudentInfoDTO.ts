@@ -5,7 +5,6 @@ import { StudentEditableInfoDTO } from "./StudentEditableInfoDTO";
 export class StudentInfoDTO extends StudentEditableInfoDTO {
     firstName: string;
     lastName: string;
-    email: string;
 
     public static async buildFrom(student: Student) {
         const s = new StudentInfoDTO();
