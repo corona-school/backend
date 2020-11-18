@@ -1,5 +1,10 @@
 name: Build Docs and Deploy
-on: [push]
+on: 
+  push:
+    branches:
+      - master
+      - dev
+  workflow_dispatch:
 jobs:
   build-docs-and-deploy:
     runs-on: ubuntu-latest
