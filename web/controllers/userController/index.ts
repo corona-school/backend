@@ -31,6 +31,8 @@ import {ApiSubject} from "../format";
 import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import { ProjectField } from "../../../common/jufo/projectFields";
+import { ProjectMatch } from "../../../common/entity/ProjectMatch";
+import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 
 const logger = getLogger();
 
@@ -161,7 +163,8 @@ export async function putHandler(req: Request, res: Response) {
         if (typeof b.firstname == "string" &&
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
-            (b.matchesRequested == undefined || typeof b.matchesRequested == "number")) {
+            (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
             if (req.params.id != undefined && res.locals.user instanceof Person) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
@@ -289,6 +292,71 @@ export async function putSubjectsHandler(req: Request, res: Response) {
 }
 
 /**
+ * @api {PUT} /user/:id/projectFields putUserProjectFields
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Set the project fields of the user.
+ *
+ * This endpoint allows editing of the user's project fields. Please be aware, that
+ * students and pupils have different project field formats (students have additional grade restrictions).
+ * The user has to be authenticated and can only edit his own project fields.
+ *
+ * The project fields are given as an array of ProjectField objects in the request's body.
+ *
+ *
+ * @apiName putUserProjectFields
+ * @apiGroup User
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X PUT -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://api.corona-school.de/api/user/<ID>/projectFields -d "<REQUEST>"
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function putProjectFieldsHandler(req: Request, res: Response) {
+    let status = 204;
+    try {
+        //check project fields for validity
+        const projectFields = req.body as ApiProjectFieldInfo[];
+        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s.name));
+        if (unknownProjectField) {
+            status = 400;
+            logger.error(`Put user project fields has invalid project field '${JSON.stringify(unknownProjectField)}'`);
+        }
+
+        //if a student, check that every project field has min and max (or neither of them)
+        if (res.locals.user instanceof Student
+            && !projectFields.every(pf => (pf.min && pf.max && pf.min <= pf.max) || (pf.min == null && pf.max == null))) { //NOTE: 0 is also an invalid value, so using negation operator (!) is ok here.
+            status = 400;
+            logger.error(`Put user project fields has invalid project field grade restriction!`);
+        }
+
+        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
+            try {
+                status = await putProjectFields(req.params.id, projectFields, res.locals.user);
+            } catch (e) {
+                logger.warn("Error PUT /user/projectFields: " + e.message);
+                logger.debug(e);
+                status = 500;
+            }
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
  * @api {PUT} /user/:id/active/:active putUserActive
  * @apiVersion 1.1.0
  * @apiDescription
@@ -389,7 +457,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.projectCoachingScreeningStatus = await person.projectCoachingScreeningStatus();
         apiResponse.matchesRequested = person.openMatchRequestCount <= 3 ? person.openMatchRequestCount : 3;
+        apiResponse.projectMatchesRequested = person.openProjectMatchRequestCount <= 3 ? person.openProjectMatchRequestCount : 3;
         apiResponse.matches = [];
+        apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
         apiResponse.projectFields = (await person.projectFields).map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf.projectField, min: pf.min, max: pf.max}));
@@ -433,6 +503,27 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.dissolvedMatches.push(apiMatch);
         }
+
+        // Project Coaching Matches
+        const projectCoachingMatches = await entityManager.find(ProjectMatch, {
+            student: person
+        });
+        apiResponse.projectMatches = projectCoachingMatches.map(m => {
+            return {
+                dissolved: m.dissolved,
+                firstname: m.pupil.firstname,
+                lastname: m.pupil.lastname,
+                email: m.pupil.email,
+                uuid: m.uuid,
+                grade: m.pupil.gradeAsNumber(),
+                projectFields: m.pupil.projectFields,
+                jitsilink: m.jitsiLink(),
+                date: m.createdAt.getTime(),
+                jufoParticipation: m.pupil.isJufoParticipant,
+                projectMemberCount: m.pupil.projectMemberCount
+            };
+        });
+
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";
         apiResponse.isPupil = person.isPupil;
@@ -440,7 +531,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.isProjectCoachee = person.isProjectCoachee;
         apiResponse.grade = parseInt(person.grade);
         apiResponse.matchesRequested = person.openMatchRequestCount <= 1 ? person.openMatchRequestCount : 1;
+        apiResponse.projectMatchesRequested = person.openProjectMatchRequestCount <= 1 ? person.openProjectMatchRequestCount : 1;
         apiResponse.matches = [];
+        apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
         apiResponse.projectFields = person.projectFields.map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf}));
@@ -484,6 +577,24 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
             apiResponse.dissolvedMatches.push(apiMatch);
         }
+
+        // Project Coaching Matches
+        const projectCoachingMatches = await entityManager.find(ProjectMatch, {
+            pupil: person
+        });
+        apiResponse.projectMatches = await Promise.all(projectCoachingMatches.map(async m => {
+            return {
+                dissolved: m.dissolved,
+                firstname: m.student.firstname,
+                lastname: m.student.lastname,
+                email: m.student.email,
+                uuid: m.uuid,
+                projectFields: (await m.student.getProjectFields()).map(p => p.name),
+                jitsilink: m.jitsiLink(),
+                date: m.createdAt.getTime(),
+                jufoParticipation: m.student.wasJufoParticipant
+            };
+        }));
     } else {
         logger.warn("Unknown type of person: " + typeof person);
         logger.debug(person);
@@ -550,6 +661,17 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         else {
             person.lastUpdatedSettingsViaBlocker = null;
         }
+
+        // ++++ OPEN _PROJECT_ MATCH REQUEST COUNT ++++
+        // Check if number of requested project matches is valid
+        if (req.projectMatchesRequested != null) {
+            let projectMatchCount = await entityManager.count(ProjectMatch, { student: person, dissolved: false });
+            if (req.projectMatchesRequested > 3 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 6) {
+                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+                return 400;
+            }
+            person.openProjectMatchRequestCount = req.projectMatchesRequested;
+        }
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -603,6 +725,17 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         }
         else {
             person.lastUpdatedSettingsViaBlocker = null;
+        }
+
+        // ++++ OPEN _PROJECT_ MATCH REQUEST COUNT ++++
+        // Check if number of requested project matches is valid
+        if (req.projectMatchesRequested != null) {
+            let projectMatchCount = await entityManager.count(ProjectMatch, { pupil: person, dissolved: false });
+            if (req.projectMatchesRequested > 1 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 1) {
+                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+                return 400;
+            }
+            person.openProjectMatchRequestCount = req.projectMatchesRequested;
         }
     } else if (person instanceof Mentor) {
         type = Mentor;
@@ -701,6 +834,54 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
         await entityManager.save(type, person);
         await transactionLog.log(
             new UpdateSubjectsEvent(person, JSON.parse(oldPerson.subjects))
+        );
+    } catch (e) {
+        logger.error("Can't update " + type.toString() + ": " + e.message);
+        logger.debug(person, e);
+    }
+
+    return 204;
+}
+
+async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], person: Pupil | Student): Promise<number> {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
+    if (person == null) {
+        logger.error("getUser() returned null");
+        return 500;
+    }
+    if (person.wix_id != wix_id) {
+        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
+        return 403;
+    }
+
+    //check if the person is a project coach(ee), otherwise do not allow setting project fields
+    if (!(person as Pupil).isProjectCoachee && !(person as Student).isProjectCoach) {
+        logger.error(`Person with id ${person.wix_id} is no project coach(ee) and thus setting project fields is invalid!`);
+        return 400;
+    }
+
+    let oldProjectFields: ProjectFieldWithGradeInfoType[];
+
+    const projectFields = req as ProjectFieldWithGradeInfoType[];
+    let type: ObjectType<Person>;
+    if (person instanceof Student) {
+        oldProjectFields = await person.getProjectFields();
+        await person.setProjectFields(projectFields);
+    } else if (person instanceof Pupil) {
+        oldProjectFields = person.projectFields.map( p => ({name: p}));
+        person.projectFields = projectFields.map(pf => pf.name);
+    } else {
+        logger.error("Unknown type of person: " + typeof person);
+        logger.debug(person);
+        return 500;
+    }
+
+    try {
+        await entityManager.save(person);
+        await transactionLog.log(
+            new UpdateProjectFieldsEvent(person, oldProjectFields)
         );
     } catch (e) {
         logger.error("Can't update " + type.toString() + ": " + e.message);

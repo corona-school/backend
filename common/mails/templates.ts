@@ -361,5 +361,31 @@ export const mailjet = {
                 base64Content: csvBase64
             }]
         };
+    },
+    PROJECTCOACHEEMATCHDISSOLVED: (variables: {
+        coacheeFirstname: string;
+        coachFirstname: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'projectcoacheematchdissolved',
+            id: 1894606,
+            sender: DEFAULTSENDERS.noreply,
+            title: "Deine Zuteilung wurde aufgelöst",
+            disabled: false,
+            variables: variables
+        };
+    },
+    PROJECTCOACHMATCHDISSOLVED: (variables: {
+        coachFirstname: string;
+        coacheeFirstname: string;
+    }) => {
+        return <TemplateMail>{
+            type: 'projectcoachmatchdissolved',
+            id: 1894653,
+            sender: DEFAULTSENDERS.noreply,
+            title: "Deine Zuteilung wurde aufgelöst",
+            disabled: false,
+            variables: variables
+        };
     }
 };

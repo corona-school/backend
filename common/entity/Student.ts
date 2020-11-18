@@ -15,6 +15,7 @@ import { parseSubjectString, Subject, toStudentSubjectDatabaseFormat } from "../
 import { ScreeningInfo } from "../util/screening";
 import { Screener } from "./Screener";
 import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
+import { ProjectMatch } from "./ProjectMatch";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -203,6 +204,9 @@ export class Student extends Person {
         cascade: true
     })
     jufoVerificationTransmission: JufoVerificationTransmission;
+
+    @OneToMany(type => ProjectMatch, match => match.student, { nullable: true })
+    projectMatches: Promise<ProjectMatch[]>;
 
     /*
      * Other data

@@ -14,10 +14,12 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (User Object) {boolean} active An inactive user is not considered for new matches.
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
+ * @apiSuccess (User Object) {number} projectMatchesRequested Number of project matches requested by the user
  * @apiSuccess (User Object) {string} screeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {string} instructorScreeningStatus <i>Only available for students:</i> <code>"ACCEPTED"</code> if the user was screened for group courses with success, <code>"REJECTED"</code> if the user was rejected, <code>"UNSCREENED"</code> if the user wasn't screened yet
  * @apiSuccess (User Object) {Subject[]} subjects List of subjects
  * @apiSuccess (User Object) {Match[]} matches List of current matches
+ * @apiSuccess (User Object) {ProjectMatch[]} projectMatches List of current project matches
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
  * @apiSuccess (User Object) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") in the frontend
  * @apiSuccess (User Object) {number} registrationDate The unix timestamp of when the user registered
@@ -83,6 +85,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  *          "instructorScreeningStatus": "ACCEPTED",
  *          "projectCoachingScreeningStatus": "ACCEPTED",
  *          "matchesRequested": 1,
+ *          "projectMatchesRequested": 1,
  *          "subjects": [
  *              {
  *                  "name": "Chinesisch",
@@ -119,7 +122,25 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  *                  "jitsilink": "https://meet.jit.si/CoronaSchool-24a93ed5-4bfe-4969-adae-b6cceaf0d1a0",
  *                  "date": 1590834509
  *              }
- *          ]
+ *          ],
+ *          "projectMatches": [
+ *              {
+ *                  "firstname": "John",
+ *                  "lastname": "Doe",
+ *                  "email": "john.doe@example.com",
+ *                  "uuid": "af7392d74-8d7f-9083-0973-fda9b8e0f9f",
+ *                  "grade": 6,
+ *                  "projectFields": [
+ *                      "Arbeitswelt",
+ *                      "Chemie"
+ *                  ]
+ *                  "jitsilink": "https://meet.jit.si/CoronaSchool-ProjectCoaching-adl792d76-8d7f-9083-0973-a8d9b8e0d2j",
+ *                  "date": 1590834509,
+ *                  "projectMemberCount": 2,
+ *                  "jufoParticipation": "yes",
+ *                  "dissolved": false
+ *              }
+ *          ],
  *      }
  */
 import {ApiSubject} from "../format";
@@ -139,6 +160,7 @@ export class ApiGetUser {
     active: boolean;
     grade?: number;
     matchesRequested?: number;
+    projectMatchesRequested?: number;
     screeningStatus?: string;
     instructorScreeningStatus?: string;
     projectCoachingScreeningStatus?: string;
@@ -146,6 +168,7 @@ export class ApiGetUser {
     projectFields: ApiProjectFieldInfo[];
     matches: ApiMatch[];
     dissolvedMatches: ApiMatch[];
+    projectMatches: ApiProjectMatch[];
     state?: string;
     university?: string;
     schoolType?: string;
@@ -162,6 +185,7 @@ export class ApiGetUser {
  * @apiParam (User Personal) {string} lastname Last name
  * @apiParam (User Personal) {number} grade <i>Only for pupils:</i> Grade of the pupil
  * @apiParam (User Personal) {number} matchesRequested <i>Only for students:</i> Number of total match requests. A student may request at most 2 matches at a time and may have at most a total of 4 matches at the same time
+ * @apiParam (User Personal) {number} [projectMatchesRequested] Number of total project match requests. A student may request at most 2 matches at a time and may have at most a total of 4 matches at the same time
  * @apiParam (User Personal) {string} state the student's/pupil's state
  * @apiParam (User Personal) {string} university <i>Only for students:</i> student's university
  * @apiParam (User Personal) {string} schoolType <i>Only for pupils:</i> School Type of the pupil
@@ -203,6 +227,7 @@ export class ApiPutUser {
     lastname: string;
     grade?: number;
     matchesRequested?: number;
+    projectMatchesRequested?: number;
     state?: string;
     university?: string;
     schoolType?: string;
@@ -339,6 +364,35 @@ export class ApiMatch {
     subjects: string[];
     jitsilink: string;
     date: number;
+}
+
+/**
+ * @apiDefine ProjectMatch
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (Match Object) {string} uuid Unique identifier for the Match
+ * @apiSuccess (Match Object) {string} firstname First name of the matched partner
+ * @apiSuccess (Match Object) {string} lastname Last name of the matched partner
+ * @apiSuccess (Match Object) {string} email E-Mail address of the matched partner
+ * @apiSuccess (Match Object) {string} [grade] <i>only available for students:</i> Grade of the pupil
+ * @apiSuccess (Match Object) {string[]} projectFields The array of project fields of the matching partner
+ * @apiSuccess (Match Object) {string} jitsilink Link to the Jitsi session for the match
+ * @apiSuccess (Match Object) {number} date Unix timestamp of when these persons were matched
+ * @apiSuccess (Match Object) {string} jufoParticipation For students one of <code>"yes", "no", "unsure", "neverheard"</code>, for pupils one of <code>"yes", "no", "idk"</code>
+ * @apiSuccess (Match Object) {number} [projectMemberCount] <i>only available for students:</i> Number of team members of the matching partner's project
+ */
+export class ApiProjectMatch {
+    dissolved: boolean;
+    firstname: string;
+    lastname: string;
+    email: string;
+    uuid: string;
+    grade?: number;
+    projectFields: ProjectField[];
+    jitsilink: string;
+    date: number;
+    jufoParticipation: TutorJufoParticipationIndication | TuteeJufoParticipationIndication;
+    projectMemberCount?: number;
 }
 
 export function checkSubject(s: string): boolean {
