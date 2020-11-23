@@ -1,0 +1,42 @@
+import {Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn} from "typeorm";
+import {Student} from "./Student";
+import {ExpertiseTag} from "./ExpertiseTag";
+
+@Entity()
+export class ExpertData {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @CreateDateColumn({ type: "timestamp" })
+    createdAt: Date;
+
+    @CreateDateColumn({ type: "timestamp" })
+    updatedAt: Date;
+
+    @OneToOne( (type) => Student, (student) => student.expertData)
+    student: Student;
+
+    @Column()
+    contactEmail: string;
+
+    @Column({
+        nullable: true
+    })
+    description: string;
+
+    @ManyToMany((type) => ExpertiseTag, expertiseTags => expertiseTags.expertData, {
+        eager: true
+    })
+    @JoinTable()
+    expertiseTags: ExpertiseTag[];
+
+    @Column({
+        default: false
+    })
+    active: boolean;
+
+    @Column({
+        default: false
+    })
+    allowed: boolean;
+}

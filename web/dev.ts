@@ -21,6 +21,7 @@ import { ProjectField } from "../common/jufo/projectFields";
 import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldWithGradeRestriction";
 import { TuteeJufoParticipationIndication } from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
+import {ExpertData} from "../common/entity/ExpertData";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -816,6 +817,21 @@ export async function setupDevDB() {
     for (let i = 0; i < schools.length; i++) {
         await entityManager.save(schools[i]);
         console.log("Inserted Dev School " + i);
+    }
+
+    //Insert expert data
+    const experts: ExpertData[] = [];
+
+    const expert1 = new ExpertData();
+    expert1.student = students[5];
+    expert1.contactEmail = "contact@jufo-tufo.de";
+    expert1.description = "JuFo is great!";
+
+    experts.push(expert1);
+
+    for (let i = 0; i < experts.length; i++) {
+        await entityManager.save(experts[i]);
+        console.log("Inserted Dev Expert " + i);
     }
 }
 
