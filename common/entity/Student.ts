@@ -222,9 +222,7 @@ export class Student extends Person {
 
     @OneToOne((type) => ExpertData, (expertData) => expertData.student, {
         nullable: true,
-        eager: true
     })
-    @JoinColumn()
     expertData: ExpertData;
 
     /*

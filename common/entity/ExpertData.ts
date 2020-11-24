@@ -1,6 +1,16 @@
-import {Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn} from "typeorm";
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    OneToOne,
+    PrimaryGeneratedColumn
+} from "typeorm";
 import {Student} from "./Student";
 import {ExpertiseTag} from "./ExpertiseTag";
+import {Col} from "sequelize/types/lib/utils";
 
 @Entity()
 export class ExpertData {
@@ -13,7 +23,10 @@ export class ExpertData {
     @CreateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @OneToOne( (type) => Student, (student) => student.expertData)
+    @OneToOne( (type) => Student, (student) => student.expertData, {
+        eager: true
+    })
+    @JoinColumn()
     student: Student;
 
     @Column()

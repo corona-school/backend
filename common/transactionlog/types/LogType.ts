@@ -18,7 +18,8 @@ enum LogType {
     CANCELLED_SUBCOURSE = "cancelledSubcourse",
     CREATED_COURSE_ATTENDANCE_LOG = "createdCourseAttendanceLog",
     CONTACT_MENTOR = "contactMentor",
-    CREATED_BBB_MEETING = "bbbMeeting"
+    CREATED_BBB_MEETING = "bbbMeeting",
+    CONTACT_EXPERT = "contactExpert"
 }
 
 export default LogType;
