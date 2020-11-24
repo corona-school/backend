@@ -2,6 +2,7 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    EntityManager,
     Index,
     JoinColumn,
     ManyToOne,
@@ -11,6 +12,8 @@ import {
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
+import { v4 as generateUUID } from "uuid";
+import { ProjectField } from "../jufo/projectFields";
 
 @Entity()
 @Unique("UQ_PJ_MATCH", ["student", "pupil"])
@@ -54,4 +57,25 @@ export class ProjectMatch {
     jitsiLink(): string {
         return `https://meet.jit.si/CoronaSchool-ProjectCoaching-${encodeURIComponent(this.uuid)}`;
     }
+
+    constructor(pupil: Pupil, student: Student) {
+        this.pupil = pupil;
+        this.student = student;
+        this.uuid = generateUUID();
+    }
+
+    async overlappingProjectFields(): Promise<ProjectField[]> {
+        return await this.pupil.overlappingProjectFieldsWithCoach(this.student);
+    }
+}
+
+export async function getProjectMatchByID(id: number, manager: EntityManager): Promise<ProjectMatch> {
+    return manager.findOne(ProjectMatch, {
+        id: id
+    });
+}
+
+///Takes the given project matches instances and re-queries them from the database, returning new instances for all of them.
+export async function reloadProjectMatchesInstances(projectMatches: ProjectMatch[], manager: EntityManager): Promise<ProjectMatch[]> {
+    return await Promise.all(projectMatches.map(async m => await getProjectMatchByID(m.id, manager)));
 }

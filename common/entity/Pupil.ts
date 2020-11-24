@@ -10,6 +10,7 @@ import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectMatch } from "./ProjectMatch";
 import { gradeAsInt } from "../util/gradestrings";
+import { Student } from "./Student";
 
 @Entity()
 export class Pupil extends Person {
@@ -172,6 +173,13 @@ export class Pupil extends Person {
 
     gradeAsNumber(): number {
         return gradeAsInt(this.grade);
+    }
+
+    async overlappingProjectFieldsWithCoach(coach: Student): Promise<ProjectField[]> {
+        const fieldsCoach = await coach.getProjectFields();
+        const pupilGrade = this.gradeAsNumber();
+
+        return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && fc.min <= pupilGrade && pupilGrade <= fc.max));
     }
 }
 

@@ -376,6 +376,13 @@ export class Student extends Person {
         return ScreeningStatus.Rejected;
     }
 
+    ///Returns true if that person is allowed to be project coach (i.e. has the required screenings and confirmations from Jugend forscht)
+    async hasPermissionToBeProjectCoach(): Promise<boolean> {
+        const screeningStatus = await this.projectCoachingScreeningStatus();
+
+        return screeningStatus === ScreeningStatus.Accepted && (this.isUniversityStudent || this.wasJufoParticipant !== TutorJufoParticipationIndication.YES || this.hasJufoCertificate === true || this.jufoPastParticipationConfirmed === true);
+    }
+
     //Returns the URL that the student can use to get to his screening video call
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)

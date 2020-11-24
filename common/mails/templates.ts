@@ -387,5 +387,38 @@ export const mailjet = {
             disabled: false,
             variables: variables
         };
+    },
+    COACHEENEWMATCH: (variables: {
+        coacheeFirstname: string;
+        coachFirstname: string;
+        coachEmail: string;
+        subjects: string;
+        callURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coacheenewmatch",
+            id: 1949901,
+            sender: DEFAULTSENDERS.anmeldung,
+            title: "Neues Match (Projektcoaching)",
+            disabled: false,
+            variables: variables
+        };
+    },
+    COACHNEWMATCH: (variables: {
+        coachFirstname: string;
+        coacheeFirstname: string;
+        coacheeEmail: string;
+        coacheeGrade: string;
+        subjects: string;
+        callURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coachnewmatch",
+            id: 1949895,
+            sender: DEFAULTSENDERS.anmeldung,
+            title: "Neues Match (Projektcoaching)",
+            disabled: false,
+            variables: variables
+        };
     }
 };

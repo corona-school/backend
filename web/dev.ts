@@ -19,8 +19,9 @@ import { State } from "../common/entity/State";
 import { SchoolType } from "../common/entity/SchoolType";
 import { ProjectField } from "../common/jufo/projectFields";
 import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldWithGradeRestriction";
-import { TuteeJufoParticipationIndication } from "../common/jufo/participationIndication";
+import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
+import { ProjectCoachingScreening } from "../common/entity/ProjectCoachingScreening";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -207,6 +208,10 @@ export async function setupDevDB() {
     await s6.setProjectFields([
         { name: ProjectField.ARBEITSWELT, min: 1, max: 13 }
     ]);
+    s6.wasJufoParticipant = TutorJufoParticipationIndication.YES;
+    s6.isUniversityStudent = false;
+    s6.hasJufoCertificate = false;
+    s6.jufoPastParticipationConfirmed = true;
     s6.verification = null;
     s6.verifiedAt = new Date(new Date().getTime() - 110000);
     s6.authToken = sha512("authtokenS6");
@@ -263,10 +268,8 @@ export async function setupDevDB() {
 
     const projectMatches: ProjectMatch[] = [];
 
-    let pm = new ProjectMatch();
+    let pm = new ProjectMatch(pupils[3], students[5]);
     pm.uuid = "000000001-0000-0000-0001-2c5d5d637475";
-    pm.pupil = pupils[3];
-    pm.student = students[5];
     projectMatches.push(pm);
 
     for (let i = 0; i < projectMatches.length; i++) {
@@ -777,6 +780,24 @@ export async function setupDevDB() {
     for (let i = 0; i < instructorScreenings.length; i++) {
         await entityManager.save(InstructorScreening, instructorScreenings[i]);
         console.log("Inserted Dev Instrcutor Screening " + i);
+    }
+
+    //project coaching screenings
+    const projectCoachingScreenings: ProjectCoachingScreening[] = [];
+
+    const projectCoachingScreening1 = new ProjectCoachingScreening();
+    projectCoachingScreening1.success = true;
+    projectCoachingScreening1.comment = "🎉";
+    projectCoachingScreening1.knowsCoronaSchoolFrom = "Internet";
+    projectCoachingScreening1.screener = screeners[0];
+    projectCoachingScreening1.student = students[5];
+
+    projectCoachingScreenings.push(projectCoachingScreening1);
+
+
+    for (let i = 0; i < projectCoachingScreenings.length; i++) {
+        await entityManager.save(ProjectCoachingScreening, projectCoachingScreenings[i]);
+        console.log("Inserted Dev Project Screening " + i);
     }
 
     // Test data for course attendance log
