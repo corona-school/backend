@@ -4,8 +4,6 @@ import {
     EntityManager,
     getManager,
     Index,
-    JoinColumn,
-    JoinTable,
     ManyToMany,
     OneToMany,
     OneToOne
@@ -221,7 +219,7 @@ export class Student extends Person {
     projectMatches: Promise<ProjectMatch[]>;
 
     @OneToOne((type) => ExpertData, (expertData) => expertData.student, {
-        nullable: true,
+        nullable: true
     })
     expertData: ExpertData;
 
