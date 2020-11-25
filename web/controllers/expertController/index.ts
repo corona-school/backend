@@ -14,13 +14,13 @@ import {ExpertiseTag} from "../../../common/entity/ExpertiseTag";
 const logger = getLogger();
 
 /**
- * @api {POST} /expert/:id/contact
+ * @api {POST} /expert/:id/contact contactExpert
  * @apiVersion 1.0.1
  * @apiDescription
  * Writes an email to an expert
  *
- * If email was successfully sent, status code 200 us returned.
- * Note: delivery cannot be guaranteed
+ * If email was successfully sent, status code 200 is returned.
+ * Note: delivery cannot be guaranteed.
  *
  * @apiName ContactExpert
  * @apiGroup Expert
@@ -37,7 +37,6 @@ const logger = getLogger();
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
- * @apiUse StatusUnauthorized
  * @apiUse StatusNotFound
  * @apiUse StatusInternalServerError
  */
@@ -117,6 +116,10 @@ async function postContactExpert(id: string, user: Pupil | Student, apiContactEx
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://[HOST]/api/expert
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
  */
 export async function getExpertsHandler(req: Request, res: Response) {
     const entityManager = getManager();
@@ -179,7 +182,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
- * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
 export async function putExpertHandler(req: Request, res: Response) {
@@ -287,6 +290,10 @@ async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag
  *
  * @apiExample {curl} Curl
  * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://[HOST]/api/expert/tags
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
  */
 export async function getUsedTagsHandler(req: Request, res: Response) {
     let status = 200;
