@@ -10,9 +10,6 @@ export class ExpertiseTag {
         unique: true
     })
     @Column()
-    identifier: string;
-
-    @Column()
     name: string;
 
     @ManyToMany((type) => ExpertData, expertData => expertData.expertiseTags)

@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import {Student} from "../../../common/entity/Student";
 import {getLogger} from "log4js";
 import {Pupil} from "../../../common/entity/Pupil";
-import {ApiContactExpert, ApiGetExpert} from "./format";
+import {ApiContactExpert, ApiGetExpert, ApiPutExpert} from "./format";
 import {getTransactionLog} from "../../../common/transactionlog";
 import {getManager} from "typeorm";
 import {ExpertData} from "../../../common/entity/ExpertData";
@@ -10,6 +10,7 @@ import mailjet from "../../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../../common/mails/config";
 import ContactExpertEvent from "../../../common/transactionlog/types/ContactExpertEvent";
 import {ApiGetUser} from "../userController/format";
+import {ExpertiseTag} from "../../../common/entity/ExpertiseTag";
 
 const logger = getLogger();
 
@@ -29,6 +30,8 @@ const logger = getLogger();
  * @apiUse ContentType
  *
  * @apiUse ContactExpert
+ *
+ * @apiParam (URL Parameter) {string} id Expert Id
  *
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://[HOST]/api/expert/:id/contact
@@ -145,7 +148,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
 
             res.json(apiResponse);
         } else {
-            logger.warn("Someone who is neither student or pup[il wanted to access the expert data.");
+            logger.warn("Someone who is neither student or pupil wanted to access the expert data.");
             status = 401;
         }
     } catch (e) {
@@ -153,4 +156,117 @@ export async function getExpertsHandler(req: Request, res: Response) {
         status = 500;
     }
     res.status(status).end();
+}
+
+/**
+ * @api {POST} /expert/:id putExpert
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * As a student become an expert or change my expert data
+ *
+ * The user has to be authenticated.
+ *
+ * @apiName postExpert
+ * @apiGroup Expert
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/expert/<ID>
+ *
+ * @apiParam (URL Parameter) {string} id User Id
+ *
+ * @apiUse PutExpert
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function putExpertHandler(req: Request, res: Response) {
+    let status = 204;
+
+    try {
+        if (res.locals.user instanceof Student
+            && req.params.id != undefined
+            && (req.body.contactEmail === undefined || typeof req.body.contactEmail === "string")
+            && (req.body.description === undefined || typeof req.body.description === "string")
+            && req.body.expertiseTags instanceof Array
+            && typeof req.body.active === "boolean") {
+
+            for (let i = 0; i < req.body.expertiseTags.length; i++) {
+                if (typeof req.body.expertiseTags[i] !== "string") {
+                    logger.error(`Invalid expertise tag ${JSON.stringify(req.body.expertiseTags[i])}`);
+                    status = 400;
+                }
+            }
+
+            if (status < 300) {
+                status = await putExpert(req.params.id, res.locals.user, req.body);
+            }
+        } else {
+            logger.warn("Invalid request parameters for PUT /expert/:id");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("PUT expert/:id failed with ", e.message);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function putExpert(wixId: string, student: Student, info: ApiPutExpert): Promise<number> {
+    if (wixId != student.wix_id) {
+        logger.warn(`Person with id ${student.wix_id} tried to access data from id ${wixId}`);
+        return 403;
+    }
+
+    if (!student.isProjectCoach) {
+        logger.warn("Non-project-coach tried to put expert data.");
+        return 403;
+    }
+
+    const entityManager = getManager();
+
+    const expertiseTags: ExpertiseTag[] = await GetExpertiseTags(info.expertiseTags);
+
+    let expertData = await entityManager.findOne(ExpertData, { student: student });
+    if (!expertData) {
+        expertData = new ExpertData();
+        expertData.student = student;
+    }
+
+    logger.debug(expertData);
+
+    expertData.contactEmail = info.contactEmail ?? student.email;
+    expertData.description = info.description;
+    expertData.expertiseTags = expertiseTags;
+    expertData.active = info.active;
+    expertData.allowed = false;
+
+    try {
+        await entityManager.save(ExpertiseTag, expertiseTags);
+        await entityManager.save(ExpertData, expertData);
+    } catch (e) {
+        logger.error("Failed to save expert data with: ", e.message);
+        return 500;
+    }
+    return 204;
+}
+
+
+async function GetExpertiseTags(tagNames: string[]): Promise<ExpertiseTag[]> {
+    const entityManager = getManager();
+
+    const tags: ExpertiseTag[] = await entityManager.find(ExpertiseTag, { where: tagNames.map(t => ({ name: t }))});
+
+    for (let i = 0; i < tagNames.length; i++) {
+        if (!tags.map(t => (t.name)).includes(tagNames[i])) {
+            let newTag = new ExpertiseTag();
+            newTag.name = tagNames[i];
+            tags.push(newTag);
+        }
+    }
+
+    return tags;
 }

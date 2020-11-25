@@ -248,6 +248,7 @@ createConnection().then(() => {
         expertRouter.use(authCheckFactory());
         expertRouter.get("/", expertController.getExpertsHandler);
         expertRouter.post("/:id/contact", expertController.postContactExpertHandler);
+        expertRouter.put("/:id", expertController.putExpertHandler);
 
         app.use("/api/expert", expertRouter);
     }

@@ -123,6 +123,7 @@ export async function setupDevDB() {
         { name: "Spanisch", minGrade: 6, maxGrade: 10 }
     ]);
     s1.openMatchRequestCount = 1;
+    s1.isProjectCoach = true;
     students.push(s1);
 
     const s2 = new Student();
@@ -825,13 +826,11 @@ export async function setupDevDB() {
 
     const tag1 = new ExpertiseTag();
     tag1.name = "LTE";
-    tag1.identifier = "lte";
 
     expertiseTags.push(tag1);
 
     const tag2 = new ExpertiseTag();
     tag2.name = "Glasfaser";
-    tag2.identifier = "glasfaser";
 
     expertiseTags.push(tag2);
 

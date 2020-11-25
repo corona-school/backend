@@ -27,3 +27,19 @@ export class ApiGetExpert {
     description?: string;
     expertiseTags: string[];
 }
+
+/**
+ * @apiDefine PutExpert
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Expert Object) {string} contactEmail <em>(optional)</em> The email adress on which the expert can be contacted from pupils. If none is given, the original email will be taken.
+ * @apiSuccess (Expert Object) {string} description <em>(optional)</em> A description provided by the expert.
+ * @apiSuccess (Expert Object) {string[]} expertiseTags Tags describing the expert's fields of expertise.
+ * @apiSuccess (Expert Object) {boolean} active If true the person consents that her/ his data will be accessible by other users.
+ */
+export interface ApiPutExpert {
+    contactEmail?: string;
+    description?: string;
+    expertiseTags: string[];
+    active: boolean;
+}

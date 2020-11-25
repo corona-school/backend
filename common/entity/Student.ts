@@ -219,7 +219,8 @@ export class Student extends Person {
     projectMatches: Promise<ProjectMatch[]>;
 
     @OneToOne((type) => ExpertData, (expertData) => expertData.student, {
-        nullable: true
+        nullable: true,
+        cascade: true
     })
     expertData: ExpertData;
 
