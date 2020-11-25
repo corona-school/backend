@@ -174,6 +174,7 @@ export class ApiGetUser {
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
+    expertData?: ApiExpertData;
     //TODO: Um Mentor erweitern
 }
 
@@ -393,6 +394,26 @@ export class ApiProjectMatch {
     date: number;
     jufoParticipation: TutorJufoParticipationIndication | TuteeJufoParticipationIndication;
     projectMemberCount?: number;
+}
+
+/**
+ * @apiDefine ExpertData
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (ExpertData Object) {number} id Unique identifier for the ExpertData.
+ * @apiSuccess (ExpertData Object) {string} contactEmail Email adress specific for contacting the expert.
+ * @apiSuccess (ExpertData Object) {string} description <em>(optional)</em> Description given by the expert on his expertise
+ * @apiSuccess (ExpertData Object) {string[]} expertiseTags Tags which describe the expert's fields of expertise
+ * @apiSuccess (ExpertData Object) {boolean} active Indicates whether the expert agrees on publishing his data on the platform
+ * @apiSuccess (ExpertData Object) {boolean} allowed Indicates whether the publishing is allowed by Corona School staff
+ */
+export class ApiExpertData {
+    id: number;
+    contactEmail: string;
+    description?: string;
+    expertiseTags: string[];
+    active: boolean;
+    allowed: boolean;
 }
 
 export function checkSubject(s: string): boolean {
