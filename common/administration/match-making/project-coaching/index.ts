@@ -36,5 +36,6 @@ export async function matchMakingOfAllPossibleMatches(manager: EntityManager) {
     await notifyMatches(databaseProjectMatches, manager);
 
     logger.info(`Successfully created ${databaseProjectMatches.length} new project matches and notified the corresponding people`);
+    logger.info(`Matches made: ${JSON.stringify(matching)}`);
     //TODO: additional logging that also logs how many people are still waiting
 }
