@@ -2,14 +2,13 @@ import {Request, Response} from "express";
 import {Student} from "../../../common/entity/Student";
 import {getLogger} from "log4js";
 import {Pupil} from "../../../common/entity/Pupil";
-import {ApiContactExpert, ApiGetExpert, ApiPutExpert} from "./format";
+import {ApiContactExpert, ApiGetExpert, ApiGetExpertiseTag, ApiPutExpert} from "./format";
 import {getTransactionLog} from "../../../common/transactionlog";
 import {getManager} from "typeorm";
 import {ExpertData} from "../../../common/entity/ExpertData";
 import mailjet from "../../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../../common/mails/config";
 import ContactExpertEvent from "../../../common/transactionlog/types/ContactExpertEvent";
-import {ApiGetUser} from "../userController/format";
 import {ExpertiseTag} from "../../../common/entity/ExpertiseTag";
 
 const logger = getLogger();
@@ -117,7 +116,7 @@ async function postContactExpert(id: string, user: Pupil | Student, apiContactEx
  * @apiUse Authentication
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET -H ""oken <AUTHTOKEN>" https://[HOST]/api/expert
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://[HOST]/api/expert
  */
 export async function getExpertsHandler(req: Request, res: Response) {
     const entityManager = getManager();
@@ -149,7 +148,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
             res.json(apiResponse);
         } else {
             logger.warn("Someone who is neither student or pupil wanted to access the expert data.");
-            status = 401;
+            status = 403;
         }
     } catch (e) {
         logger.error("GetExperts failed with ", e);
@@ -228,7 +227,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
 
     const entityManager = getManager();
 
-    const expertiseTags: ExpertiseTag[] = await GetExpertiseTags(info.expertiseTags);
+    const expertiseTags: ExpertiseTag[] = await GetExpertiseTagEntities(info.expertiseTags);
 
     let expertData = await entityManager.findOne(ExpertData, { student: student });
     if (!expertData) {
@@ -255,7 +254,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
 }
 
 
-async function GetExpertiseTags(tagNames: string[]): Promise<ExpertiseTag[]> {
+async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag[]> {
     const entityManager = getManager();
 
     const tags: ExpertiseTag[] = await entityManager.find(ExpertiseTag, { where: tagNames.map(t => ({ name: t }))});
@@ -269,4 +268,54 @@ async function GetExpertiseTags(tagNames: string[]): Promise<ExpertiseTag[]> {
     }
 
     return tags;
+}
+
+/**
+ * @api {GET} /expert/tags getUsedTags
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * Get all expertise tags in the database
+ *
+ * Only students or pupils with a valid token in the header can use the API.
+ *
+ * @apiName getUsedTags
+ * @apiGroup Expert
+ *
+ * @apiUse GetExpertiseTag
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://[HOST]/api/expert/tags
+ */
+export async function getUsedTagsHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {
+            const entityManager = getManager();
+
+            const tags = await entityManager.find(ExpertiseTag, {
+                relations: ["expertData"]
+            });
+
+            const apiResponse: ApiGetExpertiseTag[] = [];
+
+            for (let i = 0; i < tags.length; i++) {
+                let apiTag: ApiGetExpertiseTag = {
+                    name: tags[i].name,
+                    experts: tags[i].expertData.map(e => e.id)
+                };
+                apiResponse.push(apiTag);
+            }
+
+            res.json(apiResponse);
+        } else {
+            logger.warn("Someone who is neither student or pupil wanted to access the expertise tags.");
+            status = 401;
+        }
+    } catch (e) {
+        logger.error("GetUsedTags failed with ", e);
+        status = 500;
+    }
+    res.status(status).end();
 }

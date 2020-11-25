@@ -249,6 +249,7 @@ createConnection().then(() => {
         expertRouter.get("/", expertController.getExpertsHandler);
         expertRouter.post("/:id/contact", expertController.postContactExpertHandler);
         expertRouter.put("/:id", expertController.putExpertHandler);
+        expertRouter.get("/tags", expertController.getUsedTagsHandler);
 
         app.use("/api/expert", expertRouter);
     }

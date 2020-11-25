@@ -43,3 +43,15 @@ export interface ApiPutExpert {
     expertiseTags: string[];
     active: boolean;
 }
+
+/**
+ * @apiDefine GetExpertiseTag
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Expert Object) {string} name The name of the tag.
+ * @apiSuccess (Expert Object) {number[]} experts The unique of the experts who chose thies particular tag
+ */
+export interface ApiGetExpertiseTag {
+    name: string;
+    experts: number[];
+}
