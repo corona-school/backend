@@ -6,6 +6,8 @@ import { Student } from "../../../../entity/Student";
 import { Pupil } from "../../../../entity/Pupil";
 import { intersection } from "lodash";
 import { getProjectMatchByID, ProjectMatch, reloadProjectMatchesInstances } from "../../../../entity/ProjectMatch";
+import { coachIsAllowedToGetProjectMatch } from "../people/coaches";
+import { coacheeIsAllowedToGetProjectMatch } from "../people/coachees";
 
 export type ValidationProblem = {
     match: Match;
@@ -40,8 +42,11 @@ async function ensureNeverPreviouslyMatchedTogether(coach: Student, coachee: Pup
 
     return intersection([...partnersCoach, ...partnersCoachee], [coach.wix_id, coachee.wix_id]).length === 0;
 }
-async function ensureScreening(coach: Student, coachee: Pupil) {
-    return await coach.hasPermissionToBeProjectCoach();
+async function ensureScreening(coach: Student, coachee: Pupil, manager: EntityManager) {
+    return await coachIsAllowedToGetProjectMatch(manager, coach);
+}
+async function ensureNeed(coache: Student, coachee: Pupil, manager: EntityManager) {
+    return await coacheeIsAllowedToGetProjectMatch(manager, coachee);
 }
 async function ensureOverlappingProjectFields(coach: Student, coachee: Pupil) {
     return (await coachee.overlappingProjectFieldsWithCoach(coach)).length > 0;
@@ -58,7 +63,8 @@ export async function validateMatch(match: Match, manager: EntityManager): Promi
         ensureOpenMatchRequests, //3. check if both of the matching partners have an open match request
         ensureNeverPreviouslyMatchedTogether, //4. ensure that they weren't previosly matched together
         ensureScreening, //5. ensure that the student/coach is successfully screened
-        ensureOverlappingProjectFields //6. make sure that the project fields, including the grade restrictions are overlapping
+        ensureOverlappingProjectFields, //6. make sure that the project fields, including the grade restrictions are overlapping
+        ensureNeed //7. make sure the coachee really needs the match...
     ];
 
     for (const c of checks) {
