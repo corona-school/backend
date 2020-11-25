@@ -2,19 +2,20 @@ import {Request, Response} from "express";
 import {Student} from "../../../common/entity/Student";
 import {getLogger} from "log4js";
 import {Pupil} from "../../../common/entity/Pupil";
-import {ApiContactExpert} from "./format";
+import {ApiContactExpert, ApiGetExpert} from "./format";
 import {getTransactionLog} from "../../../common/transactionlog";
 import {getManager} from "typeorm";
 import {ExpertData} from "../../../common/entity/ExpertData";
 import mailjet from "../../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../../common/mails/config";
 import ContactExpertEvent from "../../../common/transactionlog/types/ContactExpertEvent";
+import {ApiGetUser} from "../userController/format";
 
 const logger = getLogger();
 
 /**
  * @api {POST} /expert/:id/contact
- * @apiVersion 1.1.0
+ * @apiVersion 1.0.1
  * @apiDescription
  * Writes an email to an expert
  *
@@ -30,7 +31,7 @@ const logger = getLogger();
  * @apiUse ContactExpert
  *
  * @apiExample {curl} Curl
- * curl -k -i -X POST =H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://[HOST]/api/expert/:id/contact
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" -H "Content-Type: application/json" https://[HOST]/api/expert/:id/contact
  *
  * @apiUse StatusOk
  * @apiUse StatusBadRequest
@@ -57,10 +58,6 @@ export async function postContactExpertHandler(req: Request, res: Response) {
             status = 400;
             logger.warn("Invalid request for POST /expert/:id/contact");
             logger.debug(req.body);
-
-            logger.debug(`res.locals.user instanceof Student || res.locals.user instanceof Pupil: ${res.locals.user instanceof Student || res.locals.user instanceof Pupil}`);
-            logger.debug(`req.params.id != undefined: ${req.params.id != undefined}`);
-            logger.debug(`typeof req.body.emailText == 'string': ${typeof req.body.emailText == 'string'}`);
         }
     } catch (e) {
         logger.error("POST /expert/:id/contact failed with ", e.message);
@@ -99,4 +96,61 @@ async function postContactExpert(id: string, user: Pupil | Student, apiContactEx
     await transactionLog.log(new ContactExpertEvent(user, apiContactExpert));
 
     return 200;
+}
+
+/**
+ * @api {GET} /expert getExperts
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * Get all active and allowed experts in the database
+ *
+ * Only students or pupils with a valid token in the header can use the API.
+ *
+ * @apiName getExperts
+ * @apiGroup Expert
+ *
+ * @apiUse Expert
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H ""oken <AUTHTOKEN>" https://[HOST]/api/expert
+ */
+export async function getExpertsHandler(req: Request, res: Response) {
+    const entityManager = getManager();
+
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {
+
+            const experts: ExpertData[] = await entityManager
+                .createQueryBuilder(ExpertData, "e")
+                .leftJoinAndSelect("e.student", "s")
+                .leftJoinAndSelect("e.expertiseTags", "t")
+                .where("e.active AND e.allowed")
+                .getMany();
+
+            let apiResponse: ApiGetExpert[] = [];
+
+            for (let i = 0; i < experts.length; i++) {
+                let apiExpert = new ApiGetExpert();
+                apiExpert.id = experts[i].id;
+                apiExpert.firstName = experts[i].student.firstname;
+                apiExpert.lastName = experts[i].student.lastname;
+                apiExpert.description = experts[i].description;
+                apiExpert.expertiseTags = experts[i].expertiseTags?.map(t => (t.name)) || [];
+
+                apiResponse.push(apiExpert);
+            }
+
+            res.json(apiResponse);
+        } else {
+            logger.warn("Someone who is neither student or pup[il wanted to access the expert data.");
+            status = 401;
+        }
+    } catch (e) {
+        logger.error("GetExperts failed with ", e);
+        status = 500;
+    }
+    res.status(status).end();
 }

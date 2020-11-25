@@ -246,6 +246,7 @@ createConnection().then(() => {
     function configureExpertAPI() {
         const expertRouter = express.Router();
         expertRouter.use(authCheckFactory());
+        expertRouter.get("/", expertController.getExpertsHandler);
         expertRouter.post("/:id/contact", expertController.postContactExpertHandler);
 
         app.use("/api/expert", expertRouter);

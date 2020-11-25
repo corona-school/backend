@@ -22,6 +22,7 @@ import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldW
 import { TuteeJufoParticipationIndication } from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
 import {ExpertData} from "../common/entity/ExpertData";
+import {ExpertiseTag} from "../common/entity/ExpertiseTag";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -820,6 +821,25 @@ export async function setupDevDB() {
     }
 
     //Insert expert data
+    const expertiseTags: ExpertiseTag[] = [];
+
+    const tag1 = new ExpertiseTag();
+    tag1.name = "LTE";
+    tag1.identifier = "lte";
+
+    expertiseTags.push(tag1);
+
+    const tag2 = new ExpertiseTag();
+    tag2.name = "Glasfaser";
+    tag2.identifier = "glasfaser";
+
+    expertiseTags.push(tag2);
+
+    for (let i = 0; i < expertiseTags.length; i++) {
+        await entityManager.save(expertiseTags[i]);
+        console.log("Inserted Expertise Tag " + i);
+    }
+
     const experts: ExpertData[] = [];
 
     const expert1 = new ExpertData();
@@ -828,6 +848,15 @@ export async function setupDevDB() {
     expert1.description = "JuFo is great!";
 
     experts.push(expert1);
+
+    const expert2 = new ExpertData();
+    expert2.student = students[6];
+    expert2.contactEmail = "contact@jufo-tufo.de";
+    expert2.active = true;
+    expert2.allowed = true;
+    expert2.expertiseTags = [tag1, tag2];
+
+    experts.push(expert2);
 
     for (let i = 0; i < experts.length; i++) {
         await entityManager.save(experts[i]);
