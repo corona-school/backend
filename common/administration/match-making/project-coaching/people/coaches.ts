@@ -22,6 +22,7 @@ export function coachesToMatchQuery(manager: EntityManager): SelectQueryBuilder<
     return manager.createQueryBuilder()
         .select("s")
         .from(Student, "s")
+        .innerJoin("s.projectFields", "projectFieldWithGradeRestriction")
         .leftJoin("s.projectCoachingScreening", "projectCoachingScreening")
         .leftJoin("s.screening", "screening")
         .where("s.active IS TRUE \

@@ -10,7 +10,7 @@ export function coacheesToMatchQuery(manager: EntityManager): SelectQueryBuilder
     return manager.createQueryBuilder()
         .select("p")
         .from(Pupil, "p")
-        .where("p.active IS TRUE AND p.verification IS NULL AND p.isProjectCoachee IS TRUE AND p.openProjectMatchRequestCount > 0");
+        .where("p.active IS TRUE AND p.verification IS NULL AND p.isProjectCoachee IS TRUE AND p.openProjectMatchRequestCount > 0 AND p.projectFields <> '{}'");
 }
 
 export async function getNumberOfCoacheesToMatch(manager: EntityManager) {
