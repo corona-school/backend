@@ -439,3 +439,8 @@ export async function activeMatchesOfStudent(s: Student, manager: EntityManager)
 export async function activeMatchCountOfStudent(s: Student, manager: EntityManager) {
     return (await activeMatchesOfStudent(s, manager)).length;
 }
+
+export const DEFAULT_PROJECT_COACH_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13
+};

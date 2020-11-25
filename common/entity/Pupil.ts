@@ -10,7 +10,7 @@ import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectMatch } from "./ProjectMatch";
 import { gradeAsInt } from "../util/gradestrings";
-import { Student } from "./Student";
+import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS } from "./Student";
 
 @Entity()
 export class Pupil extends Person {
@@ -179,7 +179,7 @@ export class Pupil extends Person {
         const fieldsCoach = await coach.getProjectFields();
         const pupilGrade = this.gradeAsNumber();
 
-        return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && fc.min <= pupilGrade && pupilGrade <= fc.max));
+        return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade && pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)));
     }
 }
 

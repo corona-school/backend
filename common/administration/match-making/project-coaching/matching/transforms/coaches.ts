@@ -1,7 +1,7 @@
 import { Helper, SubjectWithGradeRestriction } from "corona-school-matching";
 import { EntityManager } from "typeorm";
 import { reloadProjectMatchesInstances } from "../../../../../entity/ProjectMatch";
-import { Student } from "../../../../../entity/Student";
+import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS } from "../../../../../entity/Student";
 import { ProjectFieldWithGradeInfoType } from "../../../../../jufo/projectFieldWithGradeInfoType";
 import { transformPersonToPersonID } from "./persons";
 
@@ -9,8 +9,8 @@ function projectFieldToSubject(projectField: ProjectFieldWithGradeInfoType): Sub
     return {
         name: projectField.name,
         gradeRestriction: {
-            min: projectField.min,
-            max: projectField.max
+            min: projectField.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN, //use default values, because due to a screening tool's bug (or how it is designed), those values may be null (which causes the algorithm to fail)
+            max: projectField.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX
         }
     };
 }
