@@ -15,7 +15,7 @@ const logger = getLogger();
 
 /**
  * @api {POST} /expert/:id/contact contactExpert
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Writes an email to an expert
  *
@@ -101,7 +101,7 @@ async function postContactExpert(id: string, user: Pupil | Student, apiContactEx
 
 /**
  * @api {GET} /expert getExperts
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get all active and allowed experts in the database
  *
@@ -275,7 +275,7 @@ async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag
 
 /**
  * @api {GET} /expert/tags getUsedTags
- * @apiVersion 1.0.1
+ * @apiVersion 1.1.0
  * @apiDescription
  * Get all expertise tags in the database
  *
