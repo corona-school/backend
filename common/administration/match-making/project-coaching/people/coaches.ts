@@ -1,6 +1,7 @@
 import { EntityManager, SelectQueryBuilder } from "typeorm";
 import { ScreeningStatus, Student } from "../../../../entity/Student";
 import { TutorJufoParticipationIndication } from "../../../../jufo/participationIndication";
+import { InvalidEmailDomains } from "../../invalid-email-domains";
 
 ///Returns true whether the project coach is allowed to get a project match
 export async function coachIsAllowedToGetProjectMatch(manager: EntityManager, coach: Student) {
@@ -29,10 +30,11 @@ export function coachesToMatchQuery(manager: EntityManager): SelectQueryBuilder<
                 AND s.verification IS NULL \
                 AND s.isProjectCoach IS TRUE \
                 AND s.openProjectMatchRequestCount > 0 \
+                AND split_part(s.email, '@', 2) NOT IN (:...emailDomainExclusions) \
                 AND ( \
                     ( projectCoachingScreening.success IS TRUE AND (s.wasJufoParticipant <> 'yes' OR s.hasJufoCertificate IS TRUE OR s.jufoPastParticipationConfirmed IS TRUE OR s.isUniversityStudent IS TRUE) ) \
                     OR (screening.success IS TRUE AND s.isStudent) \
-                    )");
+                    )", { emailDomainExclusions: InvalidEmailDomains});
     //NOTE (and probably TODO): if someone has invalid column combinations (that shouldn't be allowed by registration and the general model), those are not caught at the moment. E.g. if s.wasJufoParticipant = NULL AND projectCoachingScreening.success = TRUE, this one could falsely get into the matching even if he's not a university Student.
 }
 

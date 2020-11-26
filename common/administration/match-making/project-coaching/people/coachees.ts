@@ -1,5 +1,6 @@
 import { EntityManager, SelectQueryBuilder } from "typeorm";
 import { Pupil } from "../../../../entity/Pupil";
+import { InvalidEmailDomains } from "../../invalid-email-domains";
 
 ///Returns true whether the project coachee is allowed to get a project match
 export async function coacheeIsAllowedToGetProjectMatch(manager: EntityManager, coachee: Pupil) {
@@ -10,7 +11,12 @@ export function coacheesToMatchQuery(manager: EntityManager): SelectQueryBuilder
     return manager.createQueryBuilder()
         .select("p")
         .from(Pupil, "p")
-        .where("p.active IS TRUE AND p.verification IS NULL AND p.isProjectCoachee IS TRUE AND p.openProjectMatchRequestCount > 0 AND p.projectFields <> '{}'");
+        .where("p.active IS TRUE \
+                AND p.verification IS NULL \
+                AND p.isProjectCoachee IS TRUE \
+                AND p.openProjectMatchRequestCount > 0 \
+                AND p.projectFields <> '{}' \
+                AND split_part(p.email, '@', 2) NOT IN (:...emailDomainExclusions)", { emailDomainExclusions: InvalidEmailDomains});
 }
 
 export async function getNumberOfCoacheesToMatch(manager: EntityManager) {
