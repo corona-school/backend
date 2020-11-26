@@ -94,6 +94,7 @@ export async function getSelfHandler(req: Request, res: Response) {
  * @apiUse User
  * @apiUse Subject
  * @apiUse Match
+ * @apiUse ExpertData
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
