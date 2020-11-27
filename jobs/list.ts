@@ -12,7 +12,6 @@ import projectMatchMaking from "./periodic/project-match-making";
 export const allJobs: CSCronJob[] = [
     // every morning
     { cronTime: "00 15 08 * * *", jobFunction: screeningReminderJob},
-    { cronTime: "00 34 08 * * *", jobFunction: projectMatchMaking},
     // every morning, but a little later
     { cronTime: "00 15 09 * * *", jobFunction: courseReminderJob},
     // every morning, but a little bit later
