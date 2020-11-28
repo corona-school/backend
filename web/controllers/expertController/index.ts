@@ -79,19 +79,19 @@ async function postContactExpert(id: string, user: Pupil | Student, apiContactEx
         return 404;
     }
 
-    const receiverAdress = expert.contactEmail;
+    const receiverAddress = expert.contactEmail;
     const receiverName = `${expert.student.firstname} ${expert.student.lastname}`;
-    const replyToAdress = user.email;
+    const replyToAddress = user.email;
     const replyToName = `${user.firstname} ${user.lastname}`;
 
     await mailjet.sendPure(
         apiContactExpert.subject ?? "",
         apiContactExpert.emailText,
         DEFAULTSENDERS.noreply,
-        receiverAdress,
+        receiverAddress,
         replyToName,
         receiverName,
-        replyToAdress,
+        replyToAddress,
         replyToName
     );
 
@@ -162,7 +162,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
 }
 
 /**
- * @api {POST} /expert/:id putExpert
+ * @api {PUT} /expert/:id putExpert
  * @apiVersion 1.1.0
  * @apiDescription
  * As a student become an expert or change my expert data
