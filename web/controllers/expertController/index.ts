@@ -239,8 +239,6 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
         expertData.student = student;
     }
 
-    logger.debug(expertData);
-
     expertData.contactEmail = info.contactEmail ?? student.email;
     expertData.description = info.description;
     expertData.expertiseTags = expertiseTags;
