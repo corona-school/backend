@@ -10,6 +10,7 @@ import mailjet from "../../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../../common/mails/config";
 import ContactExpertEvent from "../../../common/transactionlog/types/ContactExpertEvent";
 import {ExpertiseTag} from "../../../common/entity/ExpertiseTag";
+import {ExpertAllowedIndication} from "../../../common/jufo/expertAllowedIndication";
 
 const logger = getLogger();
 
@@ -132,7 +133,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
                 .createQueryBuilder(ExpertData, "e")
                 .leftJoinAndSelect("e.student", "s")
                 .leftJoinAndSelect("e.expertiseTags", "t")
-                .where("e.active AND e.allowed")
+                .where("e.active AND e.allowed='yes'")
                 .getMany();
 
             let apiResponse: ApiGetExpert[] = [];
@@ -244,7 +245,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
     expertData.description = info.description;
     expertData.expertiseTags = expertiseTags;
     expertData.active = info.active;
-    expertData.allowed = false;
+    expertData.allowed = ExpertAllowedIndication.PENDING;
 
     try {
         await entityManager.save(ExpertiseTag, expertiseTags);

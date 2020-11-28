@@ -11,6 +11,7 @@ import {
 import {Student} from "./Student";
 import {ExpertiseTag} from "./ExpertiseTag";
 import {Col} from "sequelize/types/lib/utils";
+import {ExpertAllowedIndication} from "../jufo/expertAllowedIndication";
 
 @Entity()
 export class ExpertData {
@@ -49,7 +50,7 @@ export class ExpertData {
     active: boolean;
 
     @Column({
-        default: false
+        default: ExpertAllowedIndication.PENDING
     })
-    allowed: boolean;
+    allowed: ExpertAllowedIndication;
 }

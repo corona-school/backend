@@ -156,6 +156,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  *      }
  */
 import {ApiSubject} from "../format";
+import {ExpertAllowedIndication} from "../../../common/jufo/expertAllowedIndication";
 
 export class ApiGetUser {
     id: string;
@@ -417,7 +418,7 @@ export class ApiProjectMatch {
  * @apiSuccess (ExpertData Object) {string} description <em>(optional)</em> Description given by the expert on his expertise
  * @apiSuccess (ExpertData Object) {string[]} expertiseTags Tags which describe the expert's fields of expertise
  * @apiSuccess (ExpertData Object) {boolean} active Indicates whether the expert agrees on publishing his data on the platform
- * @apiSuccess (ExpertData Object) {boolean} allowed Indicates whether the publishing is allowed by Corona School staff
+ * @apiSuccess (ExpertData Object) {string} allowed Indicates whether the publishing is allowed by Corona School staff. One of <code>"pending", "yes", "no"</code>.
  */
 export class ApiExpertData {
     id: number;
@@ -425,7 +426,7 @@ export class ApiExpertData {
     description?: string;
     expertiseTags: string[];
     active: boolean;
-    allowed: boolean;
+    allowed: ExpertAllowedIndication;
 }
 
 export function checkSubject(s: string): boolean {
