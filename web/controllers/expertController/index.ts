@@ -45,7 +45,7 @@ export async function postContactExpertHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if ((res.locals.user instanceof Student || res.locals.user instanceof Pupil)
-            && req.params.id != undefined
+            && (typeof req.params.id === 'string' && Number.isInteger(+req.params.id))
             && typeof req.body.emailText == 'string') {
 
             if (req.body.emailText.length === 0) {
