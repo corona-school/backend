@@ -14,6 +14,8 @@ import CertificateRequestEvent from '../../../common/transactionlog/types/Certif
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 import { randomBytes } from "crypto";
 import {parseDomain, ParseResultType} from "parse-domain";
+import { assert } from 'console';
+import { Person } from '../../../common/entity/Person';
 
 const logger = getLogger();
 
@@ -124,6 +126,45 @@ export async function confirmCertificateHandler(req: Request, res: Response) {
     }
     status = 500;
     res.status(status).end();
+}
+
+/**
+ * @api {GET} /certificates
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * View certificate data
+ *
+ * Returns data for certificates requested by the user or to be approved by the user (either student = user or pupil = user)
+ *
+ *
+ * @apiName getCertificates
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET https://api.corona-school.de/api/certificates
+ *
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ * 
+ * @typedef {Object} Response
+ * @property {Array} certificates
+ * 
+ * @returns {Response}
+ */
+export async function getCertificates(req: Request, res: Response) {
+    const entityManager = getManager();
+
+    assert(res.locals.user, "No user set");
+
+    const userid = (res.locals.user as Person).id; 
+
+    try {
+        const certificates = await entityManager.find(ParticipationCertificate, { where: [{ pupil: userid }, /*or*/ { student: userid }], loadEagerRelations: false });
+        return res.json({ certificates });
+    } catch(error) {
+        logger.error("Retrieving certificates for user failed with", error);
+        return res.status(500).send("Internal Server error");
+    }
 }
 
 async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }, host: string): Promise<{ status: number, pdf: any }> {
