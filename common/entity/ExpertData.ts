@@ -50,7 +50,9 @@ export class ExpertData {
     active: boolean;
 
     @Column({
-        default: ExpertAllowedIndication.PENDING
+        type: "enum",
+        default: ExpertAllowedIndication.PENDING,
+        enum: ExpertAllowedIndication
     })
     allowed: ExpertAllowedIndication;
 }
