@@ -13,7 +13,7 @@ import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 import { randomBytes } from "crypto";
-import {parseDomain, ParseResultType} from "parse-domain";
+import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
 
@@ -53,47 +53,62 @@ const logger = getLogger();
  * @apiUse StatusInternalServerError
  */
 export async function certificateHandler(req: Request, res: Response) {
-    let status;
+    const entityManager = getManager();
 
     try {
-        // todo rename parameter pupil to match
-        if (req.params.student != undefined && req.params.pupil != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
+        if (
+            req.params.student == undefined ||
+            req.params.pupil == undefined ||
+            !(res.locals.user instanceof Student || res.locals.user instanceof Pupil)
+        ) return res.status(400).send("Missing parameters");
 
-            let params = {
-                endDate: req.query.endDate as string || moment().format("X") as string,
-                subjects: req.query.subjects as string || "Mathematik, Biologie, Altgriechisch",
-                hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
-                hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
-                medium: req.query.medium as string || "Taschenrechner mit Programmierfunktion",
-                categories: req.query.categories as string || "Liste\nListe2\nListe3"
-            };
+        const requestor = res.locals.user as Student;
 
-            //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
-            const parseResult = parseDomain(req.hostname);
-            let baseDomain = "corona-school.de"; //default
-            if (parseResult.type === ParseResultType.Listed) {
-                const {domain, topLevelDomains} = parseResult;
-                baseDomain = [domain, ...topLevelDomains].join(".");
-            }
+        if (requestor instanceof Pupil)
+            return res.status(403).send("Only students may request certificates");
 
-            let certificate = await generateCertificate(res.locals.user, req.params.student, req.params.pupil, params, baseDomain);
-            if (certificate.status == 200) {
-                res.writeHead(200, {
-                    'Content-Type': 'application/pdf',
-                    'Content-Length': certificate.pdf.length
-                });
-                res.end(certificate.pdf);
-            }
-            status = certificate.status;
-        } else {
-            status = 500;
+        if (requestor.wix_id != req.params.student)
+            return res.status(403).send("Students may only retrieve certificates for themselves");
+
+
+        let params = {
+            endDate: req.query.endDate as string || moment().format("X") as string,
+            subjects: req.query.subjects as string,
+            hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
+            hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
+            medium: req.query.medium as string,
+            categories: req.query.categories as string
+        };
+
+        //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
+        const parseResult = parseDomain(req.hostname);
+        let baseDomain = "corona-school.de"; //default
+        if (parseResult.type === ParseResultType.Listed) {
+            const { domain, topLevelDomains } = parseResult;
+            baseDomain = [domain, ...topLevelDomains].join(".");
         }
+
+        // Students may only request for their matches
+        let match = await entityManager.findOne(Match, { student: requestor, uuid: req.params.pupil });
+        if (match == undefined)
+            return res.status(400).send(`No Match found with uuid ${req.params.pupil}`);
+
+        const certificate = await createCertificate(requestor, match.pupil, match, params);
+
+        const verificationLink = "http://verify." + baseDomain + "/" + certificate.uuid;
+
+        const pdf = await createPDFBinary(certificate, verificationLink);
+
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdf.length
+        });
+        return res.end(pdf);
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
         logger.debug(req, e);
-        status = 500;
+        return res.status(500).send("Internal server error");
     }
-    res.status(status).end();
 }
 
 
@@ -120,12 +135,24 @@ export async function certificateHandler(req: Request, res: Response) {
  * @apiUse StatusInternalServerError
  */
 export async function confirmCertificateHandler(req: Request, res: Response) {
-    let status;
-    if (req.params.certificateId != undefined || ("" + req.params.certificateId)) {
-        return res.send(await viewParticipationCertificate(req.params.certificateId));
+    try {
+        const { certificateId } = req.params;
+        const entityManager = getManager();
+
+        if (typeof certificateId !== "string")
+            return res.status(400).send("Missing parameter certificateId");
+
+        const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+
+        if (!certificate)
+            return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+
+
+        return res.send(await viewParticipationCertificate(certificate));
+    } catch (error) {
+        logger.error("Failed to generate certificate confirmation", error);
+        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
     }
-    status = 500;
-    res.status(status).end();
 }
 
 /**
@@ -145,10 +172,10 @@ export async function confirmCertificateHandler(req: Request, res: Response) {
  *
  * @apiUse StatusUnauthorized
  * @apiUse StatusInternalServerError
- * 
+ *
  * @typedef {Object} Response
  * @property {Array} certificates
- * 
+ *
  * @returns {Response}
  */
 export async function getCertificates(req: Request, res: Response) {
@@ -156,47 +183,60 @@ export async function getCertificates(req: Request, res: Response) {
 
     assert(res.locals.user, "No user set");
 
-    const userid = (res.locals.user as Person).id; 
+    const userid = (res.locals.user as Person).id;
 
     try {
-        const certificates = await entityManager.find(ParticipationCertificate, { where: [{ pupil: userid }, /*or*/ { student: userid }], loadEagerRelations: false });
+        const certificatesData = await entityManager.find(ParticipationCertificate, { where: [{ pupil: userid }, /*or*/ { student: userid }], relations: ["student", "pupil"] });
+        const certificates = certificatesData.map(cert => exposeCertificate(cert, /*to*/ res.locals.user));
         return res.json({ certificates });
-    } catch(error) {
+    } catch (error) {
         logger.error("Retrieving certificates for user failed with", error);
         return res.status(500).send("Internal Server error");
     }
 }
 
-async function generateCertificate(requestor: (Pupil | Student), studentid: string, matchuuid: string, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }, host: string): Promise<{ status: number, pdf: any }> {
+interface IExposedCertificate {
+    userIs: "pupil" | "student",
+    pupil: { firstname: string, lastname: string },
+    student: { firstname: string, lastname: string },
+    subjects: string,
+    categories: string,
+    certificateDate: Date,
+    startDate: Date,
+    endDate: Date,
+    uuid: string,
+    hoursPerWeek: number,
+    hoursTotal: number,
+    medium: string,
+}
+
+/* Map the certificate data to something the frontend can work with while keeping user data secret */
+function exposeCertificate({ student, pupil, ...cert }: ParticipationCertificate, to: Student | Pupil): IExposedCertificate {
+    return {
+        ...cert,
+        // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
+        userIs: pupil.wix_id === to.wix_id ? "pupil" : "student",
+        pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
+        student: { firstname: student.firstname, lastname: student.lastname }
+    };
+}
+
+interface IParams {
+    endDate: string,
+    subjects: string,
+    hoursPerWeek: number,
+    hoursTotal: number,
+    medium: string,
+    categories: string
+}
+
+async function createCertificate(requestor: Student, pupil: Pupil, match: Match, params: IParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
-    let ret = {
-        status: 500,
-        pdf: null
-    };
-
-    // Only students may request
-    if (requestor instanceof Pupil) {
-        ret.status = 403;
-        return ret;
-    }
-
-    // Students may only request for themselves
-    if (requestor.wix_id != studentid) {
-        ret.status = 403;
-        return ret;
-    }
-
-    // Students may only request for their matches
-    let match = await entityManager.findOne(Match, { student: requestor, uuid: matchuuid });
-    if (match == undefined) {
-        ret.status = 400;
-        return ret;
-    }
     let pc = new ParticipationCertificate();
-    pc.pupil = match.pupil;
-    pc.student = match.student;
+    pc.pupil = pupil;
+    pc.student = requestor;
     pc.subjects = params.subjects;
     pc.categories = params.categories;
     pc.hoursPerWeek = params.hoursPerWeek;
@@ -204,23 +244,25 @@ async function generateCertificate(requestor: (Pupil | Student), studentid: stri
     pc.medium = params.medium;
     pc.startDate = match.createdAt;
     pc.endDate = moment(params.endDate, "X").toDate();
+
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
     } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
 
     await entityManager.save(ParticipationCertificate, pc);
-    const verificationLink = "http://verify." + host + "/" + pc.uuid;
-    ret.pdf = await createPDFBinary(requestor, match.pupil, match.createdAt, params, verificationLink);
-    ret.status = 200;
+    await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
 
-    await transactionLog.log(new CertificateRequestEvent(requestor, matchuuid));
-
-
-    return ret;
+    return pc;
 }
 
-function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params: { endDate: any, subjects: any, hoursPerWeek: any, hoursTotal: any, medium: any, categories: any }, link: string): Promise<Buffer> {
-    let html = readFileSync("./assets/certificateTemplate.html", "utf8");
+const englishTemplate = readFileSync("./assets/certificateTemplate.html", "utf8");
+
+function createPDFBinary(certificate: ParticipationCertificate, link: string): Promise<Buffer> {
+    const { student, pupil } = certificate;
+
+    // TODO: Load different language templates
+    const template = englishTemplate;
+
     const options = {
         "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
         "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
@@ -228,23 +270,24 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
 
     // adjust variables
     // todo for 2021: replace %TPL% by <TPL>
-    html = html.replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname));
-    html = html.replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname));
-    html = html.replace("%DATUMHEUTE%", moment().format("D.M.YYYY"));
-    html = html.replace("%SCHUELERSTART%", moment(startDate, "X").format("D.M.YYYY"));
-    html = html.replace("%SCHUELERENDE%", moment(params.endDate, "X").format("D.M.YYYY"));
-    html = html.replace("%SCHUELERFAECHER%", escape(params.subjects).replace(/,/g, ", "));
-    html = html.replace("%SCHUELERFREITEXT%", escape(params.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
-    html = html.replace("%SCHUELERPROWOCHE%", escape(params.hoursPerWeek));
-    html = html.replace("%SCHUELERGESAMT%", escape(params.hoursTotal));
-    html = html.replace("%MEDIUM%", escape(params.medium));
-    html = html.replace("%CERTLINK%", link);
-    html = html.replace("%CERTLINKTEXT%", link);
+    const result = template
+        .replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname))
+        .replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname))
+        .replace("%DATUMHEUTE%", moment().format("D.M.YYYY"))
+        .replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"))
+        .replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"))
+        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
+        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
+        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
+        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
+        .replace("%MEDIUM%", escape(certificate.medium))
+        .replace("%CERTLINK%", link)
+        .replace("%CERTLINKTEXT%", link);
 
     // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
 
     return new Promise((resolve, reject) => {
-        pdf.create(html, options).toBuffer((err, buffer) => {
+        pdf.create(result, options).toBuffer((err, buffer) => {
             if (err) {
                 reject(err);
             } else {
@@ -254,35 +297,23 @@ function createPDFBinary(student: Student, pupil: Pupil, startDate: Date, params
     });
 }
 
-async function viewParticipationCertificate(certificateId) {
-    const entityManager = getManager();
-    let certificate: ParticipationCertificate = null;
-    let html = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
-    try {
-        certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+const englishVerificationTemplate = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
 
-        if (!certificate) {
-            return "<h1>Zertifikatslink nicht valide.</h1>";
-        }
+async function viewParticipationCertificate(certificate: ParticipationCertificate) {
+    let verificationTemplate = englishVerificationTemplate;
 
-        const screeningDate = (await certificate.student?.screening)?.createdAt;
-        html = html.replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname));
-        html = html.replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname));
-        html = html.replace("%DATUMHEUTE%", moment(certificate.certificateDate).format("D.M.YYYY"));
-        html = html.replace("%SCHUELERSTART%", moment(certificate.startDate).format("D.M.YYYY"));
-        html = html.replace("%SCHUELERENDE%", moment(certificate.endDate).format("D.M.YYYY"));
-        html = html.replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "));
-        html = html.replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'));
-        html = html.replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek));
-        html = html.replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal));
-        html = html.replace("%MEDIUM%", escape(certificate.medium));
-        html = html.replace("%SCREENINGDATUM%", escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"));
-    }
-    catch (e) {
-        logger.error(e);
-        return "<h1>Ein Fehler ist aufgetreten... 😔</h1>";
-    }
+    const screeningDate = (await certificate.student?.screening)?.createdAt;
 
-    return html;
+    return verificationTemplate
+        .replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname))
+        .replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname))
+        .replace("%DATUMHEUTE%", moment(certificate.certificateDate).format("D.M.YYYY"))
+        .replace("%SCHUELERSTART%", moment(certificate.startDate).format("D.M.YYYY"))
+        .replace("%SCHUELERENDE%", moment(certificate.endDate).format("D.M.YYYY"))
+        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
+        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
+        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
+        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
+        .replace("%MEDIUM%", escape(certificate.medium))
+        .replace("%SCREENINGDATUM%", escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"));
 }
-
