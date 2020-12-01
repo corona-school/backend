@@ -159,8 +159,13 @@ createConnection().then(() => {
 
     function configureCoursesAPI() {
         const coursesRouter = express.Router();
+
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/", courseController.getCoursesHandler);
+
+        coursesRouter.use(authCheckFactory());
+        coursesRouter.get("/tags", courseController.getCourseTagsHandler);
+
         app.use("/api/courses", coursesRouter);
     }
 

@@ -10,7 +10,7 @@ import {
     ApiCourseTag,
     ApiEditCourse,
     ApiEditLecture,
-    ApiEditSubcourse,
+    ApiEditSubcourse, ApiGetCourseTag,
     ApiInstructor,
     ApiLecture,
     ApiSubcourse
@@ -2446,4 +2446,44 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
         status = 500;
     }
     res.status(status).end();
+}
+
+export async function getCourseTagsHandler(req: Request, res: Response) {
+    let status = 200;
+    if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {
+        try {
+            const courseTags: ApiGetCourseTag[] = await getCourseTags();
+            res.json(courseTags);
+        } catch (e) {
+            logger.error("Get course tags failed with: ", e);
+            status = 500;
+        }
+    } else {
+        logger.warn("A user who is neither student nor pupil tried to access the course tags.");
+        status = 403;
+    }
+    res.status(status).end();
+}
+
+async function getCourseTags() {
+    const entityManager= getManager();
+
+    const tags = await entityManager.find(CourseTag, {
+        relations: ["courses"]
+    });
+
+    let apiResponse: ApiGetCourseTag[] = [];
+
+    for (let i=0; i < tags.length; i++) {
+        let apiTag: ApiGetCourseTag = {
+            id: tags[i].identifier,
+            name: tags[i].name,
+            category: tags[i].category,
+            courses: tags[i].courses.map(c => c.id)
+        };
+
+        apiResponse.push(apiTag);
+    }
+
+    return apiResponse;
 }
