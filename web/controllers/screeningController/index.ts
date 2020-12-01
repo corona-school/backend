@@ -15,6 +15,8 @@ import {Lecture} from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import {CourseTag} from "../../../common/entity/CourseTag";
+import {CourseTagDTO} from "../../../common/dto/CourseTagDTO";
 
 const logger = getLogger();
 
@@ -464,6 +466,23 @@ export async function getCourses(req: Request, res: Response) {
     } catch (error) {
         logger.warn("/screening/courses failed with", error.message);
         return res.status(500).send("internal server error");
+    }
+}
+
+export async function getCourseTags(req: Request, res: Response) {
+    try {
+        const entityManager = getManager();
+
+        const tags = await entityManager.find(CourseTag, {
+            relations: ["courses"]
+        });
+
+        const apiResponse = tags.map(t => new CourseTagDTO(t));
+
+        return res.json(apiResponse);
+    } catch (error) {
+        logger.warn("GET /screening/courses/tags failed with ", error.message);
+        return res.status(500);
     }
 }
 
