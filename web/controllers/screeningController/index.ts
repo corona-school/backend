@@ -17,6 +17,7 @@ import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import {CourseTag} from "../../../common/entity/CourseTag";
 import {CourseTagDTO} from "../../../common/dto/CourseTagDTO";
+import {where} from "sequelize";
 
 const logger = getLogger();
 
@@ -518,7 +519,7 @@ export async function getCourseTags(req: Request, res: Response) {
 export async function updateCourse(req: Request, res: Response) {
     try {
         const update = new ApiCourseUpdate(req.body);
-        const { newLectures, removeLectures } = req.body;
+        const { newLectures, removeLectures, tags } = req.body;
         const { id } = req.params;
         if (typeof id !== "string" || !Number.isInteger(+id))
             return res.status(400).send("Invalid course id!");
@@ -544,6 +545,17 @@ export async function updateCourse(req: Request, res: Response) {
                 }
             } else {
                 return res.status(400).send("Invalid new lectures request.");
+            }
+        }
+
+        if (tags !== undefined) {
+            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))){
+                const status = await handleUpdateCourseTags(tags, +id);
+                if (status != 200) {
+                    return res.status(status).send("Updating course tags failed");
+                }
+            } else {
+                return res.send(400).send("Invalid update course tags request");
             }
         }
 
@@ -607,6 +619,21 @@ async function handleDeleteLectures(lectures: { id: number }[]) {
         }
     }
     return 204;
+}
+
+async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number){
+    const course = await getManager().findOne(Course, { where: { id: courseId }});
+
+    try {
+        await course.updateTags(courseTags);
+        await getManager().save(course);
+        logger.info("Successfully updated course tags");
+    } catch (error) {
+        logger.warn("Updating course tags failed with ", error.message);
+        return 500;
+    }
+
+    return 200;
 }
 
 /**
