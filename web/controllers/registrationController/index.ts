@@ -52,6 +52,7 @@ export async function postTutorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            typeof req.body.phone == 'string' &&
             typeof req.body.isTutor == 'boolean' &&
             typeof req.body.isOfficial == 'boolean' &&
             typeof req.body.isInstructor == 'boolean' &&
@@ -163,6 +164,11 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         logger.warn("apiTutor.email outside of length restrictions");
         return 400;
     }
+    
+    if (apiTutor.phone.length == 0 || apiTutor.phone.length > 100) {
+        logger.warn("apiTutor.phone outside of length restrictions");
+        return 400;
+    }
 
     if (apiTutor.msg.length > 3000) {
         logger.warn("apiTutor.msg outside of length restrictions");
@@ -182,6 +188,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.firstname = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
     tutor.email = apiTutor.email.toLowerCase();
+    tutor.phone = apiTutor.phone.toLowerCase();
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
     tutor.university = apiTutor.university;
@@ -196,6 +203,11 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.subjects = JSON.stringify([]);
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
+    
+    if (! tutor.phone.startsWith("+49") && ! tutor.phone.startsWith("+41") && ! tutor.phone.startsWith("+43")) {
+        logger.error("tutor.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
@@ -323,6 +335,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            typeof req.body.phone == 'string' &&
             typeof req.body.state == 'string' &&
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
@@ -420,6 +433,11 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         logger.error("apiTutee.email outside of length restrictions");
         return 400;
     }
+    
+    if (apiTutee.phone.length == 0 || apiTutee.phone.length > 100) {
+        logger.error("apiTutee.phone outside of length restrictions");
+        return 400;
+    }
 
     if (apiTutee.msg.length > 3000) {
         logger.error("apiTutee.msg outside of length restrictions");
@@ -430,8 +448,14 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
+    tutee.phone = apiTutee.phone.toLowerCase();
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
+    }
+    
+    if (! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
+        logger.error("tutee.phone not from Germany, Swiss or Austria");
+        return 400;
     }
 
     switch (apiTutee.state) {
@@ -604,6 +628,7 @@ export async function postMentorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            typeof req.body.phone == 'string' &&
             typeof req.body.teachingExperience === 'boolean' &&
             req.body.division instanceof Array &&
             req.body.expertise instanceof Array &&
@@ -649,6 +674,10 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
         logger.warn("apiMentor.email is outside of length restrictions");
         return 400;
     }
+    if (apiMentor.phone.length == 0 || apiMentor.phone.length > 100) {
+        logger.warn("apiMentor.phone is outside of length restrictions");
+        return 400;
+    }
     if (apiMentor.message && apiMentor.message.length > 100) {
         logger.warn("apiMentor.message is outside of length restrictions");
         return 400;
@@ -673,12 +702,18 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.firstname = apiMentor.firstname;
     mentor.lastname = apiMentor.lastname;
     mentor.email = apiMentor.email;
+    mentor.phone = apiMentor.phone;
     mentor.description = apiMentor.description;
     mentor.message = apiMentor.message;
     mentor.teachingExperience = apiMentor.teachingExperience;
     mentor.wix_id = "Z-" + uuidv4();
     mentor.wix_creation_date = new Date();
     mentor.verification = generateToken();
+    
+    if (! mentor.phone.startsWith("+49") && ! mentor.phone.startsWith("+41") && ! mentor.phone.startsWith("+43")) {
+        logger.error("mentor.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     if (apiMentor.subjects.length > 0) {
         let subjects = checkSubjects(apiMentor.subjects);
@@ -753,6 +788,7 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            typeof req.body.phone == 'string' &&
             typeof req.body.grade == 'number' &&
             typeof req.body.state == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
@@ -817,6 +853,11 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         logger.error("apiStateTutee.email outside of length restrictions");
         return 400;
     }
+    
+    if (apiStateTutee.phone.length == 0 || apiStateTutee.phone.length > 100) {
+        logger.error("apiStateTutee.phone outside of length restrictions");
+        return 400;
+    }
 
     if (apiStateTutee.msg.length > 3000) {
         logger.error("apiStateTutee.msg outside of length restrictions");
@@ -827,7 +868,13 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.firstname = apiStateTutee.firstname;
     tutee.lastname = apiStateTutee.lastname;
     tutee.email = apiStateTutee.email.toLowerCase();
+    tutee.phone = apiStateTutee.phone.toLowerCase();
     tutee.grade = apiStateTutee.grade + ". Klasse";
+    
+    if (! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
+        logger.error("tutee.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     const parsedState = EnumReverseMappings.State(apiStateTutee.state);
     if (!parsedState) {
