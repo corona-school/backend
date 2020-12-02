@@ -43,11 +43,6 @@ export class Student extends Person {
     @Column({
         nullable: true
     })
-    phone: string;
-
-    @Column({
-        nullable: true
-    })
     feedback: string;
 
     @Column({
