@@ -14,10 +14,9 @@ import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import {CourseTag} from "../../../common/entity/CourseTag";
 import {CourseTagDTO} from "../../../common/dto/CourseTagDTO";
-import {where} from "sequelize";
+import {createCourseTag} from "../../../common/util/createCourseTag";
 
 const logger = getLogger();
 
@@ -483,6 +482,25 @@ export async function getCourseTags(req: Request, res: Response) {
         return res.json(apiResponse);
     } catch (error) {
         logger.warn("GET /screening/courses/tags failed with ", error.message);
+        return res.status(500);
+    }
+}
+
+export async function postCreateCourseTag(req: Request, res: Response) {
+    try {
+        const { name } = req.query;
+
+        if (typeof name !== "string") {
+            return res.status(400).send("Invalid value for query parameter 'name'");
+        }
+
+        const tag = await createCourseTag(name);
+
+        await getManager().save(CourseTag, tag);
+
+        return res.json(tag);
+    } catch (error) {
+        logger.warn("POST /screening/courses/tags/create failed with ", error.message);
         return res.status(500);
     }
 }

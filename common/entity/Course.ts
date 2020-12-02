@@ -11,12 +11,8 @@ import {
 import { Student } from "./Student";
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
-import { ApiCourseUpdate } from "../../common/dto/ApiCourseUpdate";
-import {randomBytes} from "crypto";
-import {getLogger} from "log4js";
-
-
-const logger = getLogger();
+import { ApiCourseUpdate } from "../dto/ApiCourseUpdate";
+import {createCourseTag} from "../util/createCourseTag";
 
 export enum CourseState {
     CREATED = "created",
@@ -110,33 +106,16 @@ export class Course {
         }
     }
 
-    async newTag(name: string) {
-        let identifier = name.toLowerCase().replace(/\s/g, "");
-        while (await getManager().findOne(CourseTag, { where: { identifier }})) {
-            identifier = name.toLowerCase().replace(/\s/g, "") + randomBytes(1).toString('hex').toLowerCase();
-        }
-
-        let tag = new CourseTag();
-
-        tag.identifier = identifier;
-        tag.name = name;
-        tag.category = 'other'; // Currently we don't know what to do with the category field
-
-        await getManager().save(CourseTag, tag);
-
-        return tag;
-    }
-
     async updateTags(tags: { identifier?: string, name?: string }[]) {
         let newTags: CourseTag[] = [];
         for (let i = 0; i < tags.length; i++){
             if (tags[i].identifier) {
                 newTags.push(await getManager()
                     .findOneOrFail(CourseTag, { where: { identifier: tags[i].identifier }})
-                    .catch(async () => (await this.newTag(tags[i].name)))
+                    .catch(async () => (await createCourseTag(tags[i].name)))
                 );
             } else {
-                newTags.push(await this.newTag(tags[i].name));
+                newTags.push(await createCourseTag(tags[i].name));
             }
         }
 

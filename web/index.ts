@@ -212,6 +212,10 @@ createConnection().then(() => {
             screeningController.getCourseTags
         );
         screenerApiRouter.post(
+            "/courses/tags/create",
+            screeningController.postCreateCourseTag
+        );
+        screenerApiRouter.post(
             "/course/:id/update",
             screeningController.updateCourse
         );
