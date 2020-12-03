@@ -271,6 +271,10 @@ export interface ApiCourseTag {
     category: string;
 }
 
+export interface ApiGetCourseTag extends ApiCourseTag {
+    courses: number[];
+}
+
 
 /**
  * @apiDefine PostGroupMail
