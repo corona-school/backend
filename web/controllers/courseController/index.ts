@@ -2467,17 +2467,12 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  */
 export async function getCourseTagsHandler(req: Request, res: Response) {
     let status = 200;
-    if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {
-        try {
-            const courseTags: ApiGetCourseTag[] = await getCourseTags();
-            res.json(courseTags);
-        } catch (e) {
-            logger.error("Get course tags failed with: ", e);
-            status = 500;
-        }
-    } else {
-        logger.warn("A user who is neither student nor pupil tried to access the course tags.");
-        status = 403;
+    try {
+        const courseTags: ApiGetCourseTag[] = await getCourseTags();
+        res.json(courseTags);
+    } catch (e) {
+        logger.error("Get course tags failed with: ", e);
+        status = 500;
     }
     res.status(status).end();
 }
