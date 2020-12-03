@@ -10,7 +10,7 @@ import {
     ApiCourseTag,
     ApiEditCourse,
     ApiEditLecture,
-    ApiEditSubcourse,
+    ApiEditSubcourse, ApiGetCourseTag,
     ApiInstructor,
     ApiLecture,
     ApiSubcourse
@@ -2446,4 +2446,56 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
         status = 500;
     }
     res.status(status).end();
+}
+
+/**
+ * @api {GET} /courses/tags getCourseTags
+ * @apiVersion 1.1.0
+ * @apiDescription
+ *
+ * Retrieves all used course tags
+ *
+ * Only students or pupils can access this.
+ *
+ * @apiName getCourseTags
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/courses/tags
+ */
+export async function getCourseTagsHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        const courseTags: ApiGetCourseTag[] = await getCourseTags();
+        res.json(courseTags);
+    } catch (e) {
+        logger.error("Get course tags failed with: ", e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function getCourseTags() {
+    const entityManager= getManager();
+
+    const tags = await entityManager.find(CourseTag, {
+        relations: ["courses"]
+    });
+
+    let apiResponse: ApiGetCourseTag[] = [];
+
+    for (let i=0; i < tags.length; i++) {
+        let apiTag: ApiGetCourseTag = {
+            id: tags[i].identifier,
+            name: tags[i].name,
+            category: tags[i].category,
+            courses: tags[i].courses.map(c => c.id)
+        };
+
+        apiResponse.push(apiTag);
+    }
+
+    return apiResponse;
 }
