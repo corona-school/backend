@@ -2448,6 +2448,23 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
+/**
+ * @api {GET} /courses/tags getCourseTags
+ * @apiVersion 1.1.0
+ * @apiDescription
+ *
+ * Retrieves all used course tags
+ *
+ * Only students or pupils can access this.
+ *
+ * @apiName getCourseTags
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/courses/tags
+ */
 export async function getCourseTagsHandler(req: Request, res: Response) {
     let status = 200;
     if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {

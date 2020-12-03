@@ -469,6 +469,24 @@ export async function getCourses(req: Request, res: Response) {
     }
 }
 
+/**
+ * @api {GET} /screening/courses/tags getCourseTags
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Retrieves all used course tags
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getCourseTags
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/courses/tags
+ */
 export async function getCourseTags(req: Request, res: Response) {
     try {
         const entityManager = getManager();
@@ -486,6 +504,26 @@ export async function getCourseTags(req: Request, res: Response) {
     }
 }
 
+/**
+ * @api {POST} /screening/courses/tags/create createCourseTag
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * Adds a course tag
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName createCourseTag
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiParam (URL Query) {string} name The name of the new course tag
+ * @apiParam (URL Query) {string} category The category of the new tag
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/courses/tags/create"
+ *
+ */
 export async function postCreateCourseTag(req: Request, res: Response) {
     try {
         const { name, category } = req.query;
@@ -532,6 +570,7 @@ export async function postCreateCourseTag(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|undefined} description the new description
  * @apiParam (JSON Body) {string|undefined} outline the new outline
  * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
+ * @apiParam (JSON Body) {Object[]|undefined} tags the new course tags, items must have either identifier (string) or name (string) as property
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
  * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
  * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
