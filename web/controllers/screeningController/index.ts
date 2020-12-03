@@ -8,7 +8,7 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import { Course } from "../../../common/entity/Course";
+import {Course, CourseCategory} from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import {Subcourse} from "../../../common/entity/Subcourse";
 import {Lecture} from "../../../common/entity/Lecture";
@@ -488,13 +488,17 @@ export async function getCourseTags(req: Request, res: Response) {
 
 export async function postCreateCourseTag(req: Request, res: Response) {
     try {
-        const { name } = req.query;
+        const { name, category } = req.query;
 
         if (typeof name !== "string") {
             return res.status(400).send("Invalid value for query parameter 'name'");
         }
 
-        const tag = await createCourseTag(name);
+        if (!Object.values(CourseCategory).includes(category)) {
+            return res.status(400).send("Invalid value for query parameter 'category'");
+        }
+
+        const tag = await createCourseTag(name, category);
 
         await getManager().save(CourseTag, tag);
 

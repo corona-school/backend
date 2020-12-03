@@ -112,10 +112,10 @@ export class Course {
             if (tags[i].identifier) {
                 newTags.push(await getManager()
                     .findOneOrFail(CourseTag, { where: { identifier: tags[i].identifier }})
-                    .catch(async () => (await createCourseTag(tags[i].name)))
+                    .catch(async () => (await createCourseTag(tags[i].name, this.category)))
                 );
             } else {
-                newTags.push(await createCourseTag(tags[i].name));
+                newTags.push(await createCourseTag(tags[i].name, this.category));
             }
         }
 
