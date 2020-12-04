@@ -5,6 +5,7 @@
     <title>[TEST] Corona School Bescheinigung</title>
 </head>
 <body>
+    <h2>Englisches Zertifikat</h2>
     Name des Studenten: %NAMESTUDENT%<br/>
     Name des Schülers: %NAMESCHUELER%<br/>
     Heutiges Datum: %DATUMHEUTE%<br/>
