@@ -102,7 +102,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
 
         const certificate = await createCertificate(requestor, match.pupil, match, params);
 
-        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate), lang);
+        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -162,7 +162,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         if (!certificate)
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
 
-        return res.send(await createPDFBinary(certificate, getCertificateLink(req, certificate), lang));
+        return res.send(await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang));
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
@@ -354,7 +354,7 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): string {
     }
 }
 
-function getCertificateLink(req: Request, certificate: ParticipationCertificate) {
+function getCertificateLink(req: Request, certificate: ParticipationCertificate, lang: Language) {
     //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
     const parseResult = parseDomain(req.hostname);
     let baseDomain = "corona-school.de"; //default
@@ -363,7 +363,7 @@ function getCertificateLink(req: Request, certificate: ParticipationCertificate)
         baseDomain = [domain, ...topLevelDomains].join(".");
     }
 
-    return "http://verify." + baseDomain + "/" + certificate.uuid;
+    return "http://verify." + baseDomain + "/" + certificate.uuid + "?lang=" + lang;
 }
 
 function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
