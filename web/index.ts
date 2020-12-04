@@ -160,8 +160,11 @@ createConnection().then(() => {
 
     function configureCoursesAPI() {
         const coursesRouter = express.Router();
+
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/", courseController.getCoursesHandler);
+        coursesRouter.get("/tags", courseController.getCourseTagsHandler);
+
         app.use("/api/courses", coursesRouter);
     }
 
@@ -202,6 +205,14 @@ createConnection().then(() => {
         screenerApiRouter.get(
             "/courses",
             screeningController.getCourses
+        );
+        screenerApiRouter.get(
+            "/courses/tags",
+            screeningController.getCourseTags
+        );
+        screenerApiRouter.post(
+            "/courses/tags/create",
+            screeningController.postCreateCourseTag
         );
         screenerApiRouter.post(
             "/course/:id/update",

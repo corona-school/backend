@@ -11,6 +11,7 @@ mailstore
 
 # Assets
 assets/*
+!assets/**/*.example
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
