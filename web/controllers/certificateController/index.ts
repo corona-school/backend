@@ -16,6 +16,7 @@ import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
+import {dev} from "../../../../web-user-app/src/api/config";
 
 const logger = getLogger();
 
@@ -255,7 +256,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     return pc;
 }
 
-const englishTemplate = readFileSync("./assets/certificateTemplate.html", "utf8");
+const englishTemplate = readFileSync(dev ? "./assets/certificateTemplate.html.example" : "./assets/certificateTemplate.html", "utf8");
 
 function createPDFBinary(certificate: ParticipationCertificate, link: string): Promise<Buffer> {
     const { student, pupil } = certificate;
@@ -297,7 +298,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string): P
     });
 }
 
-const englishVerificationTemplate = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
+const englishVerificationTemplate = readFileSync(dev ? "./assets/verifiedCertificatePage.html.example" : "./assets/verifiedCertificatePage.html", "utf8");
 
 async function viewParticipationCertificate(certificate: ParticipationCertificate) {
     let verificationTemplate = englishVerificationTemplate;
