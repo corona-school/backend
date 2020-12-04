@@ -164,7 +164,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         logger.warn("apiTutor.email outside of length restrictions");
         return 400;
     }
-    
+
     if (apiTutor.phone && (apiTutor.phone.length == 0 || apiTutor.phone.length > 100)) {
         logger.warn("apiTutor.phone outside of length restrictions");
         return 400;
@@ -203,7 +203,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.subjects = JSON.stringify([]);
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
-    
+
     if (tutor.phone && ! tutor.phone.startsWith("+49") && ! tutor.phone.startsWith("+41") && ! tutor.phone.startsWith("+43")) {
         logger.error("tutor.phone not from Germany, Swiss or Austria");
         return 400;
@@ -433,7 +433,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         logger.error("apiTutee.email outside of length restrictions");
         return 400;
     }
-    
+
     if (apiTutee.phone && (apiTutee.phone.length == 0 || apiTutee.phone.length > 100)) {
         logger.error("apiTutee.phone outside of length restrictions");
         return 400;
@@ -452,7 +452,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
     }
-    
+
     if (tutee.phone && ! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
         logger.error("tutee.phone not from Germany, Swiss or Austria");
         return 400;
@@ -709,7 +709,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.wix_id = "Z-" + uuidv4();
     mentor.wix_creation_date = new Date();
     mentor.verification = generateToken();
-    
+
     if (mentor.phone && ! mentor.phone.startsWith("+49") && ! mentor.phone.startsWith("+41") && ! mentor.phone.startsWith("+43")) {
         logger.error("mentor.phone not from Germany, Swiss or Austria");
         return 400;
@@ -853,7 +853,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         logger.error("apiStateTutee.email outside of length restrictions");
         return 400;
     }
-    
+
     if (apiStateTutee.phone && (apiStateTutee.phone.length == 0 || apiStateTutee.phone.length > 100)) {
         logger.error("apiStateTutee.phone outside of length restrictions");
         return 400;
@@ -870,7 +870,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.email = apiStateTutee.email.toLowerCase();
     tutee.phone = apiStateTutee.phone;
     tutee.grade = apiStateTutee.grade + ". Klasse";
-    
+
     if (tutee.phone && ! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
         logger.error("tutee.phone not from Germany, Swiss or Austria");
         return 400;
