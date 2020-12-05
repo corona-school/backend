@@ -145,6 +145,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
                 apiExpert.lastName = experts[i].student.lastname;
                 apiExpert.description = experts[i].description;
                 apiExpert.expertiseTags = experts[i].expertiseTags?.map(t => (t.name)) || [];
+                apiExpert.projectFields = await experts[i].student.getProjectFields().then((res) => res.map(f => f.name));
 
                 apiResponse.push(apiExpert);
             }

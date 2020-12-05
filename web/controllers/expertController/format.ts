@@ -19,6 +19,7 @@ export interface ApiContactExpert {
  * @apiSuccess (Expert Object) {string} firstName The first name of the expert.
  * @apiSuccess (Expert Object) {string} description <em>(optional)</em> A description provided by the expert.
  * @apiSuccess (Expert Object) {string[]} expertiseTags Tags describing the expert's fields of expertise.
+ * @apiSuccess (Expert Object) {string[]} projectFields The project fields of the expert.
  */
 export class ApiGetExpert {
     id: number;
@@ -26,6 +27,7 @@ export class ApiGetExpert {
     firstName: string;
     description?: string;
     expertiseTags: string[];
+    projectFields: string[];
 }
 
 /**
