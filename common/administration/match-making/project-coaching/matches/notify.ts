@@ -40,7 +40,7 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
         coacheeFirstname: coachee.firstname,
         coachFirstname: coach.firstname,
         coacheeEmail: coachee.email,
-        coacheeGrade: `${coachee.gradeAsNumber()}`,
+        coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
         subjects: projectFieldsString,
         callURL: callURL
     });

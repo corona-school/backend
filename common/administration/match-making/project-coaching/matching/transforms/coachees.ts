@@ -22,7 +22,7 @@ export async function transformCoacheeToHelper(coachee: Pupil, manager: EntityMa
         excludeMatchesWith: existingMatches.map(m => transformPersonToPersonID(m.student)),
         matchRequestCount: coachee.openProjectMatchRequestCount,
         subjects: coachee.projectFields.map(projectFieldToSubject),
-        grade: coachee.gradeAsNumber(),
+        grade: coachee.assumedProjectCoachingMatchingGrade(),
         matchingPriority: 0 //consistent for project coaching matching, for now
     };
 }
