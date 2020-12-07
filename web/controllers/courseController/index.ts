@@ -10,7 +10,7 @@ import {
     ApiCourseTag,
     ApiEditCourse,
     ApiEditLecture,
-    ApiEditSubcourse, ApiGetCourseTag,
+    ApiEditSubcourse,
     ApiInstructor,
     ApiLecture,
     ApiSubcourse
@@ -2468,7 +2468,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 export async function getCourseTagsHandler(req: Request, res: Response) {
     let status = 200;
     try {
-        const courseTags: ApiGetCourseTag[] = await getCourseTags();
+        const courseTags: ApiCourseTag[] = await getCourseTags();
         res.json(courseTags);
     } catch (e) {
         logger.error("Get course tags failed with: ", e);
@@ -2480,18 +2480,15 @@ export async function getCourseTagsHandler(req: Request, res: Response) {
 async function getCourseTags() {
     const entityManager= getManager();
 
-    const tags = await entityManager.find(CourseTag, {
-        relations: ["courses"]
-    });
+    const tags = await entityManager.find(CourseTag);
 
-    let apiResponse: ApiGetCourseTag[] = [];
+    let apiResponse: ApiCourseTag[] = [];
 
     for (let i=0; i < tags.length; i++) {
-        let apiTag: ApiGetCourseTag = {
+        let apiTag: ApiCourseTag = {
             id: tags[i].identifier,
             name: tags[i].name,
-            category: tags[i].category,
-            courses: tags[i].courses.map(c => c.id)
+            category: tags[i].category
         };
 
         apiResponse.push(apiTag);
