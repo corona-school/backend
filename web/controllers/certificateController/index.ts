@@ -255,7 +255,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     return pc;
 }
 
-const englishTemplate = readFileSync("./assets/certificateTemplate.html", "utf8");
+const englishTemplate = readFileSync(process.env.NODE_ENV == 'dev' ? "./assets/certificateTemplate.html.example" : "./assets/certificateTemplate.html", "utf8");
 
 function createPDFBinary(certificate: ParticipationCertificate, link: string): Promise<Buffer> {
     const { student, pupil } = certificate;
@@ -297,7 +297,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string): P
     });
 }
 
-const englishVerificationTemplate = readFileSync("./assets/verifiedCertificatePage.html", "utf8");
+const englishVerificationTemplate = readFileSync(process.env.NODE_ENV == 'dev' ? "./assets/verifiedCertificatePage.html.example" : "./assets/verifiedCertificatePage.html", "utf8");
 
 async function viewParticipationCertificate(certificate: ParticipationCertificate) {
     let verificationTemplate = englishVerificationTemplate;
