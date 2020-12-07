@@ -52,7 +52,7 @@ export async function postTutorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.isTutor == 'boolean' &&
             typeof req.body.isOfficial == 'boolean' &&
             typeof req.body.isInstructor == 'boolean' &&
@@ -335,7 +335,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.state == 'string' &&
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
@@ -628,7 +628,7 @@ export async function postMentorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.teachingExperience === 'boolean' &&
             req.body.division instanceof Array &&
             req.body.expertise instanceof Array &&
@@ -788,7 +788,7 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.grade == 'number' &&
             typeof req.body.state == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
