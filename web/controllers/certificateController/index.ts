@@ -12,10 +12,11 @@ import * as path from 'path';
 import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
-import { Certificate, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
+import EJS from "ejs";
 
 const logger = getLogger();
 
@@ -162,7 +163,13 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         if (!certificate)
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
 
-        return res.send(await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang));
+        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
+
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdf.length
+        });
+        return res.end(pdf);
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
