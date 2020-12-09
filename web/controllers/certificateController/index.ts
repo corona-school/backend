@@ -16,7 +16,8 @@ import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
-import EJS from "ejs";
+import * as EJS from "ejs";
+
 
 const logger = getLogger();
 
@@ -70,7 +71,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
             !(res.locals.user instanceof Student || res.locals.user instanceof Pupil)
         ) return res.status(400).send("Missing parameters");
 
-        let lang = req.params.lang as Language;
+        let lang = req.query.lang as Language;
 
         if (lang === undefined)
             lang = DefaultLanguage;
@@ -86,14 +87,16 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (requestor.wix_id != req.params.student)
             return res.status(403).send("Students may only retrieve certificates for themselves");
 
-
-        let params = {
+        // TODO: Move to POST to body
+        // TODO: Properly validate
+        let params: IParams = {
             endDate: req.query.endDate as string || moment().format("X") as string,
             subjects: req.query.subjects as string,
             hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
             hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
             medium: req.query.medium as string,
-            categories: req.query.categories as string
+            categories: req.query.categories as string,
+            ongoingLessons: req.query.ongoingLessons === 'true'
         };
 
         // Students may only request for their matches
@@ -282,9 +285,9 @@ interface IExposedCertificate {
     hoursTotal: number,
     medium: string,
     state: (
-       | "manual" // student did not request approval
-       | "awaiting-approval" // pupil needs to sign certificate
-       | "approved" // signed by pupil
+        | "manual" // student did not request approval
+        | "awaiting-approval" // pupil needs to sign certificate
+        | "approved" // signed by pupil
     ),
 }
 
@@ -306,7 +309,8 @@ interface IParams {
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
-    categories: string
+    categories: string,
+    ongoingLessons: boolean,
 }
 
 async function createCertificate(requestor: Student, pupil: Pupil, match: Match, params: IParams): Promise<ParticipationCertificate> {
@@ -323,6 +327,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.medium = params.medium;
     pc.startDate = match.createdAt;
     pc.endDate = moment(params.endDate, "X").toDate();
+    pc.ongoingLessons = params.ongoingLessons;
 
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
@@ -334,10 +339,10 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     return pc;
 }
 
-const _templates: { [name: string]: { [key in Language | "default"]?: string } } = {};
+const _templates: { [name: string]: { [key in Language | "default"]?: EJS.ClientFunction } } = {};
 
 /* Loads the template from the /assets folder, falls back to the default language if fallback is true */
-function loadTemplate(name, lang: Language, fallback: boolean = true): string {
+function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.ClientFunction {
     if (_templates[name] && _templates[name][lang])
         return _templates[name][lang];
 
@@ -351,8 +356,10 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): string {
         if (!_templates[name])
             _templates[name] = {};
 
-        _templates[name][lang] = result;
-        return result;
+        const compiled = EJS.compile(result);
+
+        _templates[name][lang] = compiled;
+        return compiled;
     } else {
         if (!fallback || lang === DefaultLanguage)
             throw new Error(`Cannot find template '${path}`);
@@ -384,23 +391,21 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
     };
 
-    // adjust variables
-    // todo for 2021: replace %TPL% by <TPL>
-    const result = template
-        .replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname))
-        .replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname))
-        .replace("%DATUMHEUTE%", moment().format("D.M.YYYY"))
-        .replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"))
-        .replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"))
-        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
-        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
-        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
-        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
-        .replace("%MEDIUM%", escape(certificate.medium))
-        .replace("%CERTLINK%", link)
-        .replace("%CERTLINKTEXT%", link);
-
-    // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
+    const result = template({
+        NAMESTUDENT: escape(student.firstname + " " + student.lastname),
+        NAMESCHUELER: escape(pupil.firstname + " " + pupil.lastname),
+        DATUMHEUTE: moment().format("D.M.YYYY"),
+        SCHUELERSTART: moment(certificate.startDate, "X").format("D.M.YYYY"),
+        SCHUELERENDE: moment(certificate.endDate, "X").format("D.M.YYYY"),
+        SCHUELERFAECHER: escape(certificate.subjects).replace(/,/g, ", "),
+        SCHUELERFREITEXT: escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'),
+        SCHUELERPROWOCHE: escape(certificate.hoursPerWeek),
+        SCHUELERGESAMT: escape(certificate.hoursTotal),
+        MEDIUM: escape(certificate.medium),
+        CERTLINK: link,
+        CERTLINKTEXT: link,
+        ONGOING: certificate.ongoingLessons,
+    });
 
     return new Promise((resolve, reject) => {
         pdf.create(result, options).toBuffer((err, buffer) => {
@@ -418,16 +423,18 @@ async function viewParticipationCertificate(certificate: ParticipationCertificat
 
     const screeningDate = (await certificate.student?.screening)?.createdAt;
 
-    return verificationTemplate
-        .replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname))
-        .replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname))
-        .replace("%DATUMHEUTE%", moment(certificate.certificateDate).format("D.M.YYYY"))
-        .replace("%SCHUELERSTART%", moment(certificate.startDate).format("D.M.YYYY"))
-        .replace("%SCHUELERENDE%", moment(certificate.endDate).format("D.M.YYYY"))
-        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
-        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
-        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
-        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
-        .replace("%MEDIUM%", escape(certificate.medium))
-        .replace("%SCREENINGDATUM%", escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"));
+    return verificationTemplate({
+        NAMESTUDENT: escape(certificate.student?.firstname + " " + certificate.student?.lastname),
+        NAMESCHUELER: escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname),
+        DATUMHEUTE: moment(certificate.certificateDate).format("D.M.YYYY"),
+        SCHUELERSTART: moment(certificate.startDate).format("D.M.YYYY"),
+        SCHUELERENDE: moment(certificate.endDate).format("D.M.YYYY"),
+        SCHUELERFAECHER: escape(certificate.subjects).replace(/,/g, ", "),
+        SCHUELERFREITEXT: escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'),
+        SCHUELERPROWOCHE: escape(certificate.hoursPerWeek),
+        SCHUELERGESAMT: escape(certificate.hoursTotal),
+        MEDIUM: escape(certificate.medium),
+        SCREENINGDATUM: escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"),
+        ONGOING: certificate.ongoingLessons
+    });
 }
