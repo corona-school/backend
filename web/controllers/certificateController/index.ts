@@ -404,7 +404,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         MEDIUM: escape(certificate.medium),
         CERTLINK: link,
         CERTLINKTEXT: link,
-        ONGOING: certificate.ongoingLessons,
+        ONGOING: certificate.ongoingLessons
     });
 
     return new Promise((resolve, reject) => {
