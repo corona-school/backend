@@ -70,7 +70,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
             !(res.locals.user instanceof Student || res.locals.user instanceof Pupil)
         ) return res.status(400).send("Missing parameters");
 
-        let { lang } = req.query;
+        let lang = req.params.lang as Language;
 
         if (lang === undefined)
             lang = DefaultLanguage;
