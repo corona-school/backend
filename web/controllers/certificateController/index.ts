@@ -392,16 +392,17 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
     };
 
     const result = template({
-        NAMESTUDENT: escape(student.firstname + " " + student.lastname),
-        NAMESCHUELER: escape(pupil.firstname + " " + pupil.lastname),
+        NAMESTUDENT: student.firstname + " " + student.lastname,
+        NAMESCHUELER: pupil.firstname + " " + pupil.lastname,
         DATUMHEUTE: moment().format("D.M.YYYY"),
         SCHUELERSTART: moment(certificate.startDate, "X").format("D.M.YYYY"),
         SCHUELERENDE: moment(certificate.endDate, "X").format("D.M.YYYY"),
-        SCHUELERFAECHER: escape(certificate.subjects).replace(/,/g, ", "),
-        SCHUELERFREITEXT: escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'),
-        SCHUELERPROWOCHE: escape(certificate.hoursPerWeek),
-        SCHUELERGESAMT: escape(certificate.hoursTotal),
-        MEDIUM: escape(certificate.medium),
+        SCHUELERFAECHER: certificate.subjects.replace(/,/g, ", "),
+        // SCHUELERFREITEXT: certificate.categories.replace(/(?:\r\n|\r|\n)/g, '<br />'),
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),  //array is better to handle in ejs
+        SCHUELERPROWOCHE: certificate.hoursPerWeek,
+        SCHUELERGESAMT: certificate.hoursTotal,
+        MEDIUM: certificate.medium,
         CERTLINK: link,
         CERTLINKTEXT: link,
         ONGOING: certificate.ongoingLessons
