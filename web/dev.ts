@@ -1,28 +1,28 @@
-import {getConnection, getManager} from "typeorm";
-import {createHash, randomBytes} from "crypto";
-import {Pupil} from "../common/entity/Pupil";
-import {Student} from "../common/entity/Student";
-import {Match} from "../common/entity/Match";
-import {Screener} from "../common/entity/Screener";
-import {Screening} from "../common/entity/Screening";
-import {ParticipationCertificate} from "../common/entity/ParticipationCertificate";
-import {hashPassword} from "../common/util/hashing";
-import {CourseTag} from "../common/entity/CourseTag";
-import {Course, CourseCategory, CourseState} from "../common/entity/Course";
-import {Subcourse} from "../common/entity/Subcourse";
-import {Lecture} from "../common/entity/Lecture";
-import {InstructorScreening} from "../common/entity/InstructorScreening";
-import {CourseAttendanceLog} from "../common/entity/CourseAttendanceLog";
-import {Division, Expertise, Mentor} from "../common/entity/Mentor";
-import {School} from "../common/entity/School";
-import {State} from "../common/entity/State";
-import {SchoolType} from "../common/entity/SchoolType";
-import {ProjectField} from "../common/jufo/projectFields";
-import {TuteeJufoParticipationIndication} from "../common/jufo/participationIndication";
-import {ProjectMatch} from "../common/entity/ProjectMatch";
-import {ExpertData} from "../common/entity/ExpertData";
-import {ExpertiseTag} from "../common/entity/ExpertiseTag";
-import {ExpertAllowedIndication} from "../common/jufo/expertAllowedIndication";
+import { getConnection, getManager } from "typeorm";
+import { createHash, randomBytes } from "crypto";
+import { Pupil } from "../common/entity/Pupil";
+import { Student } from "../common/entity/Student";
+import { Match } from "../common/entity/Match";
+import { Screener } from "../common/entity/Screener";
+import { Screening } from "../common/entity/Screening";
+import { ParticipationCertificate } from "../common/entity/ParticipationCertificate";
+import { hashPassword } from "../common/util/hashing";
+import { CourseTag } from "../common/entity/CourseTag";
+import { Course, CourseCategory, CourseState } from "../common/entity/Course";
+import { Subcourse } from "../common/entity/Subcourse";
+import { Lecture } from "../common/entity/Lecture";
+import { InstructorScreening } from "../common/entity/InstructorScreening";
+import { CourseAttendanceLog } from "../common/entity/CourseAttendanceLog";
+import { Division, Expertise, Mentor } from "../common/entity/Mentor";
+import { School } from "../common/entity/School";
+import { State } from "../common/entity/State";
+import { SchoolType } from "../common/entity/SchoolType";
+import { ProjectField } from "../common/jufo/projectFields";
+import { TuteeJufoParticipationIndication } from "../common/jufo/participationIndication";
+import { ProjectMatch } from "../common/entity/ProjectMatch";
+import { ExpertData } from "../common/entity/ExpertData";
+import { ExpertiseTag } from "../common/entity/ExpertiseTag";
+import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -120,7 +120,7 @@ export async function setupDevDB() {
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s1.openMatchRequestCount = 1;
     s1.isProjectCoach = true;
@@ -156,7 +156,7 @@ export async function setupDevDB() {
     s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s3.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s3.openMatchRequestCount = 1;
     students.push(s3);
@@ -175,7 +175,7 @@ export async function setupDevDB() {
     s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s4.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s4.openMatchRequestCount = 1;
     students.push(s4);
@@ -194,7 +194,7 @@ export async function setupDevDB() {
     s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s5.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s5.openMatchRequestCount = 1;
     students.push(s5);
@@ -208,7 +208,7 @@ export async function setupDevDB() {
     s6.isProjectCoach = true;
     s6.isStudent = false;
     await s6.setProjectFields([
-        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 }
+        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 },
     ]);
     s6.verification = null;
     s6.verifiedAt = new Date(new Date().getTime() - 110000);
@@ -235,7 +235,7 @@ export async function setupDevDB() {
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s7.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s7.openMatchRequestCount = 1;
     students.push(s7);
@@ -306,7 +306,12 @@ export async function setupDevDB() {
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
     mentor1.authToken = sha512("authtokenM3");
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
-    mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
+    mentor1.expertise = [
+        Expertise.SPECIALIZED,
+        Expertise.EDUCATIONAL,
+        Expertise.TECHSUPPORT,
+        Expertise.SELFORGANIZATION,
+    ];
     mentor1.subjects = null;
     mentor1.teachingExperience = true;
     mentor1.message = "text";
@@ -315,7 +320,7 @@ export async function setupDevDB() {
     mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
     mentor1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
 
     mentors.push(mentor1);
@@ -851,11 +856,35 @@ export async function setupDevDB() {
     const expert2 = new ExpertData();
     expert2.student = students[6];
     expert2.contactEmail = "contact@jufo-tufo.de";
+    expert2.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis gravida, erat in dignissim vestibulum, ex nisl consequat nisl, at sagittis mauris Glasfaser eu nisl. Cras quis dui blandit, tincidunt libero id, porttitor nisi. Sed eu tellus interdum, luctus quam id, pretium dolor. Praesent feugiat quis sem in porttitor. Ut auctor erat nisl, vitae tempus nisl ullamcorper nec.";
     expert2.active = true;
     expert2.allowed = ExpertAllowedIndication.YES;
     expert2.expertiseTags = [tag1, tag2];
 
     experts.push(expert2);
+
+    const expert3 = new ExpertData();
+    expert3.student = students[3];
+    expert3.contactEmail = "contact2@jufo-tufo.de";
+    expert3.description =
+        "Die Elektronik ist ein Hauptgebiet der Elektrotechnik. Sie ist die Wissenschaft von der Steuerung des elektrischen Stromes durch elektronische Schaltungen, das heißt Schaltungen, in denen mindestens ein Bauelement aufgrund von Vakuum- oder Halbleiter-Leitung funktioniert. Elektronische Elemente verhalten sich nichtlinear, während das Verhalten anderer elektrischer (nicht-elektronischer) Elemente als linear bezeichnet wird";
+    expert3.active = true;
+    expert3.allowed = ExpertAllowedIndication.YES;
+    expert3.expertiseTags = [tag2];
+
+    experts.push(expert3);
+
+    const expert4 = new ExpertData();
+    expert4.student = students[4];
+    expert4.contactEmail = "contact3@jufo-tufo.de";
+    expert4.description =
+        "Chemie ([çeˈmi:]; mittel- und norddeutsch auch [ʃeˈmi:]; süddeutsch: [keˈmi:]) ist diejenige Naturwissenschaft, die sich mit dem Aufbau, den Eigenschaften und der Umwandlung von chemischen Stoffen beschäftigt. Ein Stoff besteht aus Atomen, Molekülen oder beidem. Er kann außerdem Ionen enthalten. Die chemischen Reaktionen sind Vorgänge in den Elektronenhüllen der Atome, Moleküle und Ionen.";
+    expert4.active = true;
+    expert4.allowed = ExpertAllowedIndication.YES;
+    expert4.expertiseTags = [tag1];
+
+    experts.push(expert4);
 
     for (let i = 0; i < experts.length; i++) {
         await entityManager.save(experts[i]);
