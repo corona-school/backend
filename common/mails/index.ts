@@ -105,7 +105,7 @@ async function sendSMS(message : string, phone: string) {
         logger.info("SMS was sent to " + phone, JSON.stringify(result.body));
         return result;
     } catch (e) {
-        logger.warn("Unable to send SMS to " + phone + ": Status code " + e.statusCode);
+        logger.warn("Unable to send SMS to " + phone + ": Status code " + e.statusCode + " " + e.response);
         throw e;
     }
 }
