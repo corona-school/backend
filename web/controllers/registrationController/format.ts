@@ -59,6 +59,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {string} firstname First name
  * @apiSuccess (Tutee Object) {string} lastname Last name
  * @apiSuccess (Tutee Object) {string} email E-Mail
+ * @apiSuccess (Tutee Object) {string} phone Phone number
  * @apiSuccess (Tutee Object) {int} [grade] Grade of the pupil (required if not only registering for project coaching)
  * @apiSuccess (Tutee Object) {string} state State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (Tutee Object) {string} school School type, one of <code>"grundschule", "gesamtschule", "hauptschule", "realschule", "gymnasium", "förderschule", "berufsschule", "other"</code>
@@ -76,6 +77,7 @@ export interface ApiAddTutee {
     firstname: string,
     lastname: string,
     email: string,
+    phone: string,
     grade?: number,
     state: string,
     school: string,
@@ -97,6 +99,7 @@ export interface ApiAddTutee {
  * @apiSuccess (StateTutee Object) {string} firstname First name
  * @apiSuccess (StateTutee Object) {string} lastname Last name
  * @apiSuccess (StateTutee Object) {string} email E-Mail
+ * @apiSuccess (StateTutee Object) {string} phone Phone number
  * @apiSuccess (StateTutee Object) {int} grade Grade of the pupil
  * @apiSuccess (StateTutee Object) {string} state State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (StateTutee Object) {bool} isTutee True, if eligible for one-on-one matching
@@ -110,6 +113,7 @@ export interface ApiAddStateTutee {
     firstname: string,
     lastname: string,
     email: string,
+    phone: string,
     grade: number,
     state: string,
     isTutee: boolean,
@@ -127,6 +131,7 @@ export interface ApiAddStateTutee {
  * @apiSuccess (Mentor Object) {string} firstname First name
  * @apiSuccess (Mentor Object) {string} lastname Last name
  * @apiSuccess (Mentor Object) {string} email E-Mail
+ * @apiSuccess (Mentor Object) {string} phone Phone number
  * @apiSuccess (Mentor Object) {string[]} division Division, array of <code>"facebook", "email", "events", "video", "supervision"</code>
  * @apiSuccess (Mentor Object) {string[]} expertise Expertise, array of <code>"language_difficulties", "specialized_subject_experience", "didactic_expert", "technical_support", "self_organization"</code>
  * @apiSuccess (Mentor Object) {Subject[]} subjects Subjects, <em>required if</em> <code>division = "supervision"</code> or <code>expertise = "specialized_subject_experience"</code>
@@ -140,6 +145,7 @@ export interface ApiAddMentor {
     firstname: string,
     lastname: string,
     email: string,
+    phone: string,
     division: string[],
     expertise: string[],
     subjects?: ApiSubject[],

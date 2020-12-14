@@ -437,6 +437,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
+    tutee.phone = apiTutee.phone;
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
     }
@@ -682,6 +683,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.firstname = apiMentor.firstname;
     mentor.lastname = apiMentor.lastname;
     mentor.email = apiMentor.email;
+    mentor.phone = apiMentor.phone;
     mentor.description = apiMentor.description;
     mentor.message = apiMentor.message;
     mentor.teachingExperience = apiMentor.teachingExperience;
@@ -838,6 +840,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.firstname = apiStateTutee.firstname;
     tutee.lastname = apiStateTutee.lastname;
     tutee.email = apiStateTutee.email.toLowerCase();
+    tutee.phone = apiStateTutee.phone;
     tutee.grade = apiStateTutee.grade + ". Klasse";
 
     const parsedState = EnumReverseMappings.State(apiStateTutee.state);
