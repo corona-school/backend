@@ -47,7 +47,7 @@ async function sendSMS(message: string, phoneNumber: string, sender: string) {
     //log what is sent to mailjet, so we can better debug some problems with mails
     logger.info(`Sending sms-send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
 
-    return await mailjet.post("sms-send", {version: "v3.1"}).request(requestOptions);
+    return await mailjet.post("sms-send", {version: "v4"}).request(requestOptions);
 }
 
 async function sendMailPure(

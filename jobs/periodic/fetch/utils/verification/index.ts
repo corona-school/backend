@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto";
-import { getLogger } from "log4js";
+import {randomBytes} from "crypto";
+import {getLogger} from "log4js";
 import {sendTemplateMail, mailjetTemplates, sendSMS} from "../../../../../common/mails";
-import { Person } from "../../../../../common/entity/Person";
+import {Person} from "../../../../../common/entity/Person";
 
 const logger = getLogger();
 
@@ -45,16 +45,21 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
 }
 
 export async function sendVerificationSMS(person: Person) {
+    let phone = person.phone;
     let code = person.code;
 
-    console.log("verificationURL", code);
+    if (phone == null) {
+        console.log('Person with id ' + person.id + ' has no phone number');
+    } else {
+        console.log("SMS verification code", code);
 
-    try {
-        let message = "Hallo " + person.firstname + ", hier dein Code: " + code;
-        await sendSMS(message, person.phone);
-    } catch (e) {
-        logger.error("Can't send verification SMS: ", e.message);
-        logger.debug(e);
+        try {
+            let message = "Hallo " + person.firstname + ", hier dein Code: " + code;
+            await sendSMS(message, person.phone);
+        } catch (e) {
+            logger.error("Can't send verification SMS: ", e.message);
+            logger.debug(e);
+        }
     }
 }
 
