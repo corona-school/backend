@@ -171,13 +171,20 @@ export class Pupil extends Person {
     registrationSource: RegistrationSource;
 
 
-    gradeAsNumber(): number {
+    gradeAsNumber(): number | null {
+        if (this.grade == null) {
+            return null;
+        }
         return gradeAsInt(this.grade);
+    }
+
+    assumedProjectCoachingMatchingGrade(): number {
+        return this.gradeAsNumber() ?? 13; //if no grade is given (usually only for project coachees which have left the normal school and attend the "Berufsschule"), assume 13, because those people are usually older
     }
 
     async overlappingProjectFieldsWithCoach(coach: Student): Promise<ProjectField[]> {
         const fieldsCoach = await coach.getProjectFields();
-        const pupilGrade = this.gradeAsNumber();
+        const pupilGrade = this.assumedProjectCoachingMatchingGrade();
 
         return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade && pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)));
     }
