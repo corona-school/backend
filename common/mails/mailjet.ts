@@ -35,6 +35,10 @@ async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox:
 }
 
 async function sendSMS(message: string, phoneNumber: string, sender: string) {
+    if (sender.length > 11) {
+        throw new Error('Sender ' + sender + ' is too long! Maximum is 11 characters.');
+    }
+
     const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
 
     // Send actual SMS

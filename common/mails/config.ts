@@ -16,7 +16,7 @@ const DEFAULTSENDERS = {
     noreply: '"Corona School Team" <noreply@corona-school.de>',
     screening: '"Corona School Team" <screening@corona-school.de>',
     support: '"Corona School Team" <support@corona-school.de>',
-    sms: 'Corona School Team'
+    sms: 'CoronaSchoo' // Maximum 11 characters
 };
 
 export { mailjetSmtp, DEFAULTSENDERS };
