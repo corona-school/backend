@@ -174,6 +174,7 @@ export class ApiGetUser {
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
+    phone?: string;
     //TODO: Um Mentor erweitern
 }
 
@@ -237,6 +238,7 @@ export class ApiPutUser {
     subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
+    phone?: string;
 }
 
 /**

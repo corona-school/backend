@@ -45,6 +45,7 @@ export async function setupDevDB() {
     p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
+    p.phone = "+491234567891";
     pupils.push(p);
 
     p = new Pupil();
