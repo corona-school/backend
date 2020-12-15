@@ -628,7 +628,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
         logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
     }
-    
+
     person.phone = req.phone;
     if (person.phone && ! person.phone.startsWith("+49") && ! person.phone.startsWith("+41") && ! person.phone.startsWith("+43")) {
         logger.error("person.phone not from Germany, Swiss or Austria");
