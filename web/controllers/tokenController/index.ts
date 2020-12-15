@@ -175,6 +175,7 @@ export async function verifyCode(code: string): Promise<boolean | null> {
             student.verifiedPhoneAt = new Date();
             logger.info("Code " + code + " verified");
 
+            await entityManager.save(student);
             await transactionLog.log(new VerifiedCodeEvent(student));
             return true;
         }
@@ -188,6 +189,7 @@ export async function verifyCode(code: string): Promise<boolean | null> {
             pupil.verifiedPhoneAt = new Date();
             logger.info("Code " + code + " verified");
 
+            await entityManager.save(pupil);
             await transactionLog.log(new VerifiedCodeEvent(pupil));
             return true;
         }
