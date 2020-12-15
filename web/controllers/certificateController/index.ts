@@ -399,7 +399,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         SCHUELERENDE: moment(certificate.endDate, "X").format("D.M.YYYY"),
         SCHUELERFAECHER: certificate.subjects.replace(/,/g, ", "),
         // SCHUELERFREITEXT: certificate.categories.replace(/(?:\r\n|\r|\n)/g, '<br />'),
-        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),  //array is better to handle in ejs
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g), //array is better to handle in ejs
         SCHUELERPROWOCHE: certificate.hoursPerWeek,
         SCHUELERGESAMT: certificate.hoursTotal,
         MEDIUM: certificate.medium,
