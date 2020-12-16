@@ -60,11 +60,11 @@ export async function verifyTokenHandler(req: Request, res: Response) {
 // TODO Documentation
 // TODO Create Code Controller?
 export async function verifyCodeHandler(req: Request, res: Response) {
-    if (req.body.id && req.body.code) {
-        let id = req.body.id;
+    if (req.body.wixId && req.body.code) {
+        let wixId = req.body.wixId;
         let code = req.body.code;
 
-        let success = await verifyCode(id, code);
+        let success = await verifyCode(wixId, code);
         if (success) {
             return res.status(200).send();
         } else {
@@ -160,14 +160,14 @@ export async function verifyToken(token: string): Promise<string | null> {
 
 // TODO Documentation
 // TODO Create Code Controller?
-export async function verifyCode(id : number, code: string): Promise<boolean | null> {
+export async function verifyCode(wixId : string, code: string): Promise<boolean | null> {
     try {
         const entityManager = getManager();
         const transactionLog = getTransactionLog();
 
         // Try to find student
         let student = await entityManager.findOne(Student, {
-            id: id,
+            wix_id: wixId,
             code: code
         });
 
@@ -183,7 +183,10 @@ export async function verifyCode(id : number, code: string): Promise<boolean | n
         }
 
         // Try to find pupil instead
-        let pupil = await entityManager.findOne(Pupil, { code: code });
+        let pupil = await entityManager.findOne(Pupil, {
+            wix_id: wixId,
+            code: code
+        });
 
         if (pupil instanceof Pupil) {
             // Found valid pupil
