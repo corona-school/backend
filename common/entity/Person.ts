@@ -29,6 +29,11 @@ export abstract class Person {
     @Column()
     email: string;
 
+    @Column({
+        nullable: true
+    })
+    phone: string;
+
     @Index({ unique: true })
     @Column({
         nullable: true,
@@ -36,12 +41,33 @@ export abstract class Person {
     })
     verification: string;
 
+    @Index({ unique: true })
+    @Column({
+        nullable: true,
+        default: null
+    })
+    code: string;
+
+    @Index({ unique: true })
+    @Column({
+        nullable: true,
+        default: null
+    })
+    phone: string;
+
     @Column({
         type: "timestamp",
         default: null,
         nullable: true
     })
     verifiedAt: Date;
+
+    @Column({
+        type: "timestamp",
+        default: null,
+        nullable: true
+    })
+    verifiedPhoneAt: Date;
 
     @Index({ unique: true })
     @Column({

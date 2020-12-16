@@ -1,6 +1,6 @@
 import * as nodemailer from "nodemailer";
-import { mailjetSmtp } from "./config";
-import { mailjet as mailjetTemplates, TemplateMail } from "./templates";
+import {DEFAULTSENDERS, mailjetSmtp} from "./config";
+import {mailjet as mailjetTemplates, TemplateMail} from "./templates";
 import mailjet from "./mailjet";
 
 import * as fs from "fs";
@@ -97,4 +97,17 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
     }
 }
 
-export { mailjetTemplates, sendTemplateMail, sendMailTo };
+
+async function sendSMS(message : string, phone: string) {
+    try {
+        const result = await mailjet.sendSMS(message, phone, DEFAULTSENDERS.sms);
+
+        logger.info("SMS was sent to " + phone, JSON.stringify(result.body));
+        return result;
+    } catch (e) {
+        logger.warn("Unable to send SMS to " + phone + ": Status code " + e.statusCode + " " + e.response);
+        throw e;
+    }
+}
+
+export { mailjetTemplates, sendTemplateMail, sendSMS, sendMailTo };

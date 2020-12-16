@@ -52,6 +52,7 @@ createConnection().then(() => {
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
+    configureCodeAPI();
     configureCourseAPI();
     configureScreenerAPI();
     configureCoursesAPI();
@@ -120,6 +121,12 @@ createConnection().then(() => {
         tokenApiRouter.post("/", tokenController.verifyTokenHandler);
         tokenApiRouter.get("/", tokenController.getNewTokenHandler);
         app.use("/api/token", tokenApiRouter);
+    }
+
+    function configureCodeAPI() {
+        const codeApiRouter = express.Router();
+        codeApiRouter.post("/", tokenController.verifyCodeHandler);
+        app.use("/api/code", codeApiRouter);
     }
 
     function configureCertificateAPI() {

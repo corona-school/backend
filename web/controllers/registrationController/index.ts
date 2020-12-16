@@ -9,7 +9,12 @@ import { checkSubject } from '../userController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
-import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
+import {
+    generateCode,
+    generateToken,
+    sendVerificationMail,
+    sendVerificationSMS
+} from '../../../jobs/periodic/fetch/utils/verification';
 import { Mentor } from "../../../common/entity/Mentor";
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
@@ -52,6 +57,7 @@ export async function postTutorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.isTutor == 'boolean' &&
             typeof req.body.isOfficial == 'boolean' &&
             typeof req.body.isInstructor == 'boolean' &&
@@ -164,6 +170,11 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         return 400;
     }
 
+    if (apiTutor.phone && (apiTutor.phone.length == 0 || apiTutor.phone.length > 100)) {
+        logger.warn("apiTutor.phone outside of length restrictions");
+        return 400;
+    }
+
     if (apiTutor.msg.length > 3000) {
         logger.warn("apiTutor.msg outside of length restrictions");
         return 400;
@@ -182,6 +193,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.firstname = apiTutor.firstname;
     tutor.lastname = apiTutor.lastname;
     tutor.email = apiTutor.email.toLowerCase();
+    tutor.phone = apiTutor.phone;
     tutor.newsletter = apiTutor.newsletter;
     tutor.msg = apiTutor.msg;
     tutor.university = apiTutor.university;
@@ -193,9 +205,15 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
+    tutor.code = generateCode();
     tutor.subjects = JSON.stringify([]);
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
+
+    if (tutor.phone && ! tutor.phone.startsWith("+49") && ! tutor.phone.startsWith("+41") && ! tutor.phone.startsWith("+43")) {
+        logger.error("tutor.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
@@ -284,6 +302,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     try {
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor, apiTutor.redirectTo);
+        await sendVerificationSMS(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -323,6 +342,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.state == 'string' &&
             typeof req.body.school == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
@@ -421,6 +441,11 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 400;
     }
 
+    if (apiTutee.phone && (apiTutee.phone.length == 0 || apiTutee.phone.length > 100)) {
+        logger.error("apiTutee.phone outside of length restrictions");
+        return 400;
+    }
+
     if (apiTutee.msg.length > 3000) {
         logger.error("apiTutee.msg outside of length restrictions");
         return 400;
@@ -430,8 +455,14 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.firstname = apiTutee.firstname;
     tutee.lastname = apiTutee.lastname;
     tutee.email = apiTutee.email.toLowerCase();
+    tutee.phone = apiTutee.phone;
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
+    }
+
+    if (tutee.phone && ! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
+        logger.error("tutee.phone not from Germany, Swiss or Austria");
+        return 400;
     }
 
     switch (apiTutee.state) {
@@ -530,6 +561,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
+    tutee.code = generateCode();
     tutee.subjects = JSON.stringify([]);
 
     if (apiTutee.isTutee) {
@@ -566,6 +598,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiTutee.redirectTo);
+        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -604,6 +637,7 @@ export async function postMentorHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.teachingExperience === 'boolean' &&
             req.body.division instanceof Array &&
             req.body.expertise instanceof Array &&
@@ -649,6 +683,10 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
         logger.warn("apiMentor.email is outside of length restrictions");
         return 400;
     }
+    if (apiMentor.phone && (apiMentor.phone.length == 0 || apiMentor.phone.length > 100)) {
+        logger.warn("apiMentor.phone is outside of length restrictions");
+        return 400;
+    }
     if (apiMentor.message && apiMentor.message.length > 100) {
         logger.warn("apiMentor.message is outside of length restrictions");
         return 400;
@@ -673,12 +711,19 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.firstname = apiMentor.firstname;
     mentor.lastname = apiMentor.lastname;
     mentor.email = apiMentor.email;
+    mentor.phone = apiMentor.phone;
     mentor.description = apiMentor.description;
     mentor.message = apiMentor.message;
     mentor.teachingExperience = apiMentor.teachingExperience;
     mentor.wix_id = "Z-" + uuidv4();
     mentor.wix_creation_date = new Date();
     mentor.verification = generateToken();
+    mentor.code = generateCode();
+
+    if (mentor.phone && ! mentor.phone.startsWith("+49") && ! mentor.phone.startsWith("+41") && ! mentor.phone.startsWith("+43")) {
+        logger.error("mentor.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     if (apiMentor.subjects.length > 0) {
         let subjects = checkSubjects(apiMentor.subjects);
@@ -713,6 +758,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     try {
         await entityManager.save(Mentor, mentor);
         await sendVerificationMail(mentor, apiMentor.redirectTo);
+        await sendVerificationSMS(mentor);
         await transactionLog.log(new VerificationRequestEvent(mentor));
         return 204;
     } catch (e) {
@@ -753,6 +799,7 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
+            (typeof req.body.phone == 'string' || typeof req.body.phone == 'undefined') &&
             typeof req.body.grade == 'number' &&
             typeof req.body.state == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
@@ -818,6 +865,11 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         return 400;
     }
 
+    if (apiStateTutee.phone && (apiStateTutee.phone.length == 0 || apiStateTutee.phone.length > 100)) {
+        logger.error("apiStateTutee.phone outside of length restrictions");
+        return 400;
+    }
+
     if (apiStateTutee.msg.length > 3000) {
         logger.error("apiStateTutee.msg outside of length restrictions");
         return 400;
@@ -827,7 +879,13 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.firstname = apiStateTutee.firstname;
     tutee.lastname = apiStateTutee.lastname;
     tutee.email = apiStateTutee.email.toLowerCase();
+    tutee.phone = apiStateTutee.phone;
     tutee.grade = apiStateTutee.grade + ". Klasse";
+
+    if (tutee.phone && ! tutee.phone.startsWith("+49") && ! tutee.phone.startsWith("+41") && ! tutee.phone.startsWith("+43")) {
+        logger.error("tutee.phone not from Germany, Swiss or Austria");
+        return 400;
+    }
 
     const parsedState = EnumReverseMappings.State(apiStateTutee.state);
     if (!parsedState) {
@@ -844,6 +902,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
+    tutee.code = generateCode();
     tutee.subjects = JSON.stringify([]);
 
     tutee.registrationSource = RegistrationSource.COOPERATION;
@@ -907,6 +966,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {

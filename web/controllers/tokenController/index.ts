@@ -15,6 +15,7 @@ import {
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
+import VerifiedCodeEvent from "../../../common/transactionlog/types/VerifiedCodeEvent";
 
 const logger = getLogger();
 
@@ -52,6 +53,24 @@ export async function verifyTokenHandler(req: Request, res: Response) {
         }
     } else {
         // token field missing
+        res.status(400).end();
+    }
+}
+
+// TODO Documentation
+// TODO Create Code Controller?
+export async function verifyCodeHandler(req: Request, res: Response) {
+    if (req.body.code) {
+        let code = req.body.code;
+
+        let success = await verifyCode(code);
+        if (success) {
+            return res.status(200).send();
+        } else {
+            return res.status(400).end();
+        }
+    } else {
+        // code field missing
         res.status(400).end();
     }
 }
@@ -134,6 +153,53 @@ export async function verifyToken(token: string): Promise<string | null> {
         logger.error("Can't verify token: ", e.message);
         logger.debug(e);
         return null;
+    }
+}
+
+
+// TODO Documentation
+// TODO Create Code Controller?
+export async function verifyCode(code: string): Promise<boolean | null> {
+    try {
+        const entityManager = getManager();
+        const transactionLog = getTransactionLog();
+
+        // Try to find student
+        let student = await entityManager.findOne(Student, {
+            code: code
+        });
+
+        if (student instanceof Student) {
+            // Found valid student
+            student.code = null;
+            student.verifiedPhoneAt = new Date();
+            logger.info("Code " + code + " verified");
+
+            await entityManager.save(student);
+            await transactionLog.log(new VerifiedCodeEvent(student));
+            return true;
+        }
+
+        // Try to find pupil instead
+        let pupil = await entityManager.findOne(Pupil, { code: code });
+
+        if (pupil instanceof Pupil) {
+            // Found valid pupil
+            pupil.code = null;
+            pupil.verifiedPhoneAt = new Date();
+            logger.info("Code " + code + " verified");
+
+            await entityManager.save(pupil);
+            await transactionLog.log(new VerifiedCodeEvent(pupil));
+            return true;
+        }
+
+        logger.info("Can't verify code " + code);
+        return false;
+    } catch (e) {
+        logger.error("Can't verify code: ", e.message);
+        logger.debug(e);
+        return false;
     }
 }
 

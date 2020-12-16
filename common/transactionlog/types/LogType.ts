@@ -2,6 +2,7 @@ enum LogType {
     MISC = "misc",
     VERIFICATION_REQUEST = "verificationRequets",
     VERIFIED = "verified",
+    VERIFIED_CODE = "verifiedCode",
     MATCH_DISSOLVE = "matchDissolve",
     PROJECT_MATCH_DISSOLVE = "projectMatchDissolve",
     FETCHED_FROM_WIX = "fetchedFromWix",
