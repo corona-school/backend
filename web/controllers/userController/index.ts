@@ -33,6 +33,7 @@ import { TutorJufoParticipationIndication } from "../../../common/jufo/participa
 import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
+import {sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 
@@ -629,6 +630,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
     }
 
+    let prevPhone = person.phone;
     person.phone = req.phone;
     if (person.phone && ! person.phone.startsWith("+49") && ! person.phone.startsWith("+41") && ! person.phone.startsWith("+43")) {
         logger.error("person.phone not from Germany, Swiss or Austria");
@@ -793,6 +795,12 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
         logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${type.toString()}`);
         logger.debug(person);
+
+        // Phone number changed, send new SMS
+        if (prevPhone != person.phone) {
+            await sendVerificationSMS(person);
+        }
+
     } catch (e) {
         logger.error("Can't update user: " + e.message);
         logger.debug(person, e);
