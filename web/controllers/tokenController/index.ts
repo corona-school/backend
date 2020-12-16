@@ -16,6 +16,7 @@ import {
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
 import VerifiedCodeEvent from "../../../common/transactionlog/types/VerifiedCodeEvent";
+import {generateCode, sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 
@@ -65,6 +66,25 @@ export async function verifyCodeHandler(req: Request, res: Response) {
         let code = req.body.code;
 
         let success = await verifyCode(wixId, code);
+        if (success) {
+            return res.status(200).send();
+        } else {
+            return res.status(400).end();
+        }
+    } else {
+        // code field missing
+        res.status(400).end();
+    }
+}
+
+// TODO Documentation
+// TODO Create Code Controller?
+export async function requestCodeHandler(req: Request, res: Response) {
+    if (req.body.wixId && req.body.phone) {
+        let wixId = req.body.wixId;
+        let phone = req.body.phone;
+
+        let success = await requestCode(wixId, phone);
         if (success) {
             return res.status(200).send();
         } else {
@@ -203,6 +223,48 @@ export async function verifyCode(wixId : string, code: string): Promise<boolean 
         return false;
     } catch (e) {
         logger.error("Can't verify code: ", e.message);
+        logger.debug(e);
+        return false;
+    }
+}
+
+
+// TODO Documentation
+// TODO Create Code Controller?
+export async function requestCode(wixId : string, phone: string): Promise<boolean | null> {
+    try {
+        const entityManager = getManager();
+
+        // Try to find student
+        let student = await entityManager.findOne(Student, {
+            wix_id: wixId
+        });
+
+        if (student instanceof Student) {
+            student.code = generateCode();
+
+            await entityManager.save(student);
+            await sendVerificationSMS(phone, student.firstname, student.code);
+            return;
+        }
+
+        // Try to find pupil instead
+        let pupil = await entityManager.findOne(Pupil, {
+            wix_id: wixId
+        });
+
+        if (pupil instanceof Pupil) {
+            pupil.code = generateCode();
+
+            await entityManager.save(student);
+            await sendVerificationSMS(phone, pupil.firstname, pupil.code);
+            return;
+        }
+
+        logger.info("Can't request code for user " + wixId + " and phone number " + phone);
+        return false;
+    } catch (e) {
+        logger.error("Can't request code: ", e.message);
         logger.debug(e);
         return false;
     }

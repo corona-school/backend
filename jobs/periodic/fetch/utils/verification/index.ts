@@ -44,18 +44,15 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
     }
 }
 
-export async function sendVerificationSMS(person: Person) {
-    let phone = person.phone;
-    let code = person.code;
-
+export async function sendVerificationSMS(phone : string, name : string, code : string) {
     if (phone == null) {
-        console.log('Person with id ' + person.id + ' has no phone number');
+        console.log('Can\'t send verification SMS because phone number is null');
     } else {
         console.log("SMS verification code", code);
 
         try {
-            let message = "Hallo " + person.firstname + ", hier dein Code: " + code;
-            await sendSMS(message, person.phone);
+            let message = "Hallo " + name + "! Dein Bestätigungscode lautet: " + code;
+            await sendSMS(message, phone);
         } catch (e) {
             logger.error("Can't send verification SMS: ", e.message);
             logger.debug(e);

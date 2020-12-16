@@ -12,8 +12,7 @@ import { State } from '../../../common/entity/State';
 import {
     generateCode,
     generateToken,
-    sendVerificationMail,
-    sendVerificationSMS
+    sendVerificationMail
 } from '../../../jobs/periodic/fetch/utils/verification';
 import { Mentor } from "../../../common/entity/Mentor";
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
@@ -302,7 +301,6 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     try {
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor, apiTutor.redirectTo);
-        await sendVerificationSMS(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -598,7 +596,6 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiTutee.redirectTo);
-        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -758,7 +755,6 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     try {
         await entityManager.save(Mentor, mentor);
         await sendVerificationMail(mentor, apiMentor.redirectTo);
-        await sendVerificationSMS(mentor);
         await transactionLog.log(new VerificationRequestEvent(mentor));
         return 204;
     } catch (e) {
@@ -966,7 +962,6 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiStateTutee.redirectTo);
-        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {

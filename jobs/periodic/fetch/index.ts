@@ -3,7 +3,7 @@ import { Student } from "../../../common/entity/Student";
 import { ApiPupil, ApiResponse, ApiStudent } from "./api";
 import { Pupil } from "../../../common/entity/Pupil";
 import { getConnection, getManager } from "typeorm";
-import {generateCode, generateToken, sendVerificationMail, sendVerificationSMS} from "./utils/verification";
+import {generateCode, generateToken, sendVerificationMail} from "./utils/verification";
 import { getLogger } from "log4js";
 import { getTransactionLog } from "../../../common/transactionlog";
 import FetchedFromWixEvent from "../../../common/transactionlog/types/FetchedFromWixEvent";
@@ -127,7 +127,6 @@ export default async function fetchFromWixToDb() {
                     await transactionLog.log(new FetchedFromWixEvent(student));
                     totalNewStudents++;
                     await sendVerificationMail(student);
-                    await sendVerificationSMS(student);
                     await transactionLog.log(new VerificationRequestEvent(student));
                 } catch (e) {
                     logger.debug("Can't save student: ", e.message);
@@ -165,7 +164,6 @@ export default async function fetchFromWixToDb() {
                     await transactionLog.log(new FetchedFromWixEvent(pupil));
                     totalNewPupils++;
                     await sendVerificationMail(pupil);
-                    await sendVerificationSMS(pupil);
                     await transactionLog.log(
                         new VerificationRequestEvent(pupil)
                     );

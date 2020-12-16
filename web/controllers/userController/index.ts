@@ -33,7 +33,7 @@ import { TutorJufoParticipationIndication } from "../../../common/jufo/participa
 import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
-import {generateCode, sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
+import {generateCode} from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 
@@ -800,12 +800,6 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
         logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${type.toString()}`);
         logger.debug(person);
-
-        // Phone number changed, send new SMS
-        if (prevPhone != person.phone) {
-            await sendVerificationSMS(person);
-        }
-
     } catch (e) {
         logger.error("Can't update user: " + e.message);
         logger.debug(person, e);
