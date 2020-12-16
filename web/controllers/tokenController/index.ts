@@ -60,10 +60,11 @@ export async function verifyTokenHandler(req: Request, res: Response) {
 // TODO Documentation
 // TODO Create Code Controller?
 export async function verifyCodeHandler(req: Request, res: Response) {
-    if (req.body.code) {
+    if (req.body.id && req.body.code) {
+        let id = req.body.id;
         let code = req.body.code;
 
-        let success = await verifyCode(code);
+        let success = await verifyCode(id, code);
         if (success) {
             return res.status(200).send();
         } else {
@@ -159,13 +160,14 @@ export async function verifyToken(token: string): Promise<string | null> {
 
 // TODO Documentation
 // TODO Create Code Controller?
-export async function verifyCode(code: string): Promise<boolean | null> {
+export async function verifyCode(id : number, code: string): Promise<boolean | null> {
     try {
         const entityManager = getManager();
         const transactionLog = getTransactionLog();
 
         // Try to find student
         let student = await entityManager.findOne(Student, {
+            id: id,
             code: code
         });
 
