@@ -175,6 +175,7 @@ export class ApiGetUser {
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
     phone?: string;
+    phoneConfirmed?: string;
     //TODO: Um Mentor erweitern
 }
 
