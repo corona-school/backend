@@ -397,9 +397,8 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         DATUMHEUTE: moment().format("D.M.YYYY"),
         SCHUELERSTART: moment(certificate.startDate, "X").format("D.M.YYYY"),
         SCHUELERENDE: moment(certificate.endDate, "X").format("D.M.YYYY"),
-        SCHUELERFAECHER: certificate.subjects.replace(/,/g, ", "),
-        // SCHUELERFREITEXT: certificate.categories.replace(/(?:\r\n|\r|\n)/g, '<br />'),
-        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),  //array is better to handle in ejs
+        SCHUELERFAECHER: certificate.subjects.split(","),
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
         SCHUELERPROWOCHE: certificate.hoursPerWeek,
         SCHUELERGESAMT: certificate.hoursTotal,
         MEDIUM: certificate.medium,
@@ -425,17 +424,17 @@ async function viewParticipationCertificate(certificate: ParticipationCertificat
     const screeningDate = (await certificate.student?.screening)?.createdAt;
 
     return verificationTemplate({
-        NAMESTUDENT: escape(certificate.student?.firstname + " " + certificate.student?.lastname),
-        NAMESCHUELER: escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname),
+        NAMESTUDENT: certificate.student?.firstname + " " + certificate.student?.lastname,
+        NAMESCHUELER: certificate.pupil?.firstname + " " + certificate.pupil?.lastname,
         DATUMHEUTE: moment(certificate.certificateDate).format("D.M.YYYY"),
         SCHUELERSTART: moment(certificate.startDate).format("D.M.YYYY"),
         SCHUELERENDE: moment(certificate.endDate).format("D.M.YYYY"),
-        SCHUELERFAECHER: escape(certificate.subjects).replace(/,/g, ", "),
-        SCHUELERFREITEXT: escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'),
-        SCHUELERPROWOCHE: escape(certificate.hoursPerWeek),
-        SCHUELERGESAMT: escape(certificate.hoursTotal),
-        MEDIUM: escape(certificate.medium),
-        SCREENINGDATUM: escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"),
+        SCHUELERFAECHER: certificate.subjects.split(","),
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
+        SCHUELERPROWOCHE: certificate.hoursPerWeek,
+        SCHUELERGESAMT: certificate.hoursTotal,
+        MEDIUM: certificate.medium,
+        SCREENINGDATUM: screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]",
         ONGOING: certificate.ongoingLessons
     });
 }
