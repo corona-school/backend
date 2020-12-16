@@ -29,11 +29,6 @@ export abstract class Person {
     @Column()
     email: string;
 
-    @Column({
-        nullable: true
-    })
-    phone: string;
-
     @Index({ unique: true })
     @Column({
         nullable: true,
