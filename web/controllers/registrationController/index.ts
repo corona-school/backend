@@ -9,7 +9,12 @@ import { checkSubject } from '../userController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { v4 as uuidv4 } from "uuid";
 import { State } from '../../../common/entity/State';
-import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
+import {
+    generateCode,
+    generateToken,
+    sendVerificationMail,
+    sendVerificationSMS
+} from '../../../jobs/periodic/fetch/utils/verification';
 import { Mentor } from "../../../common/entity/Mentor";
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
@@ -200,6 +205,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.wix_id = "Z-" + uuidv4();
     tutor.wix_creation_date = new Date();
     tutor.verification = generateToken();
+    tutor.code = generateCode();
     tutor.subjects = JSON.stringify([]);
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
@@ -296,6 +302,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     try {
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor, apiTutor.redirectTo);
+        await sendVerificationSMS(tutor);
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -554,6 +561,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
+    tutee.code = generateCode();
     tutee.subjects = JSON.stringify([]);
 
     if (apiTutee.isTutee) {
@@ -590,6 +598,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiTutee.redirectTo);
+        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -709,6 +718,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     mentor.wix_id = "Z-" + uuidv4();
     mentor.wix_creation_date = new Date();
     mentor.verification = generateToken();
+    mentor.code = generateCode();
 
     if (mentor.phone && ! mentor.phone.startsWith("+49") && ! mentor.phone.startsWith("+41") && ! mentor.phone.startsWith("+43")) {
         logger.error("mentor.phone not from Germany, Swiss or Austria");
@@ -748,6 +758,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     try {
         await entityManager.save(Mentor, mentor);
         await sendVerificationMail(mentor, apiMentor.redirectTo);
+        await sendVerificationSMS(mentor);
         await transactionLog.log(new VerificationRequestEvent(mentor));
         return 204;
     } catch (e) {
@@ -891,6 +902,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.wix_id = "Z-" + uuidv4();
     tutee.wix_creation_date = new Date();
     tutee.verification = generateToken();
+    tutee.code = generateCode();
     tutee.subjects = JSON.stringify([]);
 
     tutee.registrationSource = RegistrationSource.COOPERATION;
@@ -954,6 +966,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await sendVerificationSMS(tutee);
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
