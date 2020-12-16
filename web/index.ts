@@ -134,6 +134,7 @@ createConnection().then(() => {
         certificateRouter.use(authCheckFactory());
         certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
         app.use("/api/certificate", certificateRouter);
+        app.get("/api/certificates", authCheckFactory(), certificateController.getCertificates);
     }
 
     function configureCourseAPI() {

@@ -8,6 +8,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {string} firstname First name
  * @apiSuccess (Tutor Object) {string} lastname Last name
  * @apiSuccess (Tutor Object) {string} email E-Mail
+ * @apiSuccess (Tutor Object) {string} phone Phone number
  * @apiSuccess (Tutor Object) {bool} isTutor True, if eligible for one-on-one matching
  * @apiSuccess (Tutor Object) {bool} isInstructor True, if eligible for course management
  * @apiSuccess (Tutor Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
@@ -33,6 +34,7 @@ export interface ApiAddTutor {
     firstname: string,
     lastname: string,
     email: string
+    phone: string,
     isTutor: boolean,
     isInstructor: boolean,
     subjects?: ApiSubject[],
@@ -131,7 +133,7 @@ export interface ApiAddStateTutee {
  * @apiSuccess (Mentor Object) {string} firstname First name
  * @apiSuccess (Mentor Object) {string} lastname Last name
  * @apiSuccess (Mentor Object) {string} email E-Mail
- * @apiSuccess (Mentor Object) {string} phone Phone number
+ * @apiSuccess (Mentor Object) {string} Phone Phone number
  * @apiSuccess (Mentor Object) {string[]} division Division, array of <code>"facebook", "email", "events", "video", "supervision"</code>
  * @apiSuccess (Mentor Object) {string[]} expertise Expertise, array of <code>"language_difficulties", "specialized_subject_experience", "didactic_expert", "technical_support", "self_organization"</code>
  * @apiSuccess (Mentor Object) {Subject[]} subjects Subjects, <em>required if</em> <code>division = "supervision"</code> or <code>expertise = "specialized_subject_experience"</code>

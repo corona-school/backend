@@ -164,7 +164,8 @@ export async function putHandler(req: Request, res: Response) {
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
             (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
-            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number") &&
+            (b.phone == undefined || typeof b.phone == "string")) {
             if (req.params.id != undefined && res.locals.user instanceof Person) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
@@ -447,6 +448,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     apiResponse.email = person.email;
     apiResponse.active = person.active;
     apiResponse.registrationDate = moment(person.wix_creation_date).unix();
+    apiResponse.phone = person.phone;
 
     if (person instanceof Student) {
         apiResponse.type = "student";
@@ -625,6 +627,12 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
         logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
+    }
+
+    person.phone = req.phone;
+    if (person.phone && ! person.phone.startsWith("+49") && ! person.phone.startsWith("+41") && ! person.phone.startsWith("+43")) {
+        logger.error("person.phone not from Germany, Swiss or Austria");
+        return 400;
     }
 
     let type: ObjectType<Person>;
