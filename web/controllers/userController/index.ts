@@ -33,7 +33,7 @@ import { TutorJufoParticipationIndication } from "../../../common/jufo/participa
 import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
-import {sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
+import {generateCode, sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 
@@ -631,7 +631,12 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     }
 
     let prevPhone = person.phone;
-    person.phone = req.phone;
+
+    if (prevPhone != req.phone) {
+        person.phone = req.phone;
+        person.code = generateCode();
+    }
+
     if (person.phone && ! person.phone.startsWith("+49") && ! person.phone.startsWith("+41") && ! person.phone.startsWith("+43")) {
         logger.error("person.phone not from Germany, Swiss or Austria");
         return 400;
