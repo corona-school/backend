@@ -255,7 +255,7 @@ export async function requestCode(wixId : string): Promise<boolean | null> {
         if (pupil instanceof Pupil) {
             pupil.code = generateCode();
 
-            await entityManager.save(student);
+            await entityManager.save(pupil);
             await sendVerificationSMS(pupil.phone, pupil.firstname, pupil.code);
             return;
         }
