@@ -125,8 +125,8 @@ createConnection().then(() => {
 
     function configureCodeAPI() {
         const codeApiRouter = express.Router();
-        codeApiRouter.post("/", tokenController.verifyCodeHandler);
-        codeApiRouter.get("/", tokenController.requestCodeHandler);
+        codeApiRouter.post("/request", tokenController.requestCodeHandler);
+        codeApiRouter.post("/verify", tokenController.verifyCodeHandler);
         app.use("/api/code", codeApiRouter);
     }
 
