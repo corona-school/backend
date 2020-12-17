@@ -80,11 +80,10 @@ export async function verifyCodeHandler(req: Request, res: Response) {
 // TODO Documentation
 // TODO Create Code Controller?
 export async function requestCodeHandler(req: Request, res: Response) {
-    if (req.body.wixId && req.body.phone) {
+    if (req.body.wixId) {
         let wixId = req.body.wixId;
-        let phone = req.body.phone;
 
-        let success = await requestCode(wixId, phone);
+        let success = await requestCode(wixId);
         if (success) {
             return res.status(200).send();
         } else {
@@ -231,7 +230,7 @@ export async function verifyCode(wixId : string, code: string): Promise<boolean 
 
 // TODO Documentation
 // TODO Create Code Controller?
-export async function requestCode(wixId : string, phone: string): Promise<boolean | null> {
+export async function requestCode(wixId : string): Promise<boolean | null> {
     try {
         const entityManager = getManager();
 
@@ -244,7 +243,7 @@ export async function requestCode(wixId : string, phone: string): Promise<boolea
             student.code = generateCode();
 
             await entityManager.save(student);
-            await sendVerificationSMS(phone, student.firstname, student.code);
+            await sendVerificationSMS(student.phone, student.firstname, student.code);
             return;
         }
 
@@ -257,11 +256,11 @@ export async function requestCode(wixId : string, phone: string): Promise<boolea
             pupil.code = generateCode();
 
             await entityManager.save(student);
-            await sendVerificationSMS(phone, pupil.firstname, pupil.code);
+            await sendVerificationSMS(pupil.phone, pupil.firstname, pupil.code);
             return;
         }
 
-        logger.info("Can't request code for user " + wixId + " and phone number " + phone);
+        logger.info("Can't request code for user " + wixId);
         return false;
     } catch (e) {
         logger.error("Can't request code: ", e.message);

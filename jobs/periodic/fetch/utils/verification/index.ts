@@ -46,7 +46,7 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
 
 export async function sendVerificationSMS(phone : string, name : string, code : string) {
     if (phone == null) {
-        console.log('Can\'t send verification SMS because phone number is null');
+        console.log('Can\'t send verification SMS because the user ' + name + " has no phone number!");
     } else {
         console.log("SMS verification code", code);
 
