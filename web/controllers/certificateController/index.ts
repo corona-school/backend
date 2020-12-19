@@ -149,7 +149,8 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         const { certificateId } = req.params;
         let { lang } = req.query;
         const requestor = res.locals.user as Student;
-
+        assert(requestor, "No user set");
+        
         const entityManager = getManager();
 
         if (lang === undefined)
