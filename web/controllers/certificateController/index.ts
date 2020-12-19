@@ -262,7 +262,10 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
     const userid = (res.locals.user as Person).id;
 
     try {
-        const certificatesData = await entityManager.find(ParticipationCertificate, { where: [{ pupil: userid }, /*or*/ { student: userid }], relations: ["student", "pupil"] });
+        const certificatesData = await entityManager.find(ParticipationCertificate, {
+            where: res.locals.user instanceof Pupil ? { pupil: userid } : { student: userid },
+            relations: ["student", "pupil"]
+        });
         const certificates = certificatesData.map(cert => exposeCertificate(cert, /*to*/ res.locals.user));
         return res.json({ certificates });
     } catch (error) {
