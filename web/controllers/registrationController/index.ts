@@ -753,11 +753,12 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.grade == 'number' &&
+            typeof req.body.grade == 'number' && //compared to normal tutee registration, grade is required, because this is for state cooperation with public schools
             typeof req.body.state == 'string' &&
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.teacherEmail == 'string' &&
+            typeof req.body.isProjectCoachee == "boolean" &&
             typeof req.body.msg == 'string') {
 
             if (req.body.isTutor) {
@@ -772,6 +773,38 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
                 } else {
                     status = 400;
                     logger.error("Tutee registration (for specific state) with isTutee missing subjects.");
+                }
+            }
+
+            if (req.body.isProjectCoachee) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.isJufoParticipant === "string"
+                    && typeof req.body.projectMemberCount === "number") {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutee registration (for specific state) with isProjectCoachee expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK isJufoParticipant for validity
+                    if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                    }
+                    // CHECK projectMemberCount for validity
+                    const projectMemberCount: number = req.body.projectMemberCount;
+                    if (projectMemberCount < 1 || projectMemberCount > 3) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutee registration (for specific state) with isProjectCoachee has invalid parameters");
                 }
             }
 
@@ -863,6 +896,14 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
 
         tutee.isPupil = true;
         tutee.subjects = JSON.stringify(apiStateTutee.subjects);
+    }
+
+    // Project coaching
+    if (apiStateTutee.isProjectCoachee) {
+        tutee.isProjectCoachee = apiStateTutee.isProjectCoachee;
+        tutee.projectFields = apiStateTutee.projectFields;
+        tutee.isJufoParticipant = apiStateTutee.isJufoParticipant;
+        tutee.projectMemberCount = apiStateTutee.projectMemberCount;
     }
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
