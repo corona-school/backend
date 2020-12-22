@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager, Like } from "typeorm";
+import { getManager, Like, ILike } from "typeorm";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentInfoDTO } from "../../../common/dto/StudentInfoDTO";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
@@ -441,10 +441,11 @@ export async function updateScreenerByMailHandler(req: Request, res: Response, n
  *
  * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
  * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getCourses(req: Request, res: Response) {
     try {
-        const { courseState, search } = req.query;
+        const { courseState, search, page } = req.query;
 
         if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");
@@ -452,15 +453,34 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
+        if(page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be string.");
+
         const where = (courseState ? (search ? [
-            { courseState, name: Like(`%${search}%`) }, /* OR */
-            { courseState, description: Like(`%${search}%`) }
+            { courseState, name: ILike(`%${search}%`) }, /* OR */
+            { courseState, description: ILike(`%${search}%`) }
         ] : { courseState }) : (search ? [
-            { name: Like(`%${search}%`) }, /* OR */
-            { description: Like(`%${search}%`) }
+            { name: ILike(`%${search}%`) }, /* OR */
+            { description: ILike(`%${search}%`) }
         ] : {}));
 
-        const courses = await getManager().find(Course, { where, take: 20 });
+        
+        const courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20  });
+
+        if(!courses.length && search) {
+            // In case the regular search does not match anything, we search for students with that name
+            // Thus we avoid searching through all students in the regular case, but still support "find by student"
+            const [firstname, lastname = ""] = search.split(" ");
+
+            const student = await getManager().findOne(Student, {
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)},
+            });
+
+            if(student) {
+                courses.push(...student.courses);
+            }
+        }
+        
 
         return res.json({ courses });
     } catch (error) {
