@@ -477,8 +477,6 @@ export async function getCourses(req: Request, res: Response) {
                 relations: ["courses"]
             });
 
-            console.log("Courses", student.courses);
-
             if (student) {
                 courses.push(...student.courses);
             }
