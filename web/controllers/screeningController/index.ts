@@ -738,10 +738,11 @@ async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: 
  *
  * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
  * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email, supporting Postgres ILIKE syntax
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getInstructors(req: Request, res: Response) {
     try {
-        let { screeningStatus, search } = req.query;
+        let { screeningStatus, search, page } = req.query;
 
         if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
@@ -749,30 +750,38 @@ export async function getInstructors(req: Request, res: Response) {
         if (typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search'");
 
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+
         search = `%${search}%`; // fuzzy search
 
         let instructors: {}[];
+
+        const PAGE_SIZE = 20;
 
         if (screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         }
 
