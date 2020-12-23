@@ -453,7 +453,7 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
-        if(page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be string.");
 
         const where = (courseState ? (search ? [
@@ -464,23 +464,23 @@ export async function getCourses(req: Request, res: Response) {
             { description: ILike(`%${search}%`) }
         ] : {}));
 
-        
-        const courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20  });
 
-        if(!courses.length && search) {
+        const courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20 });
+
+        if (!courses.length && search) {
             // In case the regular search does not match anything, we search for students with that name
             // Thus we avoid searching through all students in the regular case, but still support "find by student"
             const [firstname, lastname = ""] = search.split(" ");
 
             const student = await getManager().findOne(Student, {
-                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)},
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)}
             });
 
-            if(student) {
+            if (student) {
                 courses.push(...student.courses);
             }
         }
-        
+
 
         return res.json({ courses });
     } catch (error) {
