@@ -23,7 +23,8 @@
         "review": {
             "env": {
                 "NODE_ENV": "dev",
-                "MAILJET_LIVE": "0"
+                "MAILJET_LIVE": "0",
+                "SCREENER_AUTH_TOKEN": "screener"
             },
             "addons": [
                 "heroku-postgresql:hobby-dev"
