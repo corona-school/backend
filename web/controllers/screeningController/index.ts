@@ -454,7 +454,7 @@ export async function getCourses(req: Request, res: Response) {
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
-            return res.status(400).send("Invalid value for parameter 'page', must be string.");
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
         const where = (courseState ? (search ? [
             { courseState, name: ILike(`%${search}%`) }, /* OR */
