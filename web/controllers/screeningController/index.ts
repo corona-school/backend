@@ -477,7 +477,7 @@ export async function getCourses(req: Request, res: Response) {
             });
 
             if (student) {
-                courses.push(...student.courses);
+                courses.push(...(await student.courses));
             }
         }
 
