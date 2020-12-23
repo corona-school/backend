@@ -473,11 +473,14 @@ export async function getCourses(req: Request, res: Response) {
             const [firstname, lastname = ""] = search.split(" ");
 
             const student = await getManager().findOne(Student, {
-                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)}
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)},
+                relations: ["courses"]
             });
 
+            console.log("Courses", student.courses);
+
             if (student) {
-                courses.push(...(await student.courses));
+                courses.push(...student.courses);
             }
         }
 
