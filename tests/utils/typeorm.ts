@@ -5,7 +5,7 @@ import {
     Connection,
     EntitySchema,
     createConnections,
-    NamingStrategyInterface,
+    NamingStrategyInterface
 } from "typeorm";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
@@ -205,7 +205,7 @@ export async function createTestingConnections(
             });
 
             const queryRunner = connection.createQueryRunner();
-            for(const database of databases)
+            for (const database of databases)
                 await queryRunner.createDatabase(database, true);
 
             // create new schemas
@@ -224,7 +224,7 @@ export async function createTestingConnections(
             if (schema && schemaPaths.indexOf(schema) === -1)
                 schemaPaths.push(schema);
 
-            for(const schemaPath of schemaPaths)
+            for (const schemaPath of schemaPaths)
                 await queryRunner.createSchema(schemaPath, true);
 
             await queryRunner.release();
