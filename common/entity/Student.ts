@@ -472,3 +472,8 @@ export const DEFAULT_PROJECT_COACH_GRADERESTRICTIONS = {
     MIN: 1,
     MAX: 13
 };
+
+export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13
+};

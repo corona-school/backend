@@ -12,7 +12,8 @@ import {
 } from "typeorm";
 import { Student } from "./Student";
 import { Pupil } from "./Pupil";
-import { gradeAsInt } from "../util/gradestrings";
+import { Subject } from "../util/subjectsutils";
+import { v4 as generateUUID } from "uuid";
 
 export enum SourceType {
     IMPORTED = "imported",
@@ -95,6 +96,20 @@ export class Match {
         default: SourceType.MATCHEDINTERNAL
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
+
+    jitsiLink(): string {
+        return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
+    }
+
+    overlappingSubjects(): Subject[] {
+        return this.pupil.overlappingSubjectsWithTutor(this.student);
+    }
+
+    constructor(pupil: Pupil, student: Student, uuid: string = generateUUID()) {
+        this.pupil = pupil;
+        this.student = student;
+        this.uuid = uuid;
+    }
 }
 
 
@@ -106,4 +121,15 @@ export async function alreadyMatched(s: Student, p: Pupil, manager: EntityManage
     const matches = manager.find(Match, { student: s, pupil: p });
 
     return (await matches).length !== 0;
+}
+
+export async function getMatchByID(id: number, manager: EntityManager): Promise<Match> {
+    return manager.findOne(Match, {
+        id: id
+    });
+}
+
+///Takes the given matches instances and re-queries them from the database, returning new instances for all of them.
+export async function reloadMatchesInstances(matches: Match[], manager: EntityManager): Promise<Match[]> {
+    return await Promise.all(matches.map(async m => await getMatchByID(m.id, manager)));
 }
