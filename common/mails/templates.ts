@@ -41,13 +41,11 @@ export const mailjet = {
             variables: variables
         };
     },
-    PUPILMATCHMAILS: (variables: {
+    TUTEENEWMATCH: (variables: {
         pupilFirstname: string;
         studentFirstname: string;
         studentEmail: string;
         subjects: string;
-        meetingProposalDate: string;
-        meetingProposalTime: string;
         callURL: string;
     }) => {
         return <TemplateMail>{
@@ -59,14 +57,12 @@ export const mailjet = {
             variables: variables
         };
     },
-    STUDENTMATCHMAILS: (variables: {
+    TUTORNEWMATCH: (variables: {
         personFirstname: string;
         pupilFirstname: string;
         pupilEmail: string;
         pupilGrade: string;
         subjects: string;
-        meetingProposalDate: string;
-        meetingProposalTime: string;
         callURL: string;
     }) => {
         return <TemplateMail>{
