@@ -16,7 +16,7 @@ export async function matchMakingOfAllPossibleMatches(manager: EntityManager) {
     const tutees = await tuteesToMatch(manager);
 
     //create matching
-    const matching = await createMatching(tutors, tutees, manager);
+    const { matching, stats } = await createMatching(tutors, tutees, manager);
 
     //validate matching (including the current database state)
     const validationResult = await validateMatching(matching, manager);
@@ -37,5 +37,5 @@ export async function matchMakingOfAllPossibleMatches(manager: EntityManager) {
 
     logger.info(`Successfully created ${databaseMatches.length} new tutoring matches and notified the corresponding people`);
     logger.info(`Matches made: ${JSON.stringify(matching)}`);
-    //TODO: additional logging that also logs how many people are still waiting
+    logger.info(`Matching stats: ${JSON.stringify(stats)}`);
 }
