@@ -8,6 +8,7 @@ import * as helmet from "helmet";
 import * as cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
+import * as phoneController from "./controllers/phoneController";
 import * as matchController from "./controllers/matchController";
 import * as projectMatchController from "./controllers/projectMatchController";
 import * as screeningController from "./controllers/screeningController";
@@ -125,8 +126,8 @@ createConnection().then(() => {
 
     function configureCodeAPI() {
         const codeApiRouter = express.Router();
-        codeApiRouter.post("/request", tokenController.requestCodeHandler);
-        codeApiRouter.post("/verify", tokenController.verifyCodeHandler);
+        codeApiRouter.post("/request", phoneController.requestCodeHandler);
+        codeApiRouter.post("/verify", phoneController.verifyCodeHandler);
         app.use("/api/code", codeApiRouter);
     }
 

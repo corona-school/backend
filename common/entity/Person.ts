@@ -43,6 +43,13 @@ export abstract class Person {
     })
     code: string;
 
+    @Column({
+        type: "timestamp",
+        nullable: true,
+        default: null
+    })
+    requestedCodeAt: Date;
+
     @Index({ unique: true })
     @Column({
         nullable: true,
