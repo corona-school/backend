@@ -124,11 +124,9 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.use(authCheckFactory());
-
-        certificateRouter.get("/create/:student/:pupil", certificateController.createCertificateEndpoint);
-        certificateRouter.get("/:certificateId", certificateController.getCertificateEndpoint);
-        certificateRouter.get("/:certificateId/confirmation", certificateController.getCertificateConfirmationEndpoint);
+        certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
+        certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
+        certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
 
 
         app.use("/api/certificate", certificateRouter);
