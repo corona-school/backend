@@ -1,7 +1,7 @@
 import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
-import { Person } from "./Person";
+import { Person, RegistrationSource } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { State } from './State';
@@ -253,6 +253,13 @@ export class Student extends Person {
         default: null
     })
     lastUpdatedSettingsViaBlocker: Date;
+
+    @Column({
+        type: 'enum',
+        enum: RegistrationSource,
+        default: RegistrationSource.NORMAL
+    })
+    registrationSource: RegistrationSource;
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
