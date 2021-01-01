@@ -364,47 +364,36 @@ export async function setupDevDB() {
     t.category = "revision";
     tags.push(t);
 
-    t = new CourseTag();
-    t.name = "Spiel&Spaß";
-    t.identifier = "play&fun";
-    t.category = "club";
-    tags.push(t);
 
-    t = new CourseTag();
-    t.name = "Kreativität";
-    t.identifier = "creativity";
-    t.category = "club";
-    tags.push(t);
+    const clubTagNamesMap = {
+        "mint": "MINT",
+        "liberalarts": "Geisteswissenschaften",
+        "socialsciences": "Sozialwissenschaften",
+        "language": "Sprache",
+        "music-art-culture": "Musik, Kunst und Kultur",
+        "environment": "Natur und Umwelt",
+        "personaldevelopment": "Persönlichkeitsentwicklung",
+        "play&fun": "Spiel und Spaß",
+        "priorknowledge-no": "Ohne Vorkenntnisse",
+        "priorknowledge-required": "Vorkenntnisse benötigt",
+        "material-no": "Ohne Material",
+        "material-required": "Material benötigt"
+    };
 
-    t = new CourseTag();
-    t.name = "Sport & Bewegung";
-    t.identifier = "sports";
-    t.category = "club";
-    tags.push(t);
+    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map( ([identifier, name]) => {
+        const t = new CourseTag();
+        t.name = name;
+        t.identifier = identifier;
+        t.category = "club";
 
-    const science = (t = new CourseTag());
-    t.name = "Naturwissenschaften";
-    t.identifier = "science";
-    t.category = "club";
-    tags.push(t);
+        return [identifier, t];
+    }));
 
-    const music = (t = new CourseTag());
-    t.name = "Musik";
-    t.identifier = "music";
-    t.category = "club";
-    tags.push(t);
+    const science = clubTagMap["mint"];
+    const music = clubTagMap["music-art-culture"];
 
-    t = new CourseTag();
-    t.name = "Gesundheit";
-    t.identifier = "health";
-    t.category = "club";
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = "Interkulturelles";
-    t.identifier = "intercultural";
-    t.category = "club";
-    tags.push(t);
+    const clubTags = Object.values(clubTagMap);
+    tags.push(...clubTags);
 
     const preparation = (t = new CourseTag());
     t.name = "Prüfungsvorbereitung";
