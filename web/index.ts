@@ -144,6 +144,8 @@ createConnection().then(() => {
         coursesRouter.put("/:id", courseController.putCourseHandler);
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
 
+        coursesRouter.post("/:id/instructor", courseController.postAddCourseInstructorHandler);
+
         coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
         coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
         coursesRouter.delete("/:id/subcourse/:subid", courseController.deleteSubcourseHandler);

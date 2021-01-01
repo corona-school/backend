@@ -12,6 +12,7 @@ import {
     ApiEditLecture,
     ApiEditSubcourse,
     ApiInstructor,
+    ApiInstructorID,
     ApiLecture,
     ApiSubcourse
 } from './format';
@@ -2486,4 +2487,139 @@ async function getCourseTags() {
     }
 
     return apiResponse;
+}
+
+/**
+ * @api {POST} /course/:id/instructor AddInstructor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add a new instructor to a course (and all of its subcourses too)
+ *
+ * It will expect an email address of an existent, active and sucessfully screened instructor (a student who is an instructor)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName AddInstructor
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl --location --request POST 'localhost:5000/api/course/2/instructor' --header 'Token: authtokenS1' --header 'Content-Type: application/json' --data-raw '{ "email": "mel-98@gmail.com"}'
+ *
+ * @apiUse InstructorInfo
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function postAddCourseInstructorHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id) &&
+                typeof req.body.email == 'string') {
+
+                if (status < 300) {
+                    status = await postAddCourseInstructor(res.locals.user, +req.params.id, req.body);
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/instructor");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add an instructor to a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function postAddCourseInstructor(student: Student, courseID: number, apiInstructorToAdd: ApiInstructorID): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to add an instructor to a course, but is no accepted instructor himself.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to add an instructor to non-existent course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to add an instructor to a course, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 403;
+    }
+
+    // Check validity of instructor that should be added
+    let instructorToAdd = await entityManager.findOne(Student, {
+        email: apiInstructorToAdd.email
+    });
+
+    if (!instructorToAdd) {
+        logger.warn(`Cannot find a person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email}`);
+        return 404;
+    }
+
+    if (!instructorToAdd.active) {
+        logger.warn(`Person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not active. It cannot be added to a course!`);
+        return 404;
+    }
+
+    if (!instructorToAdd.isInstructor) {
+        logger.warn(`The person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not a course instructor. It cannot be added to a course!`);
+        return 403;
+    }
+
+    if (await instructorToAdd.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`The instructor (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not successfully screened as an instructor. S*he thus cannot be added to a course!`);
+        return 403;
+    }
+
+    if (course.instructors.some(i => i.id === instructorToAdd.id)) {
+        logger.warn(`The instructor with email address ${apiInstructorToAdd.email} is already an instructor of course number ${courseID}!`);
+        return 409;
+    }
+
+
+    //add that instructor to the course (and all of it's subcourses)
+    course.instructors.push(instructorToAdd);
+    course.subcourses.forEach( sc => sc.instructors.push(instructorToAdd));
+
+    try {
+        for (const sc of course.subcourses) { //save subcourses
+            await entityManager.save(sc);
+        }
+
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully added instructor with email ${instructorToAdd.email} to course with id ${courseID} and all of it's subcourses`);
+
+        return 200;
+    } catch (e) {
+        logger.error("Can't save the changes applied while adding an instructor to a course: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
 }
