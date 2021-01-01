@@ -33,6 +33,7 @@ import {
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
+import * as moment from 'moment-timezone';
 
 const logger = getLogger();
 
@@ -1079,8 +1080,8 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         return 400;
     }
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(2, "days").startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1195,7 +1196,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
+        logger.warn(`Student (ID ${student.id}) tried to edit a course, but is no instructor.`);
         logger.debug(student);
         return 403;
     }
@@ -1243,11 +1244,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     course.instructors = instructors;
 
     if (apiCourse.name != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'name' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
             logger.warn(`Invalid length of field 'name': ${apiCourse.name.length}`);
             logger.debug(apiCourse);
@@ -1257,11 +1253,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
 
     if (apiCourse.outline != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'outline' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.outline.length == 0 || apiCourse.outline.length > 200) {
             logger.warn(`Invalid length of field 'outline': ${apiCourse.outline.length}`);
             logger.debug(apiCourse);
@@ -1278,11 +1269,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     course.description = apiCourse.description;
 
     if (apiCourse.category != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'category' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         let category: CourseCategory;
         switch (apiCourse.category) {
             case "revision":
@@ -1319,12 +1305,20 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
     course.tags = tags;
 
-    if (course.courseState != CourseState.CREATED && (apiCourse.submit != undefined || apiCourse.submit == false)) {
+    //if course is already reviewed (i.e. either allowed, denied or cancelled) or submitted, the course state should not change at all
+    if (course.courseState === CourseState.CREATED && apiCourse.submit != undefined) { //so only if course is created, it could be possible to change the course state to submitted
+        course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    }
+    else if (apiCourse.submit === false) {
         logger.warn(`Field 'submit' is not editable on submitted courses`);
         logger.debug(apiCourse);
         return 403;
     }
-    course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    else if (apiCourse.submit != undefined) { //only change the course state, if the submit value is part of the request
+        //just issue a warning message...
+        logger.warn(`Course submission state for course number ${course.id} will not be changed, since it was already reviewed`);
+    }
+
 
     try {
         await entityManager.save(Course, course);
@@ -1463,17 +1457,15 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     }
     subcourse.instructors = instructors;
 
-    // Can't raise minGrade, when course is already published
-    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13
-        || (subcourse.published && apiSubcourse.minGrade > subcourse.minGrade)) {
+    // Always allow raising the maxGrade
+    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13) {
         logger.warn(`Field 'minGrade' contains an illegal value: ${apiSubcourse.minGrade}`);
         logger.debug(apiSubcourse);
         return 400;
     }
 
-    // Can't lower maxGrade, when course is published
-    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13
-        || (subcourse.published && apiSubcourse.maxGrade < subcourse.maxGrade)) {
+    // Always allow lowering the minGrade
+    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13) {
         logger.warn(`Field 'maxGrade' contains an illegal value: ${apiSubcourse.maxGrade}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1487,9 +1479,8 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     subcourse.minGrade = apiSubcourse.minGrade;
     subcourse.maxGrade = apiSubcourse.maxGrade;
 
-    // Can't lower maxParticipants when there are already more pupils participating
-    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100
-        || apiSubcourse.maxParticipants < subcourse.participants.length) {
+    // Always allow lowering the maxParticipants
+    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
         logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1644,8 +1635,8 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
     lecture.instructor = instructor;
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // the 2 day restriction does not apply when editing lectures -> the lecture date must only be in the future
+    if (!Number.isInteger(apiLecture.start) || moment.unix(apiLecture.start).isBefore(moment())) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
