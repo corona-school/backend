@@ -35,6 +35,11 @@ import {
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
 import * as moment from 'moment-timezone';
+import { putFile } from '../../../common/file-bucket';
+import { deleteFile } from '../../../common/file-bucket/delete';
+import { courseImageKey } from './course-images';
+import { accessURLForKey } from '../../../common/file-bucket/s3';
+import * as mime from 'mime-types';
 
 const logger = getLogger();
 
@@ -276,7 +281,7 @@ async function getCourses(student: Student | undefined,
                         apiCourse.description = courses[i].description;
                         break;
                     case 'image':
-                        apiCourse.image = courses[i].imageUrl;
+                        apiCourse.image = courses[i].imageKey ? accessURLForKey(courses[i].imageKey) : null;
                         break;
                     case 'category':
                         apiCourse.category = courses[i].category;
@@ -487,7 +492,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             name: course.name,
             outline: course.outline,
             description: course.description,
-            image: course.imageUrl,
+            image: course.imageKey ? accessURLForKey(course.imageKey) : null,
             category: course.category,
             tags: [],
             subcourses: []
@@ -771,7 +776,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
-    course.imageUrl = undefined;
+    course.imageKey = undefined;
     course.category = category;
     course.tags = tags;
     course.subcourses = [];
@@ -2622,4 +2627,192 @@ async function postAddCourseInstructor(student: Student, courseID: number, apiIn
         logger.debug(course, e);
         return 500;
     }
+}
+
+/**
+ * @api {POST} /course/:id/image ChangeImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Changes the image of a course
+ *
+ * Expects multipart/form-data image (PNG, JPEG or GIF)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName ChangeImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function putCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (!req.file) {
+                    status = 400;
+                    logger.warn(`PUT /course/:id/image expects either a PNG, JPEG or GIF file`);
+                }
+
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, req.file);
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for PUT /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to change course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function setCourseImage(student: Student, courseID: number, imageFile?: Express.Multer.File): Promise<number | { imageURL?: string }> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to change course image, but is no accepted instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to change course image of non existent course (ID ${courseID})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to change course image, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    try {
+        if (imageFile) {
+            // TODO: Check validity of image (i.e. a valid JPEG, and not just mime type or something like that)
+
+            const fileExtension = mime.extension(imageFile.mimetype);
+
+            if (!fileExtension) {
+                logger.warn(`User tried to change course image for course with ID ${courseID}, but the provided file of wrong mime type`);
+                return 400;
+            }
+
+            const key = courseImageKey(courseID, fileExtension);
+
+            // TODO: resize images to provide different resolutions
+            await putFile(imageFile.buffer, key);
+
+            course.imageKey = key;
+        }
+        else if (course.imageKey) { //otherwise, there's nothing to delete
+            //delete image if no image is given
+            await deleteFile(course.imageKey);
+
+            course.imageKey = null;
+        }
+    }
+    catch (e) {
+        logger.error(`Error while uploading/modifying image for course ${courseID}`, e);
+        return 503;
+    }
+
+    try {
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully changed image of course with ID ${courseID}`);
+
+        return { imageURL: course.imageURL() };
+    } catch (e) {
+        logger.error("Can't save changed image key to database: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+/**
+ * @api {POST} /course/:id/image RemoveImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Remove the image of a course
+ *
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName RemoveImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function deleteCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, null);
+
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to delete course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
 }

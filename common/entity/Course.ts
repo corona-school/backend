@@ -13,6 +13,7 @@ import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
 import { ApiCourseUpdate } from "../dto/ApiCourseUpdate";
 import {createCourseTag} from "../util/createCourseTag";
+import { accessURLForKey } from "../file-bucket/s3";
 
 export enum CourseState {
     CREATED = "created",
@@ -57,7 +58,7 @@ export class Course {
     @Column({
         nullable: true
     })
-    imageUrl: string;
+    imageKey: string; //note, it will not store the full url, but just the key of the file in the corresponding default bucket
 
     @Column({
         type: 'enum',
@@ -120,6 +121,10 @@ export class Course {
         }
 
         this.tags = newTags;
+    }
+
+    imageURL(): string | null {
+        return this.imageKey ? accessURLForKey(this.imageKey) : null;
     }
 
 }

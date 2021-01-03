@@ -22,6 +22,7 @@ import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
+import * as multer from "multer";
 
 // Logger setup
 try {
@@ -145,6 +146,18 @@ createConnection().then(() => {
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
 
         coursesRouter.post("/:id/instructor", courseController.postAddCourseInstructorHandler);
+
+        const courseImageUpload = multer({
+            limits: {
+                fileSize: 5 * (10 ** 6) //5mb
+            },
+            storage: multer.memoryStorage(), //store in memory.....
+            fileFilter: (req, file, cb) => {
+                cb(null, ["image/png", "image/jpeg", "image/gif"].includes(file.mimetype));
+            }
+        });
+        coursesRouter.put("/:id/image", courseImageUpload.single("cover"), courseController.putCourseImageHandler);
+        coursesRouter.delete("/:id/image", courseController.deleteCourseImageHandler);
 
         coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
         coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
