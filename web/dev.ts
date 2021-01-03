@@ -344,8 +344,8 @@ export async function setupDevDB() {
         "iY939+KK9MesuyYZ8C52r3XXZT373wpjGG5EPGigPssDK6cxCxcuHIX+GBNZSY+Q95N8JB3Ag95J3Ch" +
         "t70dFvw+wv/B95VVfwhXh3l3wodKg/fA0hLD3XFVUuWOeLR2HPC4i3E8Fm8cD3fjuCwFf0PMrUb/L2i" +
         "vCHzQiGuKjvfE5/tdfxePsxgG96g83I3g8RXDgGu6e24Jbml8uBsA0EPdIMrvgX1wiEdjT+Bxsidwh9" +
-        "6aBw8ePHjw4PfxB1+DS8VZrR4OAAAAAElFTkSuQmCC", 
-        "base64"
+        "6aBw8ePHjw4PfxB1+DS8VZrR4OAAAAAElFTkSuQmCC",
+        "utf-8"
     );
 
     const pc1 = Object.assign(new ParticipationCertificate(), {

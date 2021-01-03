@@ -242,7 +242,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
     }
 }
 
-const VALID_BASE64 = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
+const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
 /**
  * @api {POST} /certificate/:certificateId/sign
@@ -474,6 +474,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
     };
 
+
     const result = template({
         NAMESTUDENT: student.firstname + " " + student.lastname,
         NAMESCHUELER: pupil.firstname + " " + pupil.lastname,
@@ -488,8 +489,8 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         CERTLINK: link,
         CERTLINKTEXT: link,
         ONGOING: certificate.ongoingLessons,
-        SIGNATURE_PARENT: certificate.signatureParent && certificate.signatureParent.toString("base64"),
-        SIGNATURE_PUPIL: certificate.signaturePupil && certificate.signaturePupil.toString("base64")
+        SIGNATURE_PARENT: certificate.signatureParent && certificate.signatureParent.toString("utf-8"),
+        SIGNATURE_PUPIL: certificate.signaturePupil && certificate.signaturePupil.toString("utf-8")
     });
 
     return new Promise((resolve, reject) => {
@@ -531,10 +532,10 @@ async function signCertificate(certificate: ParticipationCertificate, signatureP
     assert(certificate.state === "awaiting-approval", "Certificate awaiting signature");
 
     if (signatureParent)
-        certificate.signatureParent = Buffer.from(signatureParent, "base64");
+        certificate.signatureParent = Buffer.from(signatureParent, "utf-8");
 
     if (signaturePupil)
-        certificate.signaturePupil = Buffer.from(signaturePupil, "base64");
+        certificate.signaturePupil = Buffer.from(signaturePupil, "utf-8");
 
     certificate.state === "approved";
 
