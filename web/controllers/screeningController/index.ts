@@ -8,15 +8,15 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import {Course, CourseCategory} from "../../../common/entity/Course";
+import { Course, CourseCategory } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
-import {Subcourse} from "../../../common/entity/Subcourse";
-import {Lecture} from "../../../common/entity/Lecture";
+import { Subcourse } from "../../../common/entity/Subcourse";
+import { Lecture } from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import {CourseTag} from "../../../common/entity/CourseTag";
-import {CourseTagDTO} from "../../../common/dto/CourseTagDTO";
-import {createCourseTag} from "../../../common/util/createCourseTag";
+import { CourseTag } from "../../../common/entity/CourseTag";
+import { CourseTagDTO } from "../../../common/dto/CourseTagDTO";
+import { createCourseTag } from "../../../common/util/createCourseTag";
 
 const logger = getLogger();
 
@@ -253,7 +253,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         getManager().save(student);
 
         //update transaction log
-        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, {prev: prevState, new: newState}));
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, { prev: prevState, new: newState }));
 
         res.status(200).send("Student updated successfully!");
     }
@@ -465,7 +465,7 @@ export async function getCourses(req: Request, res: Response) {
         ] : {}));
 
 
-        const courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20 });
+        let courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20, order: { "updatedAt": "DESC" } });
 
         if (!courses.length && search) {
             // In case the regular search does not match anything, we search for students with that name
@@ -473,12 +473,17 @@ export async function getCourses(req: Request, res: Response) {
             const [firstname, lastname = ""] = search.split(" ");
 
             const student = await getManager().findOne(Student, {
-                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`)},
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`) },
                 relations: ["courses"]
             });
 
             if (student) {
-                courses.push(...student.courses);
+                // This should really be done on the database, but TypeORM currently has no nice way to express this:
+                // https://github.com/typeorm/typeorm/blob/master/docs/many-to-many-relations.md
+                courses = student.courses
+                    .filter(it => courseState && it.courseState === courseState)
+                    .sort((a, b) => +b.updatedAt - +a.updatedAt)
+                    .slice((+page || 0) * 20, (+page + 1 || 1) * 20);
             }
         }
 
@@ -631,7 +636,7 @@ export async function updateCourse(req: Request, res: Response) {
         }
 
         if (tags !== undefined) {
-            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))){
+            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))) {
                 const status = await handleUpdateCourseTags(tags, +id);
                 if (status != 200) {
                     return res.status(status).send("Updating course tags failed");
@@ -659,7 +664,7 @@ export async function updateCourse(req: Request, res: Response) {
 async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
     const entityManager = getManager();
 
-    for (let lecture of lectures){
+    for (let lecture of lectures) {
         const course = await entityManager.findOne(Course, { id: courseId });
         if (course == undefined) {
             logger.warn(`No course found with ID ${courseId}`);
@@ -703,8 +708,8 @@ async function handleDeleteLectures(lectures: { id: number }[]) {
     return 204;
 }
 
-async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number){
-    const course = await getManager().findOne(Course, { where: { id: courseId }});
+async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number) {
+    const course = await getManager().findOne(Course, { where: { id: courseId } });
 
     try {
         await course.updateTags(courseTags);
