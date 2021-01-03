@@ -58,4 +58,13 @@ export class ParticipationCertificate {
 
     @Column({ default: false })
     ongoingLessons: boolean;
+
+    @Column({ default: "manual" })
+    state: "manual" | "awaiting-approval" | "approved";
+
+    @Column({ nullable: true, type: "bytea", select: false })
+    signaturePupil?: Buffer;
+
+    @Column({ nullable: true, type: "bytea", select: false })
+    signatureParent?: Buffer;
 }

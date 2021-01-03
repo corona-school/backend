@@ -21,5 +21,14 @@
     <% if(ONGOING) { %>
         Hilfe ging nach Zertifikat weiter
     <% } %>
+    <% if(SIGNATURE_PARENT) { %>
+      Unterschrift Eltern:
+      <img src="<%- SIGNATURE_PARENT %>" />
+    <% } %>
+
+    <% if(SIGNATURE_PUPIL) { %>
+      Unterschrift Schüler:
+      <img src="<%- SIGNATURE_PUPIL %>" />
+    <% } %>
 </body>
 </html>

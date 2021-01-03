@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { getTransactionLog } from '../../../common/transactionlog';
-import { getManager } from 'typeorm';
+import { getManager, getRepository } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
 import * as escape from 'escape-html';
@@ -17,6 +17,7 @@ import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
 import * as EJS from "ejs";
+import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 
 
 const logger = getLogger();
@@ -44,6 +45,7 @@ const DefaultLanguage = "de";
  * @apiParam (Query Parameter) {number} hoursTotal Total hours helped
  * @apiParam (Query Parameter) {string} medium Support medium
  * @apiParam (Query Parameter) {string} categories String of category texts for pupil's student description, separated by newlines
+ * @apiParam (Query Parameter) {string} automatic if set, the pupil will automatically receive a signature request
  *
  * @apiParam (URL Query)     {string} lang=de The language
  *
@@ -87,6 +89,8 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (requestor.wix_id != req.params.student)
             return res.status(403).send("Students may only retrieve certificates for themselves");
 
+        let state = req.params.automatic ? State.awaitingApproval : State.manual;
+
         // TODO: Move to POST to body
         // TODO: Properly validate
         let params: IParams = {
@@ -96,7 +100,8 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
             hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
             medium: req.query.medium as string,
             categories: req.query.categories as string,
-            ongoingLessons: req.query.ongoingLessons === 'true'
+            ongoingLessons: req.query.ongoingLessons === 'true',
+            state
         };
 
         // Students may only request for their matches
@@ -162,7 +167,12 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         if (typeof certificateId !== "string")
             return res.status(400).send("Missing parameter certificateId");
 
-        const certificate = await entityManager.findOne(ParticipationCertificate, { student: requestor, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+        /* Retrieve the certificate and also get the signature columsn that are usually hidden for performance reasons */
+        const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase(), student: requestor }, {
+            relations: ["student", "pupil"],
+            /* Unfortunately there is no "*" option which would also select the signatures. The query builder also does not cover this case */
+            select: ["uuid", "categories", "certificateDate", "endDate", "hoursPerWeek", "hoursTotal", "id", "medium", "ongoingLessons", "signatureParent", "signaturePupil", "startDate", "state", "subjects", "uuid"]
+        });
 
         if (!certificate)
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
@@ -232,6 +242,63 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
     }
 }
 
+const VALID_BASE64 = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
+
+/**
+ * @api {POST} /certificate/:certificateId/sign
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Sign a signature in the automatic signature approval process
+ *
+ * @apiParam (JSON Body) {string} signaturePupil  The signature of the pupil encoded as base64 JPG. Either the pupil or the parent signature must be set.
+ * @apiParam (JSON Body) {string} signatureParent The signature of the parent encoded as base64 JPG.
+ * @apiName signCertificate
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST https://api.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384/sign
+ *
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ *
+ *
+ */
+export async function signCertificateEndpoint(req: Request, res: Response) {
+    const signer = res.locals.user as Pupil;
+    const { signaturePupil, signatureParent } = req.body;
+    const { certificateId } = req.params;
+
+    const entityManager = getManager();
+
+    if (typeof certificateId !== "string")
+        return res.status(400).send("Missing parameter certificateId");
+
+    if (signaturePupil !== undefined && (typeof signaturePupil !== "string" || !signaturePupil.match(VALID_BASE64)))
+        return res.status(400).send("Parameter signaturePupil must be a string and valid base64 encoding");
+
+    if (signatureParent !== undefined && (typeof signatureParent !== "string" || !signatureParent.match(VALID_BASE64)))
+        return res.status(400).send("Parameter signatureParent must be a string and valid base64 encoding");
+
+    if (!signaturePupil && !signatureParent)
+        return res.status(400).send("Either the parent or the pupil must sign the certificate");
+
+    const certificate = await entityManager.findOne(ParticipationCertificate, { pupil: signer, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+
+    if (!certificate)
+        return res.status(400).send("Missing certificateID or the pupil is not allowed to sign this certificate");
+
+    if (certificate.state === "approved")
+        return res.status(400).send("Certificate was already signed");
+
+    if (certificate.state === "manual")
+        return res.status(400).send("Certificate cannot be signed as it is a manual one");
+
+    await signCertificate(certificate, signatureParent, signaturePupil);
+
+    return res.send("Certificate signed");
+}
+
 /**
  * @api {GET} /certificates
  * @apiVersion 1.1.0
@@ -275,6 +342,14 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
     }
 }
 
+
+
+enum State {
+    manual = "manual", // student did not request approval
+    awaitingApproval = "awaiting-approval", // pupil needs to sign certificate
+    approved = "approved" // signed by pupil
+}
+
 interface IExposedCertificate {
     userIs: "pupil" | "student",
     pupil: { firstname: string, lastname: string },
@@ -288,24 +363,21 @@ interface IExposedCertificate {
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
-    state: (
-        | "manual" // student did not request approval
-        | "awaiting-approval" // pupil needs to sign certificate
-        | "approved" // signed by pupil
-    ),
+    state: State,
 }
 
 /* Map the certificate data to something the frontend can work with while keeping user data secret */
-function exposeCertificate({ student, pupil, ...cert }: ParticipationCertificate, to: Student | Pupil): IExposedCertificate {
+function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCertificate, to: Student | Pupil): IExposedCertificate {
     return {
         ...cert,
         // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
         userIs: pupil.wix_id === to.wix_id ? "pupil" : "student",
         pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
         student: { firstname: student.firstname, lastname: student.lastname },
-        state: "manual"
+        state: state as State
     };
 }
+
 
 interface IParams {
     endDate: string,
@@ -315,6 +387,7 @@ interface IParams {
     medium: string,
     categories: string,
     ongoingLessons: boolean,
+    state: State.manual | State.awaitingApproval
 }
 
 async function createCertificate(requestor: Student, pupil: Pupil, match: Match, params: IParams): Promise<ParticipationCertificate> {
@@ -332,6 +405,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.startDate = match.createdAt;
     pc.endDate = moment(params.endDate, "X").toDate();
     pc.ongoingLessons = params.ongoingLessons;
+    pc.state = params.state;
 
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
@@ -339,6 +413,11 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
 
     await entityManager.save(ParticipationCertificate, pc);
     await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
+
+    if (params.state === "awaiting-approval") {
+        // TODO: Send Email
+        // sendTemplateMail(mailjetTemplates.PUPILSIGNREQUEST, certificate.pupil.email);
+    }
 
     return pc;
 }
@@ -408,7 +487,9 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         MEDIUM: certificate.medium,
         CERTLINK: link,
         CERTLINKTEXT: link,
-        ONGOING: certificate.ongoingLessons
+        ONGOING: certificate.ongoingLessons,
+        SIGNATURE_PARENT: certificate.signatureParent && certificate.signatureParent.toString("base64"),
+        SIGNATURE_PUPIL: certificate.signaturePupil && certificate.signaturePupil.toString("base64")
     });
 
     return new Promise((resolve, reject) => {
@@ -441,4 +522,24 @@ async function viewParticipationCertificate(certificate: ParticipationCertificat
         SCREENINGDATUM: screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]",
         ONGOING: certificate.ongoingLessons
     });
+}
+
+async function signCertificate(certificate: ParticipationCertificate, signatureParent: string | undefined, signaturePupil: string | undefined) {
+    assert(signaturePupil || signatureParent, "Parent or Pupil signs certificate");
+    assert(!signaturePupil || signaturePupil.match(VALID_BASE64), "Pupil Signature is valid Base 64");
+    assert(!signatureParent || signatureParent.match(VALID_BASE64), "Parent Signature is valid Base 64");
+    assert(certificate.state === "awaiting-approval", "Certificate awaiting signature");
+
+    if (signatureParent)
+        certificate.signatureParent = Buffer.from(signatureParent, "base64");
+
+    if (signaturePupil)
+        certificate.signaturePupil = Buffer.from(signaturePupil, "base64");
+
+    certificate.state === "approved";
+
+    await getManager().save(ParticipationCertificate, certificate);
+
+    // TODO: Send Email to certificate.student
+    // sendTemplateMail(mailjetTemplates.STUDENTSIGNEDCERT, certificate.student.email);
 }
