@@ -537,6 +537,34 @@ export async function setupDevDB() {
 
     courses.push(course7);
 
+    let course8 = new Course();
+    course8.instructors = [s1];
+    course8.name = "Lorem Ipsum";
+    course8.outline =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course8.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course8.category = CourseCategory.CLUB;
+    course8.tags = [science, creativity, play];
+    course8.subcourses = [];
+    course8.courseState = CourseState.ALLOWED;
+
+    courses.push(course8);
+
+    let course9 = new Course();
+    course9.instructors = [s1];
+    course9.name = "dolor sit amet, consectetur";
+    course9.outline =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course9.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course9.category = CourseCategory.CLUB;
+    course9.tags = [science, music, play];
+    course9.subcourses = [];
+    course9.courseState = CourseState.ALLOWED;
+
+    courses.push(course9);
+
     for (const course of courses) {
         await entityManager.save(Course, course);
 
@@ -653,6 +681,30 @@ export async function setupDevDB() {
 
     subcourses.push(subcourse9);
 
+    const subcourse10 = new Subcourse();
+    subcourse10.course = course8;
+    subcourse10.joinAfterStart = true;
+    subcourse10.minGrade = 1;
+    subcourse10.maxGrade = 10;
+    subcourse10.instructors = [s1];
+    subcourse10.maxParticipants = 20;
+    subcourse10.published = true;
+    subcourse10.participants = pupils;
+
+    subcourses.push(subcourse10);
+
+    const subcourse11 = new Subcourse();
+    subcourse11.course = course9;
+    subcourse11.joinAfterStart = true;
+    subcourse11.minGrade = 1;
+    subcourse11.maxGrade = 10;
+    subcourse11.instructors = [s1];
+    subcourse11.maxParticipants = 20;
+    subcourse11.published = true;
+    subcourse11.participants = pupils;
+
+    subcourses.push(subcourse11);
+
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
         console.log("Inserted SubCourse.");
@@ -738,6 +790,18 @@ export async function setupDevDB() {
     lecture11.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture11.instructor = s1;
 
+    const lecture12: Lecture = new Lecture();
+    lecture12.subcourse = subcourse10;
+    lecture12.duration = 60;
+    lecture12.start = new Date(year, month, date + 11, 20, 0, 0, 0);
+    lecture12.instructor = s1;
+
+    const lecture13: Lecture = new Lecture();
+    lecture13.subcourse = subcourse11;
+    lecture13.duration = 60;
+    lecture13.start = new Date(year, month, date + 12, 20, 0, 0, 0);
+    lecture13.instructor = s1;
+
     lectures.push(
         lecture1,
         lecture2,
@@ -749,7 +813,9 @@ export async function setupDevDB() {
         lecture8,
         lecture9,
         lecture10,
-        lecture11
+        lecture11,
+        lecture12,
+        lecture13
     );
 
     for (const lecture of lectures) {
