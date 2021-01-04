@@ -133,10 +133,13 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.use(authCheckFactory());
-        certificateRouter.get("/:student/:pupil", certificateController.certificateHandler);
+        certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
+        certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
+        certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
+
+
         app.use("/api/certificate", certificateRouter);
-        app.get("/api/certificates", authCheckFactory(), certificateController.getCertificates);
+        app.get("/api/certificates", authCheckFactory(), certificateController.getCertificatesEndpoint);
     }
 
     function configureCourseAPI() {
@@ -241,7 +244,7 @@ createConnection().then(() => {
             if (!req.subdomains.includes("verify")) {
                 return next();
             }
-            certificateController.confirmCertificateHandler(req, res);
+            certificateController.getCertificateConfirmationEndpoint(req, res);
         });
         participationCertificateRouter.use((req, res, next) => {
             if (req.subdomains.includes("verify")) {

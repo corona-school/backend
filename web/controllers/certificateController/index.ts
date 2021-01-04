@@ -5,7 +5,7 @@ import { Student } from '../../../common/entity/Student';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
-import { readFileSync, read } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import * as escape from 'escape-html';
 import * as pdf from 'html-pdf';
 import * as path from 'path';
@@ -16,11 +16,18 @@ import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
+import * as EJS from "ejs";
+
 
 const logger = getLogger();
 
+// supported certificate languages:
+const LANGUAGES = ["de", "en"] as const;
+type Language = (typeof LANGUAGES)[number];
+const DefaultLanguage = "de";
+
 /**
- * @api {GET} /certificate/:student/:match getCertificate
+ * @api {GET} /certificate/create/:student/:match getCertificate
  * @apiVersion 1.1.0
  * @apiDescription
  * Fetch a certificate
@@ -38,6 +45,8 @@ const logger = getLogger();
  * @apiParam (Query Parameter) {string} medium Support medium
  * @apiParam (Query Parameter) {string} categories String of category texts for pupil's student description, separated by newlines
  *
+ * @apiParam (URL Query)     {string} lang=de The language
+ *
  * @apiName getCertificate
  * @apiGroup Certificate
  *
@@ -52,7 +61,7 @@ const logger = getLogger();
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function certificateHandler(req: Request, res: Response) {
+export async function createCertificateEndpoint(req: Request, res: Response) {
     const entityManager = getManager();
 
     try {
@@ -62,6 +71,14 @@ export async function certificateHandler(req: Request, res: Response) {
             !(res.locals.user instanceof Student || res.locals.user instanceof Pupil)
         ) return res.status(400).send("Missing parameters");
 
+        let lang = req.query.lang as Language;
+
+        if (lang === undefined)
+            lang = DefaultLanguage;
+
+        if (!LANGUAGES.includes(lang))
+            return res.status(400).send("Language not known");
+
         const requestor = res.locals.user as Student;
 
         if (requestor instanceof Pupil)
@@ -70,23 +87,17 @@ export async function certificateHandler(req: Request, res: Response) {
         if (requestor.wix_id != req.params.student)
             return res.status(403).send("Students may only retrieve certificates for themselves");
 
-
-        let params = {
+        // TODO: Move to POST to body
+        // TODO: Properly validate
+        let params: IParams = {
             endDate: req.query.endDate as string || moment().format("X") as string,
             subjects: req.query.subjects as string,
             hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
             hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
             medium: req.query.medium as string,
-            categories: req.query.categories as string
+            categories: req.query.categories as string,
+            ongoingLessons: req.query.ongoingLessons === 'true'
         };
-
-        //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
-        const parseResult = parseDomain(req.hostname);
-        let baseDomain = "corona-school.de"; //default
-        if (parseResult.type === ParseResultType.Listed) {
-            const { domain, topLevelDomains } = parseResult;
-            baseDomain = [domain, ...topLevelDomains].join(".");
-        }
 
         // Students may only request for their matches
         let match = await entityManager.findOne(Match, { student: requestor, uuid: req.params.pupil });
@@ -95,9 +106,7 @@ export async function certificateHandler(req: Request, res: Response) {
 
         const certificate = await createCertificate(requestor, match.pupil, match, params);
 
-        const verificationLink = "http://verify." + baseDomain + "/" + certificate.uuid;
-
-        const pdf = await createPDFBinary(certificate, verificationLink);
+        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -113,14 +122,15 @@ export async function certificateHandler(req: Request, res: Response) {
 
 
 /**
- * @api {GET} /certificate/:certificateId getCertificateConfirmation
+ * @api {GET} /certificate/:certificateId?lang=... getCertificateConfirmation
  * @apiVersion 1.1.0
  * @apiDescription
  * View a certificate
  *
- * This endpoint allows looking at a certificate (as HTML) as confirmation link printed on the PDF Certificate.
+ * Returns the certificate as PDF
  *
  * @apiParam (URL Parameter) {string} certificateId UUID of the certificate
+ * @apiParam (URL Query)     {string} lang=de The language
  *
  * @apiName getCertificate
  * @apiGroup Certificate
@@ -134,10 +144,77 @@ export async function certificateHandler(req: Request, res: Response) {
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function confirmCertificateHandler(req: Request, res: Response) {
+export async function getCertificateEndpoint(req: Request, res: Response) {
     try {
         const { certificateId } = req.params;
+        let { lang } = req.query;
+        const requestor = res.locals.user as Student;
+        assert(requestor, "No user set");
+
         const entityManager = getManager();
+
+        if (lang === undefined)
+            lang = DefaultLanguage;
+
+        if (!LANGUAGES.includes(lang))
+            return res.status(400).send("Language not known");
+
+        if (typeof certificateId !== "string")
+            return res.status(400).send("Missing parameter certificateId");
+
+        const certificate = await entityManager.findOne(ParticipationCertificate, { student: requestor, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+
+        if (!certificate)
+            return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+
+        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
+
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdf.length
+        });
+        return res.end(pdf);
+    } catch (error) {
+        logger.error("Failed to generate certificate confirmation", error);
+        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+    }
+}
+
+/**
+ * @api {GET} /certificate/:certificateId/confirmation?lang=... getCertificateConfirmation
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * View a certificate
+ *
+ * This endpoint allows looking at a certificate (as HTML) as confirmation link printed on the PDF Certificate.
+ *
+ * @apiParam (URL Parameter) {string} certificateId UUID of the certificate
+ * @apiParam (URL Query)     {string} lang=de The language
+ *
+ * @apiName getCertificate
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET https://api.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384/confirmation
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
+    try {
+        const { certificateId } = req.params;
+        let { lang } = req.query;
+
+        const entityManager = getManager();
+
+        if (lang === undefined)
+            lang = DefaultLanguage;
+
+        if (!LANGUAGES.includes(lang))
+            return res.status(400).send("Language not known");
 
         if (typeof certificateId !== "string")
             return res.status(400).send("Missing parameter certificateId");
@@ -148,7 +225,7 @@ export async function confirmCertificateHandler(req: Request, res: Response) {
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
 
 
-        return res.send(await viewParticipationCertificate(certificate));
+        return res.send(await viewParticipationCertificate(certificate, lang));
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
@@ -178,7 +255,7 @@ export async function confirmCertificateHandler(req: Request, res: Response) {
  *
  * @returns {Response}
  */
-export async function getCertificates(req: Request, res: Response) {
+export async function getCertificatesEndpoint(req: Request, res: Response) {
     const entityManager = getManager();
 
     assert(res.locals.user, "No user set");
@@ -186,7 +263,10 @@ export async function getCertificates(req: Request, res: Response) {
     const userid = (res.locals.user as Person).id;
 
     try {
-        const certificatesData = await entityManager.find(ParticipationCertificate, { where: [{ pupil: userid }, /*or*/ { student: userid }], relations: ["student", "pupil"] });
+        const certificatesData = await entityManager.find(ParticipationCertificate, {
+            where: res.locals.user instanceof Pupil ? { pupil: userid } : { student: userid },
+            relations: ["student", "pupil"]
+        });
         const certificates = certificatesData.map(cert => exposeCertificate(cert, /*to*/ res.locals.user));
         return res.json({ certificates });
     } catch (error) {
@@ -208,6 +288,11 @@ interface IExposedCertificate {
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
+    state: (
+        | "manual" // student did not request approval
+        | "awaiting-approval" // pupil needs to sign certificate
+        | "approved" // signed by pupil
+    ),
 }
 
 /* Map the certificate data to something the frontend can work with while keeping user data secret */
@@ -217,7 +302,8 @@ function exposeCertificate({ student, pupil, ...cert }: ParticipationCertificate
         // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
         userIs: pupil.wix_id === to.wix_id ? "pupil" : "student",
         pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
-        student: { firstname: student.firstname, lastname: student.lastname }
+        student: { firstname: student.firstname, lastname: student.lastname },
+        state: "manual"
     };
 }
 
@@ -227,7 +313,8 @@ interface IParams {
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
-    categories: string
+    categories: string,
+    ongoingLessons: boolean,
 }
 
 async function createCertificate(requestor: Student, pupil: Pupil, match: Match, params: IParams): Promise<ParticipationCertificate> {
@@ -244,6 +331,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.medium = params.medium;
     pc.startDate = match.createdAt;
     pc.endDate = moment(params.endDate, "X").toDate();
+    pc.ongoingLessons = params.ongoingLessons;
 
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
@@ -255,36 +343,73 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     return pc;
 }
 
-const englishTemplate = readFileSync(process.env.NODE_ENV == 'dev' ? "./assets/certificateTemplate.html.example" : "./assets/certificateTemplate.html", "utf8");
+const _templates: { [name: string]: { [key in Language | "default"]?: EJS.ClientFunction } } = {};
 
-function createPDFBinary(certificate: ParticipationCertificate, link: string): Promise<Buffer> {
+/* Loads the template from the /assets folder, falls back to the default language if fallback is true */
+function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.ClientFunction {
+    if (_templates[name] && _templates[name][lang])
+        return _templates[name][lang];
+
+    let path = `./assets/${name}.${lang}.html`;
+
+    if (process.env.NODE_ENV == 'dev')
+        path += `.example`;
+
+    if (existsSync(path)) {
+        const result = readFileSync(path, "utf8");
+        if (!_templates[name])
+            _templates[name] = {};
+
+        const compiled = EJS.compile(result);
+
+        _templates[name][lang] = compiled;
+        return compiled;
+    } else {
+        if (!fallback || lang === DefaultLanguage)
+            throw new Error(`Cannot find template '${path}`);
+
+        return loadTemplate(name, DefaultLanguage, /*fallback:*/ false);
+    }
+}
+
+function getCertificateLink(req: Request, certificate: ParticipationCertificate, lang: Language) {
+    //parse hostname, to determine the base url which should be used for certificate links -> TODO: improve the link handling (with all that static links in various parts of the code...)
+    const parseResult = parseDomain(req.hostname);
+    let baseDomain = "corona-school.de"; //default
+    if (parseResult.type === ParseResultType.Listed) {
+        const { domain, topLevelDomains } = parseResult;
+        baseDomain = [domain, ...topLevelDomains].join(".");
+    }
+
+    return "http://verify." + baseDomain + "/" + certificate.uuid + "?lang=" + lang;
+}
+
+function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
     const { student, pupil } = certificate;
 
     // TODO: Load different language templates
-    const template = englishTemplate;
+    const template = loadTemplate("certificateTemplate", lang);
 
     const options = {
         "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
         "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
     };
 
-    // adjust variables
-    // todo for 2021: replace %TPL% by <TPL>
-    const result = template
-        .replace(/%NAMESTUDENT%/g, escape(student.firstname + " " + student.lastname))
-        .replace(/%NAMESCHUELER%/g, escape(pupil.firstname + " " + pupil.lastname))
-        .replace("%DATUMHEUTE%", moment().format("D.M.YYYY"))
-        .replace("%SCHUELERSTART%", moment(certificate.startDate, "X").format("D.M.YYYY"))
-        .replace("%SCHUELERENDE%", moment(certificate.endDate, "X").format("D.M.YYYY"))
-        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
-        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
-        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
-        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
-        .replace("%MEDIUM%", escape(certificate.medium))
-        .replace("%CERTLINK%", link)
-        .replace("%CERTLINKTEXT%", link);
-
-    // pdf.create(html, options).toFile("./assets/debug.pdf", (err, res) => { console.log(res)});
+    const result = template({
+        NAMESTUDENT: student.firstname + " " + student.lastname,
+        NAMESCHUELER: pupil.firstname + " " + pupil.lastname,
+        DATUMHEUTE: moment().format("D.M.YYYY"),
+        SCHUELERSTART: moment(certificate.startDate, "X").format("D.M.YYYY"),
+        SCHUELERENDE: moment(certificate.endDate, "X").format("D.M.YYYY"),
+        SCHUELERFAECHER: certificate.subjects.split(","),
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
+        SCHUELERPROWOCHE: certificate.hoursPerWeek,
+        SCHUELERGESAMT: certificate.hoursTotal,
+        MEDIUM: certificate.medium,
+        CERTLINK: link,
+        CERTLINKTEXT: link,
+        ONGOING: certificate.ongoingLessons
+    });
 
     return new Promise((resolve, reject) => {
         pdf.create(result, options).toBuffer((err, buffer) => {
@@ -297,23 +422,23 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string): P
     });
 }
 
-const englishVerificationTemplate = readFileSync(process.env.NODE_ENV == 'dev' ? "./assets/verifiedCertificatePage.html.example" : "./assets/verifiedCertificatePage.html", "utf8");
-
-async function viewParticipationCertificate(certificate: ParticipationCertificate) {
-    let verificationTemplate = englishVerificationTemplate;
+async function viewParticipationCertificate(certificate: ParticipationCertificate, lang: Language) {
+    let verificationTemplate = loadTemplate("verifiedCertificatePage", lang);
 
     const screeningDate = (await certificate.student?.screening)?.createdAt;
 
-    return verificationTemplate
-        .replace(/%NAMESTUDENT%/g, escape(certificate.student?.firstname + " " + certificate.student?.lastname))
-        .replace(/%NAMESCHUELER%/g, escape(certificate.pupil?.firstname + " " + certificate.pupil?.lastname))
-        .replace("%DATUMHEUTE%", moment(certificate.certificateDate).format("D.M.YYYY"))
-        .replace("%SCHUELERSTART%", moment(certificate.startDate).format("D.M.YYYY"))
-        .replace("%SCHUELERENDE%", moment(certificate.endDate).format("D.M.YYYY"))
-        .replace("%SCHUELERFAECHER%", escape(certificate.subjects).replace(/,/g, ", "))
-        .replace("%SCHUELERFREITEXT%", escape(certificate.categories).replace(/(?:\r\n|\r|\n)/g, '<br />'))
-        .replace("%SCHUELERPROWOCHE%", escape(certificate.hoursPerWeek))
-        .replace("%SCHUELERGESAMT%", escape(certificate.hoursTotal))
-        .replace("%MEDIUM%", escape(certificate.medium))
-        .replace("%SCREENINGDATUM%", escape(screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]"));
+    return verificationTemplate({
+        NAMESTUDENT: certificate.student?.firstname + " " + certificate.student?.lastname,
+        NAMESCHUELER: certificate.pupil?.firstname + " " + certificate.pupil?.lastname,
+        DATUMHEUTE: moment(certificate.certificateDate).format("D.M.YYYY"),
+        SCHUELERSTART: moment(certificate.startDate).format("D.M.YYYY"),
+        SCHUELERENDE: moment(certificate.endDate).format("D.M.YYYY"),
+        SCHUELERFAECHER: certificate.subjects.split(","),
+        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
+        SCHUELERPROWOCHE: certificate.hoursPerWeek,
+        SCHUELERGESAMT: certificate.hoursTotal,
+        MEDIUM: certificate.medium,
+        SCREENINGDATUM: screeningDate ? moment(screeningDate).format("D.M.YYYY") : "[UNBEKANNTES DATUM]",
+        ONGOING: certificate.ongoingLessons
+    });
 }

@@ -282,7 +282,7 @@ export async function setupDevDB() {
     pc.uuid = randomBytes(5).toString("hex").toUpperCase();
     pc.pupil = pupils[0];
     pc.student = students[0];
-    pc.subjects = "Englisch, Deutsch";
+    pc.subjects = "Englisch,Deutsch";
     pc.certificateDate = new Date();
     pc.startDate = new Date();
     pc.endDate = new Date();

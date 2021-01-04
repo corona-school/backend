@@ -124,6 +124,10 @@ export interface ApiAddStateTutee {
     msg: string,
     teacherEmail: string,
     redirectTo?: string;
+    isProjectCoachee: boolean;
+    projectFields?: ProjectField[];
+    isJufoParticipant?: TuteeJufoParticipationIndication;
+    projectMemberCount?: number;
 }
 
 /**
