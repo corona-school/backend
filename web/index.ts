@@ -66,7 +66,8 @@ createConnection().then(() => {
 
         const allowedSubdomains = [
             ...allStateCooperationSubdomains,
-            "jufo"
+            "jufo",
+            "drehtuer"
         ];
         if (process.env.NODE_ENV == "dev") {
             origins = [
