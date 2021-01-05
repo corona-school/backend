@@ -12,6 +12,7 @@ import {
     ApiEditLecture,
     ApiEditSubcourse,
     ApiInstructor,
+    ApiInstructorID,
     ApiLecture,
     ApiSubcourse
 } from './format';
@@ -33,6 +34,12 @@ import {
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
+import * as moment from 'moment-timezone';
+import { putFile } from '../../../common/file-bucket';
+import { deleteFile } from '../../../common/file-bucket/delete';
+import { courseImageKey } from './course-images';
+import { accessURLForKey } from '../../../common/file-bucket/s3';
+import * as mime from 'mime-types';
 
 const logger = getLogger();
 
@@ -274,7 +281,7 @@ async function getCourses(student: Student | undefined,
                         apiCourse.description = courses[i].description;
                         break;
                     case 'image':
-                        apiCourse.image = courses[i].imageUrl;
+                        apiCourse.image = courses[i].imageKey ? accessURLForKey(courses[i].imageKey) : null;
                         break;
                     case 'category':
                         apiCourse.category = courses[i].category;
@@ -485,7 +492,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             name: course.name,
             outline: course.outline,
             description: course.description,
-            image: course.imageUrl,
+            image: course.imageKey ? accessURLForKey(course.imageKey) : null,
             category: course.category,
             tags: [],
             subcourses: []
@@ -769,7 +776,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
-    course.imageUrl = undefined;
+    course.imageKey = undefined;
     course.category = category;
     course.tags = tags;
     course.subcourses = [];
@@ -1079,8 +1086,8 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         return 400;
     }
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(2, "days").startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1195,7 +1202,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
+        logger.warn(`Student (ID ${student.id}) tried to edit a course, but is no instructor.`);
         logger.debug(student);
         return 403;
     }
@@ -1243,11 +1250,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     course.instructors = instructors;
 
     if (apiCourse.name != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'name' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
             logger.warn(`Invalid length of field 'name': ${apiCourse.name.length}`);
             logger.debug(apiCourse);
@@ -1257,11 +1259,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
 
     if (apiCourse.outline != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'outline' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.outline.length == 0 || apiCourse.outline.length > 200) {
             logger.warn(`Invalid length of field 'outline': ${apiCourse.outline.length}`);
             logger.debug(apiCourse);
@@ -1278,11 +1275,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     course.description = apiCourse.description;
 
     if (apiCourse.category != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'category' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         let category: CourseCategory;
         switch (apiCourse.category) {
             case "revision":
@@ -1319,12 +1311,20 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
     course.tags = tags;
 
-    if (course.courseState != CourseState.CREATED && (apiCourse.submit != undefined || apiCourse.submit == false)) {
+    //if course is already reviewed (i.e. either allowed, denied or cancelled) or submitted, the course state should not change at all
+    if (course.courseState === CourseState.CREATED && apiCourse.submit != undefined) { //so only if course is created, it could be possible to change the course state to submitted
+        course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    }
+    else if (apiCourse.submit === false) {
         logger.warn(`Field 'submit' is not editable on submitted courses`);
         logger.debug(apiCourse);
         return 403;
     }
-    course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    else if (apiCourse.submit != undefined) { //only change the course state, if the submit value is part of the request
+        //just issue a warning message...
+        logger.warn(`Course submission state for course number ${course.id} will not be changed, since it was already reviewed`);
+    }
+
 
     try {
         await entityManager.save(Course, course);
@@ -1463,17 +1463,15 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     }
     subcourse.instructors = instructors;
 
-    // Can't raise minGrade, when course is already published
-    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13
-        || (subcourse.published && apiSubcourse.minGrade > subcourse.minGrade)) {
+    // Always allow raising the maxGrade
+    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13) {
         logger.warn(`Field 'minGrade' contains an illegal value: ${apiSubcourse.minGrade}`);
         logger.debug(apiSubcourse);
         return 400;
     }
 
-    // Can't lower maxGrade, when course is published
-    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13
-        || (subcourse.published && apiSubcourse.maxGrade < subcourse.maxGrade)) {
+    // Always allow lowering the minGrade
+    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13) {
         logger.warn(`Field 'maxGrade' contains an illegal value: ${apiSubcourse.maxGrade}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1487,9 +1485,8 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     subcourse.minGrade = apiSubcourse.minGrade;
     subcourse.maxGrade = apiSubcourse.maxGrade;
 
-    // Can't lower maxParticipants when there are already more pupils participating
-    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100
-        || apiSubcourse.maxParticipants < subcourse.participants.length) {
+    // Always allow lowering the maxParticipants
+    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
         logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1644,8 +1641,8 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
     lecture.instructor = instructor;
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // the 2 day restriction does not apply when editing lectures -> the lecture date must only be in the future
+    if (!Number.isInteger(apiLecture.start) || moment.unix(apiLecture.start).isBefore(moment())) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -2495,4 +2492,327 @@ async function getCourseTags() {
     }
 
     return apiResponse;
+}
+
+/**
+ * @api {POST} /course/:id/instructor AddInstructor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add a new instructor to a course (and all of its subcourses too)
+ *
+ * It will expect an email address of an existent, active and sucessfully screened instructor (a student who is an instructor)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName AddInstructor
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl --location --request POST 'localhost:5000/api/course/2/instructor' --header 'Token: authtokenS1' --header 'Content-Type: application/json' --data-raw '{ "email": "mel-98@gmail.com"}'
+ *
+ * @apiUse InstructorInfo
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function postAddCourseInstructorHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id) &&
+                typeof req.body.email == 'string') {
+
+                if (status < 300) {
+                    status = await postAddCourseInstructor(res.locals.user, +req.params.id, req.body);
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/instructor");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add an instructor to a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function postAddCourseInstructor(student: Student, courseID: number, apiInstructorToAdd: ApiInstructorID): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to add an instructor to a course, but is no accepted instructor himself.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to add an instructor to non-existent course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to add an instructor to a course, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 403;
+    }
+
+    // Check validity of instructor that should be added
+    let instructorToAdd = await entityManager.findOne(Student, {
+        email: apiInstructorToAdd.email
+    });
+
+    if (!instructorToAdd) {
+        logger.warn(`Cannot find a person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email}`);
+        return 404;
+    }
+
+    if (!instructorToAdd.active) {
+        logger.warn(`Person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not active. It cannot be added to a course!`);
+        return 404;
+    }
+
+    if (!instructorToAdd.isInstructor) {
+        logger.warn(`The person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not a course instructor. It cannot be added to a course!`);
+        return 403;
+    }
+
+    if (await instructorToAdd.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`The instructor (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not successfully screened as an instructor. S*he thus cannot be added to a course!`);
+        return 403;
+    }
+
+    if (course.instructors.some(i => i.id === instructorToAdd.id)) {
+        logger.warn(`The instructor with email address ${apiInstructorToAdd.email} is already an instructor of course number ${courseID}!`);
+        return 409;
+    }
+
+
+    //add that instructor to the course (and all of it's subcourses)
+    course.instructors.push(instructorToAdd);
+    course.subcourses.forEach( sc => sc.instructors.push(instructorToAdd));
+
+    try {
+        for (const sc of course.subcourses) { //save subcourses
+            await entityManager.save(sc);
+        }
+
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully added instructor with email ${instructorToAdd.email} to course with id ${courseID} and all of it's subcourses`);
+
+        return 200;
+    } catch (e) {
+        logger.error("Can't save the changes applied while adding an instructor to a course: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+/**
+ * @api {POST} /course/:id/image ChangeImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Changes the image of a course
+ *
+ * Expects multipart/form-data image (PNG, JPEG or GIF)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName ChangeImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function putCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (!req.file) {
+                    status = 400;
+                    logger.warn(`PUT /course/:id/image expects either a PNG, JPEG or GIF file`);
+                }
+
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, req.file);
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for PUT /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to change course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function setCourseImage(student: Student, courseID: number, imageFile?: Express.Multer.File): Promise<number | { imageURL?: string }> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to change course image, but is no accepted instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to change course image of non existent course (ID ${courseID})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to change course image, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    try {
+        if (imageFile) {
+            // TODO: Check validity of image (i.e. a valid JPEG, and not just mime type or something like that)
+
+            const fileExtension = mime.extension(imageFile.mimetype);
+
+            if (!fileExtension) {
+                logger.warn(`User tried to change course image for course with ID ${courseID}, but the provided file of wrong mime type`);
+                return 400;
+            }
+
+            const key = courseImageKey(courseID, fileExtension);
+
+            // TODO: resize images to provide different resolutions
+            await putFile(imageFile.buffer, key);
+
+            course.imageKey = key;
+        }
+        else if (course.imageKey) { //otherwise, there's nothing to delete
+            //delete image if no image is given
+            await deleteFile(course.imageKey);
+
+            course.imageKey = null;
+        }
+    }
+    catch (e) {
+        logger.error(`Error while uploading/modifying image for course ${courseID}`, e);
+        return 503;
+    }
+
+    try {
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully changed image of course with ID ${courseID}`);
+
+        return { imageURL: course.imageURL() };
+    } catch (e) {
+        logger.error("Can't save changed image key to database: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+/**
+ * @api {POST} /course/:id/image RemoveImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Remove the image of a course
+ *
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName RemoveImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function deleteCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, null);
+
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to delete course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
 }
