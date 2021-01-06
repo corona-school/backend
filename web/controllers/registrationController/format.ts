@@ -95,14 +95,14 @@ export interface ApiAddTutee {
 }
 
 /**
- * @apiDefine AddStateTutee
+ * @apiDefine AddCooperationTutee
  * @apiVersion 1.1.0
  *
  * @apiSuccess (StateTutee Object) {string} firstname First name
  * @apiSuccess (StateTutee Object) {string} lastname Last name
  * @apiSuccess (StateTutee Object) {string} email E-Mail
  * @apiSuccess (StateTutee Object) {int} grade Grade of the pupil
- * @apiSuccess (StateTutee Object) {string} state State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
+ * @apiSuccess (StateTutee Object) {string} [state] State, one of <code>"bw", "by", "be", "bb", "hb", "hh", "he", "mv", "ni", "nw", "rp", "sl", "sn", "st", "sh", "th", "other"</code>
  * @apiSuccess (StateTutee Object) {bool} isTutee True, if eligible for one-on-one matching
  * @apiSuccess (StateTutee Object) {Subject[]} subjects <em>required if</em> <code>isTutor = true</code>: Subjects
  * @apiSuccess (StateTutee Object) {bool} newsletter Opt-in for newsletter
@@ -110,12 +110,12 @@ export interface ApiAddTutee {
  * @apiSuccess (StateTutee Object) {string} teacherEmail The email address of the teacher as part of cooperation with one of Germany's states
  * @apiSuccess (StateTutee Object) {string|undefined} redirectTo the page the user sees after registration
  */
-export interface ApiAddStateTutee {
+export interface ApiAddCooperationTutee {
     firstname: string,
     lastname: string,
     email: string,
     grade: number,
-    state: string,
+    state?: string,
     isTutee: boolean,
     subjects?: ApiSubject[],
     newsletter: boolean,

@@ -67,6 +67,7 @@ createConnection().then(() => {
         const allowedSubdomains = [
             ...allStateCooperationSubdomains,
             "jufo",
+            "partnerschule",
             "drehtuer"
         ];
         if (process.env.NODE_ENV == "dev") {
@@ -193,7 +194,7 @@ createConnection().then(() => {
         registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         registrationRouter.post("/mentor", registrationController.postMentorHandler);
-        registrationRouter.get("/:state/schools", registrationController.getSchoolsHandler);
+        registrationRouter.get("/schools/:state?", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }
 
