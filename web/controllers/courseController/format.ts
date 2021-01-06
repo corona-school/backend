@@ -286,6 +286,17 @@ export interface ApiPostGroupMail {
 }
 
 /**
+ * @apiDefine InstructorInfo
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (InstructorInfo Object) {string} email The email address of the instructor
+ *
+ */
+export interface ApiInstructorID {
+    email: string;
+}
+
+/**
  * @apiDefine BBBMeetingReturn
  * @apiVersion 1.1.0
  *

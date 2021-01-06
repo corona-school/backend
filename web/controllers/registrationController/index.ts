@@ -58,7 +58,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
             typeof req.body.state == 'string' &&
-            typeof req.body.isProjectCoach == 'boolean') {
+            typeof req.body.isProjectCoach == 'boolean' &&
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -197,6 +198,10 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
 
+    if (apiTutor.registrationSource) {
+        tutor.registrationSource = EnumReverseMappings.RegistrationSource(apiTutor.registrationSource);
+    }
+
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -329,7 +334,8 @@ export async function postTuteeHandler(req: Request, res: Response) {
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
             typeof req.body.isProjectCoachee == "boolean" &&
-            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee))) {//require grade only if not only registering for project coaching
+            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee)) && //require grade only if not only registering for project coaching
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -432,6 +438,10 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.email = apiTutee.email.toLowerCase();
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
+    }
+
+    if (apiTutee.registrationSource) {
+        tutee.registrationSource = EnumReverseMappings.RegistrationSource(apiTutee.registrationSource);
     }
 
     switch (apiTutee.state) {

@@ -66,5 +66,6 @@ export abstract class Person {
 export enum RegistrationSource {
     NORMAL,
     COOPERATION,
+    DREHTUER,
     OTHER
 }

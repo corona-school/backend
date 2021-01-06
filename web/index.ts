@@ -22,6 +22,7 @@ import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
+import * as multer from "multer";
 
 // Logger setup
 try {
@@ -66,7 +67,8 @@ createConnection().then(() => {
         const allowedSubdomains = [
             ...allStateCooperationSubdomains,
             "jufo",
-            "partnerschule"
+            "partnerschule",
+            "drehtuer"
         ];
         if (process.env.NODE_ENV == "dev") {
             origins = [
@@ -125,11 +127,9 @@ createConnection().then(() => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.use(authCheckFactory());
-
-        certificateRouter.get("/create/:student/:pupil", certificateController.createCertificateEndpoint);
-        certificateRouter.get("/:certificateId", certificateController.getCertificateEndpoint);
-        certificateRouter.get("/:certificateId/confirmation", certificateController.getCertificateConfirmationEndpoint);
+        certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
+        certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
+        certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
 
 
         app.use("/api/certificate", certificateRouter);
@@ -146,6 +146,20 @@ createConnection().then(() => {
         coursesRouter.post("/", courseController.postCourseHandler);
         coursesRouter.put("/:id", courseController.putCourseHandler);
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
+
+        coursesRouter.post("/:id/instructor", courseController.postAddCourseInstructorHandler);
+
+        const courseImageUpload = multer({
+            limits: {
+                fileSize: 5 * (10 ** 6) //5mb
+            },
+            storage: multer.memoryStorage(), //store in memory.....
+            fileFilter: (req, file, cb) => {
+                cb(null, ["image/png", "image/jpeg", "image/gif"].includes(file.mimetype));
+            }
+        });
+        coursesRouter.put("/:id/image", courseImageUpload.single("cover"), courseController.putCourseImageHandler);
+        coursesRouter.delete("/:id/image", courseController.deleteCourseImageHandler);
 
         coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
         coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);

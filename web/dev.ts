@@ -1,3 +1,4 @@
+/* eslint-disable comma-dangle */
 import { getConnection, getManager } from "typeorm";
 import { createHash, randomBytes } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
@@ -19,7 +20,10 @@ import { State } from "../common/entity/State";
 import { SchoolType } from "../common/entity/SchoolType";
 import { ProjectField } from "../common/jufo/projectFields";
 import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldWithGradeRestriction";
-import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../common/jufo/participationIndication";
+import {
+    TuteeJufoParticipationIndication,
+    TutorJufoParticipationIndication,
+} from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
 import { ProjectCoachingScreening } from "../common/entity/ProjectCoachingScreening";
 
@@ -119,7 +123,7 @@ export async function setupDevDB() {
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s1.openMatchRequestCount = 1;
     students.push(s1);
@@ -154,7 +158,7 @@ export async function setupDevDB() {
     s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s3.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s3.openMatchRequestCount = 1;
     students.push(s3);
@@ -173,7 +177,7 @@ export async function setupDevDB() {
     s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s4.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s4.openMatchRequestCount = 1;
     students.push(s4);
@@ -192,7 +196,7 @@ export async function setupDevDB() {
     s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s5.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s5.openMatchRequestCount = 1;
     students.push(s5);
@@ -206,7 +210,7 @@ export async function setupDevDB() {
     s6.isProjectCoach = true;
     s6.isStudent = false;
     await s6.setProjectFields([
-        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 }
+        { name: ProjectField.ARBEITSWELT, min: 1, max: 13 },
     ]);
     s6.wasJufoParticipant = TutorJufoParticipationIndication.YES;
     s6.isUniversityStudent = false;
@@ -237,7 +241,7 @@ export async function setupDevDB() {
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s7.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s7.openMatchRequestCount = 1;
     students.push(s7);
@@ -306,7 +310,12 @@ export async function setupDevDB() {
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
     mentor1.authToken = sha512("authtokenM3");
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
-    mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
+    mentor1.expertise = [
+        Expertise.SPECIALIZED,
+        Expertise.EDUCATIONAL,
+        Expertise.TECHSUPPORT,
+        Expertise.SELFORGANIZATION,
+    ];
     mentor1.subjects = null;
     mentor1.teachingExperience = true;
     mentor1.message = "text";
@@ -315,7 +324,7 @@ export async function setupDevDB() {
     mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
     mentor1.subjects = JSON.stringify([
         { name: "Englisch", minGrade: 1, maxGrade: 8 },
-        { name: "Spanisch", minGrade: 6, maxGrade: 10 }
+        { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
 
     mentors.push(mentor1);
@@ -358,53 +367,53 @@ export async function setupDevDB() {
     t.category = "revision";
     tags.push(t);
 
-    t = new CourseTag();
+    const revision = (t = new CourseTag());
     t.name = "Deutsch";
     t.identifier = "German";
     t.category = "revision";
     tags.push(t);
 
-    t = new CourseTag();
-    t.name = "Spiel&Spaß";
-    t.identifier = "play&fun";
-    t.category = "club";
-    tags.push(t);
+    const clubTagNamesMap = {
+        "mint": "MINT",
+        "liberalarts": "Geisteswissenschaften",
+        "socialsciences": "Sozialwissenschaften",
+        "language": "Sprache",
+        "music-art-culture": "Musik, Kunst und Kultur",
+        "environment": "Natur und Umwelt",
+        "personaldevelopment": "Persönlichkeitsentwicklung",
+        "play&fun": "Spiel und Spaß",
+        "priorknowledge-no": "Ohne Vorkenntnisse",
+        "priorknowledge-required": "Vorkenntnisse benötigt",
+        "material-no": "Ohne Material",
+        "material-required": "Material benötigt",
+        "creativity": "Kreativität",
+        "sports": "Sport & Bewegung",
+        "science": "Naturwissenschaften",
+        "music": "Musik",
+        "health": "Gesundheit",
+        "intercultural": "Interkulturelles"
+    };
 
-    t = new CourseTag();
-    t.name = "Kreativität";
-    t.identifier = "creativity";
-    t.category = "club";
-    tags.push(t);
+    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map( ([identifier, name]) => {
+        const t = new CourseTag();
+        t.name = name;
+        t.identifier = identifier;
+        t.category = "club";
 
-    t = new CourseTag();
-    t.name = "Sport & Bewegung";
-    t.identifier = "sports";
-    t.category = "club";
-    tags.push(t);
+        return [identifier, t];
+    }));
 
-    const science = (t = new CourseTag());
-    t.name = "Naturwissenschaften";
-    t.identifier = "science";
-    t.category = "club";
-    tags.push(t);
+    const mint = clubTagMap["mint"];
+    const musicArtCulture = clubTagMap["music-art-culture"];
+    const play = clubTagMap["play&fun"];
+    const creativity = clubTagMap["creativity"];
+    const sports = clubTagMap["sports"];
+    const science = clubTagMap["science"];
+    const music = clubTagMap["music"];
+    const health = clubTagMap["health"];
 
-    const music = (t = new CourseTag());
-    t.name = "Musik";
-    t.identifier = "music";
-    t.category = "club";
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = "Gesundheit";
-    t.identifier = "health";
-    t.category = "club";
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = "Interkulturelles";
-    t.identifier = "intercultural";
-    t.category = "club";
-    tags.push(t);
+    const clubTags = Object.values(clubTagMap);
+    tags.push(...clubTags);
 
     const preparation = (t = new CourseTag());
     t.name = "Prüfungsvorbereitung";
@@ -500,6 +509,62 @@ export async function setupDevDB() {
 
     courses.push(course5);
 
+    let course6 = new Course();
+    course6.instructors = [s1];
+    course6.name = "The Science behind Chocolate";
+    course6.outline =
+        "Can you actually burn chocolate? Does chocolate make me happy? Where do most cocoa beans come from?";
+    course6.description =
+        "Chocolate comes in all shapes and sizes, varying degrees of colour and sweetness – Nearly everyone likes chocolate! But what is the science behind chocolate? What are the myths that exist around chocolate? And last, but not least: What is our impact as consumers of chocolate? Want to know more about it? Then, join us for our upcoming sessions on the world of chocolate! The sessions will take part in English – but do not hesitate to come along. No worries – your English does not need to be perfect!";
+    course6.category = CourseCategory.CLUB;
+    course6.tags = [science, creativity, play];
+    course6.subcourses = [];
+    course6.courseState = CourseState.ALLOWED;
+
+    courses.push(course6);
+
+    let course7 = new Course();
+    course7.instructors = [s1];
+    course7.name = "1x1 der Studienfinanzierung";
+    course7.outline =
+        "Fit ins Studium - Wie du ohne finanzielle Sorgen das Studium beginnst!";
+    course7.description =
+        "Studium! - aber keine Ahnung wie? Oder wie viel? Du möchtest gerne studieren, aber weißt nicht, was es kostet? Oder du weißt, was es kostet, aber nicht, wie du es bezahlen sollst? Von Stipendien hast du gehört, aber glaubst, dass die nur für Ausnahmetalente sind? In unserem Kurs möchten wir all diese Fragen und noch viel mehr diskutieren und auch mit einigen Mythen aufräumen. In diesem Kurs werden wir die folgenden Themen genauer besprechen: •	Welche Kosten kommen im Studium auf Dich zu? •	Universität vs. (Fach-)Hochschule: Was sind die Unterschiede? •	Privat- oder öffentlich finanziertes Studium? •	Ankommen im ‚Uni‘-Leben •	Finanzierung des Studiums: BAföG, Stipendien, Studienkredite und weitere Möglichkeiten";
+    course7.category = CourseCategory.CLUB;
+    course7.tags = [science, creativity, play];
+    course7.subcourses = [];
+    course7.courseState = CourseState.ALLOWED;
+
+    courses.push(course7);
+
+    let course8 = new Course();
+    course8.instructors = [s1];
+    course8.name = "Lorem Ipsum";
+    course8.outline =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course8.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course8.category = CourseCategory.CLUB;
+    course8.tags = [science, creativity, play];
+    course8.subcourses = [];
+    course8.courseState = CourseState.ALLOWED;
+
+    courses.push(course8);
+
+    let course9 = new Course();
+    course9.instructors = [s1];
+    course9.name = "dolor sit amet, consectetur";
+    course9.outline =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course9.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    course9.category = CourseCategory.CLUB;
+    course9.tags = [science, music, play];
+    course9.subcourses = [];
+    course9.courseState = CourseState.ALLOWED;
+
+    courses.push(course9);
+
     for (const course of courses) {
         await entityManager.save(Course, course);
 
@@ -592,6 +657,54 @@ export async function setupDevDB() {
 
     subcourses.push(subcourse7);
 
+    const subcourse8 = new Subcourse();
+    subcourse8.course = course6;
+    subcourse8.joinAfterStart = true;
+    subcourse8.minGrade = 3;
+    subcourse8.maxGrade = 10;
+    subcourse8.instructors = [s1];
+    subcourse8.maxParticipants = 10;
+    subcourse8.published = true;
+    subcourse8.participants = pupils;
+
+    subcourses.push(subcourse8);
+
+    const subcourse9 = new Subcourse();
+    subcourse9.course = course7;
+    subcourse9.joinAfterStart = true;
+    subcourse9.minGrade = 1;
+    subcourse9.maxGrade = 10;
+    subcourse9.instructors = [s1];
+    subcourse9.maxParticipants = 20;
+    subcourse9.published = true;
+    subcourse9.participants = pupils;
+
+    subcourses.push(subcourse9);
+
+    const subcourse10 = new Subcourse();
+    subcourse10.course = course8;
+    subcourse10.joinAfterStart = true;
+    subcourse10.minGrade = 1;
+    subcourse10.maxGrade = 10;
+    subcourse10.instructors = [s1];
+    subcourse10.maxParticipants = 20;
+    subcourse10.published = true;
+    subcourse10.participants = pupils;
+
+    subcourses.push(subcourse10);
+
+    const subcourse11 = new Subcourse();
+    subcourse11.course = course9;
+    subcourse11.joinAfterStart = true;
+    subcourse11.minGrade = 1;
+    subcourse11.maxGrade = 10;
+    subcourse11.instructors = [s1];
+    subcourse11.maxParticipants = 20;
+    subcourse11.published = true;
+    subcourse11.participants = pupils;
+
+    subcourses.push(subcourse11);
+
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
         console.log("Inserted SubCourse.");
@@ -665,6 +778,30 @@ export async function setupDevDB() {
     lecture9.start = new Date(year, month, date + 15, 11, 0, 0, 0);
     lecture9.instructor = s2;
 
+    const lecture10: Lecture = new Lecture();
+    lecture10.subcourse = subcourse8;
+    lecture10.duration = 120;
+    lecture10.start = new Date(year, month, date + 10, 19, 0, 0, 0);
+    lecture10.instructor = s1;
+
+    const lecture11: Lecture = new Lecture();
+    lecture11.subcourse = subcourse9;
+    lecture11.duration = 60;
+    lecture11.start = new Date(year, month, date + 10, 19, 0, 0, 0);
+    lecture11.instructor = s1;
+
+    const lecture12: Lecture = new Lecture();
+    lecture12.subcourse = subcourse10;
+    lecture12.duration = 60;
+    lecture12.start = new Date(year, month, date + 11, 20, 0, 0, 0);
+    lecture12.instructor = s1;
+
+    const lecture13: Lecture = new Lecture();
+    lecture13.subcourse = subcourse11;
+    lecture13.duration = 60;
+    lecture13.start = new Date(year, month, date + 12, 20, 0, 0, 0);
+    lecture13.instructor = s1;
+
     lectures.push(
         lecture1,
         lecture2,
@@ -674,7 +811,11 @@ export async function setupDevDB() {
         lecture6,
         lecture7,
         lecture8,
-        lecture9
+        lecture9,
+        lecture10,
+        lecture11,
+        lecture12,
+        lecture13
     );
 
     for (const lecture of lectures) {
@@ -794,9 +935,11 @@ export async function setupDevDB() {
 
     projectCoachingScreenings.push(projectCoachingScreening1);
 
-
     for (let i = 0; i < projectCoachingScreenings.length; i++) {
-        await entityManager.save(ProjectCoachingScreening, projectCoachingScreenings[i]);
+        await entityManager.save(
+            ProjectCoachingScreening,
+            projectCoachingScreenings[i]
+        );
         console.log("Inserted Dev Project Screening " + i);
     }
 

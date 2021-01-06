@@ -25,6 +25,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {boolean} [hasJufoCertificate] (for project coaching required) One of <code> "yes", "no", "idk" </code>
  * @apiSuccess (Tutor Object) {string[]} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  * @apiSuccess (Tutor Object) {string} [jufoPastParticipationInfo] (for project coaching sometimes required) An open text field that can be used to give any information on a past jufo participation in a very informal way.
+ * @apiSuccess (Tutor Object) {string} [registrationSource] (optional field) Can be used to indicate some registration source, allowed values are "NORMAL", "COOPERATION", "DREHTUER", "OTHER".
  *
  */
 import {ApiSubject} from "../format";
@@ -49,7 +50,8 @@ export interface ApiAddTutor {
     projectFields?: ProjectField[],
     wasJufoParticipant?: TutorJufoParticipationIndication,
     hasJufoCertificate?: boolean,
-    jufoPastParticipationInfo?: string
+    jufoPastParticipationInfo?: string,
+    registrationSource?: string
 }
 
 /**
@@ -71,6 +73,7 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {string[]} [isJufoParticipant] (for project coaching required) One of <code> "yes", "no", "unsure", "neverheard" </code>
  * @apiSuccess (Tutee Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoachee is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  * @apiSuccess (Tutee Object) {number} [projectMemberCount] (for project coaching required) A number of persons that are making the project together. Values between 1 and 3 are allowed.
+ * @apiSuccess (Tutee Object) {string} [registrationSource] (optional field) Can be used to indicate some registration source, allowed values are "NORMAL", "COOPERATION", "DREHTUER", "OTHER".
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -88,6 +91,7 @@ export interface ApiAddTutee {
     projectFields?: ProjectField[];
     isJufoParticipant?: TuteeJufoParticipationIndication;
     projectMemberCount?: number;
+    registrationSource?: string;
 }
 
 /**
