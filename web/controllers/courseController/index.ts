@@ -252,7 +252,8 @@ async function getCourses(student: Student | undefined,
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
                 id: courses[i].id,
-                publicRanking: courses[i].publicRanking
+                publicRanking: courses[i].publicRanking,
+                allowContact: courses[i].allowContact
             };
             for (let j = 0; j < fields.length; j++) {
                 switch (fields[j].toLowerCase()) {
@@ -495,7 +496,8 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             image: course.imageKey ? accessURLForKey(course.imageKey) : null,
             category: course.category,
             tags: [],
-            subcourses: []
+            subcourses: [],
+            allowContact: course.allowContact
         };
 
         if (authorizedStudent) {
@@ -642,7 +644,8 @@ export async function postCourseHandler(req: Request, res: Response) {
                 typeof req.body.description == 'string' &&
                 typeof req.body.category == 'string' &&
                 req.body.tags instanceof Array &&
-                typeof req.body.submit == 'boolean') {
+                typeof req.body.submit == 'boolean' &&
+                typeof req.body.allowContact == 'boolean') {
 
                 // Check if string arrays
                 for (let i = 0; i < req.body.instructors.length; i++) {
@@ -781,6 +784,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
     course.tags = tags;
     course.subcourses = [];
     course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    course.allowContact = apiCourse.allowContact;
 
     try {
         await entityManager.save(Course, course);
@@ -789,7 +793,8 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
 
         return {
             id: course.id,
-            publicRanking: course.publicRanking
+            publicRanking: course.publicRanking,
+            allowContact: course.allowContact
         };
     } catch (e) {
         logger.error("Can't save new course: " + e.message);
@@ -1158,6 +1163,7 @@ export async function putCourseHandler(req: Request, res: Response) {
                 (req.body.name == undefined || typeof req.body.name == 'string') &&
                 (req.body.outline == undefined || typeof req.body.outline == 'string') &&
                 typeof req.body.description == 'string' &&
+                typeof req.body.allowContact === "boolean" &&
                 (req.body.outline == undefined || typeof req.body.category == 'string') &&
                 req.body.tags instanceof Array &&
                 (req.body.outline == undefined || typeof req.body.submit == 'boolean')) {
@@ -1273,6 +1279,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
         return 400;
     }
     course.description = apiCourse.description;
+    course.allowContact = apiCourse.allowContact;
 
     if (apiCourse.category != undefined) {
         let category: CourseCategory;

@@ -20,6 +20,7 @@
  * @apiSuccess (Course Object) {Subcourse[]} subcourses <em>(optional)</em> Array of Subcourses
  * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  * @apiSuccess (Course Object) {number} publicRanking A number indicating a ranking/order of how courses should be displayed in UI.
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
  *
  */
 export interface ApiCourse {
@@ -34,6 +35,7 @@ export interface ApiCourse {
     subcourses?: ApiSubcourse[];
     state?: string;
     publicRanking: number;
+    allowContact: boolean;
 }
 
 /**
@@ -97,6 +99,7 @@ export interface ApiLecture {
  * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
  *
  */
 /**
@@ -113,6 +116,7 @@ export interface ApiAddCourse {
     category: string;
     tags: string[];
     submit: boolean;
+    allowContact: boolean;
 }
 
 /**
@@ -174,6 +178,7 @@ export interface ApiAddLecture {
  * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit <em>(optional)</em> If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
  *
  */
 export interface ApiEditCourse {
@@ -184,6 +189,7 @@ export interface ApiEditCourse {
     category?: string;
     tags: string[];
     submit?: boolean;
+    allowContact: boolean;
 }
 
 /**

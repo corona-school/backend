@@ -94,6 +94,12 @@ export class Course {
     })
     publicRanking: number;
 
+    @Column({
+        nullable: false,
+        default: false
+    })
+    allowContact: boolean;
+
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
