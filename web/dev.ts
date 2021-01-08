@@ -466,6 +466,7 @@ export async function setupDevDB() {
     course2.tags = [science];
     course2.subcourses = [];
     course2.courseState = CourseState.ALLOWED;
+    course2.allowContact = true;
 
     courses.push(course2);
 
