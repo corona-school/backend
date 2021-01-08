@@ -292,6 +292,19 @@ export interface ApiPostGroupMail {
 }
 
 /**
+ * @apiDefine PostInstructorMail
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (InstructorMail Object) {string} subject Subject
+ * @apiSuccess (InstructorMail Object) {string} body Plaintext body of the mail
+ *
+ */
+export interface ApiPostInstructorMail {
+    subject: string,
+    body: string
+}
+
+/**
  * @apiDefine InstructorInfo
  * @apiVersion 1.1.0
  *

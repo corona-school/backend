@@ -170,6 +170,7 @@ createConnection().then(() => {
 
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+        coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 

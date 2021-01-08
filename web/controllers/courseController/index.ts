@@ -25,7 +25,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -2330,6 +2330,104 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         }
     } catch (e) {
         logger.warn("Unable to send group mail");
+        logger.debug(e);
+        return 400;
+    }
+
+    return 204;
+}
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/instructormail GroupMail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send an email to a course's instructors
+ *
+ * The subcourse's participants may use this endpoint to send an email to all instructors of that course
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName InstructorMail
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostInstructorMail
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/instructormail -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function instructorMailHandler(req: Request, res: Response) {
+
+    let status = 204;
+
+    if (res.locals.user instanceof Pupil) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && typeof req.body.subject == "string"
+            && typeof req.body.body == "string") {
+            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+        } else {
+            logger.warn("Missing or invalid parameters for instructorMailHandler");
+            status = 400;
+        }
+    } else {
+        logger.warn("Instructor mail requested by Non-Pupil");
+        status = 403;
+    }
+
+    res.status(status).end();
+}
+
+async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+    if (!pupil.isParticipant || !pupil.active) {
+        logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, { id: courseId });
+
+    if (course == undefined) {
+        logger.warn("Tried to send instructor mail to invalid course");
+        return 404;
+    }
+
+    if (!course.allowContact) {
+        logger.warn("Tried to send mail to instructors of a course where contact isn't permitted.");
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn("Tried to send instructor mail to invalid subcourse");
+        return 404;
+    }
+
+    const authorized = subcourse.participants.some(p => p.id === pupil.id);
+
+    if (!authorized) {
+        logger.warn("Tried to mail instructors as participant who is not enrolled in this course");
+        logger.debug(pupil);
+        return 403;
+    }
+
+    try {
+        const instructors = [...course.instructors, ...subcourse.instructors];
+        const receivers = instructors.filter((i, pos) => instructors.findIndex(i2 => i2.id === i.id) === pos); //every instructor should receive the mail only once: if instructor is in course and subcourse, she should not receive the mail twice
+
+        for (let r of receivers) {
+            await sendParticipantToInstructorMail(pupil, r, course, mailSubject, mailBody);
+        }
+    } catch (e) {
+        logger.warn("Unable to send instructor mail");
         logger.debug(e);
         return 400;
     }
