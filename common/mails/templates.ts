@@ -3,8 +3,8 @@ import { DEFAULTSENDERS } from "./config";
 export type TemplateMail = {
     type: string;
     id: number;
-    sender: string;
-    title: string;
+    sender?: string;
+    title?: string;
     disabled: boolean;
     variables: object;
     attachements?: {
