@@ -70,6 +70,27 @@ export async function sendInstructorGroupMail(participant: Pupil, instructor: St
     await sendTemplateMail(mail, participant.email, instructor.email);
 }
 
+export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
+    const firstLecture = subcourse.firstLecture();
+
+    if (!firstLecture) {
+        throw new Error(`Cannot send registration confirmation mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
+    }
+
+    const firstLectureMoment = moment(firstLecture.start);
+
+    const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
+        participantFirstname: participant.firstname,
+        courseName: course.name,
+        courseId: String(course.id),
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm"),
+        authToken: participant.authToken
+    });
+
+    await sendTemplateMail(mail, participant.email);
+}
+
 export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
     await sendTextEmail(
         `[${course.name}] ${messageTitle}`, //subject

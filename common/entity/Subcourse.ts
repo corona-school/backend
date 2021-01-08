@@ -85,4 +85,8 @@ export class Subcourse {
         this.lectures.push(lecture);
     }
 
+    firstLecture(): Lecture {
+        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime())[0];
+    }
+
 }

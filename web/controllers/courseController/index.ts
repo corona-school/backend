@@ -25,7 +25,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -2125,6 +2125,15 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully joined subcourse");
+
+            //send confirmation to participant
+            try {
+                await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
+            }
+            catch (e) {
+                logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
+            }
+
             // todo add transactionlog
 
         } catch (e) {
