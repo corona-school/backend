@@ -350,6 +350,7 @@ async function getCourses(student: Student | undefined,
                                     }
                                 }
                                 if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.onWaitingList = courses[i].subcourses[k].isPupilOnWaitingList(pupil);
                                     subcourse.joined = false;
                                     for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
                                         if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
@@ -587,6 +588,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                 }
             }
             if (authenticatedPupil) {
+                subcourse.onWaitingList = course.subcourses[i].isPupilOnWaitingList(pupil);
                 subcourse.joined = false;
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     if (course.subcourses[i].participants[j].id == pupil.id) {
@@ -2121,6 +2123,9 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 return;
             }
 
+            //remove participant from waiting list, if he is on the waiting list
+            subcourse.removePupilFromWaitingList(pupil);
+
             subcourse.participants.push(pupil);
             await em.save(Subcourse, subcourse);
 
@@ -2138,6 +2143,121 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
 
         } catch (e) {
             logger.warn("Can't join subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+/**
+ * @api {POST} /course/:id/subcourse/:subid/waitinglist/:userid JoinCourseWaitingList
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Join a (sub)course waiting list.
+ *
+ * This endpoint allows joining a subcourse's waiting list.
+ * Only accessable for authorized participants.
+ * If subcourse has already started or pupil already is on the waiting list 409 Conflict is returned. Joining the waiting list is only possible if course is full.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName JoinCourseWaitingList
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/waitinglist/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function joinWaitingListHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await joinWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/waitinglist");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to join the waiting list of a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to join course waiting list");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to join course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
+
+            // make sure course not already started
+            const firstLecture = subcourse.firstLecture();
+
+            if (firstLecture && moment(firstLecture.start).isAfter(moment()) && !course.subcourses[0].joinAfterStart) {
+                //cannot queue on waiting list, because late join is not allowed
+                logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because the course already started and late joins are not permitted.`);
+                status = 409;
+                return;
+            }
+
+            // Check if course is full
+            if (subcourse.maxParticipants <= subcourse.participants.length) {
+                //check if pupil is already on the waiting list
+                if (subcourse.isPupilOnWaitingList(pupil)) {
+                    status = 409;
+                    logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because he's already on the waiting list`);
+                    return;
+                }
+
+                //add pupil to the waiting list
+                subcourse.addPupilToWaitingList(pupil);
+
+                status = 202; //indicate that probably the join will be completed later (i.e. the pupil is on the waiting list)
+
+                await em.save(Subcourse, subcourse);
+                logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
+                return;
+            }
+            else {
+                logger.warn(`Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
+            }
+        } catch (e) {
+            logger.warn("Can't join waitinglist of subcourse");
             logger.debug(e);
             status = 400;
         }
@@ -2243,6 +2363,103 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
 
         } catch (e) {
             logger.warn("Can't leave subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid/waitinglist/:userid LeaveCourseWaitingList
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Leave a course's waiting list.
+ *
+ * This endpoint allows leaving the waiting list of a course.
+ * Only accessable for authorized participants.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName LeaveCourseWaitingList
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/waitinglist/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function leaveWaitingListHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await leaveWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/waitinglist/:userid");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to leave a subcourse's waitinglist");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to leave course's waitinglist");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to leave course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+            // Check if pupil is on waiting list
+            if (!subcourse.isPupilOnWaitingList(pupil)) {
+                logger.warn(`Pupil ${pupil.id} tried to leave waiting list of subcourse nr ${subcourseId} he didn't join`);
+                status = 400;
+                return;
+            }
+
+            //leave waiting list
+            subcourse.removePupilFromWaitingList(pupil);
+            await em.save(Subcourse, subcourse);
+
+            logger.info(`Pupil ${pupil.id} successfully left waiting list of subcourse nr ${subcourseId}`);
+            // todo add transactionlog
+
+        } catch (e) {
+            logger.warn("Can't leave subcourse's waiting list");
             logger.debug(e);
             status = 400;
         }

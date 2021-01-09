@@ -52,6 +52,7 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {Lecture[]} lectures Array of lectures
  * @apiSuccess (Subcourse Object) {bool} joinAfterStart If set to true, participants can join after the first lecture has already started
  * @apiSuccess (Subcourse Object) {bool} joined <em>(requires authentication)</em> True if the participant has joined this subcourse
+ * @apiSuccess (Subcourse Object) {bool} onWaitingList <em>(requires authentication)</em> True if the participant has joined the waiting list of this subcourse
  * @apiSuccess (Subcourse Object) {bool} published <em>(requires authentication)</em> False if subcourse has not yet been published
  * @apiSuccess (Subcourse Object) {bool} cancelled True if subcourse has been cancelled
  *
@@ -67,6 +68,7 @@ export interface ApiSubcourse {
     lectures?: ApiLecture[];
     joinAfterStart?: boolean;
     joined?: boolean;
+    onWaitingList?: boolean;
     published?: boolean;
     cancelled?: boolean;
 }

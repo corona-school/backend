@@ -168,6 +168,9 @@ createConnection().then(() => {
         coursesRouter.post("/:id/subcourse/:subid/participants/:userid", courseController.joinSubcourseHandler);
         coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
 
+        coursesRouter.post("/:id/subcourse/:subid/waitinglist/:userid", courseController.joinWaitingListHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/waitinglist/:userid", courseController.leaveWaitingListHandler);
+
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
         coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
