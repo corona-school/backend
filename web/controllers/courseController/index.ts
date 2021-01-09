@@ -2566,7 +2566,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 }
 
 /**
- * @api {POST} /course/:id/subcourse/:subid/instructormail GroupMail
+ * @api {POST} /course/:id/subcourse/:subid/instructormail InstructorMail
  * @apiVersion 1.1.0
  * @apiDescription
  * Send an email to a course's instructors
