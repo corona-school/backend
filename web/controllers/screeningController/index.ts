@@ -777,7 +777,7 @@ export async function getInstructors(req: Request, res: Response) {
         instructors = await getManager()
             .createQueryBuilder(Student, "student")
             .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :search OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
+            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :email OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
             .take(PAGE_SIZE)
             .skip((+page || 0) * PAGE_SIZE)
             .getMany();
