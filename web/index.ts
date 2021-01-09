@@ -141,6 +141,7 @@ createConnection().then(() => {
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.get("/test/meeting/join", courseController.testJoinCourseMeetingHandler);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);

@@ -40,6 +40,8 @@ import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
 import { accessURLForKey } from '../../../common/file-bucket/s3';
 import * as mime from 'mime-types';
+import { v4 as uuidv4 } from "uuid";
+import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
 
 const logger = getLogger();
 
@@ -2770,6 +2772,67 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
         }
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
+ * @api {GET} /course/test/meeting/join TestJoinCourseMeetingHandler
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get a new empty BBB-Meeting for testing purposes.
+ *
+ * This endpoint will provide a url to join the BBB meeting with a randomly generated name
+ *
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/test/meeting/join
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function testJoinCourseMeetingHandler(req: Request, res: Response) {
+    let status = 200;
+
+    try {
+        const meeting: BBBMeeting = {
+            id: -1, // default value, because of we're not creating a database instance of BBBMeeting (through typeorm) – IMPORTANT: this is not the meetingID!
+            meetingID: `Test-${uuidv4()}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            attendeePW: uuidv4(),
+            moderatorPW: uuidv4(),
+            meetingName: "Leeres Test-Meeting"
+        };
+
+
+        // start the meeting
+        await startBBBMeeting(meeting);
+
+        const randomTestName = uniqueNamesGenerator({
+            dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
+            separator: " ",
+            length: 2,
+            style: "capital"
+        });
+
+        // log that test meeting
+        logger.info(`Test BBB meeting created for a random user called ${randomTestName} with settings: ${JSON.stringify(meeting)}`);
+
+        // get the meeting url
+        const meetingURL = getMeetingUrl(meeting.meetingID, randomTestName, meeting.attendeePW);
+
+        // immediately redirect to the meeting
+        res.redirect(meetingURL);
+    } catch (e) {
+        logger.error("An error occurred during GET /course/test/meeting/join: " + e.message);
         logger.debug(req, e);
         status = 500;
     }
