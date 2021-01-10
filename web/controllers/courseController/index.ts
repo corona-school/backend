@@ -42,6 +42,11 @@ import { accessURLForKey } from '../../../common/file-bucket/s3';
 import * as mime from 'mime-types';
 import { v4 as uuidv4 } from "uuid";
 import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
+import ParticipantJoinedCourseEvent from '../../../common/transactionlog/types/ParticipantJoinedCourseEvent';
+import ParticipantLeftCourseEvent from '../../../common/transactionlog/types/ParticipantLeftCourseEvent';
+import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/types/ParticipantLeftWaitingListEvent';
+import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/types/ParticipantJoinedWaitingListEvent';
+import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
 
 const logger = getLogger();
 
@@ -488,6 +493,12 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             logger.error("Unauthorized user tried to access course of state " + course.courseState);
             logger.debug(student);
             return 403;
+        }
+
+        if (authorizedStudent || authenticatedPupil) {
+            // transactionlog, that user accessed course
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new AccessedCourseEvent(pupil ?? student, course));
         }
 
         apiCourse = {
@@ -2164,7 +2175,9 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
             }
 
-            // todo add transactionlog
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
 
         } catch (e) {
             logger.warn("Can't join subcourse");
@@ -2234,7 +2247,6 @@ export async function joinWaitingListHandler(req: Request, res: Response) {
 
 async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2276,6 +2288,11 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
 
                 await em.save(Subcourse, subcourse);
                 logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
+
+                // transactionlog
+                const transactionLog = getTransactionLog();
+                await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
+
                 return;
             }
             else {
@@ -2384,7 +2401,10 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully left subcourse");
-            // todo add transactionlog
+
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantLeftCourseEvent(pupil, subcourse));
 
         } catch (e) {
             logger.warn("Can't leave subcourse");
@@ -2452,7 +2472,6 @@ export async function leaveWaitingListHandler(req: Request, res: Response) {
 
 async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
     const entityManager = getManager();
-    //TODO: Implement transactionLog
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2481,8 +2500,10 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
             await em.save(Subcourse, subcourse);
 
             logger.info(`Pupil ${pupil.id} successfully left waiting list of subcourse nr ${subcourseId}`);
-            // todo add transactionlog
 
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantLeftWaitingListEvent(pupil, course));
         } catch (e) {
             logger.warn("Can't leave subcourse's waiting list");
             logger.debug(e);
