@@ -704,12 +704,6 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         return 403;
     }
 
-    if (student.courses.length >= 25) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but has reached his limit.`);
-        logger.debug(student);
-        return 403;
-    }
-
     // Some checks
     if (apiCourse.instructors.indexOf(student.wix_id) < 0) {
         logger.warn(`Instructor is not mentioned in field 'instructors': ${apiCourse.instructors.join(', ')}`);
