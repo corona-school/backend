@@ -2673,13 +2673,6 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         return 404;
     }
 
-    const authorized = subcourse.participants.some(p => p.id === pupil.id);
-
-    if (!authorized) {
-        logger.warn("Tried to mail correspondent as participant who is not enrolled in this course");
-        logger.debug(pupil);
-        return 403;
-    }
 
     try {
         // send mail to correspondnet
