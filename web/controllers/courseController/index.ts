@@ -255,7 +255,8 @@ async function getCourses(student: Student | undefined,
             let apiCourse: ApiCourse = {
                 id: courses[i].id,
                 publicRanking: courses[i].publicRanking,
-                allowContact: courses[i].allowContact
+                allowContact: courses[i].allowContact,
+                correspondentID: instructorId === student?.wix_id && courses[i].correspondent?.wix_id //only if this endpoint is accessed by a student who is also an instructor of that course, return the correspondentID
             };
             for (let j = 0; j < fields.length; j++) {
                 switch (fields[j].toLowerCase()) {
@@ -505,6 +506,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
         if (authorizedStudent) {
             apiCourse.state = course.courseState;
+            apiCourse.correspondentID = course.correspondent?.wix_id; //only add the correspondent ID when students are requesting the course...
         }
 
         for (let i = 0; i < course.instructors.length; i++) {
@@ -649,7 +651,8 @@ export async function postCourseHandler(req: Request, res: Response) {
                 typeof req.body.category == 'string' &&
                 req.body.tags instanceof Array &&
                 typeof req.body.submit == 'boolean' &&
-                typeof req.body.allowContact == 'boolean') {
+                typeof req.body.allowContact == 'boolean' &&
+                (req.body.correspondentID == undefined || typeof req.body.correspondentID === "string")) {
 
                 // Check if string arrays
                 for (let i = 0; i < req.body.instructors.length; i++) {
@@ -778,6 +781,17 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         }
     }
 
+    if (apiCourse.allowContact === true && typeof apiCourse.correspondentID !== "string") {
+        logger.warn(`Cannot allow contact for new course '${apiCourse.name}' without having provided a correspondentID!`);
+        return 400;
+    }
+
+    const correspondent = instructors.find(i => i.wix_id === apiCourse.correspondentID);
+    if (apiCourse.correspondentID != null && !correspondent) {
+        logger.warn(`Cannot use correspondentID '${apiCourse.correspondentID}' for new course '${apiCourse.name}' because there is no user with such an ID who is part of the course's instructors.`);
+        return 400;
+    }
+
     const course = new Course();
     course.instructors = instructors;
     course.name = apiCourse.name;
@@ -789,6 +803,7 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
     course.subcourses = [];
     course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
     course.allowContact = apiCourse.allowContact;
+    course.correspondent = correspondent;
 
     try {
         await entityManager.save(Course, course);
@@ -1168,6 +1183,7 @@ export async function putCourseHandler(req: Request, res: Response) {
                 (req.body.outline == undefined || typeof req.body.outline == 'string') &&
                 typeof req.body.description == 'string' &&
                 typeof req.body.allowContact === "boolean" &&
+                (req.body.correspondentID == undefined || typeof req.body.correspondentID === "string") &&
                 (req.body.outline == undefined || typeof req.body.category == 'string') &&
                 req.body.tags instanceof Array &&
                 (req.body.outline == undefined || typeof req.body.submit == 'boolean')) {
@@ -1283,7 +1299,20 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
         return 400;
     }
     course.description = apiCourse.description;
+
+    if (apiCourse.allowContact === true && typeof apiCourse.correspondentID !== "string") {
+        logger.warn(`Cannot allow contact for course ${course.id} without having provided a correspondentID!`);
+        return 400;
+    }
     course.allowContact = apiCourse.allowContact;
+
+    //check correspondent ID
+    const correspondent = course.instructors.find(i => i.wix_id === apiCourse.correspondentID);
+    if (apiCourse.correspondentID != null && !correspondent) {
+        logger.warn(`Cannot use correspondentID '${apiCourse.correspondentID}' for course ${course.id} because there is no user with such an ID who is part of the course's instructors.`);
+        return 400;
+    }
+    course.correspondent = correspondent;
 
     if (apiCourse.category != undefined) {
         let category: CourseCategory;
@@ -2629,8 +2658,13 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
     }
 
     if (!course.allowContact) {
-        logger.warn("Tried to send mail to instructors of a course where contact isn't permitted.");
+        logger.warn("Tried to send mail to correspondent of a course where contact isn't permitted.");
         return 404;
+    }
+
+    if (!course.correspondent) {
+        logger.error(`Tried to send mail to instructors of course (id: ${course.id}) where no correspondent was defined.`);
+        return 500; //usually this should not happen – but if it happens, it will indicates some bug or someone who manually changed database entries...
     }
 
     const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
@@ -2642,18 +2676,14 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
     const authorized = subcourse.participants.some(p => p.id === pupil.id);
 
     if (!authorized) {
-        logger.warn("Tried to mail instructors as participant who is not enrolled in this course");
+        logger.warn("Tried to mail correspondent as participant who is not enrolled in this course");
         logger.debug(pupil);
         return 403;
     }
 
     try {
-        const instructors = [...course.instructors, ...subcourse.instructors];
-        const receivers = instructors.filter((i, pos) => instructors.findIndex(i2 => i2.id === i.id) === pos); //every instructor should receive the mail only once: if instructor is in course and subcourse, she should not receive the mail twice
-
-        for (let r of receivers) {
-            await sendParticipantToInstructorMail(pupil, r, course, mailSubject, mailBody);
-        }
+        // send mail to correspondnet
+        await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);

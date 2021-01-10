@@ -261,6 +261,11 @@ export class Student extends Person {
     })
     registrationSource: RegistrationSource;
 
+    @OneToMany(type => Course, course => course.correspondent, {
+        nullable: true
+    })
+    managedCorrespondenceCourses: Course[];
+
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
 

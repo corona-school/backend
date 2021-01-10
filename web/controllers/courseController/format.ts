@@ -21,6 +21,7 @@
  * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  * @apiSuccess (Course Object) {number} publicRanking A number indicating a ranking/order of how courses should be displayed in UI.
  * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who is the correspondent for this course. The user's ID must be contained in the course's instructors. It is only contained if the instructors are set at the same time (i.e. if accessed by authorized student who is one of the course's instructors).
  *
  */
 export interface ApiCourse {
@@ -36,6 +37,7 @@ export interface ApiCourse {
     state?: string;
     publicRanking: number;
     allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
@@ -102,6 +104,7 @@ export interface ApiLecture {
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards
  * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who should be the correspondent for this course. The user's ID must be contained in the course's instructors. It is required if allowContact is true.
  *
  */
 /**
@@ -119,6 +122,7 @@ export interface ApiAddCourse {
     tags: string[];
     submit: boolean;
     allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
@@ -181,6 +185,7 @@ export interface ApiAddLecture {
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit <em>(optional)</em> If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
  * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who should be the correspondent for this course. The user's ID must be contained in the course's instructors It is required if allowContact is true.
  *
  */
 export interface ApiEditCourse {
@@ -192,6 +197,7 @@ export interface ApiEditCourse {
     tags: string[];
     submit?: boolean;
     allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
