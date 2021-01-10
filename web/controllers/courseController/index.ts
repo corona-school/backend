@@ -2807,7 +2807,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
  * @apiDescription
  * Get a new empty BBB-Meeting for testing purposes.
  *
- * This endpoint will provide a url to join the BBB meeting with a randomly generated name
+ * This endpoint will provide a url to join the BBB meeting with a randomly generated name (and if called with an auth token, that user's name will be taken)
  *
  * @apiGroup Courses
  *
@@ -2824,14 +2824,15 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 export async function testJoinCourseMeetingHandler(req: Request, res: Response) {
     let status = 200;
 
+    const user: Student | Pupil | undefined = res.locals.user;
     try {
         const meeting: BBBMeeting = {
             id: -1, // default value, because of we're not creating a database instance of BBBMeeting (through typeorm) – IMPORTANT: this is not the meetingID!
-            meetingID: `Test-${uuidv4()}`,
+            meetingID: `Test-${user?.wix_id ?? uuidv4()}`,
             createdAt: new Date(),
             updatedAt: new Date(),
-            attendeePW: uuidv4(),
-            moderatorPW: uuidv4(),
+            attendeePW: user?.wix_id.concat("ATTENDEE-PW") ?? uuidv4(),
+            moderatorPW: user?.wix_id.concat("MODERATOR-PW") ?? uuidv4(),
             meetingName: "Leeres Test-Meeting"
         };
 
@@ -2839,7 +2840,7 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
         // start the meeting
         await startBBBMeeting(meeting);
 
-        const randomTestName = uniqueNamesGenerator({
+        const userName = user?.fullName() ?? uniqueNamesGenerator({
             dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
             separator: " ",
             length: 2,
@@ -2847,10 +2848,10 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
         });
 
         // log that test meeting
-        logger.info(`Test BBB meeting created for a random user called ${randomTestName} with settings: ${JSON.stringify(meeting)}`);
+        logger.info(`Test BBB meeting created for a user (${user?.wix_id ?? "unauthenticated"}) called ${userName} with settings: ${JSON.stringify(meeting)}`);
 
         // get the meeting url
-        const meetingURL = getMeetingUrl(meeting.meetingID, randomTestName, meeting.attendeePW);
+        const meetingURL = getMeetingUrl(meeting.meetingID, userName, meeting.attendeePW);
 
         // immediately redirect to the meeting
         res.redirect(meetingURL);
