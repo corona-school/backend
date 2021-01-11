@@ -2848,7 +2848,7 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
             updatedAt: new Date(),
             attendeePW: user?.wix_id.concat("ATTENDEE-PW") ?? uuidv4(),
             moderatorPW: user?.wix_id.concat("MODERATOR-PW") ?? uuidv4(),
-            meetingName: "Leeres Test-Meeting"
+            meetingName: "Test-Meeting"
         };
 
 
