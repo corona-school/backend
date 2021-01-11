@@ -8,11 +8,14 @@ import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
 
-export function authCheckFactory(optional = false) {
+export function authCheckFactory(optional = false, useQueryParams = false) {
     return async function (req: Request, res: Response, next) {
         if (req.method == "OPTIONS") next();
 
         let token = req.get("Token");
+        if (useQueryParams) {
+            token = req.query.Token;
+        }
         if (token == undefined) {
             token = 'invalid';
         }
