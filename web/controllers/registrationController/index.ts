@@ -906,6 +906,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
 
         tutee.isPupil = true;
         tutee.subjects = JSON.stringify(apiStateTutee.subjects);
+        tutee.matchingPriority = 30; //prioritize tutees from cooperations (i.e. NRW or Partnerschulen);
     }
 
     // Project coaching
