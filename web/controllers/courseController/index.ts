@@ -2265,7 +2265,7 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
             // make sure course not already started
             const firstLecture = subcourse.firstLecture();
 
-            if (firstLecture && moment(firstLecture.start).isAfter(moment()) && !course.subcourses[0].joinAfterStart) {
+            if (firstLecture && moment(firstLecture.start).isBefore(moment()) && !course.subcourses[0].joinAfterStart) {
                 //cannot queue on waiting list, because late join is not allowed
                 logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because the course already started and late joins are not permitted.`);
                 status = 409;
