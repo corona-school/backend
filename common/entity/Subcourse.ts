@@ -38,6 +38,12 @@ export class Subcourse {
     @JoinTable()
     participants: Pupil[];
 
+    @ManyToMany(type => Pupil, pupil => pupil.queuedSubcourses, {
+        eager: true
+    })
+    @JoinTable()
+    waitingList: Pupil[];
+
     @OneToMany(type => Lecture, lecture => lecture.subcourse, {
         eager: true
     })
@@ -83,6 +89,24 @@ export class Subcourse {
 
         await getManager().save(Lecture, lecture);
         this.lectures.push(lecture);
+    }
+
+    firstLecture(): Lecture {
+        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime())[0];
+    }
+
+    isPupilOnWaitingList(pupil: Pupil): boolean {
+        return this.waitingList?.some(p => p.id === pupil.id);
+    }
+
+    addPupilToWaitingList(pupil: Pupil) {
+        if (!this.waitingList) {
+            this.waitingList = [];
+        }
+        this.waitingList.push(pupil);
+    }
+    removePupilFromWaitingList(pupil: Pupil) {
+        this.waitingList = this.waitingList?.filter(p => p.id !== pupil.id);
     }
 
 }

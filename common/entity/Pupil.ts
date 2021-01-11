@@ -91,6 +91,9 @@ export class Pupil extends Person {
     @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
     subcourses: Subcourse[];
 
+    @ManyToMany(type => Subcourse, subcourse => subcourse.waitingList)
+    queuedSubcourses: Subcourse[];
+
     @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.pupil)
     courseAttendanceLog: CourseAttendanceLog[];
 

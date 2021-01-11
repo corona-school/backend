@@ -3,7 +3,7 @@ import {
     CreateDateColumn,
     Entity,
     JoinTable,
-    ManyToMany, OneToMany,
+    ManyToMany, OneToMany, ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
     getManager
@@ -93,6 +93,17 @@ export class Course {
         default: 0
     })
     publicRanking: number;
+
+    @Column({
+        nullable: false,
+        default: false
+    })
+    allowContact: boolean;
+
+    @ManyToOne(type => Student, student => student.managedCorrespondenceCourses, {
+        eager: true
+    })
+    correspondent?: Student;
 
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())

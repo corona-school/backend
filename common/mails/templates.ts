@@ -3,8 +3,8 @@ import { DEFAULTSENDERS } from "./config";
 export type TemplateMail = {
     type: string;
     id: number;
-    sender: string;
-    title: string;
+    sender?: string;
+    title?: string;
     disabled: boolean;
     variables: object;
     attachements?: {
@@ -237,6 +237,21 @@ export const mailjet = {
             variables: variables
         };
     },
+    COURSESPARTICIPANTREGISTRATIONCONFIRMATION: (variables: {
+        participantFirstname: string;
+        courseName: string;
+        courseId: string;
+        authToken: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coursesparticipantregistrationconfirmation",
+            id: 2145111,
+            disabled: false,
+            variables: variables
+        };
+    },
     PUPILMATCHFOLLOWUP: (variables: {
         pupilFirstName: string;
         studentFirstName: string;
@@ -259,21 +274,6 @@ export const mailjet = {
             id: 1513030,
             sender: DEFAULTSENDERS.support,
             title: "Wie läuft das gemeinsame Lernen?",
-            disabled: false,
-            variables: variables
-        };
-    },
-    PARTICIPANTCOURSEREGISTRATIONCONFIRMATION: (variables: {
-        participantFirstname: string;
-        courseName: string;
-        firstLectureDate: string;
-        firstLectureTime: string;
-    }) => {
-        return <TemplateMail>{
-            type: "participantcourseregistrationconfirmation",
-            id: 1513027,
-            sender: DEFAULTSENDERS.support,
-            title: "Du hast dich für einen Kurs angemeldet!",
             disabled: false,
             variables: variables
         };

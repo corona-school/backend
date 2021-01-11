@@ -141,6 +141,7 @@ createConnection().then(() => {
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.get("/test/meeting/join", authCheckFactory(true, true), courseController.testJoinCourseMeetingHandler);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
@@ -168,8 +169,12 @@ createConnection().then(() => {
         coursesRouter.post("/:id/subcourse/:subid/participants/:userid", courseController.joinSubcourseHandler);
         coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
 
+        coursesRouter.post("/:id/subcourse/:subid/waitinglist/:userid", courseController.joinWaitingListHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/waitinglist/:userid", courseController.leaveWaitingListHandler);
+
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+        coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
