@@ -23,6 +23,7 @@ import * as favicon from "express-favicon";
 import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
 import * as multer from "multer";
+import * as moment from "moment-timezone";
 
 // Logger setup
 try {
@@ -33,6 +34,10 @@ try {
 
 const logger = getLogger();
 const accessLogger = getLogger("access");
+
+//SETUP: moment
+moment.locale("de"); //set global moment date format
+moment.tz.setDefault("Europe/Berlin"); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 
 logger.info("Webserver backend started");
 const app = express();
