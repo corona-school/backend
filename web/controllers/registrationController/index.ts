@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee, ApiAddMentor, ApiAddStateTutee, ApiSchoolInfo } from './format';
+import { ApiAddTutor, ApiAddTutee, ApiAddMentor, ApiAddCooperationTutee, ApiSchoolInfo } from './format';
 import { getManager } from 'typeorm';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { Student, TeacherModule } from '../../../common/entity/Student';
@@ -58,7 +58,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
             typeof req.body.state == 'string' &&
-            typeof req.body.isProjectCoach == 'boolean') {
+            typeof req.body.isProjectCoach == 'boolean' &&
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -197,6 +198,10 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     tutor.isUniversityStudent = apiTutor.isTutor || apiTutor.isOfficial || !!apiTutor.isUniversityStudent;
 
+    if (apiTutor.registrationSource) {
+        tutor.registrationSource = EnumReverseMappings.RegistrationSource(apiTutor.registrationSource);
+    }
+
     if (apiTutor.isTutor) {
         if (apiTutor.subjects.length < 1) {
             logger.warn("Subjects needs to contain at least one element.");
@@ -329,7 +334,8 @@ export async function postTuteeHandler(req: Request, res: Response) {
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.msg == 'string' &&
             typeof req.body.isProjectCoachee == "boolean" &&
-            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee))) {//require grade only if not only registering for project coaching
+            (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee)) && //require grade only if not only registering for project coaching
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -432,6 +438,10 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     tutee.email = apiTutee.email.toLowerCase();
     if (apiTutee.grade) {
         tutee.grade = apiTutee.grade + ". Klasse";
+    }
+
+    if (apiTutee.registrationSource) {
+        tutee.registrationSource = EnumReverseMappings.RegistrationSource(apiTutee.registrationSource);
     }
 
     switch (apiTutee.state) {
@@ -734,7 +744,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
  *
  * @apiUse ContentType
  *
- * @apiUse AddStateTutee
+ * @apiUse AddCooperationTutee
  * @apiUse Subject
  *
  * @apiExample {curl} Curl
@@ -753,11 +763,12 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
         if (typeof req.body.firstname == 'string' &&
             typeof req.body.lastname == 'string' &&
             typeof req.body.email == 'string' &&
-            typeof req.body.grade == 'number' &&
-            typeof req.body.state == 'string' &&
+            typeof req.body.grade == 'number' && //compared to normal tutee registration, grade is required, because this is for state cooperation with public schools
+            (!req.body.state || typeof req.body.state == 'string') && //state is optional – if given, the backend will check whether given state and stored state for teacher's email address will match
             typeof req.body.isTutee == 'boolean' &&
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.teacherEmail == 'string' &&
+            typeof req.body.isProjectCoachee == "boolean" &&
             typeof req.body.msg == 'string') {
 
             if (req.body.isTutor) {
@@ -775,12 +786,44 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
                 }
             }
 
+            if (req.body.isProjectCoachee) {
+                if (req.body.projectFields instanceof Array
+                    && typeof req.body.isJufoParticipant === "string"
+                    && typeof req.body.projectMemberCount === "number") {
+                    // CHECK project fields for validity
+                    if (req.body.projectFields.length <= 0) {
+                        status = 400;
+                        logger.error("Tutee registration (for specific state) with isProjectCoachee expects projectFields");
+                    }
+                    const unknownProjectField = (req.body.projectFields as string[]).find(s => !EnumReverseMappings.ProjectField(s));
+                    if (unknownProjectField) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid project field '${unknownProjectField}'`);
+                    }
+                    // CHECK isJufoParticipant for validity
+                    if (!EnumReverseMappings.TuteeJufoParticipationIndication(req.body.isJufoParticipant)) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for jufo participation: '${req.body.isJufoParticipant}'`);
+                    }
+                    // CHECK projectMemberCount for validity
+                    const projectMemberCount: number = req.body.projectMemberCount;
+                    if (projectMemberCount < 1 || projectMemberCount > 3) {
+                        status = 400;
+                        logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
+                    }
+                }
+                else {
+                    status = 400;
+                    logger.error("Tutee registration (for specific state) with isProjectCoachee has invalid parameters");
+                }
+            }
+
             if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
                 status = 400;
 
             if (status < 300) {
                 // try registering
-                status = await registerStateTutee(req.body);
+                status = await registerCooperationTutee(req.body);
             } else {
                 logger.error("Malformed parameters in optional fields for Tutee registration (for specific state)");
                 status = 400;
@@ -799,7 +842,7 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<number> {
+async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -829,8 +872,8 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
     tutee.email = apiStateTutee.email.toLowerCase();
     tutee.grade = apiStateTutee.grade + ". Klasse";
 
-    const parsedState = EnumReverseMappings.State(apiStateTutee.state);
-    if (!parsedState) {
+    const parsedState = apiStateTutee.state ? EnumReverseMappings.State(apiStateTutee.state) : null;
+    if (apiStateTutee.state != null && !parsedState) {
         logger.error("Invalid value for Tutee registration state (for specific state): " + apiStateTutee.state);
         return 400;
     }
@@ -865,6 +908,14 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         tutee.subjects = JSON.stringify(apiStateTutee.subjects);
     }
 
+    // Project coaching
+    if (apiStateTutee.isProjectCoachee) {
+        tutee.isProjectCoachee = apiStateTutee.isProjectCoachee;
+        tutee.projectFields = apiStateTutee.projectFields;
+        tutee.isJufoParticipant = apiStateTutee.isJufoParticipant;
+        tutee.projectMemberCount = apiStateTutee.projectMemberCount;
+    }
+
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
     if (result !== undefined) {
         logger.error("Tutee with given email already exists.");
@@ -890,8 +941,8 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
         tutee.school = school;
         tutee.schooltype = school.schooltype;
 
-        //check if state is equal to that given in the request
-        if (parsedState !== school.state) {
+        //check if state is equal to that given in the request (if one is given)
+        if (parsedState != null && parsedState !== school.state) {
             logger.error(`Tutee wanted to register for state ${apiStateTutee.state} while using a school email from state ${school.state}!`);
             return 400;
         }
@@ -930,7 +981,7 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
  *
  * @apiUse OptionalAuthentication
  *
- * @apiParam (Query Parameter) {string} state The state of Germany for which the cooperation schools should be returned.
+ * @apiParam (Query Parameter) {string} [state] The state of Germany for which the cooperation schools should be returned.
  *
  * @apiUse SchoolInfo
  *
@@ -945,26 +996,20 @@ async function registerStateTutee(apiStateTutee: ApiAddStateTutee): Promise<numb
 export async function getSchoolsHandler(req: Request, res: Response) {
     let status = 200;
     try {
-        if (typeof req.params.state != 'string') {
-            logger.error("Missing required parameter state");
+        //parse state
+        const state = req.params.state ? EnumReverseMappings.State(req.params.state): null;
+
+        if (req.params.state && !state) {
+            logger.error(`Given State "${req.params.state}" is unknown`);
             status = 400;
         }
         else {
-            //parse state
-            const state = EnumReverseMappings.State(req.params.state);
+            let obj = await getSchools(state);
 
-            if (!state) {
-                logger.error(`Given State "${req.params.state}" is unknown`);
-                status = 400;
-            }
-            else {
-                let obj = await getSchools(state);
-
-                if (typeof obj == 'number') {
-                    status = obj;
-                } else {
-                    res.json(obj);
-                }
+            if (typeof obj == 'number') {
+                status = obj;
+            } else {
+                res.json(obj);
             }
         }
     } catch (e) {
@@ -975,14 +1020,16 @@ export async function getSchoolsHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function getSchools(state: State): Promise<Array<ApiSchoolInfo> | number> {
+async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number> {
     const entityManager = getManager();
 
     try {
         const schools = await entityManager.find(School, {
             where: {
-                state: state,
-                activeCooperation: true
+                activeCooperation: true,
+                ...(!!state && {
+                    state: state
+                })
             }
         });
 

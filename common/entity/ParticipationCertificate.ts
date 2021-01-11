@@ -56,5 +56,6 @@ export class ParticipationCertificate {
     @JoinColumn()
     pupil: Pupil;
 
-
+    @Column({ default: false })
+    ongoingLessons: boolean;
 }

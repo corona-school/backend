@@ -517,7 +517,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 lastname: m.pupil.lastname,
                 email: m.pupil.email,
                 uuid: m.uuid,
-                grade: m.pupil.gradeAsNumber(),
+                grade: m.pupil.assumedProjectCoachingMatchingGrade(),
                 projectFields: m.pupil.projectFields,
                 jitsilink: m.jitsiLink(),
                 date: m.createdAt.getTime(),

@@ -4,6 +4,7 @@ import { MentoringCategory } from "../mentoring/categories";
 import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { TeacherModule } from "../entity/Student";
+import { RegistrationSource } from "../entity/Person";
 
 
 const EnumReverseMappings = {
@@ -13,7 +14,8 @@ const EnumReverseMappings = {
     ProjectField: reverseMappingForStringEnum(ProjectField),
     TutorJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TutorJufoParticipationIndication)),
     TuteeJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TuteeJufoParticipationIndication)),
-    TeacherModule: caseInsensitive(reverseMappingForStringEnum(TeacherModule))
+    TeacherModule: caseInsensitive(reverseMappingForStringEnum(TeacherModule)),
+    RegistrationSource: caseInsensitive(reverseMappingForNumericEnumNames(RegistrationSource))
 };
 
 function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {
@@ -23,9 +25,15 @@ function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {
     };
 }
 
+function reverseMappingForNumericEnumNames<E>(e: E): ((s: string) => E[keyof E]) {
+    return (s: string) => {
+        return e[s];
+    };
+}
+
 function caseInsensitive<E>(reverseMappingFunction: (s: string) => E) {
     return (s: string) => {
-        return reverseMappingFunction(s.toUpperCase()) || reverseMappingFunction(s.toLowerCase());
+        return reverseMappingFunction(s.toUpperCase()) ?? reverseMappingFunction(s.toLowerCase());
     };
 }
 

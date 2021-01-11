@@ -10,7 +10,7 @@ import {
 } from "typeorm";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
-import { Person } from "./Person";
+import { Person, RegistrationSource } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { State } from './State';
@@ -270,6 +270,13 @@ export class Student extends Person {
     })
     lastUpdatedSettingsViaBlocker: Date;
 
+    @Column({
+        type: 'enum',
+        enum: RegistrationSource,
+        default: RegistrationSource.NORMAL
+    })
+    registrationSource: RegistrationSource;
+
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
 
@@ -448,3 +455,8 @@ export async function activeMatchesOfStudent(s: Student, manager: EntityManager)
 export async function activeMatchCountOfStudent(s: Student, manager: EntityManager) {
     return (await activeMatchesOfStudent(s, manager)).length;
 }
+
+export const DEFAULT_PROJECT_COACH_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13
+};

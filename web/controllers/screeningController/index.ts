@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager, Like } from "typeorm";
+import { getManager, Like, ILike } from "typeorm";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentInfoDTO } from "../../../common/dto/StudentInfoDTO";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
@@ -8,13 +8,15 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import { Course } from "../../../common/entity/Course";
+import { Course, CourseCategory } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
-import {Subcourse} from "../../../common/entity/Subcourse";
-import {Lecture} from "../../../common/entity/Lecture";
+import { Subcourse } from "../../../common/entity/Subcourse";
+import { Lecture } from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
+import { CourseTag } from "../../../common/entity/CourseTag";
+import { CourseTagDTO } from "../../../common/dto/CourseTagDTO";
+import { createCourseTag } from "../../../common/util/createCourseTag";
 
 const logger = getLogger();
 
@@ -251,7 +253,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         getManager().save(student);
 
         //update transaction log
-        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, {prev: prevState, new: newState}));
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, { prev: prevState, new: newState }));
 
         res.status(200).send("Student updated successfully!");
     }
@@ -439,10 +441,11 @@ export async function updateScreenerByMailHandler(req: Request, res: Response, n
  *
  * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
  * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getCourses(req: Request, res: Response) {
     try {
-        const { courseState, search } = req.query;
+        const { courseState, search, page } = req.query;
 
         if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");
@@ -450,20 +453,123 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+
         const where = (courseState ? (search ? [
-            { courseState, name: Like(`%${search}%`) }, /* OR */
-            { courseState, description: Like(`%${search}%`) }
+            { courseState, name: ILike(`%${search}%`) }, /* OR */
+            { courseState, description: ILike(`%${search}%`) }
         ] : { courseState }) : (search ? [
-            { name: Like(`%${search}%`) }, /* OR */
-            { description: Like(`%${search}%`) }
+            { name: ILike(`%${search}%`) }, /* OR */
+            { description: ILike(`%${search}%`) }
         ] : {}));
 
-        const courses = await getManager().find(Course, { where, take: 20 });
+
+        let courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20, order: { "updatedAt": "DESC" } });
+
+        if (!courses.length && search) {
+            // In case the regular search does not match anything, we search for students with that name
+            // Thus we avoid searching through all students in the regular case, but still support "find by student"
+            const [firstname, lastname = ""] = search.split(" ");
+
+            const student = await getManager().findOne(Student, {
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`) },
+                relations: ["courses"]
+            });
+
+            if (student) {
+                // This should really be done on the database, but TypeORM currently has no nice way to express this:
+                // https://github.com/typeorm/typeorm/blob/master/docs/many-to-many-relations.md
+                courses = student.courses
+                    .filter(it => !courseState || it.courseState === courseState)
+                    .sort((a, b) => +b.updatedAt - +a.updatedAt)
+                    .slice((+page || 0) * 20, (+page + 1 || 1) * 20);
+            }
+        }
+
 
         return res.json({ courses });
     } catch (error) {
         logger.warn("/screening/courses failed with", error.message);
         return res.status(500).send("internal server error");
+    }
+}
+
+/**
+ * @api {GET} /screening/courses/tags getCourseTags
+ * @apiVersion 1.0.1
+ * @apiDescription
+ *
+ * Retrieves all used course tags
+ *
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName getCourseTags
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" [host]/api/screening/courses/tags
+ */
+export async function getCourseTags(req: Request, res: Response) {
+    try {
+        const entityManager = getManager();
+
+        const tags = await entityManager.find(CourseTag, {
+            relations: ["courses"]
+        });
+
+        const apiResponse = tags.map(t => new CourseTagDTO(t));
+
+        return res.json(apiResponse);
+    } catch (error) {
+        logger.warn("GET /screening/courses/tags failed with ", error.message);
+        return res.status(500);
+    }
+}
+
+/**
+ * @api {POST} /screening/courses/tags/create createCourseTag
+ * @apiVersion 1.0.1
+ * @apiDescription
+ * Adds a course tag
+ *
+ * Only screeners with a valid token in the request header can use the API.
+ *
+ * @apiName createCourseTag
+ * @apiGroup Screener
+ *
+ * @apiUse Authentication
+ *
+ * @apiParam (URL Query) {string} name The name of the new course tag
+ * @apiParam (URL Query) {string} category The category of the new tag
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/courses/tags/create"
+ *
+ */
+export async function postCreateCourseTag(req: Request, res: Response) {
+    try {
+        const { name, category } = req.query;
+
+        if (typeof name !== "string") {
+            return res.status(400).send("Invalid value for query parameter 'name'");
+        }
+
+        if (!Object.values(CourseCategory).includes(category)) {
+            return res.status(400).send("Invalid value for query parameter 'category'");
+        }
+
+        const tag = await createCourseTag(name, category);
+
+        await getManager().save(CourseTag, tag);
+
+        return res.json(tag);
+    } catch (error) {
+        logger.warn("POST /screening/courses/tags/create failed with ", error.message);
+        return res.status(500);
     }
 }
 
@@ -490,6 +596,7 @@ export async function getCourses(req: Request, res: Response) {
  * @apiParam (JSON Body) {string|undefined} description the new description
  * @apiParam (JSON Body) {string|undefined} outline the new outline
  * @apiParam (JSON Body) {string|undefined} category the new category ("revision", "club", "coaching")
+ * @apiParam (JSON Body) {Object[]|undefined} tags the new course tags, items must have either identifier (string) or name (string) as property
  * @apiParam (JSON Body) {string|null|undefined} imageUrl the new image url, or null if no image should be set
  * @apiParam (JSON Body) {Object[]|undefined} instructors the instructor ids of this course
  * @apiParam (JSON Body) {number|undefined} instructors.id the instructor ids of this course
@@ -499,7 +606,7 @@ export async function getCourses(req: Request, res: Response) {
 export async function updateCourse(req: Request, res: Response) {
     try {
         const update = new ApiCourseUpdate(req.body);
-        const { newLectures, removeLectures } = req.body;
+        const { newLectures, removeLectures, tags } = req.body;
         const { id } = req.params;
         if (typeof id !== "string" || !Number.isInteger(+id))
             return res.status(400).send("Invalid course id!");
@@ -528,6 +635,17 @@ export async function updateCourse(req: Request, res: Response) {
             }
         }
 
+        if (tags !== undefined) {
+            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))) {
+                const status = await handleUpdateCourseTags(tags, +id);
+                if (status != 200) {
+                    return res.status(status).send("Updating course tags failed");
+                }
+            } else {
+                return res.send(400).send("Invalid update course tags request");
+            }
+        }
+
         const course = await getManager().findOne(Course, { where: { id: +id } });
 
         if (!course)
@@ -546,7 +664,7 @@ export async function updateCourse(req: Request, res: Response) {
 async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
     const entityManager = getManager();
 
-    for (let lecture of lectures){
+    for (let lecture of lectures) {
         const course = await entityManager.findOne(Course, { id: courseId });
         if (course == undefined) {
             logger.warn(`No course found with ID ${courseId}`);
@@ -590,6 +708,21 @@ async function handleDeleteLectures(lectures: { id: number }[]) {
     return 204;
 }
 
+async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number) {
+    const course = await getManager().findOne(Course, { where: { id: courseId } });
+
+    try {
+        await course.updateTags(courseTags);
+        await getManager().save(course);
+        logger.info("Successfully updated course tags");
+    } catch (error) {
+        logger.warn("Updating course tags failed with ", error.message);
+        return 500;
+    }
+
+    return 200;
+}
+
 /**
  * @api {GET} /screening/instructors getInstructors
  * @apiVersion 1.0.1
@@ -610,10 +743,11 @@ async function handleDeleteLectures(lectures: { id: number }[]) {
  *
  * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
  * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email, supporting Postgres ILIKE syntax
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getInstructors(req: Request, res: Response) {
     try {
-        let { screeningStatus, search } = req.query;
+        let { screeningStatus, search, page } = req.query;
 
         if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
@@ -621,30 +755,38 @@ export async function getInstructors(req: Request, res: Response) {
         if (typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search'");
 
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+
         search = `%${search}%`; // fuzzy search
 
         let instructors: {}[];
+
+        const PAGE_SIZE = 20;
 
         if (screeningStatus === ScreeningStatus.Accepted) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Rejected) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         } else if (screeningStatus === ScreeningStatus.Unscreened) {
             instructors = await getManager()
                 .createQueryBuilder(Student, "student")
                 .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
                 .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
+                .take(PAGE_SIZE)
+                .skip((+page || 0) * PAGE_SIZE)
                 .getMany();
         }
 
