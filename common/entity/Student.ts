@@ -1,4 +1,13 @@
-import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
+import {
+    Column,
+    Entity,
+    EntityManager,
+    getManager,
+    Index,
+    ManyToMany,
+    OneToMany,
+    OneToOne
+} from "typeorm";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
 import { Person, RegistrationSource } from "./Person";
@@ -16,6 +25,7 @@ import { ScreeningInfo } from "../util/screening";
 import { Screener } from "./Screener";
 import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 import { ProjectMatch } from "./ProjectMatch";
+import {ExpertData} from "./ExpertData";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -207,6 +217,12 @@ export class Student extends Person {
 
     @OneToMany(type => ProjectMatch, match => match.student, { nullable: true })
     projectMatches: Promise<ProjectMatch[]>;
+
+    @OneToOne((type) => ExpertData, (expertData) => expertData.student, {
+        nullable: true,
+        cascade: true
+    })
+    expertData: ExpertData;
 
     /*
      * Other data

@@ -15,6 +15,7 @@ import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
+import * as expertController from "./controllers/expertController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
@@ -63,6 +64,7 @@ createConnection().then(() => {
     configureCoursesAPI();
     configureRegistrationAPI();
     configureMentoringAPI();
+    configureExpertAPI();
     deployServer();
 
     function addCorsMiddleware() {
@@ -281,6 +283,17 @@ createConnection().then(() => {
         mentoringRouter.get("/feedbackCall", mentoringController.getFeedbackCallData);
 
         app.use("/api/mentoring", mentoringRouter);
+    }
+
+    function configureExpertAPI() {
+        const expertRouter = express.Router();
+        expertRouter.use(authCheckFactory());
+        expertRouter.get("/", expertController.getExpertsHandler);
+        expertRouter.post("/:id/contact", expertController.postContactExpertHandler);
+        expertRouter.put("/:id", expertController.putExpertHandler);
+        expertRouter.get("/tags", expertController.getUsedTagsHandler);
+
+        app.use("/api/expert", expertRouter);
     }
 
     function deployHTTPServer() {

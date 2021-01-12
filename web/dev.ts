@@ -19,13 +19,15 @@ import { School } from "../common/entity/School";
 import { State } from "../common/entity/State";
 import { SchoolType } from "../common/entity/SchoolType";
 import { ProjectField } from "../common/jufo/projectFields";
-import { ProjectFieldWithGradeRestriction } from "../common/entity/ProjectFieldWithGradeRestriction";
 import {
     TuteeJufoParticipationIndication,
     TutorJufoParticipationIndication,
 } from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
 import { ProjectCoachingScreening } from "../common/entity/ProjectCoachingScreening";
+import { ExpertData } from "../common/entity/ExpertData";
+import { ExpertiseTag } from "../common/entity/ExpertiseTag";
+import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -126,6 +128,7 @@ export async function setupDevDB() {
         { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s1.openMatchRequestCount = 1;
+    s1.isProjectCoach = true;
     students.push(s1);
 
     const s2 = new Student();
@@ -982,6 +985,71 @@ export async function setupDevDB() {
     for (let i = 0; i < schools.length; i++) {
         await entityManager.save(schools[i]);
         console.log("Inserted Dev School " + i);
+    }
+
+    //Insert expert data
+    const expertiseTags: ExpertiseTag[] = [];
+
+    const tag1 = new ExpertiseTag();
+    tag1.name = "LTE";
+
+    expertiseTags.push(tag1);
+
+    const tag2 = new ExpertiseTag();
+    tag2.name = "Glasfaser";
+
+    expertiseTags.push(tag2);
+
+    for (let i = 0; i < expertiseTags.length; i++) {
+        await entityManager.save(expertiseTags[i]);
+        console.log("Inserted Expertise Tag " + i);
+    }
+
+    const experts: ExpertData[] = [];
+
+    const expert1 = new ExpertData();
+    expert1.student = students[5];
+    expert1.contactEmail = "contact@jufo-tufo.de";
+    expert1.description = "JuFo is great!";
+
+    experts.push(expert1);
+
+    const expert2 = new ExpertData();
+    expert2.student = students[6];
+    expert2.contactEmail = "contact@jufo-tufo.de";
+    expert2.description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis gravida, erat in dignissim vestibulum, ex nisl consequat nisl, at sagittis mauris Glasfaser eu nisl. Cras quis dui blandit, tincidunt libero id, porttitor nisi. Sed eu tellus interdum, luctus quam id, pretium dolor. Praesent feugiat quis sem in porttitor. Ut auctor erat nisl, vitae tempus nisl ullamcorper nec.";
+    expert2.active = true;
+    expert2.allowed = ExpertAllowedIndication.YES;
+    expert2.expertiseTags = [tag1, tag2];
+
+    experts.push(expert2);
+
+    const expert3 = new ExpertData();
+    expert3.student = students[3];
+    expert3.contactEmail = "contact2@jufo-tufo.de";
+    expert3.description =
+        "Die Elektronik ist ein Hauptgebiet der Elektrotechnik. Sie ist die Wissenschaft von der Steuerung des elektrischen Stromes durch elektronische Schaltungen, das heißt Schaltungen, in denen mindestens ein Bauelement aufgrund von Vakuum- oder Halbleiter-Leitung funktioniert. Elektronische Elemente verhalten sich nichtlinear, während das Verhalten anderer elektrischer (nicht-elektronischer) Elemente als linear bezeichnet wird";
+    expert3.active = true;
+    expert3.allowed = ExpertAllowedIndication.YES;
+    expert3.expertiseTags = [tag2];
+
+    experts.push(expert3);
+
+    const expert4 = new ExpertData();
+    expert4.student = students[4];
+    expert4.contactEmail = "contact3@jufo-tufo.de";
+    expert4.description =
+        "Chemie ([çeˈmi:]; mittel- und norddeutsch auch [ʃeˈmi:]; süddeutsch: [keˈmi:]) ist diejenige Naturwissenschaft, die sich mit dem Aufbau, den Eigenschaften und der Umwandlung von chemischen Stoffen beschäftigt. Ein Stoff besteht aus Atomen, Molekülen oder beidem. Er kann außerdem Ionen enthalten. Die chemischen Reaktionen sind Vorgänge in den Elektronenhüllen der Atome, Moleküle und Ionen.";
+    expert4.active = true;
+    expert4.allowed = ExpertAllowedIndication.YES;
+    expert4.expertiseTags = [tag1];
+
+    experts.push(expert4);
+
+    for (let i = 0; i < experts.length; i++) {
+        await entityManager.save(experts[i]);
+        console.log("Inserted Dev Expert " + i);
     }
 }
 

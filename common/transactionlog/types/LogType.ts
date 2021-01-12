@@ -19,6 +19,7 @@ enum LogType {
     CREATED_COURSE_ATTENDANCE_LOG = "createdCourseAttendanceLog",
     CONTACT_MENTOR = "contactMentor",
     CREATED_BBB_MEETING = "bbbMeeting",
+    CONTACT_EXPERT = "contactExpert",
     PARTICIPANT_JOINED_COURSE = "participantJoinedCourse",
     PARTICIPANT_LEFT_COURSE = "participantLeftCourse",
     PARTICIPANT_JOINED_WAITING_LIST = "participantJoinedWaitingList",
