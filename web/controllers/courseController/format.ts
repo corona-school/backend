@@ -20,6 +20,8 @@
  * @apiSuccess (Course Object) {Subcourse[]} subcourses <em>(optional)</em> Array of Subcourses
  * @apiSuccess (Course Object) {string} state <em>(optional, requires authentication)</em> One of <code>"created", "submitted", "allowed", "denied", "cancelled"</code>
  * @apiSuccess (Course Object) {number} publicRanking A number indicating a ranking/order of how courses should be displayed in UI.
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who is the correspondent for this course. The user's ID must be contained in the course's instructors. It is only contained if the instructors are set at the same time (i.e. if accessed by authorized student who is one of the course's instructors).
  *
  */
 export interface ApiCourse {
@@ -34,6 +36,8 @@ export interface ApiCourse {
     subcourses?: ApiSubcourse[];
     state?: string;
     publicRanking: number;
+    allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
@@ -50,6 +54,7 @@ export interface ApiCourse {
  * @apiSuccess (Subcourse Object) {Lecture[]} lectures Array of lectures
  * @apiSuccess (Subcourse Object) {bool} joinAfterStart If set to true, participants can join after the first lecture has already started
  * @apiSuccess (Subcourse Object) {bool} joined <em>(requires authentication)</em> True if the participant has joined this subcourse
+ * @apiSuccess (Subcourse Object) {bool} onWaitingList <em>(requires authentication)</em> True if the participant has joined the waiting list of this subcourse
  * @apiSuccess (Subcourse Object) {bool} published <em>(requires authentication)</em> False if subcourse has not yet been published
  * @apiSuccess (Subcourse Object) {bool} cancelled True if subcourse has been cancelled
  *
@@ -65,6 +70,7 @@ export interface ApiSubcourse {
     lectures?: ApiLecture[];
     joinAfterStart?: boolean;
     joined?: boolean;
+    onWaitingList?: boolean;
     published?: boolean;
     cancelled?: boolean;
 }
@@ -97,6 +103,8 @@ export interface ApiLecture {
  * @apiSuccess (Course Object) {string} category Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>)
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit If true set status to submitted. Only restricted editing will be possible afterwards
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who should be the correspondent for this course. The user's ID must be contained in the course's instructors. It is required if allowContact is true.
  *
  */
 /**
@@ -113,6 +121,8 @@ export interface ApiAddCourse {
     category: string;
     tags: string[];
     submit: boolean;
+    allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
@@ -174,6 +184,8 @@ export interface ApiAddLecture {
  * @apiSuccess (Course Object) {string} category <em>(optional)</em> Category of this course (one of <code>"revision"</code>,<code>"club"</code>,<code>"coaching"</code>), <em>only if not submitted</em>
  * @apiSuccess (Course Object) {string[]} tags Tag identifiers for this course
  * @apiSuccess (Course Object) {bool} submit <em>(optional)</em> If true set status to submitted. Only restricted editing will be possible afterwards, <em>only if not submitted</em>
+ * @apiSuccess (Course Object) {bool} allowContact If true, course participants are allowed to contact the course instructor via a form.
+ * @apiSuccess (Course Object) {string} [correspondentID] An instructor ID who should be the correspondent for this course. The user's ID must be contained in the course's instructors It is required if allowContact is true.
  *
  */
 export interface ApiEditCourse {
@@ -184,6 +196,8 @@ export interface ApiEditCourse {
     category?: string;
     tags: string[];
     submit?: boolean;
+    allowContact: boolean;
+    correspondentID?: string;
 }
 
 /**
@@ -281,6 +295,19 @@ export interface ApiCourseTag {
  *
  */
 export interface ApiPostGroupMail {
+    subject: string,
+    body: string
+}
+
+/**
+ * @apiDefine PostInstructorMail
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (InstructorMail Object) {string} subject Subject
+ * @apiSuccess (InstructorMail Object) {string} body Plaintext body of the mail
+ *
+ */
+export interface ApiPostInstructorMail {
     subject: string,
     body: string
 }

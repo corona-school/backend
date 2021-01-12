@@ -61,6 +61,11 @@ export abstract class Person {
         default: null
     })
     authTokenSent: Date;
+
+    fullName(): string {
+        const names = [[this.firstname], [this.lastname]].flatMap(n => n[0]?.length > 0 ? n : []);
+        return names.join(" ");
+    }
 }
 
 export enum RegistrationSource {

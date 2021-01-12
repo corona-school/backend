@@ -1,10 +1,11 @@
 import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
-import { mailjetTemplates, sendTemplateMail } from "../index";
+import { mailjetTemplates, sendTemplateMail, sendTextEmail } from "../index";
 import * as moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
+import { DEFAULTSENDERS } from "../config";
 
 const logger = getLogger();
 
@@ -67,4 +68,38 @@ export async function sendInstructorGroupMail(participant: Pupil, instructor: St
     });
 
     await sendTemplateMail(mail, participant.email, instructor.email);
+}
+
+export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
+    const firstLecture = subcourse.firstLecture();
+
+    if (!firstLecture) {
+        throw new Error(`Cannot send registration confirmation mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
+    }
+
+    const firstLectureMoment = moment(firstLecture.start);
+
+    const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
+        participantFirstname: participant.firstname,
+        courseName: course.name,
+        courseId: String(course.id),
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm"),
+        authToken: participant.authToken
+    });
+
+    await sendTemplateMail(mail, participant.email);
+}
+
+export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
+    await sendTextEmail(
+        `[${course.name}] ${messageTitle}`, //subject
+        messageBody, //email text
+        DEFAULTSENDERS.noreply, //sender address
+        instructor.email, //receiver
+        `${participant.fullName()} via Corona School`, //sender name
+        `${instructor.fullName()}`, //receiver name
+        participant.email, //replyTo address
+        `${participant.fullName()}` //replyTo name
+    );
 }
