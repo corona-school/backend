@@ -24,7 +24,7 @@ import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourse
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
-import { Pupil } from '../../../common/entity/Pupil';
+import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
 import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
@@ -2156,6 +2156,20 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 logger.warn("Pupil can't join subcourse, because it has already started");
                 logger.debug(subcourse);
                 status = 409;
+                return;
+            }
+
+            //check if pupil has less than 3 active courses (because a pupil is allowed to only have 3 active courses at a time)
+            const pupilWithSubcourses = await em.findOne(Pupil, { //quick and dirty solution without rewriting large parts of the code -> refetch from database including the subcourses...
+                where: {
+                    wix_id: pupil.wix_id
+                },
+                relations: ["subcourses"]
+            });
+            const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
+            if (numberOfActiveSubcourses >= 3) { //todo: don't hardcode this constant here...
+                logger.warn(`Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
+                status = 429; //use this to quickly indicate that the pupil has too much active subcourses
                 return;
             }
 

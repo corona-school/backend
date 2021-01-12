@@ -14,6 +14,7 @@ import { Student } from "./Student";
 import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
+import * as moment from "moment";
 
 @Entity()
 export class Subcourse {
@@ -91,8 +92,15 @@ export class Subcourse {
         this.lectures.push(lecture);
     }
 
+    sortedLectures(): Lecture[] {
+        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime());
+    }
+
     firstLecture(): Lecture {
-        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime())[0];
+        return this.sortedLectures()?.[0];
+    }
+    lastLecture(): Lecture {
+        return this.sortedLectures()?.[this.lectures.length - 1];
     }
 
     isPupilOnWaitingList(pupil: Pupil): boolean {
@@ -109,4 +117,12 @@ export class Subcourse {
         this.waitingList = this.waitingList?.filter(p => p.id !== pupil.id);
     }
 
+    isActiveSubcourse(): boolean {
+        const lastLecture = this.lastLecture();
+        if (!lastLecture) {
+            return false; //then active by default
+        }
+
+        return moment().isBefore(moment(lastLecture.start).add(lastLecture.duration, "minutes"));
+    }
 }
