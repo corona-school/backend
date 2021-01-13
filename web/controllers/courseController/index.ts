@@ -147,8 +147,6 @@ export async function getCoursesHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-let cache: ApiCourse[] = null;
-
 async function getCourses(student: Student | undefined,
                           pupil: Pupil | undefined, fields: Array<string>,
                           states: Array<string>,
@@ -187,12 +185,6 @@ async function getCourses(student: Student | undefined,
         logger.debug(pupil, fields, participantId);
         return 403;
     }
-
-
-    if (cache) {
-        return cache;
-    }
-
 
     if (states.length != 1 || states[0] != 'allowed') {
         if (!authenticatedStudent) {
@@ -282,6 +274,9 @@ async function getCourses(student: Student | undefined,
                                 firstname: courses[i].instructors[k].firstname,
                                 lastname: courses[i].instructors[k].lastname
                             };
+                            if (authenticatedStudent && student.wix_id != instructorId) {
+                                instructor.id = courses[i].instructors[k].wix_id;
+                            }
                             apiCourse.instructors.push(instructor);
                         }
                         break;
@@ -330,6 +325,9 @@ async function getCourses(student: Student | undefined,
                                         firstname: courses[i].subcourses[k].instructors[l].firstname,
                                         lastname: courses[i].subcourses[k].instructors[l].lastname
                                     };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                    }
                                     subcourse.instructors.push(instructor);
                                 }
                                 for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
@@ -342,7 +340,32 @@ async function getCourses(student: Student | undefined,
                                         start: courses[i].subcourses[k].lectures[l].start.getTime() / 1000,
                                         duration: courses[i].subcourses[k].lectures[l].duration
                                     };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                    }
                                     subcourse.lectures.push(lecture);
+                                }
+                                if (authenticatedStudent && student.wix_id == instructorId) {
+                                    subcourse.participantList = [];
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        subcourse.participantList.push({
+                                            firstname: courses[i].subcourses[k].participants[l].firstname,
+                                            lastname: courses[i].subcourses[k].participants[l].lastname,
+                                            email: courses[i].subcourses[k].participants[l].email,
+                                            grade: parseInt(courses[i].subcourses[k].participants[l].grade),
+                                            schooltype: courses[i].subcourses[k].participants[l].schooltype
+                                        });
+                                    }
+                                }
+                                if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.onWaitingList = courses[i].subcourses[k].isPupilOnWaitingList(pupil);
+                                    subcourse.joined = false;
+                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                        if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
+                                            subcourse.joined = true;
+                                            break;
+                                        }
+                                    }
                                 }
                                 apiCourse.subcourses.push(subcourse);
                             }
@@ -366,10 +389,6 @@ async function getCourses(student: Student | undefined,
     //filter out onlyJoinableCourses, if requested
     if (onlyJoinableCourses) {
         apiCourses = apiCourses.filter(isJoinableCourse);
-    }
-
-    if (!cache) {
-        cache = apiCourses;
     }
 
     return apiCourses;
