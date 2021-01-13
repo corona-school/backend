@@ -234,26 +234,26 @@ createConnection().then(() => {
             "/screener/:email",
             screeningController.updateScreenerByMailHandler
         );
-        screenerApiRouter.get(
-            "/courses",
-            screeningController.getCourses
-        );
-        screenerApiRouter.get(
-            "/courses/tags",
-            screeningController.getCourseTags
-        );
-        screenerApiRouter.post(
-            "/courses/tags/create",
-            screeningController.postCreateCourseTag
-        );
-        screenerApiRouter.post(
-            "/course/:id/update",
-            screeningController.updateCourse
-        );
-        screenerApiRouter.get(
-            "/instructors",
-            screeningController.getInstructors
-        );
+        // screenerApiRouter.get(
+        //     "/courses",
+        //     screeningController.getCourses
+        // );
+        // screenerApiRouter.get(
+        //     "/courses/tags",
+        //     screeningController.getCourseTags
+        // );
+        // screenerApiRouter.post(
+        //     "/courses/tags/create",
+        //     screeningController.postCreateCourseTag
+        // );
+        // screenerApiRouter.post(
+        //     "/course/:id/update",
+        //     screeningController.updateCourse
+        // );
+        // screenerApiRouter.get(
+        //     "/instructors",
+        //     screeningController.getInstructors
+        // );
 
         app.use("/api/screening", screenerApiRouter);
     }
