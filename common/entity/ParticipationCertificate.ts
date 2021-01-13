@@ -67,4 +67,10 @@ export class ParticipationCertificate {
 
     @Column({ nullable: true, type: "bytea", select: false })
     signatureParent?: Buffer;
+
+    @Column({ nullable: true, select: false })
+    signatureLocation: string;
+
+    @Column({ nullable: true, select: false })
+    signatureDate: Date;
 }

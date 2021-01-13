@@ -266,7 +266,7 @@ const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-
  */
 export async function signCertificateEndpoint(req: Request, res: Response) {
     const signer = res.locals.user as Pupil;
-    const { signaturePupil, signatureParent } = req.body;
+    const { signaturePupil, signatureParent, signatureLocation } = req.body;
     const { certificateId } = req.params;
 
     const entityManager = getManager();
@@ -283,6 +283,9 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
     if (!signaturePupil && !signatureParent)
         return res.status(400).send("Either the parent or the pupil must sign the certificate");
 
+    if (typeof signatureLocation !== "string" || !signatureLocation)
+        return res.status(400).send("Parameter signatureLocation must be a string");
+
     const certificate = await entityManager.findOne(ParticipationCertificate, { pupil: signer, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
 
     if (!certificate)
@@ -294,7 +297,7 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
     if (certificate.state === "manual")
         return res.status(400).send("Certificate cannot be signed as it is a manual one");
 
-    await signCertificate(certificate, signatureParent, signaturePupil);
+    await signCertificate(certificate, signatureParent, signaturePupil, signatureLocation);
 
     return res.send("Certificate signed");
 }
@@ -489,8 +492,10 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         CERTLINK: link,
         CERTLINKTEXT: link,
         ONGOING: certificate.ongoingLessons,
-        SIGNATURE_PARENT: certificate.signatureParent && certificate.signatureParent.toString("utf-8"),
-        SIGNATURE_PUPIL: certificate.signaturePupil && certificate.signaturePupil.toString("utf-8")
+        SIGNATURE_PARENT: certificate.signatureParent?.toString("utf-8"),
+        SIGNATURE_PUPIL: certificate.signaturePupil?.toString("utf-8"),
+        SINGATURE_LOCATION: certificate.signatureLocation,
+        SIGNATURE_DATE: certificate.signatureDate
     });
 
     return new Promise((resolve, reject) => {
@@ -525,11 +530,12 @@ async function viewParticipationCertificate(certificate: ParticipationCertificat
     });
 }
 
-async function signCertificate(certificate: ParticipationCertificate, signatureParent: string | undefined, signaturePupil: string | undefined) {
+async function signCertificate(certificate: ParticipationCertificate, signatureParent: string | undefined, signaturePupil: string | undefined, signatureLocation: string) {
     assert(signaturePupil || signatureParent, "Parent or Pupil signs certificate");
     assert(!signaturePupil || signaturePupil.match(VALID_BASE64), "Pupil Signature is valid Base 64");
     assert(!signatureParent || signatureParent.match(VALID_BASE64), "Parent Signature is valid Base 64");
     assert(certificate.state === "awaiting-approval", "Certificate awaiting signature");
+    assert(signatureLocation, "Singature location must be set");
 
     if (signatureParent)
         certificate.signatureParent = Buffer.from(signatureParent, "utf-8");
@@ -537,7 +543,9 @@ async function signCertificate(certificate: ParticipationCertificate, signatureP
     if (signaturePupil)
         certificate.signaturePupil = Buffer.from(signaturePupil, "utf-8");
 
-    certificate.state === "approved";
+    certificate.signatureDate = new Date();
+    certificate.signatureLocation = signatureLocation;
+    certificate.state = "approved";
 
     await getManager().save(ParticipationCertificate, certificate);
 
