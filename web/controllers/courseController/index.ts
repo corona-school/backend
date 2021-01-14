@@ -47,6 +47,7 @@ import ParticipantLeftCourseEvent from '../../../common/transactionlog/types/Par
 import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/types/ParticipantLeftWaitingListEvent';
 import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/types/ParticipantJoinedWaitingListEvent';
 import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
+import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
@@ -189,11 +190,6 @@ async function getCourses(student: Student | undefined,
     }
 
 
-    if (cache) {
-        return cache;
-    }
-
-
     if (states.length != 1 || states[0] != 'allowed') {
         if (!authenticatedStudent) {
             logger.warn(`Unauthenticated user tried to filter by states ${states.join(',')}`);
@@ -210,6 +206,28 @@ async function getCourses(student: Student | undefined,
         logger.debug(student, fields, states, instructorId);
         return 400;
     }
+    let apiCourses = await getAPICourses(student, pupil, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
+
+    if (typeof apiCourses === "number") { //it's so dirty...
+        return apiCourses;
+    }
+
+    //filter out onlyJoinableCourses, if requested
+    if (onlyJoinableCourses) {
+        apiCourses = apiCourses.filter(isJoinableCourse);
+    }
+
+
+    return apiCourses;
+}
+async function getAPICourses(student: Student | undefined,
+                             pupil: Pupil | undefined,
+                             fields: Array<string>,
+                             states: Array<string>,
+                             instructorId: string | undefined,
+                             participantId: string | undefined,
+                             authenticatedStudent: boolean,
+                             authenticatedPupil: boolean): Promise<Array<ApiCourse> | number> {
     let stateFilters = [];
     for (let i = 0; i < states.length; i++) {
         let state: CourseState;
@@ -239,37 +257,103 @@ async function getCourses(student: Student | undefined,
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const qb = entityManager.getRepository(Course).createQueryBuilder("course")
-            .leftJoinAndSelect("course.subcourses", "subcourse")
-            .leftJoinAndSelect("course.tags", "tags")
-            .leftJoinAndSelect("course.instructors", "instructor")
-            .leftJoinAndSelect("subcourse.instructors", "subinstructor")
-            .leftJoinAndSelect("subcourse.participants", "participant")
-            .leftJoinAndSelect("subcourse.lectures", "lecture")
-            .leftJoinAndSelect("lecture.instructor", "lecinstructor");
-
+        let customFilter = [];
         if (instructorId) {
-            qb.where("instructor.wix_id = :id", { id: student.wix_id });
-        } else if (participantId) {
-            qb.where("participant.wix_id = :id", { id: pupil.wix_id });
+            customFilter = [{
+                subcourse: {
+                    some: {
+                        // eslint-disable-next-line
+                        subcourse_instructors_student: {
+                            some: {
+                                student: {
+                                    wix_id: student?.wix_id ?? "invalid"
+                                }
+                            }
+                        }
+                    }
+                }
+            }];
+        }
+        else if (participantId) {
+            customFilter = [{
+                subcourse: {
+                    some: {
+                        // eslint-disable-next-line
+                        subcourse_participants_pupil: {
+                            some: {
+                                pupil: {
+                                    wix_id: pupil?.wix_id ?? "invalid" //todo rewrite...
+                                }
+                            }
+                        }
+                    }
+                }
+            }];
         }
 
-        if (stateFilters.length > 0) {
-            if (instructorId || participantId) {
-                qb.andWhere("course.courseState IN (:...states)", { states: stateFilters });
-            } else {
-                qb.where("course.courseState IN (:...states)", { states: stateFilters });
+        const courses = await prisma.course.findMany({
+            where: {
+                AND: [
+                    {
+                        courseState: {
+                            in: stateFilters
+                        }
+                    },
+                    ...customFilter
+                ]
+            },
+            include: {
+                subcourse: {
+                    include: {
+                        // eslint-disable-next-line
+                        subcourse_participants_pupil: {
+                            include: {
+                                pupil: true
+                            }
+                        },
+                        // eslint-disable-next-line
+                        subcourse_instructors_student: {
+                            include: {
+                                student: true
+                            }
+                        },
+                        // eslint-disable-next-line
+                        subcourse_waiting_list_pupil: {
+                            include: {
+                                pupil: true
+                            }
+                        },
+                        lecture: {
+                            include: {
+                                student: true
+                            }
+                        }
+                    }
+                },
+                // eslint-disable-next-line
+                course_tags_course_tag: {
+                    include: {
+                        // eslint-disable-next-line
+                        course_tag: true
+                    }
+                },
+                // eslint-disable-next-line
+                course_instructors_student: {
+                    include: {
+                        student: true
+                    }
+                },
+                student: true //correspondent id...
             }
-        }
+        });
 
-        const courses = await qb.getMany();
 
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
                 id: courses[i].id,
                 publicRanking: courses[i].publicRanking,
                 allowContact: courses[i].allowContact,
-                correspondentID: instructorId === student?.wix_id && courses[i].correspondent?.wix_id //only if this endpoint is accessed by a student who is also an instructor of that course, return the correspondentID
+                correspondentID: instructorId != null && instructorId === student?.wix_id && courses[i].student?.wix_id //only if this endpoint is accessed by a student who is also an instructor of that course, return the correspondentID
             };
             for (let j = 0; j < fields.length; j++) {
                 switch (fields[j].toLowerCase()) {
@@ -277,11 +361,14 @@ async function getCourses(student: Student | undefined,
                         break;
                     case 'instructors':
                         apiCourse.instructors = [];
-                        for (let k = 0; k < courses[i].instructors.length; k++) {
+                        for (let k = 0; k < courses[i].course_instructors_student.length; k++) {
                             let instructor: ApiInstructor = {
-                                firstname: courses[i].instructors[k].firstname,
-                                lastname: courses[i].instructors[k].lastname
+                                firstname: courses[i].course_instructors_student[k].student.firstname,
+                                lastname: courses[i].course_instructors_student[k].student.lastname
                             };
+                            if (authenticatedStudent && student.wix_id != instructorId) {
+                                instructor.id = courses[i].course_instructors_student[k].student.wix_id;
+                            }
                             apiCourse.instructors.push(instructor);
                         }
                         break;
@@ -302,47 +389,75 @@ async function getCourses(student: Student | undefined,
                         break;
                     case 'tags':
                         apiCourse.tags = [];
-                        for (let k = 0; k < courses[i].tags.length; k++) {
+                        for (let k = 0; k < courses[i].course_tags_course_tag.length; k++) {
                             let tag: ApiCourseTag = {
-                                id: courses[i].tags[k].identifier,
-                                name: courses[i].tags[k].name,
-                                category: courses[i].tags[k].category
+                                id: courses[i].course_tags_course_tag[k].course_tag.identifier,
+                                name: courses[i].course_tags_course_tag[k].course_tag.name,
+                                category: courses[i].course_tags_course_tag[k].course_tag.category
                             };
                             apiCourse.tags.push(tag);
                         }
                         break;
                     case 'subcourses':
                         apiCourse.subcourses = [];
-                        if (courses[i].subcourses) {
-                            for (let k = 0; k < courses[i].subcourses.length; k++) {
+                        if (courses[i].subcourse) {
+                            for (let k = 0; k < courses[i].subcourse.length; k++) {
                                 let subcourse: ApiSubcourse = {
-                                    id: courses[i].subcourses[k].id,
-                                    minGrade: courses[i].subcourses[k].minGrade,
-                                    maxGrade: courses[i].subcourses[k].maxGrade,
-                                    maxParticipants: courses[i].subcourses[k].maxParticipants,
-                                    participants: courses[i].subcourses[k].participants.length,
+                                    id: courses[i].subcourse[k].id,
+                                    minGrade: courses[i].subcourse[k].minGrade,
+                                    maxGrade: courses[i].subcourse[k].maxGrade,
+                                    maxParticipants: courses[i].subcourse[k].maxParticipants,
+                                    participants: courses[i].subcourse[k].subcourse_participants_pupil.length,
                                     instructors: [],
                                     lectures: [],
-                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart
+                                    joinAfterStart: courses[i].subcourse[k].joinAfterStart
                                 };
-                                for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
+                                for (let l = 0; l < courses[i].subcourse[k].subcourse_instructors_student.length; l++) {
                                     let instructor: ApiInstructor = {
-                                        firstname: courses[i].subcourses[k].instructors[l].firstname,
-                                        lastname: courses[i].subcourses[k].instructors[l].lastname
+                                        firstname: courses[i].subcourse[k].subcourse_instructors_student[l].student.firstname,
+                                        lastname: courses[i].subcourse[k].subcourse_instructors_student[l].student.lastname
                                     };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        instructor.id = courses[i].subcourse[k].subcourse_instructors_student[l].student.wix_id;
+                                    }
                                     subcourse.instructors.push(instructor);
                                 }
-                                for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
+                                for (let l = 0; l < courses[i].subcourse[k].lecture.length; l++) {
                                     let lecture: ApiLecture = {
-                                        id: courses[i].subcourses[k].lectures[l].id,
+                                        id: courses[i].subcourse[k].lecture[l].id,
                                         instructor: {
-                                            firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
-                                            lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
+                                            firstname: courses[i].subcourse[k].lecture[l].student.firstname,
+                                            lastname: courses[i].subcourse[k].lecture[l].student.lastname
                                         },
-                                        start: courses[i].subcourses[k].lectures[l].start.getTime() / 1000,
-                                        duration: courses[i].subcourses[k].lectures[l].duration
+                                        start: courses[i].subcourse[k].lecture[l].start.getTime() / 1000, //see https://github.com/prisma/prisma/issues/5051 -> if you're local time (and thus the time of your timestamps in your database) is not UTC, then this endpoint will return the wrong result
+                                        duration: courses[i].subcourse[k].lecture[l].duration
                                     };
+                                    if (authenticatedStudent && student.wix_id == instructorId) {
+                                        lecture.instructor.id = courses[i].subcourse[k].lecture[l].student.wix_id;
+                                    }
                                     subcourse.lectures.push(lecture);
+                                }
+                                if (authenticatedStudent && student.wix_id == instructorId) {
+                                    subcourse.participantList = [];
+                                    for (let l = 0; l < courses[i].subcourse[k].subcourse_participants_pupil.length; l++) {
+                                        subcourse.participantList.push({
+                                            firstname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.firstname,
+                                            lastname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.lastname,
+                                            email: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.email,
+                                            grade: parseInt(courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.grade),
+                                            schooltype: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.schooltype
+                                        });
+                                    }
+                                }
+                                if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.onWaitingList = courses[i].subcourse[k].subcourse_waiting_list_pupil.some(wlp => wlp.pupilId === pupil.id);
+                                    subcourse.joined = false;
+                                    for (let l = 0; l < courses[i].subcourse[k].subcourse_participants_pupil.length; l++) {
+                                        if (courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id == pupil.wix_id) {
+                                            subcourse.joined = true;
+                                            break;
+                                        }
+                                    }
                                 }
                                 apiCourse.subcourses.push(subcourse);
                             }
@@ -361,15 +476,6 @@ async function getCourses(student: Student | undefined,
         logger.error("Can't fetch courses: " + e.message);
         logger.debug(e);
         return 500;
-    }
-
-    //filter out onlyJoinableCourses, if requested
-    if (onlyJoinableCourses) {
-        apiCourses = apiCourses.filter(isJoinableCourse);
-    }
-
-    if (!cache) {
-        cache = apiCourses;
     }
 
     return apiCourses;
