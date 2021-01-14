@@ -48,6 +48,7 @@ import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/type
 import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/types/ParticipantJoinedWaitingListEvent';
 import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
 import { prisma } from '../../../common/prisma';
+import { CourseCache } from './course-cache';
 
 const logger = getLogger();
 
@@ -148,7 +149,17 @@ export async function getCoursesHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-let cache: ApiCourse[] = null;
+const CACHE_RELOAD_INTERVAL = 600000; // in milliseconds, i.e. every 10 minutes
+let cache = new CourseCache<ApiCourse[]>(CACHE_RELOAD_INTERVAL, async (key) => {
+    const fields: string[] = key.split(",");
+    const result = await getAPICourses(undefined, undefined, fields, ['allowed'], undefined, undefined, false, false);
+
+    if (typeof result === "number") { //it's so dirty...
+        return null; //no refresh
+    }
+
+    return result;
+});
 
 async function getCourses(student: Student | undefined,
                           pupil: Pupil | undefined, fields: Array<string>,
@@ -206,9 +217,31 @@ async function getCourses(student: Student | undefined,
         logger.debug(student, fields, states, instructorId);
         return 400;
     }
-    let apiCourses = await getAPICourses(student, pupil, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
 
-    if (typeof apiCourses === "number") { //it's so dirty...
+    let cachedCourses = undefined;
+    if (!authenticatedPupil && !authenticatedStudent) {
+        //we only wanna cache in those cases
+        const cacheKey = `${fields.sort().join(",")}`;
+
+        cachedCourses = cache.get(cacheKey);
+
+        if (!cachedCourses) {
+            //HIT: do request and cache
+            const result = await getAPICourses(undefined, undefined, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
+
+            if (typeof result === "number") { //it's so dirty...
+                return result;
+            }
+            cachedCourses = result;
+
+            cache.set(cacheKey, cachedCourses);
+        }
+    }
+
+
+    let apiCourses = cachedCourses ?? await getAPICourses(student, pupil, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
+
+    if (typeof apiCourses === "number") { //it's so dirty again...
         return apiCourses;
     }
 
