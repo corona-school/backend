@@ -2996,11 +2996,14 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
             style: "capital"
         });
 
+        const hasModeratorRights = user instanceof Student;
+        const meetingPW = hasModeratorRights ? meeting.moderatorPW : meeting.attendeePW;
+
         // log that test meeting
-        logger.info(`Test BBB meeting created for a user (${user?.wix_id ?? "unauthenticated"}) called ${userName} with settings: ${JSON.stringify(meeting)}`);
+        logger.info(`Test BBB meeting created for a user (${user?.wix_id ?? "unauthenticated"}, with${!hasModeratorRights ? "out": ""} moderator rights) called ${userName} with settings: ${JSON.stringify(meeting)}`);
 
         // get the meeting url
-        const meetingURL = getMeetingUrl(meeting.meetingID, userName, meeting.attendeePW);
+        const meetingURL = getMeetingUrl(meeting.meetingID, userName, meetingPW);
 
         // immediately redirect to the meeting
         res.redirect(meetingURL);
