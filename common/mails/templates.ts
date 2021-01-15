@@ -147,7 +147,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "studentfirstscreeninginvitation",
             id: 1362938,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
@@ -160,7 +160,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: 'studentscreeningreminder',
             id: 1391548,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Erinnerung: Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
@@ -173,7 +173,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "instructorfirstscreeninginvitation",
             id: 1518623,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
@@ -186,7 +186,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "instructorscreeningreminder",
             id: 1803949,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Erinnerung: Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
@@ -328,7 +328,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "projectcoachjufoalumnifirstscreenininvitation",
             id: 1803499,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
@@ -341,7 +341,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: 'projectcoachjufoalumniscreeningreminder',
             id: 1803498,
-            sender: DEFAULTSENDERS.screening,
+            sender: DEFAULTSENDERS.support,
             title: "Erinnerung: Wir möchten dich kennenlernen!",
             disabled: false,
             variables: variables
