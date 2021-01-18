@@ -26,6 +26,7 @@ import { Screener } from "./Screener";
 import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 import { ProjectMatch } from "./ProjectMatch";
 import {ExpertData} from "./ExpertData";
+import { CourseGuest } from "./CourseGuest";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -281,6 +282,12 @@ export class Student extends Person {
         nullable: true
     })
     managedCorrespondenceCourses: Course[];
+
+    @OneToMany(type => CourseGuest, guest => guest.inviter, {
+        cascade: true,
+        nullable: true
+    })
+    invitedGuests: CourseGuest[];
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;

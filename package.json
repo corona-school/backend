@@ -78,6 +78,7 @@
     "typescript": "^3.9.7",
     "unique-names-generator": "^4.3.1",
     "uuid": "^7.0.3",
+    "validator": "^13.5.2",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
@@ -89,6 +90,7 @@
     "@types/multer": "^1.4.5",
     "@types/rewire": "^2.5.28",
     "@types/uuid": "^8.3.0",
+    "@types/validator": "^13.1.3",
     "@typescript-eslint/eslint-plugin": "^3.3.0",
     "@typescript-eslint/parser": "^3.3.0",
     "apidoc": "^0.22.1",

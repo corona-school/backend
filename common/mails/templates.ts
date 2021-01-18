@@ -252,6 +252,22 @@ export const mailjet = {
             variables: variables
         };
     },
+    COURSESGUESTINVITATION: (variables: {
+        guestFirstname: string;
+        hostFirstname: string;
+        hostEmail: string;
+        courseName: string;
+        firstLectureDate: string;
+        firstLectureTime: string;
+        linkVideochat: string;
+    }) => {
+        return <TemplateMail>{
+            type: "coursesguestinvitation",
+            id: 2204105,
+            disabled: false,
+            variables: variables
+        };
+    },
     PUPILMATCHFOLLOWUP: (variables: {
         pupilFirstName: string;
         studentFirstName: string;

@@ -149,6 +149,7 @@ createConnection().then(() => {
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
         coursesRouter.get("/test/meeting/join", authCheckFactory(true, true), courseController.testJoinCourseMeetingHandler);
+        coursesRouter.get("/meeting/external/join/:token", courseController.joinCourseMeetingExternalHandler);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
@@ -186,6 +187,8 @@ createConnection().then(() => {
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
         coursesRouter.get("/:id/subcourse/:subid/meeting/join", courseController.joinCourseMeetingHandler);
+
+        coursesRouter.post("/:id/inviteexternal", courseController.inviteExternalHandler);
 
         app.use("/api/course", coursesRouter);
     }
