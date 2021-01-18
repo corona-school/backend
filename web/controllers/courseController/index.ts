@@ -11,9 +11,11 @@ import {
     ApiEditCourse,
     ApiEditLecture,
     ApiEditSubcourse,
+    ApiExternalGuestJoinMeetingResult,
     ApiInstructor,
     ApiInstructorID,
     ApiLecture,
+    ApiPostExternalInvite,
     ApiSubcourse
 } from './format';
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
@@ -25,7 +27,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -49,6 +51,8 @@ import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/ty
 import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
 import { prisma } from '../../../common/prisma';
 import { CourseCache } from './course-cache';
+import isEmail from "validator/lib/isEmail";
+import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
 
 const logger = getLogger();
 
@@ -2423,7 +2427,7 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
                 await em.save(Subcourse, subcourse);
                 logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
 
-                // transactionlog
+                // transactionlog (remove this, if there is a performance problem with joining the waiting list -> because this introduces some performance problems!)
                 const transactionLog = getTransactionLog();
                 await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
 
@@ -3385,4 +3389,227 @@ export async function deleteCourseImageHandler(req: Request, res: Response) {
         status = 500;
     }
     res.status(status).end();
+}
+
+/**
+ * @api {POST} /course/:id/inviteexternal InviteExternalCourseGuest
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Sends an invitation to an external course guest.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the course
+ *
+ * @apiName InviteExternalCourseGuest
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse PostExternalInvite
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/inviteexternal
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function inviteExternalHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                typeof req.body.firstname === "string" && req.body.firstname.length > 0 && //oh shit... this is soooo dirty...
+                typeof req.body.lastname === "string" && req.body.lastname.length > 0 &&
+                typeof req.body.email === "string" && req.body.email.length > 0) {
+
+                status = await inviteExternal(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/inviteexternal");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to invite an external person to a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function inviteExternal(student: Student, courseID: number, inviteeInfo: ApiPostExternalInvite): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check authorization
+    if (!student.active || !student.isInstructor || await student.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`Unauthorized student ${student.id} tried to invite external guest to course ${courseID}`);
+        return 403;
+    }
+
+    // Check access rights of student to the course
+    const course = await entityManager.findOne(Course, { id: courseID }, {
+        relations: ["guests"]
+    });
+    if (course == undefined) {
+        logger.warn(`Student ${student.id} tried to invite external guest to non-existent course (ID ${courseID})`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course, but has no access rights for that course (ID ${courseID})`);
+        return 403;
+    }
+
+    if (course.courseState !== CourseState.ALLOWED) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course (ID ${courseID}) but that course is not yet allowed!`);
+        return 403;
+    }
+
+    //check inviteeInfo
+    const guestEmail = inviteeInfo.email.toLowerCase(); //always lower case...
+    if (!isEmail(guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite an external guest for course (ID ${courseID}), but the given email address is invalid`);
+        return 400;
+    }
+
+    const currentGuests = course.guests;
+    //make sure that at most 5 persons are invited per course
+    if (currentGuests.length >= 5) {
+        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 5 invited guests`);
+        return 429; //indicate that no more guests could be invited
+    }
+
+    //check if person is already invited
+    if (currentGuests.some(g => g.email === guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite another external guest with email ${guestEmail} for course with ID ${courseID}, but that guest was already invited!`);
+        return 409; //conflict
+    }
+
+    //create new guest instance
+    const uniqueToken = await generateNewCourseGuestToken(entityManager); //unique one...
+    const newGuest = new CourseGuest(guestEmail, inviteeInfo.firstname, inviteeInfo.lastname, course, student, uniqueToken);
+
+    //save that new guest
+    try {
+        await entityManager.save(newGuest);
+
+        //send the corresponding mail to the guest
+        await sendGuestInvitationMail(newGuest);
+
+        return 200;
+    }
+    catch (e) {
+        logger.error(`An error occurred during invitation of guest ${guestEmail} for course ${courseID}: ${e}`);
+        return 500;
+    }
+}
+
+
+/**
+ * @api {POST} /course/meeting/external/join/:token ExternalGuestJoinMeeting
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Uses the given token to join the external meeting
+ *
+ * @apiParam (URL Parameter) {string} token The token that should be used to join the external meeting
+ *
+ * @apiName ExternalGuestJoinMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/meeting/external/join/:token
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function joinCourseMeetingExternalHandler(req: Request, res: Response) {
+    try {
+        if (req.params.token != undefined) {
+            const result = await joinCourseMeetingExternalGuest(req.params.token);
+
+            if (typeof result === "number") {
+                res.status(result).end();
+            }
+            else {
+                //successfully got join url
+                res.send(result);
+                return;
+            }
+        } else {
+            logger.warn("Invalid request for POST /course/meeting/external/join/:token");
+            logger.debug(req.body);
+            res.status(400).end();
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        res.status(500).end();
+    }
+}
+
+async function joinCourseMeetingExternalGuest(token: string): Promise<number | ApiExternalGuestJoinMeetingResult> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check token
+    const guest = await entityManager.findOne(CourseGuest, {
+        where: {
+            token
+        },
+        relations: ["course"]
+    });
+
+    if (!guest) {
+        logger.error(`Join course using token failed: Cannot find guest info corresponding to token '${token}'`);
+        return 400;
+    }
+
+    const course = guest.course;
+
+    //get the first subcourse of this course (because my code here has no special handling for the subcourses case -> not good, but quick and dirty since the entire courses code will entirely gets deleted in a few weeks...)
+    const subcourse = course?.subcourses?.[0];
+
+    if (!subcourse) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course?.id} since that course has no subcourses!`);
+        return 500;
+    }
+
+    const subcourseIDString = ""+subcourse.id;
+    //get the meeting for that subcourse
+    const meeting = await getBBBMeetingFromDB(subcourseIDString);
+
+    if (!meeting) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since there is no meeting started yet`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+    //check if the meeting is running
+    const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseIDString);
+
+    if (!meetingIsRunning) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since the meeting exists, but wasn't yet started by the instructor`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+
+    //create the join url
+    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+
+    return {
+        url: joinURL
+    };
 }

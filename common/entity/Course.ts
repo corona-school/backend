@@ -14,6 +14,7 @@ import { CourseTag } from './CourseTag';
 import { ApiCourseUpdate } from "../dto/ApiCourseUpdate";
 import {createCourseTag} from "../util/createCourseTag";
 import { accessURLForKey } from "../file-bucket/s3";
+import { CourseGuest } from "./CourseGuest";
 
 export enum CourseState {
     CREATED = "created",
@@ -104,6 +105,9 @@ export class Course {
         eager: true
     })
     correspondent?: Student;
+
+    @OneToMany(type => CourseGuest, guests => guests.course)
+    guests: CourseGuest[];
 
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())

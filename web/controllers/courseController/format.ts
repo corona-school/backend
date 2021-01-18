@@ -313,6 +313,31 @@ export interface ApiPostInstructorMail {
 }
 
 /**
+ * @apiDefine PostExternalInvite
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (PostExternalInvite Object) {string} subject Subject <em>maximum 80 chars</em>
+ * @apiSuccess (PostExternalInvite Object) {string} body Plaintext body of the mail <em>maximum 2000 chars</em>
+ *
+ */
+export interface ApiPostExternalInvite {
+    firstname: string;
+    lastname: string;
+    email: string;
+}
+
+/**
+ * @apiDefine ExternalGuestJoinMeetingResult
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (ExternalGuestJoinMeetingResult Object) {string} url The url where someone can join the BBB meeting
+ *
+ */
+export interface ApiExternalGuestJoinMeetingResult {
+    url: string;
+}
+
+/**
  * @apiDefine InstructorInfo
  * @apiVersion 1.1.0
  *

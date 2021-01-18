@@ -6,6 +6,7 @@ import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
 import { DEFAULTSENDERS } from "../config";
+import { CourseGuest } from "../../entity/CourseGuest";
 
 const logger = getLogger();
 
@@ -102,4 +103,29 @@ export async function sendParticipantToInstructorMail(participant: Pupil, instru
         participant.email, //replyTo address
         `${participant.fullName()}` //replyTo name
     );
+}
+
+export async function sendGuestInvitationMail(guest: CourseGuest) {
+    const inviter = guest.inviter;
+    const course = guest.course;
+    const subcourse = course.subcourses?.[0];
+    const firstLecture = subcourse?.firstLecture();
+
+    if (!firstLecture) {
+        throw new Error(`Cannot send invitation mail for course ${course.id} to guest ${guest.email}, because that course has no subcourse/specified first lecture`);
+    }
+
+    const firstLectureMoment = moment(firstLecture.start);
+
+    const mail = mailjetTemplates.COURSESGUESTINVITATION({
+        guestFirstname: guest.firstname,
+        hostFirstname: inviter.firstname,
+        hostEmail: inviter.email,
+        courseName: course.name,
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm"),
+        linkVideochat: guest.getPublicUsableLink()
+    });
+
+    await sendTemplateMail(mail, guest.email);
 }
