@@ -749,7 +749,7 @@ export async function getInstructors(req: Request, res: Response) {
     try {
         let { screeningStatus, search, page } = req.query;
 
-        if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
+        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus))
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
 
         if (typeof search !== "string")
@@ -758,38 +758,34 @@ export async function getInstructors(req: Request, res: Response) {
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
-        search = `%${search}%`; // fuzzy search
+        /* Through reversed access the following happens:
+           "Jacks"      -> firstname = any, lastname = "Jacks%"         Searching by lastname only works, this matches the old behavior and is thus no breaking change
+           "Leon Jacks" -> firstname = "Leon"", lastname = "Jackson%"   Searching now also works for firstname and lastname
+           "Leon"       -> firstname = any, lastname = "Leon%"          Searching by firstname only yields wrong results, however I doubt that this will actually return useful results anyways, as firstnames collide quite often
+
+           NOTE: (firstname || " " || lastname ILIKE search) would yield better results, however that can hardly be optimized through indices (unless another "fullName" column gets added, which also comes with it's downsides)
+        */
+        let [lastname, firstname] = search.split(" ").reverse();
+        const email = `%${search}%`; // fuzzy search
+        lastname = `${lastname}%`; // Allow half started searches, "Leon Jacks" matching "Leon Jackson"
 
         let instructors: {}[];
 
         const PAGE_SIZE = 20;
 
-        if (screeningStatus === ScreeningStatus.Accepted) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(PAGE_SIZE)
-                .skip((+page || 0) * PAGE_SIZE)
-                .getMany();
-        } else if (screeningStatus === ScreeningStatus.Rejected) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(PAGE_SIZE)
-                .skip((+page || 0) * PAGE_SIZE)
-                .getMany();
-        } else if (screeningStatus === ScreeningStatus.Unscreened) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(PAGE_SIZE)
-                .skip((+page || 0) * PAGE_SIZE)
-                .getMany();
-        }
+        const condition = {
+            [ScreeningStatus.Accepted]: "instructor_screening.success = true",
+            [ScreeningStatus.Rejected]: "instructor_screening.success = false",
+            [ScreeningStatus.Unscreened]: "instructor_screening.success is NULL"
+        }[screeningStatus];
 
+        instructors = await getManager()
+            .createQueryBuilder(Student, "student")
+            .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
+            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :email OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
+            .take(PAGE_SIZE)
+            .skip((+page || 0) * PAGE_SIZE)
+            .getMany();
 
         return res.json({ instructors });
     } catch (error) {
