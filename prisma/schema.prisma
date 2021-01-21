@@ -1,0 +1,653 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model bbb_meeting {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  meetingID   String
+  meetingName String
+  attendeePW  String
+  moderatorPW String
+}
+
+model course {
+  id                         Int                          @id @default(autoincrement())
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @default(now())
+  name                       String
+  outline                    String
+  description                String
+  imageKey                   String?
+  courseState                course_coursestate_enum      @default(created)
+  category                   course_category_enum
+  screeningComment           String?
+  publicRanking              Int                          @default(0)
+  allowContact               Boolean                      @default(false)
+  correspondentId            Int?
+  student                    student?                     @relation(fields: [correspondentId], references: [id])
+  course_instructors_student course_instructors_student[]
+  course_tags_course_tag     course_tags_course_tag[]
+  subcourse                  subcourse[]
+}
+
+model course_attendance_log {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  attendedTime Int?
+  ip           String?
+  pupilId      Int?
+  lectureId    Int?
+  lecture      lecture? @relation(fields: [lectureId], references: [id])
+  pupil        pupil?   @relation(fields: [pupilId], references: [id])
+}
+
+model course_instructors_student {
+  courseId  Int
+  studentId Int
+  course    course  @relation(fields: [courseId], references: [id])
+  student   student @relation(fields: [studentId], references: [id])
+
+  @@id([courseId, studentId])
+  @@index([courseId], name: "IDX_54bce9a9a93ae130beaa70bb2f")
+  @@index([studentId], name: "IDX_66b47860afa3098729925338c1")
+}
+
+model course_tag {
+  id                     Int                      @id @default(autoincrement())
+  identifier             String                   @unique
+  name                   String
+  category               String
+  course_tags_course_tag course_tags_course_tag[]
+}
+
+model course_tags_course_tag {
+  courseId    Int
+  courseTagId Int
+  course      course     @relation(fields: [courseId], references: [id])
+  course_tag  course_tag @relation(fields: [courseTagId], references: [id])
+
+  @@id([courseId, courseTagId])
+  @@index([courseTagId], name: "IDX_af4499c3ae1153ac06782b2e5b")
+  @@index([courseId], name: "IDX_d6261ad9de1fc5f06946095bf8")
+}
+
+model expert_data {
+  id                                       Int                                        @id @default(autoincrement())
+  createdAt                                DateTime                                   @default(now())
+  updatedAt                                DateTime                                   @default(now())
+  contactEmail                             String
+  description                              String?
+  active                                   Boolean                                    @default(false)
+  allowed                                  expert_data_allowed_enum                   @default(pending)
+  studentId                                Int?                                       @unique
+  student                                  student?                                   @relation(fields: [studentId], references: [id])
+  expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
+}
+
+model expert_data_expertise_tags_expertise_tag {
+  expertDataId   Int
+  expertiseTagId Int
+  expert_data    expert_data   @relation(fields: [expertDataId], references: [id])
+  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id])
+
+  @@id([expertDataId, expertiseTagId])
+  @@index([expertDataId], name: "IDX_73044a211048e72c2026425c81")
+  @@index([expertiseTagId], name: "IDX_8a81e80d1d580b868ed36ca123")
+}
+
+model expertise_tag {
+  id                                       Int                                        @id @default(autoincrement())
+  name                                     String                                     @unique
+  expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
+}
+
+model instructor_screening {
+  id                    Int       @id @default(autoincrement())
+  success               Boolean
+  comment               String?
+  knowsCoronaSchoolFrom String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
+  screenerId            Int?
+  studentId             Int?      @unique
+  screener              screener? @relation(fields: [screenerId], references: [id])
+  student               student?  @relation(fields: [studentId], references: [id])
+}
+
+model jufo_verification_transmission {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  uuid      String
+  studentId Int?     @unique
+  student   student? @relation(fields: [studentId], references: [id])
+}
+
+model lecture {
+  id                    Int                     @id @default(autoincrement())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @default(now())
+  start                 DateTime
+  duration              Int
+  instructorId          Int?
+  subcourseId           Int?
+  student               student?                @relation(fields: [instructorId], references: [id])
+  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id])
+  course_attendance_log course_attendance_log[]
+}
+
+model log {
+  id        Int              @id @default(autoincrement())
+  logtype   log_logtype_enum @default(misc)
+  createdAt DateTime         @default(now())
+  user      String
+  data      String
+}
+
+model match {
+  id                    Int               @id @default(autoincrement())
+  uuid                  String            @unique
+  dissolved             Boolean           @default(false)
+  proposedTime          DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @default(now())
+  source                match_source_enum @default(matchedinternal)
+  studentId             Int?
+  pupilId               Int?
+  dissolveReason        Int?
+  feedbackToPupilMail   Boolean           @default(false)
+  feedbackToStudentMail Boolean           @default(false)
+  followUpToPupilMail   Boolean           @default(false)
+  followUpToStudentMail Boolean           @default(false)
+  pupil                 pupil?            @relation(fields: [pupilId], references: [id])
+  student               student?          @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, pupilId], name: "UQ_MATCH")
+}
+
+model mentor {
+  id                 Int                     @id @default(autoincrement())
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @default(now())
+  firstname          String?
+  lastname           String?
+  active             Boolean                 @default(true)
+  email              String                  @unique
+  verification       String?                 @unique
+  verifiedAt         DateTime?
+  authToken          String?                 @unique
+  authTokenUsed      Boolean                 @default(false)
+  authTokenSent      DateTime?
+  division           mentor_division_enum[]
+  expertise          mentor_expertise_enum[]
+  subjects           String?
+  teachingExperience Boolean?
+  message            String?
+  description        String?
+  imageUrl           String?
+  wix_id             String
+  wix_creation_date  DateTime
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement())
+  timestamp Int
+  name      String
+}
+
+model participation_certificate {
+  id              Int      @id @default(autoincrement())
+  uuid            String   @unique
+  subjects        String
+  categories      String
+  certificateDate DateTime @default(now())
+  startDate       DateTime @default(now())
+  endDate         DateTime @default(now())
+  hoursPerWeek    Float
+  hoursTotal      Float
+  medium          String
+  studentId       Int?
+  pupilId         Int?
+  ongoingLessons  Boolean  @default(false)
+  pupil           pupil?   @relation(fields: [pupilId], references: [id])
+  student         student? @relation(fields: [studentId], references: [id])
+}
+
+model project_coaching_screening {
+  id                    Int       @id @default(autoincrement())
+  success               Boolean
+  comment               String?
+  knowsCoronaSchoolFrom String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
+  screenerId            Int?
+  studentId             Int?      @unique
+  screener              screener? @relation(fields: [screenerId], references: [id])
+  student               student?  @relation(fields: [studentId], references: [id])
+}
+
+model project_field_with_grade_restriction {
+  id           Int                                                    @id @default(autoincrement())
+  createdAt    DateTime                                               @default(now())
+  updatedAt    DateTime                                               @default(now())
+  projectField project_field_with_grade_restriction_projectfield_enum
+  min          Int?
+  max          Int?
+  studentId    Int
+  student      student                                                @relation(fields: [studentId], references: [id])
+
+  @@unique([projectField, studentId], name: "UQ_PROJECT_FIELDS")
+}
+
+model project_match {
+  id             Int      @id @default(autoincrement())
+  uuid           String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  dissolved      Boolean  @default(false)
+  dissolveReason Int?
+  studentId      Int?
+  pupilId        Int?
+  pupil          pupil?   @relation(fields: [pupilId], references: [id])
+  student        student? @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, pupilId], name: "UQ_PJ_MATCH")
+}
+
+model pupil {
+  id                            Int                            @id @default(autoincrement())
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @default(now())
+  firstname                     String?
+  lastname                      String?
+  active                        Boolean                        @default(true)
+  email                         String                         @unique
+  verification                  String?                        @unique
+  wix_id                        String                         @unique
+  wix_creation_date             DateTime
+  subjects                      String?
+  msg                           String?
+  grade                         String?
+  verifiedAt                    DateTime?
+  authToken                     String?                        @unique
+  authTokenUsed                 Boolean                        @default(false)
+  authTokenSent                 DateTime?
+  openMatchRequestCount         Int                            @default(1)
+  matchingPriority              Int                            @default(0)
+  schooltype                    pupil_schooltype_enum          @default(other)
+  newsletter                    Boolean                        @default(false)
+  isPupil                       Boolean                        @default(false)
+  isParticipant                 Boolean                        @default(true)
+  state                         pupil_state_enum               @default(other)
+  lastUpdatedSettingsViaBlocker DateTime?
+  teacherEmailAddress           String?
+  registrationSource            pupil_registrationsource_enum  @default(dbgenerated())
+  schoolId                      Int?
+  isProjectCoachee              Boolean                        @default(false)
+  projectFields                 pupil_projectfields_enum[]
+  isJufoParticipant             String                         @default("unsure")
+  openProjectMatchRequestCount  Int                            @default(1)
+  projectMemberCount            Int                            @default(1)
+  school                        school?                        @relation(fields: [schoolId], references: [id])
+  course_attendance_log         course_attendance_log[]
+  match                         match[]
+  participation_certificate     participation_certificate[]
+  project_match                 project_match[]
+  subcourse_participants_pupil  subcourse_participants_pupil[]
+  subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
+}
+
+model school {
+  id                Int                    @id @default(autoincrement())
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @default(now())
+  name              String
+  website           String?                @unique
+  emailDomain       String                 @unique
+  state             school_state_enum?     @default(other)
+  schooltype        school_schooltype_enum @default(other)
+  activeCooperation Boolean                @default(false)
+  pupil             pupil[]
+}
+
+model screener {
+  id                         Int                          @id @default(autoincrement())
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @default(now())
+  firstname                  String?
+  lastname                   String?
+  active                     Boolean                      @default(true)
+  email                      String                       @unique
+  verification               String?                      @unique
+  password                   String
+  verified                   Boolean?                     @default(false)
+  oldNumberID                Int?                         @unique
+  verifiedAt                 DateTime?
+  authToken                  String?                      @unique
+  authTokenUsed              Boolean                      @default(false)
+  authTokenSent              DateTime?
+  instructor_screening       instructor_screening[]
+  project_coaching_screening project_coaching_screening[]
+  screening                  screening[]
+}
+
+model screening {
+  id                    Int       @id @default(autoincrement())
+  success               Boolean
+  comment               String?
+  knowsCoronaSchoolFrom String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
+  screenerId            Int?
+  studentId             Int?      @unique
+  screener              screener? @relation(fields: [screenerId], references: [id])
+  student               student?  @relation(fields: [studentId], references: [id])
+}
+
+model student {
+  id                                        Int                                    @id @default(autoincrement())
+  createdAt                                 DateTime                               @default(now())
+  updatedAt                                 DateTime                               @default(now())
+  firstname                                 String?
+  lastname                                  String?
+  active                                    Boolean                                @default(true)
+  email                                     String                                 @unique
+  verification                              String?                                @unique
+  wix_id                                    String                                 @unique
+  wix_creation_date                         DateTime
+  subjects                                  String?
+  msg                                       String?
+  phone                                     String?
+  verifiedAt                                DateTime?
+  authToken                                 String?                                @unique
+  openMatchRequestCount                     Int                                    @default(1)
+  feedback                                  String?
+  authTokenUsed                             Boolean                                @default(false)
+  authTokenSent                             DateTime?
+  sentScreeningReminderCount                Int                                    @default(0)
+  lastSentScreeningInvitationDate           DateTime?
+  isStudent                                 Boolean                                @default(true)
+  isInstructor                              Boolean                                @default(false)
+  newsletter                                Boolean                                @default(false)
+  state                                     student_state_enum?                    @default(other)
+  university                                String?
+  module                                    student_module_enum?
+  moduleHours                               Int?
+  sentInstructorScreeningReminderCount      Int                                    @default(0)
+  lastSentInstructorScreeningInvitationDate DateTime?
+  lastUpdatedSettingsViaBlocker             DateTime?
+  isProjectCoach                            Boolean                                @default(false)
+  wasJufoParticipant                        String?
+  hasJufoCertificate                        Boolean?
+  jufoPastParticipationInfo                 String?
+  jufoPastParticipationConfirmed            Boolean?
+  isUniversityStudent                       Boolean?
+  openProjectMatchRequestCount              Int                                    @default(1)
+  sentJufoAlumniScreeningReminderCount      Int                                    @default(0)
+  lastSentJufoAlumniScreeningInvitationDate DateTime?
+  registrationSource                        student_registrationsource_enum        @default(dbgenerated())
+  course                                    course[]
+  course_instructors_student                course_instructors_student[]
+  expert_data                               expert_data?
+  instructor_screening                      instructor_screening?
+  jufo_verification_transmission            jufo_verification_transmission?
+  lecture                                   lecture[]
+  match                                     match[]
+  participation_certificate                 participation_certificate[]
+  project_coaching_screening                project_coaching_screening?
+  project_field_with_grade_restriction      project_field_with_grade_restriction[]
+  project_match                             project_match[]
+  screening                                 screening?
+  subcourse_instructors_student             subcourse_instructors_student[]
+}
+
+model subcourse {
+  id                            Int                             @id @default(autoincrement())
+  createdAt                     DateTime                        @default(now())
+  updatedAt                     DateTime                        @default(now())
+  minGrade                      Int
+  maxGrade                      Int
+  maxParticipants               Int
+  published                     Boolean
+  cancelled                     Boolean                         @default(false)
+  joinAfterStart                Boolean                         @default(false)
+  courseId                      Int?
+  course                        course?                         @relation(fields: [courseId], references: [id])
+  lecture                       lecture[]
+  subcourse_instructors_student subcourse_instructors_student[]
+  subcourse_participants_pupil  subcourse_participants_pupil[]
+  subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
+}
+
+model subcourse_instructors_student {
+  subcourseId Int
+  studentId   Int
+  student     student   @relation(fields: [studentId], references: [id])
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+
+  @@id([subcourseId, studentId])
+  @@index([subcourseId], name: "IDX_3f0c594b9393bf4ca9ed368196")
+  @@index([studentId], name: "IDX_b36e4eeff8040a09cc811dbb26")
+}
+
+model subcourse_participants_pupil {
+  subcourseId Int
+  pupilId     Int
+  pupil       pupil     @relation(fields: [pupilId], references: [id])
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+
+  @@id([subcourseId, pupilId])
+  @@index([pupilId], name: "IDX_47d9d98b6496554165e08ff61d")
+  @@index([subcourseId], name: "IDX_cde91c063947d1302d50c906dc")
+}
+
+model subcourse_waiting_list_pupil {
+  subcourseId Int
+  pupilId     Int
+  pupil       pupil     @relation(fields: [pupilId], references: [id])
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+
+  @@id([subcourseId, pupilId])
+  @@index([pupilId], name: "IDX_3bd25f377afc44f574f7ac3d09")
+  @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
+}
+
+enum course_category_enum {
+  revision
+  club
+  coaching
+}
+
+enum course_coursestate_enum {
+  created
+  submitted
+  allowed
+  denied
+  cancelled
+}
+
+enum expert_data_allowed_enum {
+  pending
+  yes
+  no
+}
+
+enum log_logtype_enum {
+  misc
+  verificationRequets
+  verified
+  matchDissolve
+  projectMatchDissolve
+  fetchedFromWix
+  deActivate
+  updatePersonal
+  updateSubjects
+  updateProjectFields
+  accessedByScreener
+  updatedByScreener
+  updateStudentDescription
+  createdCourse
+  certificateRequest
+  cancelledCourse
+  cancelledSubcourse
+  createdCourseAttendanceLog
+  contactMentor
+  bbbMeeting
+  contactExpert
+  participantJoinedCourse
+  participantLeftCourse
+  participantJoinedWaitingList
+  participantLeftWaitingList
+  userAccessedCourseWhileAuthenticated
+}
+
+enum match_source_enum {
+  imported
+  matchedexternal
+  matchedinternal
+}
+
+enum mentor_division_enum {
+  facebook
+  email
+  events
+  video
+  supervision
+}
+
+enum mentor_expertise_enum {
+  language_difficulties_and_communication @map("language difficulties and communication")
+  specialized_expertise_in_subjects @map("specialized expertise in subjects")
+  educational_and_didactic_expertise @map("educational and didactic expertise")
+  technical_support @map("technical support")
+  self_organization @map("self-organization")
+}
+
+enum project_field_with_grade_restriction_projectfield_enum {
+  Arbeitswelt
+  Biologie
+  Chemie
+  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik @map("Mathematik/Informatik")
+  Physik
+  Technik
+}
+
+enum pupil_projectfields_enum {
+  Arbeitswelt
+  Biologie
+  Chemie
+  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik @map("Mathematik/Informatik")
+  Physik
+  Technik
+}
+
+enum pupil_registrationsource_enum {
+  normal @map("0")
+  cooperation @map("1")
+  drehtuer @map("2")
+  other @map("3")
+}
+
+enum pupil_schooltype_enum {
+  grundschule
+  gesamtschule
+  hauptschule
+  realschule
+  gymnasium
+  f_rderschule @map("förderschule")
+  berufsschule
+  other
+}
+
+enum pupil_state_enum {
+  bw
+  by
+  be
+  bb
+  hb
+  hh
+  he
+  mv
+  ni
+  nw
+  rp
+  sl
+  sn
+  st
+  sh
+  th
+  other
+}
+
+enum school_schooltype_enum {
+  grundschule
+  gesamtschule
+  hauptschule
+  realschule
+  gymnasium
+  f_rderschule @map("förderschule")
+  berufsschule
+  other
+}
+
+enum school_state_enum {
+  bw
+  by
+  be
+  bb
+  hb
+  hh
+  he
+  mv
+  ni
+  nw
+  rp
+  sl
+  sn
+  st
+  sh
+  th
+  other
+}
+
+enum student_module_enum {
+  internship
+  seminar
+  other
+}
+
+enum student_registrationsource_enum {
+  normal @map("0")
+  cooperation @map("1")
+  drehtuer @map("2")
+  other @map("3")
+}
+
+enum student_state_enum {
+  bw
+  by
+  be
+  bb
+  hb
+  hh
+  he
+  mv
+  ni
+  nw
+  rp
+  sl
+  sn
+  st
+  sh
+  th
+  other
+}

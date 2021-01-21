@@ -34,6 +34,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 import {generateCode} from "../../../jobs/periodic/fetch/utils/verification";
+import {ExpertData} from "../../../common/entity/ExpertData";
 
 const logger = getLogger();
 
@@ -527,6 +528,21 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 projectMemberCount: m.pupil.projectMemberCount
             };
         });
+
+        const expertData = await entityManager.findOne(ExpertData, {
+            relations: ["expertiseTags"],
+            where: { student: person }
+        });
+        if (expertData) {
+            apiResponse.expertData = {
+                id: expertData.id,
+                contactEmail: expertData.contactEmail,
+                description: expertData.description,
+                expertiseTags: expertData.expertiseTags.map(t => t.name),
+                active: expertData.active,
+                allowed: expertData.allowed
+            };
+        }
 
     } else if (person instanceof Pupil) {
         apiResponse.type = "pupil";

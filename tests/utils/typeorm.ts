@@ -5,8 +5,7 @@ import {
     Connection,
     EntitySchema,
     createConnections,
-    NamingStrategyInterface,
-    PromiseUtils
+    NamingStrategyInterface
 } from "typeorm";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
@@ -206,9 +205,8 @@ export async function createTestingConnections(
             });
 
             const queryRunner = connection.createQueryRunner();
-            await PromiseUtils.runInSequence(databases, (database) =>
-                queryRunner.createDatabase(database, true)
-            );
+            for (const database of databases)
+                await queryRunner.createDatabase(database, true);
 
             // create new schemas
             const schemaPaths: string[] = [];
@@ -226,9 +224,8 @@ export async function createTestingConnections(
             if (schema && schemaPaths.indexOf(schema) === -1)
                 schemaPaths.push(schema);
 
-            await PromiseUtils.runInSequence(schemaPaths, (schemaPath) =>
-                queryRunner.createSchema(schemaPath, true)
-            );
+            for (const schemaPath of schemaPaths)
+                await queryRunner.createSchema(schemaPath, true);
 
             await queryRunner.release();
         })
