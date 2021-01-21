@@ -144,6 +144,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  *      }
  */
 import {ApiSubject} from "../format";
+import {ExpertAllowedIndication} from "../../../common/jufo/expertAllowedIndication";
 
 export class ApiGetUser {
     id: string;
@@ -240,6 +241,7 @@ export class ApiPutUser {
     subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
+    phone?: string;
 }
 
 /**
