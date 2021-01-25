@@ -153,6 +153,8 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
+        //no default mounted middleware at all... (primarily for performance)
+        coursesRouter.post("/:id/subcourse/:subid/certificate", authCheckFactory(false, false, false, []), courseController.issueCourseCertificateHandler);
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
@@ -190,7 +192,6 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
 
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
-        coursesRouter.post("/:id/subcourse/:subid/certificate", courseController.issueCourseCertificateHandler);
         coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);

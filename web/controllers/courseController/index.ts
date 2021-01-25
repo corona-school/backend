@@ -3673,14 +3673,20 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
     }
 
     const entityManager = getManager();
-    const course = await entityManager.findOne(Course, { id: courseId });
+    const course = await entityManager.findOne(Course, { id: courseId }, {
+        loadEagerRelations: false,
+        relations: ["instructors"]
+    });
 
     if (course == undefined) {
         logger.warn(`User ${student.wix_id} tried to issue course certificates for invalid course with ID ${courseId}`);
         return 404;
     }
 
-    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course }, {
+        loadEagerRelations: false,
+        relations: ["lectures"]
+    });
     if (subcourse == undefined) {
         logger.warn(`User ${student.wix_id} tried to issue course certificate for invalid subcourse with ID ${subcourseId}.`);
         return 404;
