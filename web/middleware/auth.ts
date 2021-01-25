@@ -8,7 +8,7 @@ import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
 
-export function authCheckFactory(optional = false, useQueryParams = false) {
+export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = ['courses']) {
     return async function (req: Request, res: Response, next) {
         if (req.method == "OPTIONS") next();
 
@@ -34,7 +34,8 @@ export function authCheckFactory(optional = false, useQueryParams = false) {
                         active: true
                     }
                 ],
-                relations: ['courses']
+                relations: studentDefaultRelations,
+                loadEagerRelations
             });
 
             if (student instanceof Student) {
@@ -57,7 +58,8 @@ export function authCheckFactory(optional = false, useQueryParams = false) {
                         authToken: token,
                         active: true
                     }
-                ]
+                ],
+                loadEagerRelations
             });
             if (pupil instanceof Pupil) {
                 pupil.authTokenUsed = true;
@@ -79,7 +81,8 @@ export function authCheckFactory(optional = false, useQueryParams = false) {
                         authToken: token,
                         active: true
                     }
-                ]
+                ],
+                loadEagerRelations
             });
             if (mentor instanceof Mentor) {
                 mentor.authTokenUsed = true;

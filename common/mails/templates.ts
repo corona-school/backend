@@ -268,6 +268,22 @@ export const mailjet = {
             variables: variables
         };
     },
+    COURSESDREHTUERCERTIFICATE: (variables: {
+        participantFirstname: string;
+        courseName: string;
+    }, pdfBase64: string) => {
+        return <TemplateMail>{
+            type: "coursesdrehtuercertificate",
+            id: 2289687,
+            disabled: false,
+            variables: variables,
+            attachements: [{
+                contentType: "application/pdf",
+                filename: "Teilnahmebescheinigung_Digitale_Drehtuer.pdf",
+                base64Content: pdfBase64
+            }]
+        };
+    },
     PUPILMATCHFOLLOWUP: (variables: {
         pupilFirstName: string;
         studentFirstName: string;

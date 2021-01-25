@@ -263,6 +263,7 @@ export interface ApiInstructor {
  *
  */
 export interface ApiParticipant {
+    uuid: string;
     firstname: string;
     lastname: string;
     email: string;
@@ -297,6 +298,17 @@ export interface ApiCourseTag {
 export interface ApiPostGroupMail {
     subject: string,
     body: string
+}
+
+/**
+ * @apiDefine PostIssueGroupCertificate
+ * @apiVersion 1.1.0
+ *
+ * @apiSuccess (IssueGroupCertificate Object) {array} receivers An array of pupil UUIDs who should receive the certificate for the corresponding course
+ *
+ */
+export interface ApiPostIssueGroupCertificate {
+    receivers: string[]
 }
 
 /**

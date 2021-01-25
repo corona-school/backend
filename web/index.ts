@@ -25,6 +25,7 @@ import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
 import * as multer from "multer";
 import * as moment from "moment-timezone";
+import { setupBrowser } from "html-pppdf";
 
 // Logger setup
 try {
@@ -43,8 +44,15 @@ moment.tz.setDefault("Europe/Berlin"); //set global timezone (which is then used
 logger.info("Webserver backend started");
 const app = express();
 
+//SETUP PDF generation environment
+async function setupPDFGenerationEnvironment() {
+    await setupBrowser({
+        args: ["--no-sandbox"] //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
+    });
+}
+
 // Database connection
-createConnection().then(() => {
+createConnection().then(setupPDFGenerationEnvironment).then(() => {
     logger.info("Database connected");
     app.use(connectLogger(accessLogger, { level: "auto" }));
 
@@ -145,6 +153,8 @@ createConnection().then(() => {
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
+        //no default mounted middleware at all... (primarily for performance)
+        coursesRouter.post("/:id/subcourse/:subid/certificate", authCheckFactory(false, false, false, []), courseController.issueCourseCertificateHandler);
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
