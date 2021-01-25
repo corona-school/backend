@@ -1,0 +1,48 @@
+import * as EJS from "ejs";
+import { readFileSync } from "fs";
+import { resolve as resolvePath } from "path";
+import * as moment from "moment-timezone";
+import { generatePDFFromHTMLString } from 'html-pppdf';
+
+const TEMPLATE_FOLDER = "./assets/drehtuer/certificate";
+const TEMPLATE_ASSETS_FOLDER = `${TEMPLATE_FOLDER}/assets`;
+const CERTFICATE_PATH = `${TEMPLATE_FOLDER}/certificateTemplate.de.html`;
+
+let cachedTemplate: EJS.ClientFunction = null;
+
+/* Loads the template from the /assets folder, falls back to the default language if fallback is true */
+function getTemplate(): EJS.ClientFunction {
+    if (!cachedTemplate) {
+        let path = CERTFICATE_PATH;
+
+        if (process.env.NODE_ENV == 'dev') {
+            path += `.example`;
+        }
+
+        cachedTemplate = EJS.compile(readFileSync(path, "utf8"));
+    }
+
+    return cachedTemplate;
+}
+
+interface Lecture {
+    start: Date,
+    duration: number
+}
+export async function getCourseCertificate(studentUUID: string, pupilUUID: string, fullName: string, courseName: string, lectures: Lecture[], totalWorkload: number): Promise<Buffer> {
+    const template = getTemplate();
+
+    const htmlString = template({
+        FULLNAME: fullName,
+        COURSENAME: courseName,
+        LECTURES: lectures,
+        TOTALWORKLOAD: totalWorkload,
+        moment: moment
+    });
+
+    const buffer = await generatePDFFromHTMLString(htmlString, {
+        includePaths: [resolvePath(TEMPLATE_ASSETS_FOLDER)]
+    });
+
+    return buffer;
+}

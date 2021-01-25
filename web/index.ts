@@ -25,6 +25,7 @@ import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
 import * as multer from "multer";
 import * as moment from "moment-timezone";
+import { setupBrowser } from "html-pppdf";
 
 // Logger setup
 try {
@@ -43,8 +44,15 @@ moment.tz.setDefault("Europe/Berlin"); //set global timezone (which is then used
 logger.info("Webserver backend started");
 const app = express();
 
+//SETUP PDF generation environment
+async function setupPDFGenerationEnvironment() {
+    await setupBrowser({
+        args: ["--no-sandbox"] //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
+    });
+}
+
 // Database connection
-createConnection().then(() => {
+createConnection().then(setupPDFGenerationEnvironment).then(() => {
     logger.info("Database connected");
     app.use(connectLogger(accessLogger, { level: "auto" }));
 
@@ -182,6 +190,7 @@ createConnection().then(() => {
 
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+        coursesRouter.post("/:id/subcourse/:subid/certificate", courseController.issueCourseCertificateHandler);
         coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);

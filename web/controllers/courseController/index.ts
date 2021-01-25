@@ -27,7 +27,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantDrehtuerCertificate } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -53,6 +53,8 @@ import { prisma } from '../../../common/prisma';
 import { CourseCache } from './course-cache';
 import isEmail from "validator/lib/isEmail";
 import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
+import { getCourseCertificate } from '../../../common/drehtuer/certificates';
+import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 
 const logger = getLogger();
 
@@ -478,6 +480,7 @@ async function getAPICourses(student: Student | undefined,
                                     subcourse.participantList = [];
                                     for (let l = 0; l < courses[i].subcourse[k].subcourse_participants_pupil.length; l++) {
                                         subcourse.participantList.push({
+                                            uuid: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id,
                                             firstname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.firstname,
                                             lastname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.lastname,
                                             email: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.email,
@@ -718,6 +721,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                 subcourse.participantList = [];
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
+                        uuid: course.subcourses[i].participants[j].wix_id,
                         firstname: course.subcourses[i].participants[j].firstname,
                         lastname: course.subcourses[i].participants[j].lastname,
                         email: course.subcourses[i].participants[j].email,
@@ -3612,4 +3616,133 @@ async function joinCourseMeetingExternalGuest(token: string): Promise<number | A
     return {
         url: joinURL
     };
+}
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/certificate IssueGroupCertificate
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send a mail to all selected participants and issue them a certificate that is attached to that mail.
+ *
+ * The course instructors may use this endpoint.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName IssueGroupCertificate
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostIssueGroupCertificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/certificate -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function issueCourseCertificateHandler(req: Request, res: Response) {
+
+    let status = 204;
+
+    if (res.locals.user instanceof Student) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && req.body.receivers instanceof Array) {
+            status = await issueCourseCertificate(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.receivers);
+        } else {
+            logger.warn("Missing or invalid parameters for issueCourseCertificate");
+            status = 400;
+        }
+    } else {
+        logger.warn("Issuing course certificate requested by Non-Student");
+        status = 403;
+    }
+
+    res.status(status).end();
+}
+
+async function issueCourseCertificate(student: Student, courseId: number, subcourseId: number, receivers: string[]) {
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`User ${student.wix_id} cannot issue a course certificate for subcourse with ID ${subcourseId} since that student is no (successfully screened) instructor`);
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, { id: courseId });
+
+    if (course == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificates for invalid course with ID ${courseId}`);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for invalid subcourse with ID ${subcourseId}.`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => i.id === student.id);
+    if (!authorized) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate as user who is not instructor of course with ID ${course}`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    //check participants list
+    if (receivers.length === 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for NO receivers at all. That is not possible.`);
+        return 400;
+    }
+    if (receivers.some(r => typeof r !== "string")) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for receivers in array where not all elements are strings(receivers: ${JSON.stringify(receivers)})`);
+        return 400;
+    }
+    const participants = await Promise.all(receivers.map(r => getPupilByWixID(entityManager, r)));
+
+    const unknownParticipants = participants.filter(p => p == null);
+
+    if (unknownParticipants.length > 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for at least one unknown receiver, which is not allowed (unknown receivers: ${JSON.stringify(unknownParticipants)})`);
+        return 400;
+    }
+
+
+    //everything looks fine, so issue the certificates and send them via email.
+    try {
+        // get the transaction log
+        const transactionLog = getTransactionLog();
+
+        //compute course meta data
+        const courseDuration = subcourse.totalDuration();
+
+        for (let participant of participants) {
+            //create course certificate buffer
+            const certificateBuffer = await getCourseCertificate(
+                student.wix_id,
+                participant.wix_id,
+                participant.fullName(),
+                course.name,
+                subcourse.lectures,
+                courseDuration
+            );
+
+            //send mail to pupil
+            await sendParticipantDrehtuerCertificate(participant, course, certificateBuffer);
+
+            //TRANSACTION LOG to know who got issued when a certificate by which instructor...
+            await transactionLog.log(new InstructorIssuedCertificateEvent(student, participant, subcourse));
+        }
+    } catch (e) {
+        logger.warn("Unable to issue course certificate");
+        logger.debug(e);
+        return 400;
+    }
+
+    return 204;
 }
