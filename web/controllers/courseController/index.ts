@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
+import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 import {
     ApiAddCourse,
     ApiAddLecture,
@@ -3743,6 +3744,10 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
 
             //TRANSACTION LOG to know who got issued when a certificate by which instructor...
             await transactionLog.log(new InstructorIssuedCertificateEvent(student, participant, subcourse));
+
+            //save certificate issuing to database
+            const courseParticipationCertificate = new CourseParticipationCertificate(student, participant, subcourse);
+            await entityManager.save(courseParticipationCertificate);
         }
     } catch (e) {
         logger.warn("Unable to issue course certificate");
