@@ -3719,7 +3719,7 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
         const transactionLog = getTransactionLog();
 
         //compute course meta data
-        const courseDuration = subcourse.totalDuration();
+        const courseDuration = subcourse.totalDuration() / 60; //because we wanna have it in hours...
 
         for (let participant of participants) {
             //create course certificate buffer

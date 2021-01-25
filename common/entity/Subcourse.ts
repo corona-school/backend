@@ -126,6 +126,7 @@ export class Subcourse {
         return moment().isBefore(moment(lastLecture.start).add(lastLecture.duration, "minutes"));
     }
 
+    ///Returns the total duration in minutes
     totalDuration(): number {
         return this.lectures.reduce( (prev, curr) => prev + curr.duration, 0);
     }
