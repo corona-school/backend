@@ -127,7 +127,7 @@ createConnection().then(() => {
         certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
         certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
         certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
-
+        certificateRouter.post("/:certificateId/sign", authCheckFactory(), certificateController.signCertificateEndpoint);
 
         app.use("/api/certificate", certificateRouter);
         app.get("/api/certificates", authCheckFactory(), certificateController.getCertificatesEndpoint);
