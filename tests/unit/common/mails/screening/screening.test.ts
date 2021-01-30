@@ -31,7 +31,7 @@ describe("The screening invitation mails", function() {
                 assert.ok(this.sendTemplateMailStub.calledWith(
                     {
                         title: "Wir möchten dich kennenlernen!",
-                        sender: DEFAULTSENDERS.screening,
+                        sender: DEFAULTSENDERS.support,
                         id: 1362938,
                         type: "studentfirstscreeninginvitation",
                         variables: {
@@ -54,7 +54,7 @@ describe("The screening invitation mails", function() {
                 assert.ok(this.sendTemplateMailStub.calledWith(
                     {
                         title: "Erinnerung: Wir möchten dich kennenlernen!",
-                        sender: DEFAULTSENDERS.screening,
+                        sender: DEFAULTSENDERS.support,
                         id: 1391548,
                         type: "studentscreeningreminder",
                         variables: {
@@ -77,7 +77,7 @@ describe("The screening invitation mails", function() {
                 assert.ok(this.sendTemplateMailStub.calledWith(
                     {
                         title: "Wir möchten dich kennenlernen!",
-                        sender: DEFAULTSENDERS.screening,
+                        sender: DEFAULTSENDERS.support,
                         id: 1518623,
                         type: "instructorfirstscreeninginvitation",
                         variables: {

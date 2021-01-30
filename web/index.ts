@@ -15,6 +15,7 @@ import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
+import * as expertController from "./controllers/expertController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
@@ -22,6 +23,9 @@ import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
+import * as multer from "multer";
+import * as moment from "moment-timezone";
+import { setupBrowser } from "html-pppdf";
 
 // Logger setup
 try {
@@ -33,11 +37,22 @@ try {
 const logger = getLogger();
 const accessLogger = getLogger("access");
 
+//SETUP: moment
+moment.locale("de"); //set global moment date format
+moment.tz.setDefault("Europe/Berlin"); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
+
 logger.info("Webserver backend started");
 const app = express();
 
+//SETUP PDF generation environment
+async function setupPDFGenerationEnvironment() {
+    await setupBrowser({
+        args: ["--no-sandbox"] //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
+    });
+}
+
 // Database connection
-createConnection().then(() => {
+createConnection().then(setupPDFGenerationEnvironment).then(() => {
     logger.info("Database connected");
     app.use(connectLogger(accessLogger, { level: "auto" }));
 
@@ -57,6 +72,7 @@ createConnection().then(() => {
     configureCoursesAPI();
     configureRegistrationAPI();
     configureMentoringAPI();
+    configureExpertAPI();
     deployServer();
 
     function addCorsMiddleware() {
@@ -65,7 +81,9 @@ createConnection().then(() => {
 
         const allowedSubdomains = [
             ...allStateCooperationSubdomains,
-            "jufo"
+            "jufo",
+            "partnerschule",
+            "drehtuer"
         ];
         if (process.env.NODE_ENV == "dev") {
             origins = [
@@ -135,14 +153,32 @@ createConnection().then(() => {
 
     function configureCourseAPI() {
         const coursesRouter = express.Router();
+        //no default mounted middleware at all... (primarily for performance)
+        coursesRouter.post("/:id/subcourse/:subid/certificate", authCheckFactory(false, false, false, []), courseController.issueCourseCertificateHandler);
         //public routes
         coursesRouter.use(authCheckFactory(true));
         coursesRouter.get("/:id", courseController.getCourseHandler);
+        coursesRouter.get("/test/meeting/join", authCheckFactory(true, true), courseController.testJoinCourseMeetingHandler);
+        coursesRouter.get("/meeting/external/join/:token", courseController.joinCourseMeetingExternalHandler);
         //private routes
         coursesRouter.use(authCheckFactory());
         coursesRouter.post("/", courseController.postCourseHandler);
         coursesRouter.put("/:id", courseController.putCourseHandler);
         coursesRouter.delete("/:id", courseController.deleteCourseHandler);
+
+        coursesRouter.post("/:id/instructor", courseController.postAddCourseInstructorHandler);
+
+        const courseImageUpload = multer({
+            limits: {
+                fileSize: 5 * (10 ** 6) //5mb
+            },
+            storage: multer.memoryStorage(), //store in memory.....
+            fileFilter: (req, file, cb) => {
+                cb(null, ["image/png", "image/jpeg", "image/gif"].includes(file.mimetype));
+            }
+        });
+        coursesRouter.put("/:id/image", courseImageUpload.single("cover"), courseController.putCourseImageHandler);
+        coursesRouter.delete("/:id/image", courseController.deleteCourseImageHandler);
 
         coursesRouter.post("/:id/subcourse", courseController.postSubcourseHandler);
         coursesRouter.put("/:id/subcourse/:subid", courseController.putSubcourseHandler);
@@ -151,12 +187,18 @@ createConnection().then(() => {
         coursesRouter.post("/:id/subcourse/:subid/participants/:userid", courseController.joinSubcourseHandler);
         coursesRouter.delete("/:id/subcourse/:subid/participants/:userid", courseController.leaveSubcourseHandler);
 
+        coursesRouter.post("/:id/subcourse/:subid/waitinglist/:userid", courseController.joinWaitingListHandler);
+        coursesRouter.delete("/:id/subcourse/:subid/waitinglist/:userid", courseController.leaveWaitingListHandler);
+
         coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
         coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+        coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
         coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
         coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 
         coursesRouter.get("/:id/subcourse/:subid/meeting/join", courseController.joinCourseMeetingHandler);
+
+        coursesRouter.post("/:id/inviteexternal", courseController.inviteExternalHandler);
 
         app.use("/api/course", coursesRouter);
     }
@@ -177,7 +219,7 @@ createConnection().then(() => {
         registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         registrationRouter.post("/mentor", registrationController.postMentorHandler);
-        registrationRouter.get("/:state/schools", registrationController.getSchoolsHandler);
+        registrationRouter.get("/schools/:state?", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }
 
@@ -205,26 +247,26 @@ createConnection().then(() => {
             "/screener/:email",
             screeningController.updateScreenerByMailHandler
         );
-        screenerApiRouter.get(
-            "/courses",
-            screeningController.getCourses
-        );
-        screenerApiRouter.get(
-            "/courses/tags",
-            screeningController.getCourseTags
-        );
-        screenerApiRouter.post(
-            "/courses/tags/create",
-            screeningController.postCreateCourseTag
-        );
-        screenerApiRouter.post(
-            "/course/:id/update",
-            screeningController.updateCourse
-        );
-        screenerApiRouter.get(
-            "/instructors",
-            screeningController.getInstructors
-        );
+        // screenerApiRouter.get(
+        //     "/courses",
+        //     screeningController.getCourses
+        // );
+        // screenerApiRouter.get(
+        //     "/courses/tags",
+        //     screeningController.getCourseTags
+        // );
+        // screenerApiRouter.post(
+        //     "/courses/tags/create",
+        //     screeningController.postCreateCourseTag
+        // );
+        // screenerApiRouter.post(
+        //     "/course/:id/update",
+        //     screeningController.updateCourse
+        // );
+        // screenerApiRouter.get(
+        //     "/instructors",
+        //     screeningController.getInstructors
+        // );
 
         app.use("/api/screening", screenerApiRouter);
     }
@@ -254,6 +296,17 @@ createConnection().then(() => {
         mentoringRouter.get("/feedbackCall", mentoringController.getFeedbackCallData);
 
         app.use("/api/mentoring", mentoringRouter);
+    }
+
+    function configureExpertAPI() {
+        const expertRouter = express.Router();
+        expertRouter.use(authCheckFactory());
+        expertRouter.get("/", expertController.getExpertsHandler);
+        expertRouter.post("/:id/contact", expertController.postContactExpertHandler);
+        expertRouter.put("/:id", expertController.putExpertHandler);
+        expertRouter.get("/tags", expertController.getUsedTagsHandler);
+
+        app.use("/api/expert", expertRouter);
     }
 
     function deployHTTPServer() {

@@ -3,7 +3,7 @@ import {
     CreateDateColumn,
     Entity,
     JoinTable,
-    ManyToMany, OneToMany,
+    ManyToMany, OneToMany, ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
     getManager
@@ -13,6 +13,8 @@ import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
 import { ApiCourseUpdate } from "../dto/ApiCourseUpdate";
 import {createCourseTag} from "../util/createCourseTag";
+import { accessURLForKey } from "../file-bucket/s3";
+import { CourseGuest } from "./CourseGuest";
 
 export enum CourseState {
     CREATED = "created",
@@ -57,7 +59,7 @@ export class Course {
     @Column({
         nullable: true
     })
-    imageUrl: string;
+    imageKey: string; //note, it will not store the full url, but just the key of the file in the corresponding default bucket
 
     @Column({
         type: 'enum',
@@ -93,6 +95,20 @@ export class Course {
     })
     publicRanking: number;
 
+    @Column({
+        nullable: false,
+        default: false
+    })
+    allowContact: boolean;
+
+    @ManyToOne(type => Student, student => student.managedCorrespondenceCourses, {
+        eager: true
+    })
+    correspondent?: Student;
+
+    @OneToMany(type => CourseGuest, guests => guests.course)
+    guests: CourseGuest[];
+
     async updateCourse(update: ApiCourseUpdate) {
         if (!update.isValid())
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
@@ -120,6 +136,10 @@ export class Course {
         }
 
         this.tags = newTags;
+    }
+
+    imageURL(): string | null {
+        return this.imageKey ? accessURLForKey(this.imageKey) : null;
     }
 
 }

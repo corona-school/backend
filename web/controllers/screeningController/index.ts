@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getManager, Like } from "typeorm";
+import { getManager, Like, ILike } from "typeorm";
 import { ScreenerDTO } from "../../../common/dto/ScreenerDTO";
 import { StudentInfoDTO } from "../../../common/dto/StudentInfoDTO";
 import { getScreenerByEmail, Screener } from "../../../common/entity/Screener";
@@ -8,15 +8,15 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import {Course, CourseCategory} from "../../../common/entity/Course";
+import { Course, CourseCategory } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
-import {Subcourse} from "../../../common/entity/Subcourse";
-import {Lecture} from "../../../common/entity/Lecture";
+import { Subcourse } from "../../../common/entity/Subcourse";
+import { Lecture } from "../../../common/entity/Lecture";
 import { StudentEditableInfoDTO } from "../../../common/dto/StudentEditableInfoDTO";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import {CourseTag} from "../../../common/entity/CourseTag";
-import {CourseTagDTO} from "../../../common/dto/CourseTagDTO";
-import {createCourseTag} from "../../../common/util/createCourseTag";
+import { CourseTag } from "../../../common/entity/CourseTag";
+import { CourseTagDTO } from "../../../common/dto/CourseTagDTO";
+import { createCourseTag } from "../../../common/util/createCourseTag";
 
 const logger = getLogger();
 
@@ -253,7 +253,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         getManager().save(student);
 
         //update transaction log
-        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, {prev: prevState, new: newState}));
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, { prev: prevState, new: newState }));
 
         res.status(200).send("Student updated successfully!");
     }
@@ -441,10 +441,11 @@ export async function updateScreenerByMailHandler(req: Request, res: Response, n
  *
  * @apiParam (URL Query) {string|undefined} courseState the course state ("created", "submitted", "allowed", "denied", "cancelled")
  * @apiParam (URL Query) {string|undefined} search A query text to be searched in the title and description
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getCourses(req: Request, res: Response) {
     try {
-        const { courseState, search } = req.query;
+        const { courseState, search, page } = req.query;
 
         if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");
@@ -452,15 +453,40 @@ export async function getCourses(req: Request, res: Response) {
         if (typeof search !== "undefined" && typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search', must be string.");
 
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+
         const where = (courseState ? (search ? [
-            { courseState, name: Like(`%${search}%`) }, /* OR */
-            { courseState, description: Like(`%${search}%`) }
+            { courseState, name: ILike(`%${search}%`) }, /* OR */
+            { courseState, description: ILike(`%${search}%`) }
         ] : { courseState }) : (search ? [
-            { name: Like(`%${search}%`) }, /* OR */
-            { description: Like(`%${search}%`) }
+            { name: ILike(`%${search}%`) }, /* OR */
+            { description: ILike(`%${search}%`) }
         ] : {}));
 
-        const courses = await getManager().find(Course, { where, take: 20 });
+
+        let courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20, order: { "updatedAt": "DESC" } });
+
+        if (!courses.length && search) {
+            // In case the regular search does not match anything, we search for students with that name
+            // Thus we avoid searching through all students in the regular case, but still support "find by student"
+            const [firstname, lastname = ""] = search.split(" ");
+
+            const student = await getManager().findOne(Student, {
+                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`) },
+                relations: ["courses"]
+            });
+
+            if (student) {
+                // This should really be done on the database, but TypeORM currently has no nice way to express this:
+                // https://github.com/typeorm/typeorm/blob/master/docs/many-to-many-relations.md
+                courses = student.courses
+                    .filter(it => !courseState || it.courseState === courseState)
+                    .sort((a, b) => +b.updatedAt - +a.updatedAt)
+                    .slice((+page || 0) * 20, (+page + 1 || 1) * 20);
+            }
+        }
+
 
         return res.json({ courses });
     } catch (error) {
@@ -610,7 +636,7 @@ export async function updateCourse(req: Request, res: Response) {
         }
 
         if (tags !== undefined) {
-            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))){
+            if (Array.isArray(tags) && (tags.every(t => (typeof t.identifier === "string" || typeof t.name === "string")))) {
                 const status = await handleUpdateCourseTags(tags, +id);
                 if (status != 200) {
                     return res.status(status).send("Updating course tags failed");
@@ -638,7 +664,7 @@ export async function updateCourse(req: Request, res: Response) {
 async function handleNewLectures(lectures: { subcourse: { id: number }, start: Date, duration: number, instructor: { id: number } }[], courseId: number) {
     const entityManager = getManager();
 
-    for (let lecture of lectures){
+    for (let lecture of lectures) {
         const course = await entityManager.findOne(Course, { id: courseId });
         if (course == undefined) {
             logger.warn(`No course found with ID ${courseId}`);
@@ -682,8 +708,8 @@ async function handleDeleteLectures(lectures: { id: number }[]) {
     return 204;
 }
 
-async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number){
-    const course = await getManager().findOne(Course, { where: { id: courseId }});
+async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: string }[], courseId: number) {
+    const course = await getManager().findOne(Course, { where: { id: courseId } });
 
     try {
         await course.updateTags(courseTags);
@@ -717,44 +743,49 @@ async function handleUpdateCourseTags(courseTags: { identifier?: string, name?: 
  *
  * @apiParam (URL Query) {string} screeningStatus get instructors with a certain screeningStatus
  * @apiParam (URL Query) {string} search fuzzy search inside the instructors name and email, supporting Postgres ILIKE syntax
+ * @apiParam (URL Query) {string|undefined} page The page
  */
 export async function getInstructors(req: Request, res: Response) {
     try {
-        let { screeningStatus, search } = req.query;
+        let { screeningStatus, search, page } = req.query;
 
-        if ([ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].indexOf(screeningStatus) === -1)
+        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus))
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
 
         if (typeof search !== "string")
             return res.status(400).send("invalid value for parameter 'search'");
 
-        search = `%${search}%`; // fuzzy search
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+            return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+
+        /* Through reversed access the following happens:
+           "Jacks"      -> firstname = any, lastname = "Jacks%"         Searching by lastname only works, this matches the old behavior and is thus no breaking change
+           "Leon Jacks" -> firstname = "Leon"", lastname = "Jackson%"   Searching now also works for firstname and lastname
+           "Leon"       -> firstname = any, lastname = "Leon%"          Searching by firstname only yields wrong results, however I doubt that this will actually return useful results anyways, as firstnames collide quite often
+
+           NOTE: (firstname || " " || lastname ILIKE search) would yield better results, however that can hardly be optimized through indices (unless another "fullName" column gets added, which also comes with it's downsides)
+        */
+        let [lastname, firstname] = search.split(" ").reverse();
+        const email = `%${search}%`; // fuzzy search
+        lastname = `${lastname}%`; // Allow half started searches, "Leon Jacks" matching "Leon Jackson"
 
         let instructors: {}[];
 
-        if (screeningStatus === ScreeningStatus.Accepted) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success = true AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
-                .getMany();
-        } else if (screeningStatus === ScreeningStatus.Rejected) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success = false AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
-                .getMany();
-        } else if (screeningStatus === ScreeningStatus.Unscreened) {
-            instructors = await getManager()
-                .createQueryBuilder(Student, "student")
-                .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-                .where("student.isInstructor = true AND instructor_screening.success is NULL AND (student.email ILIKE :search OR student.lastname ILIKE :search)", { search })
-                .take(20)
-                .getMany();
-        }
+        const PAGE_SIZE = 20;
 
+        const condition = {
+            [ScreeningStatus.Accepted]: "instructor_screening.success = true",
+            [ScreeningStatus.Rejected]: "instructor_screening.success = false",
+            [ScreeningStatus.Unscreened]: "instructor_screening.success is NULL"
+        }[screeningStatus];
+
+        instructors = await getManager()
+            .createQueryBuilder(Student, "student")
+            .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
+            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :email OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
+            .take(PAGE_SIZE)
+            .skip((+page || 0) * PAGE_SIZE)
+            .getMany();
 
         return res.json({ instructors });
     } catch (error) {

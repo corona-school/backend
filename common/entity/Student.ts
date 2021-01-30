@@ -1,7 +1,16 @@
-import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from "typeorm";
+import {
+    Column,
+    Entity,
+    EntityManager,
+    getManager,
+    Index,
+    ManyToMany,
+    OneToMany,
+    OneToOne
+} from "typeorm";
 import { Match } from "./Match";
 import { Screening } from "./Screening";
-import { Person } from "./Person";
+import { Person, RegistrationSource } from "./Person";
 import { Course } from "./Course";
 import { Lecture } from './Lecture';
 import { State } from './State';
@@ -16,6 +25,8 @@ import { ScreeningInfo } from "../util/screening";
 import { Screener } from "./Screener";
 import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 import { ProjectMatch } from "./ProjectMatch";
+import {ExpertData} from "./ExpertData";
+import { CourseGuest } from "./CourseGuest";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -208,6 +219,12 @@ export class Student extends Person {
     @OneToMany(type => ProjectMatch, match => match.student, { nullable: true })
     projectMatches: Promise<ProjectMatch[]>;
 
+    @OneToOne((type) => ExpertData, (expertData) => expertData.student, {
+        nullable: true,
+        cascade: true
+    })
+    expertData: ExpertData;
+
     /*
      * Other data
      */
@@ -253,6 +270,24 @@ export class Student extends Person {
         default: null
     })
     lastUpdatedSettingsViaBlocker: Date;
+
+    @Column({
+        type: 'enum',
+        enum: RegistrationSource,
+        default: RegistrationSource.NORMAL
+    })
+    registrationSource: RegistrationSource;
+
+    @OneToMany(type => Course, course => course.correspondent, {
+        nullable: true
+    })
+    managedCorrespondenceCourses: Course[];
+
+    @OneToMany(type => CourseGuest, guest => guest.inviter, {
+        cascade: true,
+        nullable: true
+    })
+    invitedGuests: CourseGuest[];
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;

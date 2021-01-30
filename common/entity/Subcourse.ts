@@ -14,6 +14,7 @@ import { Student } from "./Student";
 import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
+import * as moment from "moment";
 
 @Entity()
 export class Subcourse {
@@ -37,6 +38,12 @@ export class Subcourse {
     })
     @JoinTable()
     participants: Pupil[];
+
+    @ManyToMany(type => Pupil, pupil => pupil.queuedSubcourses, {
+        eager: true
+    })
+    @JoinTable()
+    waitingList: Pupil[];
 
     @OneToMany(type => Lecture, lecture => lecture.subcourse, {
         eager: true
@@ -85,4 +92,42 @@ export class Subcourse {
         this.lectures.push(lecture);
     }
 
+    sortedLectures(): Lecture[] {
+        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime());
+    }
+
+    firstLecture(): Lecture {
+        return this.sortedLectures()?.[0];
+    }
+    lastLecture(): Lecture {
+        return this.sortedLectures()?.[this.lectures.length - 1];
+    }
+
+    isPupilOnWaitingList(pupil: Pupil): boolean {
+        return this.waitingList?.some(p => p.id === pupil.id);
+    }
+
+    addPupilToWaitingList(pupil: Pupil) {
+        if (!this.waitingList) {
+            this.waitingList = [];
+        }
+        this.waitingList.push(pupil);
+    }
+    removePupilFromWaitingList(pupil: Pupil) {
+        this.waitingList = this.waitingList?.filter(p => p.id !== pupil.id);
+    }
+
+    isActiveSubcourse(): boolean {
+        const lastLecture = this.lastLecture();
+        if (!lastLecture) {
+            return false; //then active by default
+        }
+
+        return moment().isBefore(moment(lastLecture.start).add(lastLecture.duration, "minutes"));
+    }
+
+    ///Returns the total duration in minutes
+    totalDuration(): number {
+        return this.lectures.reduce( (prev, curr) => prev + curr.duration, 0);
+    }
 }

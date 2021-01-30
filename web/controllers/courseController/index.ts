@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
+import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 import {
     ApiAddCourse,
     ApiAddLecture,
@@ -11,8 +12,11 @@ import {
     ApiEditCourse,
     ApiEditLecture,
     ApiEditSubcourse,
+    ApiExternalGuestJoinMeetingResult,
     ApiInstructor,
+    ApiInstructorID,
     ApiLecture,
+    ApiPostExternalInvite,
     ApiSubcourse
 } from './format';
 import { Course, CourseCategory, CourseState } from '../../../common/entity/Course';
@@ -23,8 +27,8 @@ import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourse
 import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
-import { Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail } from '../../../common/mails/courses';
+import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantDrehtuerCertificate } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -33,6 +37,25 @@ import {
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
+import * as moment from 'moment-timezone';
+import { putFile } from '../../../common/file-bucket';
+import { deleteFile } from '../../../common/file-bucket/delete';
+import { courseImageKey } from './course-images';
+import { accessURLForKey } from '../../../common/file-bucket/s3';
+import * as mime from 'mime-types';
+import { v4 as uuidv4 } from "uuid";
+import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
+import ParticipantJoinedCourseEvent from '../../../common/transactionlog/types/ParticipantJoinedCourseEvent';
+import ParticipantLeftCourseEvent from '../../../common/transactionlog/types/ParticipantLeftCourseEvent';
+import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/types/ParticipantLeftWaitingListEvent';
+import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/types/ParticipantJoinedWaitingListEvent';
+import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
+import { prisma } from '../../../common/prisma';
+import { CourseCache } from './course-cache';
+import isEmail from "validator/lib/isEmail";
+import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
+import { getCourseCertificate } from '../../../common/drehtuer/certificates';
+import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 
 const logger = getLogger();
 
@@ -133,6 +156,18 @@ export async function getCoursesHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
+const CACHE_RELOAD_INTERVAL = 600000; // in milliseconds, i.e. every 10 minutes
+let cache = new CourseCache<ApiCourse[]>(CACHE_RELOAD_INTERVAL, async (key) => {
+    const fields: string[] = key.split(",");
+    const result = await getAPICourses(undefined, undefined, fields, ['allowed'], undefined, undefined, false, false);
+
+    if (typeof result === "number") { //it's so dirty...
+        return null; //no refresh
+    }
+
+    return result;
+});
+
 async function getCourses(student: Student | undefined,
                           pupil: Pupil | undefined, fields: Array<string>,
                           states: Array<string>,
@@ -172,6 +207,7 @@ async function getCourses(student: Student | undefined,
         return 403;
     }
 
+
     if (states.length != 1 || states[0] != 'allowed') {
         if (!authenticatedStudent) {
             logger.warn(`Unauthenticated user tried to filter by states ${states.join(',')}`);
@@ -188,6 +224,50 @@ async function getCourses(student: Student | undefined,
         logger.debug(student, fields, states, instructorId);
         return 400;
     }
+
+    let cachedCourses = undefined;
+    if (!authenticatedPupil && !authenticatedStudent) {
+        //we only wanna cache in those cases
+        const cacheKey = `${fields.sort().join(",")}`;
+
+        cachedCourses = cache.get(cacheKey);
+
+        if (!cachedCourses) {
+            //HIT: do request and cache
+            const result = await getAPICourses(undefined, undefined, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
+
+            if (typeof result === "number") { //it's so dirty...
+                return result;
+            }
+            cachedCourses = result;
+
+            cache.set(cacheKey, cachedCourses);
+        }
+    }
+
+
+    let apiCourses = cachedCourses ?? await getAPICourses(student, pupil, fields, states, instructorId, participantId, authenticatedStudent, authenticatedPupil);
+
+    if (typeof apiCourses === "number") { //it's so dirty again...
+        return apiCourses;
+    }
+
+    //filter out onlyJoinableCourses, if requested
+    if (onlyJoinableCourses) {
+        apiCourses = apiCourses.filter(isJoinableCourse);
+    }
+
+
+    return apiCourses;
+}
+async function getAPICourses(student: Student | undefined,
+                             pupil: Pupil | undefined,
+                             fields: Array<string>,
+                             states: Array<string>,
+                             instructorId: string | undefined,
+                             participantId: string | undefined,
+                             authenticatedStudent: boolean,
+                             authenticatedPupil: boolean): Promise<Array<ApiCourse> | number> {
     let stateFilters = [];
     for (let i = 0; i < states.length; i++) {
         let state: CourseState;
@@ -217,35 +297,103 @@ async function getCourses(student: Student | undefined,
 
     let apiCourses: Array<ApiCourse> = [];
     try {
-        const qb = entityManager.getRepository(Course).createQueryBuilder("course")
-            .leftJoinAndSelect("course.subcourses", "subcourse")
-            .leftJoinAndSelect("course.tags", "tags")
-            .leftJoinAndSelect("course.instructors", "instructor")
-            .leftJoinAndSelect("subcourse.instructors", "subinstructor")
-            .leftJoinAndSelect("subcourse.participants", "participant")
-            .leftJoinAndSelect("subcourse.lectures", "lecture")
-            .leftJoinAndSelect("lecture.instructor", "lecinstructor");
-
+        let customFilter = [];
         if (instructorId) {
-            qb.where("instructor.wix_id = :id", { id: student.wix_id });
-        } else if (participantId) {
-            qb.where("participant.wix_id = :id", { id: pupil.wix_id });
+            customFilter = [{
+                subcourse: {
+                    some: {
+                        // eslint-disable-next-line
+                        subcourse_instructors_student: {
+                            some: {
+                                student: {
+                                    wix_id: student?.wix_id ?? "invalid"
+                                }
+                            }
+                        }
+                    }
+                }
+            }];
+        }
+        else if (participantId) {
+            customFilter = [{
+                subcourse: {
+                    some: {
+                        // eslint-disable-next-line
+                        subcourse_participants_pupil: {
+                            some: {
+                                pupil: {
+                                    wix_id: pupil?.wix_id ?? "invalid" //todo rewrite...
+                                }
+                            }
+                        }
+                    }
+                }
+            }];
         }
 
-        if (stateFilters.length > 0) {
-            if (instructorId || participantId) {
-                qb.andWhere("course.courseState IN (:...states)", { states: stateFilters });
-            } else {
-                qb.where("course.courseState IN (:...states)", { states: stateFilters });
+        const courses = await prisma.course.findMany({
+            where: {
+                AND: [
+                    {
+                        courseState: {
+                            in: stateFilters
+                        }
+                    },
+                    ...customFilter
+                ]
+            },
+            include: {
+                subcourse: {
+                    include: {
+                        // eslint-disable-next-line
+                        subcourse_participants_pupil: {
+                            include: {
+                                pupil: true
+                            }
+                        },
+                        // eslint-disable-next-line
+                        subcourse_instructors_student: {
+                            include: {
+                                student: true
+                            }
+                        },
+                        // eslint-disable-next-line
+                        subcourse_waiting_list_pupil: {
+                            include: {
+                                pupil: true
+                            }
+                        },
+                        lecture: {
+                            include: {
+                                student: true
+                            }
+                        }
+                    }
+                },
+                // eslint-disable-next-line
+                course_tags_course_tag: {
+                    include: {
+                        // eslint-disable-next-line
+                        course_tag: true
+                    }
+                },
+                // eslint-disable-next-line
+                course_instructors_student: {
+                    include: {
+                        student: true
+                    }
+                },
+                student: true //correspondent id...
             }
-        }
+        });
 
-        const courses = await qb.getMany();
 
         for (let i = 0; i < courses.length; i++) {
             let apiCourse: ApiCourse = {
                 id: courses[i].id,
-                publicRanking: courses[i].publicRanking
+                publicRanking: courses[i].publicRanking,
+                allowContact: courses[i].allowContact,
+                correspondentID: instructorId != null && instructorId === student?.wix_id && courses[i].student?.wix_id //only if this endpoint is accessed by a student who is also an instructor of that course, return the correspondentID
             };
             for (let j = 0; j < fields.length; j++) {
                 switch (fields[j].toLowerCase()) {
@@ -253,13 +401,13 @@ async function getCourses(student: Student | undefined,
                         break;
                     case 'instructors':
                         apiCourse.instructors = [];
-                        for (let k = 0; k < courses[i].instructors.length; k++) {
+                        for (let k = 0; k < courses[i].course_instructors_student.length; k++) {
                             let instructor: ApiInstructor = {
-                                firstname: courses[i].instructors[k].firstname,
-                                lastname: courses[i].instructors[k].lastname
+                                firstname: courses[i].course_instructors_student[k].student.firstname,
+                                lastname: courses[i].course_instructors_student[k].student.lastname
                             };
                             if (authenticatedStudent && student.wix_id != instructorId) {
-                                instructor.id = courses[i].instructors[k].wix_id;
+                                instructor.id = courses[i].course_instructors_student[k].student.wix_id;
                             }
                             apiCourse.instructors.push(instructor);
                         }
@@ -274,77 +422,79 @@ async function getCourses(student: Student | undefined,
                         apiCourse.description = courses[i].description;
                         break;
                     case 'image':
-                        apiCourse.image = courses[i].imageUrl;
+                        apiCourse.image = courses[i].imageKey ? accessURLForKey(courses[i].imageKey) : null;
                         break;
                     case 'category':
                         apiCourse.category = courses[i].category;
                         break;
                     case 'tags':
                         apiCourse.tags = [];
-                        for (let k = 0; k < courses[i].tags.length; k++) {
+                        for (let k = 0; k < courses[i].course_tags_course_tag.length; k++) {
                             let tag: ApiCourseTag = {
-                                id: courses[i].tags[k].identifier,
-                                name: courses[i].tags[k].name,
-                                category: courses[i].tags[k].category
+                                id: courses[i].course_tags_course_tag[k].course_tag.identifier,
+                                name: courses[i].course_tags_course_tag[k].course_tag.name,
+                                category: courses[i].course_tags_course_tag[k].course_tag.category
                             };
                             apiCourse.tags.push(tag);
                         }
                         break;
                     case 'subcourses':
                         apiCourse.subcourses = [];
-                        if (courses[i].subcourses) {
-                            for (let k = 0; k < courses[i].subcourses.length; k++) {
+                        if (courses[i].subcourse) {
+                            for (let k = 0; k < courses[i].subcourse.length; k++) {
                                 let subcourse: ApiSubcourse = {
-                                    id: courses[i].subcourses[k].id,
-                                    minGrade: courses[i].subcourses[k].minGrade,
-                                    maxGrade: courses[i].subcourses[k].maxGrade,
-                                    maxParticipants: courses[i].subcourses[k].maxParticipants,
-                                    participants: courses[i].subcourses[k].participants.length,
+                                    id: courses[i].subcourse[k].id,
+                                    minGrade: courses[i].subcourse[k].minGrade,
+                                    maxGrade: courses[i].subcourse[k].maxGrade,
+                                    maxParticipants: courses[i].subcourse[k].maxParticipants,
+                                    participants: courses[i].subcourse[k].subcourse_participants_pupil.length,
                                     instructors: [],
                                     lectures: [],
-                                    joinAfterStart: courses[i].subcourses[k].joinAfterStart
+                                    joinAfterStart: courses[i].subcourse[k].joinAfterStart
                                 };
-                                for (let l = 0; l < courses[i].subcourses[k].instructors.length; l++) {
+                                for (let l = 0; l < courses[i].subcourse[k].subcourse_instructors_student.length; l++) {
                                     let instructor: ApiInstructor = {
-                                        firstname: courses[i].subcourses[k].instructors[l].firstname,
-                                        lastname: courses[i].subcourses[k].instructors[l].lastname
+                                        firstname: courses[i].subcourse[k].subcourse_instructors_student[l].student.firstname,
+                                        lastname: courses[i].subcourse[k].subcourse_instructors_student[l].student.lastname
                                     };
                                     if (authenticatedStudent && student.wix_id == instructorId) {
-                                        instructor.id = courses[i].subcourses[k].instructors[l].wix_id;
+                                        instructor.id = courses[i].subcourse[k].subcourse_instructors_student[l].student.wix_id;
                                     }
                                     subcourse.instructors.push(instructor);
                                 }
-                                for (let l = 0; l < courses[i].subcourses[k].lectures.length; l++) {
+                                for (let l = 0; l < courses[i].subcourse[k].lecture.length; l++) {
                                     let lecture: ApiLecture = {
-                                        id: courses[i].subcourses[k].lectures[l].id,
+                                        id: courses[i].subcourse[k].lecture[l].id,
                                         instructor: {
-                                            firstname: courses[i].subcourses[k].lectures[l].instructor.firstname,
-                                            lastname: courses[i].subcourses[k].lectures[l].instructor.lastname
+                                            firstname: courses[i].subcourse[k].lecture[l].student.firstname,
+                                            lastname: courses[i].subcourse[k].lecture[l].student.lastname
                                         },
-                                        start: courses[i].subcourses[k].lectures[l].start.getTime() / 1000,
-                                        duration: courses[i].subcourses[k].lectures[l].duration
+                                        start: courses[i].subcourse[k].lecture[l].start.getTime() / 1000, //see https://github.com/prisma/prisma/issues/5051 -> if you're local time (and thus the time of your timestamps in your database) is not UTC, then this endpoint will return the wrong result
+                                        duration: courses[i].subcourse[k].lecture[l].duration
                                     };
                                     if (authenticatedStudent && student.wix_id == instructorId) {
-                                        lecture.instructor.id = courses[i].subcourses[k].lectures[l].instructor.wix_id;
+                                        lecture.instructor.id = courses[i].subcourse[k].lecture[l].student.wix_id;
                                     }
                                     subcourse.lectures.push(lecture);
                                 }
                                 if (authenticatedStudent && student.wix_id == instructorId) {
                                     subcourse.participantList = [];
-                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
+                                    for (let l = 0; l < courses[i].subcourse[k].subcourse_participants_pupil.length; l++) {
                                         subcourse.participantList.push({
-                                            firstname: courses[i].subcourses[k].participants[l].firstname,
-                                            lastname: courses[i].subcourses[k].participants[l].lastname,
-                                            email: courses[i].subcourses[k].participants[l].email,
-                                            grade: parseInt(courses[i].subcourses[k].participants[l].grade),
-                                            schooltype: courses[i].subcourses[k].participants[l].schooltype
+                                            uuid: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id,
+                                            firstname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.firstname,
+                                            lastname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.lastname,
+                                            email: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.email,
+                                            grade: parseInt(courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.grade),
+                                            schooltype: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.schooltype
                                         });
                                     }
                                 }
                                 if (authenticatedPupil && pupil.wix_id == participantId) {
+                                    subcourse.onWaitingList = courses[i].subcourse[k].subcourse_waiting_list_pupil.some(wlp => wlp.pupilId === pupil.id);
                                     subcourse.joined = false;
-                                    for (let l = 0; l < courses[i].subcourses[k].participants.length; l++) {
-                                        if (courses[i].subcourses[k].participants[l].wix_id == pupil.wix_id) {
+                                    for (let l = 0; l < courses[i].subcourse[k].subcourse_participants_pupil.length; l++) {
+                                        if (courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id == pupil.wix_id) {
                                             subcourse.joined = true;
                                             break;
                                         }
@@ -367,11 +517,6 @@ async function getCourses(student: Student | undefined,
         logger.error("Can't fetch courses: " + e.message);
         logger.debug(e);
         return 500;
-    }
-
-    //filter out onlyJoinableCourses, if requested
-    if (onlyJoinableCourses) {
-        apiCourses = apiCourses.filter(isJoinableCourse);
     }
 
     return apiCourses;
@@ -478,6 +623,12 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             return 403;
         }
 
+        if (authorizedStudent || authenticatedPupil) {
+            // transactionlog, that user accessed course
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new AccessedCourseEvent(pupil ?? student, course));
+        }
+
         apiCourse = {
             id: course.id,
             publicRanking: course.publicRanking,
@@ -485,14 +636,16 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             name: course.name,
             outline: course.outline,
             description: course.description,
-            image: course.imageUrl,
+            image: course.imageKey ? accessURLForKey(course.imageKey) : null,
             category: course.category,
             tags: [],
-            subcourses: []
+            subcourses: [],
+            allowContact: course.allowContact
         };
 
         if (authorizedStudent) {
             apiCourse.state = course.courseState;
+            apiCourse.correspondentID = course.correspondent?.wix_id; //only add the correspondent ID when students are requesting the course...
         }
 
         for (let i = 0; i < course.instructors.length; i++) {
@@ -569,6 +722,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                 subcourse.participantList = [];
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
+                        uuid: course.subcourses[i].participants[j].wix_id,
                         firstname: course.subcourses[i].participants[j].firstname,
                         lastname: course.subcourses[i].participants[j].lastname,
                         email: course.subcourses[i].participants[j].email,
@@ -578,6 +732,7 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                 }
             }
             if (authenticatedPupil) {
+                subcourse.onWaitingList = course.subcourses[i].isPupilOnWaitingList(pupil);
                 subcourse.joined = false;
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     if (course.subcourses[i].participants[j].id == pupil.id) {
@@ -635,7 +790,9 @@ export async function postCourseHandler(req: Request, res: Response) {
                 typeof req.body.description == 'string' &&
                 typeof req.body.category == 'string' &&
                 req.body.tags instanceof Array &&
-                typeof req.body.submit == 'boolean') {
+                typeof req.body.submit == 'boolean' &&
+                typeof req.body.allowContact == 'boolean' &&
+                (req.body.correspondentID == undefined || typeof req.body.correspondentID === "string")) {
 
                 // Check if string arrays
                 for (let i = 0; i < req.body.instructors.length; i++) {
@@ -683,12 +840,6 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
-        logger.debug(student);
-        return 403;
-    }
-
-    if (student.courses.length >= 25) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but has reached his limit.`);
         logger.debug(student);
         return 403;
     }
@@ -764,16 +915,29 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
         }
     }
 
+    if (apiCourse.allowContact === true && typeof apiCourse.correspondentID !== "string") {
+        logger.warn(`Cannot allow contact for new course '${apiCourse.name}' without having provided a correspondentID!`);
+        return 400;
+    }
+
+    const correspondent = instructors.find(i => i.wix_id === apiCourse.correspondentID);
+    if (apiCourse.correspondentID != null && !correspondent) {
+        logger.warn(`Cannot use correspondentID '${apiCourse.correspondentID}' for new course '${apiCourse.name}' because there is no user with such an ID who is part of the course's instructors.`);
+        return 400;
+    }
+
     const course = new Course();
     course.instructors = instructors;
     course.name = apiCourse.name;
     course.outline = apiCourse.outline;
     course.description = apiCourse.description;
-    course.imageUrl = undefined;
+    course.imageKey = undefined;
     course.category = category;
     course.tags = tags;
     course.subcourses = [];
     course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    course.allowContact = apiCourse.allowContact;
+    course.correspondent = correspondent;
 
     try {
         await entityManager.save(Course, course);
@@ -782,7 +946,8 @@ async function postCourse(student: Student, apiCourse: ApiAddCourse): Promise<Ap
 
         return {
             id: course.id,
-            publicRanking: course.publicRanking
+            publicRanking: course.publicRanking,
+            allowContact: course.allowContact
         };
     } catch (e) {
         logger.error("Can't save new course: " + e.message);
@@ -1079,8 +1244,8 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         return 400;
     }
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(2, "days").startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1151,6 +1316,8 @@ export async function putCourseHandler(req: Request, res: Response) {
                 (req.body.name == undefined || typeof req.body.name == 'string') &&
                 (req.body.outline == undefined || typeof req.body.outline == 'string') &&
                 typeof req.body.description == 'string' &&
+                typeof req.body.allowContact === "boolean" &&
+                (req.body.correspondentID == undefined || typeof req.body.correspondentID === "string") &&
                 (req.body.outline == undefined || typeof req.body.category == 'string') &&
                 req.body.tags instanceof Array &&
                 (req.body.outline == undefined || typeof req.body.submit == 'boolean')) {
@@ -1195,7 +1362,7 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     //TODO: Implement transactionLog
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
-        logger.warn(`Student (ID ${student.id}) tried to add an course, but is no instructor.`);
+        logger.warn(`Student (ID ${student.id}) tried to edit a course, but is no instructor.`);
         logger.debug(student);
         return 403;
     }
@@ -1243,11 +1410,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     course.instructors = instructors;
 
     if (apiCourse.name != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'name' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.name.length == 0 || apiCourse.name.length > 200) {
             logger.warn(`Invalid length of field 'name': ${apiCourse.name.length}`);
             logger.debug(apiCourse);
@@ -1257,11 +1419,6 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
 
     if (apiCourse.outline != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'outline' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         if (apiCourse.outline.length == 0 || apiCourse.outline.length > 200) {
             logger.warn(`Invalid length of field 'outline': ${apiCourse.outline.length}`);
             logger.debug(apiCourse);
@@ -1277,12 +1434,21 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
     course.description = apiCourse.description;
 
+    if (apiCourse.allowContact === true && typeof apiCourse.correspondentID !== "string") {
+        logger.warn(`Cannot allow contact for course ${course.id} without having provided a correspondentID!`);
+        return 400;
+    }
+    course.allowContact = apiCourse.allowContact;
+
+    //check correspondent ID
+    const correspondent = course.instructors.find(i => i.wix_id === apiCourse.correspondentID);
+    if (apiCourse.correspondentID != null && !correspondent) {
+        logger.warn(`Cannot use correspondentID '${apiCourse.correspondentID}' for course ${course.id} because there is no user with such an ID who is part of the course's instructors.`);
+        return 400;
+    }
+    course.correspondent = correspondent;
+
     if (apiCourse.category != undefined) {
-        if (course.courseState != CourseState.CREATED) {
-            logger.warn(`Field 'category' is not editable on submitted courses`);
-            logger.debug(apiCourse);
-            return 403;
-        }
         let category: CourseCategory;
         switch (apiCourse.category) {
             case "revision":
@@ -1319,12 +1485,20 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     }
     course.tags = tags;
 
-    if (course.courseState != CourseState.CREATED && (apiCourse.submit != undefined || apiCourse.submit == false)) {
+    //if course is already reviewed (i.e. either allowed, denied or cancelled) or submitted, the course state should not change at all
+    if (course.courseState === CourseState.CREATED && apiCourse.submit != undefined) { //so only if course is created, it could be possible to change the course state to submitted
+        course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    }
+    else if (apiCourse.submit === false) {
         logger.warn(`Field 'submit' is not editable on submitted courses`);
         logger.debug(apiCourse);
         return 403;
     }
-    course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
+    else if (apiCourse.submit != undefined) { //only change the course state, if the submit value is part of the request
+        //just issue a warning message...
+        logger.warn(`Course submission state for course number ${course.id} will not be changed, since it was already reviewed`);
+    }
+
 
     try {
         await entityManager.save(Course, course);
@@ -1463,17 +1637,15 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     }
     subcourse.instructors = instructors;
 
-    // Can't raise minGrade, when course is already published
-    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13
-        || (subcourse.published && apiSubcourse.minGrade > subcourse.minGrade)) {
+    // Always allow raising the maxGrade
+    if (!Number.isInteger(apiSubcourse.minGrade) || apiSubcourse.minGrade < 1 || apiSubcourse.minGrade > 13) {
         logger.warn(`Field 'minGrade' contains an illegal value: ${apiSubcourse.minGrade}`);
         logger.debug(apiSubcourse);
         return 400;
     }
 
-    // Can't lower maxGrade, when course is published
-    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13
-        || (subcourse.published && apiSubcourse.maxGrade < subcourse.maxGrade)) {
+    // Always allow lowering the minGrade
+    if (!Number.isInteger(apiSubcourse.maxGrade) || apiSubcourse.maxGrade < 1 || apiSubcourse.maxGrade > 13) {
         logger.warn(`Field 'maxGrade' contains an illegal value: ${apiSubcourse.maxGrade}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1487,9 +1659,8 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
     subcourse.minGrade = apiSubcourse.minGrade;
     subcourse.maxGrade = apiSubcourse.maxGrade;
 
-    // Can't lower maxParticipants when there are already more pupils participating
-    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100
-        || apiSubcourse.maxParticipants < subcourse.participants.length) {
+    // Always allow lowering the maxParticipants
+    if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
         logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
         logger.debug(apiSubcourse);
         return 400;
@@ -1644,8 +1815,8 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
     lecture.instructor = instructor;
 
-    // You can only create lectures that start at least in 2 days
-    if (!Number.isInteger(apiLecture.start) || apiLecture.start * 1000 - (new Date()).getTime() < 2 * 86400000) {
+    // the 2 day restriction does not apply when editing lectures -> the lecture date must only be in the future
+    if (!Number.isInteger(apiLecture.start) || moment.unix(apiLecture.start).isBefore(moment())) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -2117,14 +2288,161 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 return;
             }
 
+            //check if pupil has less than 3 active courses (because a pupil is allowed to only have 3 active courses at a time)
+            const pupilWithSubcourses = await em.findOne(Pupil, { //quick and dirty solution without rewriting large parts of the code -> refetch from database including the subcourses...
+                where: {
+                    wix_id: pupil.wix_id
+                },
+                relations: ["subcourses"]
+            });
+            const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
+            if (numberOfActiveSubcourses >= 6) { //todo: don't hardcode this constant here...
+                logger.warn(`Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
+                status = 429; //use this to quickly indicate that the pupil has too much active subcourses
+                return;
+            }
+
+            //remove participant from waiting list, if he is on the waiting list
+            subcourse.removePupilFromWaitingList(pupil);
+
             subcourse.participants.push(pupil);
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully joined subcourse");
-            // todo add transactionlog
+
+            //send confirmation to participant
+            try {
+                await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
+            }
+            catch (e) {
+                logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
+            }
+
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
 
         } catch (e) {
             logger.warn("Can't join subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+/**
+ * @api {POST} /course/:id/subcourse/:subid/waitinglist/:userid JoinCourseWaitingList
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Join a (sub)course waiting list.
+ *
+ * This endpoint allows joining a subcourse's waiting list.
+ * Only accessable for authorized participants.
+ * If subcourse has already started or pupil already is on the waiting list 409 Conflict is returned. Joining the waiting list is only possible if course is full.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName JoinCourseWaitingList
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/waitinglist/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function joinWaitingListHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await joinWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/waitinglist");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to join the waiting list of a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to join course waiting list");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to join course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
+
+            // make sure course not already started
+            const firstLecture = subcourse.firstLecture();
+
+            if (firstLecture && moment(firstLecture.start).isBefore(moment()) && !course.subcourses[0].joinAfterStart) {
+                //cannot queue on waiting list, because late join is not allowed
+                logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because the course already started and late joins are not permitted.`);
+                status = 409;
+                return;
+            }
+
+            // Check if course is full
+            if (subcourse.maxParticipants <= subcourse.participants.length) {
+                //check if pupil is already on the waiting list
+                if (subcourse.isPupilOnWaitingList(pupil)) {
+                    status = 409;
+                    logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because he's already on the waiting list`);
+                    return;
+                }
+
+                //add pupil to the waiting list
+                subcourse.addPupilToWaitingList(pupil);
+
+                status = 202; //indicate that probably the join will be completed later (i.e. the pupil is on the waiting list)
+
+                await em.save(Subcourse, subcourse);
+                logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
+
+                // transactionlog (remove this, if there is a performance problem with joining the waiting list -> because this introduces some performance problems!)
+                const transactionLog = getTransactionLog();
+                await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
+
+                return;
+            }
+            else {
+                logger.warn(`Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
+            }
+        } catch (e) {
+            logger.warn("Can't join waitinglist of subcourse");
             logger.debug(e);
             status = 400;
         }
@@ -2226,10 +2544,111 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully left subcourse");
-            // todo add transactionlog
+
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantLeftCourseEvent(pupil, subcourse));
 
         } catch (e) {
             logger.warn("Can't leave subcourse");
+            logger.debug(e);
+            status = 400;
+        }
+    });
+
+    return status;
+}
+/**
+ * @api {DELETE} /course/:id/subcourse/:subid/waitinglist/:userid LeaveCourseWaitingList
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Leave a course's waiting list.
+ *
+ * This endpoint allows leaving the waiting list of a course.
+ * Only accessable for authorized participants.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ * @apiParam (URL Parameter) {string} userid ID of the participant
+ *
+ * @apiName LeaveCourseWaitingList
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X DELETE -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/waitinglist/<USERID>
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function leaveWaitingListHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Pupil) {
+            if (req.params.id != undefined &&
+                req.params.subid != undefined &&
+                req.params.userid != undefined) {
+
+                status = await leaveWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/waitinglist/:userid");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-pupil wanted to leave a subcourse's waitinglist");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+    const entityManager = getManager();
+
+    // Check authorization
+    if (!pupil.isParticipant || pupil.wix_id != userId) {
+        logger.warn("Unauthorized pupil tried to leave course's waitinglist");
+        logger.debug(pupil, userId);
+        return 403;
+    }
+
+    // Try to leave course
+    let status = 204;
+    await entityManager.transaction(async em => {
+        // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+        try {
+            const course = await em.findOneOrFail(Course, { id: courseId });
+            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+            // Check if pupil is on waiting list
+            if (!subcourse.isPupilOnWaitingList(pupil)) {
+                logger.warn(`Pupil ${pupil.id} tried to leave waiting list of subcourse nr ${subcourseId} he didn't join`);
+                status = 400;
+                return;
+            }
+
+            //leave waiting list
+            subcourse.removePupilFromWaitingList(pupil);
+            await em.save(Subcourse, subcourse);
+
+            logger.info(`Pupil ${pupil.id} successfully left waiting list of subcourse nr ${subcourseId}`);
+
+            // transactionlog
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantLeftWaitingListEvent(pupil, course));
+        } catch (e) {
+            logger.warn("Can't leave subcourse's waiting list");
             logger.debug(e);
             status = 400;
         }
@@ -2326,6 +2745,98 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         }
     } catch (e) {
         logger.warn("Unable to send group mail");
+        logger.debug(e);
+        return 400;
+    }
+
+    return 204;
+}
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/instructormail InstructorMail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send an email to a course's instructors
+ *
+ * The subcourse's participants may use this endpoint to send an email to all instructors of that course
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName InstructorMail
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostInstructorMail
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/instructormail -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function instructorMailHandler(req: Request, res: Response) {
+
+    let status = 204;
+
+    if (res.locals.user instanceof Pupil) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && typeof req.body.subject == "string"
+            && typeof req.body.body == "string") {
+            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+        } else {
+            logger.warn("Missing or invalid parameters for instructorMailHandler");
+            status = 400;
+        }
+    } else {
+        logger.warn("Instructor mail requested by Non-Pupil");
+        status = 403;
+    }
+
+    res.status(status).end();
+}
+
+async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+    if (!pupil.isParticipant || !pupil.active) {
+        logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, { id: courseId });
+
+    if (course == undefined) {
+        logger.warn("Tried to send instructor mail to invalid course");
+        return 404;
+    }
+
+    if (!course.allowContact) {
+        logger.warn("Tried to send mail to correspondent of a course where contact isn't permitted.");
+        return 404;
+    }
+
+    if (!course.correspondent) {
+        logger.error(`Tried to send mail to instructors of course (id: ${course.id}) where no correspondent was defined.`);
+        return 500; //usually this should not happen – but if it happens, it will indicates some bug or someone who manually changed database entries...
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
+    if (subcourse == undefined) {
+        logger.warn("Tried to send instructor mail to invalid subcourse");
+        return 404;
+    }
+
+
+    try {
+        // send mail to correspondnet
+        await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
+    } catch (e) {
+        logger.warn("Unable to send instructor mail");
         logger.debug(e);
         return 400;
     }
@@ -2449,6 +2960,71 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
 }
 
 /**
+ * @api {GET} /course/test/meeting/join TestJoinCourseMeetingHandler
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get a new empty BBB-Meeting for testing purposes.
+ *
+ * This endpoint will provide a url to join the BBB meeting with a randomly generated name (and if called with an auth token, that user's name will be taken)
+ *
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/test/meeting/join
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function testJoinCourseMeetingHandler(req: Request, res: Response) {
+    let status = 200;
+
+    const user: Student | Pupil | undefined = res.locals.user;
+    try {
+        const meeting: BBBMeeting = {
+            id: -1, // default value, because of we're not creating a database instance of BBBMeeting (through typeorm) – IMPORTANT: this is not the meetingID!
+            meetingID: `Test-${user?.wix_id ?? uuidv4()}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            attendeePW: user?.wix_id.concat("ATTENDEE-PW") ?? uuidv4(),
+            moderatorPW: user?.wix_id.concat("MODERATOR-PW") ?? uuidv4(),
+            meetingName: "Test-Meeting"
+        };
+
+
+        // start the meeting
+        await startBBBMeeting(meeting);
+
+        const userName = user?.fullName() ?? uniqueNamesGenerator({
+            dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
+            separator: " ",
+            length: 2,
+            style: "capital"
+        });
+
+        const hasModeratorRights = user instanceof Student;
+        const meetingPW = hasModeratorRights ? meeting.moderatorPW : meeting.attendeePW;
+
+        // log that test meeting
+        logger.info(`Test BBB meeting created for a user (${user?.wix_id ?? "unauthenticated"}, with${!hasModeratorRights ? "out": ""} moderator rights) called ${userName} with settings: ${JSON.stringify(meeting)}`);
+
+        // get the meeting url
+        const meetingURL = getMeetingUrl(meeting.meetingID, userName, meetingPW);
+
+        // immediately redirect to the meeting
+        res.redirect(meetingURL);
+    } catch (e) {
+        logger.error("An error occurred during GET /course/test/meeting/join: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
  * @api {GET} /courses/tags getCourseTags
  * @apiVersion 1.1.0
  * @apiDescription
@@ -2495,4 +3071,689 @@ async function getCourseTags() {
     }
 
     return apiResponse;
+}
+
+/**
+ * @api {POST} /course/:id/instructor AddInstructor
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Add a new instructor to a course (and all of its subcourses too)
+ *
+ * It will expect an email address of an existent, active and sucessfully screened instructor (a student who is an instructor)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName AddInstructor
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ * @apiExample {curl} Curl
+ * curl --location --request POST 'localhost:5000/api/course/2/instructor' --header 'Token: authtokenS1' --header 'Content-Type: application/json' --data-raw '{ "email": "mel-98@gmail.com"}'
+ *
+ * @apiUse InstructorInfo
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function postAddCourseInstructorHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id) &&
+                typeof req.body.email == 'string') {
+
+                if (status < 300) {
+                    status = await postAddCourseInstructor(res.locals.user, +req.params.id, req.body);
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/instructor");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add an instructor to a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function postAddCourseInstructor(student: Student, courseID: number, apiInstructorToAdd: ApiInstructorID): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to add an instructor to a course, but is no accepted instructor himself.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to add an instructor to non-existent course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to add an instructor to a course, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 403;
+    }
+
+    // Check validity of instructor that should be added
+    let instructorToAdd = await entityManager.findOne(Student, {
+        email: apiInstructorToAdd.email
+    });
+
+    if (!instructorToAdd) {
+        logger.warn(`Cannot find a person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email}`);
+        return 404;
+    }
+
+    if (!instructorToAdd.active) {
+        logger.warn(`Person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not active. It cannot be added to a course!`);
+        return 404;
+    }
+
+    if (!instructorToAdd.isInstructor) {
+        logger.warn(`The person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not a course instructor. It cannot be added to a course!`);
+        return 403;
+    }
+
+    if (await instructorToAdd.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`The instructor (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not successfully screened as an instructor. S*he thus cannot be added to a course!`);
+        return 403;
+    }
+
+    if (course.instructors.some(i => i.id === instructorToAdd.id)) {
+        logger.warn(`The instructor with email address ${apiInstructorToAdd.email} is already an instructor of course number ${courseID}!`);
+        return 409;
+    }
+
+
+    //add that instructor to the course (and all of it's subcourses)
+    course.instructors.push(instructorToAdd);
+    course.subcourses.forEach( sc => sc.instructors.push(instructorToAdd));
+
+    try {
+        for (const sc of course.subcourses) { //save subcourses
+            await entityManager.save(sc);
+        }
+
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully added instructor with email ${instructorToAdd.email} to course with id ${courseID} and all of it's subcourses`);
+
+        return 200;
+    } catch (e) {
+        logger.error("Can't save the changes applied while adding an instructor to a course: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+/**
+ * @api {POST} /course/:id/image ChangeImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Changes the image of a course
+ *
+ * Expects multipart/form-data image (PNG, JPEG or GIF)
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName ChangeImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function putCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (!req.file) {
+                    status = 400;
+                    logger.warn(`PUT /course/:id/image expects either a PNG, JPEG or GIF file`);
+                }
+
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, req.file);
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for PUT /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to change course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function setCourseImage(student: Student, courseID: number, imageFile?: Express.Multer.File): Promise<number | { imageURL?: string }> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to change course image, but is no accepted instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to change course image of non existent course (ID ${courseID})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to change course image, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    try {
+        if (imageFile) {
+            // TODO: Check validity of image (i.e. a valid JPEG, and not just mime type or something like that)
+
+            const fileExtension = mime.extension(imageFile.mimetype);
+
+            if (!fileExtension) {
+                logger.warn(`User tried to change course image for course with ID ${courseID}, but the provided file of wrong mime type`);
+                return 400;
+            }
+
+            const key = courseImageKey(courseID, fileExtension);
+
+            // TODO: resize images to provide different resolutions
+            await putFile(imageFile.buffer, key);
+
+            course.imageKey = key;
+        }
+        else if (course.imageKey) { //otherwise, there's nothing to delete
+            //delete image if no image is given
+            await deleteFile(course.imageKey);
+
+            course.imageKey = null;
+        }
+    }
+    catch (e) {
+        logger.error(`Error while uploading/modifying image for course ${courseID}`, e);
+        return 503;
+    }
+
+    try {
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully changed image of course with ID ${courseID}`);
+
+        return { imageURL: course.imageURL() };
+    } catch (e) {
+        logger.error("Can't save changed image key to database: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+/**
+ * @api {POST} /course/:id/image RemoveImage
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Remove the image of a course
+ *
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ *
+ * @apiName RemoveImage
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse ContentType
+ *
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function deleteCourseImageHandler(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (status < 300) {
+                    const result = await setCourseImage(res.locals.user, +req.params.id, null);
+
+                    if (typeof result === "number") {
+                        status = result;
+                    }
+                    else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to delete course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+/**
+ * @api {POST} /course/:id/inviteexternal InviteExternalCourseGuest
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Sends an invitation to an external course guest.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the course
+ *
+ * @apiName InviteExternalCourseGuest
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse PostExternalInvite
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/inviteexternal
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function inviteExternalHandler(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                typeof req.body.firstname === "string" && req.body.firstname.length > 0 && //oh shit... this is soooo dirty...
+                typeof req.body.lastname === "string" && req.body.lastname.length > 0 &&
+                typeof req.body.email === "string" && req.body.email.length > 0) {
+
+                status = await inviteExternal(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
+
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/inviteexternal");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to invite an external person to a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
+
+async function inviteExternal(student: Student, courseID: number, inviteeInfo: ApiPostExternalInvite): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check authorization
+    if (!student.active || !student.isInstructor || await student.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`Unauthorized student ${student.id} tried to invite external guest to course ${courseID}`);
+        return 403;
+    }
+
+    // Check access rights of student to the course
+    const course = await entityManager.findOne(Course, { id: courseID }, {
+        relations: ["guests"]
+    });
+    if (course == undefined) {
+        logger.warn(`Student ${student.id} tried to invite external guest to non-existent course (ID ${courseID})`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course, but has no access rights for that course (ID ${courseID})`);
+        return 403;
+    }
+
+    if (course.courseState !== CourseState.ALLOWED) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course (ID ${courseID}) but that course is not yet allowed!`);
+        return 403;
+    }
+
+    //check inviteeInfo
+    const guestEmail = inviteeInfo.email.toLowerCase(); //always lower case...
+    if (!isEmail(guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite an external guest for course (ID ${courseID}), but the given email address is invalid`);
+        return 400;
+    }
+
+    const currentGuests = course.guests;
+    //make sure that at most 5 persons are invited per course
+    if (currentGuests.length >= 5) {
+        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 5 invited guests`);
+        return 429; //indicate that no more guests could be invited
+    }
+
+    //check if person is already invited
+    if (currentGuests.some(g => g.email === guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite another external guest with email ${guestEmail} for course with ID ${courseID}, but that guest was already invited!`);
+        return 409; //conflict
+    }
+
+    //create new guest instance
+    const uniqueToken = await generateNewCourseGuestToken(entityManager); //unique one...
+    const newGuest = new CourseGuest(guestEmail, inviteeInfo.firstname, inviteeInfo.lastname, course, student, uniqueToken);
+
+    //save that new guest
+    try {
+        await entityManager.save(newGuest);
+
+        //send the corresponding mail to the guest
+        await sendGuestInvitationMail(newGuest);
+
+        return 200;
+    }
+    catch (e) {
+        logger.error(`An error occurred during invitation of guest ${guestEmail} for course ${courseID}: ${e}`);
+        return 500;
+    }
+}
+
+
+/**
+ * @api {POST} /course/meeting/external/join/:token ExternalGuestJoinMeeting
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Uses the given token to join the external meeting
+ *
+ * @apiParam (URL Parameter) {string} token The token that should be used to join the external meeting
+ *
+ * @apiName ExternalGuestJoinMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/meeting/external/join/:token
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function joinCourseMeetingExternalHandler(req: Request, res: Response) {
+    try {
+        if (req.params.token != undefined) {
+            const result = await joinCourseMeetingExternalGuest(req.params.token);
+
+            if (typeof result === "number") {
+                res.status(result).end();
+            }
+            else {
+                //successfully got join url
+                res.send(result);
+                return;
+            }
+        } else {
+            logger.warn("Invalid request for POST /course/meeting/external/join/:token");
+            logger.debug(req.body);
+            res.status(400).end();
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        res.status(500).end();
+    }
+}
+
+async function joinCourseMeetingExternalGuest(token: string): Promise<number | ApiExternalGuestJoinMeetingResult> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check token
+    const guest = await entityManager.findOne(CourseGuest, {
+        where: {
+            token
+        },
+        relations: ["course"]
+    });
+
+    if (!guest) {
+        logger.error(`Join course using token failed: Cannot find guest info corresponding to token '${token}'`);
+        return 400;
+    }
+
+    const course = guest.course;
+
+    //get the first subcourse of this course (because my code here has no special handling for the subcourses case -> not good, but quick and dirty since the entire courses code will entirely gets deleted in a few weeks...)
+    const subcourse = course?.subcourses?.[0];
+
+    if (!subcourse) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course?.id} since that course has no subcourses!`);
+        return 500;
+    }
+
+    const subcourseIDString = ""+subcourse.id;
+    //get the meeting for that subcourse
+    const meeting = await getBBBMeetingFromDB(subcourseIDString);
+
+    if (!meeting) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since there is no meeting started yet`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+    //check if the meeting is running
+    const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseIDString);
+
+    if (!meetingIsRunning) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since the meeting exists, but wasn't yet started by the instructor`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+
+    //create the join url
+    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+
+    return {
+        url: joinURL
+    };
+}
+
+/**
+ * @api {POST} /course/:id/subcourse/:subid/certificate IssueGroupCertificate
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Send a mail to all selected participants and issue them a certificate that is attached to that mail.
+ *
+ * The course instructors may use this endpoint.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName IssueGroupCertificate
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiUse PostIssueGroupCertificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<SUBID>/certificate -d "<REQUEST"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusForbidden
+ * @apiUse StatusInternalServerError
+ */
+export async function issueCourseCertificateHandler(req: Request, res: Response) {
+
+    let status = 204;
+
+    if (res.locals.user instanceof Student) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && req.body.receivers instanceof Array) {
+            status = await issueCourseCertificate(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.receivers);
+        } else {
+            logger.warn("Missing or invalid parameters for issueCourseCertificate");
+            status = 400;
+        }
+    } else {
+        logger.warn("Issuing course certificate requested by Non-Student");
+        status = 403;
+    }
+
+    res.status(status).end();
+}
+
+async function issueCourseCertificate(student: Student, courseId: number, subcourseId: number, receivers: string[]) {
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`User ${student.wix_id} cannot issue a course certificate for subcourse with ID ${subcourseId} since that student is no (successfully screened) instructor`);
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, { id: courseId }, {
+        loadEagerRelations: false,
+        relations: ["instructors"]
+    });
+
+    if (course == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificates for invalid course with ID ${courseId}`);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course }, {
+        loadEagerRelations: false,
+        relations: ["lectures"]
+    });
+    if (subcourse == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for invalid subcourse with ID ${subcourseId}.`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => i.id === student.id);
+    if (!authorized) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate as user who is not instructor of course with ID ${course}`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    //check participants list
+    if (receivers.length === 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for NO receivers at all. That is not possible.`);
+        return 400;
+    }
+    if (receivers.some(r => typeof r !== "string")) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for receivers in array where not all elements are strings(receivers: ${JSON.stringify(receivers)})`);
+        return 400;
+    }
+    const participants = await Promise.all(receivers.map(r => getPupilByWixID(entityManager, r)));
+
+    const unknownParticipants = participants.filter(p => p == null);
+
+    if (unknownParticipants.length > 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for at least one unknown receiver, which is not allowed (unknown receivers: ${JSON.stringify(unknownParticipants)})`);
+        return 400;
+    }
+
+
+    //everything looks fine, so issue the certificates and send them via email.
+    try {
+        // get the transaction log
+        const transactionLog = getTransactionLog();
+
+        //compute course meta data
+        const courseDuration = subcourse.totalDuration() / 60; //because we wanna have it in hours...
+
+        for (let participant of participants) {
+            //create course certificate buffer
+            const certificateBuffer = await getCourseCertificate(
+                student.wix_id,
+                participant.wix_id,
+                participant.fullName(),
+                course.name,
+                subcourse.lectures,
+                courseDuration
+            );
+
+            //send mail to pupil
+            await sendParticipantDrehtuerCertificate(participant, course, certificateBuffer);
+
+            //TRANSACTION LOG to know who got issued when a certificate by which instructor...
+            await transactionLog.log(new InstructorIssuedCertificateEvent(student, participant, subcourse));
+
+            //save certificate issuing to database
+            const courseParticipationCertificate = new CourseParticipationCertificate(student, participant, subcourse);
+            await entityManager.save(courseParticipationCertificate);
+        }
+    } catch (e) {
+        logger.warn("Unable to issue course certificate");
+        logger.debug(e);
+        return 400;
+    }
+
+    return 204;
 }

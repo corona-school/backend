@@ -8,7 +8,7 @@ import {verifyToken} from "../../web/controllers/tokenController";
 import databaseHelper from "../utils/databaseHelper";
 
 describe("Screening Invitation", function() {
-    this.timeout(10000);
+    this.timeout(20000);
 
     // The connection that should be used for tests
     let connection: Connection;
@@ -69,7 +69,7 @@ describe("Screening Invitation", function() {
                     assert.strictEqual(mailjetStub.getCall(0).args[5], false);
 
                     assert.strictEqual(mailjetStub.getCall(1).args[0], "Wir möchten dich kennenlernen!");
-                    assert.strictEqual(mailjetStub.getCall(1).args[1], DEFAULTSENDERS.screening);
+                    assert.strictEqual(mailjetStub.getCall(1).args[1], DEFAULTSENDERS.support);
                     assert.strictEqual(mailjetStub.getCall(1).args[2], testStudent.email);
                     assert.strictEqual(mailjetStub.getCall(1).args[3], 1362938);
                     assert.strictEqual(mailjetStub.getCall(1).args[4].personFirstname, testStudent.firstname);
