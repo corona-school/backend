@@ -17,6 +17,7 @@ import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
 import * as EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
+import { createAutoLoginLink } from '../utils';
 
 
 const logger = getLogger();
@@ -417,8 +418,13 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
 
     if (params.state === "awaiting-approval") {
-        // TODO: Send Email
-        // sendTemplateMail(mailjetTemplates.PUPILSIGNREQUEST, certificate.pupil.email);
+        const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
+        const mail = mailjetTemplates.CERTIFICATEREQUEST({
+            certificateLink,
+            pupilFirstname: pc.pupil.firstname,
+            studentFirstname: pc.student.firstname
+        });
+        await sendTemplateMail(mail, pc.pupil.email);
     }
 
     return pc;
@@ -468,7 +474,6 @@ function getCertificateLink(req: Request, certificate: ParticipationCertificate,
 function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
     const { student, pupil } = certificate;
 
-    // TODO: Load different language templates
     const template = loadTemplate("certificateTemplate", lang);
 
     const options = {
@@ -548,6 +553,11 @@ async function signCertificate(certificate: ParticipationCertificate, signatureP
 
     await getManager().save(ParticipationCertificate, certificate);
 
-    // TODO: Send Email to certificate.student
-    // sendTemplateMail(mailjetTemplates.STUDENTSIGNEDCERT, certificate.student.email);
+    const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
+    const mail = mailjetTemplates.CERTIFICATESIGNED({
+        certificateLink,
+        pupilFirstname: certificate.pupil.firstname,
+        studentFirstname: certificate.student.firstname
+    });
+    await sendTemplateMail(mail, certificate.student.email);
 }
