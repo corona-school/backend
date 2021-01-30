@@ -3,10 +3,9 @@ import { Request, Response } from 'express';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { getTransactionLog } from '../../../common/transactionlog';
-import { getManager, getRepository } from 'typeorm';
+import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
-import * as escape from 'escape-html';
 import * as pdf from 'html-pdf';
 import * as path from 'path';
 import * as moment from "moment";
@@ -171,7 +170,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase(), student: requestor }, {
             relations: ["student", "pupil"],
             /* Unfortunately there is no "*" option which would also select the signatures. The query builder also does not cover this case */
-            select: ["uuid", "categories", "certificateDate", "endDate", "hoursPerWeek", "hoursTotal", "id", "medium", "ongoingLessons", "signatureParent", "signaturePupil", "startDate", "state", "subjects", "uuid"]
+            select: ["uuid", "categories", "certificateDate", "endDate", "hoursPerWeek", "hoursTotal", "id", "medium", "ongoingLessons", "signatureParent", "signaturePupil", "signatureDate", "signatureLocation", "startDate", "state", "subjects"]
         });
 
         if (!certificate)

@@ -21,6 +21,8 @@
     <% if(ONGOING) { %>
         Hilfe ging nach Zertifikat weiter
     <% } %>
+    Ort der Unterschrift: <%= SIGNATURE_LOCATION %>
+    Tag der Unterschrift: <%= SIGNATURE_DATE %>
     <% if(SIGNATURE_PARENT) { %>
       Unterschrift Eltern:
       <img src="<%- SIGNATURE_PARENT %>" />
