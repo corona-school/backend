@@ -363,7 +363,7 @@ export async function setupDevDB() {
         certificateDate: new Date(),
         startDate: new Date(),
         endDate: new Date(),
-        categories: "xyzipd",
+        categories: "test",
         hoursTotal: 8,
         medium: "PC",
         hoursPerWeek: 8
