@@ -498,7 +498,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         ONGOING: certificate.ongoingLessons,
         SIGNATURE_PARENT: certificate.signatureParent?.toString("utf-8"),
         SIGNATURE_PUPIL: certificate.signaturePupil?.toString("utf-8"),
-        SINGATURE_LOCATION: certificate.signatureLocation,
+        SIGNATURE_LOCATION: certificate.signatureLocation,
         SIGNATURE_DATE: certificate.signatureDate
     });
 
