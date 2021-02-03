@@ -397,7 +397,7 @@ export async function setupDevDB() {
         hoursTotal: 8,
         medium: "PC",
         hoursPerWeek: 8,
-        state: "approved",
+        state: "awaiting-approval",
         signaturePupil: signature
     });
 
@@ -417,7 +417,23 @@ export async function setupDevDB() {
         signatureParent: signature
     });
 
-    for (const cert of [pc1, pc2, pc3, pc4]) {
+    const pc5 = Object.assign(new ParticipationCertificate(), {
+        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        pupil: pupils[0],
+        student: students[0],
+        subjects: "Englisch,Deutsch",
+        certificateDate: new Date(),
+        startDate: new Date(),
+        endDate: new Date(),
+        categories: "xyzipd",
+        hoursTotal: 8,
+        medium: "PC",
+        hoursPerWeek: 8,
+        state: "awaiting-approval",
+        signaturePupil: signature
+    });
+
+    for (const cert of [pc1, pc2, pc3, pc4, pc5]) {
         await entityManager.save(ParticipationCertificate, cert);
         console.log("Inserted a certificate with ID: " + cert.uuid);
     }
