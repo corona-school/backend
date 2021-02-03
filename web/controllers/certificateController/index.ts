@@ -499,7 +499,7 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         SIGNATURE_PARENT: certificate.signatureParent?.toString("utf-8"),
         SIGNATURE_PUPIL: certificate.signaturePupil?.toString("utf-8"),
         SIGNATURE_LOCATION: certificate.signatureLocation,
-        SIGNATURE_DATE: certificate.signatureDate
+        SIGNATURE_DATE: moment(certificate.signatureDate).format("D.M.YYYY")
     });
 
     return new Promise((resolve, reject) => {

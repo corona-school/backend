@@ -397,8 +397,7 @@ export async function setupDevDB() {
         hoursTotal: 8,
         medium: "PC",
         hoursPerWeek: 8,
-        state: "awaiting-approval",
-        signaturePupil: signature
+        state: "awaiting-approval"
     });
 
     const pc4 = Object.assign(new ParticipationCertificate(), {
@@ -429,8 +428,7 @@ export async function setupDevDB() {
         hoursTotal: 8,
         medium: "PC",
         hoursPerWeek: 8,
-        state: "awaiting-approval",
-        signaturePupil: signature
+        state: "awaiting-approval"
     });
 
     for (const cert of [pc1, pc2, pc3, pc4, pc5]) {
