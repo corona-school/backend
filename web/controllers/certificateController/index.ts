@@ -6,7 +6,7 @@ import { getTransactionLog } from '../../../common/transactionlog';
 import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
-import * as pdf from 'html-pdf';
+import { generatePDFFromHTMLString } from 'html-pppdf';
 import * as path from 'path';
 import * as moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
@@ -471,16 +471,10 @@ function getCertificateLink(req: Request, certificate: ParticipationCertificate,
     return "http://verify." + baseDomain + "/" + certificate.uuid + "?lang=" + lang;
 }
 
-function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
+async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
     const { student, pupil } = certificate;
 
     const template = loadTemplate("certificateTemplate", lang);
-
-    const options = {
-        "base": "file://" + path.resolve(__dirname + "/../../../../assets") + "/",
-        "filename": "/tmp/html-pdf-" + student.id + "-" + pupil.id + "-" + moment().format("X") + ".pdf"
-    };
-
 
     const result = template({
         NAMESTUDENT: student.firstname + " " + student.lastname,
@@ -502,14 +496,8 @@ function createPDFBinary(certificate: ParticipationCertificate, link: string, la
         SIGNATURE_DATE: moment(certificate.signatureDate).format("D.M.YYYY")
     });
 
-    return new Promise((resolve, reject) => {
-        pdf.create(result, options).toBuffer((err, buffer) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(buffer);
-            }
-        });
+    return await generatePDFFromHTMLString(result, {
+        includePaths: [path.resolve(__dirname + "/../../../../assets") + "/"]
     });
 }
 
