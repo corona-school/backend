@@ -493,7 +493,7 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_PARENT: certificate.signatureParent?.toString("utf-8"),
         SIGNATURE_PUPIL: certificate.signaturePupil?.toString("utf-8"),
         SIGNATURE_LOCATION: certificate.signatureLocation,
-        SIGNATURE_DATE: moment(certificate.signatureDate).format("D.M.YYYY")
+        SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format("D.M.YYYY")
     });
 
     return await generatePDFFromHTMLString(result, {
