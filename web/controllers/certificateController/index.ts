@@ -496,8 +496,13 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format("D.M.YYYY")
     });
 
+    const ASSETS = __dirname + "/../../../../assets";
     return await generatePDFFromHTMLString(result, {
-        includePaths: [path.resolve(__dirname + "/../../../../assets") + "/"]
+        includePaths: [
+            path.resolve(ASSETS, "creiners.png"),
+            path.resolve(ASSETS, "coronaschool_top.png"),
+            path.resolve(ASSETS, "badge.svg")
+        ]
     });
 }
 
