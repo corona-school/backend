@@ -297,7 +297,7 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
     if (certificate.state === "manual")
         return res.status(400).send("Certificate cannot be signed as it is a manual one");
 
-    await signCertificate(certificate, signatureParent, signaturePupil, signatureLocation);
+    await signCertificate(req, certificate, signatureParent, signaturePupil, signatureLocation);
 
     return res.send("Certificate signed");
 }
@@ -527,7 +527,7 @@ async function viewParticipationCertificate(certificate: ParticipationCertificat
     });
 }
 
-async function signCertificate(certificate: ParticipationCertificate, signatureParent: string | undefined, signaturePupil: string | undefined, signatureLocation: string) {
+async function signCertificate(req: Request, certificate: ParticipationCertificate, signatureParent: string | undefined, signaturePupil: string | undefined, signatureLocation: string) {
     assert(signaturePupil || signatureParent, "Parent or Pupil signs certificate");
     assert(!signaturePupil || signaturePupil.match(VALID_BASE64), "Pupil Signature is valid Base 64");
     assert(!signatureParent || signatureParent.match(VALID_BASE64), "Parent Signature is valid Base 64");
@@ -546,11 +546,13 @@ async function signCertificate(certificate: ParticipationCertificate, signatureP
 
     await getManager().save(ParticipationCertificate, certificate);
 
+    const rendered = await createPDFBinary(certificate, getCertificateLink(req, certificate, "de"), "de");
+
     const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
     const mail = mailjetTemplates.CERTIFICATESIGNED({
         certificateLink,
         pupilFirstname: certificate.pupil.firstname,
         studentFirstname: certificate.student.firstname
-    });
+    }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
 }
