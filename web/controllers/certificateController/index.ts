@@ -89,7 +89,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (requestor.wix_id != req.params.student)
             return res.status(403).send("Students may only retrieve certificates for themselves");
 
-        let state = req.params.automatic ? State.awaitingApproval : State.manual;
+        let state = req.query.automatic ? State.awaitingApproval : State.manual;
 
         // TODO: Move to POST to body
         // TODO: Properly validate
