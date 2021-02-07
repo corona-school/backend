@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <base href="./assets/" />
     <meta charset="UTF-8">
     <title>[TEST] Corona School Bescheinigung</title>
 </head>
