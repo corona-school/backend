@@ -145,7 +145,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
         certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
         certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
         certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
-
+        certificateRouter.post("/:certificateId/sign", authCheckFactory(), certificateController.signCertificateEndpoint);
 
         app.use("/api/certificate", certificateRouter);
         app.get("/api/certificates", authCheckFactory(), certificateController.getCertificatesEndpoint);
@@ -247,26 +247,26 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
             "/screener/:email",
             screeningController.updateScreenerByMailHandler
         );
-        // screenerApiRouter.get(
-        //     "/courses",
-        //     screeningController.getCourses
-        // );
-        // screenerApiRouter.get(
-        //     "/courses/tags",
-        //     screeningController.getCourseTags
-        // );
-        // screenerApiRouter.post(
-        //     "/courses/tags/create",
-        //     screeningController.postCreateCourseTag
-        // );
-        // screenerApiRouter.post(
-        //     "/course/:id/update",
-        //     screeningController.updateCourse
-        // );
-        // screenerApiRouter.get(
-        //     "/instructors",
-        //     screeningController.getInstructors
-        // );
+        screenerApiRouter.get(
+            "/courses",
+            screeningController.getCourses
+        );
+        screenerApiRouter.get(
+            "/courses/tags",
+            screeningController.getCourseTags
+        );
+        screenerApiRouter.post(
+            "/courses/tags/create",
+            screeningController.postCreateCourseTag
+        );
+        screenerApiRouter.post(
+            "/course/:id/update",
+            screeningController.updateCourse
+        );
+        screenerApiRouter.get(
+            "/instructors",
+            screeningController.getInstructors
+        );
 
         app.use("/api/screening", screenerApiRouter);
     }

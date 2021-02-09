@@ -6,11 +6,12 @@ export class CourseTagDTO {
     category?: string;
     courses: number[];
 
-    constructor(courseTag: CourseTag) {
+    // eslint-disable-next-line
+    constructor(courseTag: CourseTag | {identifier: string, name: string, category: string, course_tags_course_tag: {courseId: number}[]}) {
         this.identifier = courseTag.identifier;
         this.name = courseTag.name;
         this.category = courseTag.category;
-        this.courses = courseTag.courses.map(c => c.id);
+        this.courses = courseTag instanceof CourseTag ? courseTag?.courses.map(c => c.id) : courseTag.course_tags_course_tag.map(c => c.courseId);
     }
 
     isValid(): boolean {

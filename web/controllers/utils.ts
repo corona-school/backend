@@ -2,6 +2,7 @@ import {Division, Expertise} from "../../common/entity/Mentor";
 import {getLogger} from "log4js";
 import {ApiSubject} from "./format";
 import {checkSubject} from "./userController/format";
+import { Person } from "../../common/entity/Person";
 
 const logger = getLogger();
 
@@ -47,4 +48,10 @@ export function checkExpertises(expertises: string[]) {
         }
     }
     return result;
+}
+
+/* Creates a link which logs in as a certain user and then goes to the path in the frontend
+   ATTENTION: Exposing this to someone else than the user is not a good idea! */
+export function createAutoLoginLink(user: Person, path: string) {
+    return `https://my.corona-school.de/login?token=${user.authToken}&path=${encodeURIComponent(path)}`;
 }

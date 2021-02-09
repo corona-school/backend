@@ -268,6 +268,23 @@ export const mailjet = {
             variables: variables
         };
     },
+    CERTIFICATEREQUEST: (variables: { certificateLink: string, studentFirstname: string, pupilFirstname: string }) => (<TemplateMail>{
+        type: "certificaterequest",
+        id: 2317254,
+        disabled: false,
+        variables
+    }),
+    CERTIFICATESIGNED: (variables: { certificateLink: string, studentFirstname: string, pupilFirstname: string }, pdfBase64: string) => (<TemplateMail>{
+        type: "certificatesigned",
+        id: 2315511,
+        disabled: false,
+        variables,
+        attachements: [{
+            contentType: "application/pdf",
+            filename: "Teilnahmebescheinigung_Coronaschool.pdf",
+            base64Content: pdfBase64
+        }]
+    }),
     COURSESDREHTUERCERTIFICATE: (variables: {
         participantFirstname: string;
         courseName: string;

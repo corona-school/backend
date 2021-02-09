@@ -17,6 +17,7 @@ import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import { CourseTag } from "../../../common/entity/CourseTag";
 import { CourseTagDTO } from "../../../common/dto/CourseTagDTO";
 import { createCourseTag } from "../../../common/util/createCourseTag";
+import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
@@ -515,10 +516,11 @@ export async function getCourses(req: Request, res: Response) {
  */
 export async function getCourseTags(req: Request, res: Response) {
     try {
-        const entityManager = getManager();
-
-        const tags = await entityManager.find(CourseTag, {
-            relations: ["courses"]
+        const tags = await prisma.course_tag.findMany({
+            include: {
+                // eslint-disable-next-line
+                course_tags_course_tag: true
+            }
         });
 
         const apiResponse = tags.map(t => new CourseTagDTO(t));
