@@ -16,14 +16,14 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   cd ./assets
 
   echo '> Cleaning up the assets folder:'
-  tree .
+  ls -R
   rm -r ./*
 
   echo '> Cloning the secret asset repo into it'
   ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
 
   echo '> These files are now there:'
-  tree .
+  ls -R
 else
   echo '> No Asset repository set in ENV, skipping step'
 fi
