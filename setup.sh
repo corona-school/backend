@@ -21,7 +21,9 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 
   
   echo '> Etablishing trust to Github'
-  ssh-keyscan -H -t rsa github.com  >> ~/.ssh/known_hosts
+  # ssh-keyscan -H -t rsa github.com  >> ~/.ssh/known_hosts
+  ssh -o StrictHostKeyChecking=no github.com
+
 
   echo '> Cloning the secret asset repo into it'
   ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
