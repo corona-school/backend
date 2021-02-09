@@ -21,7 +21,11 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 
   
   echo '> Etablishing trust to Github'
+  # Usually one would do this (and even that is bad as it allows MitM attacks) ...
   # ssh-keyscan -H -t rsa github.com  >> ~/.ssh/known_hosts
+  # but as the heroku stack somehow rewrites ~ to not point to the users home, 
+  # I have no idea were to write to, so I need to fall back to black magic
+  # Github will refuse the connection, but at least by then the SSH Key is then added to the known hosts 
   ssh -o StrictHostKeyChecking=no github.com
 
 
