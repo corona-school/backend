@@ -1,6 +1,7 @@
 # This script will run after Typescript was compiled into the ./built folder
 # It will only be run inside Heroku's build, not with 'npm run build'
 
+
 echo ' -------------- Setup.sh started            -------------- '
 
 # If a private repo is available to get the secret assets from, replace the /built/assets folder
