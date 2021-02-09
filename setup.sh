@@ -13,6 +13,11 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   echo '> Key to access it (KEEP THIS PRIVATE):'
   echo $SECRET_ASSETS_KEY
 
+
+  export DECODED="$(echo $SECRET_ASSETS_KEY | openssl base64 -A -d)"
+  echo '> Decoded:'
+  echo $DECODED
+
   cd ./assets
 
   echo '> Cleaning up the assets folder:'
@@ -20,7 +25,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   rm -r ./*
 
   echo '> Cloning the secret asset repo into it'
-  ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
+  ssh-agent bash -c 'ssh-add - <<< "${DECODED}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
 
   echo '> These files are now there:'
   ls -R
