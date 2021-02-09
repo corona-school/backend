@@ -17,7 +17,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 
   echo '> Cleaning up the assets folder:'
   ls -R
-  sudo rm -r ./*
+  rm -r ./*
 
   echo '> Cloning the secret asset repo into it'
   ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
