@@ -10,6 +10,7 @@ echo 'STEP 1/1: Add secret assets repository'
 if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   echo '> Asset repository set in ENV:'
   echo $SECRET_ASSETS_REPOSITORY
+  
   echo '> Key to access it (KEEP THIS PRIVATE):'
   echo $SECRET_ASSETS_KEY
 
