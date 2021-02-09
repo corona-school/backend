@@ -4,7 +4,7 @@
 echo ' -------------- Setup.sh started           -------------- '
 
 # If a private repo is available to get the secret assets from, replace the /built/assets folder
-if  ! -z "${SECRET_ASSETS_REPOSITORY}"; then
+if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   cd ./assets
   rm ./*
   ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}"'
