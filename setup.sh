@@ -16,6 +16,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   cd ./assets
 
   echo '> Cleaning up the assets folder:'
+  ls
   rm -r ./*
 
   echo '> Cloning the secret asset repo into it'
