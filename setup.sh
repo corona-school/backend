@@ -23,7 +23,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   
   echo '> Etablishing trust to Github'
   # Usually one would do this (and even that is bad as it allows MitM attacks) ...
-  mdkdir ~/.ssh
+  mkdir ~/.ssh
   ssh-keyscan -v -H -t  rsa github.com  >> ~/.ssh/known_hosts
   cat ~/.ssh/known_hosts
   # but as the heroku stack somehow rewrites ~ to not point to the users home, 
