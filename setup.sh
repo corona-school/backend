@@ -22,14 +22,14 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 
   
   echo '> Etablishing trust to Github'
-  # Usually one would do this (and even that is bad as it allows MitM attacks) ...
   mkdir ~/.ssh
-  ssh-keyscan -v -H -t  rsa github.com  >> ~/.ssh/known_hosts
+  
+  # We could dynamically retrieve the key like this:
+  # ssh-keyscan -v -H -t  rsa github.com  >> ~/.ssh/known_hosts
+  # But as long as Github does not change it's key, it is more secure to just pin it here statically
+  # That prevent's MitM attacks between AWS and Github (yeah, very likely that those attackers would target corona school)
+  echo '|1|nJBTgCBhxtu/n/+UpWS7ttBoiys=|rQxqxeiZRNiTSzHMhbR8HrfoBS4= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
   cat ~/.ssh/known_hosts
-  # but as the heroku stack somehow rewrites ~ to not point to the users home, 
-  # I have no idea were to write to, so I need to fall back to black magic
-  # Github will refuse the connection, but at least by then the SSH Key is then added to the known hosts 
-  # ssh -o StrictHostKeyChecking=no github.com
 
 
   echo '> Cloning the secret asset repo into it'
