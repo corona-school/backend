@@ -14,11 +14,10 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   echo '> Key to access it (KEEP THIS PRIVATE):'
   echo $SECRET_ASSETS_KEY
 
-  cd ./assets
 
   echo '> Cleaning up the assets folder:'
-  ls -R
-  rm -r ./*
+  ls -R ./assets
+  rm -rf ./assets
 
   
   echo '> Etablishing trust to Github'
@@ -33,10 +32,10 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 
 
   echo '> Cloning the secret asset repo into it'
-  ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" .'
+  ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" ./assets' || { echo 'Failed to pull repository'; exit 1; }
 
   echo '> These files are now there:'
-  ls -R
+  ls -R ./assets
 else
   echo '> No Asset repository set in ENV, skipping step'
 fi
