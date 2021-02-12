@@ -9,7 +9,7 @@
   "scripts": {
     "start": "echo Please be more specific what to start for now...",
     "build": "tsc",
-    "build:clean": "rm -rf built && tsc",
+    "build:clean": "(rm -rf ./built/ 2> /dev/null || find ./built/ -mindepth 1 -delete) && npm run build",
     "test": "mocha -r ts-node/register './tests/**/*.test.ts' --exit",
     "test:coverage": "nyc npm run test",
     "jobs": "node ./built/jobs/index.js",
