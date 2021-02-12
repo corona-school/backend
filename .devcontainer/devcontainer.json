@@ -18,7 +18,8 @@
 			"username": "postgres",
 			"password": "postgres"
 		}],
-		"remote.restoreForwardedPorts": false
+		"remote.restoreForwardedPorts": false,
+		"typescript.preferences.importModuleSpecifier": "relative"
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
