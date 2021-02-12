@@ -11,8 +11,6 @@ mailstore
 
 # Assets
 assets/*
-!assets/**/*.example
-!assets/favicon.ico
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
