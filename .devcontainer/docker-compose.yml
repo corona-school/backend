@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile-App
+      args:
+        # [Choice] Node.js version: 14, 12, 10
+        VARIANT: 14
+        # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
+        USER_UID: 1000
+        USER_GID: 1000
+
+    volumes:
+      - ..:/workspace:cached
+      - corona-school-backend-node_modules:/workspace/node_modules # use separate volume for node_modules to improve performance
+      - corona-school-backend-built:/workspace/built # use separate volume for built to improve performance and keep the files in Docker
+      
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:db
+
+  db:
+    build: 
+      context: .
+      dockerfile: Dockerfile-DB
+    restart: unless-stopped
+    volumes:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: coronaschool-dev
+
+volumes:
+  corona-school-backend-node_modules:
+  corona-school-backend-built:
