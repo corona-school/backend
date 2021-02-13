@@ -66,21 +66,20 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
     try {
         assert(res.locals.user, "Must be logged in");
 
-        const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, categories, ongoingLessons } = req.body;
+        const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, activities, ongoingLessons } = req.body;
         const requestor = res.locals.user as Student;
 
         if (requestor instanceof Pupil)
             return res.status(403).send("Only students may request certificates");
 
-        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !categories)
+        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !activities)
             return res.status(400).send("Missing parameters");
-
 
         if (automatic !== undefined && typeof automatic !== "boolean")
             return res.status(400).send("automatic must be boolean");
 
-        if (typeof endDate !== "string" /* || validate time */)
-            return res.status(400).send("ongoingLessons must be a number");
+        if (typeof endDate !== "number")
+            return res.status(400).send("endDate must be a number");
 
         if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string"))
             return res.status(400).send("subjects must be an array of strings");
@@ -94,7 +93,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (!MEDIUMS.includes(medium))
             return res.status(400).send(`medium must be one of ${MEDIUMS}`);
 
-        if (!Array.isArray(categories) || categories.some(it => typeof it !== "string"))
+        if (!Array.isArray(activities) || activities.some(it => typeof it !== "string"))
             return res.status(400).send("categories must be an array of strings");
 
         if (ongoingLessons !== undefined && typeof ongoingLessons !== "boolean")
@@ -108,7 +107,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
             hoursPerWeek,
             hoursTotal,
             medium,
-            categories: categories.join("\n"),
+            activities: activities.join("\n"),
             ongoingLessons,
             state
         };
@@ -386,12 +385,12 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
 
 
 interface IParams {
-    endDate: string,
+    endDate: number,
     subjects: string,
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
-    categories: string,
+    activities: string,
     ongoingLessons: boolean,
     state: State.manual | State.awaitingApproval
 }
@@ -404,7 +403,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.pupil = pupil;
     pc.student = requestor;
     pc.subjects = params.subjects;
-    pc.categories = params.categories;
+    pc.categories = params.activities;
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.medium = params.medium;
