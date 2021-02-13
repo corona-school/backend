@@ -35,7 +35,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   ssh-agent bash -c 'ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" ./assets' || { echo 'Failed to pull repository'; exit 1; }
 
   version=$( cat .certificate-version )
-  echo '> Checking out version ${version}'
+  echo "> Checking out version ${version}"
   git -C ./assets checkout $version
 
   echo '> These files are now there:'
