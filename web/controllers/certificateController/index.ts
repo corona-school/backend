@@ -84,10 +84,10 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string"))
             return res.status(400).send("subjects must be an array of strings");
 
-        if (typeof hoursPerWeek !== "number" || hoursPerWeek <= 0)
+        if (typeof hoursPerWeek !== "number" || hoursPerWeek < 0)
             return res.status(400).send("hoursPerWeek must be a positive number");
 
-        if (typeof hoursTotal !== "number" || hoursTotal <= 0)
+        if (typeof hoursTotal !== "number" || hoursTotal < 0)
             return res.status(400).send("hoursTotal must be a positive number");
 
         if (!MEDIUMS.includes(medium))
