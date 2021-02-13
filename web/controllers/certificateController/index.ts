@@ -72,7 +72,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         if (requestor instanceof Pupil)
             return res.status(403).send("Only students may request certificates");
 
-        if (!pupil || !endDate || !subjects || !hoursPerWeek || !hoursTotal || !medium || !categories)
+        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !categories)
             return res.status(400).send("Missing parameters");
 
 
