@@ -66,7 +66,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
     try {
         assert(res.locals.user, "Must be logged in");
 
-        const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, categories, ongoingLessons } = req.body.automatic;
+        const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, categories, ongoingLessons } = req.body;
         const requestor = res.locals.user as Student;
 
         if (requestor instanceof Pupil)
