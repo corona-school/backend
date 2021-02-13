@@ -11,6 +11,7 @@ import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourse
 import {BBBMeeting} from "../entity/BBBMeeting";
 import CreateBBBMeetingEvent from "../transactionlog/types/CreateBBBMeetingEvent";
 import {Student} from "../entity/Student";
+import { addCleanupAction } from "./cleanup";
 
 const parser = new Parser();
 const logger = getLogger();
@@ -19,9 +20,10 @@ const sharedSecret = process.env.BBB_SECRET;
 const baseUrl = process.env.BBB_BASEURL;
 
 const courseAttendanceLogInterval = 600000;
-setInterval(() => {
+const bbbMeetingInfoHandlerTimeout = setInterval(() => {
     handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);
+addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
     const entityManager = getManager();

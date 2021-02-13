@@ -1,7 +1,5 @@
 import * as express from "express";
-import * as fs from "fs";
 import * as http from "http";
-import * as https from "https";
 import * as bodyParser from "body-parser";
 import * as hpp from "hpp";
 import * as helmet from "helmet";
@@ -17,15 +15,15 @@ import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
 import * as expertController from "./controllers/expertController";
 import { configure, connectLogger, getLogger } from "log4js";
-import { createConnection } from "typeorm";
+import { createConnection, getConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
-import * as tls from "tls";
 import { allStateCooperationSubdomains } from "../common/entity/State";
 import * as multer from "multer";
 import * as moment from "moment-timezone";
-import { setupBrowser } from "html-pppdf";
+import { closeBrowser, setupBrowser } from "html-pppdf";
+import { performCleanupActions } from "../common/util/cleanup";
 
 // Logger setup
 try {
@@ -47,12 +45,13 @@ const app = express();
 //SETUP PDF generation environment
 async function setupPDFGenerationEnvironment() {
     await setupBrowser({
-        args: ["--no-sandbox"] //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
+        args: ["--no-sandbox"], //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
+        handleSIGTERM: false //don't close chrome on sigterm, which heroku sends to all processes
     });
 }
 
 // Database connection
-createConnection().then(setupPDFGenerationEnvironment).then(() => {
+createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     logger.info("Database connected");
     app.use(connectLogger(accessLogger, { level: "auto" }));
 
@@ -73,7 +72,8 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
     configureRegistrationAPI();
     configureMentoringAPI();
     configureExpertAPI();
-    deployServer();
+    const server = await deployServer();
+    configureGracefulShutdown(server);
 
     function addCorsMiddleware() {
 
@@ -309,86 +309,49 @@ createConnection().then(setupPDFGenerationEnvironment).then(() => {
         app.use("/api/expert", expertRouter);
     }
 
-    function deployHTTPServer() {
-        const staticFolder = process.env.STATIC_HTTP_FILE_PATH;
-
-        const staticHTTPServer = express();
-
-        staticHTTPServer.use((req, res, next) => {
-            const c = req.path.split("/").slice(0, 3).join("/");
-            if (!staticFolder || c !== '/.well-known/acme-challenge') { //if no static folder, redirect as usual (but have no acme challenge support)
-                res.redirect(301, 'https://' + req.headers.host + req.url);
-            } else {
-                next(); //otherwise static files
-            }
-        });
-
-        if (staticFolder) {
-            staticHTTPServer.use(express.static(staticFolder, { dotfiles: 'allow' }));
-        } else {
-            logger.warn("Have no STATIC_HTTP_FILE_PATH set, thus no ACME challenge support. Only redirecting all HTTP to HTTPS...");
+    async function deployServer() {
+        const isDev = process.env.NODE_ENV === "dev";
+        const port = process.env.PORT || 5000;
+        if (isDev) {
+            await setupDevDB();
         }
-
-        http.createServer(staticHTTPServer).listen(80);
-    }
-
-    function deployHTTPSServer() {
-        // Let's encrypt
-        const apiSSLFiles = { //API-Domain (necessary)
-            key: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/privkey.pem"),
-            cert: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/cert.pem"),
-            ca: fs.readFileSync("/etc/letsencrypt/live/api.corona-school.de/chain.pem")
-        };
-
-
-        let verifyContext: tls.SecureContext;
-
-        try {
-            const verifySSLFiles = { //Certificate Verification Domain (recommended for a more beautiful certificate URL)
-                key: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/privkey.pem"),
-                cert: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/cert.pem"),
-                ca: fs.readFileSync("/etc/letsencrypt/live/verify.corona-school.de/chain.pem")
-            };
-
-            //also have a second domain used for certificate verification on this server
-            verifyContext = tls.createSecureContext(verifySSLFiles);
-        } catch (e) {
-            logger.warn("The SSL files for Certificate Verfication/Validation domain are missing: ", e);
-        }
-
-        const options = {
-            ...apiSSLFiles,
-            SNICallback: function(domain, cb) {
-                if (verifyContext && (domain === 'verify.corona-school.de' || domain === 'www.verify.corona-school.de')) {
-                    cb(null, verifyContext);
-                } else {
-                    cb();
-                }
-            }
-        };
 
         // Start listening
-        https.createServer(options, app).listen(443);
+        return http.createServer(app).listen(port, () =>
+            logger.info(`${isDev ? "DEV-": ""}Server listening on port ${port}`)
+        ); //return server such that it can be used afterwards
     }
 
-    function deployServer() {
-        if (process.env.NODE_ENV == "dev") {
-            setupDevDB().then(() => {
-                // Start listening
-                http.createServer(app).listen(process.env.PORT || 5000, () =>
-                    logger.info("DEV server listening on port " + (process.env.PORT || 5000))
-                );
-            });
-        } else {
-            // ---> HTTP
-            deployHTTPServer();
+    function configureGracefulShutdown(server: http.Server) {
+        //NOTE: use this to cleanup node's event loop
+        process.on("SIGTERM", async () => {
+            logger.debug("SIGTERM signal received: Starting graceful shutdown procedures...");
+            //Close Server
+            await new Promise<void>( (resolve, reject) => server.close(() => {
+                resolve();
+            }));
+            logger.debug("✅ HTTP server closed!");
 
-            // ---> HTTPS
-            try {
-                deployHTTPSServer();
-            } catch (e) {
-                logger.error("Cannot setup HTTPS Server, because an error occurred (most likely some certificates are missing). Please add the certificates and restart the server!", e);
-            }
-        }
+            //remove intervals to cleanup, and anything else that have registered as cleanup actions
+            performCleanupActions();
+            logger.debug("✅ All other custom graceful shutdown actions completed!");
+
+            //close puppeteer (because if all connections are finished, it is no longer needed at the moment)
+            //even though this is not the cleanest solution (because it could still lead to some queued callbacks on node's event loop that uses puppeteer for pdf generation), it is called here, because for now all pdf generation is awaited for until a server-route's response was delivered.
+            await closeBrowser();
+            logger.debug("✅ Puppeteer gracefully shut down!");
+
+            //now, the process will automatically exit if node has no more async operations to perform (i.e. finished sending out all open mails that weren't awaited for etc.)
+        });
+
+        //NOTE: Use the following to perform async actions before exiting. This is called if node's event loop is empty and thus it will only add async operations that, when completed lead to an empty event loop, such that node can exit then.
+        process.on("beforeExit", async () => {
+            console.log("BEFORE EXIT TRIGGERED....");
+            //Close database connection
+            await getConnection()?.close();
+            logger.debug("✅ Default database connection successfully closed!");
+            //Finish...
+            logger.debug("Graceful Shutdown completed 🎉"); //event loop now fully cleaned up
+        });
     }
 });

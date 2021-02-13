@@ -56,6 +56,7 @@ import isEmail from "validator/lib/isEmail";
 import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
 import { getCourseCertificate } from '../../../common/drehtuer/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
+import { addCleanupAction } from '../../../common/util/cleanup';
 
 const logger = getLogger();
 
@@ -167,6 +168,7 @@ let cache = new CourseCache<ApiCourse[]>(CACHE_RELOAD_INTERVAL, async (key) => {
 
     return result;
 });
+addCleanupAction(() => cache.stopAutoReload()); //stop cache refresh on sigkill
 
 async function getCourses(student: Student | undefined,
                           pupil: Pupil | undefined, fields: Array<string>,
