@@ -26,7 +26,8 @@
     "db:migration:run": "npm run typeorm -- migration:run",
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
-    "linter": "eslint . --ext .ts"
+    "linter": "eslint . --ext .ts",
+    "heroku:release": "npx typeorm migration:run"
   },
   "dependencies": {
     "@prisma/client": "^2.14.0",
