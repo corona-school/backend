@@ -83,6 +83,7 @@
   "devDependencies": {
     "@prisma/cli": "^2.14.0",
     "@types/chai": "^4.2.13",
+    "@types/cron": "^1.7.2",
     "@types/lodash": "^4.14.155",
     "@types/mime-types": "^2.1.0",
     "@types/mocha": "^7.0.2",
