@@ -6,7 +6,7 @@ export class InitCourseEntities1590681099752 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "course_coursestate_enum" AS ENUM('created', 'submitted', 'allowed', 'denied', 'cancelled')`, undefined);
         await queryRunner.query(`CREATE TABLE "course" ("id" SERIAL NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "name" character varying NOT NULL, "outline" character varying NOT NULL, "description" character varying NOT NULL, "motivation" character varying NOT NULL, "requirements" character varying NOT NULL, "imageUrl" character varying, "minGrade" integer NOT NULL, "maxGrade" integer NOT NULL, "categoryId" integer NOT NULL, "joinAfterStart" boolean NOT NULL, "startDate" TIMESTAMP NOT NULL, "duration" integer NOT NULL, "frequency" integer NOT NULL, "courseState" "course_coursestate_enum" NOT NULL DEFAULT 'created', "instructorId" integer, CONSTRAINT "PK_bf95180dd756fd204fb01ce4916" PRIMARY KEY ("id"))`, undefined);
-        await queryRunner.query(`ALTER TABLE "student" ADD "isStudent" boolean NOT NULL DEFAULT true`, undefined);
+        await queryRunner.query(`ALTER TABLE "student" ADD "isStudent" boolean NOT NULL DEFAULT false`, undefined);
         await queryRunner.query(`ALTER TABLE "student" ADD "isInstructor" boolean NOT NULL DEFAULT false`, undefined);
         await queryRunner.query(`ALTER TABLE "student" ADD "instructorDescription" character varying DEFAULT null`, undefined);
         await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "verification" SET DEFAULT null`, undefined);
