@@ -58,6 +58,8 @@ function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectio
 }
 
 
+const scheduledJobs: cron.CronJob[] = [];
+
 ///Schedules a given set of Corona School Cron Jobs
 export async function scheduleJobs(jobs: CSCronJob[]) {
     //create actual cron jobs
@@ -74,4 +76,16 @@ export async function scheduleJobs(jobs: CSCronJob[]) {
     cronJobs.forEach( j => j.start() );
 
     logger.info("Jobs scheduled...");
+
+    scheduledJobs.push(...cronJobs); //store all scheduled jobs of this scheduler
+
+    return cronJobs; //return the scheduled jobs, if anyone needs them
+}
+
+export async function unscheduleAllJobs() {
+    scheduledJobs.forEach( j => j.stop());
+}
+
+export async function shutdownConnection() {
+    jobConnection?.close();
 }
