@@ -15,10 +15,6 @@ function getTemplate(): EJS.ClientFunction {
     if (!cachedTemplate) {
         let path = CERTFICATE_PATH;
 
-        if (process.env.NODE_ENV == 'dev') {
-            path += `.example`;
-        }
-
         cachedTemplate = EJS.compile(readFileSync(path, "utf8"));
     }
 

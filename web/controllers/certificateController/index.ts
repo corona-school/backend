@@ -439,9 +439,6 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
 
     let path = `./assets/${name}.${lang}.html`;
 
-    if (process.env.NODE_ENV == 'dev')
-        path += `.example`;
-
     if (existsSync(path)) {
         const result = readFileSync(path, "utf8");
         if (!_templates[name])
@@ -476,8 +473,14 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
 
     const template = loadTemplate("certificateTemplate", lang);
 
+    let name = student.firstname + " " + student.lastname;
+
+    if (process.env.NODE_ENV == 'dev') {
+        name = `[TEST] ${name}`;
+    }
+
     const result = template({
-        NAMESTUDENT: student.firstname + " " + student.lastname,
+        NAMESTUDENT: name,
         NAMESCHUELER: pupil.firstname + " " + pupil.lastname,
         DATUMHEUTE: moment().format("D.M.YYYY"),
         SCHUELERSTART: moment(certificate.startDate, "X").format("D.M.YYYY"),
