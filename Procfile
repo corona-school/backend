@@ -1,1 +1,2 @@
-web: npm run web:dev
+web: ./npm-run.sh web
+worker: ./npm-run.sh jobs
