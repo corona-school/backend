@@ -463,11 +463,11 @@ export async function getCourses(req: Request, res: Response) {
             OR: [
                 {
                     courseState,
-                    name: search && { contains: search, mode: "insensitive" }
+                    name: search && { contains: search, mode: "insensitive" as const }
                 },
                 {
                     courseState,
-                    description: search && { contains: search, mode: "insensitive" }
+                    description: search && { contains: search, mode: "insensitive" as const }
                 }
             ]
         };
@@ -482,7 +482,7 @@ export async function getCourses(req: Request, res: Response) {
             where,
             take: PAGE_SIZE,
             skip: (+page || 0) * PAGE_SIZE,
-            orderBy: { lastUpdatedAt: 'desc' },
+            orderBy: { updatedAt: 'desc' },
             include: courseInclude
         });
 
@@ -491,30 +491,30 @@ export async function getCourses(req: Request, res: Response) {
             // Thus we avoid searching through all students in the regular case, but still support "find by student"
             const [firstname, lastname = ""] = search.split(" ");
 
-            const student = await prisma.student.findMany({
+            const student = await prisma.student.findFirst({
                 where: {
                     firstname: {
                         contains: firstname,
-                        mode: "insensitive"
+                        mode: "insensitive" as const
                     },
                     lastname: {
                         contains: lastname,
-                        mode: "insensitive"
+                        mode: "insensitive" as const
                     }
                 },
                 include: {
-                    courses: {
-                        where: { courseState },
-                        orderBy: { updatedAt: 'desc' },
+                    course_instructors_student: {
+                        where: { course: { courseState }},
+                        orderBy: { course: { updatedAt: 'desc' } },
                         take: PAGE_SIZE,
                         skip: (+page || 0) * PAGE_SIZE,
-                        include: courseInclude
+                        include: { course: { include: courseInclude } }
                     }
                 }
             });
 
             if (student) {
-                courses = student.courses;
+                courses = student.course_instructors_student.map(it => it.course);
             }
         }
 
@@ -808,20 +808,21 @@ export async function getInstructors(req: Request, res: Response) {
         const instructors = prisma.student.findMany({
             where: {
                 isInstructor: true,
-                instructorScreening: {
+                instructor_screening: {
+                    // TODO: Does this work with NULL?
                     success: screeningSuccess
                 },
                 OR: [
                     {
-                        email: { contains: search, mode: "insensitive" }
+                        email: { contains: search, mode: "insensitive" as const }
                     },
                     {
-                        firstname: { contains: firstname, mode: "insensitive" },
-                        lastname: { contains: lastname, mode: "insensitive" }
+                        firstname: { contains: firstname, mode: "insensitive" as const },
+                        lastname: { contains: lastname, mode: "insensitive" as const }
                     }
                 ]
             },
-            sortBy: { createdAt: 'desc' },
+            orderBy: { createdAt: 'desc' as const },
             take: PAGE_SIZE,
             skip: (+page || 0) * PAGE_SIZE
         });
