@@ -846,7 +846,7 @@ export async function getInstructors(req: Request, res: Response) {
         const screeningQuery = {
             [ScreeningStatus.Accepted]: { success: true },
             [ScreeningStatus.Rejected]: { success: false },
-            [ScreeningStatus.Unscreened]: { none: {} } // no screening exists
+            [ScreeningStatus.Unscreened]: null // no screening exists
         }[screeningStatus as ScreeningStatus];
 
         const instructors = await prisma.student.findMany({
