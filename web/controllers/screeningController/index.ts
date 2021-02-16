@@ -843,19 +843,16 @@ export async function getInstructors(req: Request, res: Response) {
         */
         let [lastname, firstname] = search.split(" ").reverse();
 
-        const screeningSuccess = {
-            [ScreeningStatus.Accepted]: true,
-            [ScreeningStatus.Rejected]: false,
-            [ScreeningStatus.Unscreened]: null
-        }[screeningStatus];
+        const screeningQuery = {
+            [ScreeningStatus.Accepted]: { success: true },
+            [ScreeningStatus.Rejected]: { success: false },
+            [ScreeningStatus.Unscreened]: { none: {} } // no screening exists
+        }[screeningStatus as ScreeningStatus];
 
         const instructors = await prisma.student.findMany({
             where: {
                 isInstructor: true,
-                instructor_screening: {
-                    // TODO: Does this work with NULL?
-                    success: screeningSuccess
-                },
+                instructor_screening: screeningQuery,
                 OR: [
                     {
                         email: { contains: search, mode: "insensitive" as const }
