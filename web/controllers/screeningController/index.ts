@@ -849,7 +849,7 @@ export async function getInstructors(req: Request, res: Response) {
             [ScreeningStatus.Unscreened]: null
         }[screeningStatus];
 
-        const instructors = prisma.student.findMany({
+        const instructors = await prisma.student.findMany({
             where: {
                 isInstructor: true,
                 instructor_screening: {
