@@ -21,6 +21,8 @@ import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
+const PAGE_SIZE = 20;
+
 /**
  * @api {GET} /student getStudents
  * @apiVersion 1.0.1
@@ -478,8 +480,8 @@ export async function getCourses(req: Request, res: Response) {
 
         let courses = await prisma.course.findMany({
             where,
-            take: 20,
-            skip: (+page || 0) * 20,
+            take: PAGE_SIZE,
+            skip: (+page || 0) * PAGE_SIZE,
             orderBy: { lastUpdatedAt: 'desc' },
             include: courseInclude
         });
@@ -489,7 +491,7 @@ export async function getCourses(req: Request, res: Response) {
             // Thus we avoid searching through all students in the regular case, but still support "find by student"
             const [firstname, lastname = ""] = search.split(" ");
 
-            const student = await prisma.student.find({
+            const student = await prisma.student.findMany({
                 where: {
                     firstname: {
                         contains: firstname,
@@ -504,8 +506,8 @@ export async function getCourses(req: Request, res: Response) {
                     courses: {
                         where: { courseState },
                         orderBy: { updatedAt: 'desc' },
-                        take: 20,
-                        skip: (+page || 0) * 20,
+                        take: PAGE_SIZE,
+                        skip: (+page || 0) * PAGE_SIZE,
                         include: courseInclude
                     }
                 }
@@ -796,26 +798,33 @@ export async function getInstructors(req: Request, res: Response) {
            NOTE: (firstname || " " || lastname ILIKE search) would yield better results, however that can hardly be optimized through indices (unless another "fullName" column gets added, which also comes with it's downsides)
         */
         let [lastname, firstname] = search.split(" ").reverse();
-        const email = `%${search}%`; // fuzzy search
-        lastname = `${lastname}%`; // Allow half started searches, "Leon Jacks" matching "Leon Jackson"
 
-        let instructors: {}[];
-
-        const PAGE_SIZE = 20;
-
-        const condition = {
-            [ScreeningStatus.Accepted]: "instructor_screening.success = true",
-            [ScreeningStatus.Rejected]: "instructor_screening.success = false",
-            [ScreeningStatus.Unscreened]: "instructor_screening.success is NULL"
+        const screeningSuccess = {
+            [ScreeningStatus.Accepted]: true,
+            [ScreeningStatus.Rejected]: false,
+            [ScreeningStatus.Unscreened]: null
         }[screeningStatus];
 
-        instructors = await getManager()
-            .createQueryBuilder(Student, "student")
-            .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :email OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
-            .take(PAGE_SIZE)
-            .skip((+page || 0) * PAGE_SIZE)
-            .getMany();
+        const instructors = prisma.student.findMany({
+            where: {
+                isInstructor: true,
+                instructorScreening: {
+                    success: screeningSuccess
+                },
+                OR: [
+                    {
+                        email: { contains: search, mode: "insensitive" }
+                    },
+                    {
+                        firstname: { contains: firstname, mode: "insensitive" },
+                        lastname: { contains: lastname, mode: "insensitive" }
+                    }
+                ]
+            },
+            sortBy: { createdAt: 'desc' },
+            take: PAGE_SIZE,
+            skip: (+page || 0) * PAGE_SIZE
+        });
 
         return res.json({ instructors });
     } catch (error) {
