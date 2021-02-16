@@ -502,18 +502,16 @@ export async function getCourses(req: Request, res: Response) {
                 },
                 include: {
                     courses: {
+                        where: { courseState },
+                        orderBy: { updatedAt: 'desc' },
+                        take: 20,
+                        skip: (+page || 0) * 20,
                         include: courseInclude
                     }
-                }
             });
 
             if (student) {
-                // This should really be done on the database, but TypeORM currently has no nice way to express this:
-                // https://github.com/typeorm/typeorm/blob/master/docs/many-to-many-relations.md
-                courses = student.courses
-                    .filter(it => !courseState || it.courseState === courseState)
-                    .sort((a, b) => +b.updatedAt - +a.updatedAt)
-                    .slice((+page || 0) * 20, (+page + 1 || 1) * 20);
+                courses = student.courses;
             }
         }
 
