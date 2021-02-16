@@ -474,9 +474,31 @@ export async function getCourses(req: Request, res: Response) {
 
         /* eslint camelcase: 'off' */
         const courseInclude = {
-            course_instructors_student: true,
-            course_tags_course_tag: true
-        };
+            course_instructors_student: {
+                include: {
+                    student: true
+                }
+            },
+            course_tags_course_tag: {
+                include: {
+                    course_tag: true
+                }
+            },
+            subcourse: {
+                include: {
+                    lecture: true
+                    // Subcourses are currently unused, and their instructors are not set
+                    /* subcourse_instructors_student: {
+                        include: {
+                            student: true
+                        }
+                    } */
+                }
+
+            }
+        } as const;
+
+        console.log("Running the following where query", where);
 
         let courses = await prisma.course.findMany({
             where,
@@ -516,6 +538,28 @@ export async function getCourses(req: Request, res: Response) {
             if (student) {
                 courses = student.course_instructors_student.map(it => it.course);
             }
+        }
+
+        /* TODO: Clean this up once we improved the Prisma data model
+            There should be no need to massage the data */
+
+        for (const course of courses) {
+            (course as any).instructors = course.course_instructors_student.map(it => it.student);
+            (course as any).tags = course.course_tags_course_tag.map(it => it.course_tag);
+
+            course.course_instructors_student = undefined;
+            course.course_tags_course_tag = undefined;
+
+            for (const subcourse of course.subcourse) {
+                /* (subcourse as any).instructors = subcourse.subcourse_instructors_student.map(it => it.student);
+                subcourse.subcourse_instructors_student = undefined; */
+
+                (subcourse as any).lectures = subcourse.lecture;
+                subcourse.lecture = undefined;
+            }
+
+            (course as any).subcourses = course.subcourse;
+            course.subcourse = undefined;
         }
 
 
