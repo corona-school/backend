@@ -498,7 +498,6 @@ export async function getCourses(req: Request, res: Response) {
             }
         } as const;
 
-        console.log("Running the following where query", where);
 
         let courses = await prisma.course.findMany({
             where,
