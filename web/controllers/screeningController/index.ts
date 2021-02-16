@@ -457,25 +457,54 @@ export async function getCourses(req: Request, res: Response) {
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
-        const where = (courseState ? (search ? [
-            { courseState, name: ILike(`%${search}%`) }, /* OR */
-            { courseState, description: ILike(`%${search}%`) }
-        ] : { courseState }) : (search ? [
-            { name: ILike(`%${search}%`) }, /* OR */
-            { description: ILike(`%${search}%`) }
-        ] : {}));
+        const where = {
+            OR: [
+                {
+                    courseState,
+                    name: search && { contains: search, mode: "insensitive" }
+                },
+                {
+                    courseState,
+                    description: search && { contains: search, mode: "insensitive" }
+                }
+            ]
+        };
 
+        /* eslint camelcase: 'off' */
+        const courseInclude = {
+            course_instructors_student: true,
+            course_tags_course_tag: true
+        };
 
-        let courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20, order: { "updatedAt": "DESC" } });
+        let courses = await prisma.course.findMany({
+            where,
+            take: 20,
+            skip: (+page || 0) * 20,
+            orderBy: { lastUpdatedAt: 'desc' },
+            include: courseInclude
+        });
 
         if (!courses.length && search) {
             // In case the regular search does not match anything, we search for students with that name
             // Thus we avoid searching through all students in the regular case, but still support "find by student"
             const [firstname, lastname = ""] = search.split(" ");
 
-            const student = await getManager().findOne(Student, {
-                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`) },
-                relations: ["courses"]
+            const student = await prisma.student.find({
+                where: {
+                    firstname: {
+                        contains: firstname,
+                        mode: "insensitive"
+                    },
+                    lastname: {
+                        contains: lastname,
+                        mode: "insensitive"
+                    }
+                },
+                include: {
+                    courses: {
+                        include: courseInclude
+                    }
+                }
             });
 
             if (student) {
