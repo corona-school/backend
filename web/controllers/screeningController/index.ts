@@ -459,7 +459,7 @@ export async function getCourses(req: Request, res: Response) {
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
-        const where = (!!courseState || !!search) && {
+        const where = (courseState || search) ? {
             OR: [
                 {
                     courseState,
@@ -470,7 +470,7 @@ export async function getCourses(req: Request, res: Response) {
                     description: search && { contains: search, mode: "insensitive" as const }
                 }
             ]
-        };
+        } : undefined;
 
         /* eslint camelcase: 'off' */
         const courseInclude = {
