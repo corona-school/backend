@@ -508,6 +508,7 @@ export async function getCourses(req: Request, res: Response) {
                         skip: (+page || 0) * 20,
                         include: courseInclude
                     }
+                }
             });
 
             if (student) {
