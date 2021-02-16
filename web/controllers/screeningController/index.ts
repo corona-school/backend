@@ -463,11 +463,11 @@ export async function getCourses(req: Request, res: Response) {
             OR: [
                 {
                     courseState,
-                    name: search && { contains: search, mode: "insensitive" as const }
+                    name: search ? { contains: search, mode: "insensitive" as const } : undefined
                 },
                 {
                     courseState,
-                    description: search && { contains: search, mode: "insensitive" as const }
+                    description: search ? { contains: search, mode: "insensitive" as const } : undefined
                 }
             ]
         } : undefined;
