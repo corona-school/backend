@@ -21,6 +21,8 @@ import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
+const PAGE_SIZE = 20;
+
 /**
  * @api {GET} /student getStudents
  * @apiVersion 1.0.1
@@ -457,35 +459,106 @@ export async function getCourses(req: Request, res: Response) {
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
-        const where = (courseState ? (search ? [
-            { courseState, name: ILike(`%${search}%`) }, /* OR */
-            { courseState, description: ILike(`%${search}%`) }
-        ] : { courseState }) : (search ? [
-            { name: ILike(`%${search}%`) }, /* OR */
-            { description: ILike(`%${search}%`) }
-        ] : {}));
+        const where = (courseState || search) ? {
+            OR: [
+                {
+                    courseState,
+                    name: search ? { contains: search, mode: "insensitive" as const } : undefined
+                },
+                {
+                    courseState,
+                    description: search ? { contains: search, mode: "insensitive" as const } : undefined
+                }
+            ]
+        } : undefined;
+
+        /* eslint camelcase: 'off' */
+        const courseInclude = {
+            course_instructors_student: {
+                include: {
+                    student: true
+                }
+            },
+            course_tags_course_tag: {
+                include: {
+                    course_tag: true
+                }
+            },
+            subcourse: {
+                include: {
+                    lecture: true
+                    // Subcourses are currently unused, and their instructors are not set
+                    /* subcourse_instructors_student: {
+                        include: {
+                            student: true
+                        }
+                    } */
+                }
+
+            }
+        } as const;
 
 
-        let courses = await getManager().find(Course, { where, take: 20, skip: (+page || 0) * 20, order: { "updatedAt": "DESC" } });
+        let courses = await prisma.course.findMany({
+            where,
+            take: PAGE_SIZE,
+            skip: (+page || 0) * PAGE_SIZE,
+            orderBy: { updatedAt: 'desc' },
+            include: courseInclude
+        });
 
         if (!courses.length && search) {
             // In case the regular search does not match anything, we search for students with that name
             // Thus we avoid searching through all students in the regular case, but still support "find by student"
             const [firstname, lastname = ""] = search.split(" ");
 
-            const student = await getManager().findOne(Student, {
-                where: { firstname: ILike(`%${firstname}%`), lastname: ILike(`%${lastname}%`) },
-                relations: ["courses"]
+            const student = await prisma.student.findFirst({
+                where: {
+                    firstname: {
+                        contains: firstname,
+                        mode: "insensitive" as const
+                    },
+                    lastname: {
+                        contains: lastname,
+                        mode: "insensitive" as const
+                    }
+                },
+                include: {
+                    course_instructors_student: {
+                        where: { course: { courseState }},
+                        orderBy: { course: { updatedAt: 'desc' } },
+                        take: PAGE_SIZE,
+                        skip: (+page || 0) * PAGE_SIZE,
+                        include: { course: { include: courseInclude } }
+                    }
+                }
             });
 
             if (student) {
-                // This should really be done on the database, but TypeORM currently has no nice way to express this:
-                // https://github.com/typeorm/typeorm/blob/master/docs/many-to-many-relations.md
-                courses = student.courses
-                    .filter(it => !courseState || it.courseState === courseState)
-                    .sort((a, b) => +b.updatedAt - +a.updatedAt)
-                    .slice((+page || 0) * 20, (+page + 1 || 1) * 20);
+                courses = student.course_instructors_student.map(it => it.course);
             }
+        }
+
+        /* TODO: Clean this up once we improved the Prisma data model
+            There should be no need to massage the data */
+
+        for (const course of courses) {
+            (course as any).instructors = course.course_instructors_student.map(it => it.student);
+            (course as any).tags = course.course_tags_course_tag.map(it => it.course_tag);
+
+            course.course_instructors_student = undefined;
+            course.course_tags_course_tag = undefined;
+
+            for (const subcourse of course.subcourse) {
+                /* (subcourse as any).instructors = subcourse.subcourse_instructors_student.map(it => it.student);
+                subcourse.subcourse_instructors_student = undefined; */
+
+                (subcourse as any).lectures = subcourse.lecture;
+                subcourse.lecture = undefined;
+            }
+
+            (course as any).subcourses = course.subcourse;
+            course.subcourse = undefined;
         }
 
 
@@ -768,26 +841,31 @@ export async function getInstructors(req: Request, res: Response) {
            NOTE: (firstname || " " || lastname ILIKE search) would yield better results, however that can hardly be optimized through indices (unless another "fullName" column gets added, which also comes with it's downsides)
         */
         let [lastname, firstname] = search.split(" ").reverse();
-        const email = `%${search}%`; // fuzzy search
-        lastname = `${lastname}%`; // Allow half started searches, "Leon Jacks" matching "Leon Jackson"
 
-        let instructors: {}[];
+        const screeningQuery = {
+            [ScreeningStatus.Accepted]: { success: true },
+            [ScreeningStatus.Rejected]: { success: false },
+            [ScreeningStatus.Unscreened]: null // no screening exists
+        }[screeningStatus as ScreeningStatus];
 
-        const PAGE_SIZE = 20;
-
-        const condition = {
-            [ScreeningStatus.Accepted]: "instructor_screening.success = true",
-            [ScreeningStatus.Rejected]: "instructor_screening.success = false",
-            [ScreeningStatus.Unscreened]: "instructor_screening.success is NULL"
-        }[screeningStatus];
-
-        instructors = await getManager()
-            .createQueryBuilder(Student, "student")
-            .leftJoinAndSelect("student.instructorScreening", "instructor_screening")
-            .where(`student.isInstructor = true AND ${condition} AND (student.email ILIKE :email OR (student.firstname ILIKE :firstname AND student.lastname ILIKE :lastname))`, { email, firstname, lastname })
-            .take(PAGE_SIZE)
-            .skip((+page || 0) * PAGE_SIZE)
-            .getMany();
+        const instructors = await prisma.student.findMany({
+            where: {
+                isInstructor: true,
+                instructor_screening: screeningQuery,
+                OR: [
+                    {
+                        email: { contains: search, mode: "insensitive" as const }
+                    },
+                    {
+                        firstname: { contains: firstname, mode: "insensitive" as const },
+                        lastname: { contains: lastname, mode: "insensitive" as const }
+                    }
+                ]
+            },
+            orderBy: { createdAt: 'desc' as const },
+            take: PAGE_SIZE,
+            skip: (+page || 0) * PAGE_SIZE
+        });
 
         return res.json({ instructors });
     } catch (error) {
