@@ -471,7 +471,7 @@ async function getAPICourses(student: Student | undefined,
                                             firstname: courses[i].subcourse[k].lecture[l].student.firstname,
                                             lastname: courses[i].subcourse[k].lecture[l].student.lastname
                                         },
-                                        start: courses[i].subcourse[k].lecture[l].start.getTime() / 1000, //see https://github.com/prisma/prisma/issues/5051 -> if you're local time (and thus the time of your timestamps in your database) is not UTC, then this endpoint will return the wrong result
+                                        start: courses[i].subcourse[k].lecture[l].start.getTime() / 1000, //see https://github.com/prisma/prisma/issues/5051 -> if your local time (and thus the time of your timestamps in your database) is not UTC, then this endpoint will return the wrong result
                                         duration: courses[i].subcourse[k].lecture[l].duration
                                     };
                                     if (authenticatedStudent && student.wix_id == instructorId) {
