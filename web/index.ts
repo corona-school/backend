@@ -142,7 +142,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
 
     function configureCertificateAPI() {
         const certificateRouter = express.Router();
-        certificateRouter.get("/create/:student/:pupil", authCheckFactory(), certificateController.createCertificateEndpoint);
+        certificateRouter.post("/create", authCheckFactory(), certificateController.createCertificateEndpoint);
         certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
         certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
         certificateRouter.post("/:certificateId/sign", authCheckFactory(), certificateController.signCertificateEndpoint);

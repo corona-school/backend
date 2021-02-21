@@ -27,27 +27,24 @@ const LANGUAGES = ["de", "en"] as const;
 type Language = (typeof LANGUAGES)[number];
 const DefaultLanguage = "de";
 
+const MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
+
 /**
- * @api {GET} /certificate/create/:student/:match getCertificate
+ * @api {POST} /certificate/create getCertificate
  * @apiVersion 1.1.0
  * @apiDescription
- * Fetch a certificate
+ * Create a certificate
  *
- * This endpoint allows fetching a certificate (as PDF) with the second page customized for a pupil.
  * It is only available for students.
  *
- * @apiParam (URL Parameter) {string} student ID of the student
- * @apiParam (URL Parameter) {string} match UUID of the match
- *
- * @apiParam (Query Parameter) {number} endDate Unix Timestamp for the end date
- * @apiParam (Query Parameter) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
- * @apiParam (Query Parameter) {number} hoursPerWeek Hours per week helped
- * @apiParam (Query Parameter) {number} hoursTotal Total hours helped
- * @apiParam (Query Parameter) {string} medium Support medium
- * @apiParam (Query Parameter) {string} categories String of category texts for pupil's student description, separated by newlines
- * @apiParam (Query Parameter) {string} automatic if set, the pupil will automatically receive a signature request
- *
- * @apiParam (URL Query)     {string} lang=de The language
+ * @apiParam (JSON Body) {string} pupil UUID of the pupil
+ * @apiParam (JSON body) {number} endDate Unix Timestamp for the end date
+ * @apiParam (JSON body) {string} subjects Must be a comma seperated string of the subjects. Only subjects that are matched are available
+ * @apiParam (JSON body) {number} hoursPerWeek Hours per week helped
+ * @apiParam (JSON body) {number} hoursTotal Total hours helped
+ * @apiParam (JSON body) {string} medium Support medium
+ * @apiParam (JSON body) {string} categories String of category texts for pupil's student description, separated by newlines
+ * @apiParam (JSON body) {string} automatic if set, the pupil will automatically receive a signature request
  *
  * @apiName getCertificate
  * @apiGroup Certificate
@@ -67,57 +64,62 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
     const entityManager = getManager();
 
     try {
-        if (
-            req.params.student == undefined ||
-            req.params.pupil == undefined ||
-            !(res.locals.user instanceof Student || res.locals.user instanceof Pupil)
-        ) return res.status(400).send("Missing parameters");
+        assert(res.locals.user, "Must be logged in");
 
-        let lang = req.query.lang as Language;
-
-        if (lang === undefined)
-            lang = DefaultLanguage;
-
-        if (!LANGUAGES.includes(lang))
-            return res.status(400).send("Language not known");
-
+        const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, activities, ongoingLessons } = req.body;
         const requestor = res.locals.user as Student;
 
         if (requestor instanceof Pupil)
             return res.status(403).send("Only students may request certificates");
 
-        if (requestor.wix_id != req.params.student)
-            return res.status(403).send("Students may only retrieve certificates for themselves");
+        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !activities)
+            return res.status(400).send("Missing parameters");
 
-        let state = req.query.automatic ? State.awaitingApproval : State.manual;
+        if (automatic !== undefined && typeof automatic !== "boolean")
+            return res.status(400).send("automatic must be boolean");
 
-        // TODO: Move to POST to body
-        // TODO: Properly validate
+        if (typeof endDate !== "number")
+            return res.status(400).send("endDate must be a number");
+
+        if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string"))
+            return res.status(400).send("subjects must be an array of strings");
+
+        if (typeof hoursPerWeek !== "number" || hoursPerWeek < 0)
+            return res.status(400).send("hoursPerWeek must be a positive number");
+
+        if (typeof hoursTotal !== "number" || hoursTotal < 0)
+            return res.status(400).send("hoursTotal must be a positive number");
+
+        if (!MEDIUMS.includes(medium))
+            return res.status(400).send(`medium must be one of ${MEDIUMS}`);
+
+        if (!Array.isArray(activities) || activities.some(it => typeof it !== "string"))
+            return res.status(400).send("categories must be an array of strings");
+
+        if (ongoingLessons !== undefined && typeof ongoingLessons !== "boolean")
+            return res.status(400).send("ongoingLessons must be boolean");
+
+        let state = automatic ? State.awaitingApproval : State.manual;
+
         let params: IParams = {
-            endDate: req.query.endDate as string || moment().format("X") as string,
-            subjects: req.query.subjects as string,
-            hoursPerWeek: Number.parseFloat(req.query.hoursPerWeek as string) || 0.0,
-            hoursTotal: Number.parseFloat(req.query.hoursTotal as string) || 0.0,
-            medium: req.query.medium as string,
-            categories: req.query.categories as string,
-            ongoingLessons: req.query.ongoingLessons === 'true',
+            endDate,
+            subjects: subjects.join(","),
+            hoursPerWeek,
+            hoursTotal,
+            medium,
+            activities: activities.join("\n"),
+            ongoingLessons,
             state
         };
 
         // Students may only request for their matches
-        let match = await entityManager.findOne(Match, { student: requestor, uuid: req.params.pupil });
+        let match = await entityManager.findOne(Match, { student: requestor, uuid: pupil });
         if (match == undefined)
-            return res.status(400).send(`No Match found with uuid ${req.params.pupil}`);
+            return res.status(400).send(`No Match found with uuid '${pupil}'`);
 
         const certificate = await createCertificate(requestor, match.pupil, match, params);
 
-        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
-
-        res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Length': pdf.length
-        });
-        return res.end(pdf);
+        return res.json({ uuid: certificate.uuid, automatic });
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
         logger.debug(req, e);
@@ -383,12 +385,12 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
 
 
 interface IParams {
-    endDate: string,
+    endDate: number,
     subjects: string,
     hoursPerWeek: number,
     hoursTotal: number,
     medium: string,
-    categories: string,
+    activities: string,
     ongoingLessons: boolean,
     state: State.manual | State.awaitingApproval
 }
@@ -401,7 +403,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.pupil = pupil;
     pc.student = requestor;
     pc.subjects = params.subjects;
-    pc.categories = params.categories;
+    pc.categories = params.activities;
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.medium = params.medium;
