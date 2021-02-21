@@ -8,7 +8,7 @@ import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
 
-export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = ['courses']) {
+export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = []) {
     return async function (req: Request, res: Response, next) {
         if (req.method == "OPTIONS") next();
 
