@@ -800,7 +800,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     try {
         await entityManager.save(type, person);
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
-        logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${type.toString()}`);
+        logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${person?.constructor?.name}`);
         logger.debug(person);
     } catch (e) {
         logger.error("Can't update user: " + e.message);
