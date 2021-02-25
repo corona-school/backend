@@ -53,6 +53,11 @@ export async function postContactExpertHandler(req: Request, res: Response) {
                 status = 400;
             }
 
+            if (req.body.subject?.length > 255) {
+                logger.warn('E-Mail subject has more than 255 characters.');
+                status = 400;
+            }
+
             if (status < 300) {
                 status = await postContactExpert(req.params.id, res.locals.user, req.body);
             }
