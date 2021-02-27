@@ -1,3 +1,4 @@
+import {DEFAULTSENDERS} from "./config";
 import { mailjet as mailjetTemplates, TemplateMail } from "./templates";
 import mailjet from "./mailjet";
 
@@ -36,6 +37,18 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
     }
 }
 
+async function sendSMS(message : string, phone: string) {
+    try {
+        const result = await mailjet.sendSMS(message, phone, DEFAULTSENDERS.sms);
+
+        logger.info("SMS was sent to " + phone, JSON.stringify(result.body));
+        return result;
+    } catch (e) {
+        logger.warn("Unable to send SMS to " + phone + ": Status code " + e.statusCode + " " + e.response);
+        throw e;
+    }
+}
+
 async function sendTextEmail(
     subject: string,
     text: string,
@@ -50,4 +63,4 @@ async function sendTextEmail(
     await mailjet.sendPure(subject, text, senderAddress, receiverAddress, senderName, receiverName, replyToAddress, replyToName);
 }
 
-export { mailjetTemplates, sendTemplateMail, sendTextEmail};
+export { mailjetTemplates, sendTemplateMail, sendSMS, sendTextEmail};

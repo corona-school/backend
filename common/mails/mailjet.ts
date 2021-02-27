@@ -1,6 +1,6 @@
-import { mailjetSmtp } from "./config";
+import {mailjetSmtp} from "./config";
 import * as mailjetAPI from "node-mailjet";
-import { getLogger } from "log4js";
+import {getLogger} from "log4js";
 
 const logger = getLogger();
 
@@ -31,7 +31,27 @@ async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox:
     //log what is sent to mailjet, so we can better debug some problems with mails
     logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
 
-    return await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+    return await mailjet.post("send", {version: "v3.1"}).request(requestOptions);
+}
+
+async function sendSMS(message: string, phoneNumber: string, sender: string) {
+    if (sender.length > 11) {
+        throw new Error('Sender ' + sender + ' is too long! Maximum is 11 characters.');
+    }
+
+    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
+
+    // Send actual SMS
+    let requestOptions: mailjetAPI.SMS.SendParams = {
+        Text: message,
+        To: phoneNumber,
+        From: sender
+    };
+
+    //log what is sent to mailjet, so we can better debug some problems with mails
+    logger.info(`Sending sms-send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
+
+    return await mailjet.post("sms-send", {version: "v4"}).request(requestOptions);
 }
 
 async function sendMailPure(
@@ -47,7 +67,7 @@ async function sendMailPure(
 ) {
     // construct mailjet API message
     const message: mailjetAPI.Email.SendParamsMessage = {
-        From: {
+        From: {
             Email: senderAddress,
             Name: senderName
         },
@@ -118,5 +138,6 @@ const ErrorCodes = {
 export default {
     sendTemplate: sendMailTemplate,
     sendPure: sendMailPure,
+    sendSMS: sendSMS,
     ErrorCodes: ErrorCodes
 };

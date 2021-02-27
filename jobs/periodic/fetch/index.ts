@@ -3,7 +3,7 @@ import { Student } from "../../../common/entity/Student";
 import { ApiPupil, ApiResponse, ApiStudent } from "./api";
 import { Pupil } from "../../../common/entity/Pupil";
 import { getConnection, getManager } from "typeorm";
-import { generateToken, sendVerificationMail } from "./utils/verification";
+import {generateCode, generateToken, sendVerificationMail} from "./utils/verification";
 import { getLogger } from "log4js";
 import { getTransactionLog } from "../../../common/transactionlog";
 import FetchedFromWixEvent from "../../../common/transactionlog/types/FetchedFromWixEvent";
@@ -117,6 +117,7 @@ export default async function fetchFromWixToDb() {
             for (let i = 0; i < newStudents.length; i++) {
                 let student = newStudents[i];
                 student.verification = generateToken();
+                student.code = generateCode();
                 try {
                     // Note: Saving may fail and this is totally fine
                     // Possible reasons:
@@ -153,6 +154,7 @@ export default async function fetchFromWixToDb() {
             for (let i = 0; i < newPupils.length; i++) {
                 let pupil = newPupils[i];
                 pupil.verification = generateToken();
+                pupil.code = generateCode();
                 try {
                     // Note: Saving may fail and this is totally fine
                     // Possible reasons:

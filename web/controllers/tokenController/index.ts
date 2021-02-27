@@ -15,6 +15,8 @@ import {
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
+import VerifiedCodeEvent from "../../../common/transactionlog/types/VerifiedCodeEvent";
+import {generateCode, sendVerificationSMS} from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 

@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto";
-import { getLogger } from "log4js";
-import { sendTemplateMail, mailjetTemplates } from "../../../../../common/mails";
-import { Person } from "../../../../../common/entity/Person";
+import {randomBytes} from "crypto";
+import {getLogger} from "log4js";
+import {sendTemplateMail, mailjetTemplates, sendSMS} from "../../../../../common/mails";
+import {Person} from "../../../../../common/entity/Person";
 
 const logger = getLogger();
 
@@ -15,6 +15,16 @@ export function generateToken(): string {
         .replace(/\+/g, "_");
     logger.debug("Generated token: ", token);
     return token;
+}
+
+export function generateCode(): string {
+    // Range of the code
+    let min = 10000;
+    let max = 99999;
+
+    let code = Math.floor(Math.random() * (max - min + 1) + min);
+    logger.debug("Generated code: ", code);
+    return String(code);
 }
 
 export async function sendVerificationMail(person: Person, redirectTo?: string) {
@@ -33,3 +43,20 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
         logger.debug(e);
     }
 }
+
+export async function sendVerificationSMS(phone : string, name : string, code : string) {
+    if (phone == null) {
+        console.log('Can\'t send verification SMS because the user ' + name + " has no phone number!");
+    } else {
+        console.log("SMS verification code", code);
+
+        try {
+            let message = "Hallo " + name + "! Dein Bestätigungscode lautet: " + code;
+            await sendSMS(message, phone);
+        } catch (e) {
+            logger.error("Can't send verification SMS: ", e.message);
+            logger.debug(e);
+        }
+    }
+}
+

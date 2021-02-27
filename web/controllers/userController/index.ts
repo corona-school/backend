@@ -33,6 +33,7 @@ import { TutorJufoParticipationIndication } from "../../../common/jufo/participa
 import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
+import {generateCode} from "../../../jobs/periodic/fetch/utils/verification";
 import {ExpertData} from "../../../common/entity/ExpertData";
 
 const logger = getLogger();
@@ -94,7 +95,6 @@ export async function getSelfHandler(req: Request, res: Response) {
  * @apiUse User
  * @apiUse Subject
  * @apiUse Match
- * @apiUse ExpertData
  *
  * @apiUse StatusOk
  * @apiUse StatusUnauthorized
@@ -166,7 +166,8 @@ export async function putHandler(req: Request, res: Response) {
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
             (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
-            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number") &&
+            (b.phone == undefined || typeof b.phone == "string")) {
             if (req.params.id != undefined && res.locals.user instanceof Person) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
@@ -449,6 +450,8 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     apiResponse.email = person.email;
     apiResponse.active = person.active;
     apiResponse.registrationDate = moment(person.wix_creation_date).unix();
+    apiResponse.phone = person.phone;
+    apiResponse.phoneConfirmed = (person.phone && person.code == undefined) ? person.phone : null;
 
     if (person instanceof Student) {
         apiResponse.type = "student";
@@ -642,6 +645,18 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
         logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
+    }
+
+    let prevPhone = person.phone;
+
+    if (prevPhone != req.phone) {
+        person.phone = req.phone;
+        person.code = generateCode();
+    }
+
+    if (person.phone && ! person.phone.startsWith("+49") && ! person.phone.startsWith("+41") && ! person.phone.startsWith("+43")) {
+        logger.error("person.phone not from Germany, Swiss or Austria");
+        return 400;
     }
 
     let type: ObjectType<Person>;

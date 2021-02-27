@@ -23,7 +23,6 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (User Object) {Match[]} dissolvedMatches List of dissolved (past) matches
  * @apiSuccess (User Object) {number} lastUpdatedSettingsViaBlocker The unix timestamp of when some settings were last updated by a blocking popup (aka "blocker") in the frontend
  * @apiSuccess (User Object) {number} registrationDate The unix timestamp of when the user registered
- * @apiSuccess (User Object) {ExpertData} expertData <i>Only available for students (optional):</i> Expert specific data
  *
  * @apiSuccessExample {json} Pupil
  *      HTTP/1.1 200 OK
@@ -142,17 +141,6 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  *                  "dissolved": false
  *              }
  *          ],
- *          "expertData": {
- *              "id": 2,
- *              "contactEmail": "contact@jufo-tufo.de",
- *              "description": null,
- *              "expertiseTags": [
- *                  "LTE",
- *                  "Glasfaser"
- *              ],
- *              "active": true,
- *              "allowed": true
- *          },
  *      }
  */
 import {ApiSubject} from "../format";
@@ -187,6 +175,8 @@ export class ApiGetUser {
     schoolType?: string;
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
+    phone?: string;
+    phoneConfirmed?: string;
     expertData?: ApiExpertData;
     //TODO: Um Mentor erweitern
 }
@@ -251,6 +241,7 @@ export class ApiPutUser {
     subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
+    phone?: string;
 }
 
 /**

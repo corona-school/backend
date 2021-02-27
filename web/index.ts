@@ -6,6 +6,7 @@ import * as helmet from "helmet";
 import * as cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
+import * as phoneController from "./controllers/phoneController";
 import * as matchController from "./controllers/matchController";
 import * as projectMatchController from "./controllers/projectMatchController";
 import * as screeningController from "./controllers/screeningController";
@@ -66,6 +67,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     configureUserAPI();
     configureCertificateAPI();
     configureTokenAPI();
+    configureCodeAPI();
     configureCourseAPI();
     configureScreenerAPI();
     configureCoursesAPI();
@@ -138,6 +140,13 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         tokenApiRouter.post("/", tokenController.verifyTokenHandler);
         tokenApiRouter.get("/", tokenController.getNewTokenHandler);
         app.use("/api/token", tokenApiRouter);
+    }
+
+    function configureCodeAPI() {
+        const codeApiRouter = express.Router();
+        codeApiRouter.post("/request", phoneController.requestCodeHandler);
+        codeApiRouter.post("/verify", phoneController.verifyCodeHandler);
+        app.use("/api/code", codeApiRouter);
     }
 
     function configureCertificateAPI() {
