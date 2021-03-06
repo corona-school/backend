@@ -433,6 +433,10 @@ export class Student extends Person {
     setSubjectsFormatted(subjects: Subject[]) {
         this.subjects = JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat));
     }
+
+    isIntern(): boolean {
+        return this.module === TeacherModule.INTERNSHIP;
+    }
 }
 
 //re-export

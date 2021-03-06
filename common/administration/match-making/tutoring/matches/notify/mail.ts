@@ -1,6 +1,6 @@
 import { EntityManager } from "typeorm";
-import { Match } from "../../../../entity/Match";
-import { mailjetTemplates, sendTemplateMail } from "../../../../mails";
+import { Match } from "../../../../../entity/Match";
+import { mailjetTemplates, sendTemplateMail } from "../../../../../mails";
 
 
 async function commonMailParameters(match: Match) {
@@ -19,7 +19,7 @@ async function commonMailParameters(match: Match) {
     };
 }
 
-async function notifyTuteeAboutMatch(match: Match, manager: EntityManager) {
+export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
 
     const mail = mailjetTemplates.TUTEENEWMATCH({
@@ -32,7 +32,8 @@ async function notifyTuteeAboutMatch(match: Match, manager: EntityManager) {
 
     await sendTemplateMail(mail, tutee.email);
 }
-async function notifyTutorAboutMatch(match: Match, manager: EntityManager) {
+
+export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
 
     const mail = mailjetTemplates.TUTORNEWMATCH({
@@ -45,16 +46,4 @@ async function notifyTutorAboutMatch(match: Match, manager: EntityManager) {
     });
 
     await sendTemplateMail(mail, tutor.email);
-}
-
-async function notifyMatch(match: Match, manager: EntityManager) {
-    //notify tutee part
-    await notifyTuteeAboutMatch(match, manager);
-
-    //notify tutors part
-    await notifyTutorAboutMatch(match, manager);
-}
-
-export async function notifyMatches(matches: Match[], manager: EntityManager) {
-    await Promise.all(matches.map(m => notifyMatch(m, manager)));
 }

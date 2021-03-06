@@ -133,3 +133,9 @@ export async function getMatchByID(id: number, manager: EntityManager): Promise<
 export async function reloadMatchesInstances(matches: Match[], manager: EntityManager): Promise<Match[]> {
     return await Promise.all(matches.map(async m => await getMatchByID(m.id, manager)));
 }
+
+/// An interface that can be used if someone wants to represent a match just as a pair of student and pupil (without additional match metadata). Every Match is also a MatchPair
+export interface MatchPair {
+    student: Student;
+    pupil: Pupil;
+}
