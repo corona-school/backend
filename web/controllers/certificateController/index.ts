@@ -299,9 +299,13 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
     if (certificate.state === "manual")
         return res.status(400).send("Certificate cannot be signed as it is a manual one");
 
-    await signCertificate(req, certificate, signatureParent, signaturePupil, signatureLocation);
-
-    return res.send("Certificate signed");
+    try {
+        await signCertificate(req, certificate, signatureParent, signaturePupil, signatureLocation);
+        return res.send("Certificate signed");
+    } catch (error) {
+        logger.error("Failed to sign certificate", error);
+        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+    }
 }
 
 /**
