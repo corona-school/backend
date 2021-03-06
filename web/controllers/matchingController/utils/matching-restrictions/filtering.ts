@@ -13,15 +13,12 @@ function parentMatchingRestrictionFilter(restriction: ApiMatchingRestriction): (
         if (restriction.emails?.every(e => e !== t.email)) return false;
 
         //matching state?
-        if (restriction.state && restriction.state !== t.state) return false;
+        if (restriction.states?.every(s => s !== t.state)) return false;
 
         //matching registration date
-        if (restriction.registrationDate
-            && (
-                (restriction.registrationDate.min != null && moment(t.createdAt).isBefore(restriction.registrationDate.min))
-                || (restriction.registrationDate.max != null && moment(t.createdAt).isAfter(restriction.registrationDate.max))
-            )
-        ) return false;
+        if (restriction.registrationDates?.every(rd => (
+            (rd.min != null && moment(t.createdAt).isBefore(rd.min)) || (rd.max != null && moment(t.createdAt).isAfter(rd.max)))
+        )) return false;
 
         //subject names
         if (restriction.subjectNames && t.getSubjectsFormatted().every(s => restriction.subjectNames.every(rs => rs.toLowerCase() !== s.name.toLowerCase()))) return false;
@@ -50,12 +47,9 @@ export function tuteeMatchingRestrictionFilter(restriction: ApiTuteeMatchingRest
         if (!parentMatchingRestrictionFilter(restriction)(t)) return false;
 
         //matching priority?
-        if (restriction.matchingPriority
-            && (
-                (restriction.matchingPriority.min != null && restriction.matchingPriority.min > t.matchingPriority)
-                || (restriction.matchingPriority.max != null && t.matchingPriority > restriction.matchingPriority.max)
-            )
-        ) return false;
+        if (restriction.matchingPriorities?.every( mp => (
+            (mp.min != null && mp.min > t.matchingPriority) || (mp.max != null && t.matchingPriority > mp.max))
+        )) return false;
 
         //default to true
         return true;

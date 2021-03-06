@@ -39,13 +39,16 @@ export class ApiMatchingRestriction {
     blockingList?: EmailAddress[];
 
     @IsOptional()
-    @IsEnum(StateEntity)
-    state?: State;
+    @IsEnum(StateEntity, {
+        each: true
+    })
+    states?: State[];
 
     @Type(() => ApiRegistrationDateRestrictions)
     @ValidateNested()
     @IsOptional()
-    registrationDate?: ApiRegistrationDateRestrictions;
+    @IsArray()
+    registrationDates?: ApiRegistrationDateRestrictions[];
 
     @IsOptional()
     @IsString({
@@ -64,7 +67,8 @@ export class ApiTuteeMatchingRestriction extends ApiMatchingRestriction {
     @Type(() => ApiMatchingPriorityRestrictions) //required for nested transformations
     @ValidateNested()
     @IsOptional()
-    matchingPriority?: ApiMatchingPriorityRestrictions;
+    @IsArray()
+    matchingPriorities?: ApiMatchingPriorityRestrictions[];
 }
 
 export class ApiMatchingRestrictions {
