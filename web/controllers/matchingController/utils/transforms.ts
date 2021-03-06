@@ -29,7 +29,7 @@ export function transformMatchPairToApiMatch(matchPair: MatchPair): ApiMatch {
             uuid: helpee.wix_id,
             email: helpee.email,
             grade: helpee.gradeAsNumber(),
-            subjects: helpee.getSubjectsFormatted()
+            subjects: helpee.getSubjectsFormatted().map(s => ({name: s.name})) // for helpees only output the subject name
         },
         helper: {
             uuid: helper.wix_id,
