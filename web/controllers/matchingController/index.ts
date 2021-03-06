@@ -44,6 +44,8 @@ async function matchPeopleHandler(
     matchingOptions: ApiMatchingOptions,
     res: Response) {
 
+    logger.debug(`Got request to manual-matching endpoint, with \n\t* restrictions: ${JSON.stringify(matchingRestrictions)}\n\t* options: ${JSON.stringify(matchingOptions)}`);
+
     const manager = getManager();
 
     // perform additional database related checks of the matching restrictions, i.e. are all given email addresses valid?
@@ -51,6 +53,7 @@ async function matchPeopleHandler(
         await ensureValidityOfMatchingRestrictionsAgainstDB(matchingRestrictions, manager);
     }
     catch (e) {
+        logger.error(`Manual-matching failed because of invalid matching restrictions, ${e}`);
         res.status(404).send(e.toString());
         return;
     }
