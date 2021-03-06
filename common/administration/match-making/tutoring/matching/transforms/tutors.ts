@@ -14,7 +14,7 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
     };
 }
 export async function transformTutorToHelper(tutor: Student, manager: EntityManager): Promise<Helper> {
-    //reloading the matches instances is required, cause we're accessing the student property of those matches below, and we cannot ensure that the tutee really has a student property without proper loading of the _eager_ Match entity!
+    //reloading the matches instances is required, cause we're accessing the student property of those matches below, and we cannot ensure that the tutee really has a pupil property without proper loading of the _eager_ Match entity!
     const existingMatches = await reloadMatchesInstances(await tutor.matches, manager);
 
     return {
