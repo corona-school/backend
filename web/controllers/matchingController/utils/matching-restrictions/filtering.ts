@@ -7,10 +7,10 @@ import { ApiMatchingRestriction, ApiTuteeMatchingRestriction, ApiTutorMatchingRe
 function parentMatchingRestrictionFilter(restriction: ApiMatchingRestriction): (t: Pupil | Student) => boolean {
     return (t: Pupil | Student) => {
         //on blocking list?
-        if (restriction.blockingList?.some(e => e === t.email)) return false;
+        if (restriction.blockingList?.some(e => e.toLowerCase() === t.email.toLowerCase())) return false;
 
         //matching email address?
-        if (restriction.emails?.every(e => e !== t.email)) return false;
+        if (restriction.emails?.every(e => e.toLowerCase() !== t.email.toLowerCase())) return false;
 
         //matching state?
         if (restriction.states?.every(s => s !== t.state)) return false;
