@@ -17,7 +17,7 @@ function parentMatchingRestrictionFilter(restriction: ApiMatchingRestriction): (
 
         //matching registration date
         if (restriction.registrationDates?.every(rd => (
-            (rd.min != null && moment(t.createdAt).isBefore(rd.min)) || (rd.max != null && moment(t.createdAt).isAfter(rd.max)))
+            (rd.min != null && moment(t.wix_creation_date).isBefore(rd.min)) || (rd.max != null && moment(t.wix_creation_date).isAfter(rd.max)))
         )) return false;
 
         //subject names
