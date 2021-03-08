@@ -8,7 +8,7 @@ import {verifyToken} from "../../web/controllers/tokenController";
 import databaseHelper from "../utils/databaseHelper";
 
 describe("Screening Invitation", function() {
-    this.timeout(20000);
+    this.timeout(5000);
 
     // The connection that should be used for tests
     let connection: Connection;
