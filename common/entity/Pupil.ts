@@ -11,7 +11,7 @@ import { TuteeJufoParticipationIndication } from "../jufo/participationIndicatio
 import { ProjectMatch } from "./ProjectMatch";
 import { gradeAsInt } from "../util/gradestrings";
 import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from "./Student";
-import { parseSubjectString, Subject } from "../util/subjectsutils";
+import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
 
 @Entity()
 export class Pupil extends Person {
@@ -200,6 +200,9 @@ export class Pupil extends Person {
         catch (e) {
             throw new Error(`Invalid subject format string "${this.subjects}" for pupil with email ${this.email} found!`);
         }
+    }
+    setSubjectsFormatted(subjects: Subject[]) {
+        this.subjects = JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat));
     }
 
     overlappingSubjectsWithTutor(tutor: Student): Subject[] {
