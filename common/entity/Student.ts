@@ -433,6 +433,10 @@ export class Student extends Person {
     setSubjectsFormatted(subjects: Subject[]) {
         this.subjects = JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat));
     }
+
+    isIntern(): boolean {
+        return this.module === TeacherModule.INTERNSHIP;
+    }
 }
 
 //re-export
@@ -469,6 +473,11 @@ export async function activeMatchCountOfStudent(s: Student, manager: EntityManag
 }
 
 export const DEFAULT_PROJECT_COACH_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13
+};
+
+export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
     MIN: 1,
     MAX: 13
 };

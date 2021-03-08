@@ -9,6 +9,7 @@ import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
 import * as projectMatchController from "./controllers/projectMatchController";
 import * as screeningController from "./controllers/screeningController";
+import * as matchingController from "./controllers/matchingController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
@@ -24,6 +25,7 @@ import * as multer from "multer";
 import * as moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
+import "reflect-metadata"; //leave it here...
 
 // Logger setup
 try {
@@ -267,6 +269,13 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
             "/instructors",
             screeningController.getInstructors
         );
+
+        const matchingApiRouter = express.Router();
+        matchingApiRouter.post(
+            "/match",
+            matchingController.matchPeopleMiddleware
+        );
+        screenerApiRouter.use("/matching", matchingApiRouter);
 
         app.use("/api/screening", screenerApiRouter);
     }

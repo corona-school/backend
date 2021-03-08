@@ -256,16 +256,10 @@ export async function setupDevDB() {
 
     const matches: Match[] = [];
 
-    let m = new Match();
-    m.uuid = "000000001-0000-0000-0001-1b4c4c526364";
-    m.pupil = pupils[0];
-    m.student = students[0];
+    let m = new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364");
     matches.push(m);
 
-    m = new Match();
-    m.uuid = "000000001-0000-0000-0002-1b4c4c526364";
-    m.pupil = pupils[1];
-    m.student = students[0];
+    m = new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364");
     matches.push(m);
 
     for (let i = 0; i < matches.length; i++) {
