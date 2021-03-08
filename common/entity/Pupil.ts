@@ -181,6 +181,9 @@ export class Pupil extends Person {
         }
         return gradeAsInt(this.grade);
     }
+    setGradeAsNumber(newGrade: number) {
+        this.grade = `${newGrade}. Klasse`;
+    }
 
     assumedProjectCoachingMatchingGrade(): number {
         return this.gradeAsNumber() ?? 13; //if no grade is given (usually only for project coachees which have left the normal school and attend the "Berufsschule"), assume 13, because those people are usually older
