@@ -28,7 +28,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantDrehtuerCertificate } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -54,7 +54,7 @@ import { prisma } from '../../../common/prisma';
 import { CourseCache } from './course-cache';
 import isEmail from "validator/lib/isEmail";
 import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
-import { getCourseCertificate } from '../../../common/drehtuer/certificates';
+import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { addCleanupAction } from '../../../common/util/cleanup';
 
@@ -3742,7 +3742,7 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
             );
 
             //send mail to pupil
-            await sendParticipantDrehtuerCertificate(participant, course, certificateBuffer);
+            await sendParticipantCourseCertificate(participant, course, certificateBuffer);
 
             //TRANSACTION LOG to know who got issued when a certificate by which instructor...
             await transactionLog.log(new InstructorIssuedCertificateEvent(student, participant, subcourse));

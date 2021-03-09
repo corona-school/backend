@@ -281,18 +281,18 @@ export const mailjet = {
             base64Content: pdfBase64
         }]
     }),
-    COURSESDREHTUERCERTIFICATE: (variables: {
+    COURSESCERTIFICATE: (variables: {
         participantFirstname: string;
         courseName: string;
     }, pdfBase64: string) => {
         return <TemplateMail>{
-            type: "coursesdrehtuercertificate",
+            type: "coursescertificate",
             id: 2289687,
             disabled: false,
             variables: variables,
             attachements: [{
                 contentType: "application/pdf",
-                filename: "Teilnahmebescheinigung_Digitale_Drehtuer.pdf",
+                filename: "Teilnahmebescheinigung_CoronaSchool_Kurse.pdf",
                 base64Content: pdfBase64
             }]
         };

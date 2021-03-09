@@ -130,12 +130,12 @@ export async function sendGuestInvitationMail(guest: CourseGuest) {
     await sendTemplateMail(mail, guest.email);
 }
 
-export async function sendParticipantDrehtuerCertificate(participant: Pupil, course: Course, certificateBuffer: Buffer) {
+export async function sendParticipantCourseCertificate(participant: Pupil, course: Course, certificateBuffer: Buffer) {
     //create base 64 version of pdf certificate
     const base64Certificate = certificateBuffer.toString("base64");
 
     //create mail
-    const mail = mailjetTemplates.COURSESDREHTUERCERTIFICATE({
+    const mail = mailjetTemplates.COURSESCERTIFICATE({
         participantFirstname: participant.firstname,
         courseName: course.name
     }, base64Certificate);
