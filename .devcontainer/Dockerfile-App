@@ -22,6 +22,11 @@ RUN apt-get update \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+# C++ 17 support (i.e. install newer gcc version)
+RUN echo 'deb http://deb.debian.org/debian testing main' > /etc/apt/sources.list.d/testing.list
+RUN apt-get update && \
+    apt-get install -y -t testing build-essential
+
 # Uncomment if you want to install an additional version of node using nvm
 ARG EXTRA_NODE_VERSION=13
 RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"

@@ -4,7 +4,7 @@ import { resolve as resolvePath } from "path";
 import * as moment from "moment-timezone";
 import { generatePDFFromHTMLString } from 'html-pppdf';
 
-const TEMPLATE_FOLDER = "./assets/drehtuer/certificate";
+const TEMPLATE_FOLDER = "./assets/courses/certificate";
 const TEMPLATE_ASSETS_FOLDER = `${TEMPLATE_FOLDER}/assets`;
 const CERTFICATE_PATH = `${TEMPLATE_FOLDER}/certificateTemplate.de.html`;
 

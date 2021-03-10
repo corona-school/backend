@@ -20,6 +20,11 @@ export function toStudentSubjectDatabaseFormat(s: Subject) {
         minGrade: s.grade?.min
     };
 }
+export function toPupilSubjectDatabaseFormat(s: Subject) {
+    return {
+        name: s.name
+    };
+}
 
 function parseJSONObjectFormatGradeArray(parsedArray: any[]) {
     return parsedArray.flatMap( s => {

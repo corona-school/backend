@@ -10,7 +10,8 @@ import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectMatch } from "./ProjectMatch";
 import { gradeAsInt } from "../util/gradestrings";
-import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS } from "./Student";
+import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from "./Student";
+import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
 
 @Entity()
 export class Pupil extends Person {
@@ -180,6 +181,9 @@ export class Pupil extends Person {
         }
         return gradeAsInt(this.grade);
     }
+    setGradeAsNumber(newGrade: number) {
+        this.grade = `${newGrade}. Klasse`;
+    }
 
     assumedProjectCoachingMatchingGrade(): number {
         return this.gradeAsNumber() ?? 13; //if no grade is given (usually only for project coachees which have left the normal school and attend the "Berufsschule"), assume 13, because those people are usually older
@@ -190,6 +194,27 @@ export class Pupil extends Person {
         const pupilGrade = this.assumedProjectCoachingMatchingGrade();
 
         return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade && pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)));
+    }
+
+    getSubjectsFormatted(): Subject[] {
+        try {
+            return parseSubjectString(this.subjects);
+        }
+        catch (e) {
+            throw new Error(`Invalid subject format string "${this.subjects}" for pupil with email ${this.email} found!`);
+        }
+    }
+    setSubjectsFormatted(subjects: Subject[]) {
+        this.subjects = JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat));
+    }
+
+    overlappingSubjectsWithTutor(tutor: Student): Subject[] {
+        const tutorSubjects = tutor.getSubjectsFormatted();
+        const tuteeSubjects = this.getSubjectsFormatted();
+
+        const tuteeGrade = this.gradeAsNumber();
+
+        return tuteeSubjects.filter(tuteeS => tutorSubjects.some(tutorS => tuteeS.name === tutorS.name && (tutorS.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade && tuteeGrade <= (tutorS.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)));
     }
 }
 
