@@ -26,5 +26,9 @@ export async function saveMatchToDB(match: Match, manager: EntityManager): Promi
 }
 
 export async function saveMatchingToDB(matches: Match[], manager: EntityManager): Promise<DatabaseProjectMatch[]> {
-    return await Promise.all(matches.map(m => saveMatchToDB(m, manager)));
+    const savedProjectMatches: DatabaseProjectMatch[] = [];
+    for (const m of matches) {
+        savedProjectMatches.push(await saveMatchToDB(m, manager));
+    }
+    return savedProjectMatches;
 }
