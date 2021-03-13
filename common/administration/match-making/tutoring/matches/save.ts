@@ -5,9 +5,10 @@ import { getPupilByWixID } from "../../../../entity/Pupil";
 import { getStudentByWixID } from "../../../../entity/Student";
 
 
-export async function saveMatchPairToDB(matchPair: MatchPair, manager: EntityManager): Promise<DatabaseMatch> {
-    const pupil = matchPair.pupil;
-    const student = matchPair.student;
+export async function saveMatchToDB(match: Match, manager: EntityManager): Promise<DatabaseMatch> {
+    //get both persons (reload them from the database to get the latest value for openMatchRequestCount)
+    const pupil = await getPupilByWixID(manager, match.helpee.uuid);
+    const student = await getStudentByWixID(manager, match.helper.uuid);
 
     //create match
     const tutoringMatch = new DatabaseMatch(pupil, student);
@@ -23,21 +24,12 @@ export async function saveMatchPairToDB(matchPair: MatchPair, manager: EntityMan
 
     return tutoringMatch;
 }
-export async function saveMatchToDB(match: Match, manager: EntityManager): Promise<DatabaseMatch> {
-    //get both persons
-    const pupil = await getPupilByWixID(manager, match.helpee.uuid);
-    const student = await getStudentByWixID(manager, match.helper.uuid);
-
-    return await saveMatchPairToDB({
-        pupil,
-        student
-    }, manager);
-}
 
 
 export async function saveMatchingToDB(matches: Match[], manager: EntityManager): Promise<DatabaseMatch[]> {
-    return await Promise.all(matches.map(m => saveMatchToDB(m, manager)));
-}
-export async function saveMatchPairsToDB(matchPairs: MatchPair[], manager: EntityManager): Promise<DatabaseMatch[]> {
-    return await Promise.all(matchPairs.map(mp => saveMatchPairToDB(mp, manager)));
+    const savedMatches: DatabaseMatch[] = [];
+    for (const m of matches) { //use loop to have no interplay between concurrent Promises
+        savedMatches.push(await saveMatchToDB(m, manager));
+    }
+    return savedMatches;
 }
