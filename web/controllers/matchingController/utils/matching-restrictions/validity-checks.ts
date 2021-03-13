@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { personExists } from "../../../../../common/entity/Person";
+import { personExists } from "../../../../../common/util/person-utils";
 import { ApiMatchingRestriction, ApiMatchingRestrictions } from "../../types/matching-restrictions";
 
 /// Checks the given matching restrictions against the database as represented by the given entity manager
