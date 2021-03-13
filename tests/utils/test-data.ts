@@ -20,6 +20,7 @@ export interface TestableStudentProps {
     intern?: boolean;
     openMatchRequestCount?: number;
     screening?: Screening;
+    openProjectMatchRequestCount?: number;
 }
 //creates a student using the given properties
 export function createStudent(props?: TestableStudentProps, id?: number): Student {
@@ -47,6 +48,7 @@ export function createStudent(props?: TestableStudentProps, id?: number): Studen
     }]);
     s.module = (props?.intern ?? faker.random.boolean()) ? TeacherModule.INTERNSHIP : null;
     s.openMatchRequestCount = props?.openMatchRequestCount ?? faker.random.number({ min: 0, max: 5 });
+    s.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.random.number({ min: 0, max: 5 });
     s.state = props?.state ?? faker.random.arrayElement(Object.values(State));
     s.screening = Promise.resolve(props?.screening ?? null);
 
@@ -61,6 +63,7 @@ export interface TestablePupilProps {
     openMatchRequestCount?: number;
     matchingPriority?: number;
     grade?: number;
+    openProjectMatchRequestCount?: number;
 }
 export function createPupil(props?: TestablePupilProps, id?: number) {
     const p = new Pupil();
@@ -84,6 +87,7 @@ export function createPupil(props?: TestablePupilProps, id?: number) {
         }
     ]);
     p.openMatchRequestCount = props?.openMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
+    p.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
     p.state = props?.state ?? faker.random.arrayElement(Object.values(State));
     p.matchingPriority = props?.matchingPriority ?? faker.random.number( { min: 0 });
     p.setGradeAsNumber(props?.grade ?? faker.random.number({ min: 1, max: 13 }));
