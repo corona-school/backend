@@ -12,6 +12,8 @@ import { ProjectMatch } from "./ProjectMatch";
 import { gradeAsInt } from "../util/gradestrings";
 import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from "./Student";
 import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
+import { LearningGermanSince } from "../daz/learningGermanSince";
+import { Language } from "../daz/language";
 
 @Entity()
 export class Pupil extends Person {
@@ -136,6 +138,24 @@ export class Pupil extends Person {
 
     @OneToMany(type => ProjectMatch, match => match.pupil, { nullable: true })
     projectMatches: Promise<ProjectMatch[]>;
+
+    /*
+     * DaZ data
+     */
+    @Column({
+        type: "enum",
+        enum: Language,
+        default: [],
+        array: true
+    })
+    fluentlySpokenLanguages: Language[];
+
+    @Column({
+        type: "enum",
+        enum: LearningGermanSince,
+        nullable: true
+    })
+    learningGermanSince: LearningGermanSince;
 
     /*
      * Other data

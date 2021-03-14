@@ -21,13 +21,15 @@ import { SchoolType } from "../common/entity/SchoolType";
 import { ProjectField } from "../common/jufo/projectFields";
 import {
     TuteeJufoParticipationIndication,
-    TutorJufoParticipationIndication,
+    TutorJufoParticipationIndication
 } from "../common/jufo/participationIndication";
 import { ProjectMatch } from "../common/entity/ProjectMatch";
 import { ProjectCoachingScreening } from "../common/entity/ProjectCoachingScreening";
 import { ExpertData } from "../common/entity/ExpertData";
 import { ExpertiseTag } from "../common/entity/ExpertiseTag";
 import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication";
+import { LearningGermanSince } from "../common/daz/learningGermanSince";
+import { Language } from "../common/daz/language";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -51,6 +53,8 @@ export async function setupDevDB() {
     p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
+    p.fluentlySpokenLanguages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
     pupils.push(p);
 
     p = new Pupil();
@@ -129,6 +133,8 @@ export async function setupDevDB() {
     ]);
     s1.openMatchRequestCount = 1;
     s1.isProjectCoach = true;
+    s1.supportsInDaZ = true;
+    s1.languages = [Language.ku, Language.en];
     students.push(s1);
 
     const s2 = new Student();
