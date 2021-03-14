@@ -442,6 +442,7 @@ export function checkSubject(s: string): boolean {
             "chemie",
             "physik",
             "informatik",
+            "sachkunde",
             "geschichte",
             "erdkunde",
             "wirtschaft",
@@ -457,7 +458,8 @@ export function checkSubject(s: string): boolean {
             "spanisch",
             "italienisch",
             "russisch",
-            "niederländisch"
+            "niederländisch",
+            "deutsch als zweitsprache"
         ].indexOf(s.toLowerCase()) >= 0
     );
 }
