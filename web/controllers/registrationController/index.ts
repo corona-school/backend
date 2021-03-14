@@ -18,6 +18,7 @@ import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
+import { isArray } from "class-validator";
 
 const logger = getLogger();
 
@@ -59,8 +60,10 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.msg == 'string' &&
             typeof req.body.state == 'string' &&
             typeof req.body.isProjectCoach == 'boolean' &&
-            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
-
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
+            (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
+            typeof req.body.supportsInDaz == 'boolean'
+        ){
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
@@ -280,6 +283,18 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         }
     }
 
+    // DaZ
+    if (apiTutor.languages) {
+        const languages = apiTutor.languages.map(l => EnumReverseMappings.Language(l));
+        if (!languages.every(l => l)) {
+            logger.warn(`User wants to set invalid values "${apiTutor.languages}" for languages`);
+            return 400;
+        }
+        tutor.languages = languages;
+    }
+
+    tutor.supportsInDaZ = apiTutor.supportsInDaz;
+
     const result = await entityManager.findOne(Student, { email: tutor.email });
     if (result !== undefined) {
         logger.error("Tutor with given email already exists");
@@ -335,7 +350,10 @@ export async function postTuteeHandler(req: Request, res: Response) {
             typeof req.body.msg == 'string' &&
             typeof req.body.isProjectCoachee == "boolean" &&
             (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee)) && //require grade only if not only registering for project coaching
-            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) ){
+            (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
+            (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
+            typeof req.body.learningGermanSince == 'string'
+        ){
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -567,6 +585,25 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.projectMemberCount = apiTutee.projectMemberCount;
     }
 
+    // DaZ
+    if (apiTutee.languages) {
+        const languages = apiTutee.languages.map(l => EnumReverseMappings.Language(l));
+        if (!languages.every(l => l)) {
+            logger.warn(`User wants to set invalid values "${apiTutee.languages}" for languages`);
+            return 400;
+        }
+        tutee.languages = languages;
+    }
+
+    if (apiTutee.learningGermanSince) {
+        const learningGermanSince = EnumReverseMappings.LearningGermanSince(apiTutee.learningGermanSince);
+        if (!learningGermanSince) {
+            logger.warn(`User wants to set invalid value "${apiTutee.learningGermanSince}" for learningGermanSince`);
+            return 400;
+        }
+        tutee.learningGermanSince = learningGermanSince;
+    }
+
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
     if (result !== undefined) {
         logger.error("Tutee with given email already exists.");
@@ -769,7 +806,9 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
             typeof req.body.newsletter == 'boolean' &&
             typeof req.body.teacherEmail == 'string' &&
             typeof req.body.isProjectCoachee == "boolean" &&
-            typeof req.body.msg == 'string') {
+            typeof req.body.msg == 'string' &&
+            (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
+            typeof req.body.learningGermanSince == 'string') {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -916,6 +955,26 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
         tutee.isJufoParticipant = apiStateTutee.isJufoParticipant;
         tutee.projectMemberCount = apiStateTutee.projectMemberCount;
     }
+
+    // DaZ
+    if (apiStateTutee.languages) {
+        const languages = apiStateTutee.languages.map(l => EnumReverseMappings.Language(l));
+        if (!languages.every(l => l)) {
+            logger.warn(`User wants to set invalid values "${apiStateTutee.languages}" for languages`);
+            return 400;
+        }
+        tutee.languages = languages;
+    }
+
+    if (apiStateTutee.learningGermanSince) {
+        const learningGermanSince = EnumReverseMappings.LearningGermanSince(apiStateTutee.learningGermanSince);
+        if (!learningGermanSince) {
+            logger.warn(`User wants to set invalid value "${apiStateTutee.learningGermanSince}" for learningGermanSince`);
+            return 400;
+        }
+        tutee.learningGermanSince = learningGermanSince;
+    }
+
 
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
     if (result !== undefined) {
