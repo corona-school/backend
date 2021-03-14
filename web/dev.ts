@@ -53,7 +53,7 @@ export async function setupDevDB() {
     p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
-    p.fluentlySpokenLanguages = [Language.bg, Language.it];
+    p.languages = [Language.bg, Language.it];
     p.learningGermanSince = LearningGermanSince.lessThanOne;
     pupils.push(p);
 

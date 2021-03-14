@@ -5,7 +5,8 @@ import { ProjectField } from "../jufo/projectFields";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { TeacherModule } from "../entity/Student";
 import { RegistrationSource } from "../entity/Person";
-
+import { Language } from "../daz/language";
+import { LearningGermanSince } from "../daz/learningGermanSince";
 
 const EnumReverseMappings = {
     State: caseInsensitive(reverseMappingForStringEnum(State)),
@@ -15,7 +16,9 @@ const EnumReverseMappings = {
     TutorJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TutorJufoParticipationIndication)),
     TuteeJufoParticipationIndication: caseInsensitive(reverseMappingForStringEnum(TuteeJufoParticipationIndication)),
     TeacherModule: caseInsensitive(reverseMappingForStringEnum(TeacherModule)),
-    RegistrationSource: caseInsensitive(reverseMappingForNumericEnumNames(RegistrationSource))
+    RegistrationSource: caseInsensitive(reverseMappingForNumericEnumNames(RegistrationSource)),
+    Language: reverseMappingForStringEnum(Language),
+    LearningGermanSince: reverseMappingForStringEnum(LearningGermanSince)
 };
 
 function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {

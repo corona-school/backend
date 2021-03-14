@@ -251,6 +251,9 @@ export class ApiPutUser {
     subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
+    languages?: string[];
+    learningGermanSince?: string;
+    supportsInDaz?: boolean;
 }
 
 /**

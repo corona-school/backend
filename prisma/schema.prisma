@@ -300,7 +300,7 @@ model pupil {
   match                         match[]
   participation_certificate     participation_certificate[]
   project_match                 project_match[]
-  fluentlySpokenLanguages       language[]                     @default([])
+  languages                     language[]                     @default([])
   learningGermanSince           learning_german_since
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]

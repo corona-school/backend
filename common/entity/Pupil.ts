@@ -148,7 +148,7 @@ export class Pupil extends Person {
         default: [],
         array: true
     })
-    fluentlySpokenLanguages: Language[];
+    languages: Language[];
 
     @Column({
         type: "enum",
