@@ -301,7 +301,7 @@ model pupil {
   participation_certificate     participation_certificate[]
   project_match                 project_match[]
   languages                     language[]
-  learningGermanSince           learning_german_since
+  learningGermanSince           learning_german_since?
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
 }
