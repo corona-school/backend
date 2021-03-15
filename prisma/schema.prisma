@@ -508,10 +508,10 @@ enum language {
 }
 
 enum learning_german_since {
-    greaterThanFour @map("> 4")
+    greaterThanFour @map(">4")
     twoToFour @map("2-4")
     oneToTwo @map("1-2")
-    lessThanOne @map("< 1")
+    lessThanOne @map("<1")
 }
 
 enum log_logtype_enum {
