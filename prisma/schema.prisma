@@ -300,7 +300,7 @@ model pupil {
   match                         match[]
   participation_certificate     participation_certificate[]
   project_match                 project_match[]
-  languages                     language[]                     @default([])
+  languages                     language[]
   learningGermanSince           learning_german_since
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
@@ -399,7 +399,7 @@ model student {
   course_instructors_student                course_instructors_student[]
   expert_data                               expert_data?
   supportsInDaZ                             Boolean?
-  languages                                 language[]                             @default([])
+  languages                                 language[]
   instructor_screening                      instructor_screening?
   jufo_verification_transmission            jufo_verification_transmission?
   lecture                                   lecture[]
@@ -488,8 +488,8 @@ enum language {
     ar @map("Arabisch")
     hy @map("Armenisch")
     az @map("Aserbaidschanisch")
-    bs @map("Bosnisch""
-    bg @map"Bulgarisch")
+    bs @map("Bosnisch")
+    bg @map("Bulgarisch")
     zh @map("Chinesisch")
     de @map("Deutsch")
     en @map("Englisch")
