@@ -353,7 +353,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
             (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee)) && //require grade only if not only registering for project coaching
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
-            typeof req.body.learningGermanSince == 'string'
+            (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')
         ){
 
             if (req.body.isTutee) {
@@ -809,7 +809,7 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
             typeof req.body.isProjectCoachee == "boolean" &&
             typeof req.body.msg == 'string' &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
-            typeof req.body.learningGermanSince == 'string') {
+            (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')) {
 
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
