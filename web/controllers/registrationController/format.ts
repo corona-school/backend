@@ -26,7 +26,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (Tutor Object) {string[]} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoach is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  * @apiSuccess (Tutor Object) {string} [jufoPastParticipationInfo] (for project coaching sometimes required) An open text field that can be used to give any information on a past jufo participation in a very informal way.
  * @apiSuccess (Tutor Object) {string} [registrationSource] (optional field) Can be used to indicate some registration source, allowed values are "NORMAL", "COOPERATION", "DREHTUER", "OTHER".
- *
+ * @apiSuccess (Tutor Object) {string[]} [languages] (optional field) Indicates in which languages the tutor can offer support.
  */
 import {ApiSubject} from "../format";
 
@@ -52,6 +52,8 @@ export interface ApiAddTutor {
     hasJufoCertificate?: boolean,
     jufoPastParticipationInfo?: string,
     registrationSource?: string
+    languages?: string[];
+    supportsInDaz?: boolean;
 }
 
 /**
@@ -74,6 +76,8 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {string} [projectFields] (for project coaching required) An array of strings with identifiers to the project fields if isProjectCoachee is true. One of <code>"Arbeitswelt", "Biologie", "Chemie", "Geo-und-Raumwissenschaften", "Mathematik/Informatik", "Physik", "Technik"</code>
  * @apiSuccess (Tutee Object) {number} [projectMemberCount] (for project coaching required) A number of persons that are making the project together. Values between 1 and 3 are allowed.
  * @apiSuccess (Tutee Object) {string} [registrationSource] (optional field) Can be used to indicate some registration source, allowed values are "NORMAL", "COOPERATION", "DREHTUER", "OTHER".
+ * @apiSuccess (Tutee Object) {string[]} [languages] (optional field) Indicates fluently spoken languges.
+ * @apiSuccess (Tutee Obkect) {string} [learningGermanSince] Indicates since when tutee learns German. Allowed values are ">4", "2-4", "1-2", "<1".
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -92,6 +96,8 @@ export interface ApiAddTutee {
     isJufoParticipant?: TuteeJufoParticipationIndication;
     projectMemberCount?: number;
     registrationSource?: string;
+    languages?: string[];
+    learningGermanSince?: string;
 }
 
 /**
@@ -109,6 +115,8 @@ export interface ApiAddTutee {
  * @apiSuccess (StateTutee Object) {string} msg Additional information
  * @apiSuccess (StateTutee Object) {string} teacherEmail The email address of the teacher as part of cooperation with one of Germany's states
  * @apiSuccess (StateTutee Object) {string|undefined} redirectTo the page the user sees after registration
+ * @apiSuccess (Tutee Object) {string[]} [languages] (optional field) Indicates fluently spoken languges.
+ * @apiSuccess (Tutee Obkect) {string} [learningGermanSince] Indicates since when tutee learns German. Allowed values are ">4", "2-4", "1-2", "<1".
  */
 export interface ApiAddCooperationTutee {
     firstname: string,
@@ -126,6 +134,8 @@ export interface ApiAddCooperationTutee {
     projectFields?: ProjectField[];
     isJufoParticipant?: TuteeJufoParticipationIndication;
     projectMemberCount?: number;
+    languages?: string[];
+    learningGermanSince?: string;
 }
 
 /**

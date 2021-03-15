@@ -27,6 +27,7 @@ import { JufoVerificationTransmission } from "./JufoVerificationTransmission";
 import { ProjectMatch } from "./ProjectMatch";
 import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
+import { Language } from "../daz/language";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -224,6 +225,20 @@ export class Student extends Person {
         cascade: true
     })
     expertData: ExpertData;
+
+    /*
+     * DaZ Data
+     */
+    @Column({nullable: true})
+    supportsInDaZ: boolean;
+
+    @Column({
+        type: "enum",
+        enum: Language,
+        default: [],
+        array: true
+    })
+    languages: Language[];
 
     /*
      * Other data

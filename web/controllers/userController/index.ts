@@ -689,6 +689,19 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
             }
             person.openProjectMatchRequestCount = req.projectMatchesRequested;
         }
+
+        // ++++ DAZ INFORMATION ++++
+        if (req.languages) {
+            const languages = req.languages.map(l => EnumReverseMappings.Language(l));
+            if (!languages.every(l => l)) {
+                logger.warn(`User wants to set invalid values "${req.languages}" for languages`);
+                return 400;
+            }
+            person.languages = languages;
+        }
+
+        person.supportsInDaZ = req.supportsInDaz;
+
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -753,6 +766,25 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
                 return 400;
             }
             person.openProjectMatchRequestCount = req.projectMatchesRequested;
+        }
+
+        // ++++ DAZ INFORMATION +++++
+        if (req.languages) {
+            const languages = req.languages.map(l => EnumReverseMappings.Language(l));
+            if (!languages.every(l => l)) {
+                logger.warn(`User wants to set invalid values "${req.languages}" for languages`);
+                return 400;
+            }
+            person.languages = languages;
+        }
+
+        if (req.learningGermanSince) {
+            const learningGermanSince = EnumReverseMappings.LearningGermanSince(req.learningGermanSince);
+            if (!learningGermanSince) {
+                logger.warn(`User wants to set invalid value "${learningGermanSince}" for learningGermanSince`);
+                return 400;
+            }
+            person.learningGermanSince = learningGermanSince;
         }
     } else if (person instanceof Mentor) {
         type = Mentor;

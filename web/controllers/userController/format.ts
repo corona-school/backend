@@ -251,6 +251,9 @@ export class ApiPutUser {
     subjects?: ApiSubject[];
     teachingExperience?: boolean;
     description?: string;
+    languages?: string[];
+    learningGermanSince?: string;
+    supportsInDaz?: boolean;
 }
 
 /**
@@ -439,6 +442,7 @@ export function checkSubject(s: string): boolean {
             "chemie",
             "physik",
             "informatik",
+            "sachkunde",
             "geschichte",
             "erdkunde",
             "wirtschaft",
@@ -454,7 +458,8 @@ export function checkSubject(s: string): boolean {
             "spanisch",
             "italienisch",
             "russisch",
-            "niederländisch"
+            "niederländisch",
+            "deutsch als zweitsprache"
         ].indexOf(s.toLowerCase()) >= 0
     );
 }

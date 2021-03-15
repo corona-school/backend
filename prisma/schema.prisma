@@ -300,6 +300,8 @@ model pupil {
   match                         match[]
   participation_certificate     participation_certificate[]
   project_match                 project_match[]
+  languages                     language[]
+  learningGermanSince           learning_german_since
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
 }
@@ -396,6 +398,8 @@ model student {
   course                                    course[]
   course_instructors_student                course_instructors_student[]
   expert_data                               expert_data?
+  supportsInDaZ                             Boolean?
+  languages                                 language[]
   instructor_screening                      instructor_screening?
   jufo_verification_transmission            jufo_verification_transmission?
   lecture                                   lecture[]
@@ -477,6 +481,37 @@ enum expert_data_allowed_enum {
   pending
   yes
   no
+}
+
+enum language {
+    sq @map("Albanisch")
+    ar @map("Arabisch")
+    hy @map("Armenisch")
+    az @map("Aserbaidschanisch")
+    bs @map("Bosnisch")
+    bg @map("Bulgarisch")
+    zh @map("Chinesisch")
+    de @map("Deutsch")
+    en @map("Englisch")
+    fr @map("Französisch")
+    it @map("Italienisch")
+    kk @map("Kasachisch")
+    ku @map("Kurdisch")
+    pl @map("Polnisch")
+    pt @map("Portugiesisch")
+    ru @map("Russisch")
+    tr @map("Türkisch")
+    es @map("Spanisch")
+    uk @map("Ukrainisch")
+    vi @map("Vietnamesisch")
+    other @map("Andere")
+}
+
+enum learning_german_since {
+    greaterThanFour @map("> 4")
+    twoToFour @map("2-4")
+    oneToTwo @map("1-2")
+    lessThanOne @map("< 1")
 }
 
 enum log_logtype_enum {
