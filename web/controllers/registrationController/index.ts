@@ -19,6 +19,7 @@ import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 import { isArray } from "class-validator";
+import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
 
 const logger = getLogger();
 
@@ -596,7 +597,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     }
 
     if (apiTutee.learningGermanSince) {
-        const learningGermanSince = EnumReverseMappings.LearningGermanSince(apiTutee.learningGermanSince);
+        const learningGermanSince = LearningGermanSince[apiTutee.learningGermanSince];
         if (!learningGermanSince) {
             logger.warn(`User wants to set invalid value "${apiTutee.learningGermanSince}" for learningGermanSince`);
             return 400;
