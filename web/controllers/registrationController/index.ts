@@ -63,7 +63,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isProjectCoach == 'boolean' &&
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
-            typeof req.body.supportsInDaz == 'boolean'
+            (!req.body.supportsInDaZ || typeof req.body.supportsInDaz == 'boolean')
         ){
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
