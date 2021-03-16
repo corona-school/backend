@@ -968,7 +968,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
     }
 
     if (apiStateTutee.learningGermanSince) {
-        const learningGermanSince = EnumReverseMappings.LearningGermanSince(apiStateTutee.learningGermanSince);
+        const learningGermanSince = LearningGermanSince[apiStateTutee.learningGermanSince];
         if (!learningGermanSince) {
             logger.warn(`User wants to set invalid value "${apiStateTutee.learningGermanSince}" for learningGermanSince`);
             return 400;
