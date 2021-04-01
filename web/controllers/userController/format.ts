@@ -306,6 +306,19 @@ export class ApiUserRoleInstructor {
     msg: string;
 }
 
+/**
+ * @apiDefine UserRoleTutor
+ * @apiVersion 1.0.1
+ *
+ * @apiSuccess (Tutor Object) {Subject[]} subjects List of subjects
+ * @apiSuccess (Tutor Object) {bool} supportsInDaz Indication whether the student wants to support in the DaZ programme
+ * @apiSuccess (Tutor Object) {string[]} languages <i>Only if student supports in DaZ (optional):</i> Languages in which the student can offer support
+ */
+export class ApiUserRoleTutor {
+    subjects: ApiSubject[];
+    supportsInDaz: boolean;
+    languages?: string[];
+}
 
 /**
  * @apiDefine UserRoleProjectCoach

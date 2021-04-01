@@ -8,7 +8,7 @@ import {
     ApiPutUser,
     ApiUserRoleInstructor,
     ApiUserRoleProjectCoach,
-    ApiUserRoleProjectCoachee,
+    ApiUserRoleProjectCoachee, ApiUserRoleTutor,
     checkName,
     checkSubject
 } from "./format";
@@ -34,6 +34,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 import {ExpertData} from "../../../common/entity/ExpertData";
+import { languageOptions } from "../../../../web-user-app/src/assets/languages";
 
 const logger = getLogger();
 
@@ -1255,7 +1256,7 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
  *
  * @apiParam (URL Parameter) {string} id User Id
  *
- * @apiUse Subject
+ * @apiUse UserRoleTutor
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -1267,35 +1268,24 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
 
     if (res.locals.user instanceof Student
         && req.params.id != undefined
-        && req.body instanceof Array) {
-        let subjects: ApiSubject[] = [];
-        for (let testSubject of req.body) {
-            if (typeof testSubject.name == "string" &&
-                checkSubject(testSubject.name) &&
-                typeof testSubject.minGrade == "number" &&
-                Number.isInteger(testSubject.minGrade) &&
-                typeof testSubject.maxGrade == "number" &&
-                Number.isInteger(testSubject.maxGrade) &&
-                testSubject.minGrade >= 1 && testSubject.minGrade <= 13 &&
-                testSubject.maxGrade >= 1 && testSubject.maxGrade <= 13 &&
-                testSubject.minGrade <= testSubject.maxGrade) {
+        && req.body.subjects instanceof Array
+        && typeof req.body.dazSupport === "boolean"
+        && (!req.body.languages || (req.body.languages instanceof Array && req.body.languages.every(l => typeof l == "string")))) {
 
-                let newSubject: ApiSubject = {
-                    name: testSubject.name,
-                    minGrade: testSubject.minGrade,
-                    maxGrade: testSubject.maxGrade
-                };
-                subjects.push(newSubject);
-            } else {
-                logger.warn("Invalid format for subject data element.");
-                logger.debug(testSubject);
+        for (let i = 0; i < req.body.subjects.length; i++) {
+            let elem = req.body.subjects[i];
+            if (typeof elem.name !== 'string' ||
+                typeof elem.minGrade !== 'number' ||
+                typeof elem.maxGrade !== 'number') {
+                logger.error("Post user role tutor has malformed subjects.");
                 status = 400;
             }
         }
 
-        if (status < 300 && subjects.length >= 1) {
-            status = await postUserRoleTutor(req.params.id, res.locals.user, subjects);
+        if (status < 300) {
+            status = await postUserRoleTutor(req.params.id, res.locals.user, req.body);
         }
+
     } else {
         logger.warn("Missing request parameters for roleTutorHandler.");
         status = 400;
@@ -1304,7 +1294,7 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiSubject[]): Promise<number> {
+async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiUserRoleTutor): Promise<number> {
     if (wixId != student.wix_id) {
         logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
         return 403;
@@ -1315,13 +1305,21 @@ async function postUserRoleTutor(wixId: string, student: Student, subjects: ApiS
         return 400;
     }
 
+    const languages = apiTutor.languages?.map(l => EnumReverseMappings.Language(l)) ?? [];
+    if (!languages.every(l => l)) {
+        logger.warn(`User wants to set invalid values "${apiTutor.languages}" for languages`);
+        return 400;
+    }
+
     const entityManager = getManager();
     //TODO: Implement transactionLog
 
     try {
         student.isStudent = true;
         student.openMatchRequestCount = 1;
-        student.subjects = JSON.stringify(subjects);
+        student.subjects = JSON.stringify(apiTutor.subjects);
+        student.supportsInDaZ = apiTutor.supportsInDaz;
+        student.languages = languages;
         // TODO: transaction log
         await entityManager.save(Student, student);
     } catch (e) {
