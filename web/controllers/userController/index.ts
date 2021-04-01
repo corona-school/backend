@@ -30,11 +30,9 @@ import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 import {ApiSubject} from "../format";
 import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
-import { ProjectField } from "../../../common/jufo/projectFields";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 import {ExpertData} from "../../../common/entity/ExpertData";
-import { languageOptions } from "../../../../web-user-app/src/assets/languages";
 
 const logger = getLogger();
 
@@ -1269,8 +1267,8 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
     if (res.locals.user instanceof Student
         && req.params.id != undefined
         && req.body.subjects instanceof Array
-        && typeof req.body.dazSupport === "boolean"
-        && (!req.body.languages || (req.body.languages instanceof Array && req.body.languages.every(l => typeof l == "string")))) {
+        && typeof req.body.supportsInDaz === "boolean"
+        && (!req.body.languages || (req.body.languages instanceof Array && req.body.languages.every(l => typeof l === "string")))) {
 
         for (let i = 0; i < req.body.subjects.length; i++) {
             let elem = req.body.subjects[i];
@@ -1326,6 +1324,8 @@ async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiU
         logger.error("Unable to update student status: " + e.message);
         return 500;
     }
+
+    logger.info(`Student ${student.wix_id} became tutor with ${JSON.stringify(apiTutor)}`);
     return 204;
 }
 
