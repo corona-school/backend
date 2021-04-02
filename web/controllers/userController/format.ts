@@ -11,6 +11,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  * @apiSuccess (User Object) {string} type Either <code>"pupil"</code> or <code>"student"</code>
  * @apiSuccess (User Object) {string} isTutor <i>Only available for students:</i> User registered as Tutor for 1:1 matches
  * @apiSuccess (User Object) {string} isInstructor <i>Only available for students:</i> User registered as Instructor for courses
+ * @apiSuccess (User Object) {boolean} isUniversityStudent <i>Only available for project coaches:</i> The coach is enrolled at a university
  * @apiSuccess (User Object) {boolean} active An inactive user is not considered for new matches.
  * @apiSuccess (User Object) {number} grade <i>Only available for pupils:</i> Grade of the pupil
  * @apiSuccess (User Object) {number} matchesRequested <i>Only available for students:</i> Number of matches requested by the user
@@ -170,6 +171,7 @@ export class ApiGetUser {
     isPupil?: boolean;
     isParticipant?: boolean;
     isProjectCoachee?: boolean;
+    isUniversityStudent?: boolean;
     active: boolean;
     grade?: number;
     matchesRequested?: number;

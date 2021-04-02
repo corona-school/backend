@@ -454,6 +454,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.isTutor = person.isStudent;
         apiResponse.isInstructor = person.isInstructor;
         apiResponse.isProjectCoach = person.isProjectCoach;
+        apiResponse.isUniversityStudent = person.isUniversityStudent;
         apiResponse.screeningStatus = await person.screeningStatus();
         apiResponse.instructorScreeningStatus = await person.instructorScreeningStatus();
         apiResponse.projectCoachingScreeningStatus = await person.projectCoachingScreeningStatus();
