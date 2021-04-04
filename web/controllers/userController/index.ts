@@ -1,5 +1,5 @@
 import { getLogger } from "log4js";
-import { getManager, ObjectType } from "typeorm";
+import { EntityManager, getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import {
     ApiGetUser,
@@ -21,18 +21,23 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
 import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
 import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
-import { sendFirstScreeningInvitationToInstructor, sendFirstScreeningInvitationToProjectCoachingJufoAlumni, sendFirstScreeningInvitationToTutor } from "../../../common/administration/screening/initial-invitations";
+import {
+    sendFirstScreeningInvitationToInstructor,
+    sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
+    sendFirstScreeningInvitationToTutor
+} from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import * as moment from "moment-timezone";
-import {Mentor} from "../../../common/entity/Mentor";
-import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
-import {ApiSubject} from "../format";
+import { Mentor } from "../../../common/entity/Mentor";
+import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
+import { ApiSubject } from "../format";
 import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
 import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
-import {ExpertData} from "../../../common/entity/ExpertData";
+import { ExpertData } from "../../../common/entity/ExpertData";
+import { getDefaultScreener } from "../../../common/entity/Screener";
 
 const logger = getLogger();
 
@@ -1319,6 +1324,7 @@ async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiU
         student.subjects = JSON.stringify(apiTutor.subjects);
         student.supportsInDaZ = apiTutor.supportsInDaz;
         student.languages = languages;
+        await becomeTutorScreeningHandler(student, entityManager);
         // TODO: transaction log
         await entityManager.save(Student, student);
     } catch (e) {
@@ -1328,6 +1334,24 @@ async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiU
 
     logger.info(`Student ${student.wix_id} became tutor with ${JSON.stringify(apiTutor)}`);
     return 204;
+}
+
+async function becomeTutorScreeningHandler(student: Student, entityManager: EntityManager): Promise<void> {
+    // If project coach is university student and verified project coach he/ she is eligible for tutoring
+
+    if (student.isUniversityStudent) {
+        const projectCoachingScreening = await student.projectCoachingScreening;
+
+        if (projectCoachingScreening && projectCoachingScreening.success) {
+            const defualtScreener = await getDefaultScreener(entityManager);
+
+            await student.setTutorScreeningResult({
+                verified: true,
+                comment: `[AUTOMATICALLY GENERATED SECONDARY SCREENING DUE TO VALID PROJECT COACHING SCREENING]`,
+                knowsCoronaSchoolFrom: ""
+            }, defualtScreener);
+        }
+    }
 }
 
 
