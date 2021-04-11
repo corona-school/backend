@@ -576,7 +576,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
         tutee.isPupil = true;
         tutee.subjects = JSON.stringify(apiTutee.subjects);
-        if(apiTutee.requestsAutoMatch != null && !apiTutee.requestsAutoMatch) {
+        if (apiTutee.requestsAutoMatch != null && !apiTutee.requestsAutoMatch) {
             tutee.openMatchRequestCount = 0;
         }
     }
