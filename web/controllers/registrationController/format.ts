@@ -98,6 +98,7 @@ export interface ApiAddTutee {
     registrationSource?: string;
     languages?: string[];
     learningGermanSince?: string;
+    requestsAutoMatch?: boolean;
 }
 
 /**
