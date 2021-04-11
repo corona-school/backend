@@ -1,8 +1,16 @@
 import {getLogger} from "log4js";
+import { material } from "../mentoring/material";
+import { google, calendar_v3 as googleCalendar } from "googleapis";
 
-const {google} = require('googleapis');
 const logger = getLogger();
 
+
+export interface PeerToPeerCall {
+    time?: string;
+    link?: string;
+    title?: string;
+    description?: string;
+}
 
 const parsePlaylistItem = (item) => {
     return ({
@@ -19,12 +27,14 @@ const parseFileData = (item) => {
     });
 };
 
-const parseEvent = (event) => {
+const parsePeerToPeerCall = (event: googleCalendar.Schema$Event): PeerToPeerCall => {
     const linkFromConferenceData = event.conferenceData?.entryPoints?.find(e => e.entryPointType == "video")?.uri;
 
     return ({
         time: event.start.dateTime,
-        link: linkFromConferenceData ?? event.summary?.match(/https?:[^\s]+/)[0]
+        link: linkFromConferenceData ?? event.location?.match(/https?:[^\s]+/)?.pop(),
+        title: event.summary,
+        description: event.description
     });
 };
 
@@ -62,21 +72,15 @@ function queryFiles(query) {
     });
 }
 
-function queryEvents(query) {
-    return new Promise((resolve, reject) => {
-        const service = google.calendar({version: 'v3', auth: process.env.GOOGLE_KEY});
-        service.events.list(query, (err, res) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            if (!res.data.items) {
-                resolve([]);
-                return;
-            }
-            resolve(res.data.items);
-        });
+async function queryEvents(query: googleCalendar.Params$Resource$Events$List): Promise<googleCalendar.Schema$Event[]> {
+    const calender: googleCalendar.Calendar = google.calendar({
+        version: 'v3',
+        auth: process.env.GOOGLE_KEY
     });
+
+    const result = await calender.events.list(query);
+
+    return result.data.items;
 }
 
 export async function listVideos(playlistID: string) {
@@ -97,30 +101,27 @@ export async function listFiles(folderID: string) {
     return files;
 }
 
-export async function getNextDueEvent(calendarID: string) {
-    let event = {};
-    await queryEvents({
-        calendarId: calendarID,
+export async function getPeerToPeerCallDate(): Promise<PeerToPeerCall> {
+    const events = await queryEvents({
+        calendarId: material.call_calendar,
         maxResults: 1,
         orderBy: "startTime",
         singleEvents: true,
         timeMin: new Date().toISOString()
-    })
-        .then(JSON.stringify).then(JSON.parse).then(res => {
-            if (res.length !== 1) {
-                throw new Error("Calendar query returned no or more than one events.");
-            } else {
-                return res;
-            }
-        })
-        .then(res => parseEvent(res[0]))
-        .then(res => {
-            if (!res.link) {
-                logger.warn("No valid link extracted from calendar event.");
-            }
-            event = res;
-        })
-        .catch(err => logger.warn("Calendar query failed: " + err.message));
+    });
+    if (events.length === 0) {
+        return {};
+    }
+    if (events.length === 1) {
+        const peerToPeerCall = parsePeerToPeerCall(events[0]);
 
-    return event;
+        if (!peerToPeerCall.link) {
+            logger.warn("No valid link extracted from calendar event.");
+        }
+
+        return peerToPeerCall;
+    }
+    if (events.length > 1){
+        logger.warn("Calendar query returned more than one event.");
+    }
 }

@@ -6,11 +6,11 @@ import {
 } from './format';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
-import { MentoringCategory, contactEmailAddress as mentoringContactEmailAddress } from '../../../common/mentoring/categories';
+import { contactEmailAddress as mentoringContactEmailAddress } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
-import {getNextDueEvent, listFiles, listVideos} from "../../../common/google";
+import { getPeerToPeerCallDate, listFiles, listVideos, PeerToPeerCall } from "../../../common/google";
 import { material } from "../../../common/mentoring/material";
 
 const logger = getLogger();
@@ -198,8 +198,15 @@ export async function getFeedbackCallData(req: Request, res: Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student){
-            let date = await getNextDueEvent(material.call_calendar);
-            return res.status(status).json(date).end();
+            const peerToPeerCall: PeerToPeerCall = await getPeerToPeerCallDate();
+
+            if (!peerToPeerCall) {
+                status = 404;
+                logger.warn("Could not retrieve peer to peer call data.");
+                return res.status(status).end();
+            }
+
+            return res.status(status).json(peerToPeerCall).end();
         } else {
             status = 403;
             logger.warn("A non-student wanted to access student feedback call data.");
