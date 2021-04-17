@@ -1150,13 +1150,13 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
             }
     
         } catch (e) {
-            logger.error("An error occurred during GET /register/schools: " + e.message);
+            logger.error("An error occurred during GET /register/checkEmail: " + e.message);
             logger.debug(req, e);
             status = 500;
         }
 
     } else {
-        status = 404;
+        status = 400;
     }
     res.status(status).end();
 }
