@@ -221,6 +221,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         registrationRouter.post("/mentor", registrationController.postMentorHandler);
+        registrationRouter.post("/checkEmail", registrationController.checkEmail);
         registrationRouter.get("/schools/:state?", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }

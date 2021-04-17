@@ -15,7 +15,7 @@ import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
-import { RegistrationSource } from '../../../common/entity/Person';
+import { Person, RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
 import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
 import { isArray } from "class-validator";
@@ -1110,3 +1110,54 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
     }
 
 }
+
+
+/**
+ * @api {POST} /register/checkEmail checkEmail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Checks if the specified email address is already taken.
+ *
+ * @apiName checkEmail
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/checkEmail -d "<REQUEST>"
+ *
+ * @apiUse StatusOK
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+ export async function checkEmail(req: Request, res: Response) {
+    const entityManager = getManager();
+    let status: number;
+    if (req.body != null && req.body.email != null) {
+        try {
+            let result1 = await entityManager.findOne(Pupil, {email: req.body.email});
+            if (result1 !== undefined) {
+                status = 409;
+            } else {
+                let result2 = await entityManager.findOne(Student, {email: req.body.email});
+                if (result2 !== undefined) {
+                    status = 409;
+                } else {
+                    status = 200;
+                }
+            }
+    
+        } catch (e) {
+            logger.error("An error occurred during GET /register/schools: " + e.message);
+            logger.debug(req, e);
+            status = 500;
+        }
+
+    } else {
+        status = 404;
+    }
+    res.status(status).end();
+}
+
