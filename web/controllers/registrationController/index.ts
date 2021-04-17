@@ -1132,7 +1132,7 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
  * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
- export async function checkEmail(req: Request, res: Response) {
+export async function checkEmail(req: Request, res: Response) {
     const entityManager = getManager();
     let status: number;
     if (req.body != null && req.body.email != null) {
@@ -1148,7 +1148,6 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
                     status = 200;
                 }
             }
-    
         } catch (e) {
             logger.error("An error occurred during GET /register/checkEmail: " + e.message);
             logger.debug(req, e);
