@@ -1113,12 +1113,12 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
 
 
 /**
- * @api {POST} /register/checkEmail checkEmail
+ * @api {POST} /register/checkEmail CheckEmail
  * @apiVersion 1.1.0
  * @apiDescription
  * Checks if the specified email address is already taken.
- *
- * @apiName checkEmail
+ * <b>Has a rate limit of 5 requests/15 minutes per IP-address</b>
+ * @apiName CheckEmail
  * @apiGroup Registration
  *
  * @apiUse ContentType
