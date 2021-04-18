@@ -15,9 +15,9 @@ import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
 import { Address } from "address-rfc2821";
 import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
-import { Person, RegistrationSource } from '../../../common/entity/Person';
+import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
-import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
+import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { isArray } from "class-validator";
 import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
 
