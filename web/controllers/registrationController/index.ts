@@ -1111,6 +1111,9 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
 
 }
 
+/**
+ * @apiDefine CheckEmail
+ */
 
 /**
  * @api {POST} /register/checkEmail CheckEmail
@@ -1127,7 +1130,7 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
  * @apiExample {curl} Curl
  * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/checkEmail -d "<REQUEST>"
  *
- * @apiUse StatusOK
+ * @apiUse StatusOk
  * @apiUse StatusBadRequest
  * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
