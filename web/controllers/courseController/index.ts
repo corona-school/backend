@@ -2911,7 +2911,10 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         }
                     }
 
-                    if (authenticatedStudent) {
+                    if (!!meeting.alternativeUrl) {
+                        res.send( { url: meeting.alternativeUrl });
+
+                    } else if (authenticatedStudent) {
                         let user: Student = res.locals.user;
 
                         await startBBBMeeting(meeting);
@@ -2993,7 +2996,8 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
             updatedAt: new Date(),
             attendeePW: user?.wix_id.concat("ATTENDEE-PW") ?? uuidv4(),
             moderatorPW: user?.wix_id.concat("MODERATOR-PW") ?? uuidv4(),
-            meetingName: "Test-Meeting"
+            meetingName: "Test-Meeting",
+            alternativeUrl: null
         };
 
 
@@ -3605,6 +3609,14 @@ async function joinCourseMeetingExternalGuest(token: string): Promise<number | A
         logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since there is no meeting started yet`);
         return 428; //use this to indicate the meeting hasn't started yet
     }
+
+    //return alternative url if available and skip BBB related steps
+    if (meeting.alternativeUrl) {
+        return {
+            url: meeting.alternativeUrl
+        };
+    }
+
     //check if the meeting is running
     const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseIDString);
 
