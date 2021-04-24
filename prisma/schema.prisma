@@ -12,9 +12,10 @@ model bbb_meeting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
   meetingID   String
-  meetingName String
-  attendeePW  String
-  moderatorPW String
+  meetingName String?
+  attendeePW  String?
+  moderatorPW String?
+  alternativeUri String?
 }
 
 model course {
@@ -484,34 +485,34 @@ enum expert_data_allowed_enum {
 }
 
 enum language {
-    sq @map("Albanisch")
-    ar @map("Arabisch")
-    hy @map("Armenisch")
-    az @map("Aserbaidschanisch")
-    bs @map("Bosnisch")
-    bg @map("Bulgarisch")
-    zh @map("Chinesisch")
-    de @map("Deutsch")
-    en @map("Englisch")
-    fr @map("Französisch")
-    it @map("Italienisch")
-    kk @map("Kasachisch")
-    ku @map("Kurdisch")
-    pl @map("Polnisch")
-    pt @map("Portugiesisch")
-    ru @map("Russisch")
-    tr @map("Türkisch")
-    es @map("Spanisch")
-    uk @map("Ukrainisch")
-    vi @map("Vietnamesisch")
-    other @map("Andere")
+  sq @map("Albanisch")
+  ar @map("Arabisch")
+  hy @map("Armenisch")
+  az @map("Aserbaidschanisch")
+  bs @map("Bosnisch")
+  bg @map("Bulgarisch")
+  zh @map("Chinesisch")
+  de @map("Deutsch")
+  en @map("Englisch")
+  fr @map("Französisch")
+  it @map("Italienisch")
+  kk @map("Kasachisch")
+  ku @map("Kurdisch")
+  pl @map("Polnisch")
+  pt @map("Portugiesisch")
+  ru @map("Russisch")
+  tr @map("Türkisch")
+  es @map("Spanisch")
+  uk @map("Ukrainisch")
+  vi @map("Vietnamesisch")
+  other @map("Andere")
 }
 
 enum learning_german_since {
-    greaterThanFour @map(">4")
-    twoToFour @map("2-4")
-    oneToTwo @map("1-2")
-    lessThanOne @map("<1")
+  greaterThanFour @map(">4")
+  twoToFour @map("2-4")
+  oneToTwo @map("1-2")
+  lessThanOne @map("<1")
 }
 
 enum log_logtype_enum {

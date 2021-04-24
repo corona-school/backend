@@ -20,13 +20,15 @@ export class BBBMeeting {
     @Column()
     meetingID: string;
 
-    @Column()
+    @Column({ nullable: true })
     meetingName: string;
 
-    @Column()
+    @Column({ nullable: true })
     attendeePW: string;
 
-    @Column()
+    @Column({ nullable: true })
     moderatorPW: string;
 
+    @Column({ nullable: true })
+    alternativeUrl: string;
 }
