@@ -26,6 +26,7 @@ import * as moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
+import * as rateLimit from "express-rate-limit";
 
 // Logger setup
 try {
@@ -216,11 +217,17 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     }
 
     function configureRegistrationAPI() {
+        const checkEmailRateLimit = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 5
+        });
+
         const registrationRouter = express.Router();
         registrationRouter.post("/tutee", registrationController.postTuteeHandler);
         registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
         registrationRouter.post("/tutor", registrationController.postTutorHandler);
         registrationRouter.post("/mentor", registrationController.postMentorHandler);
+        registrationRouter.post("/checkEmail", checkEmailRateLimit, registrationController.checkEmail);
         registrationRouter.get("/schools/:state?", registrationController.getSchoolsHandler);
         app.use("/api/register", registrationRouter);
     }

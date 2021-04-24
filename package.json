@@ -57,6 +57,7 @@
     "esm": "^3.2.25",
     "express": "^4.15.2",
     "express-favicon": "^2.0.1",
+    "express-rate-limit": "^5.2.6",
     "googleapis": "^59.0.0",
     "helmet": "^3.22.0",
     "hpp": "^0.2.3",
@@ -87,6 +88,7 @@
   "devDependencies": {
     "@types/chai": "^4.2.13",
     "@types/cron": "^1.7.2",
+    "@types/express-rate-limit": "^5.1.1",
     "@types/faker": "^5.1.7",
     "@types/lodash": "^4.14.155",
     "@types/mime-types": "^2.1.0",

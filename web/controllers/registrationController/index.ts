@@ -17,7 +17,7 @@ import { School } from '../../../common/entity/School';
 import { SchoolType } from '../../../common/entity/SchoolType';
 import { RegistrationSource } from '../../../common/entity/Person';
 import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
-import {checkDivisions, checkExpertises, checkSubjects} from "../utils";
+import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { isArray } from "class-validator";
 import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
 
@@ -1110,3 +1110,56 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
     }
 
 }
+
+/**
+ * @apiDefine CheckEmail
+ */
+
+/**
+ * @api {POST} /register/checkEmail CheckEmail
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Checks if the specified email address is already taken.
+ * <b>Has a rate limit of 5 requests/15 minutes per IP-address</b>
+ * @apiName CheckEmail
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/checkEmail -d "<REQUEST>"
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function checkEmail(req: Request, res: Response) {
+    const entityManager = getManager();
+    let status: number;
+    if (req.body != null && req.body.email != null) {
+        try {
+            let result1 = await entityManager.findOne(Pupil, {email: req.body.email});
+            if (result1 !== undefined) {
+                status = 409;
+            } else {
+                let result2 = await entityManager.findOne(Student, {email: req.body.email});
+                if (result2 !== undefined) {
+                    status = 409;
+                } else {
+                    status = 200;
+                }
+            }
+        } catch (e) {
+            logger.error("An error occurred during GET /register/checkEmail: " + e.message);
+            logger.debug(req, e);
+            status = 500;
+        }
+
+    } else {
+        status = 400;
+    }
+    res.status(status).end();
+}
+
