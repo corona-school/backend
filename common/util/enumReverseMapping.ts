@@ -7,6 +7,7 @@ import { TeacherModule } from "../entity/Student";
 import { RegistrationSource } from "../entity/Person";
 import { Language } from "../daz/language";
 import { LearningGermanSince } from "../daz/learningGermanSince";
+import { InterestConfirmationStatus } from "../entity/PupilTutoringInterestConfirmationRequest";
 
 const EnumReverseMappings = {
     State: caseInsensitive(reverseMappingForStringEnum(State)),
@@ -18,7 +19,8 @@ const EnumReverseMappings = {
     TeacherModule: caseInsensitive(reverseMappingForStringEnum(TeacherModule)),
     RegistrationSource: caseInsensitive(reverseMappingForNumericEnumNames(RegistrationSource)),
     Language: reverseMappingForStringEnum(Language),
-    LearningGermanSince: reverseMappingForStringEnum(LearningGermanSince)
+    LearningGermanSince: reverseMappingForStringEnum(LearningGermanSince),
+    PupilTutoringInterestConfirmationStatus: reverseMappingForStringEnum(InterestConfirmationStatus)
 };
 
 function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {

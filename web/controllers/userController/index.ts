@@ -562,6 +562,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
+        apiResponse.pupilTutoringInterestConfirmationStatus = person.tutoringInterestConfirmationRequest?.status;
 
         let matches = await entityManager.find(Match, {
             pupil: person,

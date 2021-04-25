@@ -465,5 +465,33 @@ export const mailjet = {
             disabled: false,
             variables: variables
         };
+    },
+    PUPILMATCHREQUESTCONFIRMATION: (variables: {
+        firstName: string;
+        authToken: string;
+        confirmationURL: string;
+        refusalURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilmatchrequestconfirmation",
+            id: 2827881,
+            sender: DEFAULTSENDERS.support,
+            disabled: false,
+            variables: variables
+        };
+    },
+    PUPILMATCHREQUESTCONFIRMATIONREMINDER: (variables: {
+        firstName: string;
+        authToken: string;
+        confirmationURL: string;
+        refusalURL: string;
+    }) => {
+        return <TemplateMail>{
+            type: "pupilmatchrequestconfirmationreminder",
+            id: 2828166,
+            sender: DEFAULTSENDERS.support,
+            disabled: false,
+            variables: variables
+        };
     }
 };

@@ -158,6 +158,7 @@ import { ProjectField } from "../../../common/jufo/projectFields";
  */
 import {ApiSubject} from "../format";
 import {ExpertAllowedIndication} from "../../../common/jufo/expertAllowedIndication";
+import { InterestConfirmationStatus } from "../../../common/entity/PupilTutoringInterestConfirmationRequest";
 
 export class ApiGetUser {
     id: string;
@@ -190,6 +191,7 @@ export class ApiGetUser {
     lastUpdatedSettingsViaBlocker: number;
     registrationDate: number;
     expertData?: ApiExpertData;
+    pupilTutoringInterestConfirmationStatus?: InterestConfirmationStatus;
     //TODO: Um Mentor erweitern
 }
 
