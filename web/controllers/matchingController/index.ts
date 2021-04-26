@@ -23,7 +23,7 @@ const logger = getLogger();
 async function performMatchRequest(restrictions: ApiMatchingRestrictions, options: ApiMatchingOptions, manager: EntityManager) {
     // get all matchable students and pupils
     const matchableTutors = await tutorsToMatch(manager);
-    const matchableTutees = await tuteesToMatch(manager);
+    const matchableTutees = await tuteesToMatch(manager, !options.disableInterestConfirmationRestriction);
 
     // filter students and pupils according to matching restrictions (if given, otherwise use all for matching)
     const tutorFilters = restrictions.tutorRestrictions?.map(r => tutorMatchingRestrictionFilter(r));

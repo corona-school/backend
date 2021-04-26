@@ -1,5 +1,5 @@
 import { EntityManager, SelectQueryBuilder } from "typeorm";
-import { tuteesToMatchQuery } from "../../../../administration/match-making/tutoring/people/tutees";
+import { matchableTuteesQuery } from "../../../../administration/match-making/tutoring/people/tutees";
 import { RegistrationSource } from "../../../../entity/Person";
 import { Pupil } from "../../../../entity/Pupil";
 import { InterestConfirmationStatus } from "../../../../entity/PupilTutoringInterestConfirmationRequest";
@@ -8,7 +8,7 @@ import { InterestConfirmationStatus } from "../../../../entity/PupilTutoringInte
 // ⎺⎺⎺⎺⎺⎺⎺⎺
 function allMatchablePupilsThatRequireInterestConfirmationQuery(manager: EntityManager) {
     //only pupils not registered through partner schools require interest confirmation
-    return tuteesToMatchQuery(manager).andWhere("p.registrationSource != (:rs)", { rs: RegistrationSource.COOPERATION});
+    return matchableTuteesQuery(manager).andWhere("p.registrationSource != (:rs)", { rs: RegistrationSource.COOPERATION});
 }
 function allMatchablePupilsWithoutInterestConfirmationRequestQuery(manager: EntityManager) {
     //join pupil p2 a second time, to have a relationship from PupilTutoringInterestConfirmationRequest to Pupil which is not undefined

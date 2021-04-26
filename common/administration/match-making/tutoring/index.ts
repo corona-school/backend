@@ -70,10 +70,10 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
     }
 }
 
-export async function matchMakingOfAllPossibleMatches(manager: EntityManager, options: MatchingOptions = { dryRun: false, notifications: { email: true, sms: false}}) {
+export async function matchMakingOfAllPossibleMatches(manager: EntityManager, restrictToThoseWithConfirmedInterest: boolean, options: MatchingOptions = { dryRun: false, notifications: { email: true, sms: false}}) {
     // get data for matching
     const tutors = await tutorsToMatch(manager);
-    const tutees = await tuteesToMatch(manager);
+    const tutees = await tuteesToMatch(manager, restrictToThoseWithConfirmedInterest);
 
     await matchMakingWithPersons(tutors, tutees, options, manager);
 }
