@@ -29,7 +29,7 @@ export function tuteesToMatchQuery(manager: EntityManager, restrictToThoseWithCo
 
     if (restrictToThoseWithConfirmedInterest) {
         q = q.leftJoinAndSelect("p.tutoringInterestConfirmationRequest", "pticr")
-            .andWhere("(p.registrationSource == (:rs) OR p.tutoringInterestConfirmationRequest.status == (:cs))", { rs: RegistrationSource.COOPERATION, cs: InterestConfirmationStatus.CONFIRMED });
+            .andWhere("(p.registrationSource = (:rs) OR pticr.status = (:cs))", { rs: RegistrationSource.COOPERATION, cs: InterestConfirmationStatus.CONFIRMED });
     }
 
     return q;
