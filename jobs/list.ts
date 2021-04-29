@@ -13,6 +13,8 @@ import interestConfirmationRequestReminders from "./periodic/interest-confirmati
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
+    // every morning, quite early (but only on Monday and Thursday)
+    { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
     // every morning
     { cronTime: "00 15 08 * * *", jobFunction: screeningReminderJob},
     { cronTime: "00 34 08 * * *", jobFunction: projectMatchMaking},
@@ -26,8 +28,6 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "00 35 15 * * *", jobFunction: projectMatchMaking},
     // { cronTime: "00 47 14 * * *", jobFunction: tutoringMatchMaking}, // only scheduled manually, at the moment
     { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
-    // every afternoon, but only on Monday and Thursday
-    { cronTime: "00 15 16 * * 1,4", jobFunction: initialInterestConfirmationRequests},
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo}
 ];
