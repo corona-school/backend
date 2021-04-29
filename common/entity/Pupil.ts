@@ -1,4 +1,4 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from "typeorm";
 import { Match } from "./Match";
 import { Person, RegistrationSource } from "./Person";
 import { Subcourse } from './Subcourse';
@@ -14,6 +14,7 @@ import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRAD
 import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
 import { LearningGermanSince } from "../daz/learningGermanSince";
 import { Language } from "../daz/language";
+import { PupilTutoringInterestConfirmationRequest } from "./PupilTutoringInterestConfirmationRequest";
 
 @Entity()
 export class Pupil extends Person {
@@ -193,6 +194,12 @@ export class Pupil extends Person {
         default: RegistrationSource.NORMAL
     })
     registrationSource: RegistrationSource;
+
+    @OneToOne((type) => PupilTutoringInterestConfirmationRequest, (pticr) => pticr.pupil, {
+        nullable: true,
+        cascade: true
+    })
+    tutoringInterestConfirmationRequest?: PupilTutoringInterestConfirmationRequest;
 
 
     gradeAsNumber(): number | null {

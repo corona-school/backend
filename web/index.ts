@@ -15,6 +15,7 @@ import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
 import * as expertController from "./controllers/expertController";
+import * as interestConfirmationController from "./controllers/interestConfirmationController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection, getConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
@@ -75,6 +76,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     configureRegistrationAPI();
     configureMentoringAPI();
     configureExpertAPI();
+    configurePupilInterestConfirmationAPI();
     const server = await deployServer();
     configureGracefulShutdown(server);
 
@@ -120,7 +122,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
 
     function configureUserAPI() {
         const userApiRouter = express.Router();
-        userApiRouter.use(authCheckFactory());
+        userApiRouter.use(authCheckFactory(false, false, true, [], ["tutoringInterestConfirmationRequest"]));
         userApiRouter.get("/", userController.getSelfHandler);
         userApiRouter.get("/:id", userController.getHandler);
         userApiRouter.put("/:id", userController.putHandler);
@@ -323,6 +325,13 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         expertRouter.get("/tags", expertController.getUsedTagsHandler);
 
         app.use("/api/expert", expertRouter);
+    }
+
+    function configurePupilInterestConfirmationAPI() {
+        const router = express.Router();
+        router.post("/status", interestConfirmationController.postInterestConfirmationRequestStatus);
+
+        app.use("/api/interest-confirmation", router);
     }
 
     async function deployServer() {

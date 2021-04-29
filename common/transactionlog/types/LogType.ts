@@ -26,6 +26,9 @@ enum LogType {
     PARTICIPANT_LEFT_WAITING_LIST = "participantLeftWaitingList",
     ACCESSED_COURSED = "userAccessedCourseWhileAuthenticated",
     INSTRUCTOR_ISSUED_CERTIFICATE = "instructorIssuedCertificate",
+    PUPIL_INTEREST_CONFIRMATION_REQUEST_SENT = "pupilInterestConfirmationRequestSent",
+    PUPIL_INTEREST_CONFIRMATION_REQUEST_REMINDER_SENT = "pupilInterestConfirmationRequestReminderSent",
+    PUPIL_INTEREST_CONFIRMATION_REQUEST_STATUS_CHANGE = "pupilInterestConfirmationRequestStatusChange",
 }
 
 export default LogType;

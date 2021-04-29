@@ -12,4 +12,6 @@ export class ApiMatchingOptions {
     dryRun: boolean = false;
     @IsEnum(ApiNotificationOption)
     notifications: ApiNotificationOption = ApiNotificationOption.email;
+    @IsBoolean()
+    disableInterestConfirmationRestriction: boolean = false; //defines what matchable pupils will be, i.e. if only pupils with confirmed interest (or those from partnering schools) are allowed to be part of the matching
 }

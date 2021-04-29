@@ -30,6 +30,7 @@ import { ExpertiseTag } from "../common/entity/ExpertiseTag";
 import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication";
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
+import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -107,6 +108,60 @@ export async function setupDevDB() {
     p.subjects = JSON.stringify([]);
     p.grade = "6. Klasse";
     p.openMatchRequestCount = 0;
+    pupils.push(p);
+
+    p = new Pupil();
+    p.active = true;
+    p.firstname = "Martin";
+    p.lastname = "Ulz";
+    p.isParticipant = false;
+    p.isPupil = true;
+    p.isProjectCoachee = false;
+    p.email = "martinulzs@example.corona-school.de"; //no @example.org, if you wanna test matching
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 200000);
+    p.authToken = sha512("authtokenP5");
+    p.wix_id = "00000000-0000-0001-0003-1b4c4c526368";
+    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
+    p.subjects = JSON.stringify(["Deutsch", "Geschichte"]);
+    p.grade = "13. Klasse";
+    p.openMatchRequestCount = 1;
+    pupils.push(p);
+
+    const p6 = p = new Pupil();
+    p.active = true;
+    p.firstname = "Laurin";
+    p.lastname = "Ipsem";
+    p.isParticipant = false;
+    p.isPupil = true;
+    p.isProjectCoachee = false;
+    p.email = "ipsla@example.org";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 700000);
+    p.authToken = sha512("authtokenP6");
+    p.wix_id = "00000000-0000-0001-0003-1b4c4c526369";
+    p.wix_creation_date = new Date(new Date().getTime() - 70000000);
+    p.subjects = JSON.stringify(["Englisch", "Latein"]);
+    p.grade = "10. Klasse";
+    p.openMatchRequestCount = 1;
+    pupils.push(p);
+
+    const p7 = p = new Pupil();
+    p.active = true;
+    p.firstname = "Lari";
+    p.lastname = "Fari";
+    p.isParticipant = false;
+    p.isPupil = true;
+    p.isProjectCoachee = false;
+    p.email = "larifari@example.org";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 800000);
+    p.authToken = sha512("authtokenP7");
+    p.wix_id = "00000000-0000-0001-0003-1b4c4c526370";
+    p.wix_creation_date = new Date(new Date().getTime() - 80000000);
+    p.subjects = JSON.stringify(["Musik", "Latein"]);
+    p.grade = "7. Klasse";
+    p.openMatchRequestCount = 1;
     pupils.push(p);
 
     for (let i = 0; i < pupils.length; i++) {
@@ -1186,6 +1241,21 @@ export async function setupDevDB() {
     for (let i = 0; i < experts.length; i++) {
         await entityManager.save(experts[i]);
         console.log("Inserted Dev Expert " + i);
+    }
+
+    //Insert pupil interest confirmation requests
+    const pticrs: PupilTutoringInterestConfirmationRequest[] = [];
+
+    const pticr1 = new PupilTutoringInterestConfirmationRequest(p6, "interest-confirmation-token-P6");
+    pticrs.push(pticr1);
+
+    const pticr2 = new PupilTutoringInterestConfirmationRequest(p7, "interest-confirmation-token-P7");
+    pticr2.reminderSentDate = new Date( Date.now() - 6.912E+08); // minus 8 days in ms
+    pticrs.push(pticr2);
+
+    for (let i = 0; i < pticrs.length; i++) {
+        await entityManager.save(pticrs[i]);
+        console.log("Inserted Pupil Tutoring Interest Request " + i);
     }
 }
 
