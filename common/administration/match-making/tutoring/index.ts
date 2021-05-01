@@ -8,14 +8,14 @@ import { notifyMatches } from "./matches/notify";
 import { getLogger } from "../../../../jobs/utils/logging";
 import { getStudentByWixID, Student } from "../../../entity/Student";
 import { getPupilByWixID, Pupil } from "../../../entity/Pupil";
-import { MatchingOptions } from "./types/options";
+import { MatchMakingOptions } from "./types/options";
 import { MatchMakingResult } from "./types/matchmaking-result";
 
 
 const logger = getLogger();
 
 /// Execute matching on all given tutors and tutees, respecting the given matching options.
-export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToMatch: Pupil[], options: MatchingOptions, manager: EntityManager): Promise<MatchMakingResult> {
+export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToMatch: Pupil[], options: MatchMakingOptions, manager: EntityManager): Promise<MatchMakingResult> {
     //create matching
     const { matching, stats } = await createMatching(tutorsToMatch, tuteesToMatch, manager);
 
@@ -70,7 +70,7 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
     }
 }
 
-export async function matchMakingOfAllPossibleMatches(manager: EntityManager, restrictToThoseWithConfirmedInterest: boolean, options: MatchingOptions = { dryRun: false, notifications: { email: true, sms: false}}) {
+export async function matchMakingOfAllPossibleMatches(manager: EntityManager, restrictToThoseWithConfirmedInterest: boolean, options: MatchMakingOptions = { dryRun: false, notifications: { email: true, sms: false}}) {
     // get data for matching
     const tutors = await tutorsToMatch(manager);
     const tutees = await tuteesToMatch(manager, restrictToThoseWithConfirmedInterest);

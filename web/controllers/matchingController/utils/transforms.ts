@@ -1,6 +1,6 @@
 import { MatchMakingResult } from "../../../../common/administration/match-making/tutoring/types/matchmaking-result";
 import { MatchNotificationStatus, NotificationOptions } from "../../../../common/administration/match-making/tutoring/types/notifications";
-import { MatchingOptions } from "../../../../common/administration/match-making/tutoring/types/options";
+import { MatchMakingOptions } from "../../../../common/administration/match-making/tutoring/types/options";
 import { MatchPair } from "../../../../common/entity/Match";
 import { ApiMatchingOptions, ApiNotificationOption } from "../types/matching-options";
 import { ApiFailedNotification, ApiMatch, ApiMatchMakingResult } from "../types/matchmaking-result";
@@ -14,7 +14,7 @@ export function transformApiNotificationOptionToInternal(notificationOption: Api
     };
 }
 
-export function transformApiMatchingOptionsToInternal(options: ApiMatchingOptions): MatchingOptions {
+export function transformApiMatchingOptionsToInternal(options: ApiMatchingOptions): MatchMakingOptions {
     return {
         dryRun: options.dryRun,
         notifications: transformApiNotificationOptionToInternal(options.notifications)

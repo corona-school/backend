@@ -1,6 +1,6 @@
 import { NotificationOptions } from "./notifications";
 
-export interface MatchingOptions {
+export interface MatchMakingOptions {
     dryRun: boolean;
     notifications: NotificationOptions;
 }
