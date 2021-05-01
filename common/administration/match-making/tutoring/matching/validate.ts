@@ -1,6 +1,5 @@
 import { EntityManager } from "typeorm";
-import { Match } from "corona-school-matching";
-import { Matching } from "./types";
+import { Matching, Match } from "./types";
 import { getMatchingPartners } from "../people/matching-partners";
 import { Student } from "../../../../entity/Student";
 import { Pupil } from "../../../../entity/Pupil";

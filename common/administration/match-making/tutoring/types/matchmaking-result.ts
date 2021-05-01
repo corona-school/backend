@@ -1,5 +1,5 @@
-import { Stats as MatchingStats } from "corona-school-matching";
 import { MatchPair } from "../../../../entity/Match";
+import { MatchingAlgoStats } from "../matching/types";
 import { MatchNotificationStatus, NotificationOptions } from "./notifications";
 
 export type MatchMakingResult = {
@@ -7,5 +7,5 @@ export type MatchMakingResult = {
     notifications: NotificationOptions;
     createdMatches: MatchPair[] | null;
     failedNotifications: MatchNotificationStatus[] | null;
-    matchingStats: MatchingStats;
+    matchingStats: MatchingAlgoStats;
 };
