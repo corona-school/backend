@@ -17,7 +17,7 @@ const logger = getLogger();
 /// Execute matching on all given tutors and tutees, respecting the given matching options.
 export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToMatch: Pupil[], options: MatchMakingOptions, manager: EntityManager): Promise<MatchMakingResult> {
     //create matching
-    const { matching, stats } = await createMatching(tutorsToMatch, tuteesToMatch, manager);
+    const { matching, stats } = await createMatching(tutorsToMatch, tuteesToMatch, manager, options.matchingAlgoSettings);
 
     //validate matching (including the current database state)
     const validationResult = await validateMatching(matching, manager);

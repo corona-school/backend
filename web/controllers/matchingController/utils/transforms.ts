@@ -17,7 +17,8 @@ export function transformApiNotificationOptionToInternal(notificationOption: Api
 export function transformApiMatchingOptionsToInternal(options: ApiMatchingOptions): MatchMakingOptions {
     return {
         dryRun: options.dryRun,
-        notifications: transformApiNotificationOptionToInternal(options.notifications)
+        notifications: transformApiNotificationOptionToInternal(options.notifications),
+        matchingAlgoSettings: options.matchingAlgoSettings
     };
 }
 
