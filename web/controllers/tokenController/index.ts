@@ -182,7 +182,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             }
 
             if (person !== undefined) {
-                if(person.verifiedAt == null) {
+                if (person.verifiedAt == null) {
                     status = 409;
                     person.verification = generateToken();
                     await sendVerificationMail(person);
