@@ -148,7 +148,7 @@ export async function verifyToken(token: string): Promise<string | null> {
  * A user can only request a new token, if he doesn't have an unused token from the last 24h.
  *
  * A 409 'Conflict' HTTP status code indicates that the user isn't verified yet and that a new verification email has been sent.
- * 
+ *
  * @apiName requestNewToken
  * @apiGroup Token
  *
@@ -182,7 +182,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             }
 
             if (person !== undefined) {
-                if(person.verifiedAt == null) {
+                if (person.verifiedAt == null) {
                     status = 409;
                     person.verification = generateToken();
                     await sendVerificationMail(person);
