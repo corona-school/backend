@@ -15,6 +15,7 @@ import {
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
+import { generateToken, sendVerificationMail } from "../../../jobs/periodic/fetch/utils/verification";
 
 const logger = getLogger();
 
@@ -146,6 +147,8 @@ export async function verifyToken(token: string): Promise<string | null> {
  * This endpoint allows requesting a new token send via email to the user.
  * A user can only request a new token, if he doesn't have an unused token from the last 24h.
  *
+ * A 409 'Conflict' HTTP status code indicates that the user isn't verified yet and that a new verification email has been sent.
+ *
  * @apiName requestNewToken
  * @apiGroup Token
  *
@@ -158,6 +161,7 @@ export async function verifyToken(token: string): Promise<string | null> {
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
  * @apiUse StatusUnauthorized
+ * @apiUse StatusConflict
  * @apiUse StatusNotFound
  * @apiUse StatusInternalServerError
  */
@@ -178,7 +182,11 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             }
 
             if (person !== undefined) {
-                if (allowedToRequestToken(person)) {
+                if (person.verifiedAt == null) {
+                    status = 409;
+                    person.verification = generateToken();
+                    await sendVerificationMail(person);
+                } else if (allowedToRequestToken(person)) {
                     if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string")
                         status = 400;
 
