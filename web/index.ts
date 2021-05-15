@@ -103,7 +103,10 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
             origins = [
                 "https://dashboard.corona-school.de",
                 "https://my.corona-school.de",
-                ...allowedSubdomains.map(d => `https://${d}.corona-school.de`)
+                ...allowedSubdomains.map(d => `https://${d}.corona-school.de`),
+                "https://dashboard.lern-fair.de",
+                "https://my.lern-fair.de",
+                ...allowedSubdomains.map(d => `https://${d}.lern-fair.de`)
             ];
         }
 
