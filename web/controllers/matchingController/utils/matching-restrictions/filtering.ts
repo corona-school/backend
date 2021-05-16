@@ -7,21 +7,21 @@ import { ApiMatchingRestriction, ApiTuteeMatchingRestriction, ApiTutorMatchingRe
 function parentMatchingRestrictionFilter(restriction: ApiMatchingRestriction): (t: Pupil | Student) => boolean {
     return (t: Pupil | Student) => {
         //on blocking list?
-        if (restriction.blockingList?.some(e => e.toLowerCase() === t.email.toLowerCase())) return false;
+        if (restriction.blockingList?.some(e => e.toLowerCase() === t.email.toLowerCase())) { return false; }
 
         //matching email address?
-        if (restriction.emails?.every(e => e.toLowerCase() !== t.email.toLowerCase())) return false;
+        if (restriction.emails?.every(e => e.toLowerCase() !== t.email.toLowerCase())) { return false; }
 
         //matching state?
-        if (restriction.states?.every(s => s !== t.state)) return false;
+        if (restriction.states?.every(s => s !== t.state)) { return false; }
 
         //matching registration date
         if (restriction.registrationDates?.every(rd => (
             (rd.min != null && moment(t.wix_creation_date).isBefore(rd.min)) || (rd.max != null && moment(t.wix_creation_date).isAfter(rd.max)))
-        )) return false;
+        )) { return false; }
 
         //subject names
-        if (restriction.subjectNames && t.getSubjectsFormatted().every(s => restriction.subjectNames.every(rs => rs.toLowerCase() !== s.name.toLowerCase()))) return false;
+        if (restriction.subjectNames && t.getSubjectsFormatted().every(s => restriction.subjectNames.every(rs => rs.toLowerCase() !== s.name.toLowerCase()))) { return false; }
 
         //default is true
         return true;
@@ -31,10 +31,10 @@ function parentMatchingRestrictionFilter(restriction: ApiMatchingRestriction): (
 /// The filter function that should be applied if tutor matching restrictions are given and possible matching candidates should be filtered according to the specified matching restrictions.
 export function tutorMatchingRestrictionFilter(restriction: ApiTutorMatchingRestriction): (t: Student) => boolean {
     return (t: Student) => {
-        if (!parentMatchingRestrictionFilter(restriction)(t)) return false;
+        if (!parentMatchingRestrictionFilter(restriction)(t)) { return false; }
 
         //is intern?
-        if (restriction.isIntern != null && restriction.isIntern !== t.isIntern()) return false;
+        if (restriction.isIntern != null && restriction.isIntern !== t.isIntern()) { return false; }
 
         //default is true
         return true;
@@ -44,12 +44,12 @@ export function tutorMatchingRestrictionFilter(restriction: ApiTutorMatchingRest
 /// The filter function that should be applied if tutee matching restrictions are given and possible matching candidates should be filtered according to the specified matching restrictions.
 export function tuteeMatchingRestrictionFilter(restriction: ApiTuteeMatchingRestriction): (t: Pupil) => boolean {
     return (t: Pupil) => {
-        if (!parentMatchingRestrictionFilter(restriction)(t)) return false;
+        if (!parentMatchingRestrictionFilter(restriction)(t)) { return false; }
 
         //matching priority?
-        if (restriction.matchingPriorities?.every( mp => (
+        if (restriction.matchingPriorities?.every(mp => (
             (mp.min != null && mp.min > t.matchingPriority) || (mp.max != null && t.matchingPriority > mp.max))
-        )) return false;
+        )) { return false; }
 
         //default to true
         return true;

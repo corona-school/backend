@@ -23,7 +23,7 @@ function allMatchablePupilsWithInterestConfirmationRequestQuery(manager: EntityM
 // ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 export function createOrderedAndLimitedPupilsQueryFrom(qb: SelectQueryBuilder<Pupil>, limitToN?: number) {
     const q = qb.addOrderBy("p.createdAt", "ASC");
-    if (limitToN) return q.take(limitToN);
+    if (limitToN) { return q.take(limitToN); }
     return q;
 }
 export function createFilterPupilRequestByStatusQueryFrom(qb: SelectQueryBuilder<Pupil>, status: InterestConfirmationStatus) {

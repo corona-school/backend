@@ -137,7 +137,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
 export async function getMaterial(req: Request, res: Response) {
     let status = 200;
     try {
-        if (res.locals.user instanceof Student){
+        if (res.locals.user instanceof Student) {
             const { type, location } = req.query;
             if (!(location in material)) {
                 status = 400;
@@ -154,9 +154,7 @@ export async function getMaterial(req: Request, res: Response) {
             if (type === "playlist") {
                 let playlist = await listVideos(material[location]);
                 return res.status(status).json(playlist).end();
-            }
-
-            else {
+            } else {
                 status = 400;
                 logger.warn("Invalid material type in GET /mentoring/material");
                 logger.debug(location);
@@ -197,7 +195,7 @@ export async function getMaterial(req: Request, res: Response) {
 export async function getFeedbackCallData(req: Request, res: Response) {
     let status = 200;
     try {
-        if (res.locals.user instanceof Student){
+        if (res.locals.user instanceof Student) {
             const peerToPeerCall: PeerToPeerCall = await getPeerToPeerCallDate();
 
             if (!peerToPeerCall) {

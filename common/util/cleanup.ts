@@ -8,7 +8,7 @@ export function addCleanupAction(action: CleanupAction) {
 }
 
 export function performCleanupActions() {
-    for (let ca: () => void; ca = cleanupActions?.pop(); ) {
+    for (let ca: () => void; ca = cleanupActions?.pop();) {
         ca();
     }
 }

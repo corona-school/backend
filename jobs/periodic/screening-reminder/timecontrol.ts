@@ -36,7 +36,7 @@ function isCommonHolidayInAnyStateOfGermany(date: Date): Holidays.Holiday | fals
     //all holidays is each state of Germany in the year of the date
     const allHolidays: Holidays.Holiday[] = allStates.reduce((a, s) => a.concat(...(new Holidays(de, s).getHolidays(date.getFullYear()))), []);
 
-    return allHolidays.find( hd => isHolidayAtDate(hd, date));
+    return allHolidays.find(hd => isHolidayAtDate(hd, date));
 }
 
 

@@ -54,8 +54,7 @@ export function validateRequestAndExecuteWithHandler(handler: (matchingRestricti
         //check
         try {
             ({ restrictions, options } = await parseBodyOrReject(req.body));
-        }
-        catch (e) {
+        } catch (e) {
             res.status(400).send(`Invalid request: \n ❌ ${[e].flat().join("\n ❌ ")}`);
             return;
         }

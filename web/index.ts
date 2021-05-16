@@ -355,7 +355,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         process.on("SIGTERM", async () => {
             logger.debug("SIGTERM signal received: Starting graceful shutdown procedures...");
             //Close Server
-            await new Promise<void>( (resolve, reject) => server.close(() => {
+            await new Promise<void>((resolve, reject) => server.close(() => {
                 resolve();
             }));
             logger.debug("✅ HTTP server closed!");

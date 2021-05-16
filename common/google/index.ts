@@ -121,7 +121,7 @@ export async function getPeerToPeerCallDate(): Promise<PeerToPeerCall> {
 
         return peerToPeerCall;
     }
-    if (events.length > 1){
+    if (events.length > 1) {
         logger.warn("Calendar query returned more than one event.");
     }
 }

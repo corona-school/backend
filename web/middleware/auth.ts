@@ -10,7 +10,7 @@ const logger = getLogger();
 
 export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = [], pupilDefaultRelations = []) {
     return async function (req: Request, res: Response, next) {
-        if (req.method == "OPTIONS") next();
+        if (req.method == "OPTIONS") { next(); }
 
         let token = req.get("Token");
         if (useQueryParams) {
@@ -96,7 +96,7 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                 if (mentor.expertise.length > 0) {
                     const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]);
                     for (let expertise of mentor.expertise) {
-                        let replacedString = expertise.toString().replace(/"/g,"");
+                        let replacedString = expertise.toString().replace(/"/g, "");
                         if (expertiseValues.indexOf(replacedString) > -1) {
                             const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === replacedString);
                             convertedExpertises.push(Expertise[expertiseKey[0]]);
@@ -132,7 +132,7 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
 }
 
 export async function screenerAuthCheck(req: Request, res: Response, next) {
-    if (req.method == "OPTIONS") next();
+    if (req.method == "OPTIONS") { next(); }
 
     const token = req.get("Token");
     if (token != undefined) {

@@ -37,6 +37,12 @@
         "no-lonely-if": "warn",
         "no-multi-spaces": "error",
         "no-trailing-spaces": "error",
-        "@typescript-eslint/semi": ["error", "always"]
+        "@typescript-eslint/semi": ["error", "always"],
+        "space-in-parens": ["error", "never"],
+        "curly": ["error", "all"],
+        "comma-spacing": ["error", { "before": false, "after": true }],
+        "space-before-blocks": ["error", "always"],
+        "block-spacing": ["error", "always"],
+        "brace-style": ["error", "1tbs", { "allowSingleLine": true }]
     }
 }

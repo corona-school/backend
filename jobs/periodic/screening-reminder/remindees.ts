@@ -73,9 +73,9 @@ function filterToRemindAtDate(remindDateForStudent: (s: Student) => Date): (stud
         });
     };
 }
-const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate) );
-const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate) );
-const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate) );
+const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate));
+const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate));
+const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate));
 
 // ------------------
 // StUDENTS TO REMIND

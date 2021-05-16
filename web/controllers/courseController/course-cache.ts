@@ -38,8 +38,7 @@ export class CourseCache<V> {
             const res = await this.cacheUpdater(k);
             if (!res) {
                 this.del(k);
-            }
-            else {
+            } else {
                 this.set(k, res);
             }
             logger.info(`Cache for key '${k}' updated...`);
@@ -52,6 +51,6 @@ export class CourseCache<V> {
         }
         this.isUpdatingCache = true;
 
-        this.updateCache().then( () => this.isUpdatingCache = false).catch( () => this.isUpdatingCache = false);
+        this.updateCache().then(() => this.isUpdatingCache = false).catch(() => this.isUpdatingCache = false);
     }
 }

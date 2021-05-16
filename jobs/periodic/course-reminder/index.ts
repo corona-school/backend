@@ -42,7 +42,7 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
         const course = subcourse.course;
 
         // skip if this subcourse has no lectures
-        if (subcourse.lecture.length == 0) continue;
+        if (subcourse.lecture.length == 0) { continue; }
 
         // get first lecture
         let firstLecture = subcourse.lecture[0];

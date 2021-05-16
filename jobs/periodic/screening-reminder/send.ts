@@ -11,16 +11,13 @@ async function sendScreeningReminderToStudentBasedOnType(manager: EntityManager,
     if (student.isInstructor) {
         // send instructor screening reminder
         await sendInstructorScreeningReminderToStudent(manager, student);
-    }
-    else if (student.isStudent || (student.isProjectCoach && student.isUniversityStudent)) {
+    } else if (student.isStudent || (student.isProjectCoach && student.isUniversityStudent)) {
         // send tutor screening reminder
         await sendTutorScreeningReminderToStudent(manager, student);
-    }
-    else if (!student.isStudent && student.isProjectCoach && !student.isUniversityStudent) {
+    } else if (!student.isStudent && student.isProjectCoach && !student.isUniversityStudent) {
         // send jufo alumni screening reminder
         await sendJufoAlumniScreeningReminderToStudent(manager, student);
-    }
-    else {
+    } else {
         throw new Error(`Cannot send screening reminder to student because the screening reminder type cannot be determined: ${JSON.stringify(student)}!`);
     }
 }

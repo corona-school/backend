@@ -366,7 +366,7 @@ export class Student extends Person {
             await getManager().remove(pf);
         }
         //set new values
-        this.projectFields = Promise.resolve(fields.map( f => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
+        this.projectFields = Promise.resolve(fields.map(f => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
     }
     async getProjectFields(): Promise<ProjectFieldWithGradeInfoType[]> {
         return (await this.projectFields).map(pf => {
@@ -440,8 +440,7 @@ export class Student extends Person {
     getSubjectsFormatted(): Subject[] {
         try {
             return parseSubjectString(this.subjects);
-        }
-        catch (e) {
+        } catch (e) {
             throw new Error(`Invalid subject format string "${this.subjects}" for student with email ${this.email} found!`);
         }
     }

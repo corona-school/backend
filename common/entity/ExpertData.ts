@@ -24,7 +24,7 @@ export class ExpertData {
     @CreateDateColumn({ type: "timestamp" })
     updatedAt: Date;
 
-    @OneToOne( (type) => Student, (student) => student.expertData, {
+    @OneToOne((type) => Student, (student) => student.expertData, {
         eager: true
     })
     @JoinColumn()
