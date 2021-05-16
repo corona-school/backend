@@ -862,6 +862,13 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
         return 403;
     }
 
+    // filter out mingrade/maxgrade if user is pupil, since they aren't allowed to change that
+    if (person instanceof Pupil) {
+        req = req.map(x => {
+            return { name: x.name };
+        })
+    }
+
     const oldPerson = Object.assign({}, person);
 
     let type: ObjectType<Person>;
