@@ -184,7 +184,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             if (person !== undefined) {
                 if (person.verifiedAt == null) {
                     status = 409;
-                    person.verification = generateToken();
+                    person.verification = person.verification ?? generateToken();
                     await sendVerificationMail(person);
                 } else if (allowedToRequestToken(person)) {
                     if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string")
