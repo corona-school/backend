@@ -12,10 +12,10 @@ const mailjetSmtp = {
 };
 
 const DEFAULTSENDERS = {
-    anmeldung: '"Corona School Team" <anmeldung@corona-school.de>',
-    noreply: '"Corona School Team" <noreply@corona-school.de>',
-    screening: '"Corona School Team" <screening@corona-school.de>',
-    support: '"Corona School Team" <support@corona-school.de>'
+    anmeldung: '"Lern-Fair Team" <anmeldung@lern-fair.de>',
+    noreply: '"Lern-Fair Team" <noreply@lern-fair.de>',
+    screening: '"Lern-Fair Team" <screening@lern-fair.de>',
+    support: '"Lern-Fair Team" <support@lern-fair.de>'
 };
 
 export { mailjetSmtp, DEFAULTSENDERS };
