@@ -98,7 +98,7 @@ export async function sendParticipantToInstructorMail(participant: Pupil, instru
         messageBody, //email text
         DEFAULTSENDERS.noreply, //sender address
         instructor.email, //receiver
-        `${participant.fullName()} via Corona School`, //sender name
+        `${participant.fullName()} via Lern-Fair`, //sender name
         `${instructor.fullName()}`, //receiver name
         participant.email, //replyTo address
         `${participant.fullName()}` //replyTo name

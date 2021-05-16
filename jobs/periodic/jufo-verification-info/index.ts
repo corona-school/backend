@@ -65,7 +65,7 @@ async function csvStringFromCoaches(manager: EntityManager, coaches: Student[]) 
 }
 
 
-const JUFO_VERIFICATION_UPDATE_MAIL_RECEIVER = "projektcoaching@corona-school.de";
+const JUFO_VERIFICATION_UPDATE_MAIL_RECEIVER = "projektcoaching@lern-fair.de";
 
 async function sendJufoVerificationUpdateWithCoaches(manager: EntityManager, coaches: Student[]) {
     //create CSV from coaches

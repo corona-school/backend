@@ -429,11 +429,11 @@ export class Student extends Person {
     //Returns the URL that the student can use to get to his screening video call
     screeningURL(): string {
         //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
-        return "https://authentication.corona-school.de/";
+        return "https://authentication.lern-fair.de/";
     }
 
     instructorScreeningURL(): string {
-        return "https://authentication.corona-school.de/";
+        return "https://authentication.lern-fair.de/";
     }
 
     // Return the subjects formatted in the Subject Format

@@ -23,7 +23,7 @@ export const mailjet = {
             type: "verification",
             id: 1336516,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Verifizierung",
+            title: "Lern-Fair - Verifizierung",
             disabled: false,
             variables: variables
         };
@@ -36,7 +36,7 @@ export const mailjet = {
             type: "logintoken",
             id: 1337159,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Dein Account",
+            title: "Lern-Fair - Dein Account",
             disabled: false,
             variables: variables
         };
@@ -52,7 +52,7 @@ export const mailjet = {
             type: "pupilmatchmails",
             id: 1336849,
             sender: DEFAULTSENDERS.anmeldung,
-            title: "Corona School - Match",
+            title: "Lern-Fair - Match",
             disabled: false,
             variables: variables
         };
@@ -69,7 +69,7 @@ export const mailjet = {
             type: "studentmatchmails",
             id: 1336704,
             sender: DEFAULTSENDERS.anmeldung,
-            title: "Corona School - Match",
+            title: "Lern-Fair - Match",
             disabled: false,
             variables: variables
         };
@@ -79,7 +79,7 @@ export const mailjet = {
             type: "pupilnextsteps",
             id: 1336558,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächste Schritte",
+            title: "Lern-Fair - Nächste Schritte",
             disabled: true,
             variables: variables
         };
@@ -92,7 +92,7 @@ export const mailjet = {
             type: "studentnextsteps",
             id: 1336526,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächste Schritte",
+            title: "Lern-Fair - Nächste Schritte",
             disabled: true,
             variables: variables
         };
@@ -105,7 +105,7 @@ export const mailjet = {
             type: "pupilmatchdissolved",
             id: 1337164,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächstes Mal",
+            title: "Lern-Fair - Nächstes Mal",
             disabled: false,
             variables: variables
         };
@@ -118,7 +118,7 @@ export const mailjet = {
             type: "studentmatchdissolved",
             id: 1337161,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächstes Mal",
+            title: "Lern-Fair - Nächstes Mal",
             disabled: false,
             variables: variables
         };
@@ -131,7 +131,7 @@ export const mailjet = {
             type: "oldauthtoken",
             id: 1338975,
             sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Dein Account",
+            title: "Lern-Fair - Dein Account",
             disabled: false,
             variables: variables
         };
@@ -331,7 +331,7 @@ export const mailjet = {
             type: "pupilrequestfeedback",
             id: 1513025,
             sender: DEFAULTSENDERS.support,
-            title: "Dein Feedback zur Corona School!",
+            title: "Dein Feedback zu Lern-Fair!",
             disabled: false,
             variables: variables
         };
@@ -344,7 +344,7 @@ export const mailjet = {
             type: "studentrequestfeedback",
             id: 1513023,
             sender: DEFAULTSENDERS.support,
-            title: "Dein Feedback zur Corona School!",
+            title: "Dein Feedback zu Lern-Fair!",
             disabled: false,
             variables: variables
         };
