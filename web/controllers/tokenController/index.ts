@@ -186,6 +186,8 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     status = 409;
                     person.verification = person.verification ?? generateToken();
                     await sendVerificationMail(person);
+
+                    await entityManager.save(person);
                 } else if (allowedToRequestToken(person)) {
                     if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string")
                         status = 400;
