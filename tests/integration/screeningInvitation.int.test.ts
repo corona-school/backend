@@ -61,7 +61,7 @@ describe("Screening Invitation", function() {
                     );
 
                     assert.strictEqual(mailjetStub.getCall(0).args[0], "Lern-Fair - Dein Account");
-                    assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.noreply);
+                    assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.support);
                     assert.strictEqual(mailjetStub.getCall(0).args[2], testStudent.email);
                     assert.strictEqual(mailjetStub.getCall(0).args[3], 1337159);
                     assert.strictEqual(mailjetStub.getCall(0).args[4].personFirstname, testStudent.firstname);
