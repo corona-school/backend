@@ -22,7 +22,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "verification",
             id: 1336516,
-            sender: DEFAULTSENDERS.noreply,
+            sender: DEFAULTSENDERS.support,
             title: "Lern-Fair - Verifizierung",
             disabled: false,
             variables: variables
@@ -35,7 +35,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "logintoken",
             id: 1337159,
-            sender: DEFAULTSENDERS.noreply,
+            sender: DEFAULTSENDERS.support,
             title: "Lern-Fair - Dein Account",
             disabled: false,
             variables: variables
