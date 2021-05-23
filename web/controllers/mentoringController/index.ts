@@ -89,7 +89,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
     const replyToName = `${student.firstname} ${student.lastname}`;
 
     const receiverAddress = mentoringContactEmailAddress(mentoringCategory);
-    
+
     await mailjet.sendPure(
         apiContactMentor.subject ?? `Nachricht über Mentoring-Kontaktformular | Kategorie: ${getFriendlyName(mentoringCategory)}`,
         apiContactMentor.emailText,
