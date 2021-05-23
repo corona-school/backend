@@ -247,15 +247,15 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
     if (studentInfo.isValid()) {
         //save old state of student info
         const prevState = await StudentInfoDTO.buildFrom(student);
-        
+
         // Check if email already exists
         const email_dupe_res = await entityManager.findOne(Student, {email: studentInfo.email.toLocaleLowerCase()});
         if (email_dupe_res !== undefined) {
             logger.error("Email already in use");
             res.status(409).send("Email already in use!");
-            return
+            return;
         }
-    
+
         //update student info
         await updateStudentInformation(student, studentInfo, screener);
 
