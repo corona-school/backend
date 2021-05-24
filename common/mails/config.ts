@@ -13,7 +13,6 @@ const mailjetSmtp = {
 
 const DEFAULTSENDERS = {
     noreply: '"Lern-Fair Team" <noreply@lern-fair.de>',
-    screening: '"Lern-Fair Team" <screening@lern-fair.de>',
     support: '"Lern-Fair Team" <support@lern-fair.de>'
 };
 
