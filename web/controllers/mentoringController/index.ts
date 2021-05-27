@@ -6,7 +6,7 @@ import {
 } from './format';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
-import { contactEmailAddress as mentoringContactEmailAddress } from '../../../common/mentoring/categories';
+import { contactEmailAddress as mentoringContactEmailAddress, getFriendlyName } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
@@ -91,7 +91,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
     const receiverAddress = mentoringContactEmailAddress(mentoringCategory);
 
     await mailjet.sendPure(
-        apiContactMentor.subject ?? "",
+        apiContactMentor.subject ?? `Nachricht über Mentoring-Kontaktformular | Kategorie: ${getFriendlyName(mentoringCategory)}`,
         apiContactMentor.emailText,
         DEFAULTSENDERS.noreply,
         receiverAddress,

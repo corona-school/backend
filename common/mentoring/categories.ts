@@ -7,6 +7,23 @@ export enum MentoringCategory {
     OTHER = "other"
 }
 
+export function getFriendlyName(category: MentoringCategory) {
+    switch (category) {
+        case MentoringCategory.LANGUAGE:
+            return "Sprachschwierigkeiten und Kommunikation";
+        case MentoringCategory.SUBJECTS:
+            return "Inhaltliche Kompetenzen in bestimmten Unterrichtsfächern";
+        case MentoringCategory.DIDACTIC:
+            return "Pädagogische und didaktische Hilfestellungen";
+        case MentoringCategory.TECH:
+            return "Technische Unterstützung";
+        case MentoringCategory.SELFORGA:
+            return "Organisatorisches und Selbststrukturierung";
+        case MentoringCategory.OTHER:
+            return "Sonstiges";
+    }
+}
+
 export function contactEmailAddress(category: MentoringCategory) {
     switch (category) {
         case MentoringCategory.LANGUAGE:
