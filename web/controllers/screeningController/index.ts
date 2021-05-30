@@ -247,7 +247,6 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
     if (studentInfo.isValid()) {
         //save old state of student info
         const prevState = await StudentInfoDTO.buildFrom(student);
-        
 
         if (studentInfo.email.toLowerCase() !== req.params.email.toLowerCase()) {
             // Check if email already exists, but only if it differs from the request params (which happens when we don't change the email address)
@@ -256,7 +255,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
                 logger.error("Email already in use");
                 res.status(409).send("Email already in use!");
                 return;
-            }    
+            }
         }
 
         //update student info
