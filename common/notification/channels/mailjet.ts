@@ -1,5 +1,10 @@
 import { Channel, Context, IDforNotificationChannel } from "../types";
 import * as mailjetAPI from "node-mailjet";
+import { mailjetSmtp } from "../../mails/config";
+import { getLogger } from "log4js";
+
+const sandbox = true;
+const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
@@ -16,13 +21,14 @@ export const mailjetChannel: Channel = {
             TemplateID: id,
             TemplateLanguage: true,
             Variables: context,
-            Subject: context,
-            Attachments: attachements
+            Subject: context.subject,
+            Attachments: context.attachments
         };
 
-        if (replyToAddress) {
+        // TODO: check what of the code below we need to implement as well (taken from /backend/common/mails/mailjet.ts)
+        if (context.replyToAddress) {
             message.ReplyTo = {
-                Email: replyToAddress
+                Email: context.replyToAddress
             };
         }
         //determine whether we have sandbox mode or not...
@@ -49,7 +55,7 @@ export const mailjetChannel: Channel = {
         };
 
         //log what is sent to mailjet, so we can better debug some problems with mails
-        logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
+        // logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
 
         return mailjet.post("send", { version: "v3.1" }).request(requestOptions);
     }
