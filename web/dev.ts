@@ -2,7 +2,7 @@
 import { getConnection, getManager } from "typeorm";
 import { createHash, randomBytes } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
-import { Student } from "../common/entity/Student";
+import { Student, TeacherModule } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
@@ -263,6 +263,8 @@ export async function setupDevDB() {
         { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s5.openMatchRequestCount = 1;
+    s5.module = TeacherModule.INTERNSHIP;
+    s5.moduleHours = 10;
     students.push(s5);
 
     const s6 = new Student();
