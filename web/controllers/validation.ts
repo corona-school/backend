@@ -8,6 +8,11 @@ export function isStudent(res: Response): void | never {
         throw new HTTPError(403, "This endpoint can only be acessed by Students");
 }
 
+export function isPupil(res: Response): void | never {
+    if (!(res.locals.user instanceof Student))
+        throw new HTTPError(403, "This endpoint can only be acessed by Pupils");
+}
+
 // ATTENTION: This is asynchronous, don't forget to await!
 export async function isAcceptedInstructor(student: Student): Promise<void | never> {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {

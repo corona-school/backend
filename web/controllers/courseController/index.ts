@@ -137,11 +137,11 @@ let cache = new CourseCache<ApiCourse[]>(CACHE_RELOAD_INTERVAL, async (key) => {
 addCleanupAction(() => cache.stopAutoReload()); //stop cache refresh on sigkill
 
 async function getCourses(student: Student | undefined,
-    pupil: Pupil | undefined, fields: Array<string>,
-    states: Array<string>,
-    instructorId: string | undefined,
-    participantId: string | undefined,
-    onlyJoinableCourses: boolean): Promise<ApiCourse[] | never> {
+                          pupil: Pupil | undefined, fields: Array<string>,
+                          states: Array<string>,
+                          instructorId: string | undefined,
+                          participantId: string | undefined,
+                          onlyJoinableCourses: boolean): Promise<ApiCourse[] | never> {
     const authenticatedStudent = student instanceof Student;
     const authenticatedPupil = pupil instanceof Pupil;
 
@@ -200,13 +200,13 @@ async function getCourses(student: Student | undefined,
 }
 
 async function getAPICourses(student: Student | undefined,
-    pupil: Pupil | undefined,
-    fields: Array<string>,
-    states: Array<string>,
-    instructorId: string | undefined,
-    participantId: string | undefined,
-    authenticatedStudent: boolean,
-    authenticatedPupil: boolean): Promise<Array<ApiCourse> | never> {
+                             pupil: Pupil | undefined,
+                             fields: Array<string>,
+                             states: Array<string>,
+                             instructorId: string | undefined,
+                             participantId: string | undefined,
+                             authenticatedStudent: boolean,
+                             authenticatedPupil: boolean): Promise<Array<ApiCourse> | never> {
     let stateFilters = [];
     for (const inputState of states) {
         let state: CourseState;
@@ -786,22 +786,8 @@ export async function postSubcourseHandler(req: Request, res: Response) {
     handleError(res, async () => {
         Validation.isStudent(res);
 
-        if (req.params.id === undefined ||
-            !(req.body.instructors instanceof Array) ||
-            typeof req.body.minGrade !== 'number' ||
-            typeof req.body.maxGrade !== 'number' ||
-            (req.body.maxParticipants !== undefined && typeof req.body.maxParticipants !== 'number') ||
-            typeof req.body.joinAfterStart !== 'boolean' ||
-            typeof req.body.published !== 'boolean'
-        ) {
-            throw new HTTPError(400, "Invalid request for POST /course/:id/subcourse");
-        }
-
-        for (const instructor of req.body.instructors) {
-            if (typeof instructor != 'string') {
-                throw new HTTPError(400, `Instructor ID ${instructor} is no string`);
-            }
-        }
+        Validation.hasParams(req, "id");
+        Validation.hasBody(req, { instructors: "string[]", minGrade: "number", maxGrade: "number", maxParticipants: "number?", joinAfterStart: "boolean", published: "boolean" });
 
         const subcourse = await postSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
         res.json(subcourse);
@@ -898,13 +884,8 @@ export async function postLectureHandler(req: Request, res: Response) {
     handleError(res, async () => {
         Validation.isStudent(res);
 
-        if (req.params.id == undefined ||
-            req.params.subid == undefined ||
-            typeof req.body.instructor !== 'string' ||
-            typeof req.body.start !== 'number' ||
-            typeof req.body.duration !== 'number') {
-            throw new HTTPError(400, "Invalid request for POST /course/:id/subcourse/:subid/lecture");
-        }
+        Validation.hasParams(req, "id", "subid");
+        Validation.hasBody(req, { instructor: "string", start: "number", duration: "number" });
 
         const lecture = await postLecture(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body);
         res.json(lecture);
@@ -942,9 +923,7 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         throw new HTTPError(400, `Field 'start' contains an illegal value: ${apiLecture.start}`);
     }
 
-    if (!Number.isInteger(apiLecture.duration) || apiLecture.duration < 15 || apiLecture.duration > 480) {
-        throw new HTTPError(400, `Field 'duration' contains an illegal value: ${apiLecture.duration}`);
-    }
+    Validation.isInIntegerRange(apiLecture, "duration", 15, 480);
 
     const lecture = new Lecture();
     lecture.instructor = instructor;
@@ -1254,7 +1233,7 @@ export async function putLectureHandler(req: Request, res: Response) {
         Validation.hasParams(req, "id", "subid", "lecid");
         const { id, subid, lecid } = req.params;
 
-        Validation.hasBody(req, { instructor: "string", start: "number", duration: "number"});
+        Validation.hasBody(req, { instructor: "string", start: "number", duration: "number" });
 
         await putLecture(res.locals.user, Number.parseInt(id, 10), Number.parseInt(subid, 10), Number.parseInt(lecid, 10), req.body);
     });
@@ -1365,27 +1344,13 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
  * @apiUse StatusInternalServerError
  */
 export async function deleteCourseHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Student) {
-            if (req.params.id != undefined) {
-                status = await deleteCourse(res.locals.user, Number.parseInt(req.params.id, 10));
-            } else {
-                status = 400;
-                logger.warn("Invalid request for DELETE /course/:id");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-student wanted to cancel a course");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+    handleError(res, async () => {
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id");
+        await deleteCourse(res.locals.user, Number.parseInt(req.params.id, 10));
+
+        res.status(204).send("Course deleted successfully");
+    });
 }
 
 async function deleteCourse(student: Student, courseId: number): Promise<void | never> {
@@ -1399,44 +1364,35 @@ async function deleteCourse(student: Student, courseId: number): Promise<void | 
         throw new HTTPError(404, `User tried to cancel non-existent course (ID ${courseId})`);
     }
 
-    Validation.isInstructorOf(student, couse);
+    Validation.isInstructorOf(student, course);
 
-    if (course.courseState != CourseState.CANCELLED) {
-        // We have a non-mitigated race condition here: Someone could post a new subcourse into the course, while the course gets cancelled
-        try {
-            // Run in transaction, so we may not have a mixed state, where some subcourses are cancelled, but others are not
-            await entityManager.transaction(async em => {
-
-                for (let i = 0; i < course.subcourses.length; i++) {
-                    if (!course.subcourses[i].cancelled) {
-                        course.subcourses[i].cancelled = true;
-                        await em.save(Subcourse, course.subcourses[i]);
-                        sendSubcourseCancelNotifications(course, course.subcourses[i]);
-                    }
-                }
-
-                course.courseState = CourseState.CANCELLED;
-                await em.save(Course, course);
-
-            }).catch(e => {
-                logger.error("Can't cancel course");
-                logger.debug(course, e);
-            });
-
-            transactionLog.log(new CancelCourseEvent(student, course));
-            logger.info("Successfully cancelled course");
-
-            return 204;
-        } catch (e) {
-            logger.error("Can't cancel course: " + e.message);
-            logger.debug(course, e);
-            return 500;
-        }
-    } else {
-        logger.warn(`User tried to delete course repeatedly (ID ${courseId})`);
-        logger.debug(student);
-        return 403;
+    if (course.courseState === CourseState.CANCELLED) {
+        throw new HTTPError(403, `User tried to delete course repeatedly (ID ${courseId})`);
     }
+    // We have a non-mitigated race condition here: Someone could post a new subcourse into the course, while the course gets cancelled
+    try {
+        // Run in transaction, so we may not have a mixed state, where some subcourses are cancelled, but others are not
+        await entityManager.transaction(async em => {
+
+            for (const subcourse of course.subcourses) {
+                if (!subcourse.cancelled) {
+                    subcourse.cancelled = true;
+                    await em.save(Subcourse, subcourse);
+                    sendSubcourseCancelNotifications(course, subcourse);
+                }
+            }
+
+            course.courseState = CourseState.CANCELLED;
+            await em.save(Course, course);
+
+        });
+
+        transactionLog.log(new CancelCourseEvent(student, course));
+        logger.info("Successfully cancelled course");
+    } catch (error) {
+        throw new HTTPError(500, "Can't cancel course", error);
+    }
+
 }
 
 /**
@@ -1466,73 +1422,47 @@ async function deleteCourse(student: Student, courseId: number): Promise<void | 
  * @apiUse StatusInternalServerError
  */
 export async function deleteSubcourseHandler(req: Request, res: Response) {
-    let status = 204;
-    try {
-        if (res.locals.user instanceof Student) {
-            if (req.params.id != undefined && req.params.subid != undefined) {
+    handleError(res, async () => {
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id", "subid");
 
-                status = await deleteSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10));
-
-            } else {
-                status = 400;
-                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-student wanted to cancel a subcourse");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+        await deleteSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10));
+        res.status(204).send("Deleted subcourse sucessfully");
+    });
 }
 
-async function deleteSubcourse(student: Student, courseId: number, subcourseId: number): Promise<number> {
+async function deleteSubcourse(student: Student, courseId: number, subcourseId: number): Promise<void | never> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
     await Validation.isAcceptedInstructor(student);
 
-    // Check access rights
     const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
-        logger.warn(`User tried to cancel subcourse of non existent course (ID ${courseId})`);
-        logger.debug(student);
-        return 404;
+        throw new HTTPError(404, `User tried to cancel subcourse of non existent course (ID ${courseId})`);
     }
 
     const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
-        logger.warn(`User tried to cancel non-existent subcourse (ID ${subcourseId})`);
-        logger.debug(student);
-        return 404;
+        throw new HTTPError(404, `User tried to cancel non-existent subcourse (ID ${subcourseId})`);
     }
 
     Validation.isInstructorOf(student, course);
 
-    if (!subcourse.cancelled) {
-        subcourse.cancelled = true;
-    } else {
-        logger.warn(`User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
-        logger.debug(student);
-        return 403;
+    if (subcourse.cancelled) {
+        throw new HTTPError(403, `User tried to cancel subcourse repeatedly (ID ${subcourseId})`);
     }
+
+    subcourse.cancelled = true;
+
 
     try {
         await entityManager.save(Subcourse, subcourse);
         await sendSubcourseCancelNotifications(course, subcourse);
         await transactionLog.log(new CancelSubcourseEvent(student, subcourse));
         logger.info("Successfully cancelled subcourse");
-
-        return 204;
-    } catch (e) {
-        logger.error("Can't cancelled subcourse: " + e.message);
-        logger.debug(subcourse, e);
-        return 500;
+    } catch (error) {
+        throw new HTTPError(500, "Can't cancel subcourse", error);
     }
 }
 
@@ -1563,34 +1493,17 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
  * @apiUse StatusInternalServerError
  */
 export async function deleteLectureHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Student) {
-            if (req.params.id != undefined &&
-                req.params.subid != undefined &&
-                req.params.lecid != undefined) {
+    handleError(res, async () => {
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id", "subid", "lecid");
 
-                status = await deleteLecture(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), Number.parseInt(req.params.lecid, 10));
+        await deleteLecture(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), Number.parseInt(req.params.lecid, 10));
 
-            } else {
-                status = 400;
-                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/lecture/:lecid");
-                logger.debug(req.params);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-student wants to delete a lecture");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+        res.status(204).send("Lecture deleted successfully");
+    });
 }
 
-async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<number> {
+async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<void | never> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
 
@@ -1599,43 +1512,31 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
     // Check access rights
     const course = await entityManager.findOne(Course, { id: courseId });
     if (course == undefined) {
-        logger.warn(`User tried to delete a lecture of non-existent course (ID ${courseId})`);
-        logger.debug(student);
-        return 404;
+        throw new HTTPError(404, `User tried to delete a lecture of non-existent course (ID ${courseId})`);
     }
 
     const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
-        logger.warn(`User tried to delete a lecture of non-existent subcourse (ID ${subcourseId})`);
-        logger.debug(student);
-        return 404;
+        throw new HTTPError(404, `User tried to delete a lecture of non-existent subcourse (ID ${subcourseId})`);
     }
 
     const lecture = await entityManager.findOne(Lecture, { id: lectureId, subcourse: subcourse });
     if (lecture == undefined) {
-        logger.warn(`User tried to delete non-existent lecture (ID ${subcourseId})`);
-        logger.debug(student);
-        return 404;
+        throw new HTTPError(404, `User tried to delete non-existent lecture (ID ${subcourseId})`);
     }
 
     Validation.isInstructorOf(student, course);
 
     if (lecture.start.getTime() < (new Date()).getTime()) {
-        logger.warn(`User tried to delete lecture from the past (ID ${courseId})`);
-        logger.debug(student);
-        return 403;
+        throw new HTTPError(403, `User tried to delete lecture from the past (ID ${courseId})`);
     }
 
     try {
         await entityManager.remove(Lecture, lecture);
         // todo add transactionlog
         logger.info("Successfully deleted lecture");
-
-        return 204;
-    } catch (e) {
-        logger.error("Can't delete lecture: " + e.message);
-        logger.debug(lecture, e);
-        return 500;
+    } catch (error) {
+        throw new HTTPError(500, "Can't delete lecture", error);
     }
 }
 
@@ -1669,85 +1570,58 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
  * @apiUse StatusInternalServerError
  */
 export async function joinSubcourseHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Pupil) {
-            if (req.params.id != undefined &&
-                req.params.subid != undefined &&
-                req.params.userid != undefined) {
+    handleError(res, async () => {
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id", "subid", "userid");
 
-                status = await joinSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+        await joinSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
 
-            } else {
-                status = 400;
-                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/participants");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-pupil wanted to join a subcourse");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+    });
 }
 
-async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<void | never> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
 
-    // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
-        logger.warn("Unauthorized pupil tried to join course");
-        logger.debug(pupil, userId);
-        return 403;
+        throw new HTTPError(403, "Unauthorized pupil tried to join course");
     }
 
-    // Try to join course
-    let status = 204;
+    // TODO: This looks highly inefficient for something that will probably be run very often
+    // Maybe  we can use application side locking instead?
     await entityManager.transaction(async em => {
+
+        const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+        const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
+
+        // Check if course is full
+        if (subcourse.maxParticipants <= subcourse.participants.length) {
+            throw new HTTPError(409, "Pupil can't join subcourse, because it is already full");
+        }
+
+        // Check if course has already started
+        let startDate = (new Date()).getTime() + 3600000;
+        for (const lecture of subcourse.lectures) {
+            if (startDate > lecture.start.getTime())
+                startDate = lecture.start.getTime();
+        }
+        if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
+            throw new HTTPError(409, "Pupil can't join subcourse, because it has already started");
+        }
+
+        //check if pupil has less than 3 active courses (because a pupil is allowed to only have 3 active courses at a time)
+        const pupilWithSubcourses = await em.findOne(Pupil, { //quick and dirty solution without rewriting large parts of the code -> refetch from database including the subcourses...
+            where: {
+                wix_id: pupil.wix_id
+            },
+            relations: ["subcourses"]
+        });
+        const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
+        if (numberOfActiveSubcourses >= 6) { //todo: don't hardcode this constant here...
+            throw new HTTPError(429, `Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
+        }
+
         try {
-            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
-            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
-
-            // Check if course is full
-            if (subcourse.maxParticipants <= subcourse.participants.length) {
-                logger.warn("Pupil can't join subcourse, because it is already full");
-                logger.debug(subcourse);
-                status = 409;
-                return;
-            }
-            // Check if course has already started
-            let startDate = (new Date()).getTime() + 3600000;
-            for (let i = 0; i < subcourse.lectures.length; i++) {
-                if (startDate > subcourse.lectures[i].start.getTime())
-                    startDate = subcourse.lectures[i].start.getTime();
-            }
-            if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
-                logger.warn("Pupil can't join subcourse, because it has already started");
-                logger.debug(subcourse);
-                status = 409;
-                return;
-            }
-
-            //check if pupil has less than 3 active courses (because a pupil is allowed to only have 3 active courses at a time)
-            const pupilWithSubcourses = await em.findOne(Pupil, { //quick and dirty solution without rewriting large parts of the code -> refetch from database including the subcourses...
-                where: {
-                    wix_id: pupil.wix_id
-                },
-                relations: ["subcourses"]
-            });
-            const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
-            if (numberOfActiveSubcourses >= 6) { //todo: don't hardcode this constant here...
-                logger.warn(`Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
-                status = 429; //use this to quickly indicate that the pupil has too much active subcourses
-                return;
-            }
-
             //remove participant from waiting list, if he is on the waiting list
             subcourse.removePupilFromWaitingList(pupil);
 
@@ -1756,26 +1630,19 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
 
             logger.info("Pupil successfully joined subcourse");
 
-            //send confirmation to participant
-            try {
-                await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
-            }
-            catch (e) {
-                logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
-            }
-
-            // transactionlog
-            const transactionLog = getTransactionLog();
-            await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
-
-        } catch (e) {
-            logger.warn("Can't join subcourse");
-            logger.debug(e);
-            status = 400;
+        } catch (error) {
+            throw new HTTPError(400, "Can't join subcourse", error);
         }
-    });
 
-    return status;
+        //send confirmation to participant
+        /* no await */ sendParticipantRegistrationConfirmationMail(pupil, course, subcourse).catch(error => {
+            logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${error.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
+        });
+
+        // transactionlog
+        const transactionLog = getTransactionLog();
+        await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
+    });
 }
 /**
  * @api {POST} /course/:id/subcourse/:subid/waitinglist/:userid JoinCourseWaitingList
@@ -1807,94 +1674,61 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
  * @apiUse StatusInternalServerError
  */
 export async function joinWaitingListHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Pupil) {
-            if (req.params.id != undefined &&
-                req.params.subid != undefined &&
-                req.params.userid != undefined) {
+    handleError(res, async () => {
+        Validation.isPupil(res);
+        Validation.hasParams(req, "id", "subid", "userid");
 
-                status = await joinWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
-
-            } else {
-                status = 400;
-                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/waitinglist");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-pupil wanted to join the waiting list of a subcourse");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+        await joinWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+        res.status(202).send("Sucessfully joined waiting list");
+    });
 }
 
-async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<void> {
     const entityManager = getManager();
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
-        logger.warn("Unauthorized pupil tried to join course waiting list");
-        logger.debug(pupil, userId);
-        return 403;
+        throw new HTTPError(403, "Unauthorized pupil tried to join course waiting list");
     }
 
-    // Try to join course
-    let status = 204;
     await entityManager.transaction(async em => {
-        try {
-            const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
-            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
 
-            // make sure course not already started
-            const firstLecture = subcourse.firstLecture();
+        const course = await em.findOneOrFail(Course, { id: courseId, courseState: CourseState.ALLOWED });
+        const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course, published: true });
 
-            if (firstLecture && moment(firstLecture.start).isBefore(moment()) && !course.subcourses[0].joinAfterStart) {
-                //cannot queue on waiting list, because late join is not allowed
-                logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because the course already started and late joins are not permitted.`);
-                status = 409;
-                return;
-            }
+        // make sure course not already started
+        const firstLecture = subcourse.firstLecture();
 
-            // Check if course is full
-            if (subcourse.maxParticipants <= subcourse.participants.length) {
-                //check if pupil is already on the waiting list
-                if (subcourse.isPupilOnWaitingList(pupil)) {
-                    status = 409;
-                    logger.info(`Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because he's already on the waiting list`);
-                    return;
-                }
-
-                //add pupil to the waiting list
-                subcourse.addPupilToWaitingList(pupil);
-
-                status = 202; //indicate that probably the join will be completed later (i.e. the pupil is on the waiting list)
-
-                await em.save(Subcourse, subcourse);
-                logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
-
-                // transactionlog (remove this, if there is a performance problem with joining the waiting list -> because this introduces some performance problems!)
-                const transactionLog = getTransactionLog();
-                await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
-
-                return;
-            }
-            else {
-                logger.warn(`Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
-            }
-        } catch (e) {
-            logger.warn("Can't join waitinglist of subcourse");
-            logger.debug(e);
-            status = 400;
+        if (firstLecture && moment(firstLecture.start).isBefore(moment()) && !course.subcourses[0].joinAfterStart) {
+            //cannot queue on waiting list, because late join is not allowed
+            throw new HTTPError(409, `Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because the course already started and late joins are not permitted.`);
         }
-    });
 
-    return status;
+        // Check if course is full
+        if (subcourse.maxParticipants > subcourse.participants.length) {
+            throw new HTTPError(409, `Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
+        }
+
+        //check if pupil is already on the waiting list
+        if (subcourse.isPupilOnWaitingList(pupil)) {
+            throw new HTTPError(409, `Pupil ${pupil.id} cannot join waiting list of subcourse ${subcourseId}, because he's already on the waiting list`);
+        }
+
+        //add pupil to the waiting list
+        subcourse.addPupilToWaitingList(pupil);
+
+        try {
+            await em.save(Subcourse, subcourse);
+            logger.info(`Pupil ${pupil.id} successfully joined waiting list of subcourse ${subcourseId}`);
+        } catch (error) {
+            throw new HTTPError(500, "Can't join waitinglist of subcourse", error);
+        }
+
+        // transactionlog (remove this, if there is a performance problem with joining the waiting list -> because this introduces some performance problems!)
+        const transactionLog = getTransactionLog();
+        await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
+
+    });
 }
 
 /**
@@ -1925,31 +1759,13 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
  * @apiUse StatusInternalServerError
  */
 export async function leaveSubcourseHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Pupil) {
-            if (req.params.id != undefined &&
-                req.params.subid != undefined &&
-                req.params.userid != undefined) {
+    handleError(res, async () => {
+        Validation.isPupil(res);
+        Validation.hasParams(req, "id", "subid", "userid");
 
-                status = await leaveSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
-
-            } else {
-                status = 400;
-                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/participants/:userid");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-pupil wanted to leave a subcourse");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+        await leaveSubcourse(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+        res.status(204).send("Successfully left subcourse");
+    });
 }
 
 async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
@@ -1958,35 +1774,30 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
-        logger.warn("Unauthorized pupil tried to leave course");
-        logger.debug(pupil, userId);
-        return 403;
+        throw new HTTPError(403, "Unauthorized pupil tried to leave course");
     }
 
-    // Try to leave course
-    let status = 204;
     await entityManager.transaction(async em => {
         // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+
+        const course = await em.findOneOrFail(Course, { id: courseId });
+        const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+        // Check if pupil is participant
+        let index: number = undefined;
+        for (let i = 0; i < subcourse.participants.length; i++) {
+            if (subcourse.participants[i].wix_id == userId) {
+                index = i;
+                break;
+            }
+        }
+        if (index == undefined) {
+            throw new HTTPError(400, "Pupil tried to leave subcourse he didn't join");
+        }
+
+        subcourse.participants.splice(index, 1);
+
         try {
-            const course = await em.findOneOrFail(Course, { id: courseId });
-            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
-
-            // Check if pupil is participant
-            let index: number = undefined;
-            for (let i = 0; i < subcourse.participants.length; i++) {
-                if (subcourse.participants[i].wix_id == userId) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == undefined) {
-                logger.warn("Pupil tried to leave subcourse he didn't join");
-                logger.debug(subcourse, userId);
-                status = 400;
-                return;
-            }
-
-            subcourse.participants.splice(index, 1);
             await em.save(Subcourse, subcourse);
 
             logger.info("Pupil successfully left subcourse");
@@ -1995,14 +1806,10 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
             const transactionLog = getTransactionLog();
             await transactionLog.log(new ParticipantLeftCourseEvent(pupil, subcourse));
 
-        } catch (e) {
-            logger.warn("Can't leave subcourse");
-            logger.debug(e);
-            status = 400;
+        } catch (error) {
+            throw new HTTPError(500, "Can't leave subcourse", error);
         }
     });
-
-    return status;
 }
 /**
  * @api {DELETE} /course/:id/subcourse/:subid/waitinglist/:userid LeaveCourseWaitingList
@@ -2032,59 +1839,37 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
  * @apiUse StatusInternalServerError
  */
 export async function leaveWaitingListHandler(req: Request, res: Response) {
-    let status: number;
-    try {
-        if (res.locals.user instanceof Pupil) {
-            if (req.params.id != undefined &&
-                req.params.subid != undefined &&
-                req.params.userid != undefined) {
+    handleError(res, async () => {
+        Validation.isPupil(res);
+        Validation.hasParams(req, "id", "subid", "userid");
 
-                status = await leaveWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
-
-            } else {
-                status = 400;
-                logger.warn("Invalid request for DELETE /course/:id/subcourse/:subid/waitinglist/:userid");
-                logger.debug(req.body);
-            }
-        } else {
-            status = 403;
-            logger.warn("A non-pupil wanted to leave a subcourse's waitinglist");
-            logger.debug(res.locals.user);
-        }
-    } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
-        logger.debug(req, e);
-        status = 500;
-    }
-    res.status(status).end();
+        await leaveWaitingList(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.params.userid);
+        res.status(204).send("Successfully left mailinglist");
+    });
 }
 
-async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<void | never> {
     const entityManager = getManager();
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
-        logger.warn("Unauthorized pupil tried to leave course's waitinglist");
-        logger.debug(pupil, userId);
-        return 403;
+        throw new HTTPError(403, "Unauthorized pupil tried to leave course's waitinglist");
     }
 
     // Try to leave course
-    let status = 204;
     await entityManager.transaction(async em => {
         // Note: The transaction here is important, since concurrent accesses to subcourse.participants are not safe
+
+        const course = await em.findOneOrFail(Course, { id: courseId });
+        const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
+
+        // Check if pupil is on waiting list
+        if (!subcourse.isPupilOnWaitingList(pupil)) {
+            throw new HTTPError(400, `Pupil ${pupil.id} tried to leave waiting list of subcourse nr ${subcourseId} he didn't join`);
+        }
+
+        //leave waiting list
         try {
-            const course = await em.findOneOrFail(Course, { id: courseId });
-            const subcourse = await em.findOneOrFail(Subcourse, { id: subcourseId, course: course });
-
-            // Check if pupil is on waiting list
-            if (!subcourse.isPupilOnWaitingList(pupil)) {
-                logger.warn(`Pupil ${pupil.id} tried to leave waiting list of subcourse nr ${subcourseId} he didn't join`);
-                status = 400;
-                return;
-            }
-
-            //leave waiting list
             subcourse.removePupilFromWaitingList(pupil);
             await em.save(Subcourse, subcourse);
 
@@ -2094,13 +1879,9 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
             const transactionLog = getTransactionLog();
             await transactionLog.log(new ParticipantLeftWaitingListEvent(pupil, course));
         } catch (e) {
-            logger.warn("Can't leave subcourse's waiting list");
-            logger.debug(e);
-            status = 400;
+            throw new HTTPError(500, "Can't leave subcourse's waiting list");
         }
     });
-
-    return status;
 }
 
 /**
@@ -2131,45 +1912,31 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
  * @apiUse StatusInternalServerError
  */
 export async function groupMailHandler(req: Request, res: Response) {
+    handleError(res, async () => {
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id", "subid");
+        Validation.hasBody(req, { subject: "string", body: "string" });
 
-    let status = 204;
-
-    if (res.locals.user instanceof Student) {
-        if (req.params.id != undefined
-            && req.params.subid != undefined
-            && typeof req.body.subject == "string"
-            && typeof req.body.body == "string") {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
-        } else {
-            logger.warn("Missing or invalid parameters for groupMailHandler");
-            status = 400;
-        }
-    } else {
-        logger.warn("Groupmail requested by Non-Student");
-        status = 403;
-    }
-
-    res.status(status).end();
+        await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+        res.status(204).send("Emails successfully send");
+    });
 }
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string): Promise<void | never> {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
-        logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
-        return 403;
+        throw new HTTPError(403, "Group mail requested by student who is no instructor or not instructor-screened");
     }
 
     const entityManager = getManager();
     const course = await entityManager.findOne(Course, { id: courseId });
 
     if (course == undefined) {
-        logger.warn("Tried to send group mail to invalid course");
-        return 404;
+        throw new HTTPError(404, "Tried to send group mail to invalid course");
     }
 
     const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
-        logger.warn("Tried to send group mail to invalid subcourse");
-        return 404;
+        throw new HTTPError(404, "Tried to send group mail to invalid subcourse");
     }
 
     Validation.isInstructorOf(student, course);
@@ -2178,13 +1945,9 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         for (let participant of subcourse.participants) {
             await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
         }
-    } catch (e) {
-        logger.warn("Unable to send group mail");
-        logger.debug(e);
-        return 400;
+    } catch (error) {
+        throw new HTTPError(500, "Unable to send group mail", error);
     }
-
-    return 204;
 }
 
 /**
@@ -2215,55 +1978,39 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse StatusInternalServerError
  */
 export async function instructorMailHandler(req: Request, res: Response) {
+    handleError(res, async () => {
+        Validation.isPupil(res);
+        Validation.hasParams(req, "id", "subid");
+        Validation.hasBody(req, { subject: "string", body: "string" });
 
-    let status = 204;
-
-    if (res.locals.user instanceof Pupil) {
-        if (req.params.id != undefined
-            && req.params.subid != undefined
-            && typeof req.body.subject == "string"
-            && typeof req.body.body == "string") {
-            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
-        } else {
-            logger.warn("Missing or invalid parameters for instructorMailHandler");
-            status = 400;
-        }
-    } else {
-        logger.warn("Instructor mail requested by Non-Pupil");
-        status = 403;
-    }
-
-    res.status(status).end();
+        instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+        res.status(204).send("Mail sent successfully");
+    });
 }
 
-async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string): Promise<void | never> {
     if (!pupil.isParticipant || !pupil.active) {
-        logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
-        return 403;
+        throw new HTTPError(403, "Instructor mail requested by pupil who is no participant or no longer active");
     }
 
     const entityManager = getManager();
     const course = await entityManager.findOne(Course, { id: courseId });
 
     if (course == undefined) {
-        logger.warn("Tried to send instructor mail to invalid course");
-        return 404;
+        throw new HTTPError(404, "Tried to send instructor mail to invalid course");
     }
 
     if (!course.allowContact) {
-        logger.warn("Tried to send mail to correspondent of a course where contact isn't permitted.");
-        return 404;
+        throw new HTTPError(404, "Tried to send mail to correspondent of a course where contact isn't permitted.");
     }
 
     if (!course.correspondent) {
-        logger.error(`Tried to send mail to instructors of course (id: ${course.id}) where no correspondent was defined.`);
-        return 500; //usually this should not happen – but if it happens, it will indicates some bug or someone who manually changed database entries...
+        throw new HTTPError(500, `Tried to send mail to instructors of course (id: ${course.id}) where no correspondent was defined.`);
     }
 
     const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course });
     if (subcourse == undefined) {
-        logger.warn("Tried to send instructor mail to invalid subcourse");
-        return 404;
+        throw new HTTPError(404, "Tried to send instructor mail to invalid subcourse");
     }
 
 
@@ -2271,12 +2018,8 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         // send mail to correspondnet
         await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
     } catch (e) {
-        logger.warn("Unable to send instructor mail");
-        logger.debug(e);
-        return 400;
+        throw new HTTPError(400, "Unable to send instructor mail");
     }
-
-    return 204;
 }
 
 /**
@@ -2306,16 +2049,14 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
  */
 export async function joinCourseMeetingHandler(req: Request, res: Response) {
     handleError(res, async () => {
+        Validation.hasParams(req, "id", "subid");
+
         const courseId = req.params.id || null;
         const subcourseId = req.params.subid ? String(req.params.subid) : null;
         const ip = req.connection.remoteAddress || null;
 
         let course: ApiCourse;
         let meeting: BBBMeeting;
-
-        if (!courseId || !subcourseId) {
-            throw new HTTPError(400, "Expected courseId is not on route or subcourseId is not in request body");
-        }
 
         let authenticatedStudent = res.locals.user instanceof Student;
         let authenticatedPupil = res.locals.user instanceof Pupil;
@@ -2486,13 +2227,9 @@ async function getCourseTags() {
  */
 export async function postAddCourseInstructorHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!(res.locals.user instanceof Student)) {
-            throw new HTTPError(403, "A non-student wanted to add an instructor to a course");
-        }
-
-        if (!Number.isInteger(+req.params.id) || typeof req.body.email !== 'string') {
-            throw new HTTPError(400, "Invalid request for POST /course/:id/instructor");
-        }
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id");
+        Validation.hasBody(req, { email: "string" });
 
         await postAddCourseInstructor(res.locals.user, +req.params.id, req.body);
         res.status(200).send("added instructor");
@@ -2582,13 +2319,8 @@ async function postAddCourseInstructor(student: Student, courseID: number, apiIn
  */
 export async function putCourseImageHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!(res.locals.user instanceof Student)) {
-            throw new HTTPError(403, "A non-student wanted to change course image");
-        }
-
-        if (!Number.isInteger(+req.params.id)) {
-            throw new HTTPError(400, "Invalid request for PUT /course/:id/image");
-        }
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id");
 
         if (!req.file) {
             throw new HTTPError(400, `PUT /course/:id/image expects either a PNG, JPEG or GIF file`);
@@ -2678,13 +2410,8 @@ async function setCourseImage(student: Student, courseID: number, imageFile?: Ex
  */
 export async function deleteCourseImageHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!(res.locals.user instanceof Student)) {
-            throw new HTTPError(403, "A non-student wanted to delete course image");
-        }
-
-        if (!Number.isInteger(+req.params.id)) {
-            throw new HTTPError(400, "Invalid request for DELETE /course/:id/image");
-        }
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id");
 
         const result = await setCourseImage(res.locals.user, +req.params.id, null);
         res.send(result);
@@ -2717,22 +2444,9 @@ export async function deleteCourseImageHandler(req: Request, res: Response) {
  */
 export async function inviteExternalHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!(res.locals.user instanceof Student)) {
-            throw new HTTPError(403, "A non-student wanted to invite an external person to a subcourse");
-        }
-
-
-        if (
-            req.params.id == undefined ||
-            typeof req.body.firstname !== "string" ||
-            !req.body.firstname.length ||
-            typeof req.body.lastname !== "string" ||
-            !req.body.lastname.length ||
-            typeof req.body.email !== "string" ||
-            !req.body.email.length
-        ) {
-            throw new HTTPError(400, "Invalid request for POST /course/:id/subcourse/:subid/inviteexternal");
-        }
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id");
+        Validation.hasBody(req, { firstname: "string", lastname: "string", email: "string"});
 
         await inviteExternal(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
         res.status(200).end();
@@ -2821,8 +2535,7 @@ async function inviteExternal(student: Student, courseID: number, inviteeInfo: A
  */
 export async function joinCourseMeetingExternalHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!req.params.token)
-            throw new HTTPError(400, "Invalid request for POST /course/meeting/external/join/:token");
+        Validation.hasParams(req, "token");
 
         const result = await joinCourseMeetingExternalGuest(req.params.token);
         res.send(result);
@@ -2919,11 +2632,9 @@ async function joinCourseMeetingExternalGuest(token: string): Promise<ApiExterna
  */
 export async function issueCourseCertificateHandler(req: Request, res: Response) {
     handleError(res, async () => {
-        if (!(res.locals.user instanceof Student))
-            throw new HTTPError(403, "Issuing course certificate requested by Non-Student");
-
-        if (!req.params.id || !req.params.subid || !(req.body.receivers instanceof Array))
-            throw new HTTPError(400, "Missing or invalid parameters for issueCourseCertificate");
+        Validation.isStudent(res);
+        Validation.hasParams(req, "id", "subid");
+        Validation.hasBody(req, { receivers: "string[]" });
 
         await issueCourseCertificate(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.receivers);
 
@@ -2960,10 +2671,6 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
     //check participants list
     if (receivers.length === 0) {
         throw new HTTPError(400, `User ${student.wix_id} tried to issue course certificate for NO receivers at all. That is not possible.`);
-    }
-
-    if (receivers.some(r => typeof r !== "string")) {
-        throw new HTTPError(400, `User ${student.wix_id} tried to issue course certificate for receivers in array where not all elements are strings(receivers: ${JSON.stringify(receivers)})`);
     }
 
     // TODO: Can't we do that in one Database transaction?
