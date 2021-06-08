@@ -1,9 +1,18 @@
+import { PrismaClientInitializationError } from '@prisma/client/runtime';
 import { Person } from '../entity/Person';
+import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext } from './types';
+import { prisma } from '../prisma'
 
+
+
+const channels = [mailjetChannel]
 // This method can be used to send one specific notification with a very specific notification context to the user
 // e.g. the login email which contains a login token
 function sendNotification(id: NotificationID, user: Person, context: NotificationContext): Promise<any> {
+    //get Notificationchannel for Notification 
+    const notification = prisma.notification.findUnique({where: {id}})
+
 
 }
 

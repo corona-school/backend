@@ -6,11 +6,10 @@ export type CategoryID = string; // categories as means to opt out from a certai
 // An action is something the user does. One action might trigger / cancel multiple notifications
 export type ActionID = string;
 export type IDforNotificationChannel = number;
+export type Email = `${string}@${string}.${string}`; 
 
-export type NotificationChannel = {
-    id: IDforNotificationChannel; // unique ID for that notification for that channel
-    type: "mailjet" | "sms" | "whatsapp" | "signal";
-}
+
+
 
 export interface Reminder {
     cancelledOnAction: ActionID[];
@@ -18,24 +17,7 @@ export interface Reminder {
     interval: number;
 }
 
-export type NotificationTemplate = (Reminder | {}) & {
-    id: NotificationID;
-    // eventually not the user itself is notified, but their parents, teacher, etc. ...
-    recipient?: "parent" | "teacher" | ...;
-    // When one of these actions are taken by the user, the notification is sent
-    onActions: ActionID[];
-
-    via: NotificationChannel[];
-
-    // allow users to opt out per category:
-    category?: CategoryID;
-
-    // TODO: Do we check the context? 
-    // context?: ContextValidator;
-    // Create a reminder for this notification, it is preferred to use an action instead that is used in both the initial email and the reminder
-    // TODO: is this necessary
-    reminder?: NotificationID;
-}
+export{ sentNotification, notification } from '.prisma/client'; 
 
 
 
@@ -46,6 +28,7 @@ export type NotificationTemplate = (Reminder | {}) & {
 export interface NotificationContext {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
+    replyToAddress? : Email; 
     // I'm not sure if it is useful to maintain the variable shape in the backend
     //  as a missmatch with the Mailjet template won't be detected anyways. I guess we can just allow any further props:
     [key: string]: any;
@@ -55,11 +38,13 @@ export interface NotificationContext {
 export interface Context extends NotificationContext {
     user: Pupil | Student;
     title: string;
+    
 }
 
 export interface Channel {
     type: "mailjet";
     send(id: IDforNotificationChannel, context: Context): Promise<any>;
+    canSend(id: NotificationID): boolean; 
 }
 
 export namespace Notification { // supports both SMS & E-Mail
