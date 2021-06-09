@@ -69,8 +69,12 @@ export function hasBody(req: Request, body: TypeMap): void | never {
             if (key in req.body && typeof req.body[key] !== innerType)
                 throw new HTTPError(400, `optional '${key}' in request body has invalid type ${typeof req.body[key]}, expected ${innerType}`);
 
-        } else if (typeof req.body[key] !== type) {
-            throw new HTTPError(400, `'${key}' in request body has invalid type ${typeof req.body[key]}, expected ${type}`);
+        } else {
+            if (!(key in req.body))
+                throw new HTTPError(400, `'${key}' is missing in the request body`);
+
+            if (typeof req.body[key] !== type)
+                throw new HTTPError(400, `'${key}' in request body has invalid type ${typeof req.body[key]}, expected ${type}`);
         }
     }
 }

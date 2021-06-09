@@ -661,7 +661,7 @@ export async function postCourseHandler(req: Request, res: Response) {
     handleError(res, async () => {
         Validation.isStudent(res);
 
-        Validation.hasBody(req, { instructors: "string[]", name: "string", outline: "string", description: "string", category: "string", tags: "string[]", submit: "boolean", allowContact: "boolean", correspondentID: "boolean?" });
+        Validation.hasBody(req, { instructors: "string[]", name: "string", outline: "string", description: "string", category: "string", tags: "string[]", submit: "boolean", allowContact: "boolean", correspondentID: "string?" });
 
         const course = await postCourse(res.locals.user, req.body);
         res.json(course);
