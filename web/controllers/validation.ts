@@ -36,7 +36,7 @@ export function isInstructorOf(student: Student, course: Course) {
 
 export function hasParams(req: Request, ...params: string[]): void | never {
     for (const param of params) {
-        if (!(param in req.params)) {
+        if (!(param in req.params) || ! req.params[param]) {
             throw new HTTPError(400, `Missing parameter '${param}' in path`);
         }
     }
