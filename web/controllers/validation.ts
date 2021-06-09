@@ -7,12 +7,12 @@ import { Course } from "../../common/entity/Course";
 
 export function isStudent(res: Response): void | never {
     if (!(res.locals.user instanceof Student))
-        throw new HTTPError(403, "This endpoint can only be acessed by Students");
+        throw new HTTPError(403, "This endpoint can only be accessed by Students");
 }
 
 export function isPupil(res: Response): void | never {
     if (!(res.locals.user instanceof Student))
-        throw new HTTPError(403, "This endpoint can only be acessed by Pupils");
+        throw new HTTPError(403, "This endpoint can only be accessed by Pupils");
 }
 
 // ATTENTION: This is asynchronous, don't forget to await!
@@ -36,8 +36,8 @@ export function isInstructorOf(student: Student, course: Course) {
 
 export function hasParams(req: Request, ...params: string[]): void | never {
     for (const param of params) {
-        if (!(param in req.params) || ! req.params[param]) {
-            throw new HTTPError(400, `Missing parameter '${param}' in path`);
+        if (!(param in req.params) || !req.params[param] || Number.isNaN(Number.parseInt(req.params[param], 10))) {
+            throw new HTTPError(400, `Missing integer parameter '${param}' in path`);
         }
     }
 }
