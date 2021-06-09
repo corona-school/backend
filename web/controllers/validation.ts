@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import { ScreeningStatus, Student } from "../../common/entity/Student";
 import { Course } from "../../common/entity/Course";
 
+/* ----------- User Validation ---------------------------------------------------------------------------- */
+
 export function isStudent(res: Response): void | never {
     if (!(res.locals.user instanceof Student))
         throw new HTTPError(403, "This endpoint can only be acessed by Students");
@@ -20,13 +22,17 @@ export async function isAcceptedInstructor(student: Student): Promise<void | nev
     }
 }
 
-export async function isInstructorOf(student: Student, course: Course) {
+export function isInstructorOf(student: Student, course: Course) {
     const authorized = course.instructors.some(it => it.id === student.id);
 
     if (!authorized) {
         throw new HTTPError(403, `User tried to edit lecture, but has no access rights (ID ${course.id})`);
     }
 }
+
+
+
+/* ----------- Request Validation ---------------------------------------------------------------------------- */
 
 export function hasParams(req: Request, ...params: string[]): void | never {
     for (const param of params) {
