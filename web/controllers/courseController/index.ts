@@ -1768,7 +1768,7 @@ export async function leaveSubcourseHandler(req: Request, res: Response) {
     });
 }
 
-async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<void | never> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
 
@@ -2236,7 +2236,7 @@ export async function postAddCourseInstructorHandler(req: Request, res: Response
     });
 }
 
-async function postAddCourseInstructor(student: Student, courseID: number, apiInstructorToAdd: ApiInstructorID): Promise<number> {
+async function postAddCourseInstructor(student: Student, courseID: number, apiInstructorToAdd: ApiInstructorID): Promise<void | never> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
 

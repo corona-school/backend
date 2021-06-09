@@ -74,7 +74,7 @@ export function isInIntegerRange<K extends string>(value: { [k in K]: number }, 
         throw new HTTPError(400, `Expected '${key}' to be an integer was ${value[key]} instead`);
 
     if (value[key] < minInclusive || maxInclusive < value[key])
-        throw new HTTPError(400, `Expected '${key}' to be inbetween ${min} and ${max}, was outside with ${value[key]}`);
+        throw new HTTPError(400, `Expected '${key}' to be inbetween ${minInclusive} and ${maxInclusive}, was outside with ${value[key]}`);
 }
 
 export function hasLength<K extends string>(value: { [k in K]?: string }, key: K, minInclusive: number, maxInclusive: number) {
