@@ -978,12 +978,7 @@ export async function putCourseHandler(req: Request, res: Response) {
         Validation.isStudent(res);
 
         Validation.hasParams(req, "id");
-        Validation.hasBody(req, { instructors: "string[]", description: "string", allowedContact: "boolean", name: "string?", outline: "string?", correspondentID: "string?", tags: "string[]" });
-        if (
-            (req.body.outline !== undefined && typeof req.body.category !== 'string') ||
-            (req.body.outline !== undefined && typeof req.body.submit !== 'boolean')) {
-            throw new HTTPError(400, "Invalid request for PUT /course");
-        }
+        Validation.hasBody(req, { instructors: "string[]", description: "string", allowedContact: "boolean", name: "string?", outline: "string?", correspondentID: "string?", tags: "string[]", category: "string?", submit: "boolean?" });
 
         await putCourse(res.locals.user, Number.parseInt(req.params.id, 10), req.body);
 
