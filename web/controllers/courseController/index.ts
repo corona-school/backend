@@ -3494,9 +3494,9 @@ async function inviteExternal(student: Student, courseID: number, inviteeInfo: A
     }
 
     const currentGuests = course.guests;
-    //make sure that at most 5 persons are invited per course
-    if (currentGuests.length >= 5) {
-        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 5 invited guests`);
+    //make sure that at most 10 persons are invited per course
+    if (currentGuests.length >= 10) {
+        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 10 invited guests`);
         return 429; //indicate that no more guests could be invited
     }
 

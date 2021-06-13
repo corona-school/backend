@@ -31,6 +31,7 @@ import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication"
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
+import { CourseGuest } from "../common/entity/CourseGuest";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -745,6 +746,13 @@ export async function setupDevDB() {
     course8.subcourses = [];
     course8.courseState = CourseState.ALLOWED;
 
+    let guest1 = new CourseGuest("test1@gmail.com", "Tim1", "Marx1", course8, s1, "guestToken1");
+    let guest2 = new CourseGuest("test2@gmail.com", "Tim2", "Marx2", course8, s1, "guestToken2");
+    let guest3 = new CourseGuest("test3@gmail.com", "Tim3", "Marx3", course8, s1, "guestToken3");
+    let guest4 = new CourseGuest("test4@gmail.com", "Tim4", "Marx4", course8, s1, "guestToken4");
+    let guest5 = new CourseGuest("test5@gmail.com", "Tim5", "Marx5", course8, s1, "guestToken5");
+
+    course8.guests = [guest1, guest2, guest3, guest4, guest5];
     courses.push(course8);
 
     let course9 = new Course();
@@ -847,7 +855,7 @@ export async function setupDevDB() {
     subcourse7.minGrade = 3;
     subcourse7.maxGrade = 10;
     subcourse7.instructors = [s1, s2];
-    subcourse7.maxParticipants = 10;
+    subcourse7.maxParticipants = 4;
     subcourse7.published = true;
     subcourse7.participants = pupils;
 
@@ -871,7 +879,7 @@ export async function setupDevDB() {
     subcourse9.minGrade = 1;
     subcourse9.maxGrade = 10;
     subcourse9.instructors = [s1];
-    subcourse9.maxParticipants = 20;
+    subcourse9.maxParticipants = 7;
     subcourse9.published = true;
     subcourse9.participants = pupils;
 
