@@ -751,8 +751,23 @@ export async function setupDevDB() {
     let guest3 = new CourseGuest("test3@gmail.com", "Tim3", "Marx3", course8, s1, "guestToken3");
     let guest4 = new CourseGuest("test4@gmail.com", "Tim4", "Marx4", course8, s1, "guestToken4");
     let guest5 = new CourseGuest("test5@gmail.com", "Tim5", "Marx5", course8, s1, "guestToken5");
+    let guest6 = new CourseGuest("test6@gmail.com", "Tim6", "Marx6", course8, s1, "guestToken6");
+    let guest7 = new CourseGuest("test7@gmail.com", "Tim7", "Marx7", course8, s1, "guestToken7");
+    let guest8 = new CourseGuest("test8@gmail.com", "Tim8", "Marx8", course8, s1, "guestToken8");
+    let guest9 = new CourseGuest("test9@gmail.com", "Tim9", "Marx9", course8, s1, "guestToken9");
+    let guest10 = new CourseGuest("test10@gmail.com", "Tim10", "Marx10", course8, s1, "guestToken10");
+    await entityManager.save(CourseGuest, guest1);
+    await entityManager.save(CourseGuest, guest2);
+    await entityManager.save(CourseGuest, guest3);
+    await entityManager.save(CourseGuest, guest4);
+    await entityManager.save(CourseGuest, guest5);
+    await entityManager.save(CourseGuest, guest6);
+    await entityManager.save(CourseGuest, guest7);
+    await entityManager.save(CourseGuest, guest8);
+    await entityManager.save(CourseGuest, guest9);
+    await entityManager.save(CourseGuest, guest10);
 
-    course8.guests = [guest1, guest2, guest3, guest4, guest5];
+    course8.guests = [guest1, guest2, guest3, guest4, guest5, guest6, guest7, guest8, guest9, guest10];
     courses.push(course8);
 
     let course9 = new Course();
