@@ -1,3 +1,4 @@
+import { Person } from "common/entity/Person";
 import { Pupil } from "../entity/Pupil";
 import { Student } from "../entity/Student";
 
@@ -5,7 +6,6 @@ export type NotificationID = string; // either our own or we reuse them from Mai
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
 export type ActionID = string;
-export type IDforNotificationChannel = number;
 export type Email = `${string}@${string}.${string}`; 
 
 
@@ -36,14 +36,14 @@ export interface NotificationContext {
 
 // The user is always known, also for notifications sent by Actions / Reminders
 export interface Context extends NotificationContext {
-    user: Pupil | Student;
+    user: Person;
     title: string;
     
 }
 
 export interface Channel {
     type: "mailjet";
-    send(id: IDforNotificationChannel, context: Context): Promise<any>;
+    send(id: string, context: Context): Promise<any>;
     canSend(id: NotificationID): boolean; 
 }
 
