@@ -19,7 +19,8 @@ function computeNextScreeningReminderDate(sentReminderCount: number, lastInvitat
 
     const daysAfterPreviousReminderUntilNextReminder = REMINDER_INTERVALS[sentReminderCount];
 
-    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, "days").toDate();
+    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, "days")
+        .toDate();
 }
 
 // ------------

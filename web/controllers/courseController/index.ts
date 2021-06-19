@@ -674,7 +674,9 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
         for (let i = 0; i < course.subcourses.length; i++) {
             // Skip not published subcourses for unauthorized users
-            if (!authorizedStudent && !course.subcourses[i].published) { continue; }
+            if (!authorizedStudent && !course.subcourses[i].published) {
+                continue;
+            }
 
             let subcourse: ApiSubcourse = {
                 id: course.subcourses[i].id,
@@ -1095,7 +1097,9 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
         return 400;
     }
 
-    if (apiSubcourse.maxParticipants == undefined) { apiSubcourse.maxParticipants = 30; }
+    if (apiSubcourse.maxParticipants == undefined) {
+        apiSubcourse.maxParticipants = 30;
+    }
     if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
         logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
         logger.debug(apiSubcourse);
@@ -1246,7 +1250,8 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
     }
 
     // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
-    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(2, "days").startOf("day")))) {
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(2, "days")
+        .startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -2277,7 +2282,9 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
             // Check if course has already started
             let startDate = (new Date()).getTime() + 3600000;
             for (let i = 0; i < subcourse.lectures.length; i++) {
-                if (startDate > subcourse.lectures[i].start.getTime()) { startDate = subcourse.lectures[i].start.getTime(); }
+                if (startDate > subcourse.lectures[i].start.getTime()) {
+                    startDate = subcourse.lectures[i].start.getTime();
+                }
             }
             if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
                 logger.warn("Pupil can't join subcourse, because it has already started");

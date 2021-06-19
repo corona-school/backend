@@ -148,12 +148,14 @@ export async function getMaterial(req: Request, res: Response) {
 
             if (type === "files") {
                 let folder = await listFiles(material[location]);
-                return res.status(status).json(folder).end();
+                return res.status(status).json(folder)
+                    .end();
             }
 
             if (type === "playlist") {
                 let playlist = await listVideos(material[location]);
-                return res.status(status).json(playlist).end();
+                return res.status(status).json(playlist)
+                    .end();
             } else {
                 status = 400;
                 logger.warn("Invalid material type in GET /mentoring/material");
@@ -204,7 +206,8 @@ export async function getFeedbackCallData(req: Request, res: Response) {
                 return res.status(status).end();
             }
 
-            return res.status(status).json(peerToPeerCall).end();
+            return res.status(status).json(peerToPeerCall)
+                .end();
         } else {
             status = 403;
             logger.warn("A non-student wanted to access student feedback call data.");

@@ -86,7 +86,9 @@ async function queryEvents(query: googleCalendar.Params$Resource$Events$List): P
 export async function listVideos(playlistID: string) {
     let videos = [];
     await queryPlaylistItems({part: 'snippet', playlistId: playlistID, maxResults: 50})
-        .then(JSON.stringify).then(JSON.parse).then(res => videos = res.map(parsePlaylistItem))
+        .then(JSON.stringify)
+        .then(JSON.parse)
+        .then(res => videos = res.map(parsePlaylistItem))
         .catch(err => logger.warn("YouBube playlistItems query failed: " + err.message));
 
     return videos;
@@ -95,7 +97,9 @@ export async function listVideos(playlistID: string) {
 export async function listFiles(folderID: string) {
     let files = [];
     await queryFiles({q: `'${folderID}' in parents`, pageSize: 1000, fields: '*', supportsTeamDrives: true, includeTeamDriveItems: true})
-        .then(JSON.stringify).then(JSON.parse).then(res => files = res.map(parseFileData))
+        .then(JSON.stringify)
+        .then(JSON.parse)
+        .then(res => files = res.map(parseFileData))
         .catch(err => logger.warn("Drive files query failed: " + err.message));
 
     return files;

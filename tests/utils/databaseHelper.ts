@@ -15,12 +15,14 @@ function createConnection(dropSchema: boolean = true): Promise<Connection> {
             // create tables etc.
             connection.synchronize().then(() => {
                 resolve(connection);
-            }).catch(err => {
+            })
+                .catch(err => {
+                    reject(err);
+                });
+        })
+            .catch(err => {
                 reject(err);
             });
-        }).catch(err => {
-            reject(err);
-        });
     });
 }
 
@@ -34,12 +36,14 @@ function closeConnection(connection: Connection): Promise<void | Error> {
         connection.dropDatabase().then(() => {
             closeTestingConnection(connection).then(() => {
                 resolve();
-            }).catch(err => {
+            })
+                .catch(err => {
+                    reject(err);
+                });
+        })
+            .catch(err => {
                 reject(err);
             });
-        }).catch(err => {
-            reject(err);
-        });
     });
 }
 

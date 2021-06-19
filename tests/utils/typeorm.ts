@@ -91,7 +91,9 @@ export function setupSingleTestingConnection(
             ? options.namingStrategy
             : undefined
     });
-    if (!testingConnections.length) { return undefined; }
+    if (!testingConnections.length) {
+        return undefined;
+    }
 
     return testingConnections[0];
 }
@@ -131,7 +133,9 @@ export function setupTestingConnections(
 
     return ormConfigConnectionOptionsArray
         .filter((connectionOptions) => {
-            if (connectionOptions.skip === true) { return false; }
+            if (connectionOptions.skip === true) {
+                return false;
+            }
 
             return true;
         })
@@ -205,7 +209,9 @@ export async function createTestingConnections(
             });
 
             const queryRunner = connection.createQueryRunner();
-            for (const database of databases) { await queryRunner.createDatabase(database, true); }
+            for (const database of databases) {
+                await queryRunner.createDatabase(database, true);
+            }
 
             // create new schemas
             const schemaPaths: string[] = [];
@@ -215,13 +221,19 @@ export async function createTestingConnections(
                     const existSchemaPath = schemaPaths.find(
                         (path) => path === entityMetadata.schemaPath
                     );
-                    if (!existSchemaPath) { schemaPaths.push(entityMetadata.schemaPath!); }
+                    if (!existSchemaPath) {
+                        schemaPaths.push(entityMetadata.schemaPath!);
+                    }
                 });
 
             const schema = connection.driver.options["schema"];
-            if (schema && schemaPaths.indexOf(schema) === -1) { schemaPaths.push(schema); }
+            if (schema && schemaPaths.indexOf(schema) === -1) {
+                schemaPaths.push(schema);
+            }
 
-            for (const schemaPath of schemaPaths) { await queryRunner.createSchema(schemaPath, true); }
+            for (const schemaPath of schemaPaths) {
+                await queryRunner.createSchema(schemaPath, true);
+            }
 
             await queryRunner.release();
         })

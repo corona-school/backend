@@ -56,7 +56,8 @@ async function getPupilsForFeedbackRequest(manager: EntityManager): Promise<Matc
 
 function filterMatches(matches: Match[]): Match[] {
     const now = new Date();
-    const thirtyDaysAgo = moment(now).subtract(30, "days").toDate();
+    const thirtyDaysAgo = moment(now).subtract(30, "days")
+        .toDate();
     return matches.filter(m => {
         return m.createdAt <= thirtyDaysAgo;
     });

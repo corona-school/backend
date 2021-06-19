@@ -411,7 +411,8 @@ export async function setupDevDB() {
     );
 
     const pc1 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -426,7 +427,8 @@ export async function setupDevDB() {
     });
 
     const pc2 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -441,7 +443,8 @@ export async function setupDevDB() {
     });
 
     const pc3 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -456,7 +459,8 @@ export async function setupDevDB() {
     });
 
     const pc4 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -472,7 +476,8 @@ export async function setupDevDB() {
     });
 
     const pc5 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",

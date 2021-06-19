@@ -26,7 +26,10 @@ export interface TestableStudentProps {
 export function createStudent(props?: TestableStudentProps, id?: number): Student {
     const s = new Student();
 
-    if (id) { s.id = id; }
+    if (id) {
+        s.id = id;
+    }
+
 
     s.wix_id = `Student-${faker.random.uuid()}`;
     s.firstname = faker.name.firstName();
@@ -68,7 +71,9 @@ export interface TestablePupilProps {
 export function createPupil(props?: TestablePupilProps, id?: number) {
     const p = new Pupil();
 
-    if (id) { p.id = id; }
+    if (id) {
+        p.id = id;
+    }
 
     p.wix_id = `Pupil-${faker.random.uuid()}`;
     p.firstname = faker.name.firstName();

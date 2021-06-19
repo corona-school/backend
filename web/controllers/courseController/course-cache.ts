@@ -51,6 +51,7 @@ export class CourseCache<V> {
         }
         this.isUpdatingCache = true;
 
-        this.updateCache().then(() => this.isUpdatingCache = false).catch(() => this.isUpdatingCache = false);
+        this.updateCache().then(() => this.isUpdatingCache = false)
+            .catch(() => this.isUpdatingCache = false);
     }
 }

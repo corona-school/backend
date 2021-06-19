@@ -27,6 +27,8 @@ export async function getAllMatchableUnremindedPupilsWithPendingConfirmationRequ
 
     //filter by dates after initial sending
     return allPendingUnreminded.filter(p => {
-        return moment(p.tutoringInterestConfirmationRequest.createdAt).add(ndaysAfterInitialSend, "days").startOf("day").isBefore(moment());
+        return moment(p.tutoringInterestConfirmationRequest.createdAt).add(ndaysAfterInitialSend, "days")
+            .startOf("day")
+            .isBefore(moment());
     });
 }

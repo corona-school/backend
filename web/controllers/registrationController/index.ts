@@ -125,7 +125,9 @@ export async function postTutorHandler(req: Request, res: Response) {
             }
 
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") { status = 400; }
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -400,7 +402,9 @@ export async function postTuteeHandler(req: Request, res: Response) {
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") { status = 400; }
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -856,7 +860,9 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") { status = 400; }
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
 
             if (status < 300) {
                 // try registering

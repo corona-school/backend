@@ -186,7 +186,9 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.verification = person.verification ?? generateToken();
                     await sendVerificationMail(person);
                 } else if (allowedToRequestToken(person)) {
-                    if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string") { status = 400; }
+                    if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string") {
+                        status = 400;
+                    }
 
                     logger.info("Sending new auth token to user", person.id);
 

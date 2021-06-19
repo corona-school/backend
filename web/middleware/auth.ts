@@ -10,7 +10,9 @@ const logger = getLogger();
 
 export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = [], pupilDefaultRelations = []) {
     return async function (req: Request, res: Response, next) {
-        if (req.method == "OPTIONS") { next(); }
+        if (req.method == "OPTIONS") {
+            next();
+        }
 
         let token = req.get("Token");
         if (useQueryParams) {
@@ -106,7 +108,8 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                     }
                     if (mentor.expertise.length != convertedExpertises.length) {
                         logger.warn("Some expertises couldn't be saved.");
-                        res.status(500).send("Error while saving updates.").end();
+                        res.status(500).send("Error while saving updates.")
+                            .end();
                     } else {
                         mentor.expertise = convertedExpertises;
                     }
@@ -122,7 +125,8 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
             if (optional) {
                 return next();
             } else {
-                res.status(403).send("Invalid token specified.").end();
+                res.status(403).send("Invalid token specified.")
+                    .end();
             }
         } catch (e) {
             logger.debug(e);
@@ -132,7 +136,9 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
 }
 
 export async function screenerAuthCheck(req: Request, res: Response, next) {
-    if (req.method == "OPTIONS") { next(); }
+    if (req.method == "OPTIONS") {
+        next();
+    }
 
     const token = req.get("Token");
     if (token != undefined) {
@@ -140,6 +146,7 @@ export async function screenerAuthCheck(req: Request, res: Response, next) {
             return next();
         }
     }
-    res.status(403).send("Invalid token specified.").end();
+    res.status(403).send("Invalid token specified.")
+        .end();
     return;
 }

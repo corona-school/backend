@@ -11,7 +11,8 @@ const logger = getLogger();
 function isHolidayAtDate(holiday: Holidays.Holiday, date: Date) {
     //holiday duration ROUNDED UP to at least one day
     const startOfStart = moment(holiday.start).startOf("day");
-    const holidayDuration = Math.ceil(moment(holiday.end).clone().diff(startOfStart, "days", true));
+    const holidayDuration = Math.ceil(moment(holiday.end).clone()
+        .diff(startOfStart, "days", true));
 
     //the start and end time on a daily granularity, such that if a holiday actually begins at 2pm, the start time will be 0am (if holiday ends at 4pm, end time will be 11.59pm)
     const start = startOfStart;

@@ -28,8 +28,12 @@ export function toPupilSubjectDatabaseFormat(s: Subject) {
 
 function parseJSONObjectFormatGradeArray(parsedArray: any[]) {
     return parsedArray.flatMap(s => {
-        if (typeof s.name !== "string") { return []; }
-        if ((typeof s.minGrade === "number" && typeof s.maxGrade !== "number") || (typeof s.maxGrade === "number" && typeof s.minGrade !== "number")) { return []; }
+        if (typeof s.name !== "string") {
+            return [];
+        }
+        if ((typeof s.minGrade === "number" && typeof s.maxGrade !== "number") || (typeof s.maxGrade === "number" && typeof s.minGrade !== "number")) {
+            return [];
+        }
         return {
             name: s.name,
             grade: s.minGrade ? {
@@ -43,7 +47,9 @@ function parseJSONObjectFormatGradeArray(parsedArray: any[]) {
 function parseMatlabFormatGradeArray(parsedArray: any[]) {
     return parsedArray.flatMap(s => {
         const matches = s.match(/^([a-zA-Zäöüß]+)(([0-9]+):([0-9]+))*$/);
-        if (!matches) { return []; }
+        if (!matches) {
+            return [];
+        }
         if (matches[1] && matches[2]) {
             return {
                 name: matches[1],

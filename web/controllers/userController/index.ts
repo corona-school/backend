@@ -236,7 +236,9 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             status = 400;
         } else {
             let subjectType = 0; // Short type
-            if (b.length > 0 && b[0].minGrade != undefined && b[0].maxGrade != undefined) { subjectType = 1; } // Long Type
+            if (b.length > 0 && b[0].minGrade != undefined && b[0].maxGrade != undefined) {
+                subjectType = 1;
+            } // Long Type
 
             for (let i = 0; i < b.length; i++) {
                 let elem = b[i];
@@ -865,12 +867,16 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
     if (person instanceof Student) {
 
         type = Student;
-        if (!person.isStudent) { person.isStudent = true; }
+        if (!person.isStudent) {
+            person.isStudent = true;
+        }
 
     } else if (person instanceof Pupil) {
 
         type = Pupil;
-        if (!person.isPupil) { person.isPupil = true; }
+        if (!person.isPupil) {
+            person.isPupil = true;
+        }
 
     } else {
         logger.error("Unknown type of person: " + typeof person);
