@@ -12,7 +12,7 @@ describe("The screening invitation mails", function() {
         this.TestStudent.firstname = "Max";
         this.TestStudent.lastname = "Musterfrau";
         this.sendTemplateMailStub = sinon.stub(mailHandler, "sendTemplateMail").returns(
-            new Promise(resolve => {
+            new Promise<void>(resolve => {
                 resolve();
             })
         );

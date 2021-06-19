@@ -45,40 +45,37 @@ describe("Screening Invitation", function() {
         testStudent.verification = verificationToken;
 
         // save test student
-        return new Promise((resolve) => {
-            manager.save(testStudent).then(() => {
-                //setup mailjetStub
-                const mailjetStub = sandbox.spy(mailjet, "sendTemplate");
+        return manager.save(testStudent).then(() => {
+            //setup mailjetStub
+            const mailjetStub = sandbox.spy(mailjet, "sendTemplate");
 
-                // Act
-                verifyToken(verificationToken).then(() => {
+            // Act
+            verifyToken(verificationToken).then(() => {
 
-                    // Assert
-                    assert.strictEqual(mailjetStub.callCount, 2);
+                // Assert
+                assert.strictEqual(mailjetStub.callCount, 2);
 
-                    const dashboardURLUUIDMatchRegex = new RegExp(
-                        /^https:\/\/my.lern-fair.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
-                    );
+                const dashboardURLUUIDMatchRegex = new RegExp(
+                    /^https:\/\/my.lern-fair.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
+                );
 
-                    assert.strictEqual(mailjetStub.getCall(0).args[0], "Lern-Fair - Dein Account");
-                    assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.support);
-                    assert.strictEqual(mailjetStub.getCall(0).args[2], testStudent.email);
-                    assert.strictEqual(mailjetStub.getCall(0).args[3], 1337159);
-                    assert.strictEqual(mailjetStub.getCall(0).args[4].personFirstname, testStudent.firstname);
-                    assert.ok(dashboardURLUUIDMatchRegex.test(mailjetStub.getCall(0).args[4].dashboardURL));
-                    assert.strictEqual(mailjetStub.getCall(0).args[5], false);
+                assert.strictEqual(mailjetStub.getCall(0).args[0], "Lern-Fair - Dein Account");
+                assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.support);
+                assert.strictEqual(mailjetStub.getCall(0).args[2], testStudent.email);
+                assert.strictEqual(mailjetStub.getCall(0).args[3], 1337159);
+                assert.strictEqual(mailjetStub.getCall(0).args[4].personFirstname, testStudent.firstname);
+                assert.ok(dashboardURLUUIDMatchRegex.test(mailjetStub.getCall(0).args[4].dashboardURL));
+                assert.strictEqual(mailjetStub.getCall(0).args[5], false);
 
-                    assert.strictEqual(mailjetStub.getCall(1).args[0], "Wir möchten dich kennenlernen!");
-                    assert.strictEqual(mailjetStub.getCall(1).args[1], DEFAULTSENDERS.support);
-                    assert.strictEqual(mailjetStub.getCall(1).args[2], testStudent.email);
-                    assert.strictEqual(mailjetStub.getCall(1).args[3], 1362938);
-                    assert.strictEqual(mailjetStub.getCall(1).args[4].personFirstname, testStudent.firstname);
-                    assert.strictEqual(mailjetStub.getCall(1).args[4].confirmationURL, testStudent.screeningURL());
-                    assert.strictEqual(mailjetStub.getCall(1).args[5], false);
-
-                    resolve();
-                });
+                assert.strictEqual(mailjetStub.getCall(1).args[0], "Wir möchten dich kennenlernen!");
+                assert.strictEqual(mailjetStub.getCall(1).args[1], DEFAULTSENDERS.support);
+                assert.strictEqual(mailjetStub.getCall(1).args[2], testStudent.email);
+                assert.strictEqual(mailjetStub.getCall(1).args[3], 1362938);
+                assert.strictEqual(mailjetStub.getCall(1).args[4].personFirstname, testStudent.firstname);
+                assert.strictEqual(mailjetStub.getCall(1).args[4].confirmationURL, testStudent.screeningURL());
+                assert.strictEqual(mailjetStub.getCall(1).args[5], false);
             });
         });
     });
+
 });
