@@ -473,7 +473,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.university = person.university;
         apiResponse.state = person.state;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
-
+        apiResponse.isOfficial = person.module != null || person.moduleHours != null;
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
