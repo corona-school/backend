@@ -2920,7 +2920,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         await startBBBMeeting(meeting);
 
                         res.send({
-                            url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
+                            url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.moderatorPW)
                         });
 
                     } else if (authenticatedPupil) {
@@ -2929,7 +2929,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             let user: Pupil = res.locals.user;
 
                             res.send({
-                                url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.attendeePW, user.wix_id)
+                                url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.attendeePW, user.wix_id)
                             });
 
                             // BBB logging
