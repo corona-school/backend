@@ -181,9 +181,8 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             }
 
             if (person !== undefined) {
-                if (person.verifiedAt == null) {
+                if (person.verification != null) {
                     status = 409;
-                    person.verification = person.verification ?? generateToken();
                     await sendVerificationMail(person);
                 } else if (allowedToRequestToken(person)) {
                     if (req.query.redirectTo !== undefined && typeof req.query.redirectTo !== "string") {
@@ -253,7 +252,7 @@ function allowedToRequestToken(person: Person): boolean {
 }
 
 export async function sendLoginTokenMail(person: Person, token: string, redirectTo?: string) {
-    const dashboardURL = `https://my.corona-school.de/login?token=${token}&path=${redirectTo ?? ""}`;
+    const dashboardURL = `https://my.lern-fair.de/login?token=${token}&path=${redirectTo ?? ""}`;
 
     console.log(dashboardURL);
 

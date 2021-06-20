@@ -22,8 +22,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "verification",
             id: 1336516,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Verifizierung",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Verifizierung",
             disabled: false,
             variables: variables
         };
@@ -35,8 +35,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "logintoken",
             id: 1337159,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Dein Account",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Dein Account",
             disabled: false,
             variables: variables
         };
@@ -51,8 +51,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "pupilmatchmails",
             id: 1336849,
-            sender: DEFAULTSENDERS.anmeldung,
-            title: "Corona School - Match",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Match",
             disabled: false,
             variables: variables
         };
@@ -68,8 +68,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "studentmatchmails",
             id: 1336704,
-            sender: DEFAULTSENDERS.anmeldung,
-            title: "Corona School - Match",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Match",
             disabled: false,
             variables: variables
         };
@@ -78,8 +78,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "pupilnextsteps",
             id: 1336558,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächste Schritte",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Nächste Schritte",
             disabled: true,
             variables: variables
         };
@@ -91,8 +91,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "studentnextsteps",
             id: 1336526,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächste Schritte",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Nächste Schritte",
             disabled: true,
             variables: variables
         };
@@ -104,8 +104,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "pupilmatchdissolved",
             id: 1337164,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächstes Mal",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Nächstes Mal",
             disabled: false,
             variables: variables
         };
@@ -117,8 +117,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "studentmatchdissolved",
             id: 1337161,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Nächstes Mal",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Nächstes Mal",
             disabled: false,
             variables: variables
         };
@@ -130,8 +130,8 @@ export const mailjet = {
         return <TemplateMail>{
             type: "oldauthtoken",
             id: 1338975,
-            sender: DEFAULTSENDERS.noreply,
-            title: "Corona School - Dein Account",
+            sender: DEFAULTSENDERS.support,
+            title: "Lern-Fair - Dein Account",
             disabled: false,
             variables: variables
         };
@@ -331,7 +331,7 @@ export const mailjet = {
             type: "pupilrequestfeedback",
             id: 1513025,
             sender: DEFAULTSENDERS.support,
-            title: "Dein Feedback zur Corona School!",
+            title: "Dein Feedback zu Lern-Fair!",
             disabled: false,
             variables: variables
         };
@@ -344,7 +344,7 @@ export const mailjet = {
             type: "studentrequestfeedback",
             id: 1513023,
             sender: DEFAULTSENDERS.support,
-            title: "Dein Feedback zur Corona School!",
+            title: "Dein Feedback zu Lern-Fair!",
             disabled: false,
             variables: variables
         };
@@ -414,7 +414,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: 'projectcoacheematchdissolved',
             id: 1894606,
-            sender: DEFAULTSENDERS.noreply,
+            sender: DEFAULTSENDERS.support,
             title: "Deine Zuteilung wurde aufgelöst",
             disabled: false,
             variables: variables
@@ -427,7 +427,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: 'projectcoachmatchdissolved',
             id: 1894653,
-            sender: DEFAULTSENDERS.noreply,
+            sender: DEFAULTSENDERS.support,
             title: "Deine Zuteilung wurde aufgelöst",
             disabled: false,
             variables: variables
@@ -443,7 +443,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "coacheenewmatch",
             id: 1949901,
-            sender: DEFAULTSENDERS.anmeldung,
+            sender: DEFAULTSENDERS.support,
             title: "Neues Match (Projektcoaching)",
             disabled: false,
             variables: variables
@@ -460,7 +460,7 @@ export const mailjet = {
         return <TemplateMail>{
             type: "coachnewmatch",
             id: 1949895,
-            sender: DEFAULTSENDERS.anmeldung,
+            sender: DEFAULTSENDERS.support,
             title: "Neues Match (Projektcoaching)",
             disabled: false,
             variables: variables

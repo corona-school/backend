@@ -61,7 +61,7 @@ export class CourseGuest {
 
     /// The link that someone could use to go to the video chat and that is no direct BBB link, because this way, we can keep the BBB endpoint flexible
     getPublicUsableLink(): string {
-        return `https://my.corona-school.de/video/${this.token}`;
+        return `https://my.lern-fair.de/video/${this.token}`;
     }
 
     fullName(): string {

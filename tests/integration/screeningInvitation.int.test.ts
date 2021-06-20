@@ -57,11 +57,11 @@ describe("Screening Invitation", function() {
                     assert.strictEqual(mailjetStub.callCount, 2);
 
                     const dashboardURLUUIDMatchRegex = new RegExp(
-                        /^https:\/\/my.corona-school.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
+                        /^https:\/\/my.lern-fair.de\/login\?token=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/i
                     );
 
-                    assert.strictEqual(mailjetStub.getCall(0).args[0], "Corona School - Dein Account");
-                    assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.noreply);
+                    assert.strictEqual(mailjetStub.getCall(0).args[0], "Lern-Fair - Dein Account");
+                    assert.strictEqual(mailjetStub.getCall(0).args[1], DEFAULTSENDERS.support);
                     assert.strictEqual(mailjetStub.getCall(0).args[2], testStudent.email);
                     assert.strictEqual(mailjetStub.getCall(0).args[3], 1337159);
                     assert.strictEqual(mailjetStub.getCall(0).args[4].personFirstname, testStudent.firstname);

@@ -53,5 +53,5 @@ export function checkExpertises(expertises: string[]) {
 /* Creates a link which logs in as a certain user and then goes to the path in the frontend
    ATTENTION: Exposing this to someone else than the user is not a good idea! */
 export function createAutoLoginLink(user: Person, path: string) {
-    return `https://my.corona-school.de/login?token=${user.authToken}&path=${encodeURIComponent(path)}`;
+    return `https://my.lern-fair.de/login?token=${user.authToken}&path=${encodeURIComponent(path)}`;
 }
