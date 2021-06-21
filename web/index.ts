@@ -28,6 +28,8 @@ import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
+import schema from "./apolloSchema";
+import { ApolloServer } from "apollo-server-express";
 
 // Logger setup
 try {
@@ -77,6 +79,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     configureMentoringAPI();
     configureExpertAPI();
     configurePupilInterestConfirmationAPI();
+    configureApolloServer();
     const server = await deployServer();
     configureGracefulShutdown(server);
 
@@ -335,6 +338,11 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         router.post("/status", interestConfirmationController.postInterestConfirmationRequestStatus);
 
         app.use("/api/interest-confirmation", router);
+    }
+
+    function configureApolloServer() {
+        const apollo = new ApolloServer({ schema });
+        apollo.applyMiddleware({ app, path: "/apollo" });
     }
 
     async function deployServer() {
