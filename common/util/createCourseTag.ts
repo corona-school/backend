@@ -6,7 +6,8 @@ import {CourseCategory} from "../entity/Course";
 export async function createCourseTag(name: string, category: CourseCategory) {
     let identifier = name.toLowerCase().replace(/\s/g, "");
     while (await getManager().findOne(CourseTag, { where: { identifier }})) {
-        identifier = name.toLowerCase().replace(/\s/g, "") + randomBytes(1).toString('hex').toLowerCase();
+        identifier = name.toLowerCase().replace(/\s/g, "") + randomBytes(1).toString('hex')
+            .toLowerCase();
     }
 
     let tag = new CourseTag();

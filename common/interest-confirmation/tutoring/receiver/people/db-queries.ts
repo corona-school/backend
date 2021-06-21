@@ -12,10 +12,13 @@ function allMatchablePupilsThatRequireInterestConfirmationQuery(manager: EntityM
 }
 function allMatchablePupilsWithoutInterestConfirmationRequestQuery(manager: EntityManager) {
     //join pupil p2 a second time, to have a relationship from PupilTutoringInterestConfirmationRequest to Pupil which is not undefined
-    return allMatchablePupilsThatRequireInterestConfirmationQuery(manager).leftJoinAndSelect("p.tutoringInterestConfirmationRequest", "pticr").leftJoinAndSelect("pticr.pupil", "p2").andWhere("pticr IS NULL");
+    return allMatchablePupilsThatRequireInterestConfirmationQuery(manager).leftJoinAndSelect("p.tutoringInterestConfirmationRequest", "pticr")
+        .leftJoinAndSelect("pticr.pupil", "p2")
+        .andWhere("pticr IS NULL");
 }
 function allMatchablePupilsWithInterestConfirmationRequestQuery(manager: EntityManager) {
-    return allMatchablePupilsThatRequireInterestConfirmationQuery(manager).innerJoinAndSelect("p.tutoringInterestConfirmationRequest", "pticr").leftJoinAndSelect("pticr.pupil", "p2");
+    return allMatchablePupilsThatRequireInterestConfirmationQuery(manager).innerJoinAndSelect("p.tutoringInterestConfirmationRequest", "pticr")
+        .leftJoinAndSelect("pticr.pupil", "p2");
 }
 
 
@@ -23,7 +26,9 @@ function allMatchablePupilsWithInterestConfirmationRequestQuery(manager: EntityM
 // ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 export function createOrderedAndLimitedPupilsQueryFrom(qb: SelectQueryBuilder<Pupil>, limitToN?: number) {
     const q = qb.addOrderBy("p.createdAt", "ASC");
-    if (limitToN) return q.take(limitToN);
+    if (limitToN) {
+        return q.take(limitToN);
+    }
     return q;
 }
 export function createFilterPupilRequestByStatusQueryFrom(qb: SelectQueryBuilder<Pupil>, status: InterestConfirmationStatus) {

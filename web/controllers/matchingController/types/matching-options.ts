@@ -33,7 +33,7 @@ export class ApiMatchingOptions {
     @IsBoolean()
     disableInterestConfirmationRestriction: boolean = false; //defines what matchable pupils will be, i.e. if only pupils with confirmed interest (or those from partnering schools) are allowed to be part of the matching
     @Type(() => ApiMatchingAlgoSettings)
-    @ValidateIf( obj => "matchingAlgoSettings" in obj) //only validate, if key is present (such that validation is also performed if set to null)
+    @ValidateIf(obj => "matchingAlgoSettings" in obj) //only validate, if key is present (such that validation is also performed if set to null)
     @IsObject()
     @IsNotEmptyObject()
     @ValidateNested()

@@ -413,7 +413,8 @@ export async function setupDevDB() {
     );
 
     const pc1 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -428,7 +429,8 @@ export async function setupDevDB() {
     });
 
     const pc2 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -443,7 +445,8 @@ export async function setupDevDB() {
     });
 
     const pc3 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -458,7 +461,8 @@ export async function setupDevDB() {
     });
 
     const pc4 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -474,7 +478,8 @@ export async function setupDevDB() {
     });
 
     const pc5 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -590,7 +595,7 @@ export async function setupDevDB() {
         "intercultural": "Interkulturelles"
     };
 
-    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map( ([identifier, name]) => {
+    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map(([identifier, name]) => {
         const t = new CourseTag();
         t.name = name;
         t.identifier = identifier;
@@ -1252,7 +1257,7 @@ export async function setupDevDB() {
     pticrs.push(pticr1);
 
     const pticr2 = new PupilTutoringInterestConfirmationRequest(p7, "interest-confirmation-token-P7");
-    pticr2.reminderSentDate = new Date( Date.now() - 6.912E+08); // minus 8 days in ms
+    pticr2.reminderSentDate = new Date(Date.now() - 6.912E+08); // minus 8 days in ms
     pticrs.push(pticr2);
 
     for (let i = 0; i < pticrs.length; i++) {

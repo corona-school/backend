@@ -271,8 +271,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, { prev: prevState, new: newState }));
 
         res.status(200).send("Student updated successfully!");
-    }
-    else {
+    } else {
         res.status(400).send("Given student info is invalid!");
     }
 }
@@ -462,14 +461,17 @@ export async function getCourses(req: Request, res: Response) {
     try {
         const { courseState, search, page } = req.query;
 
-        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1) {
             return res.status(400).send("invalid value for parameter 'state'");
+        }
 
-        if (typeof search !== "undefined" && typeof search !== "string")
+        if (typeof search !== "undefined" && typeof search !== "string") {
             return res.status(400).send("invalid value for parameter 'search', must be string.");
+        }
 
-        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page))) {
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+        }
 
         const where = (courseState || search) ? {
             OR: [
@@ -695,10 +697,12 @@ export async function updateCourse(req: Request, res: Response) {
         const update = new ApiCourseUpdate(req.body);
         const { newLectures, removeLectures, tags } = req.body;
         const { id } = req.params;
-        if (typeof id !== "string" || !Number.isInteger(+id))
+        if (typeof id !== "string" || !Number.isInteger(+id)) {
             return res.status(400).send("Invalid course id!");
-        if (!update.isValid())
+        }
+        if (!update.isValid()) {
             return res.status(400).send("Invalid course update!");
+        }
 
         if (removeLectures !== undefined) {
             if (Array.isArray(removeLectures) && removeLectures.every(l => Number.isInteger(l.id))) {
@@ -735,8 +739,9 @@ export async function updateCourse(req: Request, res: Response) {
 
         const course = await getManager().findOne(Course, { where: { id: +id } });
 
-        if (!course)
+        if (!course) {
             return res.status(404).send("Course not found");
+        }
 
         await course.updateCourse(update);
         await getManager().save(course);
@@ -836,14 +841,17 @@ export async function getInstructors(req: Request, res: Response) {
     try {
         let { screeningStatus, search, page } = req.query;
 
-        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus))
+        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus)) {
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
+        }
 
-        if (typeof search !== "string")
+        if (typeof search !== "string") {
             return res.status(400).send("invalid value for parameter 'search'");
+        }
 
-        if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
+        if (page && (Number.isNaN(+page) || !Number.isInteger(+page))) {
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
+        }
 
         /* Through reversed access the following happens:
            "Jacks"      -> firstname = any, lastname = "Jacks%"         Searching by lastname only works, this matches the old behavior and is thus no breaking change

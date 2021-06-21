@@ -44,7 +44,7 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
     };
     if (!options.dryRun) {
         //save matching in database (such that the database is in the state as the matching was performed)
-        const savedDatabaseMatches = await manager.transaction( async transactionManager => { //do this in a transaction, such that all or no matches were saved
+        const savedDatabaseMatches = await manager.transaction(async transactionManager => { //do this in a transaction, such that all or no matches were saved
             return await saveMatchingToDB(matching, transactionManager);
         });
 
@@ -58,8 +58,7 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
             createdMatches: savedDatabaseMatches,
             failedNotifications: notificationStates.filter(ns => !ns.isOK)
         };
-    }
-    else {
+    } else {
         return { //if dry run, only query the pupil and student pairs from the database and return them
             ...result,
             createdMatches: await Promise.all(matching.map(async m => ({

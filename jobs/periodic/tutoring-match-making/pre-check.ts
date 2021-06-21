@@ -9,7 +9,8 @@ export async function shouldPerformAutomaticTutoringMatching(manager: EntityMana
     const latestMatch = await latestTutoringMatch(manager);
     const latestMatchDate = latestMatch?.createdAt;
 
-    const timeCriterion = !latestMatch ? false : moment(latestMatchDate).add(AUTOMATIC_MATCH_INTERVAL, "days").isSameOrBefore(moment()); //don't respect time criterion if this couldn't be obtained...
+    const timeCriterion = !latestMatch ? false : moment(latestMatchDate).add(AUTOMATIC_MATCH_INTERVAL, "days")
+        .isSameOrBefore(moment()); //don't respect time criterion if this couldn't be obtained...
 
     const numberOfTuteesToMatch = await getNumberOfTuteesToMatch(manager, restrictToThoseWithConfirmedInterest);
     const waitingTuteeCriterion = numberOfTuteesToMatch >= MIN_TUTEE_COUNT_FOR_MATCH_ATTEMPT;

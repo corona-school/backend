@@ -69,35 +69,45 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
         const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, activities, ongoingLessons } = req.body;
         const requestor = res.locals.user as Student;
 
-        if (requestor instanceof Pupil)
+        if (requestor instanceof Pupil) {
             return res.status(403).send("Only students may request certificates");
+        }
 
-        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !activities)
+        if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !activities) {
             return res.status(400).send("Missing parameters");
+        }
 
-        if (automatic !== undefined && typeof automatic !== "boolean")
+        if (automatic !== undefined && typeof automatic !== "boolean") {
             return res.status(400).send("automatic must be boolean");
+        }
 
-        if (typeof endDate !== "number")
+        if (typeof endDate !== "number") {
             return res.status(400).send("endDate must be a number");
+        }
 
-        if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string"))
+        if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string")) {
             return res.status(400).send("subjects must be an array of strings");
+        }
 
-        if (typeof hoursPerWeek !== "number" || hoursPerWeek < 0)
+        if (typeof hoursPerWeek !== "number" || hoursPerWeek < 0) {
             return res.status(400).send("hoursPerWeek must be a positive number");
+        }
 
-        if (typeof hoursTotal !== "number" || hoursTotal < 0)
+        if (typeof hoursTotal !== "number" || hoursTotal < 0) {
             return res.status(400).send("hoursTotal must be a positive number");
+        }
 
-        if (!MEDIUMS.includes(medium))
+        if (!MEDIUMS.includes(medium)) {
             return res.status(400).send(`medium must be one of ${MEDIUMS}`);
+        }
 
-        if (!Array.isArray(activities) || activities.some(it => typeof it !== "string"))
+        if (!Array.isArray(activities) || activities.some(it => typeof it !== "string")) {
             return res.status(400).send("categories must be an array of strings");
+        }
 
-        if (ongoingLessons !== undefined && typeof ongoingLessons !== "boolean")
+        if (ongoingLessons !== undefined && typeof ongoingLessons !== "boolean") {
             return res.status(400).send("ongoingLessons must be boolean");
+        }
 
         let state = automatic ? State.awaitingApproval : State.manual;
 
@@ -114,8 +124,9 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
 
         // Students may only request for their matches
         let match = await entityManager.findOne(Match, { student: requestor, uuid: pupil });
-        if (match == undefined)
+        if (match == undefined) {
             return res.status(400).send(`No Match found with uuid '${pupil}'`);
+        }
 
         const certificate = await createCertificate(requestor, match.pupil, match, params);
 
@@ -160,14 +171,17 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
 
         const entityManager = getManager();
 
-        if (lang === undefined)
+        if (lang === undefined) {
             lang = DefaultLanguage;
+        }
 
-        if (!LANGUAGES.includes(lang))
+        if (!LANGUAGES.includes(lang)) {
             return res.status(400).send("Language not known");
+        }
 
-        if (typeof certificateId !== "string")
+        if (typeof certificateId !== "string") {
             return res.status(400).send("Missing parameter certificateId");
+        }
 
         /* Retrieve the certificate and also get the signature columsn that are usually hidden for performance reasons */
         const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase(), student: requestor }, {
@@ -176,8 +190,9 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
             select: ["uuid", "categories", "certificateDate", "endDate", "hoursPerWeek", "hoursTotal", "id", "medium", "ongoingLessons", "signatureParent", "signaturePupil", "signatureDate", "signatureLocation", "startDate", "state", "subjects"]
         });
 
-        if (!certificate)
+        if (!certificate) {
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+        }
 
         const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
 
@@ -222,19 +237,23 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
 
         const entityManager = getManager();
 
-        if (lang === undefined)
+        if (lang === undefined) {
             lang = DefaultLanguage;
+        }
 
-        if (!LANGUAGES.includes(lang))
+        if (!LANGUAGES.includes(lang)) {
             return res.status(400).send("Language not known");
+        }
 
-        if (typeof certificateId !== "string")
+        if (typeof certificateId !== "string") {
             return res.status(400).send("Missing parameter certificateId");
+        }
 
         const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
 
-        if (!certificate)
+        if (!certificate) {
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+        }
 
 
         return res.send(await viewParticipationCertificate(certificate, lang));
@@ -273,31 +292,39 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
 
     const entityManager = getManager();
 
-    if (typeof certificateId !== "string")
+    if (typeof certificateId !== "string") {
         return res.status(400).send("Missing parameter certificateId");
+    }
 
-    if (signaturePupil !== undefined && (typeof signaturePupil !== "string" || !signaturePupil.match(VALID_BASE64)))
+    if (signaturePupil !== undefined && (typeof signaturePupil !== "string" || !signaturePupil.match(VALID_BASE64))) {
         return res.status(400).send("Parameter signaturePupil must be a string and valid base64 encoding");
+    }
 
-    if (signatureParent !== undefined && (typeof signatureParent !== "string" || !signatureParent.match(VALID_BASE64)))
+    if (signatureParent !== undefined && (typeof signatureParent !== "string" || !signatureParent.match(VALID_BASE64))) {
         return res.status(400).send("Parameter signatureParent must be a string and valid base64 encoding");
+    }
 
-    if (!signaturePupil && !signatureParent)
+    if (!signaturePupil && !signatureParent) {
         return res.status(400).send("Either the parent or the pupil must sign the certificate");
+    }
 
-    if (typeof signatureLocation !== "string" || !signatureLocation)
+    if (typeof signatureLocation !== "string" || !signatureLocation) {
         return res.status(400).send("Parameter signatureLocation must be a string");
+    }
 
     const certificate = await entityManager.findOne(ParticipationCertificate, { pupil: signer, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
 
-    if (!certificate)
+    if (!certificate) {
         return res.status(400).send("Missing certificateID or the pupil is not allowed to sign this certificate");
+    }
 
-    if (certificate.state === "approved")
+    if (certificate.state === "approved") {
         return res.status(400).send("Certificate was already signed");
+    }
 
-    if (certificate.state === "manual")
+    if (certificate.state === "manual") {
         return res.status(400).send("Certificate cannot be signed as it is a manual one");
+    }
 
     try {
         await signCertificate(req, certificate, signatureParent, signaturePupil, signatureLocation);
@@ -417,7 +444,8 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
     pc.state = params.state;
 
     do {
-        pc.uuid = randomBytes(5).toString('hex').toUpperCase();
+        pc.uuid = randomBytes(5).toString('hex')
+            .toUpperCase();
     } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
 
     await entityManager.save(ParticipationCertificate, pc);
@@ -440,23 +468,26 @@ const _templates: { [name: string]: { [key in Language | "default"]?: EJS.Client
 
 /* Loads the template from the /assets folder, falls back to the default language if fallback is true */
 function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.ClientFunction {
-    if (_templates[name] && _templates[name][lang])
+    if (_templates[name] && _templates[name][lang]) {
         return _templates[name][lang];
+    }
 
     let path = `./assets/${name}.${lang}.html`;
 
     if (existsSync(path)) {
         const result = readFileSync(path, "utf8");
-        if (!_templates[name])
+        if (!_templates[name]) {
             _templates[name] = {};
+        }
 
         const compiled = EJS.compile(result);
 
         _templates[name][lang] = compiled;
         return compiled;
     } else {
-        if (!fallback || lang === DefaultLanguage)
+        if (!fallback || lang === DefaultLanguage) {
             throw new Error(`Cannot find template '${path}`);
+        }
 
         return loadTemplate(name, DefaultLanguage, /*fallback:*/ false);
     }
@@ -541,11 +572,13 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
     assert(certificate.state === "awaiting-approval", "Certificate awaiting signature");
     assert(signatureLocation, "Singature location must be set");
 
-    if (signatureParent)
+    if (signatureParent) {
         certificate.signatureParent = Buffer.from(signatureParent, "utf-8");
+    }
 
-    if (signaturePupil)
+    if (signaturePupil) {
         certificate.signaturePupil = Buffer.from(signaturePupil, "utf-8");
+    }
 
     certificate.signatureDate = new Date();
     certificate.signatureLocation = signatureLocation;

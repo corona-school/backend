@@ -18,8 +18,7 @@ async function getActiveJobConnection() {
     if (!jobConnection) {
         logger.info("Create new connection to database...");
         jobConnection = await createConnection();
-    }
-    else if (!jobConnection.isConnected) {
+    } else if (!jobConnection.isConnected) {
         logger.info("Job database connection is no longer connected. Reconnect...");
         //Do this always, to have no transaction log that uses a connection that was closed (which then would result in errors)
         invalidateActiveTransactionLog(); // that might not be necessary here, but include it for safety reasons
@@ -47,8 +46,7 @@ function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectio
 
             //execute the job with the manager
             await job(manager);
-        }
-        catch (e) {
+        } catch (e) {
             logger.error(`Can't execute job: ${job.name} due to error with message: ${e.message}`);
             logger.debug(e);
         }
@@ -63,7 +61,7 @@ const scheduledJobs: cron.CronJob[] = [];
 ///Schedules a given set of Corona School Cron Jobs
 export async function scheduleJobs(jobs: CSCronJob[]) {
     //create actual cron jobs
-    const cronJobs = jobs.map( j => {
+    const cronJobs = jobs.map(j => {
         return cron.job({
             cronTime: j.cronTime,
             runOnInit: false,
@@ -73,7 +71,7 @@ export async function scheduleJobs(jobs: CSCronJob[]) {
     );
 
     //and start them...
-    cronJobs.forEach( j => j.start() );
+    cronJobs.forEach(j => j.start());
 
     logger.info("Jobs scheduled...");
 
@@ -83,7 +81,7 @@ export async function scheduleJobs(jobs: CSCronJob[]) {
 }
 
 export async function unscheduleAllJobs() {
-    scheduledJobs.forEach( j => j.stop());
+    scheduledJobs.forEach(j => j.stop());
 }
 
 export async function shutdownConnection() {
