@@ -163,7 +163,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         if (lang === undefined)
             lang = DefaultLanguage;
 
-        if (!LANGUAGES.includes(lang))
+        if (!LANGUAGES.includes(lang as Language))
             return res.status(400).send("Language not known");
 
         if (typeof certificateId !== "string")
@@ -179,7 +179,11 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         if (!certificate)
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
 
-        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
+        const pdf = await createPDFBinary(
+            certificate,
+            getCertificateLink(req, certificate, lang as Language),
+            lang as Language
+        );
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -225,7 +229,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
         if (lang === undefined)
             lang = DefaultLanguage;
 
-        if (!LANGUAGES.includes(lang))
+        if (!LANGUAGES.includes(lang as Language))
             return res.status(400).send("Language not known");
 
         if (typeof certificateId !== "string")
@@ -237,7 +241,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
 
 
-        return res.send(await viewParticipationCertificate(certificate, lang));
+        return res.send(await viewParticipationCertificate(certificate, lang as Language));
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");

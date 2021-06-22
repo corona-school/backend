@@ -12,11 +12,11 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
     return async function (req: Request, res: Response, next) {
         if (req.method == "OPTIONS") next();
 
-        let token = req.get("Token");
+        let token: any = req.get("Token");
         if (useQueryParams) {
             token = req.query.Token;
         }
-        if (token == undefined) {
+        if (token == undefined || typeof token !== 'string') {
             token = 'invalid';
         }
         try {

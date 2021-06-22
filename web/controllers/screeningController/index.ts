@@ -8,7 +8,7 @@ import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
 import { getLogger } from "log4js";
-import { Course, CourseCategory } from "../../../common/entity/Course";
+import { Course, CourseCategory, CourseState } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import { Subcourse } from "../../../common/entity/Subcourse";
 import { Lecture } from "../../../common/entity/Lecture";
@@ -462,7 +462,8 @@ export async function getCourses(req: Request, res: Response) {
     try {
         const { courseState, search, page } = req.query;
 
-        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
+        if (typeof courseState !== 'string' ||
+            [undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1)
             return res.status(400).send("invalid value for parameter 'state'");
 
         if (typeof search !== "undefined" && typeof search !== "string")
@@ -471,7 +472,7 @@ export async function getCourses(req: Request, res: Response) {
         if (page && (Number.isNaN(+page) || !Number.isInteger(+page)))
             return res.status(400).send("Invalid value for parameter 'page', must be integer.");
 
-        const where = (courseState || search) ? {
+        const where: any = (courseState || search) ? {
             OR: [
                 {
                     courseState,
@@ -537,7 +538,7 @@ export async function getCourses(req: Request, res: Response) {
                 },
                 include: {
                     course_instructors_student: {
-                        where: { course: { courseState }},
+                        where: { course: { courseState: courseState as CourseState }},
                         orderBy: { course: { updatedAt: 'desc' } },
                         take: PAGE_SIZE,
                         skip: (+page || 0) * PAGE_SIZE,
@@ -645,11 +646,11 @@ export async function postCreateCourseTag(req: Request, res: Response) {
             return res.status(400).send("Invalid value for query parameter 'name'");
         }
 
-        if (!Object.values(CourseCategory).includes(category)) {
+        if (!Object.values(CourseCategory).includes(category as CourseCategory)) {
             return res.status(400).send("Invalid value for query parameter 'category'");
         }
 
-        const tag = await createCourseTag(name, category);
+        const tag = await createCourseTag(name, category as CourseCategory);
 
         await getManager().save(CourseTag, tag);
 
@@ -836,7 +837,7 @@ export async function getInstructors(req: Request, res: Response) {
     try {
         let { screeningStatus, search, page } = req.query;
 
-        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus))
+        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus as ScreeningStatus))
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
 
         if (typeof search !== "string")

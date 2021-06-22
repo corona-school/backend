@@ -139,7 +139,7 @@ export async function getMaterial(req: Request, res: Response) {
     try {
         if (res.locals.user instanceof Student){
             const { type, location } = req.query;
-            if (!(location in material)) {
+            if (!(typeof location === "string" && location in material)) {
                 status = 400;
                 logger.warn("Invalid location for mentoring materials in GET /mentoring/material");
                 logger.debug(location);

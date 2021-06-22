@@ -198,7 +198,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authTokenUsed = false;
 
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
-                    await sendLoginTokenMail(person, uuid, req.query.redirectTo);
+                    await sendLoginTokenMail(person, uuid, req.query.redirectTo as string);
 
 
                     // Save new token to database and log action
