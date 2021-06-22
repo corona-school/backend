@@ -7,7 +7,7 @@ import { Pupil } from '../entity/Pupil';
 import { Student } from '../entity/Student';
 import { debug, info, warn } from 'console';
 import { getNotification, getNotifications } from './notification';
-import { getManager } from 'typeorm';
+import { getUserId, getUser } from '../user';
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
@@ -57,7 +57,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                 in: relevantNotifications.toCancel.map(it => it.id)
             },
             state: ConcreteNotificationState.DELAYED,
-            ...getUserRelation(user)
+            userId: getUserId(user)
         }
     });
 
@@ -77,7 +77,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                 notificationID: it.id,
                 state: ConcreteNotificationState.DELAYED,
                 sentAt: new Date(Date.now() + it.delay),
-                ...getUserRelation(user),
+                userId: getUserId(user),
                 contextID: notificationContext.uniqueId,
                 context: notificationContext
             }))
@@ -101,7 +101,7 @@ export async function checkReminders() {
         if (!reminder.context)
             throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
         const notification = await getNotification(reminder.notificationID);
-        const user = await getPersonForConcreteNotification(reminder);
+        const user = await getUser(reminder.userId);
         await deliverNotification(reminder, notification, user, reminder.context as Context);
     }
 
@@ -118,7 +118,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
                 notificationID: notification.id,
-                ...getUserRelation(user),
+                userId: getUserId(user),
                 contextID: context.uniqueId
             }
         });
@@ -133,7 +133,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
             // the unique id is automatically created by the database
             notificationID: notification.id,
             state: ConcreteNotificationState.PENDING,
-            ...getUserRelation(user),
+            userId: getUserId(user),
             sentAt: new Date(),
             contextID: context.uniqueId,
             context
@@ -182,27 +182,5 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
 
     }
-}
-
-
-/* --------------------------------------- Utils ----------------------------------------------- */
-
-function getUserRelation(user: Person) {
-    const pupilId = user instanceof Pupil ? user.id : undefined;
-    const studentId = user instanceof Student ? user.id : undefined;
-
-    if (!pupilId && !studentId) {
-        throw new Error("A Person was neither a Student nor a Pupil");
-    }
-
-    return { studentId, pupilId };
-}
-
-async function getPersonForConcreteNotification(concreteNotification: ConcreteNotification) {
-    if (concreteNotification.pupilId)
-        return await getManager().findOneOrFail(Pupil, { where: { id: concreteNotification.pupilId }});
-
-    if (concreteNotification.studentId)
-        return await getManager().findOneOrFail(Student, { where: { id: concreteNotification.studentId }});
 }
 

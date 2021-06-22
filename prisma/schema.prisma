@@ -305,7 +305,6 @@ model pupil {
   learningGermanSince           learning_german_since?
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
-  concrete_notifications              concrete_notification[]
 }
 
 model school {
@@ -412,7 +411,6 @@ model student {
   project_match                             project_match[]
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-  concrete_notifications                    concrete_notification[]
 }
 
 model subcourse {
@@ -493,10 +491,7 @@ model concrete_notification {
   id        Int     @id @default(autoincrement())
 
   // total disjoint relationship to user
-  pupilId   Int?
-  studentId Int?
-  pupil          pupil?   @relation(fields: [pupilId], references: [id]) 
-  student        student? @relation(fields: [studentId], references: [id])  
+  userId   String
   
   notificationID String
   
