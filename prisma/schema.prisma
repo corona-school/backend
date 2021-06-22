@@ -489,7 +489,7 @@ model sentNotification {
   
   notificationID String? // TODO: null if campaign? Or use mailjet id as notification id? collisions?
   
-  sentAt DateTime
+  sentAt DateTime // For delayed notifications this is the planned notification time
   
   state sentNotificationState
 }
