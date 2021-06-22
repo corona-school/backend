@@ -30,6 +30,7 @@ import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
 import schema from "./apolloSchema";
 import { ApolloServer } from "apollo-server-express";
+import ApolloContext from "./middleware/apolloContext";
 
 // Logger setup
 try {
@@ -341,7 +342,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     }
 
     function configureApolloServer() {
-        const apollo = new ApolloServer({ schema });
+        const apollo = new ApolloServer({ schema, context: ApolloContext });
         apollo.applyMiddleware({ app, path: "/apollo" });
     }
 

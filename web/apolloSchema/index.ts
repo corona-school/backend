@@ -1,19 +1,30 @@
-import { gql, makeExecutableSchema } from "apollo-server-express";
+import {
+    addSchemaLevelResolveFunction, AuthenticationError,
+    gql,
+    makeExecutableSchema
+} from "apollo-server-express";
 
 const typeDefs = gql`
-    type ExampleQuery{
+    type Query {
         hello: String
     }
 `;
 
 const resolvers = {
-    ExampleQuery: {
-        hello: 'Hello World!'
+    Query: {
+        hello: (parent, args, context, info) => {
+            if (context.user.roles.includes('ADMIN')) {
+                return 'Hello World!';
+            } else {
+                throw new AuthenticationError("Not authorized for 'hello'");
+            }
+        }
     }
 };
 
 const schema = makeExecutableSchema({
-    typeDefs, resolvers
+    typeDefs,
+    resolvers
 });
 
 export default schema;
