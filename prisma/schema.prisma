@@ -305,7 +305,7 @@ model pupil {
   learningGermanSince           learning_german_since?
   subcourse_participants_pupil  subcourse_participants_pupil[]
   subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
-  sentNotification              sentNotification[]
+  concrete_notifications              concrete_notification[]
 }
 
 model school {
@@ -412,7 +412,7 @@ model student {
   project_match                             project_match[]
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-  sentNotification                         sentNotification[]
+  concrete_notifications                    concrete_notification[]
 }
 
 model subcourse {
@@ -466,35 +466,64 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
+// A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
+// Yet we have to store some meta information for a Notification, which we do in this model:
 model notification {
   id                String       @id 
-  recipient         recipient
+  // In case of emergency we might want to quickly switch of some notifications, also some might be at "draft" stage first
+  active            Boolean 
+
+  // Sometimes we want to send an Email not to the user directly, but to another email that is in a 1 to 1 relationship to the user
+  recipient         notification_recipient
+  // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
   onActions         String[]
   category          String[]
 
-  //for reminder 
+  // Reminders additionally have these attributes set: 
+  // If the user takes one of these actions, the reminder gets cancelled
   cancelledOnAction String[]
   delay             Int?
   interval          Int?
 }
 
-model sentNotification {
+// From each notification, a concrete notification might be sent multiple times to the user
+// The concrete notification tracks the current progress
+model concrete_notification {
   // non-natural primary key
   id        Int     @id @default(autoincrement())
+
+  // total disjoint relationship to user
   pupilId   Int?
   studentId Int?
-  // total disjoint relationship to user
   pupil          pupil?   @relation(fields: [pupilId], references: [id]) 
   student        student? @relation(fields: [studentId], references: [id])  
   
-  notificationID String? // TODO: null if campaign? Or use mailjet id as notification id? collisions?
+  notificationID String
   
-  sentAt DateTime // For delayed notifications this is the planned notification time
+  // Sometimes an action gets taken multiple times, and we want to prevent the email from being sent multiple times
+  // For that we generate a unique contextID out of the context (e.g. for a course email the course name)
+  // with which we can find duplicates
+  contextID String
+
+  // For DELAYED and PENDING notifications we also store the context, to be able to resend 
+  // notifications in the future
+  context   Json?
+
+  // sentAt a.k.a. "sendAt" conveys the following meaning depending on the state:
+  // DELAYED - the time at which the notification is supposed to be sent
+  // PENDING - the time at which the notification was supposed to be sent out
+  // SENT    - the time at which the notification was actually sent
+  // ERROR   - the time at which the error was reported back from the channel
+  // ACTION_TAKEN - the time at which the action was taken by the user
+  sentAt DateTime 
   
-  state sentNotificationState
+  state concrete_notification_state
+
+  // If the notification failed, we might retrieve some information on what went wrong
+  error String?
 }
 
-enum sentNotificationState { 
+enum concrete_notification_state { 
   DELAYED // the action was called but there is a delay set (it's a Reminder)
   PENDING // notification was sent, not sure if arrived
   SENT // we're pretty sure the notification arrived (no bounce, no API error)
@@ -727,7 +756,8 @@ enum student_state_enum {
   other
 }
 
-enum recipient {
+enum notification_recipient {
+  user
   teacher
   parent
 }
