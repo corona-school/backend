@@ -1,10 +1,7 @@
-import { PrismaClientInitializationError } from '@prisma/client/runtime';
 import { Person } from '../entity/Person';
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState } from './types';
 import { prisma } from '../prisma';
-import { Pupil } from '../entity/Pupil';
-import { Student } from '../entity/Student';
 import { debug, info, warn } from 'console';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser } from '../user';
@@ -36,6 +33,8 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, allowDuplicates = false) {
+    // TODO: Error handling and fire and forget
+
     const context = { ...notificationContext, user };
 
     const notifications = await getNotifications();
@@ -87,6 +86,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
 
 export async function checkReminders() {
+    // TODO: Error handling
+
     debug(`Checking for pending notification reminders`);
     const start = Date.now();
 
@@ -103,12 +104,16 @@ export async function checkReminders() {
         const notification = await getNotification(reminder.notificationID);
         const user = await getUser(reminder.userId);
         await deliverNotification(reminder, notification, user, reminder.context as Context);
+
+        // TODO: What about intervals?
     }
 
     info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 
 }
-// TODO: function for user preferences
+
+// TODO: function for user preferences "categories"
+// TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
@@ -152,6 +157,8 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
+        // TODO: Check if user silenced this notification
+
         await channel.send(notification.id, context);
         await prisma.concrete_notification.update({
             data: {
@@ -173,14 +180,16 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
         await prisma.concrete_notification.update({
             data: {
                 sentAt: new Date(),
-                state: ConcreteNotificationState.ERROR
+                state: ConcreteNotificationState.ERROR,
+                error: error.message
             },
             where: {
                 id: concreteNotification.id
             }
         });
 
-
+        // TODO: What about e.g. hard bouncing emails?
+        // TODO: Check if user has lot of errors, disable account?
     }
 }
 
