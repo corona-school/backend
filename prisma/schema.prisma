@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_MIGRATION_URL")
 }
 
 model bbb_meeting {
@@ -758,4 +758,10 @@ enum student_languages_enum {
   Ukrainisch
   Vietnamesisch
   Andere
+}
+
+model setting {
+  name      String @id
+  revision  Int
+  value     String
 }
