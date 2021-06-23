@@ -730,10 +730,10 @@ enum pupil_languages_enum {
 }
 
 enum pupil_learninggermansince_enum {
-  // >4 @map(">4")
-  // 2-4 @map("2-4")
-  // 1-2 @map("1-2")
-  // <1 @map("<1")
+  bigger_four   @map(">4")
+  two_to_four   @map("2-4")
+  one_to_two    @map("1-2")
+  less_than_one @map("<1")
 }
 
 enum student_languages_enum {
