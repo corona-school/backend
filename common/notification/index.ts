@@ -2,7 +2,7 @@ import { Person } from '../entity/Person';
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState } from './types';
 import { prisma } from '../prisma';
-import { debug, info, warn } from 'console';
+import { debug, info, warn, error } from 'console';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser } from '../user';
 
@@ -34,56 +34,70 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, allowDuplicates = false) {
-    // TODO: Error handling and fire and forget
+    // Delivering notifications can be async while answering the API request continues
+    (async function fireAndForget() {
+        try {
+            const { authToken, ...userData } = user;
+            const context = { ...notificationContext, user: { ...userData, fullName: user.fullName() } };
 
-    const { authToken, ...userData } = user;
-    const context = { ...notificationContext, user: { ...userData, fullName: user.fullName() } };
+            debug(`Notification.actionTaken context for action '${actionId}'`, context);
 
-    const notifications = await getNotifications();
-    const relevantNotifications = notifications.get(actionId);
+            const notifications = await getNotifications();
+            const relevantNotifications = notifications.get(actionId);
 
-    if (!relevantNotifications) {
-        return;
-    }
+            if (!relevantNotifications) {
+                debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
+                return;
+            }
 
+            debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
+            // prevent sending of now unnecessary notifications
+            const dismissed = await prisma.concrete_notification.updateMany({
+                data: {
+                    state: ConcreteNotificationState.ACTION_TAKEN,
+                    sentAt: new Date()
+                },
+                where: {
+                    notificationID: {
+                        in: relevantNotifications.toCancel.map(it => it.id)
+                    },
+                    state: ConcreteNotificationState.DELAYED,
+                    userId: getUserId(user)
+                }
+            });
 
-    // prevent sending of now unnecessary notifications
-    await prisma.concrete_notification.updateMany({
-        data: {
-            state: ConcreteNotificationState.ACTION_TAKEN,
-            sentAt: new Date()
-        },
-        where: {
-            notificationID: {
-                in: relevantNotifications.toCancel.map(it => it.id)
-            },
-            state: ConcreteNotificationState.DELAYED,
-            userId: getUserId(user)
+            debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+
+            const reminders = relevantNotifications.toSend.filter(it => it.delay);
+            const directSends = relevantNotifications.toSend.filter(it => !it.delay);
+
+            debug(`Notification.actionTaken found reminders ${reminders.map(it => it.id)} and directSends ${directSends.map(it => it.id)}`);
+
+            // Trigger notifications that are supposed to be directly sent on this action
+            for (const directSend of directSends) {
+                const concreteNotification = await createConcreteNotification(directSend, user, context, allowDuplicates);
+                await deliverNotification(concreteNotification, directSend, user, context);
+            }
+
+            // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
+            if (reminders.length) {
+                const remindersCreated = await prisma.concrete_notification.createMany({
+                    data: reminders.map(it => ({
+                        notificationID: it.id,
+                        state: ConcreteNotificationState.DELAYED,
+                        sentAt: new Date(Date.now() + it.delay),
+                        userId: getUserId(user),
+                        contextID: notificationContext.uniqueId,
+                        context: notificationContext
+                    }))
+                });
+
+                debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
+            }
+        } catch (e) {
+            error(`Failed to perform Notification.onAction(${user.id}, "${actionId}") with `, e);
         }
-    });
-
-    const reminders = relevantNotifications.toSend.filter(it => it.delay);
-    const directSends = relevantNotifications.toSend.filter(it => !it.delay);
-
-    // Trigger notifications that are supposed to be directly sent on this action
-    for (const directSend of directSends) {
-        const concreteNotification = await createConcreteNotification(directSend, user, context, allowDuplicates);
-        await deliverNotification(concreteNotification, directSend, user, context);
-    }
-
-    // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
-    if (reminders.length) {
-        await prisma.concrete_notification.createMany({
-            data: reminders.map(it => ({
-                notificationID: it.id,
-                state: ConcreteNotificationState.DELAYED,
-                sentAt: new Date(Date.now() + it.delay),
-                userId: getUserId(user),
-                contextID: notificationContext.uniqueId,
-                context: notificationContext
-            }))
-        });
-    }
+    })();
 }
 
 
@@ -149,6 +163,8 @@ async function createConcreteNotification(notification: Notification, user: Pers
             context
         }
     });
+
+    debug(`Notification.createConcreteNotification succeeded for ConcreteNotification(${concreteNotification.id})`);
 
     return concreteNotification;
 }
