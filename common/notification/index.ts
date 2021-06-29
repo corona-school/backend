@@ -99,8 +99,10 @@ export async function checkReminders() {
     });
 
     for (const reminder of remindersToSend) {
-        if (!reminder.context)
+        if (!reminder.context) {
             throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
+        }
+
         const notification = await getNotification(reminder.notificationID);
         const user = await getUser(reminder.userId);
         await deliverNotification(reminder, notification, user, reminder.context as Context);
@@ -128,8 +130,9 @@ async function createConcreteNotification(notification: Notification, user: Pers
             }
         });
 
-        if (existingNotification)
+        if (existingNotification) {
             throw new Error(`Duplicate Notification(${notification.id}) for User(${user.id}) with Context(${context.uniqueId})`);
+        }
     }
 
     // First of all we commit the notification to the database, which allows us to recover if the backend crashes

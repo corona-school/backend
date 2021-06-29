@@ -20,11 +20,13 @@ export function getUserId(person: Person) {
 export async function getUser(userID: string): Promise<Person | never> {
     const [type, id] = userID.split("/");
     const manager = getManager();
-    if (type === "student")
+    if (type === "student") {
         return await manager.findOneOrFail(Student, { where: { id }});
+    }
 
-    if (type === "pupil")
+    if (type === "pupil") {
         return await manager.findOneOrFail(Pupil, { where: { id }});
+    }
 
     throw new Error(`Unknown User(${userID})`);
 }

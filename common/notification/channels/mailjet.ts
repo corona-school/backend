@@ -34,9 +34,7 @@ export const mailjetChannel: Channel = {
         if (process.env.MAILJET_LIVE === "TEST") {
             message.Subject = `[TEST] ${message.Subject}`;
             logger.warn("Mailjet API sending in TEST/DEV MODE!");
-        }
-        //if mailjet is not set to live (via envs), always switch to sandbox, no matter what
-        else if (process.env.MAILJET_LIVE != "1") {
+        } else if (process.env.MAILJET_LIVE != "1") {
             logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
             sandboxMode = true;
         }
