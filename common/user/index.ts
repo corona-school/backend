@@ -13,7 +13,7 @@ export function getUserId(person: Person) {
     }
 
     if (person instanceof Pupil) {
-         return `pupil/${person.id}`;
+        return `pupil/${person.id}`;
     }
 
     throw new Error(`Person was neither a Student or a Pupil`);
