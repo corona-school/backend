@@ -2,7 +2,7 @@ import { Person } from "../entity/Person";
 import { Pupil } from "../entity/Pupil";
 import { Student } from "../entity/Student";
 
-export type NotificationID = string; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
+export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
 export type ActionID = string;
@@ -37,6 +37,6 @@ export interface Context extends NotificationContext {
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
     type: "mailjet" /* | ... */;
-    send(id: string, context: Context): Promise<any>;
+    send(id: NotificationID, context: Context): Promise<any>;
     canSend(id: NotificationID): boolean;
 }

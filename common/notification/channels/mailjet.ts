@@ -1,4 +1,4 @@
-import { Channel, Context, IDforNotificationChannel, NotificationID } from "../types";
+import { Channel, Context, NotificationID } from "../types";
 import * as mailjetAPI from "node-mailjet";
 import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
@@ -7,7 +7,7 @@ const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    send: (id: IDforNotificationChannel, context: Context) => {
+    send: (id: NotificationID, context: Context) => {
         const message: mailjetAPI.Email.SendParamsMessage = {
             From: {
                 Email: undefined
@@ -30,7 +30,7 @@ export const mailjetChannel: Channel = {
             };
         }
 
-        let sandboxMode = false; 
+        let sandboxMode = false;
         if (process.env.MAILJET_LIVE === "TEST") {
             message.Subject = `[TEST] ${message.Subject}`;
             logger.warn("Mailjet API sending in TEST/DEV MODE!");
@@ -58,6 +58,6 @@ export const mailjetChannel: Channel = {
     },
 
     canSend: (id: NotificationID) => {
-        return true; 
+        return true;
     }
 };

@@ -239,8 +239,8 @@ model project_field_with_grade_restriction {
   createdAt    DateTime                                               @default(now())
   updatedAt    DateTime                                               @default(now())
   projectField project_field_with_grade_restriction_projectfield_enum
-  min          Int?
-  max          Int?
+  // min          Int?
+  // max          Int?
   studentId    Int
   student      student                                                @relation(fields: [studentId], references: [id])
 
@@ -467,7 +467,8 @@ model subcourse_waiting_list_pupil {
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
 // Yet we have to store some meta information for a Notification, which we do in this model:
 model notification {
-  id                String       @id 
+  id                Int       @id 
+  description       String
   // In case of emergency we might want to quickly switch of some notifications, also some might be at "draft" stage first
   active            Boolean 
 
@@ -493,7 +494,7 @@ model concrete_notification {
   // total disjoint relationship to user
   userId   String
   
-  notificationID String
+  notificationID Int
   
   // Sometimes an action gets taken multiple times, and we want to prevent the email from being sent multiple times
   // For that we generate a unique contextID out of the context (e.g. for a course email the course name)
