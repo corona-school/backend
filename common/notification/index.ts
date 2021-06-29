@@ -16,9 +16,10 @@ const channels = [mailjetChannel];
 export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
     const notification = await getNotification(id);
 
+    const { authToken, ...userData } = user;
     const context: Context = {
         ...notificationContext,
-        user: user
+        user: { ...userData, fullName: user.fullName() }
     };
 
     // We allow duplicates here, as the caller of sendNotification is supposed to make sure that this method is only called once for the user
@@ -35,7 +36,8 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, allowDuplicates = false) {
     // TODO: Error handling and fire and forget
 
-    const context = { ...notificationContext, user };
+    const { authToken, ...userData } = user;
+    const context = { ...notificationContext, user: { ...userData, fullName: user.fullName() } };
 
     const notifications = await getNotifications();
     const relevantNotifications = notifications.get(actionId);

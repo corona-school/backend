@@ -30,8 +30,9 @@ export interface NotificationContext {
 }
 
 // The user is always known, also for notifications sent by Actions / Reminders
+// However we keep the authToken private from the external dependencies, and also pass the fullName as string
 export interface Context extends NotificationContext {
-    user: Person;
+    user: Omit<Person, "authToken" | "fullName"> & { fullName: string; };
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
