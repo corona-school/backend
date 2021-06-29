@@ -27,15 +27,15 @@ export function getFriendlyName(category: MentoringCategory) {
 export function contactEmailAddress(category: MentoringCategory) {
     switch (category) {
         case MentoringCategory.LANGUAGE:
-            return "sprachliches@mentoring.lern-fair.de";
+            return "sprachliches@lern-fair.de";
         case MentoringCategory.SUBJECTS:
-            return "inhaltliches@mentoring.lern-fair.de";
+            return "inhaltliches@lern-fair.de";
         case MentoringCategory.DIDACTIC:
-            return "paedagogisches@mentoring.lern-fair.de";
+            return "paedagogisches@lern-fair.de";
         case MentoringCategory.TECH:
-            return "technisches@mentoring.lern-fair.de";
+            return "technisches@lern-fair.de";
         case MentoringCategory.SELFORGA:
-            return "selbststrukturierung@mentoring.lern-fair.de";
+            return "selbststrukturierung@lern-fair.de";
         case MentoringCategory.OTHER:
             return "mentoring@lern-fair.de";
     }
