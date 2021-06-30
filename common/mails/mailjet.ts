@@ -114,8 +114,8 @@ async function getHardBounces() : Promise<mailjetAPI.Email.GetResponse> {
     const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
 
     return await mailjet
-        .get("message")
-        .request({'MessageStatus': 10, 'ShowContactAlt': true })
+        .get("message", {version: "v3"})
+        .request({'MessageStatus': 10, 'ShowContactAlt': true });
 }
 
 const ErrorCodes = {

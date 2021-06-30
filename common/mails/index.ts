@@ -46,7 +46,6 @@ async function sendTextEmail(
     replyToAddress?: string,
     replyToName?: string
 ) {
-
     await mailjet.sendPure(subject, text, senderAddress, receiverAddress, senderName, receiverName, replyToAddress, replyToName);
 }
 
@@ -55,13 +54,11 @@ async function getHardBounceEmailAddresses() : Promise<string[]> {
     try {
         const result = await mailjet.getHardBounces();
         logger.info(`Received ${result.body.Count} hard bounces`);
-
         return result.body.Data.map(message => message['ContactAlt']);
     } catch (e) {
         logger.warn("Unable to get HardBounces. Status code: " + e.statusCode);
         throw e;
     }
-    
 }
 
 export { mailjetTemplates, sendTemplateMail, sendTextEmail, getHardBounceEmailAddresses};
