@@ -126,6 +126,6 @@ const ErrorCodes = {
 export default {
     sendTemplate: sendMailTemplate,
     sendPure: sendMailPure,
-    ErrorCodes: ErrorCodes, 
+    ErrorCodes: ErrorCodes,
     getHardBounces: getHardBounces
 };
