@@ -49,7 +49,6 @@ export class ConcreteNotification {
     DELAYED, // the action was called but there is a delay set (it's a Reminder)
     PENDING, // notification was sent, not sure if arrived
     SENT, // we're pretty sure the notification arrived (no bounce, no API error)
-    ERROR, // the notification bounced (TODO: and now?)
+    ERROR, // the notification bounced
     ACTION_TAKEN, // the user took an action which cancelled the pending reminder
-    REMINDER_SENT // a reminder was sent, as such a new SentNotification exists which can be used to trigger recurring reminders
   }
