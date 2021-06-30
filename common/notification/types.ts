@@ -20,7 +20,7 @@ export {
 // Previously the templates had a lot of repeating fields, such as "userFirstName"
 // by generalizing into a context that is partially available for each Notification, this was cleaned up
 export interface NotificationContext {
-    uniqueId: string;
+    uniqueId?: string; // if present, the same context (by uniqueId) will not be sent to the same user twice
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress? : Email;

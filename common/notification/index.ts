@@ -22,8 +22,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
         user: { ...userData, fullName: user.fullName() }
     };
 
-    // We allow duplicates here, as the caller of sendNotification is supposed to make sure that this method is only called once for the user
-    const concreteNotification = await createConcreteNotification(notification, user, context, /* allowDuplicates: */ true);
+    const concreteNotification = await createConcreteNotification(notification, user, context);
 
     await deliverNotification(concreteNotification, notification, user, context);
 }
@@ -33,7 +32,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, allowDuplicates = false) {
+export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
     // Delivering notifications can be async while answering the API request continues
     (async function fireAndForget() {
         try {
@@ -75,7 +74,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
-                const concreteNotification = await createConcreteNotification(directSend, user, context, allowDuplicates);
+                const concreteNotification = await createConcreteNotification(directSend, user, context);
                 await deliverNotification(concreteNotification, directSend, user, context);
             }
 
@@ -136,8 +135,8 @@ export async function checkReminders() {
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
-async function createConcreteNotification(notification: Notification, user: Person, context: Context, allowDuplicates: boolean): Promise<ConcreteNotification> {
-    if (!allowDuplicates) {
+async function createConcreteNotification(notification: Notification, user: Person, context: Context): Promise<ConcreteNotification> {
+    if (context.uniqueId) {
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
                 notificationID: notification.id,
