@@ -5,6 +5,7 @@ import {Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from "typ
 
 // From each notification, a concrete notification might be sent multiple times to the user
 // The concrete notification tracks the current progress
+@Entity()
 export class ConcreteNotification {
     // non-natural primary key
     @PrimaryGeneratedColumn()
@@ -34,7 +35,7 @@ export class ConcreteNotification {
     // SENT    - the time at which the notification was actually sent
     // ERROR   - the time at which the error was reported back from the channel
     // ACTION_TAKEN - the time at which the action was taken by the user
-    @Column({ type: "datetime" })
+    @Column({ type: "timestamp" })
     sentAt: Date;
 
     @Column()
