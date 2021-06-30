@@ -12,7 +12,7 @@ export enum NotificationRecipient {
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
 // Yet we have to store some meta information for a Notification, which we do in this model:
 @Entity()
-class Notification {
+export class Notification {
     @PrimaryColumn()
     id: number;
 
@@ -27,14 +27,14 @@ class Notification {
     @Column()
     recipient: NotificationRecipient;
     // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
-    @Column()
+    @Column("text", { array: true })
     onActions: string[];
-    @Column()
+    @Column("text", { array: true })
     category: string[];
 
     // Reminders additionally have these attributes set:
     // If the user takes one of these actions, the reminder gets cancelled
-    @Column()
+    @Column("text", { array: true })
     cancelledOnAction: string[];
     @Column({ type: "int", nullable: true })
     delay?: number;

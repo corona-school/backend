@@ -8,31 +8,32 @@ datasource db {
 }
 
 model bbb_meeting {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  meetingID   String
-  meetingName String?
-  attendeePW  String?
-  moderatorPW String?
-  alternativeUri String?
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @db.Timestamp(6)
+  meetingID      String   @db.VarChar
+  meetingName    String?  @db.VarChar
+  attendeePW     String?  @db.VarChar
+  moderatorPW    String?  @db.VarChar
+  alternativeUrl String?  @db.VarChar
 }
 
 model course {
   id                         Int                          @id @default(autoincrement())
-  createdAt                  DateTime                     @default(now())
-  updatedAt                  DateTime                     @default(now())
-  name                       String
-  outline                    String
-  description                String
-  imageKey                   String?
-  courseState                course_coursestate_enum      @default(created)
+  createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
+  name                       String                       @db.VarChar
+  outline                    String                       @db.VarChar
+  description                String                       @db.VarChar
+  imageKey                   String?                      @db.VarChar
   category                   course_category_enum
-  screeningComment           String?
+  courseState                course_coursestate_enum      @default(created)
+  screeningComment           String?                      @db.VarChar
   publicRanking              Int                          @default(0)
   allowContact               Boolean                      @default(false)
   correspondentId            Int?
   student                    student?                     @relation(fields: [correspondentId], references: [id])
+  course_guest               course_guest[]
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
   subcourse                  subcourse[]
@@ -40,10 +41,10 @@ model course {
 
 model course_attendance_log {
   id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @default(now()) @db.Timestamp(6)
   attendedTime Int?
-  ip           String?
+  ip           String?  @db.VarChar
   pupilId      Int?
   lectureId    Int?
   lecture      lecture? @relation(fields: [lectureId], references: [id])
@@ -63,9 +64,9 @@ model course_instructors_student {
 
 model course_tag {
   id                     Int                      @id @default(autoincrement())
-  identifier             String                   @unique
-  name                   String
-  category               String
+  identifier             String                   @unique @db.VarChar
+  name                   String                   @db.VarChar
+  category               String                   @db.VarChar
   course_tags_course_tag course_tags_course_tag[]
 }
 
@@ -82,10 +83,10 @@ model course_tags_course_tag {
 
 model expert_data {
   id                                       Int                                        @id @default(autoincrement())
-  createdAt                                DateTime                                   @default(now())
-  updatedAt                                DateTime                                   @default(now())
-  contactEmail                             String
-  description                              String?
+  createdAt                                DateTime                                   @default(now()) @db.Timestamp(6)
+  updatedAt                                DateTime                                   @default(now()) @db.Timestamp(6)
+  contactEmail                             String                                     @db.VarChar
+  description                              String?                                    @db.VarChar
   active                                   Boolean                                    @default(false)
   allowed                                  expert_data_allowed_enum                   @default(pending)
   studentId                                Int?                                       @unique
@@ -106,17 +107,17 @@ model expert_data_expertise_tags_expertise_tag {
 
 model expertise_tag {
   id                                       Int                                        @id @default(autoincrement())
-  name                                     String                                     @unique
+  name                                     String                                     @unique @db.VarChar
   expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
 }
 
 model instructor_screening {
   id                    Int       @id @default(autoincrement())
   success               Boolean
-  comment               String?
-  knowsCoronaSchoolFrom String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @default(now())
+  comment               String?   @db.VarChar
+  knowsCoronaSchoolFrom String?   @db.VarChar
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?      @unique
   screener              screener? @relation(fields: [screenerId], references: [id])
@@ -125,17 +126,17 @@ model instructor_screening {
 
 model jufo_verification_transmission {
   id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  uuid      String
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  uuid      String   @db.VarChar
   studentId Int?     @unique
   student   student? @relation(fields: [studentId], references: [id])
 }
 
 model lecture {
   id                    Int                     @id @default(autoincrement())
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @default(now())
-  start                 DateTime
+  createdAt             DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                @default(now()) @db.Timestamp(6)
+  start                 DateTime                @db.Timestamp(6)
   duration              Int
   instructorId          Int?
   subcourseId           Int?
@@ -147,26 +148,26 @@ model lecture {
 model log {
   id        Int              @id @default(autoincrement())
   logtype   log_logtype_enum @default(misc)
-  createdAt DateTime         @default(now())
-  user      String
-  data      String
+  createdAt DateTime         @default(now()) @db.Timestamp(6)
+  user      String           @db.VarChar
+  data      String           @db.VarChar
 }
 
 model match {
   id                    Int               @id @default(autoincrement())
-  uuid                  String            @unique
+  uuid                  String            @unique @db.VarChar
   dissolved             Boolean           @default(false)
-  proposedTime          DateTime?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @default(now())
-  source                match_source_enum @default(matchedinternal)
-  studentId             Int?
-  pupilId               Int?
   dissolveReason        Int?
+  proposedTime          DateTime?         @db.Timestamp(6)
+  createdAt             DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime          @default(now()) @db.Timestamp(6)
   feedbackToPupilMail   Boolean           @default(false)
   feedbackToStudentMail Boolean           @default(false)
   followUpToPupilMail   Boolean           @default(false)
   followUpToStudentMail Boolean           @default(false)
+  source                match_source_enum @default(matchedinternal)
+  studentId             Int?
+  pupilId               Int?
   pupil                 pupil?            @relation(fields: [pupilId], references: [id])
   student               student?          @relation(fields: [studentId], references: [id])
 
@@ -175,59 +176,58 @@ model match {
 
 model mentor {
   id                 Int                     @id @default(autoincrement())
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @default(now())
-  firstname          String?
-  lastname           String?
+  createdAt          DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime                @default(now()) @db.Timestamp(6)
+  firstname          String?                 @db.VarChar
+  lastname           String?                 @db.VarChar
   active             Boolean                 @default(true)
-  email              String                  @unique
-  verification       String?                 @unique
-  verifiedAt         DateTime?
-  authToken          String?                 @unique
+  email              String                  @unique @db.VarChar
+  verification       String?                 @unique @db.VarChar
+  verifiedAt         DateTime?               @db.Timestamp(6)
+  authToken          String?                 @unique @db.VarChar
   authTokenUsed      Boolean                 @default(false)
-  authTokenSent      DateTime?
+  authTokenSent      DateTime?               @db.Timestamp(6)
+  wix_id             String                  @unique @db.VarChar
+  wix_creation_date  DateTime                @db.Timestamp(6)
   division           mentor_division_enum[]
   expertise          mentor_expertise_enum[]
-  subjects           String?
+  subjects           String?                 @db.VarChar
   teachingExperience Boolean?
-  message            String?
-  description        String?
-  imageUrl           String?
-  wix_id             String
-  wix_creation_date  DateTime
-}
-
-model migrations {
-  id        Int    @id @default(autoincrement())
-  timestamp Int
-  name      String
+  message            String?                 @db.VarChar
+  description        String?                 @db.VarChar
+  imageUrl           String?                 @db.VarChar
 }
 
 model participation_certificate {
-  id              Int      @id @default(autoincrement())
-  uuid            String   @unique
-  subjects        String
-  categories      String
-  certificateDate DateTime @default(now())
-  startDate       DateTime @default(now())
-  endDate         DateTime @default(now())
-  hoursPerWeek    Float
-  hoursTotal      Float
-  medium          String
-  studentId       Int?
-  pupilId         Int?
-  ongoingLessons  Boolean  @default(false)
-  pupil           pupil?   @relation(fields: [pupilId], references: [id])
-  student         student? @relation(fields: [studentId], references: [id])
+  id                Int       @id @default(autoincrement())
+  uuid              String    @unique @db.VarChar
+  subjects          String    @db.VarChar
+  categories        String    @db.VarChar
+  certificateDate   DateTime  @default(now()) @db.Timestamp(6)
+  startDate         DateTime  @default(now()) @db.Timestamp(6)
+  endDate           DateTime  @default(now()) @db.Timestamp(6)
+  hoursPerWeek      Decimal   @db.Decimal
+  hoursTotal        Decimal   @db.Decimal
+  medium            String    @db.VarChar
+  ongoingLessons    Boolean   @default(false)
+  state             String    @default("manual") @db.VarChar
+  signaturePupil    Bytes?
+  signatureParent   Bytes?
+  signatureLocation String?   @db.VarChar
+  signatureDate     DateTime? @db.Timestamp(6)
+  studentId         Int?
+  pupilId           Int?
+  pupil             pupil?    @relation(fields: [pupilId], references: [id])
+  student           student?  @relation(fields: [studentId], references: [id])
 }
 
 model project_coaching_screening {
   id                    Int       @id @default(autoincrement())
   success               Boolean
-  comment               String?
-  knowsCoronaSchoolFrom String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @default(now())
+  comment               String?   @db.VarChar
+  knowsCoronaSchoolFrom String?   @db.VarChar
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?      @unique
   screener              screener? @relation(fields: [screenerId], references: [id])
@@ -236,11 +236,11 @@ model project_coaching_screening {
 
 model project_field_with_grade_restriction {
   id           Int                                                    @id @default(autoincrement())
-  createdAt    DateTime                                               @default(now())
-  updatedAt    DateTime                                               @default(now())
+  createdAt    DateTime                                               @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime                                               @default(now()) @db.Timestamp(6)
   projectField project_field_with_grade_restriction_projectfield_enum
-  // min          Int?
-  // max          Int?
+  min          Int?
+  max          Int?
   studentId    Int
   student      student                                                @relation(fields: [studentId], references: [id])
 
@@ -249,9 +249,9 @@ model project_field_with_grade_restriction {
 
 model project_match {
   id             Int      @id @default(autoincrement())
-  uuid           String   @unique
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
+  uuid           String   @unique @db.VarChar
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @db.Timestamp(6)
   dissolved      Boolean  @default(false)
   dissolveReason Int?
   studentId      Int?
@@ -263,57 +263,59 @@ model project_match {
 }
 
 model pupil {
-  id                            Int                            @id @default(autoincrement())
-  createdAt                     DateTime                       @default(now())
-  updatedAt                     DateTime                       @default(now())
-  firstname                     String?
-  lastname                      String?
-  active                        Boolean                        @default(true)
-  email                         String                         @unique
-  verification                  String?                        @unique
-  wix_id                        String                         @unique
-  wix_creation_date             DateTime
-  subjects                      String?
-  msg                           String?
-  grade                         String?
-  verifiedAt                    DateTime?
-  authToken                     String?                        @unique
-  authTokenUsed                 Boolean                        @default(false)
-  authTokenSent                 DateTime?
-  openMatchRequestCount         Int                            @default(1)
-  matchingPriority              Int                            @default(0)
-  schooltype                    pupil_schooltype_enum          @default(other)
-  newsletter                    Boolean                        @default(false)
-  isPupil                       Boolean                        @default(false)
-  isParticipant                 Boolean                        @default(true)
-  state                         pupil_state_enum               @default(other)
-  lastUpdatedSettingsViaBlocker DateTime?
-  teacherEmailAddress           String?
-  registrationSource            pupil_registrationsource_enum  @default(dbgenerated())
-  schoolId                      Int?
-  isProjectCoachee              Boolean                        @default(false)
-  projectFields                 pupil_projectfields_enum[]
-  isJufoParticipant             String                         @default("unsure")
-  openProjectMatchRequestCount  Int                            @default(1)
-  projectMemberCount            Int                            @default(1)
-  school                        school?                        @relation(fields: [schoolId], references: [id])
-  course_attendance_log         course_attendance_log[]
-  match                         match[]
-  participation_certificate     participation_certificate[]
-  project_match                 project_match[]
-  languages                     language[]
-  learningGermanSince           learning_german_since?
-  subcourse_participants_pupil  subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
+  id                                           Int                                           @id @default(autoincrement())
+  createdAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
+  updatedAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
+  firstname                                    String?                                       @db.VarChar
+  lastname                                     String?                                       @db.VarChar
+  active                                       Boolean                                       @default(true)
+  email                                        String                                        @unique @db.VarChar
+  verification                                 String?                                       @unique @db.VarChar
+  verifiedAt                                   DateTime?                                     @db.Timestamp(6)
+  authToken                                    String?                                       @unique @db.VarChar
+  authTokenUsed                                Boolean                                       @default(false)
+  authTokenSent                                DateTime?                                     @db.Timestamp(6)
+  wix_id                                       String                                        @unique @db.VarChar
+  wix_creation_date                            DateTime                                      @db.Timestamp(6)
+  state                                        pupil_state_enum                              @default(other)
+  schooltype                                   pupil_schooltype_enum                         @default(other)
+  msg                                          String?                                       @db.VarChar
+  grade                                        String?                                       @db.VarChar
+  newsletter                                   Boolean                                       @default(false)
+  isPupil                                      Boolean                                       @default(false)
+  subjects                                     String?                                       @db.VarChar
+  openMatchRequestCount                        Int                                           @default(1)
+  isParticipant                                Boolean                                       @default(true)
+  isProjectCoachee                             Boolean                                       @default(false)
+  projectFields                                pupil_projectfields_enum[]
+  isJufoParticipant                            String                                        @default("unsure") @db.VarChar
+  openProjectMatchRequestCount                 Int                                           @default(1)
+  projectMemberCount                           Int                                           @default(1)
+  languages                                    pupil_languages_enum[]
+  learningGermanSince                          pupil_learninggermansince_enum?
+  matchingPriority                             Int                                           @default(0)
+  lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
+  teacherEmailAddress                          String?                                       @db.VarChar
+  registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
+  schoolId                                     Int?
+  school                                       school?                                       @relation(fields: [schoolId], references: [id])
+  course_attendance_log                        course_attendance_log[]
+  course_participation_certificate             course_participation_certificate[]
+  match                                        match[]
+  participation_certificate                    participation_certificate[]
+  project_match                                project_match[]
+  pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request?
+  subcourse_participants_pupil                 subcourse_participants_pupil[]
+  subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
 }
 
 model school {
   id                Int                    @id @default(autoincrement())
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @default(now())
-  name              String
-  website           String?                @unique
-  emailDomain       String                 @unique
+  createdAt         DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime               @default(now()) @db.Timestamp(6)
+  name              String                 @db.VarChar
+  website           String?                @unique @db.VarChar
+  emailDomain       String                 @unique @db.VarChar
   state             school_state_enum?     @default(other)
   schooltype        school_schooltype_enum @default(other)
   activeCooperation Boolean                @default(false)
@@ -322,20 +324,20 @@ model school {
 
 model screener {
   id                         Int                          @id @default(autoincrement())
-  createdAt                  DateTime                     @default(now())
-  updatedAt                  DateTime                     @default(now())
-  firstname                  String?
-  lastname                   String?
+  createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
+  firstname                  String?                      @db.VarChar
+  lastname                   String?                      @db.VarChar
   active                     Boolean                      @default(true)
-  email                      String                       @unique
-  verification               String?                      @unique
-  password                   String
+  email                      String                       @unique @db.VarChar
+  verification               String?                      @unique @db.VarChar
+  verifiedAt                 DateTime?                    @db.Timestamp(6)
+  authToken                  String?                      @unique @db.VarChar
+  authTokenUsed              Boolean                      @default(false)
+  authTokenSent              DateTime?                    @db.Timestamp(6)
+  password                   String                       @db.VarChar
   verified                   Boolean?                     @default(false)
   oldNumberID                Int?                         @unique
-  verifiedAt                 DateTime?
-  authToken                  String?                      @unique
-  authTokenUsed              Boolean                      @default(false)
-  authTokenSent              DateTime?
   instructor_screening       instructor_screening[]
   project_coaching_screening project_coaching_screening[]
   screening                  screening[]
@@ -344,10 +346,10 @@ model screener {
 model screening {
   id                    Int       @id @default(autoincrement())
   success               Boolean
-  comment               String?
-  knowsCoronaSchoolFrom String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @default(now())
+  comment               String?   @db.VarChar
+  knowsCoronaSchoolFrom String?   @db.VarChar
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?      @unique
   screener              screener? @relation(fields: [screenerId], references: [id])
@@ -356,51 +358,53 @@ model screening {
 
 model student {
   id                                        Int                                    @id @default(autoincrement())
-  createdAt                                 DateTime                               @default(now())
-  updatedAt                                 DateTime                               @default(now())
-  firstname                                 String?
-  lastname                                  String?
+  createdAt                                 DateTime                               @default(now()) @db.Timestamp(6)
+  updatedAt                                 DateTime                               @default(now()) @db.Timestamp(6)
+  firstname                                 String?                                @db.VarChar
+  lastname                                  String?                                @db.VarChar
   active                                    Boolean                                @default(true)
-  email                                     String                                 @unique
-  verification                              String?                                @unique
-  wix_id                                    String                                 @unique
-  wix_creation_date                         DateTime
-  subjects                                  String?
-  msg                                       String?
-  phone                                     String?
-  verifiedAt                                DateTime?
-  authToken                                 String?                                @unique
-  openMatchRequestCount                     Int                                    @default(1)
-  feedback                                  String?
+  email                                     String                                 @unique @db.VarChar
+  verification                              String?                                @unique @db.VarChar
+  verifiedAt                                DateTime?                              @db.Timestamp(6)
+  authToken                                 String?                                @unique @db.VarChar
   authTokenUsed                             Boolean                                @default(false)
-  authTokenSent                             DateTime?
-  sentScreeningReminderCount                Int                                    @default(0)
-  lastSentScreeningInvitationDate           DateTime?
-  isStudent                                 Boolean                                @default(true)
-  isInstructor                              Boolean                                @default(false)
+  authTokenSent                             DateTime?                              @db.Timestamp(6)
+  wix_id                                    String                                 @unique @db.VarChar
+  wix_creation_date                         DateTime                               @db.Timestamp(6)
+  phone                                     String?                                @db.VarChar
+  feedback                                  String?                                @db.VarChar
   newsletter                                Boolean                                @default(false)
+  isStudent                                 Boolean                                @default(false)
+  subjects                                  String?                                @db.VarChar
+  openMatchRequestCount                     Int                                    @default(1)
+  isInstructor                              Boolean                                @default(false)
+  msg                                       String?                                @db.VarChar
   state                                     student_state_enum?                    @default(other)
-  university                                String?
+  university                                String?                                @db.VarChar
   module                                    student_module_enum?
   moduleHours                               Int?
-  sentInstructorScreeningReminderCount      Int                                    @default(0)
-  lastSentInstructorScreeningInvitationDate DateTime?
-  lastUpdatedSettingsViaBlocker             DateTime?
   isProjectCoach                            Boolean                                @default(false)
-  wasJufoParticipant                        String?
+  wasJufoParticipant                        String?                                @db.VarChar
   hasJufoCertificate                        Boolean?
-  jufoPastParticipationInfo                 String?
+  jufoPastParticipationInfo                 String?                                @db.VarChar
   jufoPastParticipationConfirmed            Boolean?
   isUniversityStudent                       Boolean?
   openProjectMatchRequestCount              Int                                    @default(1)
   sentJufoAlumniScreeningReminderCount      Int                                    @default(0)
-  lastSentJufoAlumniScreeningInvitationDate DateTime?
-  registrationSource                        student_registrationsource_enum        @default(dbgenerated())
-  course                                    course[]
-  course_instructors_student                course_instructors_student[]
-  expert_data                               expert_data?
+  lastSentJufoAlumniScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   supportsInDaZ                             Boolean?
-  languages                                 language[]
+  languages                                 student_languages_enum[]
+  sentScreeningReminderCount                Int                                    @default(0)
+  lastSentScreeningInvitationDate           DateTime?                              @db.Timestamp(6)
+  sentInstructorScreeningReminderCount      Int                                    @default(0)
+  lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
+  registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  course                                    course[]
+  course_guest                              course_guest[]
+  course_instructors_student                course_instructors_student[]
+  course_participation_certificate          course_participation_certificate[]
+  expert_data                               expert_data?
   instructor_screening                      instructor_screening?
   jufo_verification_transmission            jufo_verification_transmission?
   lecture                                   lecture[]
@@ -414,21 +418,22 @@ model student {
 }
 
 model subcourse {
-  id                            Int                             @id @default(autoincrement())
-  createdAt                     DateTime                        @default(now())
-  updatedAt                     DateTime                        @default(now())
-  minGrade                      Int
-  maxGrade                      Int
-  maxParticipants               Int
-  published                     Boolean
-  cancelled                     Boolean                         @default(false)
-  joinAfterStart                Boolean                         @default(false)
-  courseId                      Int?
-  course                        course?                         @relation(fields: [courseId], references: [id])
-  lecture                       lecture[]
-  subcourse_instructors_student subcourse_instructors_student[]
-  subcourse_participants_pupil  subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil  subcourse_waiting_list_pupil[]
+  id                               Int                                @id @default(autoincrement())
+  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  minGrade                         Int
+  maxGrade                         Int
+  maxParticipants                  Int
+  joinAfterStart                   Boolean                            @default(false)
+  published                        Boolean
+  cancelled                        Boolean                            @default(false)
+  courseId                         Int?
+  course                           course?                            @relation(fields: [courseId], references: [id])
+  course_participation_certificate course_participation_certificate[]
+  lecture                          lecture[]
+  subcourse_instructors_student    subcourse_instructors_student[]
+  subcourse_participants_pupil     subcourse_participants_pupil[]
+  subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
 }
 
 model subcourse_instructors_student {
@@ -464,68 +469,53 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
-// A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
-// Yet we have to store some meta information for a Notification, which we do in this model:
 model notification {
-  id                Int       @id 
-  description       String
-  // In case of emergency we might want to quickly switch of some notifications, also some might be at "draft" stage first
-  active            Boolean 
-
-  // Sometimes we want to send an Email not to the user directly, but to another email that is in a 1 to 1 relationship to the user
-  recipient         notification_recipient
-  // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
+  id                Int      @id
+  description       String   @db.VarChar
+  active            Boolean
+  recipient         Int
   onActions         String[]
   category          String[]
-
-  // Reminders additionally have these attributes set: 
-  // If the user takes one of these actions, the reminder gets cancelled
   cancelledOnAction String[]
   delay             Int?
   interval          Int?
 }
 
-// From each notification, a concrete notification might be sent multiple times to the user
-// The concrete notification tracks the current progress
-model concrete_notification {
-  // non-natural primary key
-  id        Int     @id @default(autoincrement())
-
-  // total disjoint relationship to user
-  userId   String
-  
-  notificationID Int
-  
-  // Sometimes an action gets taken multiple times, and we want to prevent the email from being sent multiple times
-  // For that we generate a unique contextID out of the context (e.g. for a course email the course name)
-  // with which we can find duplicates
-  contextID String
-
-  // For DELAYED and PENDING notifications we also store the context, to be able to resend 
-  // notifications in the future
-  context   Json?
-
-  // sentAt a.k.a. "sendAt" conveys the following meaning depending on the state:
-  // DELAYED - the time at which the notification is supposed to be sent
-  // PENDING - the time at which the notification was supposed to be sent out
-  // SENT    - the time at which the notification was actually sent
-  // ERROR   - the time at which the error was reported back from the channel
-  // ACTION_TAKEN - the time at which the action was taken by the user
-  sentAt DateTime 
-  
-  state concrete_notification_state
-
-  // If the notification failed, we might retrieve some information on what went wrong
-  error String?
+model course_guest {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  token     String   @unique @db.VarChar
+  firstname String   @db.VarChar
+  lastname  String   @db.VarChar
+  email     String   @db.VarChar
+  courseId  Int?
+  inviterId Int?
+  course    course?  @relation(fields: [courseId], references: [id])
+  student   student? @relation(fields: [inviterId], references: [id])
 }
 
-enum concrete_notification_state { 
-  DELAYED // the action was called but there is a delay set (it's a Reminder)
-  PENDING // notification was sent, not sure if arrived
-  SENT // we're pretty sure the notification arrived (no bounce, no API error)
-  ERROR // the notification bounced (TODO: and now?)
-  ACTION_TAKEN // the user took an action which cancelled the pending reminder
-  REMINDER_SENT // a reminder was sent, as such a new SentNotification exists which can be used to trigger recurring reminders
+model course_participation_certificate {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime   @default(now()) @db.Timestamp(6)
+  issuerId    Int?
+  pupilId     Int?
+  subcourseId Int?
+  student     student?   @relation(fields: [issuerId], references: [id])
+  pupil       pupil?     @relation(fields: [pupilId], references: [id])
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id])
+}
+
+model pupil_tutoring_interest_confirmation_request {
+  id               Int       @id @default(autoincrement())
+  createdAt        DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
+  status           String    @default("pending") @db.VarChar
+  token            String    @unique @db.VarChar
+  reminderSentDate DateTime? @db.Timestamp(6)
+  pupilId          Int?      @unique
+  pupil            pupil?    @relation(fields: [pupilId], references: [id])
 }
 
 enum course_category_enum {
@@ -546,37 +536,6 @@ enum expert_data_allowed_enum {
   pending
   yes
   no
-}
-
-enum language {
-  sq @map("Albanisch")
-  ar @map("Arabisch")
-  hy @map("Armenisch")
-  az @map("Aserbaidschanisch")
-  bs @map("Bosnisch")
-  bg @map("Bulgarisch")
-  zh @map("Chinesisch")
-  de @map("Deutsch")
-  en @map("Englisch")
-  fr @map("Französisch")
-  it @map("Italienisch")
-  kk @map("Kasachisch")
-  ku @map("Kurdisch")
-  pl @map("Polnisch")
-  pt @map("Portugiesisch")
-  ru @map("Russisch")
-  tr @map("Türkisch")
-  es @map("Spanisch")
-  uk @map("Ukrainisch")
-  vi @map("Vietnamesisch")
-  other @map("Andere")
-}
-
-enum learning_german_since {
-  greaterThanFour @map(">4")
-  twoToFour @map("2-4")
-  oneToTwo @map("1-2")
-  lessThanOne @map("<1")
 }
 
 enum log_logtype_enum {
@@ -606,6 +565,10 @@ enum log_logtype_enum {
   participantJoinedWaitingList
   participantLeftWaitingList
   userAccessedCourseWhileAuthenticated
+  instructorIssuedCertificate
+  pupilInterestConfirmationRequestSent
+  pupilInterestConfirmationRequestReminderSent
+  pupilInterestConfirmationRequestStatusChange
 }
 
 enum match_source_enum {
@@ -752,8 +715,57 @@ enum student_state_enum {
   other
 }
 
-enum notification_recipient {
-  user
-  teacher
-  parent
+enum pupil_languages_enum {
+  Albanisch
+  Arabisch
+  Armenisch
+  Aserbaidschanisch
+  Bosnisch
+  Bulgarisch
+  Chinesisch
+  Deutsch
+  Englisch
+  Franz_sisch @map("Französisch")
+  Italienisch
+  Kasachisch
+  Kurdisch
+  Polnisch
+  Portugiesisch
+  Russisch
+  T_rkisch @map("Türkisch")
+  Spanisch
+  Ukrainisch
+  Vietnamesisch
+  Andere
+}
+
+enum pupil_learninggermansince_enum {
+  // >4 @map(">4")
+  // 2-4 @map("2-4")
+  // 1-2 @map("1-2")
+  // <1 @map("<1")
+}
+
+enum student_languages_enum {
+  Albanisch
+  Arabisch
+  Armenisch
+  Aserbaidschanisch
+  Bosnisch
+  Bulgarisch
+  Chinesisch
+  Deutsch
+  Englisch
+  Franz_sisch @map("Französisch")
+  Italienisch
+  Kasachisch
+  Kurdisch
+  Polnisch
+  Portugiesisch
+  Russisch
+  T_rkisch @map("Türkisch")
+  Spanisch
+  Ukrainisch
+  Vietnamesisch
+  Andere
 }
