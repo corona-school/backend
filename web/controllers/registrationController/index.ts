@@ -306,7 +306,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     try {
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor, apiTutor.redirectTo);
-        await Notification.actionTaken(tutor, "student_registration_started", { uniqueId: "registration", redirectTo: apiTutor.redirectTo });
+        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
