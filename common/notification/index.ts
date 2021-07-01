@@ -14,7 +14,7 @@ const channels = [mailjetChannel];
 /* sends one specific notification with a very specific notification context to the user.
    Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
 export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
-    const notification = await getNotification(id);
+    /* const notification = await getNotification(id);
 
     const { authToken, ...userData } = user;
     const context: Context = {
@@ -24,7 +24,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 
     const concreteNotification = await createConcreteNotification(notification, user, context);
 
-    await deliverNotification(concreteNotification, notification, user, context);
+    await deliverNotification(concreteNotification, notification, user, context); */
 }
 
 
@@ -34,7 +34,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 */
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
     // Delivering notifications can be async while answering the API request continues
-    (async function fireAndForget() {
+    /* (async function fireAndForget() {
         try {
             const { authToken, ...userData } = user;
             const context = { ...notificationContext, user: { ...userData, fullName: user.fullName() } };
@@ -96,14 +96,14 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
         } catch (e) {
             error(`Failed to perform Notification.onAction(${user.id}, "${actionId}") with `, e);
         }
-    })();
+    })(); */
 }
 
 
 export async function checkReminders() {
     // TODO: Error handling
 
-    debug(`Checking for pending notification reminders`);
+    /* debug(`Checking for pending notification reminders`);
     const start = Date.now();
 
     const remindersToSend = await prisma.concrete_notification.findMany({
@@ -126,7 +126,7 @@ export async function checkReminders() {
     }
 
     info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
-
+    */
 }
 
 // TODO: function for user preferences "categories"
@@ -135,8 +135,8 @@ export async function checkReminders() {
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
-async function createConcreteNotification(notification: Notification, user: Person, context: Context): Promise<ConcreteNotification> {
-    if (context.uniqueId) {
+async function createConcreteNotification(notification: Notification, user: Person, context: Context): Promise<void /* ConcreteNotification */> {
+    /* if (context.uniqueId) {
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
                 notificationID: notification.id,
@@ -165,13 +165,13 @@ async function createConcreteNotification(notification: Notification, user: Pers
 
     debug(`Notification.createConcreteNotification succeeded for ConcreteNotification(${concreteNotification.id})`);
 
-    return concreteNotification;
+    return concreteNotification; */
 }
 
 async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, context: Context): Promise<void> {
     debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
-    try {
+    /* try {
         const channel = channels.find(it => it.canSend(notification.id));
         if (!channel) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
@@ -210,6 +210,6 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
         // TODO: What about e.g. hard bouncing emails?
         // TODO: Check if user has lot of errors, disable account?
-    }
+    } */
 }
 
