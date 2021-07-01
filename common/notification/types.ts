@@ -11,10 +11,10 @@ export type Email = `${string}@${string}.${string}`;
 // Prisma exports lowercase types, but we want capitalized types
 export {
     concrete_notification as ConcreteNotification,
-    notification as Notification,
-    concrete_notification_state as ConcreteNotificationState
+    notification as Notification
 } from '.prisma/client';
 
+export { ConcreteNotificationState } from "../entity/ConcreteNotification";
 
 
 // Previously the templates had a lot of repeating fields, such as "userFirstName"

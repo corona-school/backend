@@ -46,10 +46,10 @@ export class ConcreteNotification {
     error?: string;
 }
 
-  enum ConcreteNotificationState {
+export enum ConcreteNotificationState {
     DELAYED, // the action was called but there is a delay set (it's a Reminder)
     PENDING, // notification was sent, not sure if arrived
     SENT, // we're pretty sure the notification arrived (no bounce, no API error)
     ERROR, // the notification bounced
     ACTION_TAKEN, // the user took an action which cancelled the pending reminder
-  }
+}
