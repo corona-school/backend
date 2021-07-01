@@ -3,15 +3,6 @@ import {Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from "typ
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
 
-
-export enum ConcreteNotificationState {
-    DELAYED = "delayed", // the action was called but there is a delay set (it's a Reminder)
-    PENDING = "pending", // notification was sent, not sure if arrived
-    SENT = "sent", // we're pretty sure the notification arrived (no bounce, no API error)
-    ERROR = "error", // the notification bounced
-    ACTION_TAKEN = "action_taken", // the user took an action which cancelled the pending reminder
-}
-
 // From each notification, a concrete notification might be sent multiple times to the user
 // The concrete notification tracks the current progress
 @Entity()
@@ -47,10 +38,18 @@ export class ConcreteNotification {
     @Column({ type: "timestamp" })
     sentAt: Date;
 
-    @Column({ type: "enum", enum: ConcreteNotificationState })
+    @Column()
     state: ConcreteNotificationState;
 
     // If the notification failed, we might retrieve some information on what went wrong
     @Column({ nullable: true })
     error?: string;
 }
+
+  enum ConcreteNotificationState {
+    DELAYED, // the action was called but there is a delay set (it's a Reminder)
+    PENDING, // notification was sent, not sure if arrived
+    SENT, // we're pretty sure the notification arrived (no bounce, no API error)
+    ERROR, // the notification bounced
+    ACTION_TAKEN, // the user took an action which cancelled the pending reminder
+  }
