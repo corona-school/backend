@@ -18,6 +18,17 @@ model bbb_meeting {
   alternativeUrl String?  @db.VarChar
 }
 
+model concrete_notification {
+  id             Int      @id @default(autoincrement())
+  userId         String   @db.VarChar
+  notificationID Int
+  contextID      String?  @db.VarChar
+  context        Json     @db.Json
+  sentAt         DateTime @db.Timestamp(6)
+  state          Int
+  error          String?  @db.VarChar
+}
+
 model course {
   id                         Int                          @id @default(autoincrement())
   createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
@@ -51,6 +62,20 @@ model course_attendance_log {
   pupil        pupil?   @relation(fields: [pupilId], references: [id])
 }
 
+model course_guest {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  token     String   @unique @db.VarChar
+  firstname String   @db.VarChar
+  lastname  String   @db.VarChar
+  email     String   @db.VarChar
+  courseId  Int?
+  inviterId Int?
+  course    course?  @relation(fields: [courseId], references: [id])
+  student   student? @relation(fields: [inviterId], references: [id])
+}
+
 model course_instructors_student {
   courseId  Int
   studentId Int
@@ -60,6 +85,18 @@ model course_instructors_student {
   @@id([courseId, studentId])
   @@index([courseId], name: "IDX_54bce9a9a93ae130beaa70bb2f")
   @@index([studentId], name: "IDX_66b47860afa3098729925338c1")
+}
+
+model course_participation_certificate {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime   @default(now()) @db.Timestamp(6)
+  issuerId    Int?
+  pupilId     Int?
+  subcourseId Int?
+  student     student?   @relation(fields: [issuerId], references: [id])
+  pupil       pupil?     @relation(fields: [pupilId], references: [id])
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id])
 }
 
 model course_tag {
@@ -198,6 +235,18 @@ model mentor {
   imageUrl           String?                 @db.VarChar
 }
 
+model notification {
+  id                Int      @id
+  description       String   @db.VarChar
+  active            Boolean
+  recipient         Int
+  onActions         String[]
+  category          String[]
+  cancelledOnAction String[]
+  delay             Int?
+  interval          Int?
+}
+
 model participation_certificate {
   id                Int       @id @default(autoincrement())
   uuid              String    @unique @db.VarChar
@@ -307,6 +356,17 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request?
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+}
+
+model pupil_tutoring_interest_confirmation_request {
+  id               Int       @id @default(autoincrement())
+  createdAt        DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
+  status           String    @default("pending") @db.VarChar
+  token            String    @unique @db.VarChar
+  reminderSentDate DateTime? @db.Timestamp(6)
+  pupilId          Int?      @unique
+  pupil            pupil?    @relation(fields: [pupilId], references: [id])
 }
 
 model school {
@@ -469,55 +529,6 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
-model notification {
-  id                Int      @id
-  description       String   @db.VarChar
-  active            Boolean
-  recipient         Int
-  onActions         String[]
-  category          String[]
-  cancelledOnAction String[]
-  delay             Int?
-  interval          Int?
-}
-
-model course_guest {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @db.Timestamp(6)
-  token     String   @unique @db.VarChar
-  firstname String   @db.VarChar
-  lastname  String   @db.VarChar
-  email     String   @db.VarChar
-  courseId  Int?
-  inviterId Int?
-  course    course?  @relation(fields: [courseId], references: [id])
-  student   student? @relation(fields: [inviterId], references: [id])
-}
-
-model course_participation_certificate {
-  id          Int        @id @default(autoincrement())
-  createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @db.Timestamp(6)
-  issuerId    Int?
-  pupilId     Int?
-  subcourseId Int?
-  student     student?   @relation(fields: [issuerId], references: [id])
-  pupil       pupil?     @relation(fields: [pupilId], references: [id])
-  subcourse   subcourse? @relation(fields: [subcourseId], references: [id])
-}
-
-model pupil_tutoring_interest_confirmation_request {
-  id               Int       @id @default(autoincrement())
-  createdAt        DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
-  status           String    @default("pending") @db.VarChar
-  token            String    @unique @db.VarChar
-  reminderSentDate DateTime? @db.Timestamp(6)
-  pupilId          Int?      @unique
-  pupil            pupil?    @relation(fields: [pupilId], references: [id])
-}
-
 enum course_category_enum {
   revision
   club
@@ -603,6 +614,37 @@ enum project_field_with_grade_restriction_projectfield_enum {
   Technik
 }
 
+enum pupil_languages_enum {
+  Albanisch
+  Arabisch
+  Armenisch
+  Aserbaidschanisch
+  Bosnisch
+  Bulgarisch
+  Chinesisch
+  Deutsch
+  Englisch
+  Franz_sisch @map("Französisch")
+  Italienisch
+  Kasachisch
+  Kurdisch
+  Polnisch
+  Portugiesisch
+  Russisch
+  T_rkisch @map("Türkisch")
+  Spanisch
+  Ukrainisch
+  Vietnamesisch
+  Andere
+}
+
+enum pupil_learninggermansince_enum {
+  more_than_four @map(">4")
+  two_to_four @map("2-4")
+  one_to_two @map("1-2")
+  less_than_one @map("<1")
+}
+
 enum pupil_projectfields_enum {
   Arbeitswelt
   Biologie
@@ -682,6 +724,30 @@ enum school_state_enum {
   other
 }
 
+enum student_languages_enum {
+  Albanisch
+  Arabisch
+  Armenisch
+  Aserbaidschanisch
+  Bosnisch
+  Bulgarisch
+  Chinesisch
+  Deutsch
+  Englisch
+  Franz_sisch @map("Französisch")
+  Italienisch
+  Kasachisch
+  Kurdisch
+  Polnisch
+  Portugiesisch
+  Russisch
+  T_rkisch @map("Türkisch")
+  Spanisch
+  Ukrainisch
+  Vietnamesisch
+  Andere
+}
+
 enum student_module_enum {
   internship
   seminar
@@ -713,59 +779,4 @@ enum student_state_enum {
   sh
   th
   other
-}
-
-enum pupil_languages_enum {
-  Albanisch
-  Arabisch
-  Armenisch
-  Aserbaidschanisch
-  Bosnisch
-  Bulgarisch
-  Chinesisch
-  Deutsch
-  Englisch
-  Franz_sisch @map("Französisch")
-  Italienisch
-  Kasachisch
-  Kurdisch
-  Polnisch
-  Portugiesisch
-  Russisch
-  T_rkisch @map("Türkisch")
-  Spanisch
-  Ukrainisch
-  Vietnamesisch
-  Andere
-}
-
-enum pupil_learninggermansince_enum {
-  // >4 @map(">4")
-  // 2-4 @map("2-4")
-  // 1-2 @map("1-2")
-  // <1 @map("<1")
-}
-
-enum student_languages_enum {
-  Albanisch
-  Arabisch
-  Armenisch
-  Aserbaidschanisch
-  Bosnisch
-  Bulgarisch
-  Chinesisch
-  Deutsch
-  Englisch
-  Franz_sisch @map("Französisch")
-  Italienisch
-  Kasachisch
-  Kurdisch
-  Polnisch
-  Portugiesisch
-  Russisch
-  T_rkisch @map("Türkisch")
-  Spanisch
-  Ukrainisch
-  Vietnamesisch
-  Andere
 }
