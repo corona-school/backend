@@ -32,3 +32,15 @@ export async function getUser(userID: string): Promise<Person | never> {
 
     throw new Error(`Unknown User(${userID})`);
 }
+
+export function getFullName({ firstname, lastname }: { firstname?: string, lastname?: string }): string {
+    if (!firstname) {
+        return lastname;
+    }
+
+    if (!lastname) {
+        return firstname;
+    }
+
+    return `${firstname} ${lastname}`;
+}

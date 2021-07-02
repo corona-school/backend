@@ -4,7 +4,7 @@ import { NotificationID, NotificationContext, Context, Notification, ConcreteNot
 import { prisma } from '../prisma';
 import { debug, info, warn, error } from 'console';
 import { getNotification, getNotifications } from './notification';
-import { getUserId, getUser } from '../user';
+import { getUserId, getUser, getFullName } from '../user';
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
@@ -19,7 +19,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
     const { authToken, ...userData } = user;
     const context: Context = {
         ...notificationContext,
-        user: { ...userData, fullName: user.fullName() }
+        user: { ...userData, fullName: getFullName(user) }
     };
 
     const concreteNotification = await createConcreteNotification(notification, user, context);
@@ -37,7 +37,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
     (async function fireAndForget() {
         try {
             const { authToken, ...userData } = user;
-            const context = { ...notificationContext, user: { ...userData, fullName: user.fullName() } };
+            const context = { ...notificationContext, user: { ...userData, fullName: getFullName(user) } };
 
             debug(`Notification.actionTaken context for action '${actionId}'`, context);
 

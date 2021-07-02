@@ -9,7 +9,7 @@ import { DEFAULTSENDERS } from "../config";
 import { CourseGuest } from "../../entity/CourseGuest";
 import * as Notification from "../../../common/notification";
 import { Person } from '../../../common/entity/Person';
-import { PersonTrackingSortBy } from "aws-sdk/clients/rekognition";
+import { getFullName } from "../../../common/user";
 
 const logger = getLogger();
 
@@ -118,10 +118,10 @@ export async function sendParticipantToInstructorMail(participant: Pupil, instru
         messageBody, //email text
         DEFAULTSENDERS.noreply, //sender address
         instructor.email, //receiver
-        `${participant.fullName()} via Lern-Fair`, //sender name
-        `${instructor.fullName()}`, //receiver name
+        `${getFullName(participant)} via Lern-Fair`, //sender name
+        `${getFullName(instructor)}`, //receiver name
         participant.email, //replyTo address
-        `${participant.fullName()}` //replyTo name
+        `${getFullName(participant)}` //replyTo name
     );
 }
 
