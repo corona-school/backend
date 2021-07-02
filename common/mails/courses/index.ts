@@ -75,7 +75,7 @@ export async function sendCourseUpcomingReminderParticipant(participant: Person,
         courseName: course.name,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")
-    })
+    });
 }
 
 export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
