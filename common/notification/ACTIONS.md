@@ -98,3 +98,56 @@ Reminder send seven days after initial match
 }
 ```
 
+### subcourse_participant_cancelled
+
+*description* 
+
+Inform participants that subcourse was cancelled 
+
+*context*
+
+```typescript
+{
+    participantFirstname: string,
+    courseName: string,
+    firstLectureDate: date,
+    firstLectureTime: date
+}
+```
+
+### course_instructor_reminder
+
+*description* 
+
+Two days before the course the instructors are reminded 
+
+*context*
+
+```typescript
+{
+    participantFirstname: string,
+    courseName: string,
+    firstLectureDate: date,
+    firstLectureTime: date
+}
+```
+
+it is on purpose that it says participant firstname for the instructor.... 
+
+### course_participant_reminder
+
+*description* 
+
+Two days before the course the participants are reminded 
+
+*context*
+
+```typescript
+{
+    participantFirstname: string,
+    courseName: string,
+    firstLectureDate: date,
+    firstLectureTime: date
+}
+```
+
