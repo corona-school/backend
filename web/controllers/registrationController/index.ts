@@ -619,6 +619,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiTutee.redirectTo);
+        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -766,6 +767,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     try {
         await entityManager.save(Mentor, mentor);
         await sendVerificationMail(mentor, apiMentor.redirectTo);
+        await Notification.actionTaken(mentor, "mentor_registration_started", { redirectTo: apiMentor.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(mentor));
         return 204;
     } catch (e) {
@@ -1024,6 +1026,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await Notification.actionTaken(tutee, "cooperation_tutee_registration_started", { redirectTo: apiStateTutee.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {

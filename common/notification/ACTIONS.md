@@ -55,3 +55,46 @@ Triggered when the user registers as a student.
     redirectTo?: string;
 }
 ```
+
+### pupil_registration_started
+
+*description* 
+
+Triggered when the user registers as a pupil.
+
+*context*
+
+```ts
+{
+    redirectTo?: string;
+}
+```
+
+### student_match_follow_up
+
+*description* 
+
+Reminder send seven days after initial match 
+
+*context*
+
+```ts
+{
+    pupil: pupil;
+}
+```
+
+### pupil_match_follow_up
+
+*description* 
+
+Reminder send seven days after initial match 
+
+*context*
+
+```ts
+{
+    student: student;
+}
+```
+
