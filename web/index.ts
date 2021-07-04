@@ -28,6 +28,7 @@ import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
+import * as notificationController from "./controllers/notifiationController";
 
 // Logger setup
 try {
@@ -77,6 +78,7 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
     configureMentoringAPI();
     configureExpertAPI();
     configurePupilInterestConfirmationAPI();
+    configureNotificationAPI();
     const server = await deployServer();
     configureGracefulShutdown(server);
 
@@ -335,6 +337,15 @@ createConnection().then(setupPDFGenerationEnvironment).then(async () => {
         router.post("/status", interestConfirmationController.postInterestConfirmationRequestStatus);
 
         app.use("/api/interest-confirmation", router);
+    }
+
+    function configureNotificationAPI() {
+        const router = express.Router();
+
+        // DEV only:
+        app.post("/trigger-action", notificationController.triggerActionHandler);
+
+        app.use("/api/notification", authCheckFactory(), router);
     }
 
     async function deployServer() {

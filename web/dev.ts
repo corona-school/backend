@@ -32,7 +32,7 @@ import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
 import { prisma } from "../common/prisma/";
-import { NotificationRecipient } from "common/entity/Notification";
+import { NotificationRecipient } from "../common/entity/Notification";
 
 export async function setupDevDB() {
     const conn = getConnection();
