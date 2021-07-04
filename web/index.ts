@@ -345,7 +345,7 @@ createConnection().then(setupPDFGenerationEnvironment)
             const router = express.Router();
 
             // DEV only:
-            app.post("/trigger-action", notificationController.triggerActionHandler);
+            router.post("/trigger-action", notificationController.triggerActionHandler);
 
             app.use("/api/notification", authCheckFactory(), router);
         }
