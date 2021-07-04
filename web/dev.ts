@@ -31,6 +31,8 @@ import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication"
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
+import { prisma } from "../common/prisma/";
+import { NotificationRecipient } from "common/entity/Notification";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -1257,6 +1259,63 @@ export async function setupDevDB() {
         await entityManager.save(pticrs[i]);
         console.log("Inserted Pupil Tutoring Interest Request " + i);
     }
+
+    /* NOTIFICATION SYSTEM */
+
+    await prisma.notification.createMany({
+        data: [
+            {
+                id: 1,
+                active: true,
+                description: 'TEST: Instant notification on registration',
+                recipient: NotificationRecipient.USER,
+                cancelledOnAction: [],
+                category: [],
+                onActions: ["test_start"]
+            },
+            {
+                id: 2,
+                active: false,
+                description: 'TEST: Disabled notification - If you see this, something is wrong',
+                recipient: NotificationRecipient.USER,
+                cancelledOnAction: [],
+                category: [],
+                onActions: ["test_start"]
+            },
+            {
+                id: 3,
+                active: true,
+                description: 'TEST: One Minute delayed notification on registration',
+                recipient: NotificationRecipient.USER,
+                cancelledOnAction: ["test_cancel"],
+                category: [],
+                onActions: ["test_start"],
+                delay: 60_000 /*ms*/,
+            },
+            {
+                id: 4,
+                active: true,
+                description: 'TEST: Delayed disabled notification - If you see this, something is wrong',
+                recipient: NotificationRecipient.USER,
+                cancelledOnAction: ["test_cancel"],
+                category: [],
+                onActions: ["test_start"],
+                delay: 60_000 /*ms*/,
+            },
+            {
+                id: 5,
+                active: true,
+                description: 'TEST: One Minute delayed notification on registration, repeated',
+                recipient: NotificationRecipient.USER,
+                cancelledOnAction: ["test_cancel"],
+                category: [],
+                onActions: ["test_start"],
+                delay: 60_000 /*ms*/,
+                interval: 60_000 /*ms*/
+            },
+
+        ]
+    });
 }
 
 function sha512(input: string): string {
