@@ -12,8 +12,9 @@ export async function triggerActionHandler(req: Express.Request, res: Express.Re
     const user = res.locals.user as Person;
     const { actionId, context } = req.body;
 
-    if (typeof actionId !== "string" || typeof context !== "object")
+    if (typeof actionId !== "string" || typeof context !== "object") {
         return res.status(400).send("Missing actionId or context in body");
+    }
 
     try {
         await Notification.actionTaken(user, actionId, context);
