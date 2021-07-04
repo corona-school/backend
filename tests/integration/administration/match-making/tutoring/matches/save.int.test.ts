@@ -169,6 +169,6 @@ describe("Saving Tutoring Matches", function() {
 
         // ASSERT
         assert.deepEqual(tuteesMatched.map(t => t.openMatchRequestCount), [0, 0, 0, 0]);
-        assert.deepEqual(tutorsMatched.map( t => t.openMatchRequestCount), [1, 0, 0]);
+        assert.deepEqual(tutorsMatched.map(t => t.openMatchRequestCount), [1, 0, 0]);
     });
 });

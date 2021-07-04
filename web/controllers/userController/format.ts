@@ -192,6 +192,7 @@ export class ApiGetUser {
     registrationDate: number;
     expertData?: ApiExpertData;
     pupilTutoringInterestConfirmationStatus?: InterestConfirmationStatus;
+    isOfficial?: boolean;
     //TODO: Um Mentor erweitern
 }
 

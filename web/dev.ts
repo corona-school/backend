@@ -2,7 +2,7 @@
 import { getConnection, getManager } from "typeorm";
 import { createHash, randomBytes } from "crypto";
 import { Pupil } from "../common/entity/Pupil";
-import { Student } from "../common/entity/Student";
+import { Student, TeacherModule } from "../common/entity/Student";
 import { Match } from "../common/entity/Match";
 import { Screener } from "../common/entity/Screener";
 import { Screening } from "../common/entity/Screening";
@@ -33,6 +33,7 @@ import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
 import { prisma } from "../common/prisma/";
 import { NotificationRecipient } from "../common/entity/Notification";
+import { CourseGuest } from "../common/entity/CourseGuest";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -265,6 +266,8 @@ export async function setupDevDB() {
         { name: "Spanisch", minGrade: 6, maxGrade: 10 },
     ]);
     s5.openMatchRequestCount = 1;
+    s5.module = TeacherModule.INTERNSHIP;
+    s5.moduleHours = 10;
     students.push(s5);
 
     const s6 = new Student();
@@ -413,7 +416,8 @@ export async function setupDevDB() {
     );
 
     const pc1 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -428,7 +432,8 @@ export async function setupDevDB() {
     });
 
     const pc2 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -443,7 +448,8 @@ export async function setupDevDB() {
     });
 
     const pc3 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -458,7 +464,8 @@ export async function setupDevDB() {
     });
 
     const pc4 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -474,7 +481,8 @@ export async function setupDevDB() {
     });
 
     const pc5 = Object.assign(new ParticipationCertificate(), {
-        uuid: randomBytes(5).toString("hex").toUpperCase(),
+        uuid: randomBytes(5).toString("hex")
+            .toUpperCase(),
         pupil: pupils[0],
         student: students[0],
         subjects: "Englisch,Deutsch",
@@ -590,7 +598,7 @@ export async function setupDevDB() {
         "intercultural": "Interkulturelles"
     };
 
-    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map( ([identifier, name]) => {
+    const clubTagMap = Object.fromEntries(Object.entries(clubTagNamesMap).map(([identifier, name]) => {
         const t = new CourseTag();
         t.name = name;
         t.identifier = identifier;
@@ -747,6 +755,28 @@ export async function setupDevDB() {
     course8.subcourses = [];
     course8.courseState = CourseState.ALLOWED;
 
+    let guest1 = new CourseGuest("test1@gmail.com", "Tim1", "Marx1", course8, s1, "guestToken1");
+    let guest2 = new CourseGuest("test2@gmail.com", "Tim2", "Marx2", course8, s1, "guestToken2");
+    let guest3 = new CourseGuest("test3@gmail.com", "Tim3", "Marx3", course8, s1, "guestToken3");
+    let guest4 = new CourseGuest("test4@gmail.com", "Tim4", "Marx4", course8, s1, "guestToken4");
+    let guest5 = new CourseGuest("test5@gmail.com", "Tim5", "Marx5", course8, s1, "guestToken5");
+    let guest6 = new CourseGuest("test6@gmail.com", "Tim6", "Marx6", course8, s1, "guestToken6");
+    let guest7 = new CourseGuest("test7@gmail.com", "Tim7", "Marx7", course8, s1, "guestToken7");
+    let guest8 = new CourseGuest("test8@gmail.com", "Tim8", "Marx8", course8, s1, "guestToken8");
+    let guest9 = new CourseGuest("test9@gmail.com", "Tim9", "Marx9", course8, s1, "guestToken9");
+    let guest10 = new CourseGuest("test10@gmail.com", "Tim10", "Marx10", course8, s1, "guestToken10");
+    await entityManager.save(CourseGuest, guest1);
+    await entityManager.save(CourseGuest, guest2);
+    await entityManager.save(CourseGuest, guest3);
+    await entityManager.save(CourseGuest, guest4);
+    await entityManager.save(CourseGuest, guest5);
+    await entityManager.save(CourseGuest, guest6);
+    await entityManager.save(CourseGuest, guest7);
+    await entityManager.save(CourseGuest, guest8);
+    await entityManager.save(CourseGuest, guest9);
+    await entityManager.save(CourseGuest, guest10);
+
+    course8.guests = [guest1, guest2, guest3, guest4, guest5, guest6, guest7, guest8, guest9, guest10];
     courses.push(course8);
 
     let course9 = new Course();
@@ -849,7 +879,7 @@ export async function setupDevDB() {
     subcourse7.minGrade = 3;
     subcourse7.maxGrade = 10;
     subcourse7.instructors = [s1, s2];
-    subcourse7.maxParticipants = 10;
+    subcourse7.maxParticipants = 4;
     subcourse7.published = true;
     subcourse7.participants = pupils;
 
@@ -873,7 +903,7 @@ export async function setupDevDB() {
     subcourse9.minGrade = 1;
     subcourse9.maxGrade = 10;
     subcourse9.instructors = [s1];
-    subcourse9.maxParticipants = 20;
+    subcourse9.maxParticipants = 7;
     subcourse9.published = true;
     subcourse9.participants = pupils;
 
@@ -1252,7 +1282,7 @@ export async function setupDevDB() {
     pticrs.push(pticr1);
 
     const pticr2 = new PupilTutoringInterestConfirmationRequest(p7, "interest-confirmation-token-P7");
-    pticr2.reminderSentDate = new Date( Date.now() - 6.912E+08); // minus 8 days in ms
+    pticr2.reminderSentDate = new Date(Date.now() - 6.912E+08); // minus 8 days in ms
     pticrs.push(pticr2);
 
     for (let i = 0; i < pticrs.length; i++) {

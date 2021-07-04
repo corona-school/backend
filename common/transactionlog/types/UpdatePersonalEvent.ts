@@ -24,10 +24,13 @@ export default class UpdatePersonalEvent extends LogUserEvent {
             console.log("key: " + key);
 
             // Add all new keys
-            if (oldKeys.indexOf(key) == -1) diff[key] = newObj[key];
-            // Add all keys that changed
-            else if (oldObj[key] != newObj[key]) diff[key] = newObj[key];
-            else console.log("unchanged");
+            if (oldKeys.indexOf(key) == -1) {
+                diff[key] = newObj[key];
+            } else if (oldObj[key] != newObj[key]) {
+                diff[key] = newObj[key];
+            } else {
+                console.log("unchanged");
+            } // Add all keys that changed
         });
 
         console.log("diff", diff);

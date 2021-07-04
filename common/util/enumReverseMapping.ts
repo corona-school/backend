@@ -26,7 +26,7 @@ const EnumReverseMappings = {
 function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {
     //this would be equivalent to check whether `Object.values(ENUM)` contains `s` and then return s
     return (s: string) => {
-        return Object.entries(e).find( ([, value]) => typeof value === "string" && value === s)?.[1];
+        return Object.entries(e).find(([, value]) => typeof value === "string" && value === s)?.[1];
     };
 }
 

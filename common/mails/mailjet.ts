@@ -11,9 +11,8 @@ async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox:
     if (process.env.MAILJET_LIVE === "TEST") {
         message.Subject = `[TEST] ${message.Subject}`;
         logger.warn("Mailjet API sending in TEST/DEV MODE!");
-    }
-    //if mailjet is not set to live (via envs), always switch to sandbox, no matter what the sandbox-Parameter is set to
-    else if (process.env.MAILJET_LIVE != "1") {
+    } else if (process.env.MAILJET_LIVE != "1") {
+        //if mailjet is not set to live (via envs), always switch to sandbox, no matter what the sandbox-Parameter is set to
         logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
         sandboxMode = true;
     }

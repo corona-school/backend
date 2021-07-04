@@ -57,7 +57,8 @@ async function getPupilsForFollowUps(manager: EntityManager): Promise<Match[]> {
 
 function filterMatches(matches: Match[]): Match[] {
     const now = new Date();
-    const sevenDaysAgo = moment(now).subtract(7, "days").toDate();
+    const sevenDaysAgo = moment(now).subtract(7, "days")
+        .toDate();
     return matches.filter(m => {
         return m.createdAt <= sevenDaysAgo;
     });

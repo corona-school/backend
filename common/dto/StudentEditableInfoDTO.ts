@@ -53,7 +53,7 @@ export class StudentEditableInfoDTO {
     wasJufoParticipant?: TutorJufoParticipationIndication;
     hasJufoCertificate?: boolean;
     jufoPastParticipationInfo?: string;
-    verifiedAt: Date;
+    verification: string;
     official?: {
         hours: number;
         module: TeacherModule;

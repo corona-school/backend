@@ -316,8 +316,7 @@ async function getAPICourses(student: Student | undefined,
                     }
                 }
             }];
-        }
-        else if (participantId) {
+        } else if (participantId) {
             customFilter = [{
                 subcourse: {
                     some: {
@@ -676,7 +675,9 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
 
         for (let i = 0; i < course.subcourses.length; i++) {
             // Skip not published subcourses for unauthorized users
-            if (!authorizedStudent && !course.subcourses[i].published) continue;
+            if (!authorizedStudent && !course.subcourses[i].published) {
+                continue;
+            }
 
             let subcourse: ApiSubcourse = {
                 id: course.subcourses[i].id,
@@ -1097,7 +1098,9 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
         return 400;
     }
 
-    if (apiSubcourse.maxParticipants == undefined) apiSubcourse.maxParticipants = 30;
+    if (apiSubcourse.maxParticipants == undefined) {
+        apiSubcourse.maxParticipants = 30;
+    }
     if (!Number.isInteger(apiSubcourse.maxParticipants) || apiSubcourse.maxParticipants < 3 || apiSubcourse.maxParticipants > 100) {
         logger.warn(`Field 'maxParticipants' contains an illegal value: ${apiSubcourse.maxParticipants}`);
         logger.debug(apiSubcourse);
@@ -1248,7 +1251,8 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
     }
 
     // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
-    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days").startOf("day")))) {
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days")
+        .startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
         return 400;
@@ -1491,13 +1495,11 @@ async function putCourse(student: Student, courseId: number, apiCourse: ApiEditC
     //if course is already reviewed (i.e. either allowed, denied or cancelled) or submitted, the course state should not change at all
     if (course.courseState === CourseState.CREATED && apiCourse.submit != undefined) { //so only if course is created, it could be possible to change the course state to submitted
         course.courseState = apiCourse.submit ? CourseState.SUBMITTED : CourseState.CREATED;
-    }
-    else if (apiCourse.submit === false) {
+    } else if (apiCourse.submit === false) {
         logger.warn(`Field 'submit' is not editable on submitted courses`);
         logger.debug(apiCourse);
         return 403;
-    }
-    else if (apiCourse.submit != undefined) { //only change the course state, if the submit value is part of the request
+    } else if (apiCourse.submit != undefined) { //only change the course state, if the submit value is part of the request
         //just issue a warning message...
         logger.warn(`Course submission state for course number ${course.id} will not be changed, since it was already reviewed`);
     }
@@ -2281,8 +2283,9 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
             // Check if course has already started
             let startDate = (new Date()).getTime() + 3600000;
             for (let i = 0; i < subcourse.lectures.length; i++) {
-                if (startDate > subcourse.lectures[i].start.getTime())
+                if (startDate > subcourse.lectures[i].start.getTime()) {
                     startDate = subcourse.lectures[i].start.getTime();
+                }
             }
             if (startDate < (new Date()).getTime() && !subcourse.joinAfterStart) {
                 logger.warn("Pupil can't join subcourse, because it has already started");
@@ -2316,8 +2319,7 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
             //send confirmation to participant
             try {
                 await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
-            }
-            catch (e) {
+            } catch (e) {
                 logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
             }
 
@@ -2440,8 +2442,7 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
                 await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
 
                 return;
-            }
-            else {
+            } else {
                 logger.warn(`Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
             }
         } catch (e) {
@@ -2913,7 +2914,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                     }
 
                     if (!!meeting.alternativeUrl) {
-                        res.send( { url: meeting.alternativeUrl });
+                        res.send({ url: meeting.alternativeUrl });
 
                     } else if (authenticatedStudent) {
                         let user: Student = res.locals.user;
@@ -2921,7 +2922,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                         await startBBBMeeting(meeting);
 
                         res.send({
-                            url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.moderatorPW)
+                            url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.moderatorPW)
                         });
 
                     } else if (authenticatedPupil) {
@@ -2930,7 +2931,7 @@ export async function joinCourseMeetingHandler(req: Request, res: Response) {
                             let user: Pupil = res.locals.user;
 
                             res.send({
-                                url: getMeetingUrl(subcourseId, `${user.firstname}+${user.lastname}`, meeting.attendeePW, user.wix_id)
+                                url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.attendeePW, user.wix_id)
                             });
 
                             // BBB logging
@@ -3195,7 +3196,7 @@ async function postAddCourseInstructor(student: Student, courseID: number, apiIn
 
     //add that instructor to the course (and all of it's subcourses)
     course.instructors.push(instructorToAdd);
-    course.subcourses.forEach( sc => sc.instructors.push(instructorToAdd));
+    course.subcourses.forEach(sc => sc.instructors.push(instructorToAdd));
 
     try {
         for (const sc of course.subcourses) { //save subcourses
@@ -3253,8 +3254,7 @@ export async function putCourseImageHandler(req: Request, res: Response) {
                     const result = await setCourseImage(res.locals.user, +req.params.id, req.file);
                     if (typeof result === "number") {
                         status = result;
-                    }
-                    else {
+                    } else {
                         res.send(result);
                     }
                 }
@@ -3320,15 +3320,13 @@ async function setCourseImage(student: Student, courseID: number, imageFile?: Ex
             await putFile(imageFile.buffer, key);
 
             course.imageKey = key;
-        }
-        else if (course.imageKey) { //otherwise, there's nothing to delete
+        } else if (course.imageKey) { //otherwise, there's nothing to delete
             //delete image if no image is given
             await deleteFile(course.imageKey);
 
             course.imageKey = null;
         }
-    }
-    catch (e) {
+    } catch (e) {
         logger.error(`Error while uploading/modifying image for course ${courseID}`, e);
         return 503;
     }
@@ -3380,8 +3378,7 @@ export async function deleteCourseImageHandler(req: Request, res: Response) {
 
                     if (typeof result === "number") {
                         status = result;
-                    }
-                    else {
+                    } else {
                         res.send(result);
                     }
                 }
@@ -3495,9 +3492,9 @@ async function inviteExternal(student: Student, courseID: number, inviteeInfo: A
     }
 
     const currentGuests = course.guests;
-    //make sure that at most 5 persons are invited per course
-    if (currentGuests.length >= 5) {
-        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 5 invited guests`);
+    //make sure that at most 10 persons are invited per course
+    if (currentGuests.length >= 10) {
+        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 10 invited guests`);
         return 429; //indicate that no more guests could be invited
     }
 
@@ -3519,8 +3516,7 @@ async function inviteExternal(student: Student, courseID: number, inviteeInfo: A
         await sendGuestInvitationMail(newGuest);
 
         return 200;
-    }
-    catch (e) {
+    } catch (e) {
         logger.error(`An error occurred during invitation of guest ${guestEmail} for course ${courseID}: ${e}`);
         return 500;
     }
@@ -3557,8 +3553,7 @@ export async function joinCourseMeetingExternalHandler(req: Request, res: Respon
 
             if (typeof result === "number") {
                 res.status(result).end();
-            }
-            else {
+            } else {
                 //successfully got join url
                 res.send(result);
                 return;

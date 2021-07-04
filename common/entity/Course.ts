@@ -110,21 +110,24 @@ export class Course {
     guests: CourseGuest[];
 
     async updateCourse(update: ApiCourseUpdate) {
-        if (!update.isValid())
+        if (!update.isValid()) {
             throw new Error("Cannot use invalid ApiCourseUpdate to update course!");
+        }
 
-        if (update.instructors)
+        if (update.instructors) {
             update.instructors = await Promise.all(update.instructors.map(it => getManager().findOneOrFail(Student, { where: { id: it.id, isInstructor: true }})));
+        }
 
         for (const [key, value] of Object.entries(update)) {
-            if (typeof value !== "undefined")
+            if (typeof value !== "undefined") {
                 this[key] = value;
+            }
         }
     }
 
     async updateTags(tags: { identifier?: string, name?: string }[]) {
         let newTags: CourseTag[] = [];
-        for (let i = 0; i < tags.length; i++){
+        for (let i = 0; i < tags.length; i++) {
             if (tags[i].identifier) {
                 newTags.push(await getManager()
                     .findOneOrFail(CourseTag, { where: { identifier: tags[i].identifier }})

@@ -19,7 +19,8 @@ function computeNextScreeningReminderDate(sentReminderCount: number, lastInvitat
 
     const daysAfterPreviousReminderUntilNextReminder = REMINDER_INTERVALS[sentReminderCount];
 
-    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, "days").toDate();
+    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, "days")
+        .toDate();
 }
 
 // ------------
@@ -73,9 +74,9 @@ function filterToRemindAtDate(remindDateForStudent: (s: Student) => Date): (stud
         });
     };
 }
-const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate) );
-const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate) );
-const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate( s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate) );
+const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate));
+const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate));
+const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate));
 
 // ------------------
 // StUDENTS TO REMIND

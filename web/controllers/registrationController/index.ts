@@ -65,7 +65,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
             (!req.body.supportsInDaZ || typeof req.body.supportsInDaz == 'boolean')
-        ){
+        ) {
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
@@ -119,16 +119,16 @@ export async function postTutorHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutor registration with jufoPastParticipationInfo requires the info on a past jufo participation to be a string`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutor registration with isProjectCoach has invalid parameters");
                 }
             }
 
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -356,7 +356,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
             (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')
-        ){
+        ) {
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -398,15 +398,15 @@ export async function postTuteeHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutee registration with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutee registration with isProjectCoachee has invalid parameters");
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -858,15 +858,15 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutee registration (for specific state) with isProjectCoachee has invalid parameters");
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -1016,8 +1016,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
         }
         tutee.state = school.state;
 
-    }
-    catch {
+    } catch {
         logger.error("Invalid email address for teacher email during Tutee registration (for specific state)");
         return 400;
     }
@@ -1071,8 +1070,7 @@ export async function getSchoolsHandler(req: Request, res: Response) {
         if (req.params.state && !state) {
             logger.error(`Given State "${req.params.state}" is unknown`);
             status = 400;
-        }
-        else {
+        } else {
             let obj = await getSchools(state);
 
             if (typeof obj == 'number') {
@@ -1102,7 +1100,7 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
             }
         });
 
-        return schools.map( s => {
+        return schools.map(s => {
             return {
                 name: s.name,
                 emailDomain: s.emailDomain

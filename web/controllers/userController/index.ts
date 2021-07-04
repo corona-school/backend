@@ -236,8 +236,9 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             status = 400;
         } else {
             let subjectType = 0; // Short type
-            if (b.length > 0 && b[0].minGrade != undefined && b[0].maxGrade != undefined)
-                subjectType = 1; // Long Type
+            if (b.length > 0 && b[0].minGrade != undefined && b[0].maxGrade != undefined) {
+                subjectType = 1;
+            } // Long Type
 
             for (let i = 0; i < b.length; i++) {
                 let elem = b[i];
@@ -473,7 +474,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.university = person.university;
         apiResponse.state = person.state;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
-
+        apiResponse.isOfficial = person.module != null || person.moduleHours != null;
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
@@ -680,8 +681,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
             person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
-        }
-        else {
+        } else {
             person.lastUpdatedSettingsViaBlocker = null;
         }
 
@@ -758,8 +758,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // ++++ LAST UPDATED SETTINGS VIA BLOCKER ++++
         if (req.lastUpdatedSettingsViaBlocker) {
             person.lastUpdatedSettingsViaBlocker = moment.unix(req.lastUpdatedSettingsViaBlocker).toDate();
-        }
-        else {
+        } else {
             person.lastUpdatedSettingsViaBlocker = null;
         }
 
@@ -868,14 +867,16 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
     if (person instanceof Student) {
 
         type = Student;
-        if (!person.isStudent)
+        if (!person.isStudent) {
             person.isStudent = true;
+        }
 
     } else if (person instanceof Pupil) {
 
         type = Pupil;
-        if (!person.isPupil)
+        if (!person.isPupil) {
             person.isPupil = true;
+        }
 
     } else {
         logger.error("Unknown type of person: " + typeof person);
@@ -925,7 +926,7 @@ async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], pers
         oldProjectFields = await person.getProjectFields();
         await person.setProjectFields(projectFields);
     } else if (person instanceof Pupil) {
-        oldProjectFields = person.projectFields.map( p => ({name: p}));
+        oldProjectFields = person.projectFields.map(p => ({name: p}));
         person.projectFields = projectFields.map(pf => pf.name);
     } else {
         logger.error("Unknown type of person: " + typeof person);
@@ -1475,14 +1476,12 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
             if (student.isUniversityStudent) {
                 //send usual tutor screening invitation
                 await sendFirstScreeningInvitationToTutor(entityManager, student);
-            }
-            else if (student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === true) {
+            } else if (student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === true) {
                 //invite to jufo specific screening
                 await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
             }
         }
-    }
-    catch (e) {
+    } catch (e) {
         logger.error(`Cannot send screening invitation (after adding role) to ${student.email}... ${e}`);
     }
 

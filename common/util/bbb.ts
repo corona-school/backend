@@ -61,17 +61,48 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
 
 export async function startBBBMeeting(meeting: BBBMeeting) {
     const callName = 'create';
-    const queryParams = encodeURI(`attendeePW=${meeting.attendeePW}&meetingID=${meeting.meetingID}&moderatorPW=${meeting.moderatorPW}&name=${meeting.meetingName}&record=false`);
+    const params = {
+        attendeePW: meeting.attendeePW,
+        meetingID: meeting.meetingID,
+        moderatorPW: meeting.moderatorPW,
+        name: meeting.meetingName,
+        record: "false"
+    };
+    const queryParams = new URLSearchParams(params).toString(); //use URLSearchParams to have correct encoding which also encodes "'" correctly as required by application/x-www-form-urlencoded format (which BBB seems to use and require)
 
-    const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+    const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`, {
+        headers: {
+            //explicitly use application/xml such that the server will respond with xml always (for some reaseon the BBB server supports json responses only if the request failed, but not if the request was successful)
+            accept: "application/xml"
+        }
+    });
     if (response.status !== 200) {
+        //response level error (for example network error, server crash...)
         throw new Error("Status code: " + response.status);
+    }
+
+    //in case of a successful *BBB* response, it always contains a returncode, which must be SUCCESS
+    const parsedResponseData = await (new Parser({
+        explicitArray: false //do not put all child nodes into an array automatically...
+    })).parseStringPromise(response.data);
+
+    if (parsedResponseData.response?.returncode !== "SUCCESS") {
+        logger.error(`An error occurred during creation of the BBB meeting (meetingID: ${meeting.meetingID}). Error: ${parsedResponseData.response.message}`);
+        throw new Error(`Meeting with id '${meeting.meetingID}' couldn't be started!`);
+        //TODO: improve error handling – also for the other calls (and refactor this whole thing here...)
     }
 }
 
 export function getMeetingUrl(id: string, name: string, pw: string, userID?: string): string {
     const callName = 'join';
-    const queryParams = encodeURI(`fullName=${name}&meetingID=${id}&password=${pw}&redirect=true&userID=${userID}`);
+    const params = {
+        fullName: name,
+        meetingID: id,
+        password: pw,
+        redirect: "true",
+        userID: userID
+    };
+    const queryParams = new URLSearchParams(params).toString();
 
     return (`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
 }

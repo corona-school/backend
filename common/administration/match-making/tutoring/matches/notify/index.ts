@@ -20,11 +20,11 @@ const notificationFunctionMapping: {
     tutees: NotificationFunctions;
 } = {
     tutors: {
-        sms: async () => {throw new Error("NOT YET IMPLEMENTED");}, //TODO
+        sms: async () => { throw new Error("NOT YET IMPLEMENTED"); }, //TODO
         email: mailNotifyTutorAboutMatch
     },
     tutees: {
-        sms: async () => {throw new Error("NOT YET IMPLEMENTED");}, //TODO
+        sms: async () => { throw new Error("NOT YET IMPLEMENTED"); }, //TODO
         email: mailNotifyTuteeAboutMatch
     }
 };
@@ -36,8 +36,7 @@ async function notifyMatchThroughNotificationType(match: Match, notificationType
     //notify tutee part
     try {
         await tuteeNotificationFunctions[notificationType](match, manager);
-    }
-    catch (e) {
+    } catch (e) {
         return new MatchNotificationStatus(match, notificationType, {
             affectedTutee: match.pupil,
             affectedTutor: match.student, //also affected, because she won't get notified if the first notification failed (that might change in the future)
@@ -48,8 +47,7 @@ async function notifyMatchThroughNotificationType(match: Match, notificationType
     //notify tutors part
     try {
         await tutorNotificationFunctions[notificationType](match, manager);
-    }
-    catch (e) {
+    } catch (e) {
         return new MatchNotificationStatus(match, notificationType, {
             affectedTutor: match.student, //now only the tutor is affected, because tutee notification above was successful
             underlyingError: e
