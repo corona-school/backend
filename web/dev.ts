@@ -1324,7 +1324,7 @@ export async function setupDevDB() {
             },
             {
                 id: 4,
-                active: true,
+                active: false,
                 description: 'TEST: Delayed disabled notification - If you see this, something is wrong',
                 recipient: NotificationRecipient.USER,
                 cancelledOnAction: ["test_cancel"],
