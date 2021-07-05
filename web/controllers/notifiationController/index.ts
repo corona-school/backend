@@ -23,3 +23,17 @@ export async function triggerActionHandler(req: Express.Request, res: Express.Re
         return res.status(500).send(`The following error occured:\n\n${error}`);
     }
 }
+
+/* Internal API endpoint for debugging / manual testing purposes */
+export async function checkReminders(req: Express.Request, res: Express.Response) {
+    if (process.env.NODE_ENV !== "dev") {
+        return res.status(404).send("This endpoint is only accessible in development environments");
+    }
+
+    try {
+        await Notification.checkReminders();
+        return res.send("OK - Checked reminders, see logs for details");
+    } catch (error) {
+        return res.status(500).send(`The following error occured:\n\n${error}`);
+    }
+}

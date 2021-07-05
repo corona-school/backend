@@ -346,6 +346,7 @@ createConnection().then(setupPDFGenerationEnvironment)
 
             // DEV only:
             router.post("/trigger-action", notificationController.triggerActionHandler);
+            router.post("/check-reminders", notificationController.checkReminders);
 
             app.use("/api/notification", authCheckFactory(), router);
         }
