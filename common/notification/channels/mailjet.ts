@@ -2,19 +2,20 @@ import { Channel, Context, NotificationID } from "../types";
 import * as mailjetAPI from "node-mailjet";
 import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
+import { Person } from "../../entity/Person";
 
 const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    async send(id: NotificationID, context: Context) {
+    async send(id: NotificationID, to: Person, context: Context) {
         const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
                 Email: undefined
             },
             To: [
                 {
-                    Email: context.user.email
+                    Email: to.email
                 }
             ],
             TemplateID: id,

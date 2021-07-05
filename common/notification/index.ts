@@ -16,15 +16,9 @@ const channels = [mailjetChannel];
 export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
     const notification = await getNotification(id);
 
-    const { authToken, ...userData } = user;
-    const context: Context = {
-        ...notificationContext,
-        user: { ...userData, fullName: getFullName(user) }
-    };
+    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
 
-    const concreteNotification = await createConcreteNotification(notification, user, context);
-
-    await deliverNotification(concreteNotification, notification, user, context);
+    await deliverNotification(concreteNotification, notification, user, notificationContext);
 }
 
 
@@ -36,10 +30,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
     // Delivering notifications can be async while answering the API request continues
     (async function fireAndForget() {
         try {
-            const { authToken, ...userData } = user;
-            const context = { ...notificationContext, user: { ...userData, fullName: getFullName(user) } };
-
-            debug(`Notification.actionTaken context for action '${actionId}'`, context);
+            debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
 
             const notifications = await getNotifications();
             const relevantNotifications = notifications.get(actionId);
@@ -74,8 +65,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
-                const concreteNotification = await createConcreteNotification(directSend, user, context);
-                await deliverNotification(concreteNotification, directSend, user, context);
+                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext);
+                await deliverNotification(concreteNotification, directSend, user, notificationContext);
             }
 
             // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
@@ -101,8 +92,6 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
 
 export async function checkReminders() {
-    // TODO: Error handling
-
     debug(`Checking for pending notification reminders`);
     const start = Date.now();
 
@@ -120,7 +109,7 @@ export async function checkReminders() {
 
         const notification = await getNotification(reminder.notificationID);
         const user = await getUser(reminder.userId);
-        await deliverNotification(reminder, notification, user, reminder.context as Context);
+        await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
 
         // TODO: What about intervals?
     }
@@ -135,7 +124,7 @@ export async function checkReminders() {
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
-async function createConcreteNotification(notification: Notification, user: Person, context: Context): Promise<ConcreteNotification> {
+async function createConcreteNotification(notification: Notification, user: Person, context: NotificationContext): Promise<ConcreteNotification> {
     if (context.uniqueId) {
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
@@ -168,8 +157,15 @@ async function createConcreteNotification(notification: Notification, user: Pers
     return concreteNotification;
 }
 
-async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, context: Context): Promise<void> {
+async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext): Promise<void> {
     debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+
+    // Remove secrets from context and enrich with user data
+    const { authToken, ...userData } = user;
+    const context: Context = {
+        ...notificationContext,
+        user: { ...userData, fullName: getFullName(user) }
+    };
 
     try {
         const channel = channels.find(it => it.canSend(notification.id));
@@ -179,7 +175,7 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification.id, context);
+        await channel.send(notification.id, user, context);
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
