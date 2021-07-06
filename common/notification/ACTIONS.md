@@ -151,3 +151,109 @@ Two days before the course the participants are reminded
 }
 ```
 
+### certificate_pupil_approval
+
+*description*
+
+Send mail to pupil to approve certificate
+
+*context*
+
+```typescript
+{
+     certificateLink: string,
+     pupilFirstname: pupil.firstname,
+     studentFirstname: student.firstname
+}
+```
+
+### certificate_student_sign
+
+*description*
+
+Send mail to student to sign certificate
+
+*context*
+
+```typescript
+{
+     certificateLink: string,
+     pupilFirstname: pupil.firstname,
+     studentFirstname: student.firstname
+}
+```
+
+### coachee_matching_notify
+
+*description*
+
+Send mail to coachee to notify after matching
+
+*context*
+
+```typescript
+{
+    coacheeFirstname: coachee.firstname,
+    coachFirstname: coach.firstname,
+    coachEmail: coach.email,
+    subjects: projectFieldsString,
+    callURL: callURL 
+}
+```
+
+### coach_matching_notify
+
+*description*
+
+Send mail to coach to notify after matching
+
+*context*
+
+```typescript
+{
+    coacheeFirstname: coachee.firstname,
+    coachFirstname: coach.firstname,
+    coacheeEmail: coachee.email,
+    coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
+    subjects: projectFieldsString,
+    callURL: callURL 
+}
+```
+
+### tutee_matching_notify
+
+*description*
+
+Send mail to tutee to notify after matching
+
+*context*
+
+```typescript
+{
+    pupilFirstname: tutee.firstname,
+    studentFirstname: tutor.firstname,
+    studentEmail: tutor.email,
+    subjects: subjectsString,
+    callURL: callURL
+}
+```
+
+### tutor_matching_notify
+
+*description*
+
+Send mail to tutor to notify after matching
+
+*context*
+
+```typescript
+{
+    pupilFirstname: tutee.firstname,
+    personFirstname: tutor.firstname,
+    pupilEmail: tutee.email,
+    pupilGrade: `${tutee.gradeAsNumber()}. Klasse`,
+    subjects: subjectsString,
+    callURL: callURL
+}
+```
+
