@@ -150,4 +150,34 @@ Two days before the course the participants are reminded
     firstLectureTime: date
 }
 ```
+### coach_project_match_dissolved
+
+*description* 
+
+Notifies the (remaining) coach that the project match has been dissolved. 
+
+*context*
+
+```typescript
+{
+    coachFirstname: to.firstname,
+    coacheeFirstname: dissolver.firstname
+}
+```
+### coachee_project_match_dissolved
+
+*description* 
+
+Notifies the (remaining) coachee that the project match has been dissolved.
+
+*context*
+
+```typescript
+{
+    coachFirstname: to.firstname,
+    coacheeFirstname: dissolver.firstname
+}
+```
+
+
 

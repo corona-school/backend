@@ -16,6 +16,7 @@ import {
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
 import { generateToken, sendVerificationMail } from "../../../jobs/periodic/fetch/utils/verification";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -262,6 +263,10 @@ export async function sendLoginTokenMail(person: Person, token: string, redirect
             dashboardURL: dashboardURL
         });
         await sendTemplateMail(mail, person.email);
+        await Notification.actionTaken(person, "email_verification_started", {
+            personFirstname: person.firstname,
+            dashboardURL: dashboardURL
+        });
     } catch (e) {
         logger.error("Can't send login token mail: ", e.message);
         logger.debug(e);
