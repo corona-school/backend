@@ -594,9 +594,12 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
 
     const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
     const mail = mailjetTemplates.CERTIFICATESIGNED({
-        certificateLink,
-        pupilFirstname: certificate.pupil.firstname,
-        studentFirstname: certificate.student.firstname
+
     }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
+    await Notification.actionTaken(certificate.student, "certificate_student_sign", {
+    certificateLink,
+    pupilFirstname: certificate.pupil.firstname,
+    studentFirstname: certificate.student.firstname});
+
 }
