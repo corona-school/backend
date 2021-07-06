@@ -192,8 +192,7 @@ Send mail to pupil to approve certificate
 ```typescript
 {
      certificateLink: string,
-     pupilFirstname: pupil.firstname,
-     studentFirstname: student.firstname
+     student: student
 }
 ```
 
@@ -208,8 +207,7 @@ Send mail to student to sign certificate
 ```typescript
 {
      certificateLink: string,
-     pupilFirstname: pupil.firstname,
-     studentFirstname: student.firstname
+     pupil: pupil
 }
 ```
 
@@ -291,14 +289,12 @@ Send mail to tutor to notify after matching
 
 *description* 
 
-Unsure: Ask pupil if he is interested in the match for tutoring 
+Ask pupil if he is interested in the match for tutoring 
 
 *context*
 
 ```typescript
 {
-    firstName: pupil.firstname,
-    authToken: pupil.authToken,
     confirmationURL: confirmationRequest.confirmationURL(),
     refusalURL: confirmationRequest.refusalURL()
 }
@@ -308,14 +304,12 @@ Unsure: Ask pupil if he is interested in the match for tutoring
 
 *description* 
 
-Unsure: Remind pupil to confirm interest in tutoring 
+Remind pupil to confirm interest in tutoring 
 
 *context*
 
 ```typescript
 {
-    firstName: pupil.firstname,
-    authToken: pupil.authToken,
     confirmationURL: confirmationRequest.confirmationURL(),
     refusalURL: confirmationRequest.refusalURL()
 }

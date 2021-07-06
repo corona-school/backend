@@ -20,8 +20,6 @@ export async function sendTutoringConfirmationRequest(confirmationRequest: Pupil
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
     await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request", {
-        firstName: confirmationRequest.pupil.firstname,
-        authToken: confirmationRequest.pupil.authToken,
         confirmationURL: confirmationRequest.confirmationURL(),
         refusalURL: confirmationRequest.refusalURL()
     });
@@ -36,8 +34,6 @@ export async function sendTutoringConfirmationRequestReminder(confirmationReques
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATIONREMINDER, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
     await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request_reminder", {
-        firstName: confirmationRequest.pupil.firstname,
-        authToken: confirmationRequest.pupil.authToken,
         confirmationURL: confirmationRequest.confirmationURL(),
         refusalURL: confirmationRequest.refusalURL()
     });
