@@ -1295,7 +1295,7 @@ export async function setupDevDB() {
     await prisma.notification.createMany({
         data: [
             {
-                id: 1,
+                id: 3026265, /* notification_system_test */
                 active: true,
                 description: 'TEST: Instant notification on registration',
                 recipient: NotificationRecipient.USER,

@@ -31,6 +31,13 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
     });
 
     await sendTemplateMail(mail, tutee.email);
+    await Notification.actionTaken(tutee, "tutee_matching_notify", {
+     pupilFirstname: tutee.firstname,
+     studentFirstname: tutor.firstname,
+     studentEmail: tutor.email,
+     subjects: subjectsString,
+     callURL: callURL
+     });
 }
 
 export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
@@ -46,4 +53,12 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
     });
 
     await sendTemplateMail(mail, tutor.email);
+    await Notification.actionTaken(tutor, "tutor_matching_notify", {
+    pupilFirstname: tutee.firstname,
+    personFirstname: tutor.firstname,
+    pupilEmail: tutee.email,
+    pupilGrade: `${tutee.gradeAsNumber()}. Klasse`,
+    subjects: subjectsString,
+    callURL: callURL
+    });
 }
