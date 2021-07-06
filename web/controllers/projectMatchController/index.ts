@@ -151,8 +151,7 @@ export async function sendProjectMatchDissolvedMail(to: Person, dissolver: Perso
                 coachFirstname: dissolver.firstname
             });
             await Notification.actionTaken(to, "coachee_project_match_dissolved", {
-                coacheeFirstname: to.firstname,
-                    coachFirstname: dissolver.firstname
+                coach: dissolver
             });
         } else {
             // Send mail to (remaining) coach
@@ -161,8 +160,7 @@ export async function sendProjectMatchDissolvedMail(to: Person, dissolver: Perso
                 coacheeFirstname: dissolver.firstname
             });
             await Notification.actionTaken(to, "coach_project_match_dissolved", {
-                coachFirstname: to.firstname,
-                coacheeFirstname: dissolver.firstname
+                coachee: dissolver
             });
         }
         //send out mail...

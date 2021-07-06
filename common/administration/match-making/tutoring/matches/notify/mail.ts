@@ -1,6 +1,9 @@
 import { EntityManager } from "typeorm";
 import { Match } from "../../../../../entity/Match";
 import { mailjetTemplates, sendTemplateMail } from "../../../../../mails";
+import * as Notification from "../../../../../../common/notification";
+import { getPupilGradeAsString } from "../../../../../../common/pupil";
+
 
 
 async function commonMailParameters(match: Match) {
@@ -32,11 +35,9 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
 
     await sendTemplateMail(mail, tutee.email);
     await Notification.actionTaken(tutee, "tutee_matching_notify", {
-     pupilFirstname: tutee.firstname,
-     studentFirstname: tutor.firstname,
-     studentEmail: tutor.email,
-     subjects: subjectsString,
-     callURL: callURL
+        student: tutor,
+        subjects: subjectsString,
+        callURL: callURL
      });
 }
 
@@ -54,11 +55,9 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
 
     await sendTemplateMail(mail, tutor.email);
     await Notification.actionTaken(tutor, "tutor_matching_notify", {
-    pupilFirstname: tutee.firstname,
-    personFirstname: tutor.firstname,
-    pupilEmail: tutee.email,
-    pupilGrade: `${tutee.gradeAsNumber()}. Klasse`,
-    subjects: subjectsString,
-    callURL: callURL
+        pupil: tutee,
+        pupilGrade: getPupilGradeAsString(tutee),
+        subjects: subjectsString,
+        callURL: callURL
     });
 }

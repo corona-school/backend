@@ -3,6 +3,7 @@ import { ProjectMatch } from "../../../../entity/ProjectMatch";
 import { getOfficialProjectFieldName } from "../../../../jufo/projectFields";
 import { mailjetTemplates, sendTemplateMail } from "../../../../mails";
 import * as Notification from "../../../../../common/notification";
+import { getPupilGradeAsString } from "../../../../../common/pupil";
 
 
 
@@ -35,9 +36,9 @@ async function notifyCoacheeAboutMatch(projectMatch: ProjectMatch, manager: Enti
 
     await sendTemplateMail(mail, coachee.email);
     await Notification.actionTaken(coachee, "coachee_matching_notify", {
-    coach: coach,
-    subjects: projectFieldsString,
-    callURL: callURL
+        coach: coach,
+        subjects: projectFieldsString,
+        callURL: callURL
     });
 }
 async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: EntityManager) {
@@ -47,7 +48,7 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
         coacheeFirstname: coachee.firstname,
         coachFirstname: coach.firstname,
         coacheeEmail: coachee.email,
-        coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
+        coacheeGrade: getPupilGradeAsString(coachee),
         subjects: projectFieldsString,
         callURL: callURL
     });
@@ -55,7 +56,7 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
     await sendTemplateMail(mail, coach.email);
     await Notification.actionTaken(coach, "coach_matching_notify", {
         coachee: coachee,
-        coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
+        coacheeGrade: getPupilGradeAsString(coachee),
         subjects: projectFieldsString,
         callURL: callURL
     });

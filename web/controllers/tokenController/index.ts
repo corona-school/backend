@@ -264,7 +264,6 @@ export async function sendLoginTokenMail(person: Person, token: string, redirect
         });
         await sendTemplateMail(mail, person.email);
         await Notification.actionTaken(person, "email_verification_started", {
-            personFirstname: person.firstname,
             dashboardURL: dashboardURL
         });
     } catch (e) {
