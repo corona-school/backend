@@ -1313,7 +1313,7 @@ export async function setupDevDB() {
                 onActions: ["test_start"]
             },
             {
-                id: 3,
+                id: 3026840, /* notification_system_test_reminder */
                 active: true,
                 description: 'TEST: One Minute delayed notification on registration',
                 recipient: NotificationRecipient.USER,
