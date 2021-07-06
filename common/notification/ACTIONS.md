@@ -155,7 +155,7 @@ Two days before the course the participants are reminded
 
 *description* 
 
-Unsure: Ask pupil if he is interested in the match 
+Unsure: Ask pupil if he is interested in the match for tutoring 
 
 *context*
 
@@ -172,7 +172,7 @@ Unsure: Ask pupil if he is interested in the match
 
 *description* 
 
-Unsure: Remind pupil.
+Unsure: Remind pupil to confirm interest in tutoring 
 
 *context*
 
@@ -184,3 +184,35 @@ Unsure: Remind pupil.
     refusalURL: confirmationRequest.refusalURL()
 }
 ```
+
+### feedback_request_student
+
+*description* 
+
+Ask student for feedback
+
+*context*
+
+```typescript
+{
+    studentFirstName: student.firstname,
+    pupilFirstName: pupil.firstname
+}
+```
+
+### feedback_request_student
+
+*description* 
+
+Ask pupil for feedback 
+
+*context*
+
+```typescript
+{
+    studentFirstName: student.firstname,
+    pupilFirstName: pupil.firstname
+}
+```
+
+### 
