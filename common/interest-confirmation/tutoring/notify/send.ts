@@ -4,6 +4,7 @@ import { mailjetTemplates, sendTemplateMail } from "../../../mails";
 import { getTransactionLog } from "../../../transactionlog";
 import PupilInterestConfirmationRequestReminderSentEvent from "../../../transactionlog/types/PupilInterestConfirmationRequestReminderSentEvent";
 import PupilInterestConfirmationRequestSentEvent from "../../../transactionlog/types/PupilInterestConfirmationRequestSentEvent";
+import * as Notification from "../../../../common/notification";
 
 function createMailFromTemplate(template: typeof mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION | typeof mailjetTemplates.PUPILMATCHREQUESTCONFIRMATIONREMINDER, confirmationRequest: PupilTutoringInterestConfirmationRequest) {
     return template({
@@ -18,6 +19,12 @@ export async function sendTutoringConfirmationRequest(confirmationRequest: Pupil
     // send email
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
+    await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request", {
+        firstName: confirmationRequest.pupil.firstname,
+        authToken: confirmationRequest.pupil.authToken,
+        confirmationURL: confirmationRequest.confirmationURL(),
+        refusalURL: confirmationRequest.refusalURL()
+    });
 
     // transaction log
     const transactionLog = getTransactionLog();
@@ -28,6 +35,12 @@ export async function sendTutoringConfirmationRequestReminder(confirmationReques
     // send email
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATIONREMINDER, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
+    await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request_reminder", {
+        firstName: confirmationRequest.pupil.firstname,
+        authToken: confirmationRequest.pupil.authToken,
+        confirmationURL: confirmationRequest.confirmationURL(),
+        refusalURL: confirmationRequest.refusalURL()
+    });
 
     // transaction log
     const transactionLog = getTransactionLog();

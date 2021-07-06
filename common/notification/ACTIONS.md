@@ -151,3 +151,36 @@ Two days before the course the participants are reminded
 }
 ```
 
+### tutoring_pupil_confirmation_request
+
+*description* 
+
+Unsure: Ask pupil if he is interested in the match 
+
+*context*
+
+```typescript
+{
+    firstName: pupil.firstname,
+    authToken: pupil.authToken,
+    confirmationURL: confirmationRequest.confirmationURL(),
+    refusalURL: confirmationRequest.refusalURL()
+}
+```
+
+### tutoring_pupil_confirmation_request_reminder
+
+*description* 
+
+Unsure: Remind pupil.
+
+*context*
+
+```typescript
+{
+    firstName: pupil.firstname,
+    authToken: pupil.authToken,
+    confirmationURL: confirmationRequest.confirmationURL(),
+    refusalURL: confirmationRequest.refusalURL()
+}
+```
