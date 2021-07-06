@@ -177,9 +177,9 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
-                sentAt: new Date()
-                // TODO: drop the context, as it is irrelevant from now on, and only eats up memory
-                // context: null
+                sentAt: new Date(),
+                // drop the context, as it is irrelevant from now on, and only eats up memory
+                context: {}
             },
             where: {
                 id: concreteNotification.id
