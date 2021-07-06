@@ -11,16 +11,16 @@ export type Email = `${string}@${string}.${string}`;
 // Prisma exports lowercase types, but we want capitalized types
 export {
     concrete_notification as ConcreteNotification,
-    notification as Notification,
-    concrete_notification_state as ConcreteNotificationState
+    notification as Notification
 } from '.prisma/client';
 
+export { ConcreteNotificationState } from "../entity/ConcreteNotification";
 
 
 // Previously the templates had a lot of repeating fields, such as "userFirstName"
 // by generalizing into a context that is partially available for each Notification, this was cleaned up
 export interface NotificationContext {
-    uniqueId: string;
+    uniqueId?: string; // if present, the same context (by uniqueId) will not be sent to the same user twice
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress? : Email;
@@ -30,13 +30,14 @@ export interface NotificationContext {
 }
 
 // The user is always known, also for notifications sent by Actions / Reminders
+// However we keep the authToken private from the external dependencies, and also pass the fullName as string
 export interface Context extends NotificationContext {
-    user: Person;
+    user: Omit<Person, "authToken" | "fullName"> & { fullName: string; };
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
     type: "mailjet" /* | ... */;
-    send(id: NotificationID, context: Context): Promise<any>;
+    send(id: NotificationID, to: Person, context: Context): Promise<any>;
     canSend(id: NotificationID): boolean;
 }

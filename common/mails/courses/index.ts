@@ -7,6 +7,9 @@ import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
 import { DEFAULTSENDERS } from "../config";
 import { CourseGuest } from "../../entity/CourseGuest";
+import * as Notification from "../../../common/notification";
+import { Person } from '../../../common/entity/Person';
+import { getFullName } from "../../../common/user";
 
 const logger = getLogger();
 
@@ -35,10 +38,16 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
             firstLectureTime: moment(firstLecture).format("HH:mm")
         });
         await sendTemplateMail(mail, participant.email);
+        await Notification.actionTaken(participant, "subcourse_participant_cancelled", {
+            participantFirstname: participant.firstname,
+            courseName: course.name,
+            firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+            firstLectureTime: moment(firstLecture).format("HH:mm")
+        });
     }
 }
 
-export async function sendCourseUpcomingReminderInstructor(instructor: {firstname: string, email: string}, course: {name: string}, firstLecture: Date) {
+export async function sendCourseUpcomingReminderInstructor(instructor: Person, course: {name: string}, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
         participantFirstname: instructor.firstname,
         courseName: course.name,
@@ -46,9 +55,14 @@ export async function sendCourseUpcomingReminderInstructor(instructor: {firstnam
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, instructor.email);
+    await Notification.actionTaken(instructor, "course_instructor_reminder", {
+        courseName: course.name,
+        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+        firstLectureTime: moment(firstLecture).format("HH:mm")
+    });
 }
 
-export async function sendCourseUpcomingReminderParticipant(participant: {firstname: string, email: string}, course: {name: string}, firstLecture: Date) {
+export async function sendCourseUpcomingReminderParticipant(participant: Person, course: {name: string}, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,
@@ -56,6 +70,12 @@ export async function sendCourseUpcomingReminderParticipant(participant: {firstn
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, participant.email);
+    await Notification.actionTaken(participant, "course_participant_reminder", {
+        participantFirstname: participant.firstname,
+        courseName: course.name,
+        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+        firstLectureTime: moment(firstLecture).format("HH:mm")
+    });
 }
 
 export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
@@ -98,10 +118,10 @@ export async function sendParticipantToInstructorMail(participant: Pupil, instru
         messageBody, //email text
         DEFAULTSENDERS.noreply, //sender address
         instructor.email, //receiver
-        `${participant.fullName()} via Lern-Fair`, //sender name
-        `${instructor.fullName()}`, //receiver name
+        `${getFullName(participant)} via Lern-Fair`, //sender name
+        `${getFullName(instructor)}`, //receiver name
         participant.email, //replyTo address
-        `${participant.fullName()}` //replyTo name
+        `${getFullName(participant)}` //replyTo name
     );
 }
 

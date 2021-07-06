@@ -20,6 +20,7 @@ import { TutorJufoParticipationIndication } from '../../../common/jufo/participa
 import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { isArray } from "class-validator";
 import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -64,7 +65,7 @@ export async function postTutorHandler(req: Request, res: Response) {
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
             (!req.body.supportsInDaZ || typeof req.body.supportsInDaz == 'boolean')
-        ){
+        ) {
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
                     for (let i = 0; i < req.body.subjects.length; i++) {
@@ -118,16 +119,16 @@ export async function postTutorHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutor registration with jufoPastParticipationInfo requires the info on a past jufo participation to be a string`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutor registration with isProjectCoach has invalid parameters");
                 }
             }
 
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -305,6 +306,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     try {
         await entityManager.save(Student, tutor);
         await sendVerificationMail(tutor, apiTutor.redirectTo);
+        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutor));
         return 204;
     } catch (e) {
@@ -354,7 +356,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
             (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')
-        ){
+        ) {
 
             if (req.body.isTutee) {
                 if (req.body.subjects instanceof Array) {
@@ -396,15 +398,15 @@ export async function postTuteeHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutee registration with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutee registration with isProjectCoachee has invalid parameters");
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -617,6 +619,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiTutee.redirectTo);
+        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -764,6 +767,7 @@ async function registerMentor(apiMentor: ApiAddMentor): Promise<number> {
     try {
         await entityManager.save(Mentor, mentor);
         await sendVerificationMail(mentor, apiMentor.redirectTo);
+        await Notification.actionTaken(mentor, "mentor_registration_started", { redirectTo: apiMentor.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(mentor));
         return 204;
     } catch (e) {
@@ -854,15 +858,15 @@ export async function postStateTuteeHandler(req: Request, res: Response) {
                         status = 400;
                         logger.error(`Tutee registration (for specific state) with isProjectCoachee has invalid value for projectMemberCount: ${projectMemberCount}`);
                     }
-                }
-                else {
+                } else {
                     status = 400;
                     logger.error("Tutee registration (for specific state) with isProjectCoachee has invalid parameters");
                 }
             }
 
-            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string")
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
                 status = 400;
+            }
 
             if (status < 300) {
                 // try registering
@@ -1012,8 +1016,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
         }
         tutee.state = school.state;
 
-    }
-    catch {
+    } catch {
         logger.error("Invalid email address for teacher email during Tutee registration (for specific state)");
         return 400;
     }
@@ -1022,6 +1025,7 @@ async function registerCooperationTutee(apiStateTutee: ApiAddCooperationTutee): 
     try {
         await entityManager.save(Pupil, tutee);
         await sendVerificationMail(tutee, apiStateTutee.redirectTo);
+        await Notification.actionTaken(tutee, "cooperation_tutee_registration_started", { redirectTo: apiStateTutee.redirectTo });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
@@ -1066,8 +1070,7 @@ export async function getSchoolsHandler(req: Request, res: Response) {
         if (req.params.state && !state) {
             logger.error(`Given State "${req.params.state}" is unknown`);
             status = 400;
-        }
-        else {
+        } else {
             let obj = await getSchools(state);
 
             if (typeof obj == 'number') {
@@ -1097,7 +1100,7 @@ async function getSchools(state?: State): Promise<Array<ApiSchoolInfo> | number>
             }
         });
 
-        return schools.map( s => {
+        return schools.map(s => {
             return {
                 name: s.name,
                 emailDomain: s.emailDomain

@@ -15,8 +15,9 @@ export function invalidateCache() {
 }
 
 export async function getNotifications(): Promise<NotificationsPerAction> {
-    if (_notificationsPerAction)
+    if (_notificationsPerAction) {
         return _notificationsPerAction;
+    }
 
     const result = _notificationsPerAction = new Map();
 
@@ -24,15 +25,17 @@ export async function getNotifications(): Promise<NotificationsPerAction> {
 
     for (const notification of notifications) {
         for (const sendAction of notification.onActions) {
-            if (!result.has(sendAction))
+            if (!result.has(sendAction)) {
                 result.set(sendAction, { toSend: [], toCancel: [] });
+            }
 
             result.get(sendAction).toSend.push(notification);
         }
 
         for (const cancelAction of notification.cancelledOnAction) {
-            if (!result.has(cancelAction))
+            if (!result.has(cancelAction)) {
                 result.set(cancelAction, { toSend: [], toCancel: [] });
+            }
 
             result.get(cancelAction).toCancel.push(notification);
         }
@@ -62,8 +65,9 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
         where: { id }
     });
 
-    if (!matched)
+    if (!matched) {
         throw new Error(`Failed to toggle activation of Notification(${id}) as it was not found`);
+    }
 
     invalidateCache();
 }
@@ -76,8 +80,9 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
         where: { id }
     });
 
-    if (!matched)
+    if (!matched) {
         throw new Error(`Failed to toggle activation of Notification(${id}) as it was not found`);
+    }
 
     invalidateCache();
 }

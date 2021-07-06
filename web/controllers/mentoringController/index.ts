@@ -6,7 +6,7 @@ import {
 } from './format';
 import { getTransactionLog } from '../../../common/transactionlog';
 import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
-import { contactEmailAddress as mentoringContactEmailAddress } from '../../../common/mentoring/categories';
+import { contactEmailAddress as mentoringContactEmailAddress, getFriendlyName } from '../../../common/mentoring/categories';
 import mailjet from '../../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../../common/mails/config';
 import ContactMentorEvent from '../../../common/transactionlog/types/ContactMentorEvent';
@@ -91,7 +91,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
     const receiverAddress = mentoringContactEmailAddress(mentoringCategory);
 
     await mailjet.sendPure(
-        apiContactMentor.subject ?? "",
+        apiContactMentor.subject ?? `Nachricht über Mentoring-Kontaktformular | Kategorie: ${getFriendlyName(mentoringCategory)}`,
         apiContactMentor.emailText,
         DEFAULTSENDERS.noreply,
         receiverAddress,
@@ -137,7 +137,7 @@ async function postContactMentor(student: Student, apiContactMentor: ApiContactM
 export async function getMaterial(req: Request, res: Response) {
     let status = 200;
     try {
-        if (res.locals.user instanceof Student){
+        if (res.locals.user instanceof Student) {
             const { type, location } = req.query;
             if (!(location in material)) {
                 status = 400;
@@ -148,15 +148,15 @@ export async function getMaterial(req: Request, res: Response) {
 
             if (type === "files") {
                 let folder = await listFiles(material[location]);
-                return res.status(status).json(folder).end();
+                return res.status(status).json(folder)
+                    .end();
             }
 
             if (type === "playlist") {
                 let playlist = await listVideos(material[location]);
-                return res.status(status).json(playlist).end();
-            }
-
-            else {
+                return res.status(status).json(playlist)
+                    .end();
+            } else {
                 status = 400;
                 logger.warn("Invalid material type in GET /mentoring/material");
                 logger.debug(location);
@@ -197,7 +197,7 @@ export async function getMaterial(req: Request, res: Response) {
 export async function getFeedbackCallData(req: Request, res: Response) {
     let status = 200;
     try {
-        if (res.locals.user instanceof Student){
+        if (res.locals.user instanceof Student) {
             const peerToPeerCall: PeerToPeerCall = await getPeerToPeerCallDate();
 
             if (!peerToPeerCall) {
@@ -206,7 +206,8 @@ export async function getFeedbackCallData(req: Request, res: Response) {
                 return res.status(status).end();
             }
 
-            return res.status(status).json(peerToPeerCall).end();
+            return res.status(status).json(peerToPeerCall)
+                .end();
         } else {
             status = 403;
             logger.warn("A non-student wanted to access student feedback call data.");

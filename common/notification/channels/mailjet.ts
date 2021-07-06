@@ -2,25 +2,25 @@ import { Channel, Context, NotificationID } from "../types";
 import * as mailjetAPI from "node-mailjet";
 import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
+import { Person } from "../../entity/Person";
 
 const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    send: (id: NotificationID, context: Context) => {
-        const message: mailjetAPI.Email.SendParamsMessage = {
+    async send(id: NotificationID, to: Person, context: Context) {
+        const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
                 Email: undefined
             },
             To: [
                 {
-                    Email: context.user.email
+                    Email: to.email
                 }
             ],
             TemplateID: id,
             TemplateLanguage: true,
             Variables: context,
-            Subject: context.subject,
             Attachments: context.attachments
         };
 
@@ -31,19 +31,21 @@ export const mailjetChannel: Channel = {
         }
 
         let sandboxMode = false;
+
         if (process.env.MAILJET_LIVE === "TEST") {
-            message.Subject = `[TEST] ${message.Subject}`;
-            logger.warn("Mailjet API sending in TEST/DEV MODE!");
-        }
-        //if mailjet is not set to live (via envs), always switch to sandbox, no matter what
-        else if (process.env.MAILJET_LIVE != "1") {
-            logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
+            message.Subject = `TESTEMAIL`;
+            logger.warn(`Mail is in Test Mode`);
+        } else if (process.env.MAILJET_LIVE != "1") {
+            logger.warn(`Mail is in Sandbox Mode`);
             sandboxMode = true;
+        }
+
+        if (!mailjetSmtp.auth.user || !mailjetSmtp.auth.pass) {
+            throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
         }
 
         const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
 
-        //send actual email
         let requestOptions: mailjetAPI.Email.SendParams = {
             SandboxMode: sandboxMode,
             Messages: [
@@ -51,10 +53,11 @@ export const mailjetChannel: Channel = {
             ]
         };
 
-        //log what is sent to mailjet, so we can better debug some problems with mails
-        logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
+        logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
 
-        return mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+        await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+
+        logger.info(`Sent Mail(${message.TemplateID})`);
     },
 
     canSend: (id: NotificationID) => {

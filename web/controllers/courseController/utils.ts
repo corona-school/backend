@@ -21,7 +21,8 @@ function subcourseFinished(apiSubcourse: ApiSubcourse) {
     }
     const sortedLectures = getLecturesSorted(apiSubcourse);
     const lastLecture = sortedLectures[sortedLectures.length - 1];
-    return moment.unix(lastLecture.start).add(lastLecture.duration, "minutes").isSameOrBefore(Date.now());
+    return moment.unix(lastLecture.start).add(lastLecture.duration, "minutes")
+        .isSameOrBefore(Date.now());
 }
 
 function isJoinableSubcourse(apiSubcourse: ApiSubcourse) {

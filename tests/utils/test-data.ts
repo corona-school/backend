@@ -26,7 +26,10 @@ export interface TestableStudentProps {
 export function createStudent(props?: TestableStudentProps, id?: number): Student {
     const s = new Student();
 
-    if (id) s.id = id;
+    if (id) {
+        s.id = id;
+    }
+
 
     s.wix_id = `Student-${faker.random.uuid()}`;
     s.firstname = faker.name.firstName();
@@ -68,7 +71,9 @@ export interface TestablePupilProps {
 export function createPupil(props?: TestablePupilProps, id?: number) {
     const p = new Pupil();
 
-    if (id) p.id = id;
+    if (id) {
+        p.id = id;
+    }
 
     p.wix_id = `Pupil-${faker.random.uuid()}`;
     p.firstname = faker.name.firstName();
@@ -89,7 +94,7 @@ export function createPupil(props?: TestablePupilProps, id?: number) {
     p.openMatchRequestCount = props?.openMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
     p.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
     p.state = props?.state ?? faker.random.arrayElement(Object.values(State));
-    p.matchingPriority = props?.matchingPriority ?? faker.random.number( { min: 0 });
+    p.matchingPriority = props?.matchingPriority ?? faker.random.number({ min: 0 });
     p.setGradeAsNumber(props?.grade ?? faker.random.number({ min: 1, max: 13 }));
 
     return p;

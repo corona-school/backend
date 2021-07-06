@@ -60,4 +60,5 @@ export function stateCooperationSubdomainPart(state: State): string {
     }
 }
 
-export const allStateCooperationSubdomains = Object.values(State).map(s => stateCooperationSubdomainPart(s)).filter(s => s);
+export const allStateCooperationSubdomains = Object.values(State).map(s => stateCooperationSubdomainPart(s))
+    .filter(s => s);
