@@ -221,11 +221,9 @@ Send mail to coachee to notify after matching
 
 ```typescript
 {
-    coacheeFirstname: coachee.firstname,
-    coachFirstname: coach.firstname,
-    coachEmail: coach.email,
+    coach: coach,
     subjects: projectFieldsString,
-    callURL: callURL 
+    callURL: callURL
 }
 ```
 
@@ -239,12 +237,10 @@ Send mail to coach to notify after matching
 
 ```typescript
 {
-    coacheeFirstname: coachee.firstname,
-    coachFirstname: coach.firstname,
-    coacheeEmail: coachee.email,
+    coachee: coachee,
     coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
-    subjects: projectFieldsString,
-    callURL: callURL 
+   	subjects: projectFieldsString,
+    callURL: callURL
 }
 ```
 

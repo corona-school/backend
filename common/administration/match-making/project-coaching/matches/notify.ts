@@ -2,6 +2,8 @@ import { EntityManager } from "typeorm";
 import { ProjectMatch } from "../../../../entity/ProjectMatch";
 import { getOfficialProjectFieldName } from "../../../../jufo/projectFields";
 import { mailjetTemplates, sendTemplateMail } from "../../../../mails";
+import * as Notification from "../../../../../common/notification";
+
 
 
 async function commonMailParameters(projectMatch: ProjectMatch) {
@@ -33,9 +35,7 @@ async function notifyCoacheeAboutMatch(projectMatch: ProjectMatch, manager: Enti
 
     await sendTemplateMail(mail, coachee.email);
     await Notification.actionTaken(coachee, "coachee_matching_notify", {
-    coacheeFirstname: coachee.firstname,
-    coachFirstname: coach.firstname,
-    coachEmail: coach.email,
+    coach: coach,
     subjects: projectFieldsString,
     callURL: callURL
     });
@@ -54,12 +54,10 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
 
     await sendTemplateMail(mail, coach.email);
     await Notification.actionTaken(coach, "coach_matching_notify", {
-    coacheeFirstname: coachee.firstname,
-    coachFirstname: coach.firstname,
-    coacheeEmail: coachee.email,
-    coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
-    subjects: projectFieldsString,
-    callURL: callURL
+        coachee: coachee,
+        coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
+        subjects: projectFieldsString,
+        callURL: callURL
     });
 }
 
