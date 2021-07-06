@@ -1,0 +1,1 @@
+This folder is automatically generated during `npx prisma generate` by the typegraphql-prisma package. Please DO NOT make manual changes to the files here. If you want to make a change, COPY THE FILE into the /graphql folder, then make the changes there and change the import. 
