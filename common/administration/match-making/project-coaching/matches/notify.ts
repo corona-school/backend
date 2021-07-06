@@ -32,6 +32,13 @@ async function notifyCoacheeAboutMatch(projectMatch: ProjectMatch, manager: Enti
     });
 
     await sendTemplateMail(mail, coachee.email);
+    await Notification.actionTaken(coachee, "coachee_matching_notify", {
+    coacheeFirstname: coachee.firstname,
+    coachFirstname: coach.firstname,
+    coachEmail: coach.email,
+    subjects: projectFieldsString,
+    callURL: callURL
+    });
 }
 async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: EntityManager) {
     const { coachee, coach, callURL, projectFieldsString } = await commonMailParameters(projectMatch);
@@ -46,6 +53,14 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
     });
 
     await sendTemplateMail(mail, coach.email);
+    await Notification.actionTaken(coach, "coach_matching_notify", {
+    coacheeFirstname: coachee.firstname,
+    coachFirstname: coach.firstname,
+    coacheeEmail: coachee.email,
+    coacheeGrade: coachee.gradeAsNumber() != null ? `${coachee.gradeAsNumber()}. Klasse` : "hat die Schule bereits abgeschlossen",
+    subjects: projectFieldsString,
+    callURL: callURL
+    });
 }
 
 async function notifyMatch(projectMatch: ProjectMatch, manager: EntityManager) {
