@@ -18,7 +18,7 @@ import { Person } from '../../../common/entity/Person';
 import * as EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 import { createAutoLoginLink } from '../utils';
-
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -431,6 +431,10 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
             studentFirstname: pc.student.firstname
         });
         await sendTemplateMail(mail, pc.pupil.email);
+        await Notification.actionTaken(pc.pupil, "certificate_pupil_approval", {
+            certificateLink,
+            pupilFirstname: pc.pupil.firstname,
+            studentFirstname: pc.student.firstname });
     }
 
     return pc;
