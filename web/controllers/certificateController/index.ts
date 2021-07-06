@@ -599,7 +599,8 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
     }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
     await Notification.actionTaken(certificate.student, "certificate_student_sign", {
-    certificateLink,
-    pupil: certificate.pupil});
+        certificateLink,
+        pupil: certificate.pupil
+    });
 
 }

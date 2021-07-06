@@ -38,7 +38,7 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
         student: tutor,
         subjects: subjectsString,
         callURL: callURL
-     });
+    });
 }
 
 export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
