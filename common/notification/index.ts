@@ -160,11 +160,9 @@ async function createConcreteNotification(notification: Notification, user: Pers
 async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext): Promise<void> {
     debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
-    // Remove secrets from context and enrich with user data
-    const { authToken, ...userData } = user;
     const context: Context = {
         ...notificationContext,
-        user: { ...userData, fullName: getFullName(user) }
+        user: { ...user, fullName: getFullName(user) }
     };
 
     try {
