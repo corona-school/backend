@@ -461,8 +461,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
         await sendTemplateMail(mail, pc.pupil.email);
         await Notification.actionTaken(pc.pupil, "certificate_pupil_approval", {
             certificateLink,
-            pupilFirstname: pc.pupil.firstname,
-            studentFirstname: pc.student.firstname });
+            student: pc.student });
     }
 
     return pc;
@@ -594,12 +593,13 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
 
     const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
     const mail = mailjetTemplates.CERTIFICATESIGNED({
-
+        certificateLink,
+        pupilFirstname: certificate.pupil.firstname,
+        studentFirstname: certificate.student.firstname
     }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
     await Notification.actionTaken(certificate.student, "certificate_student_sign", {
     certificateLink,
-    pupilFirstname: certificate.pupil.firstname,
-    studentFirstname: certificate.student.firstname});
+    pupil: certificate.pupil});
 
 }
