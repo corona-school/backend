@@ -233,7 +233,7 @@ Send mail to student to sign certificate
 
 ## Tutoring
 
-### tutee_matching_notify
+### tutee_matching_success
 
 *description*
 
@@ -249,7 +249,7 @@ Send mail to tutee to notify after matching
 }
 ```
 
-### tutor_matching_notify
+### tutor_matching_success
 
 *description*
 
