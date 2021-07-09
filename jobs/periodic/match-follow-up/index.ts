@@ -68,7 +68,6 @@ async function sendFollowUpsToStudents(manager: EntityManager, matches: Match[])
     try {
         for (const m of matches) {
             await sendMatchFollowUpStudent(m.student, m.pupil);
-            await Notification.actionTaken(m.student, "student_match_follow_up", { pupil: m.pupil });
             m.followUpToStudentMail = true;
             await manager.save(Match, m);
         }
@@ -85,7 +84,6 @@ async function sendFollowUpsToPupils(manager: EntityManager, matches: Match[]) {
     try {
         for (const m of matches) {
             await sendMatchFollowUpPupil(m.student, m.pupil);
-            await Notification.actionTaken(m.pupil, "pupil_match_follow_up", { student: m.student });
             m.followUpToPupilMail = true;
             await manager.save(Match, m);
         }

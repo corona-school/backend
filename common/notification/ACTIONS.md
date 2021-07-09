@@ -42,6 +42,8 @@ user: {
 
 The following actions are implemented with their additional context:
 
+## Onboarding
+
 ### student_registration_started
 
 *description* 
@@ -70,35 +72,36 @@ Triggered when the user registers as a pupil.
 }
 ```
 
-### student_match_follow_up
+### mentor_registration_started
 
 *description* 
 
-Reminder send seven days after initial match 
+Triggered when the user registers as a Mentor.
 
 *context*
 
 ```ts
 {
-    pupil: pupil;
+    redirectTo?: string;
 }
 ```
 
-### pupil_match_follow_up
+### cooperation_tutee_registration_started
 
 *description* 
 
-Reminder send seven days after initial match 
+Triggered when the user registers as a cooperation tutee.
 
 *context*
 
 ```ts
 {
-    student: student;
+    redirectTo?: string;
 }
 ```
+## Courses
 
-### subcourse_participant_cancelled
+### participant_subcourse_cancelled
 
 *description* 
 
@@ -108,14 +111,13 @@ Inform participants that subcourse was cancelled
 
 ```typescript
 {
-    participantFirstname: string,
     courseName: string,
-    firstLectureDate: date,
-    firstLectureTime: date
+    firstLectureDate: string /* DD.MM.YYYY */,
+    firstLectureTime: string /* HH:MM */
 }
 ```
 
-### course_instructor_reminder
+### instructor_course_reminder
 
 *description* 
 
@@ -125,31 +127,17 @@ Two days before the course the instructors are reminded
 
 ```typescript
 {
-    participantFirstname: string,
     courseName: string,
-    firstLectureDate: date,
-    firstLectureTime: date
+    firstLectureDate: string /* DD.MM.YYYY */,
+    firstLectureTime: string /* HH:MM */
 }
 ```
 
 it is on purpose that it says participant firstname for the instructor.... 
 
-### course_participant_reminder
 
-*description* 
+## Project Coaching
 
-Two days before the course the participants are reminded 
-
-*context*
-
-```typescript
-{
-    participantFirstname: string,
-    courseName: string,
-    firstLectureDate: date,
-    firstLectureTime: date
-}
-```
 ### coach_project_match_dissolved
 
 *description* 
@@ -160,8 +148,7 @@ Notifies the (remaining) coach that the project match has been dissolved.
 
 ```typescript
 {
-    coachFirstname: to.firstname,
-    coacheeFirstname: dissolver.firstname
+    coachee: User;
 }
 ```
 ### coachee_project_match_dissolved
@@ -174,14 +161,47 @@ Notifies the (remaining) coachee that the project match has been dissolved.
 
 ```typescript
 {
-    coachFirstname: to.firstname,
-    coacheeFirstname: dissolver.firstname
+    coach: User;
 }
 ```
 
 
+### coachee_project_match_success
 
-### certificate_pupil_approval
+*description*
+
+Send mail to coachee to notify after matching
+
+*context*
+
+```typescript
+{
+    coach: User,
+    subjects: string,
+    callURL: string
+}
+```
+
+### coach_project_match_success
+
+*description*
+
+Send mail to coach to notify after matching
+
+*context*
+
+```typescript
+{
+    coachee: User,
+   	coacheeGrade: string,
+    subjects: string,
+    callURL: string
+}
+```
+
+## Certificates
+
+### pupil_certificate_approval
 
 *description*
 
@@ -192,11 +212,11 @@ Send mail to pupil to approve certificate
 ```typescript
 {
      certificateLink: string,
-     student: student
+     student: User
 }
 ```
 
-### certificate_student_sign
+### student_certificate_sign
 
 *description*
 
@@ -207,42 +227,11 @@ Send mail to student to sign certificate
 ```typescript
 {
      certificateLink: string,
-     pupil: pupil
+     pupil: User
 }
 ```
 
-### coachee_matching_notify
-
-*description*
-
-Send mail to coachee to notify after matching
-
-*context*
-
-```typescript
-{
-    coach: coach,
-    subjects: projectFieldsString,
-    callURL: callURL
-}
-```
-
-### coach_matching_notify
-
-*description*
-
-Send mail to coach to notify after matching
-
-*context*
-
-```typescript
-{
-    coachee: coachee,
-   	coacheeGrade: getPupilGradeAsString(coachee),
-    subjects: projectFieldsString,
-    callURL: callURL
-}
-```
+## Tutoring
 
 ### tutee_matching_notify
 
@@ -254,9 +243,9 @@ Send mail to tutee to notify after matching
 
 ```typescript
 {
-    student: tutor,
-    subjects: subjectsString,
-    callURL: callURL
+    student: User,
+    subjects: string,
+    callURL: string
 }
 ```
 
@@ -270,14 +259,14 @@ Send mail to tutor to notify after matching
 
 ```typescript
 {
-    pupil: tutee,
-    pupilGrade: getPupilGradeAsString(tutee),
-    subjects: subjectsString,
-    callURL: callURL
+    pupil: User,
+    pupilGrade: string,
+    subjects: string,
+    callURL: string
 }
 ```
 
-### tutoring_pupil_confirmation_request
+### tutee_matching_confirm_interest
 
 *description* 
 
@@ -287,25 +276,12 @@ Ask pupil if he is interested in the match for tutoring
 
 ```typescript
 {
-    confirmationURL: confirmationRequest.confirmationURL(),
-    refusalURL: confirmationRequest.refusalURL()
+    confirmationURL: string,
+    refusalURL: string
 }
 ```
 
-### tutoring_pupil_confirmation_request_reminder
-
-*description* 
-
-Remind pupil to confirm interest in tutoring 
-
-*context*
-
-```typescript
-{
-    confirmationURL: confirmationRequest.confirmationURL(),
-    refusalURL: confirmationRequest.refusalURL()
-}
-```
+## Feedback
 
 ### feedback_request_student
 
@@ -317,11 +293,11 @@ Ask student for feedback
 
 ```typescript
 {
-    pupilFirstName: pupil.firstname
+    pupil: User
 }
 ```
 
-### feedback_request_student
+### feedback_request_pupil
 
 *description* 
 
@@ -331,21 +307,23 @@ Ask pupil for feedback
 
 ```typescript
 {
-    pupilFirstName: pupil.firstname
+    student: User
 }
 ```
 
-### email_verification_started
+## Various
+
+### user_login_email
 
 *description* 
 
-send Login Token 
+The user tries to log in, a link is supposed to be sent to him for login to the dashboard. 
 
 *context*
 
 ```typescript
 {
-    dashboardURL: dashboardURL
+    dashboardURL: string
 }
 ```
 

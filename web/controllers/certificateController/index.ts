@@ -459,7 +459,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
             studentFirstname: pc.student.firstname
         });
         await sendTemplateMail(mail, pc.pupil.email);
-        await Notification.actionTaken(pc.pupil, "certificate_pupil_approval", {
+        await Notification.actionTaken(pc.pupil, "pupil_certificate_approval", {
             certificateLink,
             student: pc.student });
     }
@@ -598,7 +598,7 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
         studentFirstname: certificate.student.firstname
     }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
-    await Notification.actionTaken(certificate.student, "certificate_student_sign", {
+    await Notification.actionTaken(certificate.student, "student_certificate_sign", {
         certificateLink,
         pupil: certificate.pupil
     });

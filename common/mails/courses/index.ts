@@ -38,8 +38,7 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
             firstLectureTime: moment(firstLecture).format("HH:mm")
         });
         await sendTemplateMail(mail, participant.email);
-        await Notification.actionTaken(participant, "subcourse_participant_cancelled", {
-            participantFirstname: participant.firstname,
+        await Notification.actionTaken(participant, "participant_subcourse_cancelled", {
             courseName: course.name,
             firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
             firstLectureTime: moment(firstLecture).format("HH:mm")
@@ -55,7 +54,7 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Person, c
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, instructor.email);
-    await Notification.actionTaken(instructor, "course_instructor_reminder", {
+    await Notification.actionTaken(instructor, "instructor_course_reminder", {
         courseName: course.name,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")
@@ -70,8 +69,7 @@ export async function sendCourseUpcomingReminderParticipant(participant: Person,
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, participant.email);
-    await Notification.actionTaken(participant, "course_participant_reminder", {
-        participantFirstname: participant.firstname,
+    await Notification.actionTaken(participant, "participant_subcourse_reminder", {
         courseName: course.name,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")

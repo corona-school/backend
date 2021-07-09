@@ -10,7 +10,7 @@ export async function sendFeedbackRequestStudent(student: Student, pupil: Pupil)
     });
     await sendTemplateMail(mail, student.email);
     await Notification.actionTaken(student, "feedback_request_student", {
-        pupilFirstName: pupil.firstname
+        pupil
     });
 }
 
@@ -20,7 +20,7 @@ export async function sendFeedbackRequestPupil(student: Student, pupil: Pupil) {
         pupilFirstName: pupil.firstname
     });
     await sendTemplateMail(mail, pupil.email);
-    await Notification.actionTaken(student, "feedback_request_pupil", {
-        pupilFirstName: pupil.firstname
+    await Notification.actionTaken(pupil, "feedback_request_pupil", {
+        student
     });
 }

@@ -35,7 +35,7 @@ async function notifyCoacheeAboutMatch(projectMatch: ProjectMatch, manager: Enti
     });
 
     await sendTemplateMail(mail, coachee.email);
-    await Notification.actionTaken(coachee, "coachee_matching_notify", {
+    await Notification.actionTaken(coachee, "coachee_project_match_success", {
         coach: coach,
         subjects: projectFieldsString,
         callURL: callURL
@@ -54,7 +54,7 @@ async function notifyCoachAboutMatch(projectMatch: ProjectMatch, manager: Entity
     });
 
     await sendTemplateMail(mail, coach.email);
-    await Notification.actionTaken(coach, "coach_matching_notify", {
+    await Notification.actionTaken(coach, "coach_project_match_success", {
         coachee: coachee,
         coacheeGrade: getPupilGradeAsString(coachee),
         subjects: projectFieldsString,

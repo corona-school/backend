@@ -19,7 +19,7 @@ export async function sendTutoringConfirmationRequest(confirmationRequest: Pupil
     // send email
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
-    await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request", {
+    await Notification.actionTaken(confirmationRequest.pupil, "tutee_matching_confirm_interest", {
         confirmationURL: confirmationRequest.confirmationURL(),
         refusalURL: confirmationRequest.refusalURL()
     });
@@ -33,10 +33,6 @@ export async function sendTutoringConfirmationRequestReminder(confirmationReques
     // send email
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATIONREMINDER, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
-    await Notification.actionTaken(confirmationRequest.pupil, "tutoring_pupil_confirmation_request_reminder", {
-        confirmationURL: confirmationRequest.confirmationURL(),
-        refusalURL: confirmationRequest.refusalURL()
-    });
 
     // transaction log
     const transactionLog = getTransactionLog();
