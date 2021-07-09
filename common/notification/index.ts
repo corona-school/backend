@@ -41,6 +41,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
             }
 
             debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
+
             // prevent sending of now unnecessary notifications
             const dismissed = await prisma.concrete_notification.updateMany({
                 data: {
@@ -52,7 +53,12 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                         in: relevantNotifications.toCancel.map(it => it.id)
                     },
                     state: ConcreteNotificationState.DELAYED,
-                    userId: getUserId(user)
+                    userId: getUserId(user),
+                    // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
+                    // If it is not specified, it'll apply to all reminders
+                    ...(notificationContext.uniqueId ? {
+                        OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }]
+                    } : {})
                 }
             });
 
