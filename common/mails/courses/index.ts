@@ -39,6 +39,7 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
         });
         await sendTemplateMail(mail, participant.email);
         await Notification.actionTaken(participant, "participant_subcourse_cancelled", {
+            uniqueId: `${subcourse.id}`,
             courseName: course.name,
             firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
             firstLectureTime: moment(firstLecture).format("HH:mm")
@@ -61,7 +62,7 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Person, c
     });
 }
 
-export async function sendCourseUpcomingReminderParticipant(participant: Person, course: {name: string}, firstLecture: Date) {
+export async function sendCourseUpcomingReminderParticipant(participant: Person, course: {name: string}, subcourse: { id: number }, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,
@@ -70,6 +71,7 @@ export async function sendCourseUpcomingReminderParticipant(participant: Person,
     });
     await sendTemplateMail(mail, participant.email);
     await Notification.actionTaken(participant, "participant_subcourse_reminder", {
+        subcourse: `${subcourse.id}`,
         courseName: course.name,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")

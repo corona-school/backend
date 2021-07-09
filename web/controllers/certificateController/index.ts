@@ -460,6 +460,7 @@ async function createCertificate(requestor: Student, pupil: Pupil, match: Match,
         });
         await sendTemplateMail(mail, pc.pupil.email);
         await Notification.actionTaken(pc.pupil, "pupil_certificate_approval", {
+            uniqueId: `${pc.id}`,
             certificateLink,
             student: pc.student });
     }
@@ -599,6 +600,7 @@ async function signCertificate(req: Request, certificate: ParticipationCertifica
     }, rendered.toString("base64"));
     await sendTemplateMail(mail, certificate.student.email);
     await Notification.actionTaken(certificate.student, "student_certificate_sign", {
+        uniqueId: `${certificate.id}`,
         certificateLink,
         pupil: certificate.pupil
     });

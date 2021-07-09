@@ -20,6 +20,7 @@ export async function sendTutoringConfirmationRequest(confirmationRequest: Pupil
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
     await Notification.actionTaken(confirmationRequest.pupil, "tutee_matching_confirm_interest", {
+        uniqueId: `${confirmationRequest.id}`,
         confirmationURL: confirmationRequest.confirmationURL(),
         refusalURL: confirmationRequest.refusalURL()
     });
