@@ -8,7 +8,7 @@ const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    async send(id: NotificationID, to: Person, context: Context) {
+    async send(id: NotificationID, to: Person, context: Context, concreteID: number) {
         const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
                 Email: undefined
@@ -21,7 +21,8 @@ export const mailjetChannel: Channel = {
             TemplateID: id,
             TemplateLanguage: true,
             Variables: context,
-            Attachments: context.attachments
+            Attachments: context.attachments,
+            CustomID: `${concreteID}`
         };
 
         if (context.replyToAddress) {
@@ -55,7 +56,19 @@ export const mailjetChannel: Channel = {
 
         logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
 
-        await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+        const { body } = await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+
+        if (!body.Messages || body.Messages.length !== 1) {
+            throw new Error(`Mailjet API responded with invalid body`);
+        }
+
+        const result = body.Messages[0];
+
+        if (result.Status !== "success") {
+            const errorMessages = (result as any).Errors.map(error => error.ErrorMessage).join(", ");
+
+            throw new Error(`Mailjet Message Delivery failed: ${errorMessages}`);
+        }
 
         logger.info(`Sent Mail(${message.TemplateID})`);
     },

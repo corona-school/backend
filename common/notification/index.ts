@@ -180,7 +180,7 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification.id, user, context);
+        await channel.send(notification.id, user, context, concreteNotification.id);
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
