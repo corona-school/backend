@@ -91,7 +91,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                 debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
             }
         } catch (e) {
-            error(`Failed to perform Notification.onAction(${user.id}, "${actionId}") with `, e);
+            error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
         }
         debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
     })();
