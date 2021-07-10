@@ -29,9 +29,9 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
     // Delivering notifications can be async while answering the API request continues
     (async function fireAndForget() {
+        const startTime = Date.now();
         try {
             debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
-
             const notifications = await getNotifications();
             const relevantNotifications = notifications.get(actionId);
 
@@ -93,6 +93,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
         } catch (e) {
             error(`Failed to perform Notification.onAction(${user.id}, "${actionId}") with `, e);
         }
+        debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
     })();
 }
 
