@@ -4,7 +4,7 @@ import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
 
 export default class DeActivateEvent extends LogUserEvent {
-    constructor(user: Pupil | Student, newActiveStatus: boolean) {
+    constructor(user: { wix_id: string }, newActiveStatus: boolean) {
         super(LogType.DEACTIVATE, user, {
             newStatus: newActiveStatus
         });
