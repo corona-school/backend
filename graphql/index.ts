@@ -2,7 +2,7 @@ import { FindManyCourseResolver, applyResolversEnhanceMap, ResolversEnhanceMap }
 import { buildSchemaSync } from "type-graphql";
 import { FindManyMatchResolver, FindManyPupilResolver } from "./generated/resolvers/crud";
 import { authorizationEnhanceMap } from "./authorizations";
-import { ActivatePupilResolver } from "./pupil/mutations";
+import { MutatePupilResolver } from "./pupil/mutations";
 
 // TODO: Authentication / Authorization?
 
@@ -14,7 +14,7 @@ const schema = buildSchemaSync({
         FindManyCourseResolver,
         /* Pupil */
         FindManyPupilResolver,
-        ActivatePupilResolver,
+        MutatePupilResolver,
         /* Match */
         FindManyMatchResolver
     ]
