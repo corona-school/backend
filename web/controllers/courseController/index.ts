@@ -2301,7 +2301,7 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 relations: ["subcourses"]
             });
             const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
-            if (numberOfActiveSubcourses >= 6) { //todo: don't hardcode this constant here...
+            if (numberOfActiveSubcourses >= 10) { //todo: don't hardcode this constant here...
                 logger.warn(`Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
                 status = 429; //use this to quickly indicate that the pupil has too much active subcourses
                 return;
