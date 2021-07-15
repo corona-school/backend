@@ -9,6 +9,7 @@ import { TemplateMail } from "../../../common/mails/templates";
 import { getTransactionLog } from "../../../common/transactionlog";
 import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import ProjectMatchDissolveEvent from "../../../common/transactionlog/types/ProjectMatchDissolveEvent";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -149,11 +150,17 @@ export async function sendProjectMatchDissolvedMail(to: Person, dissolver: Perso
                 coacheeFirstname: to.firstname,
                 coachFirstname: dissolver.firstname
             });
+            await Notification.actionTaken(to, "coachee_project_match_dissolved", {
+                coach: dissolver
+            });
         } else {
             // Send mail to (remaining) coach
             mail = mailjetTemplates.PROJECTCOACHMATCHDISSOLVED({
                 coachFirstname: to.firstname,
                 coacheeFirstname: dissolver.firstname
+            });
+            await Notification.actionTaken(to, "coach_project_match_dissolved", {
+                coachee: dissolver
             });
         }
         //send out mail...

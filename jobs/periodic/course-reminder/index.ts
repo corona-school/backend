@@ -65,7 +65,7 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
 
             // notify all participants
             for (let i = 0; i < subcourse.subcourse_participants_pupil.length; i++) {
-                sendCourseUpcomingReminderParticipant(subcourse.subcourse_participants_pupil[i].pupil, course, firstLecture.start);
+                sendCourseUpcomingReminderParticipant(subcourse.subcourse_participants_pupil[i].pupil, course, subcourse, firstLecture.start);
             }
         }
     }

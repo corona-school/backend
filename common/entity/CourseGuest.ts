@@ -63,11 +63,6 @@ export class CourseGuest {
     getPublicUsableLink(): string {
         return `https://my.lern-fair.de/video/${this.token}`;
     }
-
-    fullName(): string {
-        const names = [[this.firstname], [this.lastname]].flatMap(n => n[0]?.length > 0 ? n : []); //copied, quick and dirty (but hey, this code just lives for 3 weeks)
-        return names.join(" ");
-    }
 }
 
 export async function generateNewCourseGuestToken(manager: EntityManager): Promise<string> {

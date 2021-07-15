@@ -536,20 +536,24 @@ export async function getCourses(req: Request, res: Response) {
                         contains: lastname,
                         mode: "insensitive" as const
                     }
-                },
-                include: {
-                    course_instructors_student: {
-                        where: { course: { courseState }},
-                        orderBy: { course: { updatedAt: 'desc' } },
-                        take: PAGE_SIZE,
-                        skip: (+page || 0) * PAGE_SIZE,
-                        include: { course: { include: courseInclude } }
-                    }
                 }
             });
 
             if (student) {
-                courses = student.course_instructors_student.map(it => it.course);
+                courses = await prisma.course.findMany({
+                    where: {
+                        courseState,
+                        course_instructors_student: {
+                            some: {
+                                studentId: student.id
+                            }
+                        }
+                    },
+                    include: courseInclude,
+                    orderBy: { updatedAt: 'desc' },
+                    take: PAGE_SIZE,
+                    skip: (+page || 0) * PAGE_SIZE
+                });
             }
         }
 

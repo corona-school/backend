@@ -109,6 +109,14 @@ async function sendMailTemplate(
     return await sendMessage(message, sandbox);
 }
 
+async function getHardBounces() : Promise<mailjetAPI.Email.GetResponse> {
+    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
+
+    return await mailjet
+        .get("message", {version: "v3"})
+        .request({'MessageStatus': 10, 'ShowContactAlt': true });
+}
+
 const ErrorCodes = {
     RATE_LIMIT: 429,
     NOT_AUTHORIZED: 401
@@ -117,5 +125,6 @@ const ErrorCodes = {
 export default {
     sendTemplate: sendMailTemplate,
     sendPure: sendMailPure,
-    ErrorCodes: ErrorCodes
+    ErrorCodes: ErrorCodes,
+    getHardBounces: getHardBounces
 };
