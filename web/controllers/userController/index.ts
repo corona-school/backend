@@ -1007,7 +1007,6 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             person.active = false;
 
             await entityManager.save(type, person);
-            console.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
             await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
