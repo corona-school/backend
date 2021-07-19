@@ -3,6 +3,9 @@ import { buildSchemaSync } from "type-graphql";
 import { FindManyMatchResolver, FindManyPupilResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
+import injectContext from "./context";
+import { ApolloServer } from "apollo-server-express";
+import { GraphQLLogger } from "./logging";
 
 // TODO: Authentication / Authorization?
 
@@ -21,4 +24,10 @@ const schema = buildSchemaSync({
     authChecker
 });
 
-export default schema;
+export const apolloServer = new ApolloServer({
+    schema,
+    context: injectContext,
+    plugins: [
+        GraphQLLogger
+    ]
+});
