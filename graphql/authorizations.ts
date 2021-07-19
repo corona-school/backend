@@ -3,7 +3,7 @@ import { Authorized } from "type-graphql";
 
 import { AuthChecker } from "type-graphql";
 import { GraphQLContext } from "./context";
-import assert from "assert";
+import * as assert from "assert";
 
 export enum Role {
     /* Access via Retool */
