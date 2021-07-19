@@ -45,7 +45,7 @@ describe("Screening Invitation", function() {
         testStudent.verification = verificationToken;
 
         // save test student
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
             manager.save(testStudent).then(() => {
                 //setup mailjetStub
                 const mailjetStub = sandbox.spy(mailjet, "sendTemplate");
