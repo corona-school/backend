@@ -1,4 +1,4 @@
-import { Role } from "../../graphql/roles";
+import { Role } from "../../graphql/authorizations";
 import { prisma } from "../../common/prisma";
 import { GraphQLContext } from "../../graphql/context";
 
