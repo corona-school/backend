@@ -1,5 +1,6 @@
 import { Role } from "../../graphql/roles";
 import { prisma } from "../../common/prisma";
+import { GraphQLContext } from "../../graphql/context";
 
 export default function ApolloContext({ req }) {
     const token = req.headers.authorization || '';
@@ -12,5 +13,6 @@ export default function ApolloContext({ req }) {
 
     const user = { roles };
 
-    return { user, prisma };
+    const context: GraphQLContext = { user, prisma };
+    return context;
 }
