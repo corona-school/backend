@@ -7,15 +7,17 @@ const getPupil = (pupil: GraphQLModel.Pupil) => prisma.pupil.findUnique({ where:
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
-    @Mutation(returns => undefined)
-    async activate(@Root() _pupil: GraphQLModel.Pupil): Promise<void> {
+    @Mutation()
+    async activate(@Root() _pupil: GraphQLModel.Pupil): Promise<boolean> {
         const pupil = await getPupil(_pupil);
         await activatePupil(pupil);
+        return true;
     }
 
     @Mutation(returns => undefined)
-    async deactivate(@Root() _pupil: GraphQLModel.Pupil): Promise<void> {
+    async deactivate(@Root() _pupil: GraphQLModel.Pupil): Promise<boolean> {
         const pupil = await getPupil(_pupil);
         await deactivatePupil(pupil);
+        return true;
     }
 }
