@@ -28,9 +28,7 @@ import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
-import schema, { apolloServer } from "./../graphql";
-import { ApolloServer } from "apollo-server-express";
-import ApolloContext from "./middleware/apolloContext";
+import { apolloServer } from "./../graphql";
 
 // Logger setup
 try {

@@ -28,6 +28,6 @@ export const apolloServer = new ApolloServer({
     schema,
     context: injectContext,
     plugins: [
-        GraphQLLogger
+        GraphQLLogger as any
     ]
 });
