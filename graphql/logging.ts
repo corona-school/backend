@@ -5,8 +5,8 @@ import { GraphQLContext } from "./context";
 const logger = getLogger("GraphQL");
 const isDev = process.env.NODE_ENV === "dev";
 
-export const GraphQLLogger: ApolloServerPlugin = {
-    async requestDidStart(requestContext) {
+export const GraphQLLogger: any = {
+    requestDidStart(requestContext) {
         logger.debug(`Request started`);
 
         const handler: GraphQLRequestListener = {
