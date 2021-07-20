@@ -1,5 +1,4 @@
-import { Subcourse } from "graphql/generated";
-import { Pupil } from "graphql/generated";
+import { Subcourse, Pupil } from "../generated";
 import { Field, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 
