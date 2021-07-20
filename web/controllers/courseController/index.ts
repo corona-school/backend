@@ -37,7 +37,7 @@ import {
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import { putFile } from '../../../common/file-bucket';
 import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
