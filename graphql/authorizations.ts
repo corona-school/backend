@@ -13,11 +13,10 @@ export enum Role {
 
 const authLogger = getLogger("GraphQL Authorization");
 
-export const authChecker: AuthChecker<GraphQLContext> = ({ context, root, args, info }, requiredRoles) => {
+export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
 
-    authLogger.debug(`root`, root, `args`, args, `info`, info);
 
     if (!context.user || !context.user.roles)
         return false;
