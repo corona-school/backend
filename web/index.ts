@@ -20,7 +20,7 @@ import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection, getConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
-import * as favicon from "express-favicon";
+import favicon from "express-favicon";
 import { allStateCooperationSubdomains } from "../common/entity/State";
 import multer from "multer";
 import moment from "moment-timezone";
