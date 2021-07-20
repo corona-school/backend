@@ -6,6 +6,8 @@ import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
 import { ApolloServer } from "apollo-server-express";
 import { GraphQLLogger } from "./logging";
+import { plugin as apolloTracing } from "apollo-tracing";
+import { PluginDefinition } from "apollo-server-core";
 
 // TODO: Authentication / Authorization?
 
@@ -24,10 +26,14 @@ const schema = buildSchemaSync({
     authChecker
 });
 
+const plugins: PluginDefinition[] = [GraphQLLogger as any];
+const isDev = process.env.NODE_ENV === "dev";
+
+if (isDev) {
+    plugins.push( apolloTracing() );
+}
 export const apolloServer = new ApolloServer({
     schema,
     context: injectContext,
-    plugins: [
-        GraphQLLogger as any
-    ]
+    plugins
 });

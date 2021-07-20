@@ -34,6 +34,7 @@
     "address-rfc2821": "^1.1.3",
     "apollo-server-express": "^2.25.1",
     "apollo-server-plugin-base": "^3.0.1",
+    "apollo-tracing": "^0.15.0",
     "async-mutex": "^0.2.2",
     "aws-sdk": "^2.820.0",
     "axios": "^0.19.2",
