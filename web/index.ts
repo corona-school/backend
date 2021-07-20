@@ -1,8 +1,8 @@
 import express from "express";
-import * as http from "http";
-import * as bodyParser from "body-parser";
-import * as hpp from "hpp";
-import * as helmet from "helmet";
+import http from "http";
+import bodyParser from "body-parser";
+import hpp from "hpp";
+import helmet from "helmet";
 import cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
