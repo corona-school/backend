@@ -5,6 +5,9 @@ import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import { dissolveMatch } from "../match/dissolve";
 
 export async function activatePupil(pupil: Pupil) {
+    if (pupil.active)
+        throw new Error("Pupil was already activated");
+
     await prisma.pupil.update({
         data: { active: true },
         where: { id: pupil.id }
@@ -15,6 +18,9 @@ export async function activatePupil(pupil: Pupil) {
 
 
 export async function deactivatePupil(pupil: Pupil) {
+    if (!pupil.active)
+        throw new Error("Pupil was already deactivated");
+
     let matches = await prisma.match.findMany({
         where: {
             pupilId: pupil.id
