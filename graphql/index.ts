@@ -1,6 +1,6 @@
 import { FindManyCourseResolver, applyResolversEnhanceMap, ResolversEnhanceMap } from "./generated";
 import { buildSchemaSync } from "type-graphql";
-import { FindManyMatchResolver, FindManyPupilResolver } from "./generated/resolvers/crud";
+import { FindManyMatchResolver, FindManyPupilResolver, FindManySubcourseResolver, FindManyLectureResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
@@ -8,6 +8,7 @@ import { ApolloServer } from "apollo-server-express";
 import { GraphQLLogger } from "./logging";
 import { plugin as apolloTracing } from "apollo-tracing";
 import { PluginDefinition } from "apollo-server-core";
+import { ExtendFieldsPupilResolver } from "./pupil/fields";
 
 // TODO: Authentication / Authorization?
 
@@ -19,6 +20,7 @@ const schema = buildSchemaSync({
         FindManyCourseResolver,
         /* Pupil */
         FindManyPupilResolver,
+        ExtendFieldsPupilResolver,
         MutatePupilResolver,
         /* Match */
         FindManyMatchResolver
