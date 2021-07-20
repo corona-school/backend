@@ -8,6 +8,12 @@ const isDev = process.env.NODE_ENV === "dev";
 export const GraphQLLogger: ApolloServerPlugin = {
     async requestDidStart() {
         return {
+            async didResolveOperation(requestContext) {
+                logger.debug(`Starting Operation ${requestContext.operationName}`);
+            },
+            async didEncounterErrors(requestContext) {
+                logger.warn(`An error  occured:`, requestContext.errors);
+            },
             async willSendResponse(requestContext) {
                 logger.debug(`Processed the query:\n${requestContext.request.query}`);
 
