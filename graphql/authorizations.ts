@@ -4,15 +4,20 @@ import { Authorized } from "type-graphql";
 import { AuthChecker } from "type-graphql";
 import { GraphQLContext } from "./context";
 import assert from "assert";
+import { getLogger } from "log4js";
 
 export enum Role {
     /* Access via Retool */
     ADMIN = "ADMIN"
 }
 
-export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRoles) => {
+const authLogger = getLogger("GraphQL Authorization");
+
+export const authChecker: AuthChecker<GraphQLContext> = ({ context, root, args, info }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
+
+    authLogger.debug(`root`, root, `args`, args, `info`, info);
 
     if (!context.user || !context.user.roles)
         return false;
