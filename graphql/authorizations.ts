@@ -31,5 +31,6 @@ export const authorizationEnhanceMap: ResolversEnhanceMap = {
     Subcourse: allAdmin,
     Student: allAdmin,
     Screening: allAdmin,
-    Screener: allAdmin
+    Screener: allAdmin,
+    Project_match: allAdmin
 };

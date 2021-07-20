@@ -1,6 +1,6 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap, ResolversEnhanceMap } from "./generated";
+import { FindManyCourseResolver, applyResolversEnhanceMap } from "./generated";
 import { buildSchemaSync } from "type-graphql";
-import { FindManyMatchResolver, FindManyPupilResolver, FindManySubcourseResolver, FindManyLectureResolver } from "./generated/resolvers/crud";
+import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
@@ -23,7 +23,9 @@ const schema = buildSchemaSync({
         ExtendFieldsPupilResolver,
         MutatePupilResolver,
         /* Match */
-        FindManyMatchResolver
+        FindManyMatchResolver,
+        /* Projects */
+        FindManyProject_matchResolver
     ],
     authChecker
 });
