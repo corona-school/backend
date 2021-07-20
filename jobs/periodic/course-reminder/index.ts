@@ -1,6 +1,6 @@
 import { EntityManager } from "typeorm";
 import { CourseState } from "../../../common/entity/Course";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { sendCourseUpcomingReminderInstructor, sendCourseUpcomingReminderParticipant } from "../../../common/mails/courses";
 import { prisma } from "../../../common/prisma";

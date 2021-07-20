@@ -28,7 +28,7 @@ import {
 } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { Mentor } from "../../../common/entity/Mentor";
 import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { ApiSubject } from "../format";

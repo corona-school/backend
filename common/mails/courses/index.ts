@@ -1,7 +1,7 @@
 import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from "../index";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";

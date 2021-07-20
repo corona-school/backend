@@ -1,4 +1,4 @@
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { setup as setupLogging, getLogger } from "./utils/logging";
 import { scheduleJobs } from "./scheduler";
 import * as scheduler from "./scheduler";
