@@ -1,6 +1,6 @@
 import { GraphQLRequestContext } from "apollo-server-plugin-base";
 import { getLogger } from "log4js";
-const logger = getLogger("GraphQL");
+const logger = getLogger("GraphQL Processing");
 const isDev = process.env.NODE_ENV === "dev";
 
 export const GraphQLLogger: any = {

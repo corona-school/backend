@@ -8,19 +8,22 @@ export interface GraphQLContext {
     prisma: PrismaClient;
 }
 
-const logger = getLogger("ApolloContext");
+const authLogger = getLogger("GraphQL Authentication");
 
 if (!process.env.ADMIN_AUTH_TOKEN)
-    logger.warn("Missing ADMIN_AUTH_TOKEN, Admin API is disabled");
+    authLogger.warn("Missing ADMIN_AUTH_TOKEN, Admin API access is disabled");
 
 export default function injectContext({ req }) {
     const token = req.headers.authorization || '';
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     let roles: Role[] = [];
 
     if (process.env.ADMIN_AUTH_TOKEN && token === process.env.ADMIN_AUTH_TOKEN) {
         roles.push(Role.ADMIN);
-        logger.debug("Admin authenticated");
+        authLogger.info(`Admin authenticated from ${ip}`);
+    } else {
+        authLogger.info(`Unauthenticated access from ${ip}`);
     }
 
     const user = { roles };
