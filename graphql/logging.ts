@@ -20,7 +20,7 @@ export const GraphQLLogger: any = {
             validationDidStart() {
                 logger.debug(`Validation started`);
                 return (errors) => {
-                    if (errors.length) {
+                    if (errors?.length) {
                         logger.warn(`Validation failed with:`, errors);
                     } else {
                         logger.debug(`Validation succeeded`);
