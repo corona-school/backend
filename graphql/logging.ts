@@ -1,7 +1,4 @@
-import { ApolloServerPlugin, GraphQLRequestContext, GraphQLRequestListener } from "apollo-server-plugin-base";
 import { getLogger } from "log4js";
-import { GraphQLContext } from "./context";
-
 const logger = getLogger("GraphQL");
 const isDev = process.env.NODE_ENV === "dev";
 
@@ -9,10 +6,10 @@ export const GraphQLLogger: any = {
     requestDidStart(requestContext) {
         logger.debug(`Request started`);
 
-        const handler: GraphQLRequestListener = {
-            async parsingDidStart() {
+        const handler: any = { // Actually GraphQLRequestListener, but we're on v2 and not on v3
+            parsingDidStart() {
                 logger.debug(`Parsing started`);
-                return async (error) => {
+                return (error) => {
                     if (error) {
                         logger.warn(`Parsing failed with:`, error);
                     } else {
@@ -20,9 +17,9 @@ export const GraphQLLogger: any = {
                     }
                 };
             },
-            async validationDidStart() {
+            validationDidStart() {
                 logger.debug(`Validation started`);
-                return async (errors) => {
+                return (errors) => {
                     if (errors.length) {
                         logger.warn(`Validation failed with:`, errors);
                     } else {
@@ -30,9 +27,9 @@ export const GraphQLLogger: any = {
                     }
                 };
             },
-            async executionDidStart() {
+            executionDidStart() {
                 logger.debug(`Execution started`);
-                return { async executionDidEnd(error) {
+                return { executionDidEnd(error) {
                     if (error) {
                         logger.warn(`Execution failed with:`, error);
                     } else {
@@ -40,10 +37,10 @@ export const GraphQLLogger: any = {
                     }
                 } };
             },
-            async didEncounterErrors(requestContext) {
+            didEncounterErrors(requestContext) {
                 logger.warn(`An error  occurred:`, requestContext.errors);
             },
-            async willSendResponse(requestContext) {
+            willSendResponse(requestContext) {
                 logger.debug(`Processed the query:\n${requestContext.request.query}`);
 
                 if (requestContext.errors.length) {
