@@ -6,7 +6,9 @@ const logger = getLogger("GraphQL");
 const isDev = process.env.NODE_ENV === "dev";
 
 export const GraphQLLogger: ApolloServerPlugin = {
-    async requestDidStart() {
+    async requestDidStart(requestContext) {
+        logger.debug(`Request did start`);
+
         return {
             async didResolveOperation(requestContext) {
                 logger.debug(`Starting Operation ${requestContext.operationName}`);
