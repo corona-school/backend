@@ -1,9 +1,9 @@
-import * as express from "express";
+import express from "express";
 import * as http from "http";
 import * as bodyParser from "body-parser";
 import * as hpp from "hpp";
 import * as helmet from "helmet";
-import * as cors from "cors";
+import cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
@@ -22,12 +22,12 @@ import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
 import * as favicon from "express-favicon";
 import { allStateCooperationSubdomains } from "../common/entity/State";
-import * as multer from "multer";
-import * as moment from "moment-timezone";
+import multer from "multer";
+import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import * as rateLimit from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import { apolloServer } from "./../graphql";
 
 // Logger setup

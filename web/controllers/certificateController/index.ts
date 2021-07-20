@@ -8,7 +8,7 @@ import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';
 import * as path from 'path';
-import * as moment from "moment";
+import moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 import { randomBytes } from "crypto";

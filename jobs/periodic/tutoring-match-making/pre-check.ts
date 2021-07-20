@@ -1,4 +1,4 @@
-import * as moment from "moment";
+import moment from "moment";
 import { EntityManager } from "typeorm";
 import { latestTutoringMatch } from "../../../common/administration/match-making/tutoring/matches/retrieve";
 import { getNumberOfTuteesToMatch } from "../../../common/administration/match-making/tutoring/people/tutees";
