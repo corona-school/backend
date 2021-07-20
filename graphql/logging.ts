@@ -1,47 +1,22 @@
+import { GraphQLRequestContext } from "apollo-server-plugin-base";
 import { getLogger } from "log4js";
 const logger = getLogger("GraphQL");
 const isDev = process.env.NODE_ENV === "dev";
 
 export const GraphQLLogger: any = {
-    requestDidStart(requestContext) {
-        logger.debug(`Request started`);
+    requestDidStart(requestContext: GraphQLRequestContext) {
+        const startTime = Date.now();
+        logger.debug(`Started processing query`, requestContext.request.query);
 
         const handler: any = { // Actually GraphQLRequestListener, but we're on v2 and not on v3
-            parsingDidStart() {
-                logger.debug(`Parsing started`);
-                return (error) => {
-                    if (error) {
-                        logger.warn(`Parsing failed with:`, error);
-                    } else {
-                        logger.debug(`Parsing succeeded`);
-                    }
-                };
+            didEncounterErrors(requestContext: GraphQLRequestContext) {
+                logger.warn(`Errors occurred:`, requestContext.errors);
             },
-            validationDidStart() {
-                logger.debug(`Validation started`);
-                return (errors) => {
-                    if (errors?.length) {
-                        logger.warn(`Validation failed with:`, errors);
-                    } else {
-                        logger.debug(`Validation succeeded`);
-                    }
-                };
-            },
-            executionDidStart() {
-                logger.debug(`Execution started`);
-                return { executionDidEnd(error) {
-                    if (error) {
-                        logger.warn(`Execution failed with:`, error);
-                    } else {
-                        logger.debug(`Execution succeeded`);
-                    }
-                } };
-            },
-            didEncounterErrors(requestContext) {
-                logger.warn(`An error  occurred:`, requestContext.errors);
-            },
-            willSendResponse(requestContext) {
-                logger.debug(`Processed the query:\n${requestContext.request.query}`);
+            willSendResponse(requestContext: GraphQLRequestContext) {
+                logger.debug(`Finished processing after ${Date.now() - startTime}ms`);
+                if (isDev) {
+                    logger.debug(`Responding with`, requestContext.response.data);
+                }
             }
         };
 
