@@ -2,6 +2,7 @@ import { pupil as Pupil } from "@prisma/client";
 import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
+import { dissolveMatch } from "../match/dissolve";
 
 export async function activatePupil(pupil: Pupil) {
     await prisma.pupil.update({
@@ -17,13 +18,11 @@ export async function deactivatePupil(pupil: Pupil) {
     let matches = await prisma.match.findMany({
         where: {
             pupilId: pupil.id
-        },
-        include: { student: true, pupil: true }
+        }
     });
 
     for (const match of matches) {
-        // TODO: Move dissolveMatch into common and generalize
-        // await dissolveMatch(match, 0, pupil);
+        await dissolveMatch(match, 0, pupil);
     }
 
     await prisma.pupil.update({
