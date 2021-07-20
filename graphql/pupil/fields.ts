@@ -6,6 +6,9 @@ import { prisma } from "../../common/prisma";
 export class ExtendFieldsPupilResolver {
     @FieldResolver(type => [Subcourse])
     async subcourses(@Root() pupil: Pupil) {
+
+        console.log(`pupil.subcourses pupilId:`, pupil.id);
+
         return await prisma.subcourse.findMany({
             where: {
                 subcourse_participants_pupil: {
