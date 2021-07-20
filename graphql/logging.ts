@@ -43,7 +43,7 @@ export const GraphQLLogger: any = {
             willSendResponse(requestContext) {
                 logger.debug(`Processed the query:\n${requestContext.request.query}`);
 
-                if (requestContext.errors.length) {
+                if (requestContext.errors?.length) {
                     logger.warn(`The following errors occured:`, requestContext.errors);
                 } else if (isDev) {
                     logger.debug(`Successfully processed, responding with`, requestContext.response.data);
