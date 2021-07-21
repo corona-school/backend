@@ -51,8 +51,7 @@ async function matchPeopleHandler(
     // perform additional database related checks of the matching restrictions, i.e. are all given email addresses valid?
     try {
         await ensureValidityOfMatchingRestrictionsAgainstDB(matchingRestrictions, manager);
-    }
-    catch (e) {
+    } catch (e) {
         logger.error(`Manual-matching failed because of invalid matching restrictions, ${e}`);
         res.status(404).send(e.toString());
         return;
@@ -67,8 +66,7 @@ async function matchPeopleHandler(
 
         //return with success
         res.status(200).send(plainObj);
-    }
-    catch (e) {
+    } catch (e) {
         res.status(400).send(e.toString());
     }
 }

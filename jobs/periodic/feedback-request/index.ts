@@ -56,7 +56,8 @@ async function getPupilsForFeedbackRequest(manager: EntityManager): Promise<Matc
 
 function filterMatches(matches: Match[]): Match[] {
     const now = new Date();
-    const thirtyDaysAgo = moment(now).subtract(30, "days").toDate();
+    const thirtyDaysAgo = moment(now).subtract(30, "days")
+        .toDate();
     return matches.filter(m => {
         return m.createdAt <= thirtyDaysAgo;
     });
@@ -69,8 +70,7 @@ async function sendFeedbackRequestsToStudents(manager: EntityManager, matches: M
             m.feedbackToStudentMail = true;
             await manager.save(Match, m);
         }
-    }
-    catch (e) {
+    } catch (e) {
         if (e.statusCode === mailjet.ErrorCodes.RATE_LIMIT) { //handle rate limit errors in mailjet
             logger.info("Hit rate limit while sending feedback requests to students -> the missing mails will be sent tomorrow...");
             return;
@@ -86,8 +86,7 @@ async function sendFeedbackRequestsToPupils(manager: EntityManager, matches: Mat
             m.feedbackToPupilMail = true;
             await manager.save(Match, m);
         }
-    }
-    catch (e) {
+    } catch (e) {
         if (e.statusCode === mailjet.ErrorCodes.RATE_LIMIT) { //handle rate limit errors in mailjet
             logger.info("Hit rate limit while sending feedback requests to pupils -> the missing mails will be sent tomorrow...");
             return;

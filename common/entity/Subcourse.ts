@@ -76,7 +76,7 @@ export class Subcourse {
     })
     cancelled: boolean;
 
-    async addLecture(newLecture: {start: Date, duration: number, instructor: { id: number } }){
+    async addLecture(newLecture: {start: Date, duration: number, instructor: { id: number } }) {
         const instructor = this.instructors.find(it => it.id === newLecture.instructor.id);
 
         if (!instructor) {
@@ -93,7 +93,7 @@ export class Subcourse {
     }
 
     sortedLectures(): Lecture[] {
-        return this.lectures?.sort( (a, b) => a.start.getTime() - b.start.getTime());
+        return this.lectures?.sort((a, b) => a.start.getTime() - b.start.getTime());
     }
 
     firstLecture(): Lecture {
@@ -128,6 +128,6 @@ export class Subcourse {
 
     ///Returns the total duration in minutes
     totalDuration(): number {
-        return this.lectures.reduce( (prev, curr) => prev + curr.duration, 0);
+        return this.lectures.reduce((prev, curr) => prev + curr.duration, 0);
     }
 }

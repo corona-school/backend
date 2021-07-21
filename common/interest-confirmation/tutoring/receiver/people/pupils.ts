@@ -26,7 +26,9 @@ export async function getAllMatchableUnremindedPupilsWithPendingConfirmationRequ
     const allPendingUnreminded = await allMatchablePupilsUnremindedWithPendingConfirmation(manager).getMany();
 
     //filter by dates after initial sending
-    return allPendingUnreminded.filter( p => {
-        return moment(p.tutoringInterestConfirmationRequest.createdAt).add(ndaysAfterInitialSend, "days").startOf("day").isBefore(moment());
+    return allPendingUnreminded.filter(p => {
+        return moment(p.tutoringInterestConfirmationRequest.createdAt).add(ndaysAfterInitialSend, "days")
+            .startOf("day")
+            .isBefore(moment());
     });
 }

@@ -226,8 +226,7 @@ export class Pupil extends Person {
     getSubjectsFormatted(): Subject[] {
         try {
             return parseSubjectString(this.subjects);
-        }
-        catch (e) {
+        } catch (e) {
             throw new Error(`Invalid subject format string "${this.subjects}" for pupil with email ${this.email} found!`);
         }
     }

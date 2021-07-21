@@ -91,7 +91,9 @@ export function setupSingleTestingConnection(
             ? options.namingStrategy
             : undefined
     });
-    if (!testingConnections.length) return undefined;
+    if (!testingConnections.length) {
+        return undefined;
+    }
 
     return testingConnections[0];
 }
@@ -123,14 +125,17 @@ export function setupTestingConnections(
 ): PostgresConnectionOptions[] {
     const ormConfigConnectionOptionsArray = getTypeOrmConfig();
 
-    if (!ormConfigConnectionOptionsArray.length)
+    if (!ormConfigConnectionOptionsArray.length) {
         throw new Error(
             `No connections setup in ${TEST_ORM_CONFIG_FILE} file. Please create configurations for the postgres database that should be used.`
         );
+    }
 
     return ormConfigConnectionOptionsArray
         .filter((connectionOptions) => {
-            if (connectionOptions.skip === true) return false;
+            if (connectionOptions.skip === true) {
+                return false;
+            }
 
             return true;
         })
@@ -200,13 +205,13 @@ export async function createTestingConnections(
                 if (
                     metadata.database &&
                     databases.indexOf(metadata.database) === -1
-                )
-                    databases.push(metadata.database);
+                ) { databases.push(metadata.database); }
             });
 
             const queryRunner = connection.createQueryRunner();
-            for (const database of databases)
+            for (const database of databases) {
                 await queryRunner.createDatabase(database, true);
+            }
 
             // create new schemas
             const schemaPaths: string[] = [];
@@ -216,16 +221,19 @@ export async function createTestingConnections(
                     const existSchemaPath = schemaPaths.find(
                         (path) => path === entityMetadata.schemaPath
                     );
-                    if (!existSchemaPath)
+                    if (!existSchemaPath) {
                         schemaPaths.push(entityMetadata.schemaPath!);
+                    }
                 });
 
             const schema = connection.driver.options["schema"];
-            if (schema && schemaPaths.indexOf(schema) === -1)
+            if (schema && schemaPaths.indexOf(schema) === -1) {
                 schemaPaths.push(schema);
+            }
 
-            for (const schemaPath of schemaPaths)
+            for (const schemaPath of schemaPaths) {
                 await queryRunner.createSchema(schemaPath, true);
+            }
 
             await queryRunner.release();
         })
@@ -273,10 +281,11 @@ export function generateRandomText(length: number): string {
     const characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    for (let i = 0; i <= length; i++)
+    for (let i = 0; i <= length; i++) {
         text += characters.charAt(
             Math.floor(Math.random() * characters.length)
         );
+    }
 
     return text;
 }
