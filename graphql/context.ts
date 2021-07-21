@@ -10,8 +10,9 @@ export interface GraphQLContext {
 
 const authLogger = getLogger("GraphQL Authentication");
 
-if (!process.env.ADMIN_AUTH_TOKEN)
+if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn("Missing ADMIN_AUTH_TOKEN, Admin API access is disabled");
+}
 
 export default function injectContext({ req }) {
     const token = req.headers.authorization || '';

@@ -461,7 +461,7 @@ export async function getCourses(req: Request, res: Response) {
     try {
         const { courseState, search, page } = req.query;
 
-        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState) === -1) {
+        if ([undefined, "created", "submitted", "allowed", "denied", "cancelled"].indexOf(courseState as string) === -1) {
             return res.status(400).send("invalid value for parameter 'state'");
         }
 
