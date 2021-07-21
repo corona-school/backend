@@ -48,7 +48,7 @@ const plugins: PluginDefinition[] = [GraphQLLogger as any];
 const isDev = process.env.NODE_ENV === "dev";
 
 if (isDev) {
-    plugins.push( apolloTracing() );
+    plugins.push(apolloTracing());
 }
 
 export const apolloServer = new ApolloServer({

@@ -18,8 +18,9 @@ export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRo
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
 
 
-    if (!context.user || !context.user.roles)
+    if (!context.user || !context.user.roles) {
         return false;
+    }
 
     return requiredRoles.some(requiredRole => context.user.roles.includes(requiredRole as Role));
 };
