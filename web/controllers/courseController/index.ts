@@ -42,7 +42,7 @@ import { putFile } from '../../../common/file-bucket';
 import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
 import { accessURLForKey } from '../../../common/file-bucket/s3';
-import * as mime from 'mime-types';
+import mime from 'mime-types';
 import { v4 as uuidv4 } from "uuid";
 import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
 import ParticipantJoinedCourseEvent from '../../../common/transactionlog/types/ParticipantJoinedCourseEvent';

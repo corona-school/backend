@@ -7,7 +7,7 @@ import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';
-import * as path from 'path';
+import path from 'path';
 import moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
@@ -15,7 +15,7 @@ import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
-import * as EJS from "ejs";
+import EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 import { createAutoLoginLink } from '../utils';
 

@@ -1,5 +1,5 @@
 import {assert} from "chai";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import mailjet from "../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../common/mails/config";
 import {Connection} from "typeorm";

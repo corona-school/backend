@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import * as bcrypt from "bcrypt";
+import bcrypt from "bcrypt";
 
 export function hashToken(input: string, algorithm : string = "sha512"): string {
     const hash = createHash(algorithm);

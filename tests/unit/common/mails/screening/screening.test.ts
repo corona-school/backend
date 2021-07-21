@@ -1,5 +1,5 @@
 import {assert} from "chai";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import * as screening from "../../../../../common/mails/screening";
 import * as mailHandler from "../../../../../common/mails";
 import { Student } from "../../../../../common/entity/Student";

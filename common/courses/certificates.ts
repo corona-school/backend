@@ -1,4 +1,4 @@
-import * as EJS from "ejs";
+import EJS from "ejs";
 import { readFileSync } from "fs";
 import { resolve as resolvePath } from "path";
 import moment from "moment-timezone";

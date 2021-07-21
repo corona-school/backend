@@ -3,7 +3,7 @@ import { assert } from "chai";
 import { ApiTuteeMatchingRestriction, ApiTutorMatchingRestriction } from "../../../../../../../web/controllers/matchingController/types/matching-restrictions";
 import { tuteeMatchingRestrictionFilter, tutorMatchingRestrictionFilter } from "../../../../../../../web/controllers/matchingController/utils/matching-restrictions/filtering";
 import { createPupil, createStudent } from "../../../../../../utils/test-data";
-import * as faker from "faker";
+import faker from "faker";
 import { State } from "../../../../../../../common/entity/State";
 
 function createTutorRestriction(init: Readonly<ApiTutorMatchingRestriction> = {}): ApiTutorMatchingRestriction {
