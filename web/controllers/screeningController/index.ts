@@ -845,7 +845,7 @@ export async function getInstructors(req: Request, res: Response) {
     try {
         let { screeningStatus, search, page } = req.query;
 
-        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus as ScreeningStatus))
+        if (![ScreeningStatus.Accepted, ScreeningStatus.Rejected, ScreeningStatus.Unscreened].includes(screeningStatus as ScreeningStatus)) {
             return res.status(400).send("invalid value for parameter 'screeningStatus'");
         }
 

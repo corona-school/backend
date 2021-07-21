@@ -245,7 +245,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             lang = DefaultLanguage;
         }
 
-        if (!LANGUAGES.includes(lang as Language))
+        if (!LANGUAGES.includes(lang as Language)) {
             return res.status(400).send("Language not known");
         }
 
