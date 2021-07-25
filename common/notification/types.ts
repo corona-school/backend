@@ -16,6 +16,11 @@ export {
 
 export { ConcreteNotificationState } from "../entity/ConcreteNotification";
 
+interface Attachment {
+    Filename: string;
+    ContentType: "image/png" | "image/jpg" | "application/pdf" | string; // MIME Type, see https://www.iana.org/assignments/media-types/media-types.xhtml
+    Base64Content: string;
+}
 
 // Previously the templates had a lot of repeating fields, such as "userFirstName"
 // by generalizing into a context that is partially available for each Notification, this was cleaned up
@@ -24,6 +29,7 @@ export interface NotificationContext {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress? : Email;
+    attachments?: Attachment[];
     // As it is not quite useful to maintain the variable shape in the backend as a missmatch with the Mailjet template won't be detected anyways,
     // further props can be set at will
     [key: string]: any;
@@ -37,7 +43,7 @@ export interface Context extends NotificationContext {
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
-    type: "mailjet" /* | ... */;
+    type: "mailjet";
     send(id: NotificationID, to: Person, context: Context, concreteID: number): Promise<any>;
     canSend(id: NotificationID): boolean;
 }

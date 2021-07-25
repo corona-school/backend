@@ -4,7 +4,6 @@ import mailjet from "../../../common/mails/mailjet";
 import { Match } from "../../../common/entity/Match";
 import { sendMatchFollowUpStudent, sendMatchFollowUpPupil } from "../../../common/mails/match-follow-up";
 import * as moment from "moment-timezone";
-import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
