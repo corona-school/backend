@@ -44,6 +44,6 @@ export interface Context extends NotificationContext {
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
     type: "mailjet";
-    send(id: NotificationID, to: Person, context: Context, concreteID: number): Promise<any>;
-    canSend(id: NotificationID): boolean;
+    send(notification: Notification, to: Person, context: Context, concreteID: number): Promise<any>;
+    canSend(notification: Notification): boolean;
 }

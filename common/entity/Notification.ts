@@ -16,6 +16,10 @@ export class Notification {
     @PrimaryColumn()
     id: number;
 
+    // Template IDs per Channel
+    @Column({ type: "int", nullable: true })
+    mailjetTemplateId?: number;
+
     @Column()
     description: string;
 

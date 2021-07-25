@@ -173,14 +173,14 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     };
 
     try {
-        const channel = channels.find(it => it.canSend(notification.id));
+        const channel = channels.find(it => it.canSend(notification));
         if (!channel) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification.id, user, context, concreteNotification.id);
+        await channel.send(notification, user, context, concreteNotification.id);
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
