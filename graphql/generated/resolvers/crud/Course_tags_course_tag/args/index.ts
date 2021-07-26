@@ -1,0 +1,12 @@
+export { AggregateCourse_tags_course_tagArgs } from "./AggregateCourse_tags_course_tagArgs";
+export { CreateCourse_tags_course_tagArgs } from "./CreateCourse_tags_course_tagArgs";
+export { CreateManyCourse_tags_course_tagArgs } from "./CreateManyCourse_tags_course_tagArgs";
+export { DeleteCourse_tags_course_tagArgs } from "./DeleteCourse_tags_course_tagArgs";
+export { DeleteManyCourse_tags_course_tagArgs } from "./DeleteManyCourse_tags_course_tagArgs";
+export { FindFirstCourse_tags_course_tagArgs } from "./FindFirstCourse_tags_course_tagArgs";
+export { FindManyCourse_tags_course_tagArgs } from "./FindManyCourse_tags_course_tagArgs";
+export { FindUniqueCourse_tags_course_tagArgs } from "./FindUniqueCourse_tags_course_tagArgs";
+export { GroupByCourse_tags_course_tagArgs } from "./GroupByCourse_tags_course_tagArgs";
+export { UpdateCourse_tags_course_tagArgs } from "./UpdateCourse_tags_course_tagArgs";
+export { UpdateManyCourse_tags_course_tagArgs } from "./UpdateManyCourse_tags_course_tagArgs";
+export { UpsertCourse_tags_course_tagArgs } from "./UpsertCourse_tags_course_tagArgs";

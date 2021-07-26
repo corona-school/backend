@@ -1,0 +1,1 @@
+export { SchoolPupilArgs } from "./SchoolPupilArgs";

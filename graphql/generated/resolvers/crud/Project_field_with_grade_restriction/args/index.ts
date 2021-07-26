@@ -1,0 +1,12 @@
+export { AggregateProject_field_with_grade_restrictionArgs } from "./AggregateProject_field_with_grade_restrictionArgs";
+export { CreateManyProject_field_with_grade_restrictionArgs } from "./CreateManyProject_field_with_grade_restrictionArgs";
+export { CreateProject_field_with_grade_restrictionArgs } from "./CreateProject_field_with_grade_restrictionArgs";
+export { DeleteManyProject_field_with_grade_restrictionArgs } from "./DeleteManyProject_field_with_grade_restrictionArgs";
+export { DeleteProject_field_with_grade_restrictionArgs } from "./DeleteProject_field_with_grade_restrictionArgs";
+export { FindFirstProject_field_with_grade_restrictionArgs } from "./FindFirstProject_field_with_grade_restrictionArgs";
+export { FindManyProject_field_with_grade_restrictionArgs } from "./FindManyProject_field_with_grade_restrictionArgs";
+export { FindUniqueProject_field_with_grade_restrictionArgs } from "./FindUniqueProject_field_with_grade_restrictionArgs";
+export { GroupByProject_field_with_grade_restrictionArgs } from "./GroupByProject_field_with_grade_restrictionArgs";
+export { UpdateManyProject_field_with_grade_restrictionArgs } from "./UpdateManyProject_field_with_grade_restrictionArgs";
+export { UpdateProject_field_with_grade_restrictionArgs } from "./UpdateProject_field_with_grade_restrictionArgs";
+export { UpsertProject_field_with_grade_restrictionArgs } from "./UpsertProject_field_with_grade_restrictionArgs";
