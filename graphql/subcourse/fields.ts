@@ -1,4 +1,4 @@
-import { Course, Lecture, Subcourse } from "../generated";
+import { Course, Lecture, Subcourse, Pupil } from "../generated";
 import { Authorized, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
@@ -20,6 +20,28 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourseId: subcourse.id
             }
+        });
+    }
+
+    @FieldResolver(returns => [Pupil])
+    @Authorized(Role.ADMIN)
+    async participants(@Root() subcourse: Subcourse) {
+        return await prisma.pupil.findMany({
+            where: {
+                subcourse_participants_pupil: {
+                    some: {
+                        subcourseId: subcourse.id
+                    }
+                }
+            }
+        });
+    }
+
+    @FieldResolver(returns => Number)
+    @Authorized(Role.ADMIN)
+    async participantsCount(@Root() subcourse: Subcourse) {
+        return await prisma.subcourse_participants_pupil.count({
+            where: { subcourseId: subcourse.id }
         });
     }
 }
