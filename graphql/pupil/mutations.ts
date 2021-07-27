@@ -4,7 +4,7 @@ import * as GraphQLModel from "../generated/models";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { Role } from "../authorizations";
 
-const getPupil = (pupilId: number) => prisma.pupil.findUnique({ where: { id: pupilId } });
+const getPupil = (pupilId: number) => prisma.pupil.findUnique({ where: { id: pupilId }, rejectOnNotFound: true });
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
