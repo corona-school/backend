@@ -23,4 +23,62 @@ export class MutatePupilResolver {
         await deactivatePupil(pupil);
         return true;
     }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async resendVerificationMail(@Arg("pupilId") pupilId: number/*to do*/): Promise<boolean> {
+        /*to do*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async addTutoringRequest(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async editTutoringRequest(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        /*Edit subjects,status and priority*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async takeBackTutoringRequest(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async changePupilStatus(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        /*choose between applied(not selectable),accepted,rejection,deregistration*/
+        return true
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async addCourse(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async deregisterPupil(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async seePupilActions(@Arg("pupilId") pupilId: number/*to do*/ ): Promise<boolean>{
+        /*to do*/
+        return true;
+    }
 }
