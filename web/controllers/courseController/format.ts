@@ -1,9 +1,13 @@
+import { ApiEditCourse } from './format';
 /**
  * @apiDefine Courses
  * @apiVersion 1.1.0
  *
  * @apiSuccess (Courses Object) {Course[]} root Array of all courses
  */
+
+import { Pupil } from "../../../common/entity/Pupil";
+import { Student } from "../../../common/entity/Student";
 
 /**
  * @apiDefine Course
@@ -366,3 +370,104 @@ export interface ApiInstructorID {
  *
  * @apiSuccess (BBBMeeting Return Object) {string} url Meeting url depending on whether it is an attendee or moderator
  */
+
+export class responseError {
+    public readonly code: number;
+    public readonly message: string;
+
+    constructor(code: number, message: string) {
+        this.code = code;
+        this.message = message;
+    }
+}
+
+export interface IGetCourses {
+    student: Student | undefined,
+    pupil: Pupil | undefined,
+    fields: string[],
+    states: string[],
+    instructorId: string | undefined,
+    participantId: string | undefined,
+    onlyJoinableCourses: boolean
+}
+
+export interface IGetCourse {
+    student: Student | undefined,
+    pupil: Pupil | undefined,
+    courseId: number
+}
+
+export interface IPostCourse {
+    student: Student,
+    apiCourse: ApiAddCourse
+}
+
+export interface IPostSubcourse {
+    student: Student,
+    courseId: number,
+    apiSubcourse: ApiAddSubcourse
+}
+
+export interface IPostlecture {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    apiLecture: ApiAddLecture
+}
+
+export interface IPutcourse {
+    student: Student,
+    courseId: number,
+    apiCourse: ApiEditCourse
+}
+
+export interface IPutsubcourse {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    apiSubcourse: ApiEditSubcourse
+}
+
+export interface IPutlecture {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    lectureId: number,
+    apiLecture: ApiEditLecture
+}
+
+export interface IDeletesubcourse {
+    student: Student,
+    courseId: number,
+    subcourseId: number
+}
+
+export interface IDeleteLecture {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    lectureId: number
+}
+
+export interface IJoinleaveInterface {
+    pupil: Pupil,
+    courseId: number,
+    subcourseId: number,
+    userId: string
+}
+
+export interface IGroupMail {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    mailSubject: string,
+    mailBody: string
+}
+
+export interface IInstructormail {
+    pupil: Pupil,
+    courseId: number,
+    subcourseId: number,
+    mailSubject: string,
+    mailBody: string
+}

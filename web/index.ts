@@ -29,7 +29,7 @@ import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
 // Testing services imports starts here
-import * as courseREST from './controllers_new/courseController';
+import * as courseREST from '../web/controllers_new/courseController';
 // Testing services imports ends here
 
 // Logger setup
@@ -75,7 +75,8 @@ createConnection().then(setupPDFGenerationEnvironment)
         configureCertificateAPI();
         configureTokenAPI();
         configureCourseAPI();
-        configureServiceApis();
+        // configureServiceApis();
+        configCourse();
         configureScreenerAPI();
         configureCoursesAPI();
         configureRegistrationAPI();
@@ -228,15 +229,25 @@ createConnection().then(setupPDFGenerationEnvironment)
 
         /* ===================TESTING SERVICES ================= */
 
-        function configureServiceApis() {
-            const courseService = express.Router();
+        function configCourse() {
+            const cr = express.Router();
 
-            courseService.use(authCheckFactory(true));
-            courseService.get('/', courseREST.getCoursesHandlerREST);
-            courseService.get('/tags', courseREST.getCourseTagsHandlerREST);
+            cr.use(authCheckFactory(true));
+            cr.get("/:id", courseREST.getCourseHandlerREST);
 
-            app.use('/api/course-service', courseService);
+            app.use('/api/test_course', cr);
+
         }
+
+        // function configureServiceApis() {
+        //     const courseService = express.Router();
+
+        //     courseService.use(authCheckFactory(true));
+        //     courseService.get('/', courseREST.getCoursesHandlerREST);
+        //     courseService.get('/tags', courseREST.getCourseTagsHandlerREST);
+
+        //     app.use('/api/course-service', courseService);
+        // }
 
         /* ================ END TESTING SERVICS ================== */
 

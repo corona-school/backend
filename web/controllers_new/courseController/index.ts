@@ -1,27 +1,10 @@
+import { IDeleteLecture, IDeletesubcourse, IJoinleaveInterface, IPostCourse, IPostlecture, IPostSubcourse, IPutcourse, IPutlecture, IPutsubcourse, responseError, IGroupMail, IInstructormail, IGetCourses, IGetCourse } from './../../controllers/courseController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { NextFunction, Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import {
-    deleteCourseHandlerSERVICE,
-    deleteLectureHandlerSERVICE,
-    deleteSubcourseHandlerSERVICE,
-    getCourseHandlerSERVICE,
-    getCoursesHandlerSERVICE,
-    getCourseTagsHandlerSERVICE,
-    groupMailHandlerSERVICE,
-    instructorMailHandlerSERVICE,
-    joinSubcourseHandlerSERVICE,
-    joinWaitingListHandlerSERVICE,
-    leaveSubcourseHandlerSERVICE,
-    leaveWaitingListHandlerSERVICE,
-    postCourseHandlerSERVICE,
-    postLectureHandlerSERVICE,
-    postSubcourseHandlerSERVICE,
-    putCourseHandlerSERVICE,
-    putLectureHandlerSERVICE,
-    putSubcourseHandlerSERVICE
-} from '../../services/courseService';
+import { deleteCourse, deleteLecture, deleteSubcourse, getCourse, getCourses, getCourseTags, groupMail, instructorMail, joinSubcourse, joinWaitingList, leaveSubcourse, leaveWaitingList, postCourse, postLecture, postSubcourse, putCourse, putLecture, putSubcourse } from '../../../web/services/courseService';
+
 
 const logger = getLogger();
 
@@ -68,32 +51,19 @@ export const getCoursesHandlerREST = async (
             onlyJoinableCourses = req.query.onlyJoinableCourses === 'true';
         }
 
-        if (authenticatedStudent) {
-            authenticatedStudent = res.locals.user;
-        } else {
-            authenticatedStudent = undefined;
-        }
-
-        if (authenticatedPupil) {
-            authenticatedPupil = res.locals.user;
-        } else {
-            authenticatedPupil = undefined;
-        }
-
-        const getCourseHandlerObject = {
-            authenticatedStudent,
-            authenticatedPupil,
-            fields,
-            states,
-            instructorId,
-            participantId,
-            onlyJoinableCourses
-        };
-
         try {
-            const requestHandler = await getCoursesHandlerSERVICE(
-                getCourseHandlerObject
-            );
+            const requestObject: IGetCourses = {
+                student: authenticatedStudent ? res.locals.user : undefined,
+                pupil: authenticatedPupil ? res.locals.user : undefined,
+                fields,
+                states,
+                instructorId,
+                participantId,
+                onlyJoinableCourses
+            };
+
+            const requestHandler = await getCourses(requestObject);
+
             if (typeof requestHandler == 'number') {
                 status = requestHandler;
             } else {
@@ -130,26 +100,18 @@ export const getCourseHandlerREST = async (
                 authenticatedPupil = true;
             }
 
-            authenticatedStudent = authenticatedStudent
-                ? res.locals.user
-                : undefined;
-
-            authenticatedPupil = authenticatedPupil
-                ? res.locals.user
-                : undefined;
-
-            let id = Number.parseInt(req.params.id, 10);
-
-            const requestGetCourseHandlerObject = {
-                authenticatedStudent,
-                authenticatedPupil,
-                id
-            };
-
             try {
-                const requestHandler = await getCourseHandlerSERVICE(
-                    requestGetCourseHandlerObject
-                );
+                const requestObject: IGetCourse = {
+                    student: authenticatedStudent
+                        ? res.locals.user
+                        : undefined,
+                    pupil: authenticatedPupil
+                        ? res.locals.user
+                        : undefined,
+                    courseId: Number.parseInt(req.params.id, 10)
+                };
+
+                const requestHandler = await getCourse(requestObject);
 
                 if (typeof requestHandler == 'number') {
                     status = requestHandler;
@@ -176,14 +138,14 @@ export const getCourseHandlerREST = async (
     res.status(status).end();
 };
 
-export const getCourseTagsHandlerREST = async (
+export const getCourseTagsREST = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     let status = 200;
     try {
-        const requestHandler = await getCourseTagsHandlerSERVICE();
+        const requestHandler = await getCourseTags();
         res.json(requestHandler);
     } catch (e) {
         logger.error('Get course tags failed with: ', e);
@@ -192,7 +154,7 @@ export const getCourseTagsHandlerREST = async (
     res.status(status).end();
 };
 
-export const postHandlerREST = async (
+export const postCourseREST = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -232,13 +194,12 @@ export const postHandlerREST = async (
 
                 if (status < 300) {
                     try {
-                        const newObj = {
-                            user: res.locals.user,
-                            body: req.body
+                        const requestObject: IPostCourse = {
+                            student: res.locals.user,
+                            apiCourse: req.body
                         };
-                        const requestHandler = await postCourseHandlerSERVICE(
-                            newObj
-                        );
+
+                        const requestHandler = await postCourse(requestObject);
 
                         if (typeof requestHandler == 'number') {
                             status = requestHandler;
@@ -300,16 +261,15 @@ export const postSubCourseHandlerREST = async (
                 }
 
                 if (status < 300) {
-                    const id = Number.parseInt(req.params.id, 10);
-                    const newObj = {
-                        user: res.locals.user,
-                        id: id,
-                        body: req.body
-                    };
-
                     try {
+                        const requestObject: IPostSubcourse = {
+                            student: res.locals.user,
+                            courseId: Number.parseInt(req.params.id, 10),
+                            apiSubcourse: req.body
+                        };
+
                         const requestHandler =
-                            await postSubcourseHandlerSERVICE(newObj);
+                            await postSubcourse(requestObject);
                         if (typeof requestHandler == 'number') {
                             status = requestHandler;
                         } else {
@@ -358,20 +318,16 @@ export const postLectureHandlerREST = async (
                 typeof req.body.duration == 'number'
             ) {
                 if (status < 300) {
-                    const courseId = Number.parseInt(req.params.id, 10);
-                    const subCourseId = parseInt(req.params.subid, 10);
-
-                    const obj = {
-                        user: res.locals.user,
-                        courseId,
-                        subCourseId,
-                        body: req.body
+                    const requestObject: IPostlecture = {
+                        student: res.locals.user,
+                        courseId: Number.parseInt(req.params.id, 10),
+                        subcourseId: Number.parseInt(req.params.subid, 10),
+                        apiLecture: req.body
                     };
 
                     try {
-                        const requestHandler = await postLectureHandlerSERVICE(
-                            obj
-                        );
+                        const requestHandler = await postLecture(requestObject);
+
                         if (typeof requestHandler == 'number') {
                             status = requestHandler;
                         } else {
@@ -450,13 +406,12 @@ export const postCourseHandlerREST = async (
                 }
 
                 if (status < 300) {
-                    const courseId = Number.parseInt(req.params.id, 10);
-                    const newObj = {
-                        user: res.locals.user,
-                        courseId,
-                        body: req.body
+                    const requestObject: IPutcourse = {
+                        student: res.locals.user,
+                        courseId: Number.parseInt(req.params.id, 10),
+                        apiCourse: req.body
                     };
-                    status = await putCourseHandlerSERVICE(newObj);
+                    status = await putCourse(requestObject);
                 }
             } else {
                 status = 400;
@@ -498,15 +453,13 @@ export const putSubcourseHandlerREST = async (req: Request, res:Response, next: 
                 }
 
                 if (status < 300) {
-                    const courseId = Number.parseInt(req.params.id, 10);
-                    const SubCourseId = Number.parseInt(req.params.subid, 10);
-                    const newObj = {
-                        user: res.locals.user,
-                        courseId,
-                        SubCourseId,
-                        body: req.body
+                    const requestObject: IPutsubcourse = {
+                        student: res.locals.user,
+                        courseId: Number.parseInt(req.params.id, 10),
+                        subcourseId: Number.parseInt(req.params.subid, 10),
+                        apiSubcourse: req.body
                     };
-                    status = await putSubcourseHandlerSERVICE(newObj);
+                    status = await putSubcourse(requestObject);
                 }
             } else {
                 status = 400;
@@ -537,17 +490,15 @@ export const putLectureHandlerREST = async (req: Request, res: Response, next: N
                 typeof req.body.start == 'number' &&
                 typeof req.body.duration == 'number') {
 
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const LectureId = Number.parseInt(req.params.lecid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    LectureId,
-                    body: req.body
+
+                const requestObject: IPutlecture = {
+                    student: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    lectureId: Number.parseInt(req.params.lecid, 10),
+                    apiLecture: req.body
                 };
-                status = await putLectureHandlerSERVICE(newObj);
+                status = await putLecture(requestObject);
 
             } else {
                 status = 400;
@@ -572,13 +523,12 @@ export const deleteCourseHandlerREST = async (req: Request, res: Response, next:
     try {
         if (res.locals.user instanceof Student) {
             if (req.params.id != undefined) {
-                const courseId = Number.parseInt(req.params.id, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId
+                const requestObject = {
+                    student: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10)
                 };
 
-                status = await deleteCourseHandlerSERVICE(newObj);
+                status = await deleteCourse(requestObject.student, requestObject.courseId);
             } else {
                 status = 400;
                 logger.warn("Invalid request for DELETE /course/:id");
@@ -602,16 +552,13 @@ export const deleteSubcourseHandlerREST = async (req: Request, res: Response, ne
     try {
         if (res.locals.user instanceof Student) {
             if (req.params.id != undefined && req.params.subid != undefined) {
-
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId
+                const requestObject: IDeletesubcourse = {
+                    student: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10)
                 };
 
-                status = await deleteSubcourseHandlerSERVICE(newObj);
+                status = await deleteSubcourse(requestObject);
 
             } else {
                 status = 400;
@@ -638,16 +585,13 @@ export const deleteLectureHandlerREST = async (req: Request, res: Response, next
             if (req.params.id != undefined &&
                 req.params.subid != undefined &&
                 req.params.lecid != undefined) {
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const LectureId = Number.parseInt(req.params.lecid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    LectureId
+                const requestObject: IDeleteLecture = {
+                    student: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    lectureId: Number.parseInt(req.params.lecid, 10)
                 };
-                status = await deleteLectureHandlerSERVICE(newObj);
+                status = await deleteLecture(requestObject);
 
             } else {
                 status = 400;
@@ -676,16 +620,13 @@ export const joinSubcourseHandlerREST = async (req: Request, res: Response, next
                 req.params.subid != undefined &&
                 req.params.userid != undefined) {
 
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const userId = Number.parseInt(req.params.userid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    userId
+                const requestObject: IJoinleaveInterface = {
+                    pupil: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    userId: req.params.userid
                 };
-                status = await joinSubcourseHandlerSERVICE(newObj);
+                status = await joinSubcourse(requestObject);
 
             } else {
                 status = 400;
@@ -713,16 +654,13 @@ export const joinWaitingListHandlerREST = async (req: Request, res: Response, ne
             if (req.params.id != undefined &&
                 req.params.subid != undefined &&
                 req.params.userid != undefined) {
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const userId = Number.parseInt(req.params.userid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    userId
+                const requestObject: IJoinleaveInterface = {
+                    pupil: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    userId: req.params.userid
                 };
-                status = await joinWaitingListHandlerSERVICE(newObj);
+                status = await joinWaitingList(requestObject);
 
             } else {
                 status = 400;
@@ -750,16 +688,13 @@ export const leaveSubcourseHandlerREST = async (req: Request, res: Response, nex
                 req.params.subid != undefined &&
                 req.params.userid != undefined) {
 
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const userId = Number.parseInt(req.params.userid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    userId
+                const requestObject: IJoinleaveInterface = {
+                    pupil: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    userId: req.params.userid
                 };
-                status = await leaveSubcourseHandlerSERVICE(newObj);
+                status = await leaveSubcourse(requestObject);
 
             } else {
                 status = 400;
@@ -787,16 +722,13 @@ export const leaveWaitingListHandlerREST = async (req: Request, res: Response, n
                 req.params.subid != undefined &&
                 req.params.userid != undefined) {
 
-                const courseId = Number.parseInt(req.params.id, 10);
-                const SubCourseId = Number.parseInt(req.params.subid, 10);
-                const userId = Number.parseInt(req.params.userid, 10);
-                const newObj = {
-                    user: res.locals.user,
-                    courseId,
-                    SubCourseId,
-                    userId
+                const requestObject: IJoinleaveInterface = {
+                    pupil: res.locals.user,
+                    courseId: Number.parseInt(req.params.id, 10),
+                    subcourseId: Number.parseInt(req.params.subid, 10),
+                    userId: req.params.userid
                 };
-                status = await leaveWaitingListHandlerSERVICE(newObj);
+                status = await leaveWaitingList(requestObject);
 
             } else {
                 status = 400;
@@ -824,18 +756,14 @@ export const groupMailHandlerREST = async (req: Request, res: Response, next: Ne
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-
-            const courseId = Number.parseInt(req.params.id, 10);
-            const SubCourseId = Number.parseInt(req.params.subid, 10);
-            const userId = Number.parseInt(req.params.userid, 10);
-            const newObj = {
-                user: res.locals.user,
-                courseId,
-                SubCourseId,
+            const requestObject: IGroupMail = {
+                student: res.locals.user,
+                courseId: Number.parseInt(req.params.id, 10),
+                subcourseId: Number.parseInt(req.params.subid, 10),
                 mailSubject: req.body.subject,
                 mailBody: req.body.body
             };
-            status = await groupMailHandlerSERVICE(newObj);
+            status = await groupMail(requestObject);
 
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
@@ -857,18 +785,14 @@ export const instructorMailHandlerREST = async (req: Request, res: Response, nex
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-
-            const courseId = Number.parseInt(req.params.id, 10);
-            const SubCourseId = Number.parseInt(req.params.subid, 10);
-            const userId = Number.parseInt(req.params.userid, 10);
-            const newObj = {
-                user: res.locals.user,
-                courseId,
-                SubCourseId,
+            const requestObject: IInstructormail = {
+                pupil: res.locals.user,
+                courseId: Number.parseInt(req.params.id, 10),
+                subcourseId: Number.parseInt(req.params.subid, 10),
                 mailSubject: req.body.subject,
                 mailBody: req.body.body
             };
-            status = await instructorMailHandlerSERVICE(newObj);
+            status = await instructorMail(requestObject);
         } else {
             logger.warn("Missing or invalid parameters for instructorMailHandler");
             status = 400;
@@ -880,3 +804,132 @@ export const instructorMailHandlerREST = async (req: Request, res: Response, nex
 
     res.status(status).end();
 };
+
+// // export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
+// //      next: NextFunction) => {
+// //         const courseId = req.params.id ? req.params.id : null;
+// //         const subcourseId = req.params.subid ? String(req.params.subid) : null;
+// //         const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
+// //         let status = 200;
+
+// //         try {
+// //             let requestObject = {
+// //                 user: res.locals.user,
+// //                 courseId,
+// //                 subcourseId,
+// //                 ip
+// //             };
+
+// //             const request = await joinCourseMeetingHandlerSERVICE(requestObject);
+
+// //         } catch (error) {
+
+// //         }
+
+
+// //         try {
+// //             if (courseId != null && subcourseId != null) {
+// //                 let authenticatedStudent = false;
+// //                 let authenticatedPupil = false;
+// //                 if (res.locals.user instanceof Student) {
+// //                     authenticatedStudent = true;
+// //                 }
+// //                 if (res.locals.user instanceof Pupil) {
+// //                     authenticatedPupil = true;
+// //                 }
+// //                 try {
+
+// //                     if (authenticatedPupil || authenticatedStudent) {
+// //                         if (meetingInDB) {
+// //                             meeting = await getBBBMeetingFromDB(subcourseId);
+// //                         } else {
+// //                             // todo this should get its own method and not use a method from some other route
+// //                             let obj = await getCourse(
+// //                                 authenticatedStudent ? res.locals.user : undefined,
+// //                                 authenticatedPupil ? res.locals.user : undefined,
+// //                                 Number.parseInt(courseId, 10)
+// //                             );
+
+// //                             if (typeof obj == 'number') {
+// //                                 status = obj;
+// //                             } else {
+// //                                 course = obj;
+// //                                 meeting = await createBBBMeeting(course.name, subcourseId, res.locals.user);
+// //                             }
+// //                         }
+
+// //                         if (!!meeting.alternativeUrl) {
+// //                             res.send({ url: meeting.alternativeUrl });
+
+// //                         } else if (authenticatedStudent) {
+// //                             let user: Student = res.locals.user;
+
+// //                             await startBBBMeeting(meeting);
+
+// //                             res.send({
+// //                                 url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.moderatorPW)
+// //                             });
+
+// //                         } else if (authenticatedPupil) {
+// //                             const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
+// //                             if (meetingIsRunning) {
+// //                                 let user: Pupil = res.locals.user;
+
+// //                                 res.send({
+// //                                     url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.attendeePW, user.wix_id)
+// //                                 });
+
+// //                                 // BBB logging
+// //                                 await createOrUpdateCourseAttendanceLog(user, ip, subcourseId);
+
+// //                             } else {
+// //                                 status = 400;
+// //                                 logger.error("BBB-Meeting has not startet yet");
+// //                             }
+// //                         }
+
+// //                     } else {
+// //                         status = 403;
+// //                         logger.warn("An unauthorized user wanted to join a BBB-Meeting");
+// //                         logger.debug(res.locals.user);
+// //                     }
+
+// //                 } catch (e) {
+// //                     logger.error("An error occurred during GET /course/:id/subcourse/:subid/meeting/join: " + e.message);
+// //                     logger.debug(req, e);
+// //                     status = 500;
+// //                 }
+// //             } else {
+// //                 status = 400;
+// //                 logger.error("Expected courseId is not on route or subcourseId is not in request body");
+// //             }
+// //         } catch (e) {
+// //             logger.error("Unexpected format of express request: " + e.message);
+// //             logger.debug(req, e);
+// //             status = 500;
+// //         }
+// //         res.status(status).end();
+// // };
+
+
+
+
+// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+
+// // };
+
+// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+
+// // };
+
+// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+
+// // };
+
+// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+
+// // };
+
+// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+
+// // };

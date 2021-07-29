@@ -1,22 +1,26 @@
-import {
-    ApiAddCourse,
-    ApiAddLecture,
-    ApiAddSubcourse,
-    ApiEditCourse,
-    ApiEditLecture,
-    ApiEditSubcourse
-} from '../../controllers/courseController/format';
+import { ApiCourse,
+         ApiCourseTag,
+         ApiInstructor,
+         ApiLecture,
+         ApiSubcourse,
+         IDeleteLecture,
+         IDeletesubcourse,
+         IGetCourse,
+         IGetCourses,
+         IGroupMail,
+         IJoinleaveInterface,
+         IPostCourse,
+         IPostlecture,
+         IPostSubcourse,
+         IPutcourse,
+         IPutlecture,
+         IPutsubcourse,
+         responseError,
+         IInstructormail } from './../../controllers/courseController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
-import {
-    ApiCourse,
-    ApiCourseTag,
-    ApiInstructor,
-    ApiLecture,
-    ApiSubcourse
-} from '../../controllers/courseController/format';
 import { isJoinableCourse } from '../../controllers/courseController/utils';
 import {
     Course,
@@ -44,55 +48,19 @@ import ParticipantLeftCourseEvent from '../../../common/transactionlog/types/Par
 import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/types/ParticipantLeftWaitingListEvent';
 import { sendInstructorGroupMail } from '../../../common/mails/courses';
 import { sendParticipantToInstructorMail } from '../../../common/mails/courses';
-import { isBBBMeetingInDB } from '../../../common/util/bbb';
-import { BBBMeeting } from '../../../common/entity/BBBMeeting';
-import { getBBBMeetingFromDB } from '../../../common/util/bbb';
-import { createBBBMeeting } from '../../../common/util/bbb';
-import { startBBBMeeting } from '../../../common/util/bbb';
-import { getMeetingUrl } from '../../../common/util/bbb';
-import { isBBBMeetingRunning } from '../../../common/util/bbb';
-import { createOrUpdateCourseAttendanceLog } from '../../../common/util/bbb';
 
 const logger = getLogger();
 
-interface ICoursesHandler {
-    authenticatedStudent: any;
-    authenticatedPupil: any;
-    fields: string[];
-    states: string[];
-    instructorId: string;
-    participantId: string;
-    onlyJoinableCourses: boolean;
-}
-
-export const getCoursesHandlerSERVICE = async (
-    courseHandlerData: ICoursesHandler
-): Promise<ApiCourse[] | number> => {
-    console.log(courseHandlerData);
-
-    let obj = await getCourses(
-        courseHandlerData.authenticatedStudent,
-        courseHandlerData.authenticatedPupil,
-        courseHandlerData.fields,
-        courseHandlerData.states,
-        courseHandlerData.instructorId,
-        courseHandlerData.participantId,
-        courseHandlerData.onlyJoinableCourses
-    );
-
-    return obj;
-};
-
-async function getCourses(
-    student: Student | undefined,
-    pupil: Pupil | undefined,
-    fields: Array<string>,
-    states: Array<string>,
-    instructorId: string | undefined,
-    participantId: string | undefined,
-    onlyJoinableCourses: boolean
-): Promise<Array<ApiCourse> | number> {
+export async function getCourses(coursesData: IGetCourses): Promise<ApiCourse[] | number> {
     const entityManager = getManager();
+
+    const {student,
+           pupil,
+           fields,
+           states,
+           instructorId,
+           participantId,
+           onlyJoinableCourses} = coursesData;
 
     let authenticatedStudent = false;
     let authenticatedPupil = false;
@@ -226,16 +194,16 @@ async function getCourses(
     return apiCourses;
 }
 
-async function getAPICourses(
+export async function getAPICourses(
     student: Student | undefined,
     pupil: Pupil | undefined,
-    fields: Array<string>,
-    states: Array<string>,
+    fields: string[],
+    states: string[],
     instructorId: string | undefined,
     participantId: string | undefined,
     authenticatedStudent: boolean,
     authenticatedPupil: boolean
-): Promise<Array<ApiCourse> | number> {
+): Promise<ApiCourse[] | number> {
     let stateFilters = [];
     for (let i = 0; i < states.length; i++) {
         let state: CourseState;
@@ -647,27 +615,10 @@ let cache = new CourseCache<ApiCourse[]>(CACHE_RELOAD_INTERVAL, async (key) => {
 
 addCleanupAction(() => cache.stopAutoReload()); //stop cache refresh on sigkill
 
-interface ICourseHandler {
-    authenticatedStudent: any;
-    authenticatedPupil: any;
-    id: number;
-}
-
-export async function getCourseHandlerSERVICE(dataObject: ICourseHandler) {
-    let obj = await getCourse(
-        dataObject.authenticatedStudent,
-        dataObject.authenticatedPupil,
-        dataObject.id
-    );
-
-    return obj;
-}
-
-async function getCourse(
-    student: Student | undefined,
-    pupil: Pupil | undefined,
-    courseId: number
-): Promise<ApiCourse | number> {
+export async function getCourse(
+    courseData: IGetCourse
+): Promise<ApiCourse | responseError> {
+    const { student, pupil, courseId } = courseData;
     const entityManager = getManager();
 
     let authenticatedStudent = false;
@@ -699,7 +650,11 @@ async function getCourse(
                     course.courseState
             );
             logger.debug(student);
-            return 403;
+            return {
+                code: 403,
+                message: 'Unauthorized user tried to access course of state ' +
+                course.courseState
+            };
         }
 
         if (authorizedStudent || authenticatedPupil) {
@@ -850,18 +805,16 @@ async function getCourse(
     } catch (e) {
         logger.error("Can't fetch courses: " + e.message);
         logger.debug(e);
-        return 500;
+        return {
+            code: 500,
+            message: "Can't fetch courses: " + e.message
+        };
     }
 
     return apiCourse;
 }
 
-export async function getCourseTagsHandlerSERVICE() {
-    const courseTags: ApiCourseTag[] = await getCourseTags();
-    return courseTags;
-}
-
-async function getCourseTags() {
+export async function getCourseTags() {
     const entityManager = getManager();
 
     const tags = await entityManager.find(CourseTag);
@@ -881,23 +834,12 @@ async function getCourseTags() {
     return apiResponse;
 }
 
-interface postCourseHandler {
-    user: Student;
-    body: ApiAddCourse;
-}
-
-export async function postCourseHandlerSERVICE(dataObj: postCourseHandler) {
-    const ret = await postCourse(dataObj.user, dataObj.body);
-
-    return ret;
-}
-
-async function postCourse(
-    student: Student,
-    apiCourse: ApiAddCourse
+export async function postCourse(
+    postData: IPostCourse
 ): Promise<ApiCourse | number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
+    const { student, apiCourse } = postData;
 
     if (
         !student.isInstructor ||
@@ -1052,27 +994,12 @@ async function postCourse(
     }
 }
 
-export async function postSubcourseHandlerSERVICE({
-    user,
-    id,
-    body
-}: {
-    user: Student;
-    id: number;
-    body: ApiAddSubcourse;
-}) {
-    const ret = await postSubcourse(user, id, body);
-
-    return ret;
-}
-
-async function postSubcourse(
-    student: Student,
-    courseId: number,
-    apiSubcourse: ApiAddSubcourse
+export async function postSubcourse(
+    postSubcourse: IPostSubcourse
 ): Promise<ApiSubcourse | number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const { student, courseId, apiSubcourse} = postSubcourse;
 
     if (
         !student.isInstructor ||
@@ -1204,25 +1131,12 @@ async function postSubcourse(
     }
 }
 
-export async function postLectureHandlerSERVICE(dataObject) {
-    const ret = await postLecture(
-        dataObject.user,
-        dataObject.courseId,
-        dataObject.subCourseId,
-        dataObject.body
-    );
-
-    return ret;
-}
-
-async function postLecture(
-    student: Student,
-    courseId: number,
-    subcourseId: number,
-    apiLecture: ApiAddLecture
+export async function postLecture(
+    postLectureData: IPostlecture
 ): Promise<{ id: number } | number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const { student, courseId, subcourseId, apiLecture } = postLectureData;
 
     if (
         !student.isInstructor ||
@@ -1338,18 +1252,12 @@ async function postLecture(
     }
 }
 
-export async function putCourseHandlerSERVICE(dataObj) {
-    return await putCourse(dataObj.user, dataObj.courseId, dataObj.body);
-}
-
-async function putCourse(
-    student: Student,
-    courseId: number,
-    apiCourse: ApiEditCourse
+export async function putCourse(
+    putcourseData: IPutcourse
 ): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
-
+    const {student, courseId, apiCourse } = putcourseData;
     if (
         !student.isInstructor ||
         (await student.instructorScreeningStatus()) != ScreeningStatus.Accepted
@@ -1545,13 +1453,11 @@ async function putCourse(
     }
 }
 
-export async function putSubcourseHandlerSERVICE(dataObj) {
-    return await putSubcourse(dataObj.user, dataObj.courseId, dataObj.subcourseId, dataObj.body);
-}
-
-async function putSubcourse(student: Student, courseId: number, subcourseId: number, apiSubcourse: ApiEditSubcourse): Promise<number> {
+export async function putSubcourse(putSubcourseData: IPutsubcourse): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+
+    const { student, courseId, subcourseId, apiSubcourse} = putSubcourseData;
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to edit a subcourse, but is no instructor.`);
@@ -1684,13 +1590,11 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function putLectureHandlerSERVICE(dataObj) {
-    return await putLecture(dataObj.user, dataObj.courseId, dataObj.subcourseId, dataObj.lectureId, dataObj.body);
-}
 
-async function putLecture(student: Student, courseId: number, subcourseId: number, lectureId: number, apiLecture: ApiEditLecture): Promise<number> {
+export async function putLecture(putLectureData: IPutlecture): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const { student, courseId, subcourseId, lectureId, apiLecture} = putLectureData;
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to add a lecture, but is no instructor.`);
@@ -1808,11 +1712,8 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function deleteCourseHandlerSERVICE(dataObj) {
-    return await deleteCourse(dataObj.user, dataObj.courseId);
-}
 
-async function deleteCourse(student: Student, courseId: number): Promise<number> {
+export async function deleteCourse(student: Student, courseId: number): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -1907,14 +1808,12 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function deleteSubcourseHandlerSERVICE(dataObj) {
-    return await deleteSubcourse(dataObj.user, dataObj.courseId, dataObj.SubCourseId);
 
-}
-
-async function deleteSubcourse(student: Student, courseId: number, subcourseId: number): Promise<number> {
+export async function deleteSubcourse(deletesubcourseData: IDeletesubcourse): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
+
+    const { student, courseId, subcourseId } = deletesubcourseData;
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to cancel a subcourse, but is no instructor.`);
@@ -1998,13 +1897,11 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function deleteLectureHandlerSERVICE(dataObj) {
-    return await deleteLecture(dataObj.user, dataObj.courseId, dataObj.SubCourseId, dataObj.LectureId);
-}
 
-async function deleteLecture(student: Student, courseId: number, subcourseId: number, lectureId: number): Promise<number> {
+export async function deleteLecture(deleteLectureData: IDeleteLecture): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const {student, courseId, subcourseId, lectureId} = deleteLectureData;
 
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn(`Student (ID ${student.id}) tried to delete a lecture, but is no instructor.`);
@@ -2095,14 +1992,11 @@ async function deleteLecture(student: Student, courseId: number, subcourseId: nu
  * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
-export async function joinSubcourseHandlerSERVICE(dataObj) {
-    return await joinSubcourse(dataObj.user, dataObj.courseId, dataObj.SubCourseId, dataObj.userId);
 
-}
-
-async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+export async function joinSubcourse(joinsubcourseData: IJoinleaveInterface): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const {pupil, courseId, subcourseId, userId}= joinsubcourseData;
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2210,12 +2104,10 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
  * @apiUse StatusConflict
  * @apiUse StatusInternalServerError
  */
-export async function joinWaitingListHandlerSERVICE(dataObj) {
-    return await joinWaitingList(dataObj.user, dataObj.courseId, dataObj.SubcourseId, dataObj.userId);
-}
 
-async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+export async function joinWaitingList(joinwaitinglistData: IJoinleaveInterface): Promise<number> {
     const entityManager = getManager();
+    const {pupil, courseId, subcourseId, userId}= joinwaitinglistData;
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2303,13 +2195,11 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function leaveSubcourseHandlerSERVICE(dataObj) {
-    return await leaveSubcourse(dataObj.user, dataObj.courseId, dataObj.SubcourseId, dataObj.userId);
-}
 
-async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+export async function leaveSubcourse(leavesubcourseData: IJoinleaveInterface): Promise<number> {
     const entityManager = getManager();
     //TODO: Implement transactionLog
+    const {pupil, courseId, subcourseId, userId} = leavesubcourseData;
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2386,12 +2276,11 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function leaveWaitingListHandlerSERVICE(dataObj) {
-    return await leaveWaitingList(dataObj.user, dataObj.courseId, dataObj.SubcourseId, dataObj.userId);
-}
 
-async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: number, userId: string): Promise<number> {
+export async function leaveWaitingList(leavewaitinglistData: IJoinleaveInterface): Promise<number> {
     const entityManager = getManager();
+
+    const {pupil, courseId, subcourseId, userId} = leavewaitinglistData;
 
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
@@ -2421,7 +2310,7 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
 
             logger.info(`Pupil ${pupil.id} successfully left waiting list of subcourse nr ${subcourseId}`);
 
-            // transactionlog
+            //             transactionlog
             const transactionLog = getTransactionLog();
             await transactionLog.log(new ParticipantLeftWaitingListEvent(pupil, course));
         } catch (e) {
@@ -2461,11 +2350,11 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function groupMailHandlerSERVICE(dataObj) {
-    return await groupMail(dataObj.user, dataObj.courseId, dataObj.SubcourseId, dataObj.mailSubject, dataObj.mailBody);
-}
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+export async function groupMail(groupMailData: IGroupMail) {
+
+    const {student, courseId, subcourseId, mailSubject, mailBody} = groupMailData;
+
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
@@ -2538,11 +2427,11 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function instructorMailHandlerSERVICE(dataObj) {
-    return await instructorMail(dataObj.user, dataObj.courseId, dataObj.SubcourseId, dataObj.mailSubject, dataObj.mailBody);
-}
 
-async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+export async function instructorMail(instructormailData: IInstructormail) {
+
+    const {pupil, courseId, subcourseId, mailSubject, mailBody}= instructormailData;
+
     if (!pupil.isParticipant || !pupil.active) {
         logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
         return 403;
