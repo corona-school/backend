@@ -1,4 +1,4 @@
-import { Channel, Context, NotificationID } from "../types";
+import { Channel, Context, Notification } from "../types";
 import * as mailjetAPI from "node-mailjet";
 import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";

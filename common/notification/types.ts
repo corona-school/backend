@@ -2,17 +2,19 @@ import { Person } from "../entity/Person";
 import { Pupil } from "../entity/Pupil";
 import { Student } from "../entity/Student";
 
+// Prisma exports lowercase types, but we want capitalized types
+import {
+    concrete_notification as ConcreteNotification,
+    notification as Notification
+} from '.prisma/client';
+
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
 export type ActionID = string;
 export type Email = `${string}@${string}.${string}`;
 
-// Prisma exports lowercase types, but we want capitalized types
-export {
-    concrete_notification as ConcreteNotification,
-    notification as Notification
-} from '.prisma/client';
+export {ConcreteNotification, Notification};
 
 export { ConcreteNotificationState } from "../entity/ConcreteNotification";
 

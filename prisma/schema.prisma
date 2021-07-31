@@ -236,7 +236,8 @@ model mentor {
 }
 
 model notification {
-  id                Int      @id
+  id                Int      @id @default(autoincrement())
+  mailjetTemplateId Int?
   description       String   @db.VarChar
   active            Boolean
   recipient         Int

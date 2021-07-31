@@ -1,4 +1,4 @@
-import {Column, Entity, Index, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
@@ -13,7 +13,7 @@ export enum NotificationRecipient {
 // Yet we have to store some meta information for a Notification, which we do in this model:
 @Entity()
 export class Notification {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
     id: number;
 
     // Template IDs per Channel
