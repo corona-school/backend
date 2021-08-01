@@ -5,6 +5,7 @@ import { prisma } from "../prisma";
 import { debug } from "console";
 import { Notification, NotificationID } from "./types";
 import { NotificationRecipient } from "../entity/Notification";
+import { Prisma } from "@prisma/client";
 
 type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
 let _notificationsPerAction: NotificationsPerAction;
@@ -86,9 +87,21 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
     invalidateCache();
 }
 
-export async function create(notification: Omit<Notification, "id" | "active">) {
+export async function create(notification: Prisma.notificationCreateInput) {
+    if (notification.recipient !== NotificationRecipient.USER) {
+        throw new Error("For now, the recipient of a notification must be USER");
+    }
+
+    if (notification.active !== false) {
+        throw new Error("Notifications must be created in inactive state");
+    }
+
+    if (!notification.mailjetTemplateId) {
+        throw new Error("As long as Mailjet is our main channel, it is required to set the mailjetTemplateId");
+    }
+
     await prisma.notification.create({
-        data: { ...notification, active: false }
+        data: { ...notification }
     });
 
     invalidateCache();
