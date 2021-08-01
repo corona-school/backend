@@ -5,6 +5,9 @@ import ParticipantJoinedCourseEvent from "../transactionlog/types/ParticipantJoi
 import { getLogger } from "log4js";
 import { prisma } from "../prisma";
 import ParticipantLeftCourseEvent from "../transactionlog/types/ParticipantLeftCourseEvent";
+import moment from "moment";
+import { sendTemplateMail, mailjetTemplates } from "../mails";
+import * as Notification from "../notification";
 
 const delay = (time: number) => new Promise(res => setTimeout(res, time));
 
@@ -117,21 +120,39 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         }
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
+
+        try {
+            const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }});
+            const courseStart = moment(firstLecture[0].start);
+
+            /* TODO: Deprecate usage of old mailjet templates */
+            const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
+                participantFirstname: pupil.firstname,
+                courseName: course.name,
+                courseId: String(course.id),
+                firstLectureDate: courseStart.format("DD.MM.YYYY"),
+                firstLectureTime: courseStart.format("HH:mm"),
+                authToken: pupil.authToken
+            });
+
+            await sendTemplateMail(mail, pupil.email);
+
+            await Notification.actionTaken(pupil, "participant_subcourse_joined", {
+                course,
+                firstLectureDate: courseStart.format("DD.MM.YYYY"),
+                firstLectureTime: courseStart.format("HH:mm")
+            });
+        } catch (error) {
+            logger.warn(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`);
+        }
+
+        try {
+            const transactionLog = getTransactionLog();
+            await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
+        } catch (error) {
+            logger.warn(`Failed to add ParticipationJoinedCourseEvent to transaction log, but pupil still joined the course`, error);
+        }
     });
-
-    try {
-        const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }});
-        await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
-    } catch (error) {
-        logger.warn(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`);
-    }
-
-    try {
-        const transactionLog = getTransactionLog();
-        await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
-    } catch (error) {
-        logger.warn(`Failed to add ParticipationJoinedCourseEvent to transaction log, but pupil still joined the course`, error);
-    }
 }
 
 export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {

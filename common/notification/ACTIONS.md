@@ -117,6 +117,22 @@ Inform participants that subcourse was cancelled
 }
 ```
 
+### participant_subcourse_joined
+
+*description*
+
+Participant successfully joined course.
+
+*context*
+
+```typescript 
+{
+    course: Course,
+    firstLectureDate: string /* DD.MM.YYYY */,
+    firstLectureTime: string /* HH:MM */
+}
+```
+
 ### instructor_course_reminder
 
 *description* 
