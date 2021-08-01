@@ -27,7 +27,7 @@ import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import * as rateLimit from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notifiationController";
 import { apolloServer } from "./../graphql";
 
