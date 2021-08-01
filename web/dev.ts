@@ -1295,7 +1295,6 @@ export async function setupDevDB() {
     await prisma.notification.createMany({
         data: [
             {
-                id: 1,
                 mailjetTemplateId: 3026265, /* notification_system_test */
                 active: true,
                 description: 'TEST: Instant notification on registration',
@@ -1305,7 +1304,6 @@ export async function setupDevDB() {
                 onActions: ["test_start"]
             },
             {
-                id: 2,
                 active: false,
                 description: 'TEST: Disabled notification - If you see this, something is wrong',
                 recipient: NotificationRecipient.USER,
@@ -1314,7 +1312,6 @@ export async function setupDevDB() {
                 onActions: ["test_start"]
             },
             {
-                id: 3,
                 mailjetTemplateId: 3026840, /* notification_system_test_reminder */
                 active: true,
                 description: 'TEST: One Minute delayed notification on registration',
@@ -1325,7 +1322,6 @@ export async function setupDevDB() {
                 delay: 60_000 /*ms*/,
             },
             {
-                id: 4,
                 active: false,
                 description: 'TEST: Delayed disabled notification - If you see this, something is wrong',
                 recipient: NotificationRecipient.USER,
@@ -1335,7 +1331,6 @@ export async function setupDevDB() {
                 delay: 60_000 /*ms*/,
             },
             {
-                id: 5,
                 mailjetTemplateId: 3026840, /* notification_system_test_reminder */
                 active: true,
                 description: 'TEST: One Minute delayed notification on registration, repeated',
