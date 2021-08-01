@@ -2,17 +2,18 @@
     towards a common User Entity. This module contains some steps towards that entity */
 
 import { Person } from "../entity/Person";
+import * as Prisma from "@prisma/client";
 import { Pupil } from "../entity/Pupil";
 import { Student } from "../entity/Student";
 import { getManager } from "typeorm";
 
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it */
-export function getUserId(person: Pupil | Student) {
-    if ((person as Student).isStudent) {
+export function getUserId(person: Prisma.pupil | Prisma.student) {
+    if ((person as Prisma.student).isStudent) {
         return `student/${person.id}`;
     }
 
-    if ((person as Pupil).isPupil) {
+    if ((person as Prisma.pupil).isPupil) {
         return `pupil/${person.id}`;
     }
 
