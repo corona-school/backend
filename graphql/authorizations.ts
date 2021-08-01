@@ -50,12 +50,16 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Instructor_screening: allAdmin,
     Jufo_verification_transmission: allAdmin,
     Mentor: allAdmin,
-    Migrations: allAdmin,
     Participation_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
     School: allAdmin,
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
-    Subcourse_waiting_list_pupil: allAdmin
+    Subcourse_waiting_list_pupil: allAdmin,
+    Concrete_notification: allAdmin,
+    Course_guest: allAdmin,
+    Course_participation_certificate: allAdmin,
+    Notification: allAdmin,
+    Pupil_tutoring_interest_confirmation_request: allAdmin
 };

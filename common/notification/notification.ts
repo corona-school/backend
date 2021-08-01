@@ -4,6 +4,7 @@
 import { prisma } from "../prisma";
 import { debug } from "console";
 import { Notification, NotificationID } from "./types";
+import { NotificationRecipient } from "../entity/Notification";
 
 type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
 let _notificationsPerAction: NotificationsPerAction;
@@ -58,7 +59,6 @@ export async function getNotification(id: NotificationID, allowDeactivated = fal
     return notification;
 }
 
-// TODO: Expose as GraphQL Mutation
 export async function activate(id: NotificationID, active: boolean): Promise<void | never> {
     const matched = await prisma.notification.update({
         data: { active },
@@ -73,7 +73,6 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
 }
 
 
-// TODO: Expose as GraphQL Mutation
 export async function update(id: NotificationID, values: Partial<Omit<Notification, "active">>) {
     const matched = await prisma.notification.update({
         data: values,
@@ -87,10 +86,9 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
     invalidateCache();
 }
 
-// TODO: Expose as GraphQL Mutation
-export async function create(notification: Notification) {
+export async function create(notification: Omit<Notification, "id" | "active">) {
     await prisma.notification.create({
-        data: notification
+        data: { ...notification, active: false }
     });
 
     invalidateCache();

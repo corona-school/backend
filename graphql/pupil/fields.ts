@@ -1,7 +1,8 @@
-import { Subcourse, Pupil } from "../generated";
+import { Subcourse, Pupil, Concrete_notification } from "../generated";
 import { Authorized, Field, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
+import { getUserId } from "../../common/user";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -20,5 +21,11 @@ export class ExtendFieldsPupilResolver {
                 }
             }
         });
+    }
+
+    @FieldResolver(type => [Concrete_notification])
+    @Authorized(Role.ADMIN)
+    async concreteNotifications(@Root() pupil: Required<Pupil>) {
+        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) }});
     }
 }
