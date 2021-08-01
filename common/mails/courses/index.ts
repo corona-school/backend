@@ -110,6 +110,12 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
     });
 
     await sendTemplateMail(mail, participant.email);
+
+    await Notification.actionTaken(participant, "participant_subcourse_joined", {
+        course,
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm")
+    });
 }
 
 export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
