@@ -8,6 +8,10 @@ export async function getAllPupilsToSendInitialInterestConfirmationRequest(manag
     //compute a limit on how many people should NOW be able to receive the initial request
     const limit = await numberOfPupilsToRemindNow(manager);
 
+    if (limit <= 0) {
+        return []; //don't go into the database, because typeorm's take/limit doesn't work as documented or expected, see: https://github.com/typeorm/typeorm/issues/4883 (but of course, we can also interpret this as a shortcut...)
+    }
+
     //get the pupils
     const pupils = await getAllMatchablePupilsWithoutInterestConfirmationRequest(manager, limit);
 

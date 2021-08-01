@@ -57,6 +57,7 @@ import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity
 import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { addCleanupAction } from '../../../common/util/cleanup';
+import { getFullName } from '../../../common/user';
 
 const logger = getLogger();
 
@@ -2301,7 +2302,7 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 relations: ["subcourses"]
             });
             const numberOfActiveSubcourses = pupilWithSubcourses.subcourses?.filter(s => s.isActiveSubcourse()).length;
-            if (numberOfActiveSubcourses >= 6) { //todo: don't hardcode this constant here...
+            if (numberOfActiveSubcourses >= 10) { //todo: don't hardcode this constant here...
                 logger.warn(`Pupil with id ${pupil.id} can't join subcourse, because she already has ${numberOfActiveSubcourses} active courses`);
                 status = 429; //use this to quickly indicate that the pupil has too much active subcourses
                 return;
@@ -3005,7 +3006,7 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
         // start the meeting
         await startBBBMeeting(meeting);
 
-        const userName = user?.fullName() ?? uniqueNamesGenerator({
+        const userName = user ? getFullName(user) : uniqueNamesGenerator({
             dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
             separator: " ",
             length: 2,
@@ -3621,7 +3622,7 @@ async function joinCourseMeetingExternalGuest(token: string): Promise<number | A
     }
 
     //create the join url
-    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+    const joinURL = getMeetingUrl(meeting.meetingID, getFullName(guest), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
 
     return {
         url: joinURL
@@ -3742,7 +3743,7 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
             const certificateBuffer = await getCourseCertificate(
                 student.wix_id,
                 participant.wix_id,
-                participant.fullName(),
+                getFullName(participant),
                 course.name,
                 subcourse.lectures,
                 courseDuration

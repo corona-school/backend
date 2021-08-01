@@ -4,6 +4,7 @@ import { mailjetTemplates, sendTemplateMail } from "../../../mails";
 import { getTransactionLog } from "../../../transactionlog";
 import PupilInterestConfirmationRequestReminderSentEvent from "../../../transactionlog/types/PupilInterestConfirmationRequestReminderSentEvent";
 import PupilInterestConfirmationRequestSentEvent from "../../../transactionlog/types/PupilInterestConfirmationRequestSentEvent";
+import * as Notification from "../../../../common/notification";
 
 function createMailFromTemplate(template: typeof mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION | typeof mailjetTemplates.PUPILMATCHREQUESTCONFIRMATIONREMINDER, confirmationRequest: PupilTutoringInterestConfirmationRequest) {
     return template({
@@ -18,6 +19,11 @@ export async function sendTutoringConfirmationRequest(confirmationRequest: Pupil
     // send email
     const mail = createMailFromTemplate(mailjetTemplates.PUPILMATCHREQUESTCONFIRMATION, confirmationRequest);
     await sendTemplateMail(mail, confirmationRequest.pupil.email);
+    await Notification.actionTaken(confirmationRequest.pupil, "tutee_matching_confirm_interest", {
+        uniqueId: `${confirmationRequest.id}`,
+        confirmationURL: confirmationRequest.confirmationURL(),
+        refusalURL: confirmationRequest.refusalURL()
+    });
 
     // transaction log
     const transactionLog = getTransactionLog();
