@@ -13,6 +13,7 @@ import { ExtendedFieldsSubcourseResolver } from "./subcourse/fields";
 import { ExtendedFieldsCourseResolver } from "./course/fields";
 import { ExtendedFieldsMatchResolver } from "./match/fields";
 import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
+import { MutateNotificationResolver } from "./notification/mutations";
 
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
