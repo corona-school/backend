@@ -49,16 +49,14 @@ async function aquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: ()
 }
 
 export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil, force = true) {
-    const waitingListDeletion = await prisma.subcourse_waiting_list_pupil.delete({
+    const waitingListDeletion = await prisma.subcourse_waiting_list_pupil.deleteMany({
         where: {
-            subcourseId_pupilId: {
-                pupilId: pupil.id,
-                subcourseId: subcourse.id
-            }
+            pupilId: pupil.id,
+            subcourseId: subcourse.id
         }
     });
 
-    if (waitingListDeletion !== null) {
+    if (waitingListDeletion.count === 1) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of SUbcourse(${subcourse.id})`);
     } else if (force) {
         throw new Error(`Pupil is not on the waiting list`);
@@ -157,16 +155,14 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
 
 export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     // As we only delete, locking is not necessary
-    const deletion = await prisma.subcourse_participants_pupil.delete({
+    const deletion = await prisma.subcourse_participants_pupil.deleteMany({
         where: {
-            subcourseId_pupilId: {
-                subcourseId: subcourse.id,
-                pupilId: pupil.id
-            }
+            subcourseId: subcourse.id,
+            pupilId: pupil.id
         }
     });
 
-    if (deletion === null) {
+    if (deletion.count !== 1) {
         throw new Error(`Failed to leave Subcourse as the Pupil is not a participant`);
     }
 
