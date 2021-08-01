@@ -7,12 +7,12 @@ import { Student } from "../entity/Student";
 import { getManager } from "typeorm";
 
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it */
-export function getUserId(person: Person) {
-    if (person instanceof Student) {
+export function getUserId(person: Pupil | Student) {
+    if ((person as Student).isStudent) {
         return `student/${person.id}`;
     }
 
-    if (person instanceof Pupil) {
+    if ((person as Pupil).isPupil) {
         return `pupil/${person.id}`;
     }
 
