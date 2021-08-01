@@ -26,7 +26,11 @@ export enum log_logtype_enum {
   participantLeftCourse = "participantLeftCourse",
   participantJoinedWaitingList = "participantJoinedWaitingList",
   participantLeftWaitingList = "participantLeftWaitingList",
-  userAccessedCourseWhileAuthenticated = "userAccessedCourseWhileAuthenticated"
+  userAccessedCourseWhileAuthenticated = "userAccessedCourseWhileAuthenticated",
+  instructorIssuedCertificate = "instructorIssuedCertificate",
+  pupilInterestConfirmationRequestSent = "pupilInterestConfirmationRequestSent",
+  pupilInterestConfirmationRequestReminderSent = "pupilInterestConfirmationRequestReminderSent",
+  pupilInterestConfirmationRequestStatusChange = "pupilInterestConfirmationRequestStatusChange"
 }
 TypeGraphQL.registerEnumType(log_logtype_enum, {
   name: "log_logtype_enum",

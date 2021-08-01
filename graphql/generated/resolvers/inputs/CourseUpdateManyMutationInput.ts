@@ -44,15 +44,15 @@ export class CourseUpdateManyMutationInput {
   })
   imageKey?: NullableStringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  courseState?: Enumcourse_coursestate_enumFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => Enumcourse_category_enumFieldUpdateOperationsInput, {
     nullable: true
   })
   category?: Enumcourse_category_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  courseState?: Enumcourse_coursestate_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true

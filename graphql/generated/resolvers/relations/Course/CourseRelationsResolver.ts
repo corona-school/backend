@@ -1,9 +1,11 @@
 import * as TypeGraphQL from "type-graphql";
 import { Course } from "../../../models/Course";
+import { Course_guest } from "../../../models/Course_guest";
 import { Course_instructors_student } from "../../../models/Course_instructors_student";
 import { Course_tags_course_tag } from "../../../models/Course_tags_course_tag";
 import { Student } from "../../../models/Student";
 import { Subcourse } from "../../../models/Subcourse";
+import { CourseCourse_guestArgs } from "./args/CourseCourse_guestArgs";
 import { CourseCourse_instructors_studentArgs } from "./args/CourseCourse_instructors_studentArgs";
 import { CourseCourse_tags_course_tagArgs } from "./args/CourseCourse_tags_course_tagArgs";
 import { CourseSubcourseArgs } from "./args/CourseSubcourseArgs";
@@ -20,6 +22,17 @@ export class CourseRelationsResolver {
         id: course.id,
       },
     }).student({});
+  }
+
+  @TypeGraphQL.FieldResolver(_type => [Course_guest], {
+    nullable: false
+  })
+  async course_guest(@TypeGraphQL.Root() course: Course, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: CourseCourse_guestArgs): Promise<Course_guest[]> {
+    return getPrismaFromContext(ctx).course.findUnique({
+      where: {
+        id: course.id,
+      },
+    }).course_guest(args);
   }
 
   @TypeGraphQL.FieldResolver(_type => [Course_instructors_student], {

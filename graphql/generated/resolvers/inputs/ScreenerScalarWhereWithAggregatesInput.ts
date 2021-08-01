@@ -70,21 +70,6 @@ export class ScreenerScalarWhereWithAggregatesInput {
   })
   verification?: StringNullableWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
-    nullable: true
-  })
-  password?: StringWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  verified?: BoolNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  oldNumberID?: IntNullableWithAggregatesFilter | undefined;
-
   @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
     nullable: true
   })
@@ -104,4 +89,19 @@ export class ScreenerScalarWhereWithAggregatesInput {
     nullable: true
   })
   authTokenSent?: DateTimeNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
+    nullable: true
+  })
+  password?: StringWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  verified?: BoolNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  oldNumberID?: IntNullableWithAggregatesFilter | undefined;
 }

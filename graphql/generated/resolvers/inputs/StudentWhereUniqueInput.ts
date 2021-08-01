@@ -25,10 +25,10 @@ export class StudentWhereUniqueInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  wix_id?: string | undefined;
+  authToken?: string | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  authToken?: string | undefined;
+  wix_id?: string | undefined;
 }

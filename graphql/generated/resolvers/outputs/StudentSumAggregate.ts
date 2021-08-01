@@ -20,17 +20,7 @@ export class StudentSumAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  sentScreeningReminderCount!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
   moduleHours!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount!: number | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
@@ -41,4 +31,14 @@ export class StudentSumAggregate {
     nullable: true
   })
   sentJufoAlumniScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount!: number | null;
 }

@@ -35,5 +35,5 @@ export class FindFirstSubcourseArgs {
   @TypeGraphQL.Field(_type => [SubcourseScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "minGrade" | "maxGrade" | "maxParticipants" | "published" | "cancelled" | "joinAfterStart" | "courseId"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "minGrade" | "maxGrade" | "maxParticipants" | "joinAfterStart" | "published" | "cancelled" | "courseId"> | undefined;
 }

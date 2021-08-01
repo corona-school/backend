@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateManylanguagesInput } from "../inputs/PupilCreateManylanguagesInput";
 import { PupilCreateManyprojectFieldsInput } from "../inputs/PupilCreateManyprojectFieldsInput";
-import { learning_german_since } from "../../enums/learning_german_since";
+import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
@@ -53,31 +53,6 @@ export class PupilCreateManyInput {
   })
   verification?: string | undefined;
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
-  })
-  wix_id!: string;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: false
-  })
-  wix_creation_date!: Date;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  subjects?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  grade?: string | undefined;
-
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -98,20 +73,35 @@ export class PupilCreateManyInput {
   })
   authTokenSent?: Date | undefined;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
   })
-  openMatchRequestCount?: number | undefined;
+  wix_id!: string;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: false
+  })
+  wix_creation_date!: Date;
+
+  @TypeGraphQL.Field(_type => pupil_state_enum, {
     nullable: true
   })
-  matchingPriority?: number | undefined;
+  state?: "bw" | "by" | "be" | "bb" | "hb" | "hh" | "he" | "mv" | "ni" | "nw" | "rp" | "sl" | "sn" | "st" | "sh" | "th" | "other" | undefined;
 
   @TypeGraphQL.Field(_type => pupil_schooltype_enum, {
     nullable: true
   })
   schooltype?: "grundschule" | "gesamtschule" | "hauptschule" | "realschule" | "gymnasium" | "f_rderschule" | "berufsschule" | "other" | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  msg?: string | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  grade?: string | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -123,35 +113,20 @@ export class PupilCreateManyInput {
   })
   isPupil?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  isParticipant?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => pupil_state_enum, {
-    nullable: true
-  })
-  state?: "bw" | "by" | "be" | "bb" | "hb" | "hh" | "he" | "mv" | "ni" | "nw" | "rp" | "sl" | "sn" | "st" | "sh" | "th" | "other" | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: Date | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  teacherEmailAddress?: string | undefined;
-
-  @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
-    nullable: true
-  })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  subjects?: string | undefined;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  schoolId?: number | undefined;
+  openMatchRequestCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  isParticipant?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -173,10 +148,35 @@ export class PupilCreateManyInput {
   })
   projectMemberCount?: number | undefined;
 
-  @TypeGraphQL.Field(_type => learning_german_since, {
+  @TypeGraphQL.Field(_type => pupil_learninggermansince_enum, {
     nullable: true
   })
-  learningGermanSince?: "greaterThanFour" | "twoToFour" | "oneToTwo" | "lessThanOne" | undefined;
+  learningGermanSince?: "more_than_four" | "two_to_four" | "one_to_two" | "less_than_one" | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  matchingPriority?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  teacherEmailAddress?: string | undefined;
+
+  @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
+    nullable: true
+  })
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  schoolId?: number | undefined;
 
   @TypeGraphQL.Field(_type => PupilCreateManyprojectFieldsInput, {
     nullable: true

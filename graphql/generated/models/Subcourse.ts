@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Course } from "../models/Course";
+import { Course_participation_certificate } from "../models/Course_participation_certificate";
 import { Lecture } from "../models/Lecture";
 import { Subcourse_instructors_student } from "../models/Subcourse_instructors_student";
 import { Subcourse_participants_pupil } from "../models/Subcourse_participants_pupil";
@@ -45,6 +46,11 @@ export class Subcourse {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
+  joinAfterStart!: boolean;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
   published!: boolean;
 
   @TypeGraphQL.Field(_type => Boolean, {
@@ -52,17 +58,14 @@ export class Subcourse {
   })
   cancelled!: boolean;
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: false
-  })
-  joinAfterStart!: boolean;
-
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
   courseId?: number | null;
 
   course?: Course | null;
+
+  course_participation_certificate?: Course_participation_certificate[];
 
   lecture?: Lecture[];
 

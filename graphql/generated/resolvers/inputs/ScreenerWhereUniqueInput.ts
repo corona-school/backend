@@ -22,13 +22,13 @@ export class ScreenerWhereUniqueInput {
   })
   verification?: string | undefined;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  oldNumberID?: number | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
   authToken?: string | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  oldNumberID?: number | undefined;
 }

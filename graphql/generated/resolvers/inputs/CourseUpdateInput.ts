@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
+import { Course_guestUpdateManyWithoutCourseInput } from "../inputs/Course_guestUpdateManyWithoutCourseInput";
 import { Course_instructors_studentUpdateManyWithoutCourseInput } from "../inputs/Course_instructors_studentUpdateManyWithoutCourseInput";
 import { Course_tags_course_tagUpdateManyWithoutCourseInput } from "../inputs/Course_tags_course_tagUpdateManyWithoutCourseInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
@@ -48,15 +49,15 @@ export class CourseUpdateInput {
   })
   imageKey?: NullableStringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  courseState?: Enumcourse_coursestate_enumFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => Enumcourse_category_enumFieldUpdateOperationsInput, {
     nullable: true
   })
   category?: Enumcourse_category_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  courseState?: Enumcourse_coursestate_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
@@ -77,6 +78,11 @@ export class CourseUpdateInput {
     nullable: true
   })
   student?: StudentUpdateOneWithoutCourseInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_guestUpdateManyWithoutCourseInput, {
+    nullable: true
+  })
+  course_guest?: Course_guestUpdateManyWithoutCourseInput | undefined;
 
   @TypeGraphQL.Field(_type => Course_instructors_studentUpdateManyWithoutCourseInput, {
     nullable: true

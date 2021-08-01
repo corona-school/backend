@@ -9,13 +9,13 @@ export enum ScreenerScalarFieldEnum {
   active = "active",
   email = "email",
   verification = "verification",
-  password = "password",
-  verified = "verified",
-  oldNumberID = "oldNumberID",
   verifiedAt = "verifiedAt",
   authToken = "authToken",
   authTokenUsed = "authTokenUsed",
-  authTokenSent = "authTokenSent"
+  authTokenSent = "authTokenSent",
+  password = "password",
+  verified = "verified",
+  oldNumberID = "oldNumberID"
 }
 TypeGraphQL.registerEnumType(ScreenerScalarFieldEnum, {
   name: "ScreenerScalarFieldEnum",

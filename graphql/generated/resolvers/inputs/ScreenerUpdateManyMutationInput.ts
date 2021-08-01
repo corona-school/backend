@@ -49,21 +49,6 @@ export class ScreenerUpdateManyMutationInput {
   })
   verification?: NullableStringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  password?: StringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableBoolFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  verified?: NullableBoolFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  oldNumberID?: NullableIntFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -83,4 +68,19 @@ export class ScreenerUpdateManyMutationInput {
     nullable: true
   })
   authTokenSent?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  password?: StringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableBoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  verified?: NullableBoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  oldNumberID?: NullableIntFieldUpdateOperationsInput | undefined;
 }

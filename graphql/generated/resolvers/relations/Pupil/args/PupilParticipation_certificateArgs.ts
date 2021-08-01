@@ -35,5 +35,5 @@ export class PupilParticipation_certificateArgs {
   @TypeGraphQL.Field(_type => [Participation_certificateScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "uuid" | "subjects" | "categories" | "certificateDate" | "startDate" | "endDate" | "hoursPerWeek" | "hoursTotal" | "medium" | "studentId" | "pupilId" | "ongoingLessons"> | undefined;
+  distinct?: Array<"id" | "uuid" | "subjects" | "categories" | "certificateDate" | "startDate" | "endDate" | "hoursPerWeek" | "hoursTotal" | "medium" | "ongoingLessons" | "state" | "signaturePupil" | "signatureParent" | "signatureLocation" | "signatureDate" | "studentId" | "pupilId"> | undefined;
 }

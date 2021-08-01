@@ -38,6 +38,11 @@ export class SubcourseCreateManyInput {
   maxParticipants!: number;
 
   @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  joinAfterStart?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   published!: boolean;
@@ -46,11 +51,6 @@ export class SubcourseCreateManyInput {
     nullable: true
   })
   cancelled?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  joinAfterStart?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

@@ -44,21 +44,6 @@ export class ScreenerCreateWithoutProject_coaching_screeningInput {
   })
   verification?: string | undefined;
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
-  })
-  password!: string;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  verified?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  oldNumberID?: number | undefined;
-
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -78,6 +63,21 @@ export class ScreenerCreateWithoutProject_coaching_screeningInput {
     nullable: true
   })
   authTokenSent?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
+  })
+  password!: string;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  verified?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  oldNumberID?: number | undefined;
 
   @TypeGraphQL.Field(_type => Instructor_screeningCreateNestedManyWithoutScreenerInput, {
     nullable: true

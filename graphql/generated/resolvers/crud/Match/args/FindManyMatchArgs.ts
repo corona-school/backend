@@ -35,5 +35,5 @@ export class FindManyMatchArgs {
   @TypeGraphQL.Field(_type => [MatchScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "uuid" | "dissolved" | "proposedTime" | "createdAt" | "updatedAt" | "source" | "studentId" | "pupilId" | "dissolveReason" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail"> | undefined;
+  distinct?: Array<"id" | "uuid" | "dissolved" | "dissolveReason" | "proposedTime" | "createdAt" | "updatedAt" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail" | "source" | "studentId" | "pupilId"> | undefined;
 }

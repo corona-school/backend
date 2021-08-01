@@ -20,7 +20,7 @@ export class GroupByMentorArgs {
   @TypeGraphQL.Field(_type => [MentorScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "division" | "expertise" | "subjects" | "teachingExperience" | "message" | "description" | "imageUrl" | "wix_id" | "wix_creation_date">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "division" | "expertise" | "subjects" | "teachingExperience" | "message" | "description" | "imageUrl">;
 
   @TypeGraphQL.Field(_type => MentorScalarWhereWithAggregatesInput, {
     nullable: true

@@ -49,15 +49,15 @@ export class CourseGroupBy {
   })
   imageKey!: string | null;
 
-  @TypeGraphQL.Field(_type => course_coursestate_enum, {
-    nullable: false
-  })
-  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled";
-
   @TypeGraphQL.Field(_type => course_category_enum, {
     nullable: false
   })
   category!: "revision" | "club" | "coaching";
+
+  @TypeGraphQL.Field(_type => course_coursestate_enum, {
+    nullable: false
+  })
+  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled";
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

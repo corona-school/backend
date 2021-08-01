@@ -65,15 +65,15 @@ export class CourseScalarWhereWithAggregatesInput {
   })
   imageKey?: StringNullableWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumWithAggregatesFilter, {
-    nullable: true
-  })
-  courseState?: Enumcourse_coursestate_enumWithAggregatesFilter | undefined;
-
   @TypeGraphQL.Field(_type => Enumcourse_category_enumWithAggregatesFilter, {
     nullable: true
   })
   category?: Enumcourse_category_enumWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumWithAggregatesFilter, {
+    nullable: true
+  })
+  courseState?: Enumcourse_coursestate_enumWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
     nullable: true

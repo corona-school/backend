@@ -13,15 +13,15 @@ export enum MentorScalarFieldEnum {
   authToken = "authToken",
   authTokenUsed = "authTokenUsed",
   authTokenSent = "authTokenSent",
+  wix_id = "wix_id",
+  wix_creation_date = "wix_creation_date",
   division = "division",
   expertise = "expertise",
   subjects = "subjects",
   teachingExperience = "teachingExperience",
   message = "message",
   description = "description",
-  imageUrl = "imageUrl",
-  wix_id = "wix_id",
-  wix_creation_date = "wix_creation_date"
+  imageUrl = "imageUrl"
 }
 TypeGraphQL.registerEnumType(MentorScalarFieldEnum, {
   name: "MentorScalarFieldEnum",

@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
+import { Course_participation_certificateUpdateManyWithoutSubcourseInput } from "../inputs/Course_participation_certificateUpdateManyWithoutSubcourseInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperationsInput";
 import { LectureUpdateManyWithoutSubcourseInput } from "../inputs/LectureUpdateManyWithoutSubcourseInput";
@@ -42,6 +43,11 @@ export class SubcourseUpdateWithoutCourseInput {
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
+  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
   published?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
@@ -49,10 +55,10 @@ export class SubcourseUpdateWithoutCourseInput {
   })
   cancelled?: BoolFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => Course_participation_certificateUpdateManyWithoutSubcourseInput, {
     nullable: true
   })
-  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
+  course_participation_certificate?: Course_participation_certificateUpdateManyWithoutSubcourseInput | undefined;
 
   @TypeGraphQL.Field(_type => LectureUpdateManyWithoutSubcourseInput, {
     nullable: true

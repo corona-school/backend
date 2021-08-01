@@ -70,6 +70,16 @@ export class MentorMinAggregate {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
+  wix_id!: string | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  wix_creation_date!: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
   subjects!: string | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
@@ -91,14 +101,4 @@ export class MentorMinAggregate {
     nullable: true
   })
   imageUrl!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  wix_id!: string | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  wix_creation_date!: Date | null;
 }

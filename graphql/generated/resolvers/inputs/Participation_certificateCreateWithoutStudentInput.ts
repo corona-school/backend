@@ -38,15 +38,15 @@ export class Participation_certificateCreateWithoutStudentInput {
   })
   endDate?: Date | undefined;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: false
   })
-  hoursPerWeek!: number;
+  hoursPerWeek!: Prisma.Decimal;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: false
   })
-  hoursTotal!: number;
+  hoursTotal!: Prisma.Decimal;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: false
@@ -57,6 +57,31 @@ export class Participation_certificateCreateWithoutStudentInput {
     nullable: true
   })
   ongoingLessons?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  state?: string | undefined;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signaturePupil?: Buffer | undefined;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signatureParent?: Buffer | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  signatureLocation?: string | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  signatureDate?: Date | undefined;
 
   @TypeGraphQL.Field(_type => PupilCreateNestedOneWithoutParticipation_certificateInput, {
     nullable: true

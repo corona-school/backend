@@ -46,12 +46,12 @@ export class CourseOrderByInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
-  courseState?: "asc" | "desc" | undefined;
+  category?: "asc" | "desc" | undefined;
 
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
-  category?: "asc" | "desc" | undefined;
+  courseState?: "asc" | "desc" | undefined;
 
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true

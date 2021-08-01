@@ -64,5 +64,5 @@ export class Bbb_meetingScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
     nullable: true
   })
-  alternativeUri?: StringNullableWithAggregatesFilter | undefined;
+  alternativeUrl?: StringNullableWithAggregatesFilter | undefined;
 }

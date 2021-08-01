@@ -44,20 +44,50 @@ export class Participation_certificate {
   })
   endDate!: Date;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: false
   })
-  hoursPerWeek!: number;
+  hoursPerWeek!: Prisma.Decimal;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: false
   })
-  hoursTotal!: number;
+  hoursTotal!: Prisma.Decimal;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
   medium!: string;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
+  ongoingLessons!: boolean;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
+  })
+  state!: string;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signaturePupil?: Buffer | null;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signatureParent?: Buffer | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  signatureLocation?: string | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  signatureDate?: Date | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
@@ -68,11 +98,6 @@ export class Participation_certificate {
     nullable: true
   })
   pupilId?: number | null;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: false
-  })
-  ongoingLessons!: boolean;
 
   pupil?: Pupil | null;
 

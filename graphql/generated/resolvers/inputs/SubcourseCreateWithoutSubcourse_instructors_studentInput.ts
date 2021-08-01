@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { CourseCreateNestedOneWithoutSubcourseInput } from "../inputs/CourseCreateNestedOneWithoutSubcourseInput";
+import { Course_participation_certificateCreateNestedManyWithoutSubcourseInput } from "../inputs/Course_participation_certificateCreateNestedManyWithoutSubcourseInput";
 import { LectureCreateNestedManyWithoutSubcourseInput } from "../inputs/LectureCreateNestedManyWithoutSubcourseInput";
 import { Subcourse_participants_pupilCreateNestedManyWithoutSubcourseInput } from "../inputs/Subcourse_participants_pupilCreateNestedManyWithoutSubcourseInput";
 import { Subcourse_waiting_list_pupilCreateNestedManyWithoutSubcourseInput } from "../inputs/Subcourse_waiting_list_pupilCreateNestedManyWithoutSubcourseInput";
@@ -37,6 +38,11 @@ export class SubcourseCreateWithoutSubcourse_instructors_studentInput {
   maxParticipants!: number;
 
   @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  joinAfterStart?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   published!: boolean;
@@ -46,15 +52,15 @@ export class SubcourseCreateWithoutSubcourse_instructors_studentInput {
   })
   cancelled?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  joinAfterStart?: boolean | undefined;
-
   @TypeGraphQL.Field(_type => CourseCreateNestedOneWithoutSubcourseInput, {
     nullable: true
   })
   course?: CourseCreateNestedOneWithoutSubcourseInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_participation_certificateCreateNestedManyWithoutSubcourseInput, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateCreateNestedManyWithoutSubcourseInput | undefined;
 
   @TypeGraphQL.Field(_type => LectureCreateNestedManyWithoutSubcourseInput, {
     nullable: true

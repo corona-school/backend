@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { CourseUpdateOneWithoutSubcourseInput } from "../inputs/CourseUpdateOneWithoutSubcourseInput";
+import { Course_participation_certificateUpdateManyWithoutSubcourseInput } from "../inputs/Course_participation_certificateUpdateManyWithoutSubcourseInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperationsInput";
 import { Subcourse_instructors_studentUpdateManyWithoutSubcourseInput } from "../inputs/Subcourse_instructors_studentUpdateManyWithoutSubcourseInput";
@@ -42,6 +43,11 @@ export class SubcourseUpdateWithoutLectureInput {
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
+  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
   published?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
@@ -49,15 +55,15 @@ export class SubcourseUpdateWithoutLectureInput {
   })
   cancelled?: BoolFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => CourseUpdateOneWithoutSubcourseInput, {
     nullable: true
   })
   course?: CourseUpdateOneWithoutSubcourseInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_participation_certificateUpdateManyWithoutSubcourseInput, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateUpdateManyWithoutSubcourseInput | undefined;
 
   @TypeGraphQL.Field(_type => Subcourse_instructors_studentUpdateManyWithoutSubcourseInput, {
     nullable: true

@@ -20,6 +20,11 @@ export class MatchCreateInput {
   })
   dissolved?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  dissolveReason?: number | undefined;
+
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -34,16 +39,6 @@ export class MatchCreateInput {
     nullable: true
   })
   updatedAt?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => match_source_enum, {
-    nullable: true
-  })
-  source?: "imported" | "matchedexternal" | "matchedinternal" | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  dissolveReason?: number | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -64,6 +59,11 @@ export class MatchCreateInput {
     nullable: true
   })
   followUpToStudentMail?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => match_source_enum, {
+    nullable: true
+  })
+  source?: "imported" | "matchedexternal" | "matchedinternal" | undefined;
 
   @TypeGraphQL.Field(_type => PupilCreateNestedOneWithoutMatchInput, {
     nullable: true

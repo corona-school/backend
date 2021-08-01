@@ -1,13 +1,16 @@
 import * as TypeGraphQL from "type-graphql";
 import { Course_attendance_log } from "../../../models/Course_attendance_log";
+import { Course_participation_certificate } from "../../../models/Course_participation_certificate";
 import { Match } from "../../../models/Match";
 import { Participation_certificate } from "../../../models/Participation_certificate";
 import { Project_match } from "../../../models/Project_match";
 import { Pupil } from "../../../models/Pupil";
+import { Pupil_tutoring_interest_confirmation_request } from "../../../models/Pupil_tutoring_interest_confirmation_request";
 import { School } from "../../../models/School";
 import { Subcourse_participants_pupil } from "../../../models/Subcourse_participants_pupil";
 import { Subcourse_waiting_list_pupil } from "../../../models/Subcourse_waiting_list_pupil";
 import { PupilCourse_attendance_logArgs } from "./args/PupilCourse_attendance_logArgs";
+import { PupilCourse_participation_certificateArgs } from "./args/PupilCourse_participation_certificateArgs";
 import { PupilMatchArgs } from "./args/PupilMatchArgs";
 import { PupilParticipation_certificateArgs } from "./args/PupilParticipation_certificateArgs";
 import { PupilProject_matchArgs } from "./args/PupilProject_matchArgs";
@@ -37,6 +40,17 @@ export class PupilRelationsResolver {
         id: pupil.id,
       },
     }).course_attendance_log(args);
+  }
+
+  @TypeGraphQL.FieldResolver(_type => [Course_participation_certificate], {
+    nullable: false
+  })
+  async course_participation_certificate(@TypeGraphQL.Root() pupil: Pupil, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: PupilCourse_participation_certificateArgs): Promise<Course_participation_certificate[]> {
+    return getPrismaFromContext(ctx).pupil.findUnique({
+      where: {
+        id: pupil.id,
+      },
+    }).course_participation_certificate(args);
   }
 
   @TypeGraphQL.FieldResolver(_type => [Match], {
@@ -70,6 +84,17 @@ export class PupilRelationsResolver {
         id: pupil.id,
       },
     }).project_match(args);
+  }
+
+  @TypeGraphQL.FieldResolver(_type => Pupil_tutoring_interest_confirmation_request, {
+    nullable: true
+  })
+  async pupil_tutoring_interest_confirmation_request(@TypeGraphQL.Root() pupil: Pupil, @TypeGraphQL.Ctx() ctx: any): Promise<Pupil_tutoring_interest_confirmation_request | null> {
+    return getPrismaFromContext(ctx).pupil.findUnique({
+      where: {
+        id: pupil.id,
+      },
+    }).pupil_tutoring_interest_confirmation_request({});
   }
 
   @TypeGraphQL.FieldResolver(_type => [Subcourse_participants_pupil], {

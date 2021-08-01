@@ -12,15 +12,15 @@ export class Participation_certificateAvgAggregate {
   })
   id!: number | null;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: true
   })
-  hoursPerWeek!: number | null;
+  hoursPerWeek!: Prisma.Decimal | null;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: true
   })
-  hoursTotal!: number | null;
+  hoursTotal!: Prisma.Decimal | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true

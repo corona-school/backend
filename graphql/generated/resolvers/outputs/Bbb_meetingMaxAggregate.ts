@@ -45,5 +45,5 @@ export class Bbb_meetingMaxAggregate {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  alternativeUri!: string | null;
+  alternativeUrl!: string | null;
 }

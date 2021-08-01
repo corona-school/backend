@@ -20,7 +20,7 @@ export class GroupByParticipation_certificateArgs {
   @TypeGraphQL.Field(_type => [Participation_certificateScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "uuid" | "subjects" | "categories" | "certificateDate" | "startDate" | "endDate" | "hoursPerWeek" | "hoursTotal" | "medium" | "studentId" | "pupilId" | "ongoingLessons">;
+  by!: Array<"id" | "uuid" | "subjects" | "categories" | "certificateDate" | "startDate" | "endDate" | "hoursPerWeek" | "hoursTotal" | "medium" | "ongoingLessons" | "state" | "signaturePupil" | "signatureParent" | "signatureLocation" | "signatureDate" | "studentId" | "pupilId">;
 
   @TypeGraphQL.Field(_type => Participation_certificateScalarWhereWithAggregatesInput, {
     nullable: true

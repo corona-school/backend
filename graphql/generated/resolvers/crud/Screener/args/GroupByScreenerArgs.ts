@@ -20,7 +20,7 @@ export class GroupByScreenerArgs {
   @TypeGraphQL.Field(_type => [ScreenerScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "password" | "verified" | "oldNumberID" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "password" | "verified" | "oldNumberID">;
 
   @TypeGraphQL.Field(_type => ScreenerScalarWhereWithAggregatesInput, {
     nullable: true

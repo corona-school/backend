@@ -64,5 +64,5 @@ export class Bbb_meetingWhereInput {
   @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true
   })
-  alternativeUri?: StringNullableFilter | undefined;
+  alternativeUrl?: StringNullableFilter | undefined;
 }

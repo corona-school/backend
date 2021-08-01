@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { CourseRelationFilter } from "../inputs/CourseRelationFilter";
+import { Course_participation_certificateListRelationFilter } from "../inputs/Course_participation_certificateListRelationFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
@@ -64,17 +65,17 @@ export class SubcourseWhereInput {
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
+  joinAfterStart?: BoolFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
   published?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
   cancelled?: BoolFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolFilter, {
-    nullable: true
-  })
-  joinAfterStart?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true
@@ -85,6 +86,11 @@ export class SubcourseWhereInput {
     nullable: true
   })
   course?: CourseRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Course_participation_certificateListRelationFilter, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateListRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => LectureListRelationFilter, {
     nullable: true

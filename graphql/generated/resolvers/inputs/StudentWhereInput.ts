@@ -5,10 +5,12 @@ import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { BoolNullableFilter } from "../inputs/BoolNullableFilter";
 import { CourseListRelationFilter } from "../inputs/CourseListRelationFilter";
+import { Course_guestListRelationFilter } from "../inputs/Course_guestListRelationFilter";
 import { Course_instructors_studentListRelationFilter } from "../inputs/Course_instructors_studentListRelationFilter";
+import { Course_participation_certificateListRelationFilter } from "../inputs/Course_participation_certificateListRelationFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { DateTimeNullableFilter } from "../inputs/DateTimeNullableFilter";
-import { EnumlanguageNullableListFilter } from "../inputs/EnumlanguageNullableListFilter";
+import { Enumstudent_languages_enumNullableListFilter } from "../inputs/Enumstudent_languages_enumNullableListFilter";
 import { Enumstudent_module_enumNullableFilter } from "../inputs/Enumstudent_module_enumNullableFilter";
 import { Enumstudent_registrationsource_enumFilter } from "../inputs/Enumstudent_registrationsource_enumFilter";
 import { Enumstudent_state_enumNullableFilter } from "../inputs/Enumstudent_state_enumNullableFilter";
@@ -87,6 +89,26 @@ export class StudentWhereInput {
   })
   verification?: StringNullableFilter | undefined;
 
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  verifiedAt?: DateTimeNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  authToken?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
+  authTokenUsed?: BoolFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  authTokenSent?: DateTimeNullableFilter | undefined;
+
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
@@ -100,32 +122,7 @@ export class StudentWhereInput {
   @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true
   })
-  subjects?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  msg?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
   phone?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  verifiedAt?: DateTimeNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  authToken?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntFilter, {
-    nullable: true
-  })
-  openMatchRequestCount?: IntFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true
@@ -135,37 +132,32 @@ export class StudentWhereInput {
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
-  authTokenUsed?: BoolFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  authTokenSent?: DateTimeNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntFilter, {
-    nullable: true
-  })
-  sentScreeningReminderCount?: IntFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: DateTimeNullableFilter | undefined;
+  newsletter?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
   isStudent?: BoolFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  subjects?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntFilter, {
+    nullable: true
+  })
+  openMatchRequestCount?: IntFilter | undefined;
+
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
   isInstructor?: BoolFilter | undefined;
 
-  @TypeGraphQL.Field(_type => BoolFilter, {
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true
   })
-  newsletter?: BoolFilter | undefined;
+  msg?: StringNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => Enumstudent_state_enumNullableFilter, {
     nullable: true
@@ -186,21 +178,6 @@ export class StudentWhereInput {
     nullable: true
   })
   moduleHours?: IntNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntFilter, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount?: IntFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: DateTimeNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: DateTimeNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
@@ -247,6 +224,41 @@ export class StudentWhereInput {
   })
   lastSentJufoAlumniScreeningInvitationDate?: DateTimeNullableFilter | undefined;
 
+  @TypeGraphQL.Field(_type => BoolNullableFilter, {
+    nullable: true
+  })
+  supportsInDaZ?: BoolNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumstudent_languages_enumNullableListFilter, {
+    nullable: true
+  })
+  languages?: Enumstudent_languages_enumNullableListFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntFilter, {
+    nullable: true
+  })
+  sentScreeningReminderCount?: IntFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: DateTimeNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntFilter, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount?: IntFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: DateTimeNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: DateTimeNullableFilter | undefined;
+
   @TypeGraphQL.Field(_type => Enumstudent_registrationsource_enumFilter, {
     nullable: true
   })
@@ -257,25 +269,25 @@ export class StudentWhereInput {
   })
   course?: CourseListRelationFilter | undefined;
 
+  @TypeGraphQL.Field(_type => Course_guestListRelationFilter, {
+    nullable: true
+  })
+  course_guest?: Course_guestListRelationFilter | undefined;
+
   @TypeGraphQL.Field(_type => Course_instructors_studentListRelationFilter, {
     nullable: true
   })
   course_instructors_student?: Course_instructors_studentListRelationFilter | undefined;
 
+  @TypeGraphQL.Field(_type => Course_participation_certificateListRelationFilter, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateListRelationFilter | undefined;
+
   @TypeGraphQL.Field(_type => Expert_dataRelationFilter, {
     nullable: true
   })
   expert_data?: Expert_dataRelationFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolNullableFilter, {
-    nullable: true
-  })
-  supportsInDaZ?: BoolNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => EnumlanguageNullableListFilter, {
-    nullable: true
-  })
-  languages?: EnumlanguageNullableListFilter | undefined;
 
   @TypeGraphQL.Field(_type => Instructor_screeningRelationFilter, {
     nullable: true

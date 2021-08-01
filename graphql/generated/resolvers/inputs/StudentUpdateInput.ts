@@ -4,7 +4,9 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { CourseUpdateManyWithoutStudentInput } from "../inputs/CourseUpdateManyWithoutStudentInput";
+import { Course_guestUpdateManyWithoutStudentInput } from "../inputs/Course_guestUpdateManyWithoutStudentInput";
 import { Course_instructors_studentUpdateManyWithoutStudentInput } from "../inputs/Course_instructors_studentUpdateManyWithoutStudentInput";
+import { Course_participation_certificateUpdateManyWithoutStudentInput } from "../inputs/Course_participation_certificateUpdateManyWithoutStudentInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { Enumstudent_registrationsource_enumFieldUpdateOperationsInput } from "../inputs/Enumstudent_registrationsource_enumFieldUpdateOperationsInput";
 import { Expert_dataUpdateOneWithoutStudentInput } from "../inputs/Expert_dataUpdateOneWithoutStudentInput";
@@ -67,6 +69,26 @@ export class StudentUpdateInput {
   })
   verification?: NullableStringFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  authToken?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  authTokenUsed?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  authTokenSent?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -80,32 +102,7 @@ export class StudentUpdateInput {
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
   })
-  subjects?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  msg?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
   phone?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  authToken?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
@@ -115,37 +112,32 @@ export class StudentUpdateInput {
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
-  authTokenUsed?: BoolFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  authTokenSent?: NullableDateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  sentScreeningReminderCount?: IntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+  newsletter?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
   isStudent?: BoolFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  subjects?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
   isInstructor?: BoolFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
   })
-  newsletter?: BoolFieldUpdateOperationsInput | undefined;
+  msg?: NullableStringFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => NullableEnumstudent_state_enumFieldUpdateOperationsInput, {
     nullable: true
@@ -166,21 +158,6 @@ export class StudentUpdateInput {
     nullable: true
   })
   moduleHours?: NullableIntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount?: IntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: NullableDateTimeFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -227,15 +204,40 @@ export class StudentUpdateInput {
   })
   lastSentJufoAlumniScreeningInvitationDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => Enumstudent_registrationsource_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  registrationSource?: Enumstudent_registrationsource_enumFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => NullableBoolFieldUpdateOperationsInput, {
     nullable: true
   })
   supportsInDaZ?: NullableBoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  sentScreeningReminderCount?: IntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount?: IntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enumstudent_registrationsource_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  registrationSource?: Enumstudent_registrationsource_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentUpdatelanguagesInput, {
     nullable: true
@@ -247,10 +249,20 @@ export class StudentUpdateInput {
   })
   course?: CourseUpdateManyWithoutStudentInput | undefined;
 
+  @TypeGraphQL.Field(_type => Course_guestUpdateManyWithoutStudentInput, {
+    nullable: true
+  })
+  course_guest?: Course_guestUpdateManyWithoutStudentInput | undefined;
+
   @TypeGraphQL.Field(_type => Course_instructors_studentUpdateManyWithoutStudentInput, {
     nullable: true
   })
   course_instructors_student?: Course_instructors_studentUpdateManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_participation_certificateUpdateManyWithoutStudentInput, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateUpdateManyWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => Expert_dataUpdateOneWithoutStudentInput, {
     nullable: true

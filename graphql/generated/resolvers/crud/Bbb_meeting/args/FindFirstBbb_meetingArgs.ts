@@ -35,5 +35,5 @@ export class FindFirstBbb_meetingArgs {
   @TypeGraphQL.Field(_type => [Bbb_meetingScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "meetingID" | "meetingName" | "attendeePW" | "moderatorPW" | "alternativeUri"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "meetingID" | "meetingName" | "attendeePW" | "moderatorPW" | "alternativeUrl"> | undefined;
 }

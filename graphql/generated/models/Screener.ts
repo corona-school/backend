@@ -50,21 +50,6 @@ export class Screener {
   })
   verification?: string | null;
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
-  })
-  password!: string;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  verified?: boolean | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  oldNumberID?: number | null;
-
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -84,6 +69,21 @@ export class Screener {
     nullable: true
   })
   authTokenSent?: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
+  })
+  password!: string;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  verified?: boolean | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  oldNumberID?: number | null;
 
   instructor_screening?: Instructor_screening[];
 

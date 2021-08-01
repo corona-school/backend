@@ -5,8 +5,8 @@ import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { DateTimeNullableFilter } from "../inputs/DateTimeNullableFilter";
-import { EnumlanguageNullableListFilter } from "../inputs/EnumlanguageNullableListFilter";
-import { Enumlearning_german_sinceNullableFilter } from "../inputs/Enumlearning_german_sinceNullableFilter";
+import { Enumpupil_languages_enumNullableListFilter } from "../inputs/Enumpupil_languages_enumNullableListFilter";
+import { Enumpupil_learninggermansince_enumNullableFilter } from "../inputs/Enumpupil_learninggermansince_enumNullableFilter";
 import { Enumpupil_projectfields_enumNullableListFilter } from "../inputs/Enumpupil_projectfields_enumNullableListFilter";
 import { Enumpupil_registrationsource_enumFilter } from "../inputs/Enumpupil_registrationsource_enumFilter";
 import { Enumpupil_schooltype_enumFilter } from "../inputs/Enumpupil_schooltype_enumFilter";
@@ -75,31 +75,6 @@ export class PupilScalarWhereInput {
   })
   verification?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
-  })
-  wix_id?: StringFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeFilter, {
-    nullable: true
-  })
-  wix_creation_date?: DateTimeFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  subjects?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  msg?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  grade?: StringNullableFilter | undefined;
-
   @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
     nullable: true
   })
@@ -120,20 +95,35 @@ export class PupilScalarWhereInput {
   })
   authTokenSent?: DateTimeNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => IntFilter, {
+  @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
-  openMatchRequestCount?: IntFilter | undefined;
+  wix_id?: StringFilter | undefined;
 
-  @TypeGraphQL.Field(_type => IntFilter, {
+  @TypeGraphQL.Field(_type => DateTimeFilter, {
     nullable: true
   })
-  matchingPriority?: IntFilter | undefined;
+  wix_creation_date?: DateTimeFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumpupil_state_enumFilter, {
+    nullable: true
+  })
+  state?: Enumpupil_state_enumFilter | undefined;
 
   @TypeGraphQL.Field(_type => Enumpupil_schooltype_enumFilter, {
     nullable: true
   })
   schooltype?: Enumpupil_schooltype_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  msg?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  grade?: StringNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
@@ -145,35 +135,20 @@ export class PupilScalarWhereInput {
   })
   isPupil?: BoolFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  subjects?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntFilter, {
+    nullable: true
+  })
+  openMatchRequestCount?: IntFilter | undefined;
+
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
   isParticipant?: BoolFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Enumpupil_state_enumFilter, {
-    nullable: true
-  })
-  state?: Enumpupil_state_enumFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: DateTimeNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
-  })
-  teacherEmailAddress?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Enumpupil_registrationsource_enumFilter, {
-    nullable: true
-  })
-  registrationSource?: Enumpupil_registrationsource_enumFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableFilter, {
-    nullable: true
-  })
-  schoolId?: IntNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
@@ -200,13 +175,38 @@ export class PupilScalarWhereInput {
   })
   projectMemberCount?: IntFilter | undefined;
 
-  @TypeGraphQL.Field(_type => EnumlanguageNullableListFilter, {
+  @TypeGraphQL.Field(_type => Enumpupil_languages_enumNullableListFilter, {
     nullable: true
   })
-  languages?: EnumlanguageNullableListFilter | undefined;
+  languages?: Enumpupil_languages_enumNullableListFilter | undefined;
 
-  @TypeGraphQL.Field(_type => Enumlearning_german_sinceNullableFilter, {
+  @TypeGraphQL.Field(_type => Enumpupil_learninggermansince_enumNullableFilter, {
     nullable: true
   })
-  learningGermanSince?: Enumlearning_german_sinceNullableFilter | undefined;
+  learningGermanSince?: Enumpupil_learninggermansince_enumNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntFilter, {
+    nullable: true
+  })
+  matchingPriority?: IntFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: DateTimeNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  teacherEmailAddress?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumpupil_registrationsource_enumFilter, {
+    nullable: true
+  })
+  registrationSource?: Enumpupil_registrationsource_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntNullableFilter, {
+    nullable: true
+  })
+  schoolId?: IntNullableFilter | undefined;
 }

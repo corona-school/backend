@@ -24,6 +24,11 @@ export class MatchUpdateWithoutPupilInput {
   })
   dissolved?: BoolFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  dissolveReason?: NullableIntFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -38,16 +43,6 @@ export class MatchUpdateWithoutPupilInput {
     nullable: true
   })
   updatedAt?: DateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => Enummatch_source_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  source?: Enummatch_source_enumFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  dissolveReason?: NullableIntFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -68,6 +63,11 @@ export class MatchUpdateWithoutPupilInput {
     nullable: true
   })
   followUpToStudentMail?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enummatch_source_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  source?: Enummatch_source_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentUpdateOneWithoutMatchInput, {
     nullable: true

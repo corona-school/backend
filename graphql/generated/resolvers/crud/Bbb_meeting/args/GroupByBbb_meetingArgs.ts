@@ -20,7 +20,7 @@ export class GroupByBbb_meetingArgs {
   @TypeGraphQL.Field(_type => [Bbb_meetingScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "meetingID" | "meetingName" | "attendeePW" | "moderatorPW" | "alternativeUri">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "meetingID" | "meetingName" | "attendeePW" | "moderatorPW" | "alternativeUrl">;
 
   @TypeGraphQL.Field(_type => Bbb_meetingScalarWhereWithAggregatesInput, {
     nullable: true

@@ -45,17 +45,17 @@ export class SubcourseGroupBy {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
+  joinAfterStart!: boolean;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
   published!: boolean;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   cancelled!: boolean;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: false
-  })
-  joinAfterStart!: boolean;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

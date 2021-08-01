@@ -73,21 +73,6 @@ export class ScreenerWhereInput {
   })
   verification?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
-  })
-  password?: StringFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolNullableFilter, {
-    nullable: true
-  })
-  verified?: BoolNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableFilter, {
-    nullable: true
-  })
-  oldNumberID?: IntNullableFilter | undefined;
-
   @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
     nullable: true
   })
@@ -107,6 +92,21 @@ export class ScreenerWhereInput {
     nullable: true
   })
   authTokenSent?: DateTimeNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringFilter, {
+    nullable: true
+  })
+  password?: StringFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolNullableFilter, {
+    nullable: true
+  })
+  verified?: BoolNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntNullableFilter, {
+    nullable: true
+  })
+  oldNumberID?: IntNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => Instructor_screeningListRelationFilter, {
     nullable: true

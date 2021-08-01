@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
+import { Course_guestListRelationFilter } from "../inputs/Course_guestListRelationFilter";
 import { Course_instructors_studentListRelationFilter } from "../inputs/Course_instructors_studentListRelationFilter";
 import { Course_tags_course_tagListRelationFilter } from "../inputs/Course_tags_course_tagListRelationFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
@@ -69,15 +70,15 @@ export class CourseWhereInput {
   })
   imageKey?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFilter, {
-    nullable: true
-  })
-  courseState?: Enumcourse_coursestate_enumFilter | undefined;
-
   @TypeGraphQL.Field(_type => Enumcourse_category_enumFilter, {
     nullable: true
   })
   category?: Enumcourse_category_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFilter, {
+    nullable: true
+  })
+  courseState?: Enumcourse_coursestate_enumFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true
@@ -103,6 +104,11 @@ export class CourseWhereInput {
     nullable: true
   })
   student?: StudentRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Course_guestListRelationFilter, {
+    nullable: true
+  })
+  course_guest?: Course_guestListRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => Course_instructors_studentListRelationFilter, {
     nullable: true

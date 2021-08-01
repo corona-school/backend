@@ -59,17 +59,17 @@ export class SubcourseScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
+  joinAfterStart?: BoolWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
+    nullable: true
+  })
   published?: BoolWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
   cancelled?: BoolWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
-    nullable: true
-  })
-  joinAfterStart?: BoolWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
     nullable: true

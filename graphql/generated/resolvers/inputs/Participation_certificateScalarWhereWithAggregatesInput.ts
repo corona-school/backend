@@ -3,10 +3,13 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolWithAggregatesFilter } from "../inputs/BoolWithAggregatesFilter";
+import { BytesNullableWithAggregatesFilter } from "../inputs/BytesNullableWithAggregatesFilter";
+import { DateTimeNullableWithAggregatesFilter } from "../inputs/DateTimeNullableWithAggregatesFilter";
 import { DateTimeWithAggregatesFilter } from "../inputs/DateTimeWithAggregatesFilter";
-import { FloatWithAggregatesFilter } from "../inputs/FloatWithAggregatesFilter";
+import { DecimalWithAggregatesFilter } from "../inputs/DecimalWithAggregatesFilter";
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
+import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
 @TypeGraphQL.InputType({
@@ -63,20 +66,50 @@ export class Participation_certificateScalarWhereWithAggregatesInput {
   })
   endDate?: DateTimeWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => FloatWithAggregatesFilter, {
+  @TypeGraphQL.Field(_type => DecimalWithAggregatesFilter, {
     nullable: true
   })
-  hoursPerWeek?: FloatWithAggregatesFilter | undefined;
+  hoursPerWeek?: DecimalWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => FloatWithAggregatesFilter, {
+  @TypeGraphQL.Field(_type => DecimalWithAggregatesFilter, {
     nullable: true
   })
-  hoursTotal?: FloatWithAggregatesFilter | undefined;
+  hoursTotal?: DecimalWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
     nullable: true
   })
   medium?: StringWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
+    nullable: true
+  })
+  ongoingLessons?: BoolWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
+    nullable: true
+  })
+  state?: StringWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BytesNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  signaturePupil?: BytesNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BytesNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  signatureParent?: BytesNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  signatureLocation?: StringNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  signatureDate?: DateTimeNullableWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
     nullable: true
@@ -87,9 +120,4 @@ export class Participation_certificateScalarWhereWithAggregatesInput {
     nullable: true
   })
   pupilId?: IntNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
-    nullable: true
-  })
-  ongoingLessons?: BoolWithAggregatesFilter | undefined;
 }

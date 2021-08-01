@@ -1,6 +1,8 @@
 import * as TypeGraphQL from "type-graphql";
 import { Course } from "../../../models/Course";
+import { Course_guest } from "../../../models/Course_guest";
 import { Course_instructors_student } from "../../../models/Course_instructors_student";
+import { Course_participation_certificate } from "../../../models/Course_participation_certificate";
 import { Expert_data } from "../../../models/Expert_data";
 import { Instructor_screening } from "../../../models/Instructor_screening";
 import { Jufo_verification_transmission } from "../../../models/Jufo_verification_transmission";
@@ -14,7 +16,9 @@ import { Screening } from "../../../models/Screening";
 import { Student } from "../../../models/Student";
 import { Subcourse_instructors_student } from "../../../models/Subcourse_instructors_student";
 import { StudentCourseArgs } from "./args/StudentCourseArgs";
+import { StudentCourse_guestArgs } from "./args/StudentCourse_guestArgs";
 import { StudentCourse_instructors_studentArgs } from "./args/StudentCourse_instructors_studentArgs";
+import { StudentCourse_participation_certificateArgs } from "./args/StudentCourse_participation_certificateArgs";
 import { StudentLectureArgs } from "./args/StudentLectureArgs";
 import { StudentMatchArgs } from "./args/StudentMatchArgs";
 import { StudentParticipation_certificateArgs } from "./args/StudentParticipation_certificateArgs";
@@ -36,6 +40,17 @@ export class StudentRelationsResolver {
     }).course(args);
   }
 
+  @TypeGraphQL.FieldResolver(_type => [Course_guest], {
+    nullable: false
+  })
+  async course_guest(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: StudentCourse_guestArgs): Promise<Course_guest[]> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).course_guest(args);
+  }
+
   @TypeGraphQL.FieldResolver(_type => [Course_instructors_student], {
     nullable: false
   })
@@ -45,6 +60,17 @@ export class StudentRelationsResolver {
         id: student.id,
       },
     }).course_instructors_student(args);
+  }
+
+  @TypeGraphQL.FieldResolver(_type => [Course_participation_certificate], {
+    nullable: false
+  })
+  async course_participation_certificate(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: StudentCourse_participation_certificateArgs): Promise<Course_participation_certificate[]> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).course_participation_certificate(args);
   }
 
   @TypeGraphQL.FieldResolver(_type => Expert_data, {

@@ -47,21 +47,6 @@ export class ScreenerMinAggregate {
   })
   verification!: string | null;
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  password!: string | null;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  verified!: boolean | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  oldNumberID!: number | null;
-
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -81,4 +66,19 @@ export class ScreenerMinAggregate {
     nullable: true
   })
   authTokenSent!: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  password!: string | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  verified!: boolean | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  oldNumberID!: number | null;
 }

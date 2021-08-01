@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
+import { Course_guest } from "../models/Course_guest";
 import { Course_instructors_student } from "../models/Course_instructors_student";
 import { Course_tags_course_tag } from "../models/Course_tags_course_tag";
 import { Student } from "../models/Student";
@@ -48,15 +49,15 @@ export class Course {
   })
   imageKey?: string | null;
 
-  @TypeGraphQL.Field(_type => course_coursestate_enum, {
-    nullable: false
-  })
-  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled";
-
   @TypeGraphQL.Field(_type => course_category_enum, {
     nullable: false
   })
   category!: "revision" | "club" | "coaching";
+
+  @TypeGraphQL.Field(_type => course_coursestate_enum, {
+    nullable: false
+  })
+  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled";
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -79,6 +80,8 @@ export class Course {
   correspondentId?: number | null;
 
   student?: Student | null;
+
+  course_guest?: Course_guest[];
 
   course_instructors_student?: Course_instructors_student[];
 

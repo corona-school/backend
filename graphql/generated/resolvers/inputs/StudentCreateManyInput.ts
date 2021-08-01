@@ -51,6 +51,26 @@ export class StudentCreateManyInput {
   })
   verification?: string | undefined;
 
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  verifiedAt?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  authToken?: string | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  authTokenUsed?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  authTokenSent?: Date | undefined;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -64,32 +84,7 @@ export class StudentCreateManyInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  subjects?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
   phone?: string | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  verifiedAt?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  authToken?: string | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  openMatchRequestCount?: number | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -99,37 +94,32 @@ export class StudentCreateManyInput {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
-  authTokenUsed?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  authTokenSent?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentScreeningReminderCount?: number | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: Date | undefined;
+  newsletter?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isStudent?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  subjects?: string | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  openMatchRequestCount?: number | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isInstructor?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => Boolean, {
+  @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  newsletter?: boolean | undefined;
+  msg?: string | undefined;
 
   @TypeGraphQL.Field(_type => student_state_enum, {
     nullable: true
@@ -150,21 +140,6 @@ export class StudentCreateManyInput {
     nullable: true
   })
   moduleHours?: number | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount?: number | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: Date | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -211,15 +186,40 @@ export class StudentCreateManyInput {
   })
   lastSentJufoAlumniScreeningInvitationDate?: Date | undefined;
 
-  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
-    nullable: true
-  })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   supportsInDaZ?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentScreeningReminderCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
+    nullable: true
+  })
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreateManylanguagesInput, {
     nullable: true

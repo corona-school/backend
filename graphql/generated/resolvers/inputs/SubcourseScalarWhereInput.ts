@@ -59,17 +59,17 @@ export class SubcourseScalarWhereInput {
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
+  joinAfterStart?: BoolFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
   published?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
   cancelled?: BoolFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolFilter, {
-    nullable: true
-  })
-  joinAfterStart?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true

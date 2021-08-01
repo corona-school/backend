@@ -50,6 +50,26 @@ export class StudentMinAggregate {
   })
   verification!: string | null;
 
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  verifiedAt!: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  authToken!: string | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  authTokenUsed!: boolean | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  authTokenSent!: Date | null;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -63,32 +83,7 @@ export class StudentMinAggregate {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  subjects!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
   phone!: string | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  verifiedAt!: Date | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  authToken!: string | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  openMatchRequestCount!: number | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -98,37 +93,32 @@ export class StudentMinAggregate {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
-  authTokenUsed!: boolean | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  authTokenSent!: Date | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentScreeningReminderCount!: number | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate!: Date | null;
+  newsletter!: boolean | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isStudent!: boolean | null;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  subjects!: string | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  openMatchRequestCount!: number | null;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isInstructor!: boolean | null;
 
-  @TypeGraphQL.Field(_type => Boolean, {
+  @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  newsletter!: boolean | null;
+  msg!: string | null;
 
   @TypeGraphQL.Field(_type => student_state_enum, {
     nullable: true
@@ -149,21 +139,6 @@ export class StudentMinAggregate {
     nullable: true
   })
   moduleHours!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount!: number | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate!: Date | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker!: Date | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -210,13 +185,38 @@ export class StudentMinAggregate {
   })
   lastSentJufoAlumniScreeningInvitationDate!: Date | null;
 
-  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
-    nullable: true
-  })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | null;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   supportsInDaZ!: boolean | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate!: Date | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate!: Date | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker!: Date | null;
+
+  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
+    nullable: true
+  })
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | null;
 }

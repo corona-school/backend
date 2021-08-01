@@ -74,6 +74,16 @@ export class MentorGroupBy {
   })
   authTokenSent!: Date | null;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
+  })
+  wix_id!: string;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: false
+  })
+  wix_creation_date!: Date;
+
   @TypeGraphQL.Field(_type => [mentor_division_enum], {
     nullable: true
   })
@@ -108,16 +118,6 @@ export class MentorGroupBy {
     nullable: true
   })
   imageUrl!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
-  })
-  wix_id!: string;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: false
-  })
-  wix_creation_date!: Date;
 
   @TypeGraphQL.Field(_type => MentorCountAggregate, {
     nullable: true

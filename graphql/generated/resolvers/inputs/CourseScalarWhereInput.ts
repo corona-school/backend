@@ -65,15 +65,15 @@ export class CourseScalarWhereInput {
   })
   imageKey?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFilter, {
-    nullable: true
-  })
-  courseState?: Enumcourse_coursestate_enumFilter | undefined;
-
   @TypeGraphQL.Field(_type => Enumcourse_category_enumFilter, {
     nullable: true
   })
   category?: Enumcourse_category_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumcourse_coursestate_enumFilter, {
+    nullable: true
+  })
+  courseState?: Enumcourse_coursestate_enumFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableFilter, {
     nullable: true

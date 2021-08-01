@@ -45,7 +45,7 @@ export class Bbb_meetingCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  alternativeUri!: number;
+  alternativeUrl!: number;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false

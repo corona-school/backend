@@ -35,5 +35,5 @@ export class FindFirstMentorArgs {
   @TypeGraphQL.Field(_type => [MentorScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "division" | "expertise" | "subjects" | "teachingExperience" | "message" | "description" | "imageUrl" | "wix_id" | "wix_creation_date"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "division" | "expertise" | "subjects" | "teachingExperience" | "message" | "description" | "imageUrl"> | undefined;
 }

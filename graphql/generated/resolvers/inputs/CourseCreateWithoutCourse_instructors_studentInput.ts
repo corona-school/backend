@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
+import { Course_guestCreateNestedManyWithoutCourseInput } from "../inputs/Course_guestCreateNestedManyWithoutCourseInput";
 import { Course_tags_course_tagCreateNestedManyWithoutCourseInput } from "../inputs/Course_tags_course_tagCreateNestedManyWithoutCourseInput";
 import { StudentCreateNestedOneWithoutCourseInput } from "../inputs/StudentCreateNestedOneWithoutCourseInput";
 import { SubcourseCreateNestedManyWithoutCourseInput } from "../inputs/SubcourseCreateNestedManyWithoutCourseInput";
@@ -42,15 +43,15 @@ export class CourseCreateWithoutCourse_instructors_studentInput {
   })
   imageKey?: string | undefined;
 
-  @TypeGraphQL.Field(_type => course_coursestate_enum, {
-    nullable: true
-  })
-  courseState?: "created" | "submitted" | "allowed" | "denied" | "cancelled" | undefined;
-
   @TypeGraphQL.Field(_type => course_category_enum, {
     nullable: false
   })
   category!: "revision" | "club" | "coaching";
+
+  @TypeGraphQL.Field(_type => course_coursestate_enum, {
+    nullable: true
+  })
+  courseState?: "created" | "submitted" | "allowed" | "denied" | "cancelled" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -71,6 +72,11 @@ export class CourseCreateWithoutCourse_instructors_studentInput {
     nullable: true
   })
   student?: StudentCreateNestedOneWithoutCourseInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_guestCreateNestedManyWithoutCourseInput, {
+    nullable: true
+  })
+  course_guest?: Course_guestCreateNestedManyWithoutCourseInput | undefined;
 
   @TypeGraphQL.Field(_type => Course_tags_course_tagCreateNestedManyWithoutCourseInput, {
     nullable: true

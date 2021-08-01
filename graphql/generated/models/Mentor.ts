@@ -69,6 +69,16 @@ export class Mentor {
   })
   authTokenSent?: Date | null;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: false
+  })
+  wix_id!: string;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: false
+  })
+  wix_creation_date!: Date;
+
   @TypeGraphQL.Field(_type => [mentor_division_enum], {
     nullable: false
   })
@@ -103,14 +113,4 @@ export class Mentor {
     nullable: true
   })
   imageUrl?: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
-  })
-  wix_id!: string;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: false
-  })
-  wix_creation_date!: Date;
 }

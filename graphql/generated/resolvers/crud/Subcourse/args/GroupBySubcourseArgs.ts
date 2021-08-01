@@ -20,7 +20,7 @@ export class GroupBySubcourseArgs {
   @TypeGraphQL.Field(_type => [SubcourseScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "minGrade" | "maxGrade" | "maxParticipants" | "published" | "cancelled" | "joinAfterStart" | "courseId">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "minGrade" | "maxGrade" | "maxParticipants" | "joinAfterStart" | "published" | "cancelled" | "courseId">;
 
   @TypeGraphQL.Field(_type => SubcourseScalarWhereWithAggregatesInput, {
     nullable: true

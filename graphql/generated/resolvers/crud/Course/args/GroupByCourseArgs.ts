@@ -20,7 +20,7 @@ export class GroupByCourseArgs {
   @TypeGraphQL.Field(_type => [CourseScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "name" | "outline" | "description" | "imageKey" | "courseState" | "category" | "screeningComment" | "publicRanking" | "allowContact" | "correspondentId">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "name" | "outline" | "description" | "imageKey" | "category" | "courseState" | "screeningComment" | "publicRanking" | "allowContact" | "correspondentId">;
 
   @TypeGraphQL.Field(_type => CourseScalarWhereWithAggregatesInput, {
     nullable: true

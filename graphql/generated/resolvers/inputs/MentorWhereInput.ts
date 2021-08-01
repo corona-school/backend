@@ -91,6 +91,16 @@ export class MentorWhereInput {
   })
   authTokenSent?: DateTimeNullableFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringFilter, {
+    nullable: true
+  })
+  wix_id?: StringFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeFilter, {
+    nullable: true
+  })
+  wix_creation_date?: DateTimeFilter | undefined;
+
   @TypeGraphQL.Field(_type => Enummentor_division_enumNullableListFilter, {
     nullable: true
   })
@@ -125,14 +135,4 @@ export class MentorWhereInput {
     nullable: true
   })
   imageUrl?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
-  })
-  wix_id?: StringFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeFilter, {
-    nullable: true
-  })
-  wix_creation_date?: DateTimeFilter | undefined;
 }

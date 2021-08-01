@@ -44,15 +44,15 @@ export class CourseCreateManyInput {
   })
   imageKey?: string | undefined;
 
-  @TypeGraphQL.Field(_type => course_coursestate_enum, {
-    nullable: true
-  })
-  courseState?: "created" | "submitted" | "allowed" | "denied" | "cancelled" | undefined;
-
   @TypeGraphQL.Field(_type => course_category_enum, {
     nullable: false
   })
   category!: "revision" | "club" | "coaching";
+
+  @TypeGraphQL.Field(_type => course_coursestate_enum, {
+    nullable: true
+  })
+  courseState?: "created" | "submitted" | "allowed" | "denied" | "cancelled" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

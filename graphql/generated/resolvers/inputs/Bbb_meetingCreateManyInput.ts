@@ -45,5 +45,5 @@ export class Bbb_meetingCreateManyInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  alternativeUri?: string | undefined;
+  alternativeUrl?: string | undefined;
 }

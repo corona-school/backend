@@ -20,7 +20,7 @@ export class GroupByMatchArgs {
   @TypeGraphQL.Field(_type => [MatchScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "uuid" | "dissolved" | "proposedTime" | "createdAt" | "updatedAt" | "source" | "studentId" | "pupilId" | "dissolveReason" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail">;
+  by!: Array<"id" | "uuid" | "dissolved" | "dissolveReason" | "proposedTime" | "createdAt" | "updatedAt" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail" | "source" | "studentId" | "pupilId">;
 
   @TypeGraphQL.Field(_type => MatchScalarWhereWithAggregatesInput, {
     nullable: true

@@ -45,5 +45,5 @@ export class Bbb_meeting {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  alternativeUri?: string | null;
+  alternativeUrl?: string | null;
 }

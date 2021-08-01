@@ -7,9 +7,9 @@ export enum SubcourseScalarFieldEnum {
   minGrade = "minGrade",
   maxGrade = "maxGrade",
   maxParticipants = "maxParticipants",
+  joinAfterStart = "joinAfterStart",
   published = "published",
   cancelled = "cancelled",
-  joinAfterStart = "joinAfterStart",
   courseId = "courseId"
 }
 TypeGraphQL.registerEnumType(SubcourseScalarFieldEnum, {

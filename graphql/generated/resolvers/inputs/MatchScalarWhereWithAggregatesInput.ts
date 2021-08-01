@@ -44,6 +44,11 @@ export class MatchScalarWhereWithAggregatesInput {
   })
   dissolved?: BoolWithAggregatesFilter | undefined;
 
+  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  dissolveReason?: IntNullableWithAggregatesFilter | undefined;
+
   @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
     nullable: true
   })
@@ -58,26 +63,6 @@ export class MatchScalarWhereWithAggregatesInput {
     nullable: true
   })
   updatedAt?: DateTimeWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Enummatch_source_enumWithAggregatesFilter, {
-    nullable: true
-  })
-  source?: Enummatch_source_enumWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  studentId?: IntNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  pupilId?: IntNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  dissolveReason?: IntNullableWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
@@ -98,4 +83,19 @@ export class MatchScalarWhereWithAggregatesInput {
     nullable: true
   })
   followUpToStudentMail?: BoolWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enummatch_source_enumWithAggregatesFilter, {
+    nullable: true
+  })
+  source?: Enummatch_source_enumWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  studentId?: IntNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  pupilId?: IntNullableWithAggregatesFilter | undefined;
 }

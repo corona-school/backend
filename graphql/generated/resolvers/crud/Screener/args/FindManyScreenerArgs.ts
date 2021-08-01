@@ -35,5 +35,5 @@ export class FindManyScreenerArgs {
   @TypeGraphQL.Field(_type => [ScreenerScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "password" | "verified" | "oldNumberID" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "password" | "verified" | "oldNumberID"> | undefined;
 }

@@ -46,5 +46,5 @@ export class Bbb_meetingOrderByInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
-  alternativeUri?: "asc" | "desc" | undefined;
+  alternativeUrl?: "asc" | "desc" | undefined;
 }

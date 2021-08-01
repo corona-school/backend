@@ -20,17 +20,7 @@ export class StudentAvgAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true
   })
-  sentScreeningReminderCount!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
-    nullable: true
-  })
   moduleHours!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount!: number | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true
@@ -41,4 +31,14 @@ export class StudentAvgAggregate {
     nullable: true
   })
   sentJufoAlumniScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+    nullable: true
+  })
+  sentScreeningReminderCount!: number | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount!: number | null;
 }

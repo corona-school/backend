@@ -3,7 +3,9 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { CourseCreateNestedManyWithoutStudentInput } from "../inputs/CourseCreateNestedManyWithoutStudentInput";
+import { Course_guestCreateNestedManyWithoutStudentInput } from "../inputs/Course_guestCreateNestedManyWithoutStudentInput";
 import { Course_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Course_instructors_studentCreateNestedManyWithoutStudentInput";
+import { Course_participation_certificateCreateNestedManyWithoutStudentInput } from "../inputs/Course_participation_certificateCreateNestedManyWithoutStudentInput";
 import { Expert_dataCreateNestedOneWithoutStudentInput } from "../inputs/Expert_dataCreateNestedOneWithoutStudentInput";
 import { Instructor_screeningCreateNestedOneWithoutStudentInput } from "../inputs/Instructor_screeningCreateNestedOneWithoutStudentInput";
 import { Jufo_verification_transmissionCreateNestedOneWithoutStudentInput } from "../inputs/Jufo_verification_transmissionCreateNestedOneWithoutStudentInput";
@@ -59,6 +61,26 @@ export class StudentCreateInput {
   })
   verification?: string | undefined;
 
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  verifiedAt?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  authToken?: string | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  authTokenUsed?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  authTokenSent?: Date | undefined;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -72,32 +94,7 @@ export class StudentCreateInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  subjects?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
   phone?: string | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  verifiedAt?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  authToken?: string | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  openMatchRequestCount?: number | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -107,37 +104,32 @@ export class StudentCreateInput {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
-  authTokenUsed?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  authTokenSent?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentScreeningReminderCount?: number | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: Date | undefined;
+  newsletter?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isStudent?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  subjects?: string | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  openMatchRequestCount?: number | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   isInstructor?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => Boolean, {
+  @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  newsletter?: boolean | undefined;
+  msg?: string | undefined;
 
   @TypeGraphQL.Field(_type => student_state_enum, {
     nullable: true
@@ -158,21 +150,6 @@ export class StudentCreateInput {
     nullable: true
   })
   moduleHours?: number | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount?: number | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: Date | undefined;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: Date | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -219,15 +196,40 @@ export class StudentCreateInput {
   })
   lastSentJufoAlumniScreeningInvitationDate?: Date | undefined;
 
-  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
-    nullable: true
-  })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   supportsInDaZ?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentScreeningReminderCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: Date | undefined;
+
+  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
+    nullable: true
+  })
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
     nullable: true
@@ -239,10 +241,20 @@ export class StudentCreateInput {
   })
   course?: CourseCreateNestedManyWithoutStudentInput | undefined;
 
+  @TypeGraphQL.Field(_type => Course_guestCreateNestedManyWithoutStudentInput, {
+    nullable: true
+  })
+  course_guest?: Course_guestCreateNestedManyWithoutStudentInput | undefined;
+
   @TypeGraphQL.Field(_type => Course_instructors_studentCreateNestedManyWithoutStudentInput, {
     nullable: true
   })
   course_instructors_student?: Course_instructors_studentCreateNestedManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Course_participation_certificateCreateNestedManyWithoutStudentInput, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateCreateNestedManyWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => Expert_dataCreateNestedOneWithoutStudentInput, {
     nullable: true

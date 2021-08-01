@@ -4,17 +4,17 @@ export enum MatchScalarFieldEnum {
   id = "id",
   uuid = "uuid",
   dissolved = "dissolved",
+  dissolveReason = "dissolveReason",
   proposedTime = "proposedTime",
   createdAt = "createdAt",
   updatedAt = "updatedAt",
-  source = "source",
-  studentId = "studentId",
-  pupilId = "pupilId",
-  dissolveReason = "dissolveReason",
   feedbackToPupilMail = "feedbackToPupilMail",
   feedbackToStudentMail = "feedbackToStudentMail",
   followUpToPupilMail = "followUpToPupilMail",
-  followUpToStudentMail = "followUpToStudentMail"
+  followUpToStudentMail = "followUpToStudentMail",
+  source = "source",
+  studentId = "studentId",
+  pupilId = "pupilId"
 }
 TypeGraphQL.registerEnumType(MatchScalarFieldEnum, {
   name: "MatchScalarFieldEnum",

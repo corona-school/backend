@@ -40,17 +40,17 @@ export class SubcourseMinAggregate {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
+  joinAfterStart!: boolean | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
   published!: boolean | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   cancelled!: boolean | null;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  joinAfterStart!: boolean | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

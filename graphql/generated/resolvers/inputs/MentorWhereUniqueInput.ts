@@ -26,4 +26,9 @@ export class MentorWhereUniqueInput {
     nullable: true
   })
   authToken?: string | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  wix_id?: string | undefined;
 }

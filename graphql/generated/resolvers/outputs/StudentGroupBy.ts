@@ -7,7 +7,7 @@ import { StudentCountAggregate } from "../outputs/StudentCountAggregate";
 import { StudentMaxAggregate } from "../outputs/StudentMaxAggregate";
 import { StudentMinAggregate } from "../outputs/StudentMinAggregate";
 import { StudentSumAggregate } from "../outputs/StudentSumAggregate";
-import { language } from "../../enums/language";
+import { student_languages_enum } from "../../enums/student_languages_enum";
 import { student_module_enum } from "../../enums/student_module_enum";
 import { student_registrationsource_enum } from "../../enums/student_registrationsource_enum";
 import { student_state_enum } from "../../enums/student_state_enum";
@@ -56,6 +56,26 @@ export class StudentGroupBy {
   })
   verification!: string | null;
 
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  verifiedAt!: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  authToken!: string | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
+  authTokenUsed!: boolean;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  authTokenSent!: Date | null;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -69,32 +89,7 @@ export class StudentGroupBy {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  subjects!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg!: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
   phone!: string | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  verifiedAt!: Date | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  authToken!: string | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  openMatchRequestCount!: number;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -104,37 +99,32 @@ export class StudentGroupBy {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
-  authTokenUsed!: boolean;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  authTokenSent!: Date | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  sentScreeningReminderCount!: number;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate!: Date | null;
+  newsletter!: boolean;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   isStudent!: boolean;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  subjects!: string | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  openMatchRequestCount!: number;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   isInstructor!: boolean;
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: false
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
   })
-  newsletter!: boolean;
+  msg!: string | null;
 
   @TypeGraphQL.Field(_type => student_state_enum, {
     nullable: true
@@ -155,21 +145,6 @@ export class StudentGroupBy {
     nullable: true
   })
   moduleHours!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  sentInstructorScreeningReminderCount!: number;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate!: Date | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker!: Date | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
@@ -216,20 +191,45 @@ export class StudentGroupBy {
   })
   lastSentJufoAlumniScreeningInvitationDate!: Date | null;
 
-  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
-    nullable: false
-  })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
   supportsInDaZ!: boolean | null;
 
-  @TypeGraphQL.Field(_type => [language], {
+  @TypeGraphQL.Field(_type => [student_languages_enum], {
     nullable: true
   })
-  languages!: Array<"sq" | "ar" | "hy" | "az" | "bs" | "bg" | "zh" | "de" | "en" | "fr" | "it" | "kk" | "ku" | "pl" | "pt" | "ru" | "tr" | "es" | "uk" | "vi" | "other"> | null;
+  languages!: Array<"Albanisch" | "Arabisch" | "Armenisch" | "Aserbaidschanisch" | "Bosnisch" | "Bulgarisch" | "Chinesisch" | "Deutsch" | "Englisch" | "Franz_sisch" | "Italienisch" | "Kasachisch" | "Kurdisch" | "Polnisch" | "Portugiesisch" | "Russisch" | "T_rkisch" | "Spanisch" | "Ukrainisch" | "Vietnamesisch" | "Andere"> | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  sentScreeningReminderCount!: number;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate!: Date | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  sentInstructorScreeningReminderCount!: number;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate!: Date | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker!: Date | null;
+
+  @TypeGraphQL.Field(_type => student_registrationsource_enum, {
+    nullable: false
+  })
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
 
   @TypeGraphQL.Field(_type => StudentCountAggregate, {
     nullable: true

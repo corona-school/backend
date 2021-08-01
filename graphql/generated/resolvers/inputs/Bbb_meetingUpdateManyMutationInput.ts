@@ -43,5 +43,5 @@ export class Bbb_meetingUpdateManyMutationInput {
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
   })
-  alternativeUri?: NullableStringFieldUpdateOperationsInput | undefined;
+  alternativeUrl?: NullableStringFieldUpdateOperationsInput | undefined;
 }

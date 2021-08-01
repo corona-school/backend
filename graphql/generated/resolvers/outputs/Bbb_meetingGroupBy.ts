@@ -50,7 +50,7 @@ export class Bbb_meetingGroupBy {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  alternativeUri!: string | null;
+  alternativeUrl!: string | null;
 
   @TypeGraphQL.Field(_type => Bbb_meetingCountAggregate, {
     nullable: true

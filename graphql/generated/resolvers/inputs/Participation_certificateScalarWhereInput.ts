@@ -3,11 +3,14 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
+import { BytesNullableFilter } from "../inputs/BytesNullableFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
-import { FloatFilter } from "../inputs/FloatFilter";
+import { DateTimeNullableFilter } from "../inputs/DateTimeNullableFilter";
+import { DecimalFilter } from "../inputs/DecimalFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
+import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
 @TypeGraphQL.InputType({
   isAbstract: true
@@ -63,20 +66,50 @@ export class Participation_certificateScalarWhereInput {
   })
   endDate?: DateTimeFilter | undefined;
 
-  @TypeGraphQL.Field(_type => FloatFilter, {
+  @TypeGraphQL.Field(_type => DecimalFilter, {
     nullable: true
   })
-  hoursPerWeek?: FloatFilter | undefined;
+  hoursPerWeek?: DecimalFilter | undefined;
 
-  @TypeGraphQL.Field(_type => FloatFilter, {
+  @TypeGraphQL.Field(_type => DecimalFilter, {
     nullable: true
   })
-  hoursTotal?: FloatFilter | undefined;
+  hoursTotal?: DecimalFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
   medium?: StringFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
+  ongoingLessons?: BoolFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringFilter, {
+    nullable: true
+  })
+  state?: StringFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BytesNullableFilter, {
+    nullable: true
+  })
+  signaturePupil?: BytesNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BytesNullableFilter, {
+    nullable: true
+  })
+  signatureParent?: BytesNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  signatureLocation?: StringNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableFilter, {
+    nullable: true
+  })
+  signatureDate?: DateTimeNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true
@@ -87,9 +120,4 @@ export class Participation_certificateScalarWhereInput {
     nullable: true
   })
   pupilId?: IntNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => BoolFilter, {
-    nullable: true
-  })
-  ongoingLessons?: BoolFilter | undefined;
 }

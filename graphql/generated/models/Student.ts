@@ -3,7 +3,9 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Course } from "../models/Course";
+import { Course_guest } from "../models/Course_guest";
 import { Course_instructors_student } from "../models/Course_instructors_student";
+import { Course_participation_certificate } from "../models/Course_participation_certificate";
 import { Expert_data } from "../models/Expert_data";
 import { Instructor_screening } from "../models/Instructor_screening";
 import { Jufo_verification_transmission } from "../models/Jufo_verification_transmission";
@@ -15,7 +17,7 @@ import { Project_field_with_grade_restriction } from "../models/Project_field_wi
 import { Project_match } from "../models/Project_match";
 import { Screening } from "../models/Screening";
 import { Subcourse_instructors_student } from "../models/Subcourse_instructors_student";
-import { language } from "../enums/language";
+import { student_languages_enum } from "../enums/student_languages_enum";
 import { student_module_enum } from "../enums/student_module_enum";
 import { student_registrationsource_enum } from "../enums/student_registrationsource_enum";
 import { student_state_enum } from "../enums/student_state_enum";
@@ -64,6 +66,26 @@ export class Student {
   })
   verification?: string | null;
 
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  verifiedAt?: Date | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  authToken?: string | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
+  authTokenUsed!: boolean;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  authTokenSent?: Date | null;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -77,32 +99,7 @@ export class Student {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
-  subjects?: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  msg?: string | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
   phone?: string | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  verifiedAt?: Date | null;
-
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  authToken?: string | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  openMatchRequestCount!: number;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -112,37 +109,32 @@ export class Student {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
-  authTokenUsed!: boolean;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  authTokenSent?: Date | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  sentScreeningReminderCount!: number;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: Date | null;
+  newsletter!: boolean;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   isStudent!: boolean;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  subjects?: string | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  openMatchRequestCount!: number;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
   isInstructor!: boolean;
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: false
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
   })
-  newsletter!: boolean;
+  msg?: string | null;
 
   @TypeGraphQL.Field(_type => student_state_enum, {
     nullable: true
@@ -163,21 +155,6 @@ export class Student {
     nullable: true
   })
   moduleHours?: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
-  sentInstructorScreeningReminderCount!: number;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: Date | null;
-
-  @TypeGraphQL.Field(_type => Date, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: Date | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
@@ -224,6 +201,41 @@ export class Student {
   })
   lastSentJufoAlumniScreeningInvitationDate?: Date | null;
 
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  supportsInDaZ?: boolean | null;
+
+  @TypeGraphQL.Field(_type => [student_languages_enum], {
+    nullable: false
+  })
+  languages!: Array<"Albanisch" | "Arabisch" | "Armenisch" | "Aserbaidschanisch" | "Bosnisch" | "Bulgarisch" | "Chinesisch" | "Deutsch" | "Englisch" | "Franz_sisch" | "Italienisch" | "Kasachisch" | "Kurdisch" | "Polnisch" | "Portugiesisch" | "Russisch" | "T_rkisch" | "Spanisch" | "Ukrainisch" | "Vietnamesisch" | "Andere">;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  sentScreeningReminderCount!: number;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: Date | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
+  sentInstructorScreeningReminderCount!: number;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: Date | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: Date | null;
+
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: false
   })
@@ -231,19 +243,13 @@ export class Student {
 
   course?: Course[];
 
+  course_guest?: Course_guest[];
+
   course_instructors_student?: Course_instructors_student[];
 
+  course_participation_certificate?: Course_participation_certificate[];
+
   expert_data?: Expert_data | null;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  supportsInDaZ?: boolean | null;
-
-  @TypeGraphQL.Field(_type => [language], {
-    nullable: false
-  })
-  languages!: Array<"sq" | "ar" | "hy" | "az" | "bs" | "bg" | "zh" | "de" | "en" | "fr" | "it" | "kk" | "ku" | "pl" | "pt" | "ru" | "tr" | "es" | "uk" | "vi" | "other">;
 
   instructor_screening?: Instructor_screening | null;
 

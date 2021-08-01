@@ -44,15 +44,15 @@ export class CourseMinAggregate {
   })
   imageKey!: string | null;
 
-  @TypeGraphQL.Field(_type => course_coursestate_enum, {
-    nullable: true
-  })
-  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled" | null;
-
   @TypeGraphQL.Field(_type => course_category_enum, {
     nullable: true
   })
   category!: "revision" | "club" | "coaching" | null;
+
+  @TypeGraphQL.Field(_type => course_coursestate_enum, {
+    nullable: true
+  })
+  courseState!: "created" | "submitted" | "allowed" | "denied" | "cancelled" | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

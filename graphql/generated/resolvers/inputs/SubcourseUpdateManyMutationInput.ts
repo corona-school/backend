@@ -38,15 +38,15 @@ export class SubcourseUpdateManyMutationInput {
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
+  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
   published?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
   cancelled?: BoolFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  joinAfterStart?: BoolFieldUpdateOperationsInput | undefined;
 }

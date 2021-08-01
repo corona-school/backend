@@ -8,7 +8,7 @@ export enum Bbb_meetingScalarFieldEnum {
   meetingName = "meetingName",
   attendeePW = "attendeePW",
   moderatorPW = "moderatorPW",
-  alternativeUri = "alternativeUri"
+  alternativeUrl = "alternativeUrl"
 }
 TypeGraphQL.registerEnumType(Bbb_meetingScalarFieldEnum, {
   name: "Bbb_meetingScalarFieldEnum",

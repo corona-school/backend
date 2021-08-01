@@ -23,6 +23,11 @@ export class MatchMaxAggregate {
   })
   dissolved!: boolean | null;
 
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  dissolveReason!: number | null;
+
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })
@@ -37,26 +42,6 @@ export class MatchMaxAggregate {
     nullable: true
   })
   updatedAt!: Date | null;
-
-  @TypeGraphQL.Field(_type => match_source_enum, {
-    nullable: true
-  })
-  source!: "imported" | "matchedexternal" | "matchedinternal" | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  studentId!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  pupilId!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  dissolveReason!: number | null;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -77,4 +62,19 @@ export class MatchMaxAggregate {
     nullable: true
   })
   followUpToStudentMail!: boolean | null;
+
+  @TypeGraphQL.Field(_type => match_source_enum, {
+    nullable: true
+  })
+  source!: "imported" | "matchedexternal" | "matchedinternal" | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  studentId!: number | null;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  pupilId!: number | null;
 }

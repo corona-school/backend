@@ -6,7 +6,7 @@ import { BoolNullableWithAggregatesFilter } from "../inputs/BoolNullableWithAggr
 import { BoolWithAggregatesFilter } from "../inputs/BoolWithAggregatesFilter";
 import { DateTimeNullableWithAggregatesFilter } from "../inputs/DateTimeNullableWithAggregatesFilter";
 import { DateTimeWithAggregatesFilter } from "../inputs/DateTimeWithAggregatesFilter";
-import { EnumlanguageNullableListFilter } from "../inputs/EnumlanguageNullableListFilter";
+import { Enumstudent_languages_enumNullableListFilter } from "../inputs/Enumstudent_languages_enumNullableListFilter";
 import { Enumstudent_module_enumNullableWithAggregatesFilter } from "../inputs/Enumstudent_module_enumNullableWithAggregatesFilter";
 import { Enumstudent_registrationsource_enumWithAggregatesFilter } from "../inputs/Enumstudent_registrationsource_enumWithAggregatesFilter";
 import { Enumstudent_state_enumNullableWithAggregatesFilter } from "../inputs/Enumstudent_state_enumNullableWithAggregatesFilter";
@@ -74,6 +74,26 @@ export class StudentScalarWhereWithAggregatesInput {
   })
   verification?: StringNullableWithAggregatesFilter | undefined;
 
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  verifiedAt?: DateTimeNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  authToken?: StringNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
+    nullable: true
+  })
+  authTokenUsed?: BoolWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  authTokenSent?: DateTimeNullableWithAggregatesFilter | undefined;
+
   @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
     nullable: true
   })
@@ -87,32 +107,7 @@ export class StudentScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
     nullable: true
   })
-  subjects?: StringNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  msg?: StringNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
-    nullable: true
-  })
   phone?: StringNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  verifiedAt?: DateTimeNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  authToken?: StringNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
-    nullable: true
-  })
-  openMatchRequestCount?: IntWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
     nullable: true
@@ -122,37 +117,32 @@ export class StudentScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
-  authTokenUsed?: BoolWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  authTokenSent?: DateTimeNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
-    nullable: true
-  })
-  sentScreeningReminderCount?: IntWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  lastSentScreeningInvitationDate?: DateTimeNullableWithAggregatesFilter | undefined;
+  newsletter?: BoolWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
   isStudent?: BoolWithAggregatesFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  subjects?: StringNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
+    nullable: true
+  })
+  openMatchRequestCount?: IntWithAggregatesFilter | undefined;
+
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
   isInstructor?: BoolWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
     nullable: true
   })
-  newsletter?: BoolWithAggregatesFilter | undefined;
+  msg?: StringNullableWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => Enumstudent_state_enumNullableWithAggregatesFilter, {
     nullable: true
@@ -173,21 +163,6 @@ export class StudentScalarWhereWithAggregatesInput {
     nullable: true
   })
   moduleHours?: IntNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
-    nullable: true
-  })
-  sentInstructorScreeningReminderCount?: IntWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  lastSentInstructorScreeningInvitationDate?: DateTimeNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: DateTimeNullableWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
@@ -234,18 +209,43 @@ export class StudentScalarWhereWithAggregatesInput {
   })
   lastSentJufoAlumniScreeningInvitationDate?: DateTimeNullableWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => Enumstudent_registrationsource_enumWithAggregatesFilter, {
-    nullable: true
-  })
-  registrationSource?: Enumstudent_registrationsource_enumWithAggregatesFilter | undefined;
-
   @TypeGraphQL.Field(_type => BoolNullableWithAggregatesFilter, {
     nullable: true
   })
   supportsInDaZ?: BoolNullableWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => EnumlanguageNullableListFilter, {
+  @TypeGraphQL.Field(_type => Enumstudent_languages_enumNullableListFilter, {
     nullable: true
   })
-  languages?: EnumlanguageNullableListFilter | undefined;
+  languages?: Enumstudent_languages_enumNullableListFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
+    nullable: true
+  })
+  sentScreeningReminderCount?: IntWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  lastSentScreeningInvitationDate?: DateTimeNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
+    nullable: true
+  })
+  sentInstructorScreeningReminderCount?: IntWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  lastSentInstructorScreeningInvitationDate?: DateTimeNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: DateTimeNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumstudent_registrationsource_enumWithAggregatesFilter, {
+    nullable: true
+  })
+  registrationSource?: Enumstudent_registrationsource_enumWithAggregatesFilter | undefined;
 }

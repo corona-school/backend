@@ -42,20 +42,50 @@ export class Participation_certificateMaxAggregate {
   })
   endDate!: Date | null;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: true
   })
-  hoursPerWeek!: number | null;
+  hoursPerWeek!: Prisma.Decimal | null;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+  @TypeGraphQL.Field(_type => DecimalJSScalar, {
     nullable: true
   })
-  hoursTotal!: number | null;
+  hoursTotal!: Prisma.Decimal | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
   medium!: string | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  ongoingLessons!: boolean | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  state!: string | null;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signaturePupil!: Buffer | null;
+
+  @TypeGraphQL.Field(_type => GraphQLScalars.ByteResolver, {
+    nullable: true
+  })
+  signatureParent!: Buffer | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  signatureLocation!: string | null;
+
+  @TypeGraphQL.Field(_type => Date, {
+    nullable: true
+  })
+  signatureDate!: Date | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
@@ -66,9 +96,4 @@ export class Participation_certificateMaxAggregate {
     nullable: true
   })
   pupilId!: number | null;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  ongoingLessons!: boolean | null;
 }

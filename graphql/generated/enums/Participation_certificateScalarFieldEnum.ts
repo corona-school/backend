@@ -11,9 +11,14 @@ export enum Participation_certificateScalarFieldEnum {
   hoursPerWeek = "hoursPerWeek",
   hoursTotal = "hoursTotal",
   medium = "medium",
+  ongoingLessons = "ongoingLessons",
+  state = "state",
+  signaturePupil = "signaturePupil",
+  signatureParent = "signatureParent",
+  signatureLocation = "signatureLocation",
+  signatureDate = "signatureDate",
   studentId = "studentId",
-  pupilId = "pupilId",
-  ongoingLessons = "ongoingLessons"
+  pupilId = "pupilId"
 }
 TypeGraphQL.registerEnumType(Participation_certificateScalarFieldEnum, {
   name: "Participation_certificateScalarFieldEnum",

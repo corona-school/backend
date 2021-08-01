@@ -35,5 +35,5 @@ export class FindManyCourseArgs {
   @TypeGraphQL.Field(_type => [CourseScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "name" | "outline" | "description" | "imageKey" | "courseState" | "category" | "screeningComment" | "publicRanking" | "allowContact" | "correspondentId"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "name" | "outline" | "description" | "imageKey" | "category" | "courseState" | "screeningComment" | "publicRanking" | "allowContact" | "correspondentId"> | undefined;
 }

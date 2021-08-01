@@ -1,6 +1,8 @@
 export { CourseRelationsResolver } from "./Course/CourseRelationsResolver";
 export { Course_attendance_logRelationsResolver } from "./Course_attendance_log/Course_attendance_logRelationsResolver";
+export { Course_guestRelationsResolver } from "./Course_guest/Course_guestRelationsResolver";
 export { Course_instructors_studentRelationsResolver } from "./Course_instructors_student/Course_instructors_studentRelationsResolver";
+export { Course_participation_certificateRelationsResolver } from "./Course_participation_certificate/Course_participation_certificateRelationsResolver";
 export { Course_tagRelationsResolver } from "./Course_tag/Course_tagRelationsResolver";
 export { Course_tags_course_tagRelationsResolver } from "./Course_tags_course_tag/Course_tags_course_tagRelationsResolver";
 export { Expert_dataRelationsResolver } from "./Expert_data/Expert_dataRelationsResolver";
@@ -15,6 +17,7 @@ export { Project_coaching_screeningRelationsResolver } from "./Project_coaching_
 export { Project_field_with_grade_restrictionRelationsResolver } from "./Project_field_with_grade_restriction/Project_field_with_grade_restrictionRelationsResolver";
 export { Project_matchRelationsResolver } from "./Project_match/Project_matchRelationsResolver";
 export { PupilRelationsResolver } from "./Pupil/PupilRelationsResolver";
+export { Pupil_tutoring_interest_confirmation_requestRelationsResolver } from "./Pupil_tutoring_interest_confirmation_request/Pupil_tutoring_interest_confirmation_requestRelationsResolver";
 export { SchoolRelationsResolver } from "./School/SchoolRelationsResolver";
 export { ScreenerRelationsResolver } from "./Screener/ScreenerRelationsResolver";
 export { ScreeningRelationsResolver } from "./Screening/ScreeningRelationsResolver";

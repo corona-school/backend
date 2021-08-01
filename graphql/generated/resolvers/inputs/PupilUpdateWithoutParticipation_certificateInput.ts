@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { Course_attendance_logUpdateManyWithoutPupilInput } from "../inputs/Course_attendance_logUpdateManyWithoutPupilInput";
+import { Course_participation_certificateUpdateManyWithoutPupilInput } from "../inputs/Course_participation_certificateUpdateManyWithoutPupilInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { Enumpupil_registrationsource_enumFieldUpdateOperationsInput } from "../inputs/Enumpupil_registrationsource_enumFieldUpdateOperationsInput";
 import { Enumpupil_schooltype_enumFieldUpdateOperationsInput } from "../inputs/Enumpupil_schooltype_enumFieldUpdateOperationsInput";
@@ -11,11 +12,12 @@ import { Enumpupil_state_enumFieldUpdateOperationsInput } from "../inputs/Enumpu
 import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperationsInput";
 import { MatchUpdateManyWithoutPupilInput } from "../inputs/MatchUpdateManyWithoutPupilInput";
 import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDateTimeFieldUpdateOperationsInput";
-import { NullableEnumlearning_german_sinceFieldUpdateOperationsInput } from "../inputs/NullableEnumlearning_german_sinceFieldUpdateOperationsInput";
+import { NullableEnumpupil_learninggermansince_enumFieldUpdateOperationsInput } from "../inputs/NullableEnumpupil_learninggermansince_enumFieldUpdateOperationsInput";
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { Project_matchUpdateManyWithoutPupilInput } from "../inputs/Project_matchUpdateManyWithoutPupilInput";
 import { PupilUpdatelanguagesInput } from "../inputs/PupilUpdatelanguagesInput";
 import { PupilUpdateprojectFieldsInput } from "../inputs/PupilUpdateprojectFieldsInput";
+import { Pupil_tutoring_interest_confirmation_requestUpdateOneWithoutPupilInput } from "../inputs/Pupil_tutoring_interest_confirmation_requestUpdateOneWithoutPupilInput";
 import { SchoolUpdateOneWithoutPupilInput } from "../inputs/SchoolUpdateOneWithoutPupilInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { Subcourse_participants_pupilUpdateManyWithoutPupilInput } from "../inputs/Subcourse_participants_pupilUpdateManyWithoutPupilInput";
@@ -60,31 +62,6 @@ export class PupilUpdateWithoutParticipation_certificateInput {
   })
   verification?: NullableStringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  wix_id?: StringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  wix_creation_date?: DateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  subjects?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  msg?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  grade?: NullableStringFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -105,20 +82,35 @@ export class PupilUpdateWithoutParticipation_certificateInput {
   })
   authTokenSent?: NullableDateTimeFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
   })
-  openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
+  wix_id?: StringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => DateTimeFieldUpdateOperationsInput, {
     nullable: true
   })
-  matchingPriority?: IntFieldUpdateOperationsInput | undefined;
+  wix_creation_date?: DateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enumpupil_state_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  state?: Enumpupil_state_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => Enumpupil_schooltype_enumFieldUpdateOperationsInput, {
     nullable: true
   })
   schooltype?: Enumpupil_schooltype_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  msg?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  grade?: NullableStringFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -130,30 +122,20 @@ export class PupilUpdateWithoutParticipation_certificateInput {
   })
   isPupil?: BoolFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  subjects?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
   })
   isParticipant?: BoolFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => Enumpupil_state_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  state?: Enumpupil_state_enumFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  lastUpdatedSettingsViaBlocker?: NullableDateTimeFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  teacherEmailAddress?: NullableStringFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => Enumpupil_registrationsource_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  registrationSource?: Enumpupil_registrationsource_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -175,10 +157,30 @@ export class PupilUpdateWithoutParticipation_certificateInput {
   })
   projectMemberCount?: IntFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => NullableEnumlearning_german_sinceFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => NullableEnumpupil_learninggermansince_enumFieldUpdateOperationsInput, {
     nullable: true
   })
-  learningGermanSince?: NullableEnumlearning_german_sinceFieldUpdateOperationsInput | undefined;
+  learningGermanSince?: NullableEnumpupil_learninggermansince_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  matchingPriority?: IntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  lastUpdatedSettingsViaBlocker?: NullableDateTimeFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  teacherEmailAddress?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => Enumpupil_registrationsource_enumFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  registrationSource?: Enumpupil_registrationsource_enumFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => PupilUpdateprojectFieldsInput, {
     nullable: true
@@ -200,6 +202,11 @@ export class PupilUpdateWithoutParticipation_certificateInput {
   })
   course_attendance_log?: Course_attendance_logUpdateManyWithoutPupilInput | undefined;
 
+  @TypeGraphQL.Field(_type => Course_participation_certificateUpdateManyWithoutPupilInput, {
+    nullable: true
+  })
+  course_participation_certificate?: Course_participation_certificateUpdateManyWithoutPupilInput | undefined;
+
   @TypeGraphQL.Field(_type => MatchUpdateManyWithoutPupilInput, {
     nullable: true
   })
@@ -209,6 +216,11 @@ export class PupilUpdateWithoutParticipation_certificateInput {
     nullable: true
   })
   project_match?: Project_matchUpdateManyWithoutPupilInput | undefined;
+
+  @TypeGraphQL.Field(_type => Pupil_tutoring_interest_confirmation_requestUpdateOneWithoutPupilInput, {
+    nullable: true
+  })
+  pupil_tutoring_interest_confirmation_request?: Pupil_tutoring_interest_confirmation_requestUpdateOneWithoutPupilInput | undefined;
 
   @TypeGraphQL.Field(_type => Subcourse_participants_pupilUpdateManyWithoutPupilInput, {
     nullable: true

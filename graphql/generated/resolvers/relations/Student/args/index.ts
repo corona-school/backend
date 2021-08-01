@@ -1,5 +1,7 @@
 export { StudentCourseArgs } from "./StudentCourseArgs";
+export { StudentCourse_guestArgs } from "./StudentCourse_guestArgs";
 export { StudentCourse_instructors_studentArgs } from "./StudentCourse_instructors_studentArgs";
+export { StudentCourse_participation_certificateArgs } from "./StudentCourse_participation_certificateArgs";
 export { StudentLectureArgs } from "./StudentLectureArgs";
 export { StudentMatchArgs } from "./StudentMatchArgs";
 export { StudentParticipation_certificateArgs } from "./StudentParticipation_certificateArgs";

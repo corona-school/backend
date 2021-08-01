@@ -4,7 +4,10 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
-import { FloatFieldUpdateOperationsInput } from "../inputs/FloatFieldUpdateOperationsInput";
+import { DecimalFieldUpdateOperationsInput } from "../inputs/DecimalFieldUpdateOperationsInput";
+import { NullableBytesFieldUpdateOperationsInput } from "../inputs/NullableBytesFieldUpdateOperationsInput";
+import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDateTimeFieldUpdateOperationsInput";
+import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { PupilUpdateOneWithoutParticipation_certificateInput } from "../inputs/PupilUpdateOneWithoutParticipation_certificateInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
@@ -42,15 +45,15 @@ export class Participation_certificateUpdateWithoutStudentInput {
   })
   endDate?: DateTimeFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => FloatFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => DecimalFieldUpdateOperationsInput, {
     nullable: true
   })
-  hoursPerWeek?: FloatFieldUpdateOperationsInput | undefined;
+  hoursPerWeek?: DecimalFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => FloatFieldUpdateOperationsInput, {
+  @TypeGraphQL.Field(_type => DecimalFieldUpdateOperationsInput, {
     nullable: true
   })
-  hoursTotal?: FloatFieldUpdateOperationsInput | undefined;
+  hoursTotal?: DecimalFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
@@ -61,6 +64,31 @@ export class Participation_certificateUpdateWithoutStudentInput {
     nullable: true
   })
   ongoingLessons?: BoolFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  state?: StringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableBytesFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  signaturePupil?: NullableBytesFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableBytesFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  signatureParent?: NullableBytesFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  signatureLocation?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableDateTimeFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  signatureDate?: NullableDateTimeFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => PupilUpdateOneWithoutParticipation_certificateInput, {
     nullable: true

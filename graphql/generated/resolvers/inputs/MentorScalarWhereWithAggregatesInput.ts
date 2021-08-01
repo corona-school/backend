@@ -91,6 +91,16 @@ export class MentorScalarWhereWithAggregatesInput {
   })
   authTokenSent?: DateTimeNullableWithAggregatesFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
+    nullable: true
+  })
+  wix_id?: StringWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => DateTimeWithAggregatesFilter, {
+    nullable: true
+  })
+  wix_creation_date?: DateTimeWithAggregatesFilter | undefined;
+
   @TypeGraphQL.Field(_type => Enummentor_division_enumNullableListFilter, {
     nullable: true
   })
@@ -125,14 +135,4 @@ export class MentorScalarWhereWithAggregatesInput {
     nullable: true
   })
   imageUrl?: StringNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
-    nullable: true
-  })
-  wix_id?: StringWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => DateTimeWithAggregatesFilter, {
-    nullable: true
-  })
-  wix_creation_date?: DateTimeWithAggregatesFilter | undefined;
 }
