@@ -178,4 +178,10 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     } catch (error) {
         logger.warn(`Failed to add ParticpationLeftCourseEvent to transaction log, but pupil still left the subcourse`);
     }
+
+    const course = prisma.course.findUnique({ where: { id: subcourse.courseId }});
+
+    await Notification.actionTaken(pupil, "participant_subcourse_leave", {
+        course
+    });
 }

@@ -133,6 +133,18 @@ Participant successfully joined course.
 }
 ```
 
+### participant_subcourse_leave
+
+*description*
+
+Participant left a course (or was removed by an Admin)
+
+```typescript
+{
+    course: Course
+}
+```
+
 ### instructor_course_reminder
 
 *description* 
