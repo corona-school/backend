@@ -1,9 +1,10 @@
-import { IDeleteLecture, IDeletesubcourse, IJoinleaveInterface, IPostCourse, IPostlecture, IPostSubcourse, IPutcourse, IPutlecture, IPutsubcourse, responseError, IGroupMail, IInstructormail, IGetCourses, IGetCourse } from './../../controllers/courseController/format';
+import { IDeleteLecture, IDeletesubcourse, IJoinleaveInterface, IPostCourse, IPostlecture, IPostSubcourse, IPutcourse, IPutlecture, IPutsubcourse, responseError, IGroupMail, IInstructormail, IGetCourses, IGetCourse, IPostaddcourseInstructor, IImageHandler, IIssueCertificate } from './../../controllers/courseController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { NextFunction, Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { deleteCourse, deleteLecture, deleteSubcourse, getCourse, getCourses, getCourseTags, groupMail, instructorMail, joinSubcourse, joinWaitingList, leaveSubcourse, leaveWaitingList, postCourse, postLecture, postSubcourse, putCourse, putLecture, putSubcourse } from '../../../web/services/courseService';
+import { deleteCourse, deleteLecture, deleteSubcourse, getCourse, getCourses, getCourseTags, groupMail, instructorMail, inviteExternal, issueCourseCertificate, joinCourseMeetingExternalGuest, joinCourseMeetingHandler, joinSubcourse, joinWaitingList, leaveSubcourse, leaveWaitingList, postAddCourseInstructor, postCourse, postLecture, postSubcourse, putCourse, putLecture, putSubcourse, setCourseImage } from '../../../web/services/courseService';
+import { testJoinCourseMeetingHandler } from 'web/controllers/courseController';
 
 
 const logger = getLogger();
@@ -805,131 +806,252 @@ export const instructorMailHandlerREST = async (req: Request, res: Response, nex
     res.status(status).end();
 };
 
-// // export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
-// //      next: NextFunction) => {
-// //         const courseId = req.params.id ? req.params.id : null;
-// //         const subcourseId = req.params.subid ? String(req.params.subid) : null;
-// //         const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
-// //         let status = 200;
+export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
+    next: NextFunction) => {
+    const courseId = req.params.id ? req.params.id : null;
+    const subcourseId = req.params.subid ? String(req.params.subid) : null;
+    const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
+    let status = 200;
 
-// //         try {
-// //             let requestObject = {
-// //                 user: res.locals.user,
-// //                 courseId,
-// //                 subcourseId,
-// //                 ip
-// //             };
+    try {
+        let requestObject = {
+            user: res.locals.user,
+            courseId,
+            subcourseId,
+            ip
+        };
 
-// //             const request = await joinCourseMeetingHandlerSERVICE(requestObject);
+        const requestHandler = await joinCourseMeetingHandler(requestObject);
 
-// //         } catch (error) {
+        if (typeof requestHandler == 'number') {
+            status = requestHandler;
+        } else {
+            res.send(requestHandler);
+        }
 
-// //         }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        return 500;
+    }
 
+    res.status(status).end();
+};
 
-// //         try {
-// //             if (courseId != null && subcourseId != null) {
-// //                 let authenticatedStudent = false;
-// //                 let authenticatedPupil = false;
-// //                 if (res.locals.user instanceof Student) {
-// //                     authenticatedStudent = true;
-// //                 }
-// //                 if (res.locals.user instanceof Pupil) {
-// //                     authenticatedPupil = true;
-// //                 }
-// //                 try {
+export const testJoinCourseMeetingHandlerREST = async(req: Request, res:Response, next: NextFunction) => {
+    let status = 200;
+    const user: Student | Pupil | undefined = res.locals.user;
 
-// //                     if (authenticatedPupil || authenticatedStudent) {
-// //                         if (meetingInDB) {
-// //                             meeting = await getBBBMeetingFromDB(subcourseId);
-// //                         } else {
-// //                             // todo this should get its own method and not use a method from some other route
-// //                             let obj = await getCourse(
-// //                                 authenticatedStudent ? res.locals.user : undefined,
-// //                                 authenticatedPupil ? res.locals.user : undefined,
-// //                                 Number.parseInt(courseId, 10)
-// //                             );
+    try {
+        const requestHandler: string = await testJoinCourseMeetingHandler(user);
+        res.redirect(requestHandler);
+    } catch (e) {
+        logger.error("An error occurred during GET /course/test/meeting/join: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
 
-// //                             if (typeof obj == 'number') {
-// //                                 status = obj;
-// //                             } else {
-// //                                 course = obj;
-// //                                 meeting = await createBBBMeeting(course.name, subcourseId, res.locals.user);
-// //                             }
-// //                         }
+    res.status(status).end();
+};
 
-// //                         if (!!meeting.alternativeUrl) {
-// //                             res.send({ url: meeting.alternativeUrl });
+export async function postAddCourseInstructorHandlerREST(req: Request, res:Response, next: NextFunction) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id) &&
+                typeof req.body.email == 'string') {
 
-// //                         } else if (authenticatedStudent) {
-// //                             let user: Student = res.locals.user;
+                if (status < 300) {
+                    const requestObject: IPostaddcourseInstructor = {
+                        student: res.locals.user,
+                        courseID: +req.params.id,
+                        apiInstructorToAdd: req.body
+                    };
+                    status = await postAddCourseInstructor(requestObject);
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/instructor");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to add an instructor to a course");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
 
-// //                             await startBBBMeeting(meeting);
+export async function putCourseImageHandlerREST(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (!req.file) {
+                    status = 400;
+                    logger.warn(`PUT /course/:id/image expects either a PNG, JPEG or GIF file`);
+                }
 
-// //                             res.send({
-// //                                 url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.moderatorPW)
-// //                             });
+                if (status < 300) {
+                    const requestObject: IImageHandler = {
+                        student: res.locals.user,
+                        courseID: +req.params.id,
+                        imageFile: req.file
+                    };
+                    const result = await setCourseImage(requestObject);
+                    if (typeof result === "number") {
+                        status = result;
+                    } else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for PUT /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to change course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
 
-// //                         } else if (authenticatedPupil) {
-// //                             const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
-// //                             if (meetingIsRunning) {
-// //                                 let user: Pupil = res.locals.user;
+export async function deleteCourseImageHandlerREST(req: Request, res: Response) {
+    let status = 200;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                Number.isInteger(+req.params.id)) {
+                if (status < 300) {
+                    const requestObject: IImageHandler = {
+                        student: res.locals.user,
+                        courseID: +req.params.id,
+                        imageFile: null
+                    };
 
-// //                                 res.send({
-// //                                     url: getMeetingUrl(subcourseId, `${user.firstname} ${user.lastname}`, meeting.attendeePW, user.wix_id)
-// //                                 });
+                    const result = await setCourseImage(requestObject);
 
-// //                                 // BBB logging
-// //                                 await createOrUpdateCourseAttendanceLog(user, ip, subcourseId);
+                    if (typeof result === "number") {
+                        status = result;
+                    } else {
+                        res.send(result);
+                    }
+                }
+            } else {
+                status = 400;
+                logger.warn("Invalid request for DELETE /course/:id/image");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to delete course image");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
 
-// //                             } else {
-// //                                 status = 400;
-// //                                 logger.error("BBB-Meeting has not startet yet");
-// //                             }
-// //                         }
+export async function inviteExternalHandlerREST(req: Request, res: Response) {
+    let status: number;
+    try {
+        if (res.locals.user instanceof Student) {
+            if (req.params.id != undefined &&
+                typeof req.body.firstname === "string" && req.body.firstname.length > 0 && //oh shit... this is soooo dirty...
+                typeof req.body.lastname === "string" && req.body.lastname.length > 0 &&
+                typeof req.body.email === "string" && req.body.email.length > 0) {
 
-// //                     } else {
-// //                         status = 403;
-// //                         logger.warn("An unauthorized user wanted to join a BBB-Meeting");
-// //                         logger.debug(res.locals.user);
-// //                     }
+                const reqquestObject = {
+                    student: res.locals.user,
+                    courseID: Number.parseInt(req.params.id, 10),
+                    inviteeInfo: req.body
+                };
 
-// //                 } catch (e) {
-// //                     logger.error("An error occurred during GET /course/:id/subcourse/:subid/meeting/join: " + e.message);
-// //                     logger.debug(req, e);
-// //                     status = 500;
-// //                 }
-// //             } else {
-// //                 status = 400;
-// //                 logger.error("Expected courseId is not on route or subcourseId is not in request body");
-// //             }
-// //         } catch (e) {
-// //             logger.error("Unexpected format of express request: " + e.message);
-// //             logger.debug(req, e);
-// //             status = 500;
-// //         }
-// //         res.status(status).end();
-// // };
+                status = await inviteExternal(reqquestObject);
 
+            } else {
+                status = 400;
+                logger.warn("Invalid request for POST /course/:id/subcourse/:subid/inviteexternal");
+                logger.debug(req.body);
+            }
+        } else {
+            status = 403;
+            logger.warn("A non-student wanted to invite an external person to a subcourse");
+            logger.debug(res.locals.user);
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+    res.status(status).end();
+}
 
+export async function joinCourseMeetingExternalHandlerREST(req: Request, res: Response) {
+    try {
+        if (req.params.token != undefined) {
+            const token = req.params.token;
+            const result = await joinCourseMeetingExternalGuest(token);
 
+            if (typeof result === "number") {
+                res.status(result).end();
+            } else {
+                //successfully got join url
+                res.send(result);
+                return;
+            }
+        } else {
+            logger.warn("Invalid request for POST /course/meeting/external/join/:token");
+            logger.debug(req.body);
+            res.status(400).end();
+        }
+    } catch (e) {
+        logger.error("Unexpected format of express request: " + e.message);
+        logger.debug(req, e);
+        res.status(500).end();
+    }
+}
 
-// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+export async function issueCourseCertificateHandlerREST(req: Request, res: Response) {
 
-// // };
+    let status = 204;
 
-// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
+    if (res.locals.user instanceof Student) {
+        if (req.params.id != undefined
+            && req.params.subid != undefined
+            && req.body.receivers instanceof Array) {
+            const requestObject: IIssueCertificate = {
+                student: res.locals.user,
+                courseId: Number.parseInt(req.params.id, 10),
+                subcourseId: Number.parseInt(req.params.subid, 10),
+                receivers: req.body.receivers
+            };
+            status = await issueCourseCertificate(requestObject);
+        } else {
+            logger.warn("Missing or invalid parameters for issueCourseCertificate");
+            status = 400;
+        }
+    } else {
+        logger.warn("Issuing course certificate requested by Non-Student");
+        status = 403;
+    }
 
-// // };
-
-// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
-
-// // };
-
-// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
-
-// // };
-
-// // export const ?? = async(req: Request, res:Response, next: NextFunction) => {
-
-// // };
+    res.status(status).end();
+}

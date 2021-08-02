@@ -15,9 +15,14 @@ import { ApiCourse,
          IPutcourse,
          IPutlecture,
          IPutsubcourse,
-         responseError,
-         IInstructormail } from './../../controllers/courseController/format';
-import { Pupil } from '../../../common/entity/Pupil';
+         IInstructormail,
+         IJoincourseMeeting,
+         IPostaddcourseInstructor,
+         IImageHandler,
+         IInviteExternal,
+         ApiExternalGuestJoinMeetingResult,
+         IIssueCertificate} from './../../controllers/courseController/format';
+import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
@@ -27,7 +32,11 @@ import {
     CourseCategory,
     CourseState
 } from '../../../common/entity/Course';
+import { v4 as uuidv4 } from "uuid";
+import * as mime from 'mime-types';
 import { prisma } from '../../../common/prisma';
+import { putFile } from '../../../common/file-bucket';
+import { deleteFile } from '../../../common/file-bucket/delete';
 import { accessURLForKey } from '../../../common/file-bucket/s3';
 import { CourseCache } from '../../controllers/courseController/course-cache';
 import { addCleanupAction } from '../../../common/util/cleanup';
@@ -38,7 +47,7 @@ import CreateCourseEvent from '../../../common/transactionlog/types/CreateCourse
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import moment from 'moment-timezone';
-import { sendSubcourseCancelNotifications } from '../../../common/mails/courses';
+import { sendGuestInvitationMail, sendParticipantCourseCertificate, sendSubcourseCancelNotifications } from '../../../common/mails/courses';
 import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourseEvent';
 import CancelSubcourseEvent from '../../../common/transactionlog/types/CancelSubcourseEvent';
 import { sendParticipantRegistrationConfirmationMail } from '../../../common/mails/courses';
@@ -48,6 +57,18 @@ import ParticipantLeftCourseEvent from '../../../common/transactionlog/types/Par
 import ParticipantLeftWaitingListEvent from '../../../common/transactionlog/types/ParticipantLeftWaitingListEvent';
 import { sendInstructorGroupMail } from '../../../common/mails/courses';
 import { sendParticipantToInstructorMail } from '../../../common/mails/courses';
+import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingInDB, isBBBMeetingRunning, startBBBMeeting } from '../../../common/util/bbb';
+import { BBBMeeting } from '../../../common/entity/BBBMeeting';
+import { getBBBMeetingFromDB } from '../../../common/util/bbb';
+import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
+import { courseImageKey } from '../../../web/controllers/courseController/course-images';
+import { generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
+import { CourseGuest } from '../../../common/entity/CourseGuest';
+import isEmail from "validator/lib/isEmail";
+import { getCourseCertificate } from '../../../common/courses/certificates';
+import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
+import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
+
 
 const logger = getLogger();
 
@@ -617,7 +638,7 @@ addCleanupAction(() => cache.stopAutoReload()); //stop cache refresh on sigkill
 
 export async function getCourse(
     courseData: IGetCourse
-): Promise<ApiCourse | responseError> {
+): Promise<ApiCourse | number> {
     const { student, pupil, courseId } = courseData;
     const entityManager = getManager();
 
@@ -650,11 +671,7 @@ export async function getCourse(
                     course.courseState
             );
             logger.debug(student);
-            return {
-                code: 403,
-                message: 'Unauthorized user tried to access course of state ' +
-                course.courseState
-            };
+            return 403;
         }
 
         if (authorizedStudent || authenticatedPupil) {
@@ -805,10 +822,7 @@ export async function getCourse(
     } catch (e) {
         logger.error("Can't fetch courses: " + e.message);
         logger.debug(e);
-        return {
-            code: 500,
-            message: "Can't fetch courses: " + e.message
-        };
+        return 500;
     }
 
     return apiCourse;
@@ -2467,6 +2481,546 @@ export async function instructorMail(instructormailData: IInstructormail) {
         await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
     } catch (e) {
         logger.warn("Unable to send instructor mail");
+        logger.debug(e);
+        return 400;
+    }
+
+    return 204;
+}
+
+/**
+ * @api {GET} /course/:id/subcourse/:subid/meeting/join JoinCourseMeetingHandler
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get the BBB-Meeting for a given subcourse
+ *
+ * This endpoint provides the BBB-Meeting of a subcourse.
+ *
+ * @apiParam (URL Parameter) {int} id ID of the main course
+ * @apiParam (URL Parameter) {int} subid ID of the subcourse
+ *
+ * @apiName GetCourseMeeting
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ * @apiUse BBBMeetingReturn
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/<ID>/subcourse/<ID>/meeting/join
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+
+export async function joinCourseMeetingHandler(joinCourseMeetingData: IJoincourseMeeting) {
+    // Destructuring the data from the object
+    const { user, courseId, subcourseId, ip} = joinCourseMeetingData;
+    const meetingInDB: boolean = await isBBBMeetingInDB(subcourseId);
+    let course: ApiCourse;
+    let meeting: BBBMeeting;
+
+    if (courseId != null && subcourseId != null) {
+        let authenticatedStudent = false;
+        let authenticatedPupil = false;
+        if (user instanceof Student) {
+            authenticatedStudent = true;
+        }
+        if (user instanceof Pupil) {
+            authenticatedPupil = true;
+        }
+        try {
+
+            if (authenticatedPupil || authenticatedStudent) {
+                if (meetingInDB) {
+                    meeting = await getBBBMeetingFromDB(subcourseId);
+                } else {
+                    // todo this should get its own method and not use a method from some other route
+                    const courseObject: IGetCourse = {
+                        student: authenticatedStudent ? (user instanceof Student) ? user : undefined : undefined,
+                        pupil: authenticatedPupil ? (user instanceof Pupil) ? user : undefined : undefined,
+                        courseId: Number.parseInt(courseId, 10)
+                    };
+
+                    let obj = await getCourse(courseObject);
+
+                    if (typeof obj == 'number') {
+                        return obj;
+                    } else {
+                        course = obj;
+                        meeting = await createBBBMeeting(course.name, subcourseId, user);
+                    }
+                }
+
+                if (!!meeting.alternativeUrl) {
+                    return { url: meeting.alternativeUrl };
+
+                } else if (authenticatedStudent) {
+                    let userStudent: Student = (user instanceof Student) ? user : undefined;
+
+                    await startBBBMeeting(meeting);
+
+                    return {
+                        url: getMeetingUrl(subcourseId, `${userStudent.firstname} ${userStudent.lastname}`, meeting.moderatorPW)
+                    };
+
+                } else if (authenticatedPupil) {
+                    const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseId);
+                    if (meetingIsRunning) {
+                        let userPupil: Pupil = (user instanceof Pupil) ? user : undefined;
+                        // BBB logging
+                        await createOrUpdateCourseAttendanceLog(userPupil, ip, subcourseId);
+
+                        return {
+                            url: getMeetingUrl(subcourseId, `${userPupil.firstname} ${userPupil.lastname}`, meeting.attendeePW, user.wix_id)
+                        };
+                    } else {
+                        logger.error("BBB-Meeting has not startet yet");
+                        return 400;
+                    }
+                }
+
+            } else {
+                logger.warn("An unauthorized user wanted to join a BBB-Meeting");
+                logger.debug(user);
+                return 403;
+            }
+
+        } catch (e) {
+            logger.error("An error occurred during GET /course/:id/subcourse/:subid/meeting/join: " + e.message);
+            logger.debug(joinCourseMeetingData, e);
+            return 500;
+        }
+    } else {
+        logger.error("Expected courseId is not on route or subcourseId is not in request body");
+        return 400;
+    }
+}
+
+/**
+ * @api {GET} /course/test/meeting/join TestJoinCourseMeetingHandler
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Get a new empty BBB-Meeting for testing purposes.
+ *
+ * This endpoint will provide a url to join the BBB meeting with a randomly generated name (and if called with an auth token, that user's name will be taken)
+ *
+ * @apiGroup Courses
+ *
+ * @apiUse Authentication
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/course/test/meeting/join
+ *
+ * @apiUse StatusOk
+ * @apiUse StatusBadRequest
+ * @apiUse StatusUnauthorized
+ * @apiUse StatusInternalServerError
+ */
+export async function testJoinCourseMeetingHandler(user: Student | Pupil | undefined) {
+
+    const meeting: BBBMeeting = {
+        id: -1, // default value, because of we're not creating a database instance of BBBMeeting (through typeorm) – IMPORTANT: this is not the meetingID!
+        meetingID: `Test-${user?.wix_id ?? uuidv4()}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        attendeePW: user?.wix_id.concat("ATTENDEE-PW") ?? uuidv4(),
+        moderatorPW: user?.wix_id.concat("MODERATOR-PW") ?? uuidv4(),
+        meetingName: "Test-Meeting",
+        alternativeUrl: null
+    };
+
+    // start the meeting
+    await startBBBMeeting(meeting);
+
+    const userName = user?.fullName() ?? uniqueNamesGenerator({
+        dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
+        separator: " ",
+        length: 2,
+        style: "capital"
+    });
+
+    const hasModeratorRights = user instanceof Student;
+    const meetingPW = hasModeratorRights ? meeting.moderatorPW : meeting.attendeePW;
+
+    // log that test meeting
+    logger.info(`Test BBB meeting created for a user (${user?.wix_id ?? "unauthenticated"}, with${!hasModeratorRights ? "out": ""} moderator rights) called ${userName} with settings: ${JSON.stringify(meeting)}`);
+
+    // get the meeting url
+    const meetingURL = getMeetingUrl(meeting.meetingID, userName, meetingPW);
+
+    // immediately redirect to the meeting
+    return meetingURL;
+}
+
+
+export async function postAddCourseInstructor(postAddcourseData: IPostaddcourseInstructor): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    const { student, courseID, apiInstructorToAdd} = postAddcourseData;
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to add an instructor to a course, but is no accepted instructor himself.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to add an instructor to non-existent course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to add an instructor to a course, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student, apiInstructorToAdd);
+        return 403;
+    }
+
+    // Check validity of instructor that should be added
+    let instructorToAdd = await entityManager.findOne(Student, {
+        email: apiInstructorToAdd.email
+    });
+
+    if (!instructorToAdd) {
+        logger.warn(`Cannot find a person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email}`);
+        return 404;
+    }
+
+    if (!instructorToAdd.active) {
+        logger.warn(`Person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not active. It cannot be added to a course!`);
+        return 404;
+    }
+
+    if (!instructorToAdd.isInstructor) {
+        logger.warn(`The person (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not a course instructor. It cannot be added to a course!`);
+        return 403;
+    }
+
+    if (await instructorToAdd.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`The instructor (to add to course number ${courseID}) with email address ${apiInstructorToAdd.email} is not successfully screened as an instructor. S*he thus cannot be added to a course!`);
+        return 403;
+    }
+
+    if (course.instructors.some(i => i.id === instructorToAdd.id)) {
+        logger.warn(`The instructor with email address ${apiInstructorToAdd.email} is already an instructor of course number ${courseID}!`);
+        return 409;
+    }
+
+
+    //add that instructor to the course (and all of it's subcourses)
+    course.instructors.push(instructorToAdd);
+    course.subcourses.forEach(sc => sc.instructors.push(instructorToAdd));
+
+    try {
+        for (const sc of course.subcourses) { //save subcourses
+            await entityManager.save(sc);
+        }
+
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully added instructor with email ${instructorToAdd.email} to course with id ${courseID} and all of it's subcourses`);
+
+        return 200;
+    } catch (e) {
+        logger.error("Can't save the changes applied while adding an instructor to a course: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+export async function setCourseImage(imageData: IImageHandler): Promise<number | { imageURL?: string }> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+    const { student, courseID, imageFile } = imageData;
+
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`Student (ID ${student.id}) tried to change course image, but is no accepted instructor.`);
+        logger.debug(student);
+        return 403;
+    }
+
+    // Check access rights
+    const course = await entityManager.findOne(Course, { id: courseID });
+    if (course == undefined) {
+        logger.warn(`User tried to change course image of non existent course (ID ${courseID})`);
+        logger.debug(student);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`User tried to change course image, but has no access rights for that course (ID ${courseID})`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    try {
+        if (imageFile) {
+            // TODO: Check validity of image (i.e. a valid JPEG, and not just mime type or something like that)
+
+            const fileExtension = mime.extension(imageFile.mimetype);
+
+            if (!fileExtension) {
+                logger.warn(`User tried to change course image for course with ID ${courseID}, but the provided file of wrong mime type`);
+                return 400;
+            }
+
+            const key = courseImageKey(courseID, fileExtension);
+
+            // TODO: resize images to provide different resolutions
+            await putFile(imageFile.buffer, key);
+
+            course.imageKey = key;
+        } else if (course.imageKey) { //otherwise, there's nothing to delete
+            //delete image if no image is given
+            await deleteFile(course.imageKey);
+
+            course.imageKey = null;
+        }
+    } catch (e) {
+        logger.error(`Error while uploading/modifying image for course ${courseID}`, e);
+        return 503;
+    }
+
+    try {
+        await entityManager.save(course); //save course...
+
+        // todo add transactionlog
+        logger.info(`Successfully changed image of course with ID ${courseID}`);
+
+        return { imageURL: course.imageURL() };
+    } catch (e) {
+        logger.error("Can't save changed image key to database: " + e.message);
+        logger.debug(course, e);
+        return 500;
+    }
+}
+
+export async function inviteExternal(inviteeData: IInviteExternal): Promise<number> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    const { student, courseID, inviteeInfo} = inviteeData;
+    // Check authorization
+    if (!student.active || !student.isInstructor || await student.instructorScreeningStatus() !== ScreeningStatus.Accepted) {
+        logger.warn(`Unauthorized student ${student.id} tried to invite external guest to course ${courseID}`);
+        return 403;
+    }
+
+    // Check access rights of student to the course
+    const course = await entityManager.findOne(Course, { id: courseID }, {
+        relations: ["guests"]
+    });
+    if (course == undefined) {
+        logger.warn(`Student ${student.id} tried to invite external guest to non-existent course (ID ${courseID})`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => student.id === i.id);
+
+    if (!authorized) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course, but has no access rights for that course (ID ${courseID})`);
+        return 403;
+    }
+
+    if (course.courseState !== CourseState.ALLOWED) {
+        logger.warn(`Student ${student.id} tried to invite an external guest to a course (ID ${courseID}) but that course is not yet allowed!`);
+        return 403;
+    }
+
+    //check inviteeInfo
+    const guestEmail = inviteeInfo.email.toLowerCase(); //always lower case...
+    if (!isEmail(guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite an external guest for course (ID ${courseID}), but the given email address is invalid`);
+        return 400;
+    }
+
+    const currentGuests = course.guests;
+    //make sure that at most 10 persons are invited per course
+    if (currentGuests.length >= 10) {
+        logger.warn(`Student ${student.id} tried to invite another external guest for course with ID ${courseID}, but that course already has 10 invited guests`);
+        return 429; //indicate that no more guests could be invited
+    }
+
+    //check if person is already invited
+    if (currentGuests.some(g => g.email === guestEmail)) {
+        logger.warn(`Student ${student.id} tried to invite another external guest with email ${guestEmail} for course with ID ${courseID}, but that guest was already invited!`);
+        return 409; //conflict
+    }
+
+    //create new guest instance
+    const uniqueToken = await generateNewCourseGuestToken(entityManager); //unique one...
+    const newGuest = new CourseGuest(guestEmail, inviteeInfo.firstname, inviteeInfo.lastname, course, student, uniqueToken);
+
+    //save that new guest
+    try {
+        await entityManager.save(newGuest);
+
+        //send the corresponding mail to the guest
+        await sendGuestInvitationMail(newGuest);
+
+        return 200;
+    } catch (e) {
+        logger.error(`An error occurred during invitation of guest ${guestEmail} for course ${courseID}: ${e}`);
+        return 500;
+    }
+}
+
+export async function joinCourseMeetingExternalGuest(token: string): Promise<number | ApiExternalGuestJoinMeetingResult> {
+    const entityManager = getManager();
+    //TODO: Implement transactionLog
+
+    // Check token
+    const guest = await entityManager.findOne(CourseGuest, {
+        where: {
+            token
+        },
+        relations: ["course"]
+    });
+
+    if (!guest) {
+        logger.error(`Join course using token failed: Cannot find guest info corresponding to token '${token}'`);
+        return 400;
+    }
+
+    const course = guest.course;
+
+    //get the first subcourse of this course (because my code here has no special handling for the subcourses case -> not good, but quick and dirty since the entire courses code will entirely gets deleted in a few weeks...)
+    const subcourse = course?.subcourses?.[0];
+
+    if (!subcourse) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course?.id} since that course has no subcourses!`);
+        return 500;
+    }
+
+    const subcourseIDString = ""+subcourse.id;
+    //get the meeting for that subcourse
+    const meeting = await getBBBMeetingFromDB(subcourseIDString);
+
+    if (!meeting) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since there is no meeting started yet`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+
+    //return alternative url if available and skip BBB related steps
+    if (meeting.alternativeUrl) {
+        return {
+            url: meeting.alternativeUrl
+        };
+    }
+
+    //check if the meeting is running
+    const meetingIsRunning: boolean = await isBBBMeetingRunning(subcourseIDString);
+
+    if (!meetingIsRunning) {
+        logger.error(`Cannot join meeting as guest ${guest.email} for course ${course.id} since the meeting exists, but wasn't yet started by the instructor`);
+        return 428; //use this to indicate the meeting hasn't started yet
+    }
+
+    //create the join url
+    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+
+    return {
+        url: joinURL
+    };
+}
+
+export async function issueCourseCertificate(certificateData: IIssueCertificate) {
+
+    const { student, courseId, subcourseId, receivers } = certificateData;
+    if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
+        logger.warn(`User ${student.wix_id} cannot issue a course certificate for subcourse with ID ${subcourseId} since that student is no (successfully screened) instructor`);
+        return 403;
+    }
+
+    const entityManager = getManager();
+    const course = await entityManager.findOne(Course, { id: courseId }, {
+        loadEagerRelations: false,
+        relations: ["instructors"]
+    });
+
+    if (course == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificates for invalid course with ID ${courseId}`);
+        return 404;
+    }
+
+    const subcourse = await entityManager.findOne(Subcourse, { id: subcourseId, course: course }, {
+        loadEagerRelations: false,
+        relations: ["lectures"]
+    });
+    if (subcourse == undefined) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for invalid subcourse with ID ${subcourseId}.`);
+        return 404;
+    }
+
+    let authorized = course.instructors.some(i => i.id === student.id);
+    if (!authorized) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate as user who is not instructor of course with ID ${course}`);
+        logger.debug(student);
+        return 403;
+    }
+
+
+    //check participants list
+    if (receivers.length === 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for NO receivers at all. That is not possible.`);
+        return 400;
+    }
+    if (receivers.some(r => typeof r !== "string")) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for receivers in array where not all elements are strings(receivers: ${JSON.stringify(receivers)})`);
+        return 400;
+    }
+    const participants = await Promise.all(receivers.map(r => getPupilByWixID(entityManager, r)));
+
+    const unknownParticipants = participants.filter(p => p == null);
+
+    if (unknownParticipants.length > 0) {
+        logger.warn(`User ${student.wix_id} tried to issue course certificate for at least one unknown receiver, which is not allowed (unknown receivers: ${JSON.stringify(unknownParticipants)})`);
+        return 400;
+    }
+
+
+    //everything looks fine, so issue the certificates and send them via email.
+    try {
+        // get the transaction log
+        const transactionLog = getTransactionLog();
+
+        //compute course meta data
+        const courseDuration = subcourse.totalDuration() / 60; //because we wanna have it in hours...
+
+        for (let participant of participants) {
+            //create course certificate buffer
+            const certificateBuffer = await getCourseCertificate(
+                student.wix_id,
+                participant.wix_id,
+                participant.fullName(),
+                course.name,
+                subcourse.lectures,
+                courseDuration
+            );
+
+            //send mail to pupil
+            await sendParticipantCourseCertificate(participant, course, certificateBuffer);
+
+            //TRANSACTION LOG to know who got issued when a certificate by which instructor...
+            await transactionLog.log(new InstructorIssuedCertificateEvent(student, participant, subcourse));
+
+            //save certificate issuing to database
+            const courseParticipationCertificate = new CourseParticipationCertificate(student, participant, subcourse);
+            await entityManager.save(courseParticipationCertificate);
+        }
+    } catch (e) {
+        logger.warn("Unable to issue course certificate");
         logger.debug(e);
         return 400;
     }

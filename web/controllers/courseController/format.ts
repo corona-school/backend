@@ -1,4 +1,3 @@
-import { ApiEditCourse } from './format';
 /**
  * @apiDefine Courses
  * @apiVersion 1.1.0
@@ -470,4 +469,37 @@ export interface IInstructormail {
     subcourseId: number,
     mailSubject: string,
     mailBody: string
+}
+
+export interface IJoincourseMeeting {
+    user: Student | Pupil | undefined,
+    courseId: string,
+    subcourseId: string,
+    ip: string,
+
+}
+
+export interface IPostaddcourseInstructor {
+    student: Student,
+    courseID: number,
+    apiInstructorToAdd: ApiInstructorID
+}
+
+export interface IImageHandler {
+    student: Student,
+    courseID: number,
+    imageFile?: Express.Multer.File
+}
+
+export interface IInviteExternal {
+    student: Student,
+    courseID: number,
+    inviteeInfo: ApiPostExternalInvite
+}
+
+export interface IIssueCertificate {
+    student: Student,
+    courseId: number,
+    subcourseId: number,
+    receivers: string[]
 }
