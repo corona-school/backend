@@ -38,9 +38,6 @@ export default function injectContext({ req }) {
 
     let roles: Role[] = [];
 
-    // TODO: REMOVE SECRET!
-    authLogger.debug(` Authorization Header`, req.headers.authorization, `Basic Auth Header`, auth);
-
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
             authLogger.warn(`Admin failed to authenticate from ${ip}`);

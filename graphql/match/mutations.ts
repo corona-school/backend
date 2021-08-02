@@ -12,7 +12,9 @@ export class MutateMatchResolver {
     async matchAdd(@Arg("pupilId") pupilId: number, @Arg("studentId") studentId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         const student = await getStudent(studentId);
-        /* TODO */
+        /* TODO: Add Implementation */
+        throw new Error("Not implemented");
+
         return true;
     }
 
@@ -20,7 +22,9 @@ export class MutateMatchResolver {
     @Authorized(Role.ADMIN)
     async matchDissolve(@Arg("matchId") matchId: number): Promise<boolean> {
         const match = await getMatch(matchId);
-        /* TODO */
+        /* TODO: Add Implementation */
+        throw new Error("Not implemented");
+
         return true;
     }
 }
