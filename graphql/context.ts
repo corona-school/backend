@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { Role } from "./authorizations";
 import { prisma } from "../common/prisma";
 import { getLogger } from "log4js";
-import * as basicAuth from "basic-auth";
+import basicAuth from "basic-auth";
 import * as crypto from "crypto";
 
 /* time safe comparison adapted from
@@ -34,7 +34,7 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
 
 export default function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const auth = basicAuth.parse(req);
+    const auth = basicAuth(req);
 
     let roles: Role[] = [];
 
