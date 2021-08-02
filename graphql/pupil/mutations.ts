@@ -4,6 +4,8 @@ import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { Role } from "../authorizations";
 import { getPupil, getSubcourse } from "../util";
 import { joinSubcourse, leaveSubcourse } from "../../common/courses/participants";
+import * as Notification from "../../common/notification";
+import { refreshToken } from "../../common/pupil/token";
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
@@ -26,20 +28,12 @@ export class MutatePupilResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.ADMIN)
     async pupilResendVerificationMail(@Arg("pupilId") pupilId: number): Promise<boolean> {
-        /* TODO: Implement using new notification system
-           Notificarion.actionTaken("user-resend-verification", { authToken: ... }); */
-        throw new Error("Not implemented");
-
-        return true;
-    }
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilChangeStatus(@Arg("pupilId") pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        /* TODO: choose between applied(not selectable),accepted,rejection,deregistration
-           Needed? */
-        throw new Error("Not implemented");
+
+        const secretToken = await refreshToken(pupil);
+        await Notification.actionTaken(pupil, "user_authenticate", {
+            secretToken
+        });
         return true;
     }
 

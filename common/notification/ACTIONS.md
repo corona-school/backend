@@ -99,6 +99,20 @@ Triggered when the user registers as a cooperation tutee.
     redirectTo?: string;
 }
 ```
+
+### user_authenticate
+
+*description*
+
+Triggered when the user tries to login or support triggers this Notification.
+The user should be able to log in with the provided `secretToken`.
+
+*context*
+
+```ts
+{ secretToken: string; }
+```
+
 ## Courses
 
 ### participant_subcourse_cancelled
