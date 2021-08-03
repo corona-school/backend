@@ -28,6 +28,16 @@ export class ApiGetExpert {
     description?: string;
     expertiseTags: string[];
     projectFields: string[];
+
+
+    constructor(id: number, lastName: string, firstName: string, description: string, expertiseTags: string[], projectFields: string[]) {
+        this.id = id;
+        this.lastName = lastName;
+        this.firstName = firstName;
+        this.description = description;
+        this.expertiseTags = expertiseTags;
+        this.projectFields = projectFields;
+    }
 }
 
 /**

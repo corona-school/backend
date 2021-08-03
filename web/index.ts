@@ -14,7 +14,7 @@ import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
-import * as expertController from "./controllers/expertController";
+import * as expertController from "./controllers_new/expertController";
 import * as interestConfirmationController from "./controllers/interestConfirmationController";
 import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection, getConnection } from "typeorm";

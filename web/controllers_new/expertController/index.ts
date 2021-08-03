@@ -136,15 +136,10 @@ export async function getExpertsHandler(req: Request, res: Response) {
 
             let apiResponse: ApiGetExpert[] = [];
 
-            for (let i = 0; i < experts.length; i++) {
-                let apiExpert = new ApiGetExpert();
-                apiExpert.id = experts[i].id;
-                apiExpert.firstName = experts[i].student.firstname;
-                apiExpert.lastName = experts[i].student.lastname;
-                apiExpert.description = experts[i].description;
-                apiExpert.expertiseTags = experts[i].expertiseTags?.map(t => (t.name)) || [];
-                apiExpert.projectFields = await experts[i].student.getProjectFields().then((res) => res.map(f => f.name));
-
+            for (const expert of experts) {
+                const expertiseTags = expert.expertiseTags?.map(t => (t.name)) || [];
+                const projectFields = await expert.student.getProjectFields().then((res) => res.map(f => f.name));
+                let apiExpert = new ApiGetExpert(expert.id, expert.student.firstname,expert.student.lastname,expert.description, expertiseTags, projectFields);
                 apiResponse.push(apiExpert);
             }
 
@@ -281,10 +276,10 @@ export async function getUsedTagsHandler(req: Request, res: Response) {
 
             const apiResponse: ApiGetExpertiseTag[] = [];
 
-            for (let i = 0; i < tags.length; i++) {
+            for (const tag of tags) {
                 let apiTag: ApiGetExpertiseTag = {
-                    name: tags[i].name,
-                    experts: tags[i].expertData.map(e => e.id)
+                    name: tag.name,
+                    experts: tag.expertData.map(e => e.id)
                 };
                 apiResponse.push(apiTag);
             }
