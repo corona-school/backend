@@ -129,7 +129,7 @@ export async function checkReminders() {
         if (notification.interval) {
             logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}, thus another reminder gets scheduled to be sent out in the future`);
 
-            if (notification.cancelOnAction.length === 0) {
+            if (notification.cancelledOnAction.length === 0) {
                 logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
             }
 
@@ -139,7 +139,7 @@ export async function checkReminders() {
                     state: ConcreteNotificationState.DELAYED,
                     sentAt: new Date(Date.now() + notification.interval),
                     userId: getUserId(user),
-                    contextID: reminder.contextId,
+                    contextID: reminder.contextID,
                     context: reminder.context
                 }
             });
