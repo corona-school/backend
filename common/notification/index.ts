@@ -2,9 +2,11 @@ import { Person } from '../entity/Person';
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState } from './types';
 import { prisma } from '../prisma';
-import { debug, info, warn, error } from 'console';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
+import { getLogger } from 'log4js';
+
+const logger = getLogger("Notification");
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
@@ -31,16 +33,16 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
     (async function fireAndForget() {
         const startTime = Date.now();
         try {
-            debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
+            logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
             const notifications = await getNotifications();
             const relevantNotifications = notifications.get(actionId);
 
             if (!relevantNotifications) {
-                debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
+                logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
                 return;
             }
 
-            debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
+            logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
 
             // prevent sending of now unnecessary notifications
             const dismissed = await prisma.concrete_notification.updateMany({
@@ -62,12 +64,12 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                 }
             });
 
-            debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+            logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
 
             const reminders = relevantNotifications.toSend.filter(it => it.delay);
             const directSends = relevantNotifications.toSend.filter(it => !it.delay);
 
-            debug(`Notification.actionTaken found reminders ${reminders.map(it => it.id)} and directSends ${directSends.map(it => it.id)}`);
+            logger.debug(`Notification.actionTaken found reminders ${reminders.map(it => it.id)} and directSends ${directSends.map(it => it.id)}`);
 
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
@@ -88,18 +90,19 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                     }))
                 });
 
-                debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
+                logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
             }
         } catch (e) {
-            error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
+            logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
         }
-        debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
+
+        logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
     })();
 }
 
 
 export async function checkReminders() {
-    debug(`Checking for pending notification reminders`);
+    logger.debug(`Checking for pending notification reminders`);
     const start = Date.now();
 
     const remindersToSend = await prisma.concrete_notification.findMany({
@@ -121,8 +124,7 @@ export async function checkReminders() {
         // TODO: What about intervals?
     }
 
-    info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
-
+    logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 
 // TODO: function for user preferences "categories"
@@ -159,13 +161,13 @@ async function createConcreteNotification(notification: Notification, user: Pers
         }
     });
 
-    debug(`Notification.createConcreteNotification succeeded for ConcreteNotification(${concreteNotification.id})`);
+    logger.debug(`Notification.createConcreteNotification succeeded for ConcreteNotification(${concreteNotification.id})`);
 
     return concreteNotification;
 }
 
 async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext): Promise<void> {
-    debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
     const context: Context = {
         ...notificationContext,
@@ -193,10 +195,10 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
             }
         });
 
-        info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
     } catch (error) {
-        warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
 
         await prisma.concrete_notification.update({
             data: {
