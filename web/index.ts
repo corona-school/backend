@@ -28,7 +28,7 @@ import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
-import * as notificationController from "./controllers/notifiationController";
+import * as notificationController from "./controllers/notificationController";
 
 // Logger setup
 try {
