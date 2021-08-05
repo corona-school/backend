@@ -40,6 +40,7 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "corona-school-matching": "^1.0.1",
+    "cors": "^2.8.5",
     "cron": "^1.8.2",
     "csv-writer": "^1.6.0",
     "date-holidays": "^1.5.3",
@@ -53,7 +54,7 @@
     "hpp": "^0.2.3",
     "html-pppdf": "^1.0.1",
     "lodash": "^4.17.19",
-    "log4js": "latest",
+    "log4js": "^6.3.0",
     "mime-types": "^2.1.28",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.31",
@@ -67,8 +68,7 @@
     "unique-names-generator": "^4.3.1",
     "uuid": "^7.0.3",
     "validator": "^13.5.2",
-    "xml2js": "^0.4.23",
-    "cors": "^2.8.5"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "typescript": "^4.3.4",
