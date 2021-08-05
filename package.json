@@ -67,7 +67,8 @@
     "unique-names-generator": "^4.3.1",
     "uuid": "^7.0.3",
     "validator": "^13.5.2",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.4.23",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "typescript": "^4.3.4",
@@ -91,7 +92,6 @@
     "@typescript-eslint/parser": "^3.3.0",
     "apidoc": "^0.22.1",
     "chai": "^4.2.0",
-    "cors": "^2.8.5",
     "eslint": "^7.2.0",
     "faker": "^5.4.0",
     "mocha": "^8.0.1",
