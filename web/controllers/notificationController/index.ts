@@ -5,7 +5,7 @@ export const notificationRoute = Express.Router();
 
 /* Internal API endpoint for debugging / manual testing purposes */
 export async function triggerActionHandler(req: Express.Request, res: Express.Response) {
-    if (process.env.NODE_ENV !== "dev") {
+    if (process.env.ENV !== "dev") {
         return res.status(404).send("This endpoint is only accessible in development environments");
     }
 
@@ -26,7 +26,7 @@ export async function triggerActionHandler(req: Express.Request, res: Express.Re
 
 /* Internal API endpoint for debugging / manual testing purposes */
 export async function checkReminders(req: Express.Request, res: Express.Response) {
-    if (process.env.NODE_ENV !== "dev") {
+    if (process.env.ENV !== "dev") {
         return res.status(404).send("This endpoint is only accessible in development environments");
     }
 

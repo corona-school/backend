@@ -27,7 +27,7 @@
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
-    "heroku:release": "if [ \"$NODE_ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
+    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
   },
   "dependencies": {
     "@prisma/client": "^2.26.0",
