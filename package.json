@@ -27,7 +27,7 @@
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
-    "heroku:release": "if [ \"$NODE_ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
+    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
   },
   "dependencies": {
     "@prisma/client": "^2.26.0",
@@ -40,6 +40,7 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "corona-school-matching": "^1.0.1",
+    "cors": "^2.8.5",
     "cron": "^1.8.2",
     "csv-writer": "^1.6.0",
     "date-holidays": "^1.5.3",
@@ -53,7 +54,7 @@
     "hpp": "^0.2.3",
     "html-pppdf": "^1.0.1",
     "lodash": "^4.17.19",
-    "log4js": "latest",
+    "log4js": "^6.3.0",
     "mime-types": "^2.1.28",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.31",
@@ -91,7 +92,6 @@
     "@typescript-eslint/parser": "^3.3.0",
     "apidoc": "^0.22.1",
     "chai": "^4.2.0",
-    "cors": "^2.8.5",
     "eslint": "^7.2.0",
     "faker": "^5.4.0",
     "mocha": "^8.0.1",

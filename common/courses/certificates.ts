@@ -36,7 +36,7 @@ export async function getCourseCertificate(studentUUID: string, pupilUUID: strin
         moment: moment
     });
 
-    const includePaths = process.env.NODE_ENV === 'dev' ? [] : [resolvePath(TEMPLATE_ASSETS_FOLDER)]; //only include assets in production
+    const includePaths = process.env.ENV === 'dev' ? [] : [resolvePath(TEMPLATE_ASSETS_FOLDER)]; //only include assets in production
 
     const buffer = await generatePDFFromHTMLString(htmlString, {
         includePaths
