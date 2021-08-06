@@ -458,6 +458,64 @@ Send mail to student to sign certificate
 
 ## Tutoring
 
+### pupil_match_dissolved
+
+*description*
+
+Match was dissolved.
+
+*context*
+
+```typescript
+{
+    student: Student;
+}
+```
+
+### pupil_match_dissolved_other
+
+*description*
+
+Match was dissolved by Pupil.
+
+*context*
+
+```typescript
+{
+    student: Student;
+}
+```
+
+
+### student_match_dissolved
+
+*description*
+
+Match was dissolved.
+
+*context*
+
+```typescript
+{
+    pupil: Pupil;
+}
+```
+
+### student_match_dissolved_other
+
+*description*
+
+Match was dissolved by Pupil. 
+
+*context*
+
+```typescript
+{
+    pupil: Pupil;
+}
+```
+
+
 ### tutee_matching_success
 
 *description*
