@@ -99,9 +99,108 @@ Triggered when the user registers as a cooperation tutee.
     redirectTo?: string;
 }
 ```
+
+### user_registration_verified_email
+
+*description*
+
+The user has verified their email after registration. 
+Pupils can now visit the platform, students are invited for screening.
+
+### pupil_registration_finished
+
+*description*
+
+The pupil successfully registered and verified their email. 
+
+## Screening
+
+### tutor_screening_invitation
+
+*description*
+
+A future tutor was invited for screening.
+
+### tutor_screening_success
+
+*description*
+
+A future tutor was accepted during screening.
+
+### tutor_screening_rejection
+
+*description*
+
+A tutor was rejected during screening.
+
+
+### instructor_screening_invitation
+
+*description*
+
+A future instructor was invited for screening.
+
+### instructor_screening_success
+
+*description*
+
+A future course instructor was accepted during screening.
+
+### instructor_screening_rejection
+
+*description*
+
+A course instructor was rejected during screening.
+
+
+### coach_screening_invitation
+
+*description*
+
+A future coach was invited for screening.
+
+### coach_screening_success
+
+*description*
+
+A future coach was accepted during screening.
+
+### coach_screening_rejection
+
+*description*
+
+A coach was rejected during screening.
+
+
 ## Courses
 
-### participant_subcourse_cancelled
+### participant_course_join
+
+*description*
+
+Participant joined the course
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
+}
+```
+
+### participant_course_waiting_list_join
+
+*description*
+
+Future Participant joined the waiting list
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
+}
+```
+
+### participant_course_cancelled
 
 *description* 
 
@@ -111,9 +210,118 @@ Inform participants that subcourse was cancelled
 
 ```typescript
 {
-    courseName: string,
+    course: Course,
+    subcourse: Subcourse,
     firstLectureDate: string /* DD.MM.YYYY */,
     firstLectureTime: string /* HH:MM */
+}
+```
+
+### participant_course_leave
+
+*description*
+
+Participant left the course
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
+}
+```
+
+
+### participant_course_waiting_list_leave
+
+*description*
+
+Participant left the waiting list
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
+}
+```
+
+### participant_course_message
+
+*description*
+
+An instructor sent a message to all participants
+
+*context*
+
+```typescript
+{
+    instructor: User,
+    course: Course,
+    subcourse: Subcourse,
+    subject: string,
+    body: string
+}
+```
+
+### participant_course_reminder
+
+*description*
+
+Two days before the course the participants are reminded
+
+*context*
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse,
+}
+```
+
+### instructor_course_created
+
+*description*
+
+The instructor created a new subcourse.
+
+*context*
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse,
+    firstLectureDate: string /* DD.MM.YYYY */,
+    firstLectureTime: string /* HH:MM */
+}
+```
+
+
+### instructor_course_cancelled
+
+*description*
+
+The instructor cancelled a subcourse.
+
+*context*
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
+}
+```
+
+### instructor_course_published
+
+*description*
+
+The instructor published a subcourse and pupils can join from now on.
+
+*context*
+
+```typescript
+{
+    course: Course,
+    subcourse: Subcourse
 }
 ```
 
@@ -127,13 +335,30 @@ Two days before the course the instructors are reminded
 
 ```typescript
 {
-    courseName: string,
+    course: Course,
+    subcourse: Subcourse,
     firstLectureDate: string /* DD.MM.YYYY */,
     firstLectureTime: string /* HH:MM */
 }
 ```
 
-it is on purpose that it says participant firstname for the instructor.... 
+### instructor_course_participant_message
+
+*description*
+
+A participant sent a message to the correspondent
+
+```typescript
+{
+    participant: User,
+    course: Course,
+    subcourse: Subcourse,
+    subject: string,
+    body: string
+}
+```
+
+
 
 
 ## Project Coaching

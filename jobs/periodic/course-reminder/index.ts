@@ -61,7 +61,7 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
             logger.info("Sending reminders to instructor and " + subcourse.subcourse_participants_pupil.length + " participants");
 
             // notify instructor
-            sendCourseUpcomingReminderInstructor(firstLecture.student, course, firstLecture.start);
+            sendCourseUpcomingReminderInstructor(firstLecture.student, course, subcourse, firstLecture.start);
 
             // notify all participants
             for (let i = 0; i < subcourse.subcourse_participants_pupil.length; i++) {
