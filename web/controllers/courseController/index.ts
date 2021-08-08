@@ -1250,8 +1250,9 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         return 400;
     }
 
-    // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
-    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days")
+    // If the course doesn't have the CREATED state anymore, any added lectures must be at least five days in the future. Otherwise, 7 days.
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(5, "days")
+        .startOf("day"))) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days")
         .startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
@@ -1820,7 +1821,7 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
     lecture.instructor = instructor;
 
-    // the 2 day restriction does not apply when editing lectures -> the lecture date must only be in the future
+    // the 5 day restriction does not apply when editing lectures -> the lecture date must only be in the future
     if (!Number.isInteger(apiLecture.start) || moment.unix(apiLecture.start).isBefore(moment())) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
