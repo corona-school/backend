@@ -1019,7 +1019,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                         course.instructors = course.instructors.filter(s => s.id !== person.id);
                         entityManager.transaction(async em => {
                             await em.save(Course, course);
-                            logger.info("Removed instructor " + person.fullName + " from course " + course.name + ".");
+                            logger.info("Removed instructor " + person.firstname + " " + person.lastname + " from course " + course.name + ".");
                         });
                     } else {
                         // Our person is the only instructor in the course. Cancel it.
