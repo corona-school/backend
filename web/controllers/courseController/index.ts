@@ -724,6 +724,10 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             }
             if (authorizedStudent) {
                 subcourse.participantList = [];
+                if (course.instructors.some(i => i.id === student.id)) {
+                    // If the user is an instructor, attach the amount of people on the waiting list
+                    subcourse.waitingListCount = course.subcourses[i].waitingList.length;
+                }
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
                         uuid: course.subcourses[i].participants[j].wix_id,
