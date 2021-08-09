@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
-import * as moment from "moment";
+import moment from "moment";
 import {
     sendFirstScreeningInvitationToInstructor,
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
@@ -199,7 +199,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authTokenUsed = false;
 
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
-                    await sendLoginTokenMail(person, uuid, req.query.redirectTo);
+                    await sendLoginTokenMail(person, uuid, req.query.redirectTo as string);
 
 
                     // Save new token to database and log action

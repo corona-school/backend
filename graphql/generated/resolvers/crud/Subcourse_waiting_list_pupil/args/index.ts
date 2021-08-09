@@ -1,0 +1,12 @@
+export { AggregateSubcourse_waiting_list_pupilArgs } from "./AggregateSubcourse_waiting_list_pupilArgs";
+export { CreateManySubcourse_waiting_list_pupilArgs } from "./CreateManySubcourse_waiting_list_pupilArgs";
+export { CreateSubcourse_waiting_list_pupilArgs } from "./CreateSubcourse_waiting_list_pupilArgs";
+export { DeleteManySubcourse_waiting_list_pupilArgs } from "./DeleteManySubcourse_waiting_list_pupilArgs";
+export { DeleteSubcourse_waiting_list_pupilArgs } from "./DeleteSubcourse_waiting_list_pupilArgs";
+export { FindFirstSubcourse_waiting_list_pupilArgs } from "./FindFirstSubcourse_waiting_list_pupilArgs";
+export { FindManySubcourse_waiting_list_pupilArgs } from "./FindManySubcourse_waiting_list_pupilArgs";
+export { FindUniqueSubcourse_waiting_list_pupilArgs } from "./FindUniqueSubcourse_waiting_list_pupilArgs";
+export { GroupBySubcourse_waiting_list_pupilArgs } from "./GroupBySubcourse_waiting_list_pupilArgs";
+export { UpdateManySubcourse_waiting_list_pupilArgs } from "./UpdateManySubcourse_waiting_list_pupilArgs";
+export { UpdateSubcourse_waiting_list_pupilArgs } from "./UpdateSubcourse_waiting_list_pupilArgs";
+export { UpsertSubcourse_waiting_list_pupilArgs } from "./UpsertSubcourse_waiting_list_pupilArgs";

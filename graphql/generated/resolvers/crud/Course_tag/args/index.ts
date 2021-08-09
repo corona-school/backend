@@ -1,0 +1,12 @@
+export { AggregateCourse_tagArgs } from "./AggregateCourse_tagArgs";
+export { CreateCourse_tagArgs } from "./CreateCourse_tagArgs";
+export { CreateManyCourse_tagArgs } from "./CreateManyCourse_tagArgs";
+export { DeleteCourse_tagArgs } from "./DeleteCourse_tagArgs";
+export { DeleteManyCourse_tagArgs } from "./DeleteManyCourse_tagArgs";
+export { FindFirstCourse_tagArgs } from "./FindFirstCourse_tagArgs";
+export { FindManyCourse_tagArgs } from "./FindManyCourse_tagArgs";
+export { FindUniqueCourse_tagArgs } from "./FindUniqueCourse_tagArgs";
+export { GroupByCourse_tagArgs } from "./GroupByCourse_tagArgs";
+export { UpdateCourse_tagArgs } from "./UpdateCourse_tagArgs";
+export { UpdateManyCourse_tagArgs } from "./UpdateManyCourse_tagArgs";
+export { UpsertCourse_tagArgs } from "./UpsertCourse_tagArgs";

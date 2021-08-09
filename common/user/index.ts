@@ -6,13 +6,17 @@ import { Pupil } from "../entity/Pupil";
 import { Student } from "../entity/Student";
 import { getManager } from "typeorm";
 
-/* IDs of pupils and students collide. Thus we need to generate a unique ID out of it */
-export function getUserId(person: Person) {
-    if (person instanceof Student) {
+/* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
+   Unfortunately we do not have a way to detect the database table a Prisma query returned from
+   Thus for interoperability with Prisma we need to decide based on the fields available
+   NOTE: isPupil can be false for Pupils and isStudent can be false for Students.
+   The existence of the boolean is however tied to the respective entities */
+export function getUserId(person: { id: number, isPupil?: boolean, isStudent?: boolean }) {
+    if (typeof person.isStudent === "boolean") {
         return `student/${person.id}`;
     }
 
-    if (person instanceof Pupil) {
+    if (typeof person.isPupil === "boolean") {
         return `pupil/${person.id}`;
     }
 

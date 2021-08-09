@@ -1,0 +1,12 @@
+export { AggregatePupil_tutoring_interest_confirmation_requestArgs } from "./AggregatePupil_tutoring_interest_confirmation_requestArgs";
+export { CreateManyPupil_tutoring_interest_confirmation_requestArgs } from "./CreateManyPupil_tutoring_interest_confirmation_requestArgs";
+export { CreatePupil_tutoring_interest_confirmation_requestArgs } from "./CreatePupil_tutoring_interest_confirmation_requestArgs";
+export { DeleteManyPupil_tutoring_interest_confirmation_requestArgs } from "./DeleteManyPupil_tutoring_interest_confirmation_requestArgs";
+export { DeletePupil_tutoring_interest_confirmation_requestArgs } from "./DeletePupil_tutoring_interest_confirmation_requestArgs";
+export { FindFirstPupil_tutoring_interest_confirmation_requestArgs } from "./FindFirstPupil_tutoring_interest_confirmation_requestArgs";
+export { FindManyPupil_tutoring_interest_confirmation_requestArgs } from "./FindManyPupil_tutoring_interest_confirmation_requestArgs";
+export { FindUniquePupil_tutoring_interest_confirmation_requestArgs } from "./FindUniquePupil_tutoring_interest_confirmation_requestArgs";
+export { GroupByPupil_tutoring_interest_confirmation_requestArgs } from "./GroupByPupil_tutoring_interest_confirmation_requestArgs";
+export { UpdateManyPupil_tutoring_interest_confirmation_requestArgs } from "./UpdateManyPupil_tutoring_interest_confirmation_requestArgs";
+export { UpdatePupil_tutoring_interest_confirmation_requestArgs } from "./UpdatePupil_tutoring_interest_confirmation_requestArgs";
+export { UpsertPupil_tutoring_interest_confirmation_requestArgs } from "./UpsertPupil_tutoring_interest_confirmation_requestArgs";

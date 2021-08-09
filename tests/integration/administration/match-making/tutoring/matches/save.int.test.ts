@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { Connection } from "typeorm";
 import { saveMatchingToDB } from "../../../../../../common/administration/match-making/tutoring/matches/save";
 import databaseHelper from "../../../../../utils/databaseHelper";

@@ -28,7 +28,7 @@ import {
 } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { Mentor } from "../../../common/entity/Mentor";
 import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { ApiSubject } from "../format";
@@ -70,7 +70,7 @@ const logger = getLogger();
  *
  */
 export async function getSelfHandler(req: Request, res: Response) {
-    if (res.locals.user instanceof Person) {
+    if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
         req.params.id = res.locals.user.wix_id;
     }
 
@@ -109,7 +109,7 @@ export async function getHandler(req: Request, res: Response) {
     let status;
 
     try {
-        if (req.params.id != undefined && res.locals.user instanceof Person) {
+        if (req.params.id != undefined && (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
             try {
                 let obj = await get(req.params.id, res.locals.user);
                 if (obj != null) {
@@ -171,7 +171,9 @@ export async function putHandler(req: Request, res: Response) {
             (b.grade == undefined || typeof b.grade == "number") &&
             (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
             (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
-            if (req.params.id != undefined && res.locals.user instanceof Person) {
+            if (req.params.id != undefined &&
+                (res.locals.user instanceof Student || res.locals.user instanceof Pupil)
+            ) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
                 } catch (e) {
@@ -281,7 +283,8 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             }
         }
 
-        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
+        if (status < 300 && req.params.id != undefined &&
+            (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
             try {
                 status = await putSubjects(req.params.id, b, res.locals.user);
             } catch (e) {
@@ -346,7 +349,8 @@ export async function putProjectFieldsHandler(req: Request, res: Response) {
             logger.error(`Put user project fields has invalid project field grade restriction!`);
         }
 
-        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
+        if (status < 300 && req.params.id != undefined &&
+            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
                 status = await putProjectFields(req.params.id, projectFields, res.locals.user);
             } catch (e) {
@@ -398,7 +402,7 @@ export async function putActiveHandler(req: Request, res: Response) {
     try {
         if (req.params.id != undefined &&
             req.params.active != undefined &&
-            res.locals.user instanceof Person) {
+            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
 
                 let active: boolean;

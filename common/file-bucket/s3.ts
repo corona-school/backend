@@ -1,4 +1,4 @@
-import * as aws from "aws-sdk";
+import aws from "aws-sdk";
 import { assert } from "console";
 
 export const AWS_BUCKET_ENDPOINT = process.env.AWS_BUCKET_ENDPOINT;
