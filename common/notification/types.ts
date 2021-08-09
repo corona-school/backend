@@ -1,11 +1,9 @@
-import { Person } from "../entity/Person";
-import { Pupil } from "../entity/Pupil";
-import { Student } from "../entity/Student";
-
 // Prisma exports lowercase types, but we want capitalized types
 import {
     concrete_notification as ConcreteNotification,
-    notification as Notification
+    notification as Notification,
+    pupil as Pupil,
+    student as Student
 } from '.prisma/client';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
@@ -40,12 +38,12 @@ export interface NotificationContext {
 // The user is always known, also for notifications sent by Actions / Reminders
 // However we keep the authToken private from the external dependencies, and also pass the fullName as string
 export interface Context extends NotificationContext {
-    user: Omit<Person, "fullName"> & { fullName: string; };
+    user: Omit<Pupil | Student, "fullName"> & { fullName: string; };
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
     type: "mailjet";
-    send(notification: Notification, to: Person, context: Context, concreteID: number): Promise<any>;
+    send(notification: Notification, to: Pupil | Student, context: Context, concreteID: number): Promise<any>;
     canSend(notification: Notification): boolean;
 }
