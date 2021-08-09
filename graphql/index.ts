@@ -65,5 +65,5 @@ export const apolloServer = new ApolloServer({
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
     introspection: true,
-    playground: false
+    playground: isDev
 });
