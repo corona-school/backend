@@ -3,12 +3,12 @@
   "version": "0.3.0",
   "description": "The Corona School Backend",
   "engines": {
-    "node": "14.x"
+    "node": "13.x"
   },
   "main": "index.js",
   "scripts": {
     "start": "echo Please be more specific what to start for now...",
-    "build": "npx prisma generate && tsc",
+    "build": "tsc",
     "build:clean": "(rm -rf ./built/ 2> /dev/null || find ./built/ -mindepth 1 -delete) && npm run build",
     "heroku-postbuild": "npm run build && ./setup.sh",
     "test": "TS_NODE_FILES=true mocha -r ts-node/register './tests/**/*.test.ts' --exit",
@@ -27,7 +27,7 @@
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
-    "heroku:release": "if [ \"$NODE_ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
+    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
   },
   "dependencies": {
     "@prisma/client": "^2.26.0",
@@ -44,6 +44,7 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "corona-school-matching": "^1.0.1",
+    "cors": "^2.8.5",
     "cron": "^1.8.2",
     "csv-writer": "^1.6.0",
     "date-holidays": "^1.5.3",

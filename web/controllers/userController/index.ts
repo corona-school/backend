@@ -419,7 +419,9 @@ export async function putActiveHandler(req: Request, res: Response) {
                     status = await putActive(
                         req.params.id,
                         active,
-                        res.locals.user
+                        res.locals.user,
+                        req.body.deactivationReason,
+                        req.body.deactivationFeedback
                     );
                 }
             } catch (e) {
@@ -951,7 +953,7 @@ async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], pers
     return 204;
 }
 
-async function putActive(wix_id: string, active: boolean, person: Pupil | Student): Promise<number> {
+async function putActive(wix_id: string, active: boolean, person: Pupil | Student, deactivationReason?: string, deactivationFeedback?: string): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -1009,7 +1011,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             person.active = false;
 
             await entityManager.save(type, person);
-            await transactionLog.log(new DeActivateEvent(person, false));
+            await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
         logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);

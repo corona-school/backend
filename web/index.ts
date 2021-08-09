@@ -27,9 +27,9 @@ import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import rateLimit from "express-rate-limit";
-import * as notificationController from "./controllers/notifiationController";
 import { apolloServer } from "./../graphql";
+import rateLimit from "express-rate-limit";
+import * as notificationController from "./controllers/notificationController";
 
 // Logger setup
 try {
@@ -95,7 +95,7 @@ createConnection().then(setupPDFGenerationEnvironment)
                 "partnerschule",
                 "drehtuer"
             ];
-            if (process.env.NODE_ENV == "dev") {
+            if (process.env.ENV == "dev") {
                 origins = [
                     "http://localhost:3000",
                     ...allowedSubdomains.map(d => `http://${d}.localhost:3000`),
@@ -358,7 +358,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         }
 
         async function deployServer() {
-            const isDev = process.env.NODE_ENV === "dev";
+            const isDev = process.env.ENV === "dev";
             const port = process.env.PORT || 5000;
             if (isDev) {
                 await setupDevDB();

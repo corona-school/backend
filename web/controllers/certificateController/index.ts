@@ -520,7 +520,7 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
 
     let name = student.firstname + " " + student.lastname;
 
-    if (process.env.NODE_ENV == 'dev') {
+    if (process.env.ENV == 'dev') {
         name = `[TEST] ${name}`;
     }
 
