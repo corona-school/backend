@@ -67,6 +67,14 @@ export const apolloServer = new ApolloServer({
     introspection: true,
     playground: {
         title: "GraphQL@LernFair",
+        endpoint: "/apollo",
+        codeTheme: {
+            cursorColor: "#F4CC54",
+            editorBackground: "#2B4B51",
+            leftDrawerBackground: "#82B1B0",
+            resultBackground: "#82B1B0",
+            rightDrawerBackground: "#82B1B0"
+        },
         tabs: [
             {
                 name: "Hello World",
