@@ -15,7 +15,6 @@ import { ExtendedFieldsMatchResolver } from "./match/fields";
 import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
 import { MutateNotificationResolver } from "./notification/mutations";
 
-
 applyResolversEnhanceMap(authorizationEnhanceMap);
 
 const schema = buildSchemaSync({
@@ -50,8 +49,11 @@ const schema = buildSchemaSync({
     authChecker
 });
 
-const plugins: PluginDefinition[] = [GraphQLLogger as any];
-const isDev = process.env.NODE_ENV === "dev";
+const plugins: PluginDefinition[] = [
+    GraphQLLogger as any
+];
+
+const isDev = process.env.ENV === "dev";
 
 if (isDev) {
     plugins.push(apolloTracing());
@@ -60,5 +62,8 @@ if (isDev) {
 export const apolloServer = new ApolloServer({
     schema,
     context: injectContext,
-    plugins
+    plugins,
+    // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
+    introspection: true,
+    playground: false
 });
