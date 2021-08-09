@@ -65,38 +65,5 @@ export const apolloServer = new ApolloServer({
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
     introspection: true,
-    playground: {
-        title: "GraphQL@LernFair",
-        endpoint: "/apollo",
-        codeTheme: {
-            cursorColor: "#F4CC54",
-            editorBackground: "#2B4B51",
-            leftDrawerBackground: "#82B1B0",
-            resultBackground: "#82B1B0",
-            rightDrawerBackground: "#82B1B0"
-        },
-        tabs: [
-            {
-                name: "Hello World",
-                query: `# GraphQL Playground\n# To get access, contact the TECH Team`
-            },
-            {
-                name: "Example Query",
-                query: `query {
-                    courses {
-                      id,
-                      name,
-                      subcourses {
-                        maxParticipants
-                        participantsCount
-                        lectures {
-                            start
-                          duration
-                        }
-                      }
-                    }
-                  }`
-            }
-        ]
-    }
+    playground: true
 });
