@@ -270,10 +270,7 @@ export async function getUsedTagsHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student || res.locals.user instanceof Pupil) {
-            const entityManager = getManager();
-
             const tags = await getExpertiseTags({relations: ["expertData"]});
-
             const apiResponse: ApiGetExpertiseTag[] = [];
 
             for (const tag of tags) {
