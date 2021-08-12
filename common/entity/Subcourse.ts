@@ -14,7 +14,7 @@ import { Student } from "./Student";
 import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
-import * as moment from "moment";
+import moment from "moment";
 
 @Entity()
 export class Subcourse {

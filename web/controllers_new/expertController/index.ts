@@ -12,6 +12,9 @@ import ContactExpertEvent from "../../../common/transactionlog/types/ContactExpe
 import {ExpertiseTag} from "../../../common/entity/ExpertiseTag";
 import {ExpertAllowedIndication} from "../../../common/jufo/expertAllowedIndication";
 import {getExpertById, getExpertByStudent, GetExpertiseTagEntities, getExpertiseTags, getExperts, saveExpertData, saveExpertiseTags} from "../../datastore/dataModel";
+import {checkPostContactExpertValidity, checkValidity} from "./handler";
+import {isInstance} from "class-validator";
+import {postContactExpert} from "./internal";
 
 const logger = getLogger();
 
@@ -45,65 +48,15 @@ const logger = getLogger();
 export async function postContactExpertHandler(req: Request, res: Response) {
     let status = 200;
     try {
-        if ((res.locals.user instanceof Student || res.locals.user instanceof Pupil)
-            && (typeof req.params.id === 'string' && Number.isInteger(+req.params.id))
-            && typeof req.body.emailText == 'string') {
-
-            if (req.body.emailText.length === 0) {
-                logger.warn(`Empty email text specified when trying to send mentor-contact-mail!`);
-                status = 400;
-            }
-
-            if (req.body.subject?.length > 255) {
-                logger.warn('E-Mail subject has more than 255 characters.');
-                status = 400;
-            }
-
-            if (status < 300) {
-                status = await postContactExpert(req.params.id, res.locals.user, req.body);
-            }
-        } else {
-            status = 400;
-            logger.warn("Invalid request for POST /expert/:id/contact");
-            logger.debug(req.body);
-        }
+        checkPostContactExpertValidity(req, res);
+        status = await postContactExpert(req.params.id, res.locals.user, req.body);
     } catch (e) {
-        logger.error("POST /expert/:id/contact failed with ", e.message);
-        logger.debug(req, e);
-        status = 500;
+        logger.error(e.message);
+        status = e.status || 500;
     }
     res.status(status).end();
 }
 
-async function postContactExpert(id: string, user: Pupil | Student, apiContactExpert: ApiContactExpert): Promise<number> {
-    const transactionLog = getTransactionLog();
-
-    const expert = await getExpertById({id: Number(id)});
-    if (expert === undefined) {
-        logger.warn(`Expert with ID ${id} does not exist.`);
-        return 404;
-    }
-
-    const receiverAddress = expert.contactEmail;
-    const receiverName = `${expert.student.firstname} ${expert.student.lastname}`;
-    const replyToAddress = user.email;
-    const replyToName = `${user.firstname} ${user.lastname}`;
-
-    await mailjet.sendPure(
-        apiContactExpert.subject ?? "",
-        apiContactExpert.emailText,
-        DEFAULTSENDERS.noreply,
-        receiverAddress,
-        replyToName,
-        receiverName,
-        replyToAddress,
-        replyToName
-    );
-
-    await transactionLog.log(new ContactExpertEvent(user, apiContactExpert));
-
-    return 200;
-}
 
 /**
  * @api {GET} /expert getExperts
@@ -139,7 +92,7 @@ export async function getExpertsHandler(req: Request, res: Response) {
             for (const expert of experts) {
                 const expertiseTags = expert.expertiseTags?.map(t => (t.name)) || [];
                 const projectFields = await expert.student.getProjectFields().then((res) => res.map(f => f.name));
-                let apiExpert = new ApiGetExpert(expert.id, expert.student.firstname,expert.student.lastname,expert.description, expertiseTags, projectFields);
+                let apiExpert = new ApiGetExpert(expert.id, expert.student.firstname, expert.student.lastname, expert.description, expertiseTags, projectFields);
                 apiResponse.push(apiExpert);
             }
 
@@ -184,12 +137,7 @@ export async function putExpertHandler(req: Request, res: Response) {
     let status = 204;
 
     try {
-        if (res.locals.user instanceof Student
-            && req.params.id != undefined
-            && (req.body.contactEmail === undefined || typeof req.body.contactEmail === "string")
-            && (req.body.description === undefined || typeof req.body.description === "string")
-            && req.body.expertiseTags instanceof Array
-            && typeof req.body.active === "boolean") {
+        if (checkValidity(req, res)) {
 
             for (let i = 0; i < req.body.expertiseTags.length; i++) {
                 if (typeof req.body.expertiseTags[i] !== "string") {
@@ -235,7 +183,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
 
     try {
         await saveExpertiseTags(expertiseTags);
-        await saveExpertData(expertData)
+        await saveExpertData(expertData);
     } catch (e) {
         logger.error("Failed to save expert data with: ", e.message);
         return 500;

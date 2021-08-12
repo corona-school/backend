@@ -1,9 +1,9 @@
-import * as express from "express";
-import * as http from "http";
-import * as bodyParser from "body-parser";
-import * as hpp from "hpp";
-import * as helmet from "helmet";
-import * as cors from "cors";
+import express from "express";
+import http from "http";
+import bodyParser from "body-parser";
+import hpp from "hpp";
+import helmet from "helmet";
+import cors from "cors";
 import * as userController from "./controllers/userController";
 import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
@@ -20,14 +20,16 @@ import { configure, connectLogger, getLogger } from "log4js";
 import { createConnection, getConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
-import * as favicon from "express-favicon";
+import favicon from "express-favicon";
 import { allStateCooperationSubdomains } from "../common/entity/State";
-import * as multer from "multer";
-import * as moment from "moment-timezone";
+import multer from "multer";
+import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import * as rateLimit from "express-rate-limit";
+import { apolloServer } from "./../graphql";
+import rateLimit from "express-rate-limit";
+import * as notificationController from "./controllers/notificationController";
 
 // Logger setup
 try {
@@ -77,7 +79,9 @@ createConnection().then(setupPDFGenerationEnvironment)
         configureRegistrationAPI();
         configureMentoringAPI();
         configureExpertAPI();
+        configureApolloServer();
         configurePupilInterestConfirmationAPI();
+        configureNotificationAPI();
         const server = await deployServer();
         configureGracefulShutdown(server);
 
@@ -91,7 +95,7 @@ createConnection().then(setupPDFGenerationEnvironment)
                 "partnerschule",
                 "drehtuer"
             ];
-            if (process.env.NODE_ENV == "dev") {
+            if (process.env.ENV == "dev") {
                 origins = [
                     "http://localhost:3000",
                     ...allowedSubdomains.map(d => `http://${d}.localhost:3000`),
@@ -339,8 +343,22 @@ createConnection().then(setupPDFGenerationEnvironment)
             app.use("/api/interest-confirmation", router);
         }
 
+        function configureNotificationAPI() {
+            const router = express.Router();
+
+            // DEV only:
+            router.post("/trigger-action", notificationController.triggerActionHandler);
+            router.post("/check-reminders", notificationController.checkReminders);
+
+            app.use("/api/notification", authCheckFactory(), router);
+        }
+
+        function configureApolloServer() {
+            apolloServer.applyMiddleware({ app, path: "/apollo" });
+        }
+
         async function deployServer() {
-            const isDev = process.env.NODE_ENV === "dev";
+            const isDev = process.env.ENV === "dev";
             const port = process.env.PORT || 5000;
             if (isDev) {
                 await setupDevDB();

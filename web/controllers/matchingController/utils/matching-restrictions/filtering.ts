@@ -1,4 +1,4 @@
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { Pupil } from "../../../../../common/entity/Pupil";
 import { Student } from "../../../../../common/entity/Student";
 import { ApiMatchingRestriction, ApiTuteeMatchingRestriction, ApiTutorMatchingRestriction } from "../../types/matching-restrictions";

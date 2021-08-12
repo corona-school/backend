@@ -1,0 +1,12 @@
+export { AggregateProject_coaching_screeningArgs } from "./AggregateProject_coaching_screeningArgs";
+export { CreateManyProject_coaching_screeningArgs } from "./CreateManyProject_coaching_screeningArgs";
+export { CreateProject_coaching_screeningArgs } from "./CreateProject_coaching_screeningArgs";
+export { DeleteManyProject_coaching_screeningArgs } from "./DeleteManyProject_coaching_screeningArgs";
+export { DeleteProject_coaching_screeningArgs } from "./DeleteProject_coaching_screeningArgs";
+export { FindFirstProject_coaching_screeningArgs } from "./FindFirstProject_coaching_screeningArgs";
+export { FindManyProject_coaching_screeningArgs } from "./FindManyProject_coaching_screeningArgs";
+export { FindUniqueProject_coaching_screeningArgs } from "./FindUniqueProject_coaching_screeningArgs";
+export { GroupByProject_coaching_screeningArgs } from "./GroupByProject_coaching_screeningArgs";
+export { UpdateManyProject_coaching_screeningArgs } from "./UpdateManyProject_coaching_screeningArgs";
+export { UpdateProject_coaching_screeningArgs } from "./UpdateProject_coaching_screeningArgs";
+export { UpsertProject_coaching_screeningArgs } from "./UpsertProject_coaching_screeningArgs";

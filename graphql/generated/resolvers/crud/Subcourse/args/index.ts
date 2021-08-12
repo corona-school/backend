@@ -1,0 +1,12 @@
+export { AggregateSubcourseArgs } from "./AggregateSubcourseArgs";
+export { CreateManySubcourseArgs } from "./CreateManySubcourseArgs";
+export { CreateSubcourseArgs } from "./CreateSubcourseArgs";
+export { DeleteManySubcourseArgs } from "./DeleteManySubcourseArgs";
+export { DeleteSubcourseArgs } from "./DeleteSubcourseArgs";
+export { FindFirstSubcourseArgs } from "./FindFirstSubcourseArgs";
+export { FindManySubcourseArgs } from "./FindManySubcourseArgs";
+export { FindUniqueSubcourseArgs } from "./FindUniqueSubcourseArgs";
+export { GroupBySubcourseArgs } from "./GroupBySubcourseArgs";
+export { UpdateManySubcourseArgs } from "./UpdateManySubcourseArgs";
+export { UpdateSubcourseArgs } from "./UpdateSubcourseArgs";
+export { UpsertSubcourseArgs } from "./UpsertSubcourseArgs";

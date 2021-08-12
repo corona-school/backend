@@ -37,12 +37,12 @@ import {
 } from '../../../common/util/bbb';
 import { isJoinableCourse } from './utils';
 import {BBBMeeting} from "../../../common/entity/BBBMeeting";
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import { putFile } from '../../../common/file-bucket';
 import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
 import { accessURLForKey } from '../../../common/file-bucket/s3';
-import * as mime from 'mime-types';
+import mime from 'mime-types';
 import { v4 as uuidv4 } from "uuid";
 import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
 import ParticipantJoinedCourseEvent from '../../../common/transactionlog/types/ParticipantJoinedCourseEvent';
@@ -57,6 +57,7 @@ import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity
 import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { addCleanupAction } from '../../../common/util/cleanup';
+import { getFullName } from '../../../common/user';
 
 const logger = getLogger();
 
@@ -723,6 +724,10 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             }
             if (authorizedStudent) {
                 subcourse.participantList = [];
+                if (course.instructors.some(i => i.id === student.id)) {
+                    // If the user is an instructor, attach the amount of people on the waiting list
+                    subcourse.waitingListCount = course.subcourses[i].waitingList.length;
+                }
                 for (let j = 0; j < course.subcourses[i].participants.length; j++) {
                     subcourse.participantList.push({
                         uuid: course.subcourses[i].participants[j].wix_id,
@@ -1249,8 +1254,9 @@ async function postLecture(student: Student, courseId: number, subcourseId: numb
         return 400;
     }
 
-    // You can only create lectures that start at least in 2 days (but don't respect the time while doing this check) – but this restriction does not apply if the course is already submitted
-    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment())) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days")
+    // If the course doesn't have the CREATED state anymore, any added lectures must be at least five days in the future. Otherwise, 7 days.
+    if (!Number.isInteger(apiLecture.start) || (course.courseState !== CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(5, "days")
+        .startOf("day"))) || (course.courseState === CourseState.CREATED && moment.unix(apiLecture.start).isBefore(moment().add(7, "days")
         .startOf("day")))) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
@@ -1819,7 +1825,7 @@ async function putLecture(student: Student, courseId: number, subcourseId: numbe
     }
     lecture.instructor = instructor;
 
-    // the 2 day restriction does not apply when editing lectures -> the lecture date must only be in the future
+    // the 5 day restriction does not apply when editing lectures -> the lecture date must only be in the future
     if (!Number.isInteger(apiLecture.start) || moment.unix(apiLecture.start).isBefore(moment())) {
         logger.warn(`Field 'start' contains an illegal value: ${apiLecture.start}`);
         logger.debug(apiLecture);
@@ -3005,7 +3011,7 @@ export async function testJoinCourseMeetingHandler(req: Request, res: Response) 
         // start the meeting
         await startBBBMeeting(meeting);
 
-        const userName = user?.fullName() ?? uniqueNamesGenerator({
+        const userName = user ? getFullName(user) : uniqueNamesGenerator({
             dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
             separator: " ",
             length: 2,
@@ -3621,7 +3627,7 @@ async function joinCourseMeetingExternalGuest(token: string): Promise<number | A
     }
 
     //create the join url
-    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+    const joinURL = getMeetingUrl(meeting.meetingID, getFullName(guest), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
 
     return {
         url: joinURL
@@ -3742,7 +3748,7 @@ async function issueCourseCertificate(student: Student, courseId: number, subcou
             const certificateBuffer = await getCourseCertificate(
                 student.wix_id,
                 participant.wix_id,
-                participant.fullName(),
+                getFullName(participant),
                 course.name,
                 subcourse.lectures,
                 courseDuration

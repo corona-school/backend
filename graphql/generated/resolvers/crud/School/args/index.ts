@@ -1,0 +1,12 @@
+export { AggregateSchoolArgs } from "./AggregateSchoolArgs";
+export { CreateManySchoolArgs } from "./CreateManySchoolArgs";
+export { CreateSchoolArgs } from "./CreateSchoolArgs";
+export { DeleteManySchoolArgs } from "./DeleteManySchoolArgs";
+export { DeleteSchoolArgs } from "./DeleteSchoolArgs";
+export { FindFirstSchoolArgs } from "./FindFirstSchoolArgs";
+export { FindManySchoolArgs } from "./FindManySchoolArgs";
+export { FindUniqueSchoolArgs } from "./FindUniqueSchoolArgs";
+export { GroupBySchoolArgs } from "./GroupBySchoolArgs";
+export { UpdateManySchoolArgs } from "./UpdateManySchoolArgs";
+export { UpdateSchoolArgs } from "./UpdateSchoolArgs";
+export { UpsertSchoolArgs } from "./UpsertSchoolArgs";

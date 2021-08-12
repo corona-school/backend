@@ -1,0 +1,43 @@
+import * as TypeGraphQL from "type-graphql";
+
+export enum PupilScalarFieldEnum {
+  id = "id",
+  createdAt = "createdAt",
+  updatedAt = "updatedAt",
+  firstname = "firstname",
+  lastname = "lastname",
+  active = "active",
+  email = "email",
+  verification = "verification",
+  verifiedAt = "verifiedAt",
+  authToken = "authToken",
+  authTokenUsed = "authTokenUsed",
+  authTokenSent = "authTokenSent",
+  wix_id = "wix_id",
+  wix_creation_date = "wix_creation_date",
+  state = "state",
+  schooltype = "schooltype",
+  msg = "msg",
+  grade = "grade",
+  newsletter = "newsletter",
+  isPupil = "isPupil",
+  subjects = "subjects",
+  openMatchRequestCount = "openMatchRequestCount",
+  isParticipant = "isParticipant",
+  isProjectCoachee = "isProjectCoachee",
+  projectFields = "projectFields",
+  isJufoParticipant = "isJufoParticipant",
+  openProjectMatchRequestCount = "openProjectMatchRequestCount",
+  projectMemberCount = "projectMemberCount",
+  languages = "languages",
+  learningGermanSince = "learningGermanSince",
+  matchingPriority = "matchingPriority",
+  lastUpdatedSettingsViaBlocker = "lastUpdatedSettingsViaBlocker",
+  teacherEmailAddress = "teacherEmailAddress",
+  registrationSource = "registrationSource",
+  schoolId = "schoolId"
+}
+TypeGraphQL.registerEnumType(PupilScalarFieldEnum, {
+  name: "PupilScalarFieldEnum",
+  description: undefined,
+});

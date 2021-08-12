@@ -1,0 +1,12 @@
+export { AggregateExpertise_tagArgs } from "./AggregateExpertise_tagArgs";
+export { CreateExpertise_tagArgs } from "./CreateExpertise_tagArgs";
+export { CreateManyExpertise_tagArgs } from "./CreateManyExpertise_tagArgs";
+export { DeleteExpertise_tagArgs } from "./DeleteExpertise_tagArgs";
+export { DeleteManyExpertise_tagArgs } from "./DeleteManyExpertise_tagArgs";
+export { FindFirstExpertise_tagArgs } from "./FindFirstExpertise_tagArgs";
+export { FindManyExpertise_tagArgs } from "./FindManyExpertise_tagArgs";
+export { FindUniqueExpertise_tagArgs } from "./FindUniqueExpertise_tagArgs";
+export { GroupByExpertise_tagArgs } from "./GroupByExpertise_tagArgs";
+export { UpdateExpertise_tagArgs } from "./UpdateExpertise_tagArgs";
+export { UpdateManyExpertise_tagArgs } from "./UpdateManyExpertise_tagArgs";
+export { UpsertExpertise_tagArgs } from "./UpsertExpertise_tagArgs";

@@ -22,7 +22,8 @@
     "environments": {
         "review": {
             "env": {
-                "NODE_ENV": "dev",
+                "NODE_ENV": "production",
+                "ENV": "dev",
                 "MAILJET_LIVE": "0"
             },
             "addons": [

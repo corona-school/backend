@@ -1,0 +1,12 @@
+export { AggregateParticipation_certificateArgs } from "./AggregateParticipation_certificateArgs";
+export { CreateManyParticipation_certificateArgs } from "./CreateManyParticipation_certificateArgs";
+export { CreateParticipation_certificateArgs } from "./CreateParticipation_certificateArgs";
+export { DeleteManyParticipation_certificateArgs } from "./DeleteManyParticipation_certificateArgs";
+export { DeleteParticipation_certificateArgs } from "./DeleteParticipation_certificateArgs";
+export { FindFirstParticipation_certificateArgs } from "./FindFirstParticipation_certificateArgs";
+export { FindManyParticipation_certificateArgs } from "./FindManyParticipation_certificateArgs";
+export { FindUniqueParticipation_certificateArgs } from "./FindUniqueParticipation_certificateArgs";
+export { GroupByParticipation_certificateArgs } from "./GroupByParticipation_certificateArgs";
+export { UpdateManyParticipation_certificateArgs } from "./UpdateManyParticipation_certificateArgs";
+export { UpdateParticipation_certificateArgs } from "./UpdateParticipation_certificateArgs";
+export { UpsertParticipation_certificateArgs } from "./UpsertParticipation_certificateArgs";

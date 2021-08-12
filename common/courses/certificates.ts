@@ -1,7 +1,7 @@
-import * as EJS from "ejs";
+import EJS from "ejs";
 import { readFileSync } from "fs";
 import { resolve as resolvePath } from "path";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { generatePDFFromHTMLString } from 'html-pppdf';
 
 const TEMPLATE_FOLDER = "./assets/courses/certificate";
@@ -36,7 +36,7 @@ export async function getCourseCertificate(studentUUID: string, pupilUUID: strin
         moment: moment
     });
 
-    const includePaths = process.env.NODE_ENV === 'dev' ? [] : [resolvePath(TEMPLATE_ASSETS_FOLDER)]; //only include assets in production
+    const includePaths = process.env.ENV === 'dev' ? [] : [resolvePath(TEMPLATE_ASSETS_FOLDER)]; //only include assets in production
 
     const buffer = await generatePDFFromHTMLString(htmlString, {
         includePaths
