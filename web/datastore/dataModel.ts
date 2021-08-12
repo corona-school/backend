@@ -6,7 +6,7 @@ import {ExpertiseTag} from "../../common/entity/ExpertiseTag";
 const entityManager = getManager();
 
 
-export async function getExperts(){
+export async function getExperts() {
     return entityManager
         .createQueryBuilder(ExpertData, "e")
         .leftJoinAndSelect("e.student", "s")
@@ -16,7 +16,7 @@ export async function getExperts(){
 }
 
 
-export async function getExpertByStudent(condition: { student: Student }){
+export async function getExpertByStudent(condition: { student: Student }) {
     let expertData = await entityManager.findOne(ExpertData, condition);
 
     if (!expertData) {
@@ -24,22 +24,22 @@ export async function getExpertByStudent(condition: { student: Student }){
         expertData.student = condition.student;
     }
 
-    return expertData
+    return expertData;
 }
 
-export async function getExpertById(condition: {id: number}){
-    return entityManager.findOne(ExpertData, condition );
+export async function getExpertById(condition: {id: number}) {
+    return entityManager.findOne(ExpertData, condition);
 }
 
-export async function saveExpertData(expertData: ExpertData){
+export async function saveExpertData(expertData: ExpertData) {
     return entityManager.save(ExpertData, expertData);
 }
 
-export async function saveExpertiseTags(expertiseTags: ExpertiseTag[]){
+export async function saveExpertiseTags(expertiseTags: ExpertiseTag[]) {
     return entityManager.save(ExpertiseTag, expertiseTags);
 }
 
-export async function getExpertiseTags(options:{relations:string[]}){
+export async function getExpertiseTags(options:{relations:string[]}) {
     return entityManager.find(ExpertiseTag, options);
 }
 
