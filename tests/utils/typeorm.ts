@@ -222,7 +222,7 @@ export async function createTestingConnections(
                         (path) => path === entityMetadata.schemaPath
                     );
                     if (!existSchemaPath) {
-                        schemaPaths.push(entityMetadata. schemaPath!);
+                        schemaPaths.push(entityMetadata.schemaPath!);
                     }
                 });
 
