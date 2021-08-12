@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {getLogger} from "log4js";
 import {ExpertData} from "../../../common/entity/ExpertData";
-import { getExpertiseTags, getExperts, saveExpertData, saveExpertiseTags} from "../../datastore/dataModel";
+import { getExpertiseTags, getExperts} from "../../datastore/dataModel";
 import {checkgetExpertsHandlerValidity, checkGetUsedTagsHandlerValidity, checkPostContactExpertValidity, checkPutExpertsHandlerValidity} from "./handler";
 import {postContactExpert, putExpert, transformAPIExpertData, transformAPIExpertiseTags} from "./internal";
 import {ServiceError} from "../../custom_error_handlers/ServiceError";
@@ -40,8 +40,10 @@ export async function postContactExpertHandler(req: Request, res: Response) {
         checkPostContactExpertValidity(req, res);
         status = await postContactExpert(req.params.id, res.locals.user, req.body);
     } catch (e) {
-        logger.error(e.message);
-        status = e.status || 500;
+        status = 500;
+        if (e instanceof ServiceError) {
+            status = e.getRESTStatusCode();
+        }
     }
     res.status(status).end();
 }
