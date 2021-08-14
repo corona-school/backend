@@ -34,9 +34,7 @@ function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQuery
 
     context.limits[ info.path.key ] = accumulatedLimit;
 
-    console.log("Complexity Limit Path", info.path, "accumulatedLimit", accumulatedLimit);
-
-    if (accumulatedLimit >= ACCUMULATED_LIMIT) {
+    if (accumulatedLimit > ACCUMULATED_LIMIT) {
         const limitInfo = Object.entries(context.limits)
             .map(([key, limit]) => `${key}:${limit}`)
             .join(", ");
