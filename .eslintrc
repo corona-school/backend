@@ -5,7 +5,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "lernfair-lint"
     ],
     "rules": {
         "block-scoped-var": "error",
