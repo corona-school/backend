@@ -27,8 +27,16 @@ module.exports = {
 
                 if(!authorizationCheck) {
                     context.report({ 
-                        node: methodNode,
-                        message: `@Authorized missing for Method ${methodNode.key.name}`,
+                        node: methodNode.key,
+                        message: `@Authorized missing for Method ${methodNode.key.name} in a Resolver`,
+                        suggest: [
+                            {
+                                desc: `Add @Authorized annotation`,
+                                fix(fixer) {
+                                    return fixer.insertTextBefore(methodNode, "@Authorized(Role.ADMIN)\n")
+                                }
+                            }
+                        ],
                     });
                 }
             }
