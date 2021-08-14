@@ -1,5 +1,5 @@
 module.exports = { 
     rules: {
-        "lernfair-graphql-authorized": require("./graphql-authorized"),
+        "graphql-authorized": require("./graphql-authorized"),
     }
 };
