@@ -1,5 +1,5 @@
 {
-  "name": "lernfair-linter",
+  "name": "eslint-plugin-lernfair-linter",
   "version": "1.0.0",
   "description": "Custom ESLint rules for the Lernfair Backend",
   "main": "index.js",
