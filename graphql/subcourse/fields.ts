@@ -7,7 +7,7 @@ import { LimitEstimated } from "../complexity";
 @Resolver(of => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(returns => Course)
-    // @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN)
     @LimitEstimated(1)
     async course(@Root() subcourse: Subcourse) {
         return await prisma.course.findUnique({
