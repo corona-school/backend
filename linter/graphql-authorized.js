@@ -14,8 +14,6 @@ module.exports = {
         return {
             "ClassDeclaration": function(classNode) {
                 inResolver = classNode.decorators?.some(it => it.expression.callee.name === "Resolver");
-                if(inResolver)
-                    console.log(classNode.body.body);
             },
             "ClassDeclaration:exit": function(classNode) {
                 inResolver = false;
@@ -29,7 +27,7 @@ module.exports = {
 
                 if(!authorizationCheck) {
                     context.report({ 
-                        node,
+                        node: methodNode,
                         message: `@Authorized missing for Method ${methodNode.key.name}`,
                     });
                 }
