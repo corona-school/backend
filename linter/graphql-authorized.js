@@ -13,23 +13,26 @@ module.exports = {
 
         return {
             "ClassDeclaration": function(classNode) {
-                const isResolver = classNode.decorators?.some(it => it.expression.expression.escapedText === "Resolver");
-                console.log("Visiting Class", classNode, isResolver);
-                if (isResolver) {
-                    inResolver = true;
-                }
+                inResolver = classNode.decorators?.some(it => it.expression.callee.name === "Resolver");
+                if(inResolver)
+                    console.log(classNode.body.body);
             },
             "ClassDeclaration:exit": function(classNode) {
                 inResolver = false;
             },
-            "MethodDeclaration": function(methodNode) {
+            "MethodDefinition": function(methodNode) {
                 if (!inResolver) {
                     return;
                 }
 
-                const authorizationCheck = methodNode.decorators?.some(it => it.expression.expression.escapedText === "Authorized");
+                const authorizationCheck = methodNode.decorators?.some(it => it.expression.callee.name === "Authorized");
 
-                console.log("Method in Resolver", methodNode, authorizationCheck);
+                if(!authorizationCheck) {
+                    context.report({ 
+                        node,
+                        message: `@Authorized missing for Method ${methodNode.key.name}`,
+                    });
+                }
             }
         };
     }
