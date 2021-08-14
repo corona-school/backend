@@ -1,21 +1,19 @@
 module.exports = {
     meta: {
         type: "problem",
-
         docs: {
-            description: "",
+            description: "Every method in a @Resolver must be annotated with @Authorized",
             category: "Lernfair Rule",
             recommended: true,
             url: "https://github.com/corona-school/backend/tree/master/linter"
-        },
-        fixable: "code"
+        }
     },
     create(context) {
         let inResolver = false;
 
         return {
             "ClassDeclaration": function(classNode) {
-                const isResolver = classNode.decorators.some(it => it.expression.expression.escapedText === "Resolver");
+                const isResolver = classNode.decorators?.some(it => it.expression.expression.escapedText === "Resolver");
                 console.log("Visiting Class", classNode, isResolver);
                 if (isResolver) {
                     inResolver = true;
@@ -29,7 +27,7 @@ module.exports = {
                     return;
                 }
 
-                const authorizationCheck = methodNode.decorators.some(it => it.expression.expression.escapedText === "Authorized");
+                const authorizationCheck = methodNode.decorators?.some(it => it.expression.expression.escapedText === "Authorized");
 
                 console.log("Method in Resolver", methodNode, authorizationCheck);
             }
