@@ -1,0 +1,12 @@
+export { AggregateJufo_verification_transmissionArgs } from "./AggregateJufo_verification_transmissionArgs";
+export { CreateJufo_verification_transmissionArgs } from "./CreateJufo_verification_transmissionArgs";
+export { CreateManyJufo_verification_transmissionArgs } from "./CreateManyJufo_verification_transmissionArgs";
+export { DeleteJufo_verification_transmissionArgs } from "./DeleteJufo_verification_transmissionArgs";
+export { DeleteManyJufo_verification_transmissionArgs } from "./DeleteManyJufo_verification_transmissionArgs";
+export { FindFirstJufo_verification_transmissionArgs } from "./FindFirstJufo_verification_transmissionArgs";
+export { FindManyJufo_verification_transmissionArgs } from "./FindManyJufo_verification_transmissionArgs";
+export { FindUniqueJufo_verification_transmissionArgs } from "./FindUniqueJufo_verification_transmissionArgs";
+export { GroupByJufo_verification_transmissionArgs } from "./GroupByJufo_verification_transmissionArgs";
+export { UpdateJufo_verification_transmissionArgs } from "./UpdateJufo_verification_transmissionArgs";
+export { UpdateManyJufo_verification_transmissionArgs } from "./UpdateManyJufo_verification_transmissionArgs";
+export { UpsertJufo_verification_transmissionArgs } from "./UpsertJufo_verification_transmissionArgs";

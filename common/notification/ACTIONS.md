@@ -171,6 +171,18 @@ A future coach was accepted during screening.
 
 A coach was rejected during screening.
 
+### user_authenticate
+
+*description*
+
+Triggered when the user tries to login or support triggers this Notification.
+The user should be able to log in with the provided `secretToken`.
+
+*context*
+
+```ts
+{ secretToken: string; }
+```
 
 ## Courses
 
@@ -293,7 +305,6 @@ The instructor created a new subcourse.
     firstLectureTime: string /* HH:MM */
 }
 ```
-
 
 ### instructor_course_cancelled
 

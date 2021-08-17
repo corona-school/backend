@@ -1,7 +1,7 @@
 import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from "../index";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
@@ -120,6 +120,12 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
     });
 
     await sendTemplateMail(mail, participant.email);
+
+    await Notification.actionTaken(participant, "participant_subcourse_joined", {
+        course,
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm")
+    });
 }
 
 export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {

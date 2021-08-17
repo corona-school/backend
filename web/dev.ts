@@ -167,6 +167,61 @@ export async function setupDevDB() {
     p.openMatchRequestCount = 1;
     pupils.push(p);
 
+    const p8 = p = new Pupil();
+    p.firstname = "Max8";
+    p.lastname = "Musterschüler8";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "max8@gamil.com";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP8");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526371";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
+    const p9 = p = new Pupil();
+    p.firstname = "Max9";
+    p.lastname = "Musterschüler9";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "max9@gamil.com";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP9");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526372";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
+    const p10 = p = new Pupil();
+    p.firstname = "Max10";
+    p.lastname = "Musterschüler10";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "max10@gamil.com";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP10");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526373";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
+
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
         console.log("Inserted Dev Pupil " + i);
@@ -881,7 +936,7 @@ export async function setupDevDB() {
     subcourse7.instructors = [s1, s2];
     subcourse7.maxParticipants = 4;
     subcourse7.published = true;
-    subcourse7.participants = pupils;
+    subcourse7.participants = pupils.slice(0, 5);
 
     subcourses.push(subcourse7);
 
@@ -893,7 +948,7 @@ export async function setupDevDB() {
     subcourse8.instructors = [s1];
     subcourse8.maxParticipants = 10;
     subcourse8.published = true;
-    subcourse8.participants = pupils;
+    subcourse8.participants = pupils.slice(0, 5);
 
     subcourses.push(subcourse8);
 
@@ -905,7 +960,7 @@ export async function setupDevDB() {
     subcourse9.instructors = [s1];
     subcourse9.maxParticipants = 7;
     subcourse9.published = true;
-    subcourse9.participants = pupils;
+    subcourse9.participants = pupils.slice(0, 7);
 
     subcourses.push(subcourse9);
 
@@ -1295,7 +1350,6 @@ export async function setupDevDB() {
     await prisma.notification.createMany({
         data: [
             {
-                id: 1,
                 mailjetTemplateId: 3026265, /* notification_system_test */
                 active: true,
                 description: 'TEST: Instant notification on registration',
@@ -1305,7 +1359,6 @@ export async function setupDevDB() {
                 onActions: ["test_start"]
             },
             {
-                id: 2,
                 active: false,
                 description: 'TEST: Disabled notification - If you see this, something is wrong',
                 recipient: NotificationRecipient.USER,
@@ -1314,7 +1367,6 @@ export async function setupDevDB() {
                 onActions: ["test_start"]
             },
             {
-                id: 3,
                 mailjetTemplateId: 3026840, /* notification_system_test_reminder */
                 active: true,
                 description: 'TEST: One Minute delayed notification on registration',
@@ -1325,7 +1377,6 @@ export async function setupDevDB() {
                 delay: 60_000 /*ms*/,
             },
             {
-                id: 4,
                 active: false,
                 description: 'TEST: Delayed disabled notification - If you see this, something is wrong',
                 recipient: NotificationRecipient.USER,
@@ -1335,7 +1386,6 @@ export async function setupDevDB() {
                 delay: 60_000 /*ms*/,
             },
             {
-                id: 5,
                 mailjetTemplateId: 3026840, /* notification_system_test_reminder */
                 active: true,
                 description: 'TEST: One Minute delayed notification on registration, repeated',

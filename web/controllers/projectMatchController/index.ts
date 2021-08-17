@@ -50,7 +50,7 @@ export async function deleteHandler(req: Request, res: Response) {
         let b = req.body;
         if (req.params.id != undefined &&
             req.params.uuid != undefined &&
-            res.locals.user instanceof Person &&
+            (res.locals.user instanceof Student || res.locals.user instanceof Pupil) &&
             typeof b.reason == "number" &&
             Number.isInteger(b.reason) &&
             b.reason >= -1 &&

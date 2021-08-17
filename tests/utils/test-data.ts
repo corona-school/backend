@@ -1,4 +1,4 @@
-import * as faker from "faker";
+import faker from "faker";
 import { State } from "../../common/entity/State";
 import { Student, Subject, TeacherModule } from "../../common/entity/Student";
 import { Pupil } from "../../common/entity/Pupil";

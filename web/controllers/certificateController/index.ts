@@ -7,15 +7,15 @@ import { getManager } from 'typeorm';
 import { Match } from '../../../common/entity/Match';
 import { readFileSync, existsSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';
-import * as path from 'path';
-import * as moment from "moment";
+import path from 'path';
+import moment from "moment";
 import CertificateRequestEvent from '../../../common/transactionlog/types/CertificateRequestEvent';
 import { ParticipationCertificate } from '../../../common/entity/ParticipationCertificate';
 import { randomBytes } from "crypto";
 import { parseDomain, ParseResultType } from "parse-domain";
 import { assert } from 'console';
 import { Person } from '../../../common/entity/Person';
-import * as EJS from "ejs";
+import EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 import { createAutoLoginLink } from '../utils';
 import * as Notification from "../../../common/notification";
@@ -175,7 +175,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
             lang = DefaultLanguage;
         }
 
-        if (!LANGUAGES.includes(lang)) {
+        if (!LANGUAGES.includes(lang as Language)) {
             return res.status(400).send("Language not known");
         }
 
@@ -194,7 +194,11 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
             return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
         }
 
-        const pdf = await createPDFBinary(certificate, getCertificateLink(req, certificate, lang), lang);
+        const pdf = await createPDFBinary(
+            certificate,
+            getCertificateLink(req, certificate, lang as Language),
+            lang as Language
+        );
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -241,7 +245,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             lang = DefaultLanguage;
         }
 
-        if (!LANGUAGES.includes(lang)) {
+        if (!LANGUAGES.includes(lang as Language)) {
             return res.status(400).send("Language not known");
         }
 
@@ -256,7 +260,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
         }
 
 
-        return res.send(await viewParticipationCertificate(certificate, lang));
+        return res.send(await viewParticipationCertificate(certificate, lang as Language));
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");

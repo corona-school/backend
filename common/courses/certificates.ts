@@ -1,7 +1,7 @@
-import * as EJS from "ejs";
+import EJS from "ejs";
 import { readFileSync } from "fs";
 import { resolve as resolvePath } from "path";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { generatePDFFromHTMLString } from 'html-pppdf';
 
 const TEMPLATE_FOLDER = "./assets/courses/certificate";

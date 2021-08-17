@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import _ from "lodash";
 import {shouldRemindAtDate} from "../../../../../jobs/periodic/screening-reminder/timecontrol";
 import {assert} from "chai";
 
