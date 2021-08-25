@@ -1082,7 +1082,7 @@ export async function setupDevDB() {
     const lecture13: Lecture = new Lecture();
     lecture13.subcourse = subcourse11;
     lecture13.duration = 60;
-    lecture13.start = new Date(year, month, date + 12, 20, 0, 0, 0);
+    lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
 
     lectures.push(
