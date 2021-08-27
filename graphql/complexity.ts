@@ -33,7 +33,7 @@ function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQuery
        Thus this function will be executed once for the pupil, and the limit (specified by TAKE) will be stored in the context.limits
        In the subcourse, the path is { key: "subcourses", prev: { key: 0, prev: { key: "pupils"}}}, thus with .prev.prev one can access the limit of the previous association.
        If the query retrieves 100 pupils, and 10 subcourses for each pupil, by multiplying we get the maximum number of pupils 100 * 10. On that we enforce the limit
-       NOTE: Keys of different paths could collide in a query, however we hope that nobody writes such query :) 
+       NOTE: Keys of different paths could collide in a query, however we hope that nobody writes such query :)
     */
     let accumulatedLimit = (info.path?.prev?.prev && context.limits[ info.path.prev.prev.key ]) ?? 1;
     accumulatedLimit *= cardinality;
