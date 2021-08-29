@@ -1017,54 +1017,46 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                     .getRepository(Course)
                     .createQueryBuilder("course")
                     .leftJoinAndSelect("course.instructors", "instructors")
+                    .where("instructors.id = :id", { id: person.id})
                     .getMany();
 
-                courses.forEach(async (course: Course) => {
-                    if (course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
+                console.log("CRS: ", courses);
+
+                entityManager.transaction(async em => {
+                    for (const course of courses) {
+                        if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
+                            return;
+                        }
+
                         if (course.instructors.length > 1) {
                             // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
                             course.instructors = course.instructors.filter(s => s.id !== person.id);
-                            entityManager.transaction(async em => {
-                                await em.save(Course, course);
-                                logger.info("Removed instructor " + person.firstname + " " + person.lastname + " from course " + course.name + ".");
-                            });
+                            await em.save(Course, course);
+                            logger.info("Removed instructor " + person.firstname + " " + person.lastname + " from course " + course.name + ".");
                         } else {
-                        // Our person is the only instructor in the course. Cancel it.
+                            // Our person is the only instructor in the course. Cancel it.
 
-                            // We have a non-mitigated race condition here: Someone could post a new subcourse into the course, while the course gets cancelled
                             try {
-                            // Run in transaction, so we may not have a mixed state, where some subcourses are cancelled, but others are not
-                                await entityManager.transaction(async em => {
-                                    if (course.hasOwnProperty("subcourses")) {
-                                        for (let i = 0; i < course.subcourses.length; i++) {
-                                            if (!course.subcourses[i].cancelled) {
-                                                course.subcourses[i].cancelled = true;
-                                                await em.save(Subcourse, course.subcourses[i]);
-                                                sendSubcourseCancelNotifications(course, course.subcourses[i]);
-                                            }
-                                        }
+                                for (const subcourse of course.subcourses) {
+                                    if (!subcourse.cancelled) {
+                                        subcourse.cancelled = true;
+                                        await em.save(Subcourse, subcourse);
+                                        sendSubcourseCancelNotifications(course, subcourse);
                                     }
+                                }
 
-                                    course.courseState = CourseState.CANCELLED;
-                                    await em.save(Course, course);
-
-                                }).catch(e => {
-                                    logger.error("Can't cancel course");
-                                    logger.debug(course, e);
-                                });
-
+                                course.courseState = CourseState.CANCELLED;
+                                await em.save(Course, course);
                                 transactionLog.log(new CancelCourseEvent(person as Student, course));
                                 logger.info("Successfully cancelled course");
-
-                                return 204;
                             } catch (e) {
                                 logger.error("Can't cancel course: " + e.message);
                                 logger.debug(course, e);
-                                return 500;
                             }
                         }
+
                     }
-                });
+                }).catch(e => logger.error("Couldn't cancel all courses. ", e));
             }
 
 
