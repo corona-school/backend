@@ -2,9 +2,19 @@
 import {
     concrete_notification as ConcreteNotification,
     notification as Notification,
-    pupil as Pupil,
-    student as Student
+    pupil as PrismaPupil,
+    student as PrismaStudent,
+    mentor as PrismaMentor
 } from '.prisma/client';
+import { Pupil as TypeORMPupil } from './../entity/Pupil';
+import { Student as TypeORMStudent } from './../entity/Student';
+import { Mentor as TypeORMMentor } from './../entity/Mentor';
+
+// Temporary interop between TypeORM and Prisma
+type Pupil = PrismaPupil | TypeORMPupil;
+type Student = PrismaStudent | TypeORMStudent;
+type Mentor = PrismaMentor | TypeORMMentor;
+export type Person = Pupil | Student | Mentor;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
@@ -38,12 +48,12 @@ export interface NotificationContext {
 // The user is always known, also for notifications sent by Actions / Reminders
 // However we keep the authToken private from the external dependencies, and also pass the fullName as string
 export interface Context extends NotificationContext {
-    user: Omit<Pupil | Student, "fullName"> & { fullName: string; };
+    user: Omit<Person, "fullName"> & { fullName: string; };
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
     type: "mailjet";
-    send(notification: Notification, to: Pupil | Student, context: Context, concreteID: number): Promise<any>;
+    send(notification: Notification, to: Person, context: Context, concreteID: number): Promise<any>;
     canSend(notification: Notification): boolean;
 }
