@@ -1025,7 +1025,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                 entityManager.transaction(async em => {
                     for (const course of courses) {
                         if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
-                            return;
+                            continue;
                         }
 
                         if (course.instructors.length > 1) {
@@ -1036,23 +1036,18 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                         } else {
                             // Our person is the only instructor in the course. Cancel it.
 
-                            try {
-                                for (const subcourse of course.subcourses) {
-                                    if (!subcourse.cancelled) {
-                                        subcourse.cancelled = true;
-                                        await em.save(Subcourse, subcourse);
-                                        sendSubcourseCancelNotifications(course, subcourse);
-                                    }
+                            for (const subcourse of course.subcourses) {
+                                if (!subcourse.cancelled) {
+                                    subcourse.cancelled = true;
+                                    await em.save(Subcourse, subcourse);
+                                    sendSubcourseCancelNotifications(course, subcourse);
                                 }
-
-                                course.courseState = CourseState.CANCELLED;
-                                await em.save(Course, course);
-                                transactionLog.log(new CancelCourseEvent(person as Student, course));
-                                logger.info("Successfully cancelled course");
-                            } catch (e) {
-                                logger.error("Can't cancel course: " + e.message);
-                                logger.debug(course, e);
                             }
+
+                            course.courseState = CourseState.CANCELLED;
+                            await em.save(Course, course);
+                            transactionLog.log(new CancelCourseEvent(person as Student, course));
+                            logger.info("Successfully cancelled course");
                         }
 
                     }
