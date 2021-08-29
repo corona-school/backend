@@ -58,6 +58,13 @@ import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
+import * as Notification from "../../../common/notification";
+
+const dropCourseRelations = (course: Course) =>
+    ({ ...course, instructors: undefined, guests: undefined, correspondent: undefined, subcourses: undefined });
+
+const dropSubcourseRelations = (subcourse: Subcourse) =>
+    ({ ...subcourse, instructors: undefined, participants: undefined, waitingList: undefined, course: undefined });
 
 const logger = getLogger();
 
@@ -1127,6 +1134,18 @@ async function postSubcourse(student: Student, courseId: number, apiSubcourse: A
         // todo add transactionlog
         logger.info("Successfully saved new subcourse");
 
+        await Notification.actionTaken(student, "instructor_course_created", {
+            course: dropCourseRelations(course),
+            subcourse: dropSubcourseRelations(subcourse)
+        });
+
+        if (subcourse.published) {
+            await Notification.actionTaken(student, "instructor_course_published", {
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse)
+            });
+        }
+
         return {
             id: subcourse.id
         };
@@ -1682,6 +1701,14 @@ async function putSubcourse(student: Student, courseId: number, subcourseId: num
         logger.debug(subcourseId, apiSubcourse);
         return 400;
     }
+
+    if (!subcourse.published && apiSubcourse.published) {
+        await Notification.actionTaken(student, "instructor_course_published", {
+            course: dropCourseRelations(course),
+            subcourse: dropSubcourseRelations(subcourse)
+        });
+    }
+
     subcourse.published = apiSubcourse.published;
 
     subcourse.joinAfterStart = apiSubcourse.joinAfterStart;
@@ -1945,6 +1972,10 @@ async function deleteCourse(student: Student, courseId: number): Promise<number>
                     if (!course.subcourses[i].cancelled) {
                         course.subcourses[i].cancelled = true;
                         await em.save(Subcourse, course.subcourses[i]);
+                        await Notification.actionTaken(student, "instructor_course_cancelled", {
+                            course: dropCourseRelations(course),
+                            subcourse: dropSubcourseRelations(course.subcourses[i])
+                        });
                         sendSubcourseCancelNotifications(course, course.subcourses[i]);
                     }
                 }
@@ -2076,6 +2107,11 @@ async function deleteSubcourse(student: Student, courseId: number, subcourseId: 
         await sendSubcourseCancelNotifications(course, subcourse);
         await transactionLog.log(new CancelSubcourseEvent(student, subcourse));
         logger.info("Successfully cancelled subcourse");
+
+        await Notification.actionTaken(student, "instructor_course_cancelled", {
+            course: dropCourseRelations(course),
+            subcourse: dropSubcourseRelations(subcourse)
+        });
 
         return 204;
     } catch (e) {
@@ -2324,6 +2360,12 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
             //send confirmation to participant
             try {
                 await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
+
+
+                await Notification.actionTaken(pupil, "participant_course_join", {
+                    course: dropCourseRelations(course),
+                    subcourse: dropSubcourseRelations(subcourse)
+                });
             } catch (e) {
                 logger.warn(`Will not send participant confirmation mail for subcourse with ID ${subcourse.id} due to error ${e.toString()}. However the participant ${pupil.id} has still been enrolled in the course.`);
             }
@@ -2446,6 +2488,10 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
                 const transactionLog = getTransactionLog();
                 await transactionLog.log(new ParticipantJoinedWaitingListEvent(pupil, course));
 
+                await Notification.actionTaken(pupil, "participant_course_waiting_list_join", {
+                    course: dropCourseRelations(course),
+                    subcourse: dropSubcourseRelations(subcourse)
+                });
                 return;
             } else {
                 logger.warn(`Pupil  ${pupil.id} can't join waiting list of subcourse ${subcourseId}, because the course is not full.`);
@@ -2558,6 +2604,11 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
             const transactionLog = getTransactionLog();
             await transactionLog.log(new ParticipantLeftCourseEvent(pupil, subcourse));
 
+
+            await Notification.actionTaken(pupil, "participant_course_leave", {
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse)
+            });
         } catch (e) {
             logger.warn("Can't leave subcourse");
             logger.debug(e);
@@ -2656,6 +2707,12 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
             // transactionlog
             const transactionLog = getTransactionLog();
             await transactionLog.log(new ParticipantLeftWaitingListEvent(pupil, course));
+
+
+            await Notification.actionTaken(pupil, "participant_course_waiting_list_leave", {
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse)
+            });
         } catch (e) {
             logger.warn("Can't leave subcourse's waiting list");
             logger.debug(e);
@@ -2751,6 +2808,13 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     try {
         for (let participant of subcourse.participants) {
             await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
+            await Notification.actionTaken(participant, "participant_course_message", {
+                instructor: student,
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse),
+                subject: mailSubject,
+                body: mailBody
+            });
         }
     } catch (e) {
         logger.warn("Unable to send group mail");
@@ -2844,6 +2908,13 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
     try {
         // send mail to correspondnet
         await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
+        await Notification.actionTaken(pupil, "instructor_course_participant_message", {
+            participant: pupil,
+            course: dropCourseRelations(course),
+            subcourse: dropSubcourseRelations(subcourse),
+            subject: mailSubject,
+            body: mailBody
+        });
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);
