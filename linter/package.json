@@ -1,0 +1,11 @@
+{
+  "name": "eslint-plugin-lernfair-linter",
+  "version": "1.0.0",
+  "description": "Custom ESLint rules for the Lernfair Backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "The Lernfair TECH Team",
+  "license": "ISC"
+}
