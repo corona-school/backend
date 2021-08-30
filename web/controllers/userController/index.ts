@@ -981,6 +981,9 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         return 500;
     }
 
+    let debugCancelledCourses = [];
+    let debugRemovedFrom = [];
+
     try {
         if (active && !person.active) {
             // Activate if deactivated
@@ -1017,45 +1020,45 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                     .getRepository(Course)
                     .createQueryBuilder("course")
                     .leftJoinAndSelect("course.instructors", "instructors")
+                    .leftJoinAndSelect("course.subcourses", "subcourses")
                     .where("instructors.id = :id", { id: person.id})
                     .getMany();
 
-                console.log("CRS: ", courses);
+                logger.debug("Trying to cancel following courses: ", courses);
 
-                entityManager.transaction(async em => {
+                await entityManager.transaction(async em => {
                     for (const course of courses) {
+                        logger.debug("CRS_I:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
                         if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
                             continue;
                         }
 
                         if (course.instructors.length > 1) {
-                            // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
+                        // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
                             course.instructors = course.instructors.filter(s => s.id !== person.id);
                             await em.save(Course, course);
-                            logger.info("Removed instructor " + person.firstname + " " + person.lastname + " from course " + course.name + ".");
+                            debugRemovedFrom.push(course);
                         } else {
-                            // Our person is the only instructor in the course. Cancel it.
-
+                        // Our person is the only instructor in the course. Cancel it.
                             for (const subcourse of course.subcourses) {
                                 if (!subcourse.cancelled) {
                                     subcourse.cancelled = true;
                                     await em.save(Subcourse, subcourse);
-                                    sendSubcourseCancelNotifications(course, subcourse);
+                                    //await sendSubcourseCancelNotifications(course, subcourse);
                                 }
                             }
 
                             course.courseState = CourseState.CANCELLED;
                             await em.save(Course, course);
                             transactionLog.log(new CancelCourseEvent(person as Student, course));
-                            logger.info("Successfully cancelled course");
+                            debugCancelledCourses.push(course);
                         }
 
                     }
-                }).catch(e => logger.error("Couldn't cancel all courses. ", e));
+                });
+                logger.info("Courses user was removed from (as an instructor): ", debugRemovedFrom);
+                logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
             }
-
-
-
 
             // Step 3: Deactivate
             person.active = false;
@@ -1065,10 +1068,10 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         }
     } catch (e) {
         logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);
-        logger.debug(person, e);
+        logger.debug(person);
+        logger.debug(e);
         return 500;
     }
-
     return 204;
 }
 
