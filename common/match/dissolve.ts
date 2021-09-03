@@ -19,6 +19,8 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         }
     });
 
+    logger.info(`Match(${match.id}) was dissolved by ${dissolver?.firstname ?? "an admin"}`);
+
     try {
         if (dissolver && isStudent(dissolver)) {
             if (dissolver.id !== match.studentId) {
@@ -46,12 +48,29 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
                 }),
                 student.email
             );
-        } else if (dissolver === null) {
-            // TODO: To whom should the dissolve email be sent?
+        } else if (dissolver === null) { // dissolved by an admin
+            const student = await prisma.student.findUnique({ where: { id: match.studentId }});
+            const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
+
+            await sendTemplateMail(
+                mailjetTemplates.PUPILMATCHDISSOLVED({
+                    studentFirstname: student.firstname,
+                    pupilFirstname: pupil.firstname
+                }),
+                pupil.email
+            );
+
+            await sendTemplateMail(
+                mailjetTemplates.STUDENTMATCHDISSOLVED({
+                    studentFirstname: student.firstname,
+                    pupilFirstname: pupil.firstname
+                }),
+                student.email
+            );
         } else {
             throw new Error("Dissolver was neither student nor pupil nor admin");
         }
-    } catch (e) {
-        logger.error("Can't send match dissolved mail: ", e);
+    } catch (error) {
+        logger.error("Can't send match dissolved mail: ", error);
     }
 }
