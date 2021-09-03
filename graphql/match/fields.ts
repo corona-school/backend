@@ -5,23 +5,8 @@ import { Subcourse, Pupil, Match, Student } from "../generated";
 import { LimitEstimated } from "../complexity";
 import { getStudent, getPupil } from "../util";
 import { getOverlappingSubjects } from "../../common/match/util";
+import { Subject } from "../types/subject";
 
-@ObjectType()
-class Range { // GraphQL Type for common/entity/Student -> Subject.range
-    @Field(type => Int)
-    min: number;
-    @Field(type => Int)
-    field: number;
-}
-
-@ObjectType() 
-class Subject { // GraphQL Type for common/entity/Student -> Subject
-    @Field()
-    name: string;
-
-    @Field(type => Range)
-    grade: Range; 
-}
 
 
 @Resolver(of => Match)
@@ -46,7 +31,7 @@ export class ExtendedFieldsMatchResolver {
 
     @FieldResolver(returns => [Subject])
     @Authorized(Role.ADMIN)
-    async subjects(@Root() match: Match) {
+    async subjectsFormatted(@Root() match: Match) {
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
 
