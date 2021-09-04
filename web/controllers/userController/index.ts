@@ -1020,15 +1020,17 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                     .getRepository(Course)
                     .createQueryBuilder("course")
                     .leftJoinAndSelect("course.instructors", "instructors")
+                    .innerJoin("course.instructors", "instructorsSelect")
+                    .where("instructorsSelect.id = :id", { id: person.id})
                     .leftJoinAndSelect("course.subcourses", "subcourses")
-                    .where("instructors.id = :id", { id: person.id})
                     .getMany();
+                    //.where("instructors.id = :id", { id: person.id})
 
                 logger.debug("Trying to cancel following courses: ", courses);
 
                 await entityManager.transaction(async em => {
                     for (const course of courses) {
-                        logger.debug("CRS_I:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
+                        logger.debug("Iterating through courses:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
                         if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
                             continue;
                         }
