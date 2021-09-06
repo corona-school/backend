@@ -8,7 +8,14 @@ import { getLogger } from "log4js";
 
 export enum Role {
     /* Access via Retool */
-    ADMIN = "ADMIN"
+    ADMIN = "ADMIN",
+    /* Access via Screener Admin Interface */
+    SCREENER = "SCREENER",
+    /* Access via User Interface */
+    PUPIL = "PUPIL",
+    STUDENT = "STUDENT",
+    /* Accessible to everyone */
+    UNAUTHENTICATED = "UNAUTHENTICATED"
 }
 
 const authLogger = getLogger("GraphQL Authorization");
