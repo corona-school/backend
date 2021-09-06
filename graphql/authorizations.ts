@@ -18,7 +18,7 @@ export enum Role {
     UNAUTHENTICATED = "UNAUTHENTICATED"
 }
 
-const authLogger = getLogger("GraphQL Authorization");
+const authLogger = getLogger("GraphQL Authentication");
 
 export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");

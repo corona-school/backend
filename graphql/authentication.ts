@@ -6,8 +6,15 @@ import { v4 as uuid } from "uuid";
 import { GraphQLContext } from "./context";
 import { assert } from "console";
 import { getPupil, getScreener, getStudent } from "./util";
+import { Screener } from "./generated";
+import { prisma } from "../common/prisma";
+import { hashToken } from "../common/util/hashing";
+import { getLogger } from "log4js";
+
+const logger = getLogger("GraphQL Authentication");
 
 // This interface is close to what might be a user entity in the future
+// As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
 export interface GraphQLUser {
     roles: Role[];
 
@@ -82,24 +89,94 @@ function ensureSession(context: GraphQLContext) {
 
 
 @Resolver()
-class AuthenticationResolver {
+export class AuthenticationResolver {
     @Authorized(Role.ADMIN)
     @FieldResolver()
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
-        // TODO: Real implementation
-        const user: GraphQLUser = {
-            firstName: "Hallo",
-            lastName: "Welt",
-            roles: [Role.PUPIL, Role.STUDENT]
-        };
+        ensureSession(context);
+
+        let user: GraphQLUser;
+
+        const pupil = await prisma.pupil.findFirst({
+            where: {
+                OR: [
+                    { authToken: hashToken(authToken) },
+                    { authToken }
+                ],
+                active: true
+            }
+        });
+
+        if (pupil) {
+            user = {
+                firstName: pupil.firstname,
+                lastName: pupil.lastname,
+                email: pupil.email,
+                roles: [Role.PUPIL]
+            };
+
+            logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in`);
+        }
+
+        const student = await prisma.student.findFirst({
+            where: {
+                OR: [
+                    { authToken: hashToken(authToken) },
+                    { authToken }
+                ],
+                active: true
+            }
+        });
+
+        if (student) {
+            assert(!user, "AuthTokens may not collide");
+
+            user = {
+                firstName: student.firstname,
+                lastName: student.lastname,
+                email: student.email,
+                roles: [Role.STUDENT]
+            };
+
+            logger.info(`[${context.sessionToken}] Student(${student.id}) successfully logged in`);
+        }
+
+        if (!user) {
+            logger.warn(`[${context.sessionToken}] Invalid authToken`);
+            throw new Error("Invalid authToken");
+        }
 
         context.user = user;
+        userSessions.set(context.sessionToken, user);
 
     }
 
     @Authorized(Role.ADMIN)
     async loginScreener(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
+
+        const screener = await prisma.screener.findFirst({
+            where: {
+                email,
+                password // TODO: Plaintext?
+            }
+        });
+
+        if (!screener) {
+            logger.info(`[${context.sessionToken}] Invalid screener email or password`);
+            throw new Error("Invalid email or password");
+        }
+
+        const user: GraphQLUser = {
+            firstName: screener.firstname,
+            lastName: screener.lastname,
+            email: screener.email,
+            roles: [Role.SCREENER]
+        };
+
+        context.user = user;
+        userSessions.set(context.sessionToken, user);
+        logger.info(`[${context.sessionToken}] Screener(${screener.id}) successfully logged in`);
     }
 
     @Authorized(Role.ADMIN)

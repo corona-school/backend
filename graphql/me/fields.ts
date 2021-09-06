@@ -16,7 +16,7 @@ class Me {
 }
 
 @Resolver(of => Me)
-class FieldMeResolver {
+export class FieldMeResolver {
     @Query()
     @Authorized(Role.STUDENT, Role.PUPIL, Role.SCREENER)
     async me(@Ctx() context: GraphQLContext): Promise<Me> {
