@@ -42,7 +42,7 @@ export const suggestToken = () => uuid();
 // By logging only part of the token, we can identify users whilst preventing session takeover
 export const toPublicToken = (token: string) => token.slice(0, -5);
 
-export function getUserForSession(sessionToken: string) {
+export async function getUserForSession(sessionToken: string) {
     return userSessions.get(sessionToken);
 }
 

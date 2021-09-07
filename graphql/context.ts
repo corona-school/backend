@@ -35,7 +35,7 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
 }
 
 
-export default function injectContext({ req }) {
+export default async function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
@@ -57,11 +57,13 @@ export default function injectContext({ req }) {
             throw new Error("Session Tokens must have at least 20 characters");
         }
 
-        const sessionUser = getUserForSession(sessionToken);
+        const sessionUser = await getUserForSession(sessionToken);
 
 
         if (!sessionUser) {
             authLogger.info(`Unauthenticated Session(${toPublicToken(sessionToken)}) started from ${ip}`);
+        } else {
+            user = sessionUser;
         }
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
