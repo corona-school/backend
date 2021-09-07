@@ -39,7 +39,7 @@ export default function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    let user: GraphQLUser | undefined = undefined;
+    let user: GraphQLUser= { roles: [] };
     let sessionToken: string | undefined = undefined;
 
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
@@ -67,7 +67,8 @@ export default function injectContext({ req }) {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
 
-    roles.push(Role.UNAUTHENTICATED);
+    // All users own the UNAUTHENTICATED role
+    user.roles.push(Role.UNAUTHENTICATED);
 
     const context: GraphQLContext = { user, prisma };
     return context;
