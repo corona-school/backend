@@ -6,17 +6,12 @@ import { Role } from "../authorizations";
 import { prisma } from "../../common/prisma";
 @ObjectType()
 export class Me {
-    firstName?: string;
-    lastName?: string;
+    firstname?: string;
+    lastname?: string;
     email?: string;
 
-    isPupil: boolean;
     pupil?: Pupil;
-
-    isStudent: boolean;
     student?: Student;
-
-    isScreener: boolean;
     screener?: Screener;
 }
 
@@ -47,7 +42,7 @@ export class FieldMeResolver {
     }
 
     @FieldResolver(returns => Pupil)
-    @Authorized(Role.PUPIL)
+    @Authorized(Role.USER)
     async pupil(@Ctx() context: GraphQLContext): Promise<Pupil> {
         const user = getSessionUser(context);
         if (!user.pupilId) {
@@ -58,7 +53,7 @@ export class FieldMeResolver {
     }
 
     @FieldResolver(returns => Student)
-    @Authorized(Role.STUDENT)
+    @Authorized(Role.USER)
     async student(@Ctx() context: GraphQLContext): Promise<Student> {
         const user = getSessionUser(context);
         if (!user.studentId) {
@@ -69,7 +64,7 @@ export class FieldMeResolver {
     }
 
     @FieldResolver(returns => Screener)
-    @Authorized(Role.SCREENER)
+    @Authorized(Role.USER)
     async screener(@Ctx() context: GraphQLContext): Promise<Screener> {
         const user = getSessionUser(context);
         if (!user.screenerId) {

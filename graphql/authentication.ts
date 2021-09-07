@@ -19,8 +19,8 @@ const logger = getLogger("GraphQL Authentication");
 export interface GraphQLUser {
     roles: Role[];
 
-    firstName?: string;
-    lastName?: string;
+    firstname?: string;
+    lastname?: string;
     email?: string;
 
     studentId?: number;
@@ -110,8 +110,8 @@ export class AuthenticationResolver {
 
         if (pupil) {
             user = {
-                firstName: pupil.firstname,
-                lastName: pupil.lastname,
+                firstname: pupil.firstname,
+                lastname: pupil.lastname,
                 email: pupil.email,
                 pupilId: pupil.id,
                 roles: [Role.USER, Role.PUPIL]
@@ -134,8 +134,8 @@ export class AuthenticationResolver {
             assert(!user, "AuthTokens may not collide");
 
             user = {
-                firstName: student.firstname,
-                lastName: student.lastname,
+                firstname: student.firstname,
+                lastname: student.lastname,
                 email: student.email,
                 studentId: student.id,
                 roles: [Role.USER, Role.STUDENT]
@@ -173,10 +173,11 @@ export class AuthenticationResolver {
         }
 
         const user: GraphQLUser = {
-            firstName: screener.firstname,
-            lastName: screener.lastname,
+            firstname: screener.firstname,
+            lastname: screener.lastname,
             email: screener.email,
-            roles: [Role.USER, Role.SCREENER]
+            roles: [Role.USER, Role.SCREENER],
+            screenerId: screener.id
         };
 
         context.user = user;
