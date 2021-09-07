@@ -44,7 +44,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }
     if (requiredRoles.includes(Role.OWNER)) {
         assert(info.parentType, "Type must be resolved to determine ownership");
 
-        const typeName = info.schema.getQueryType().name as ResolverModelNames;
+        const typeName = (info.rootValue.constructor as Function).name as ResolverModelNames;
         const ownershipCheck = isOwnedBy[typeName];
         assert(!!ownershipCheck, `Entity ${typeName} must have ownership definition if Role.OWNER is used`);
 
