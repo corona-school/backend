@@ -5,6 +5,7 @@ import { AuthChecker } from "type-graphql";
 import { GraphQLContext } from "./context";
 import assert from "assert";
 import { getLogger } from "log4js";
+import { isOwnedBy, ResolverModelNames } from "./ownership";
 
 export enum Role {
     /* Access via Retool */
@@ -15,12 +16,14 @@ export enum Role {
     PUPIL = "PUPIL",
     STUDENT = "STUDENT",
     /* Accessible to everyone */
-    UNAUTHENTICATED = "UNAUTHENTICATED"
+    UNAUTHENTICATED = "UNAUTHENTICATED",
+    /* User owns the entity as defined in graphql/ownership */
+    OWNER = "OWNER"
 }
 
 const authLogger = getLogger("GraphQL Authentication");
 
-export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRoles) => {
+export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
 
@@ -29,20 +32,42 @@ export const authChecker: AuthChecker<GraphQLContext> = ({ context }, requiredRo
         return false;
     }
 
-    return requiredRoles.some(requiredRole => context.user.roles.includes(requiredRole as Role));
+    if (requiredRoles.some(requiredRole => context.user.roles.includes(requiredRole as Role))) {
+        return true;
+    }
+
+    /* If the user could access this field if they are owning the entity, 
+       we have to compare the user to the rootValue (e.g. for course.id that would be the course)
+       and use the ownership check */
+    if (requiredRoles.includes(Role.OWNER)) {
+        assert(info.parentType, "Type must be resolved to determine ownership");
+
+        const ownershipCheck = isOwnedBy[info.parentType.name as ResolverModelNames];
+        assert(!!ownershipCheck, `Entity ${info.parentType.name} must have ownership definition if Role.OWNER is used`);
+
+        const isOwner = await ownershipCheck(context.user, info.rootValue);
+        authLogger.debug(`Ownership check, result: ${isOwner} for ${info.parentType.name}`, context.user, info.rootValue);
+
+        if (isOwner) {
+            return true;
+        }
+    }
+
+    return false;
 };
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
+const allAdminOrOwner = { _all: [Authorized(Role.ADMIN, Role.OWNER)] };
 
 // Although we do not expose all Prisma entities, we make sure authorization is present for all of them
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course: allAdmin,
-    Pupil: allAdmin,
+    Pupil: allAdminOrOwner,
     Match: allAdmin,
     Lecture: allAdmin,
     Log: allAdmin,
     Subcourse: allAdmin,
-    Student: allAdmin,
+    Student: allAdminOrOwner,
     Screening: allAdmin,
     Screener: allAdmin,
     Project_match: allAdmin,
