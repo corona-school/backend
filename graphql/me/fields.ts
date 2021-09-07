@@ -5,7 +5,7 @@ import { GraphQLContext } from "../context";
 import { Role } from "../authorizations";
 
 @ObjectType()
-class Me {
+export class Me {
     firstName?: string;
     lastName?: string;
     email?: string;

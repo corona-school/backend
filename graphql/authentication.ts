@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, FieldResolver, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, Mutation, Resolver } from "type-graphql";
 import { Role } from "./authorizations";
 import { student as Student, pupil as Pupil } from "@prisma/client";
 import Keyv from "keyv";
@@ -10,6 +10,7 @@ import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
 import { hashToken } from "../common/util/hashing";
 import { getLogger } from "log4js";
+import { Me } from "./me/fields";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -88,10 +89,10 @@ function ensureSession(context: GraphQLContext) {
 }
 
 
-@Resolver()
+@Resolver(of => Me)
 export class AuthenticationResolver {
     @Authorized(Role.ADMIN)
-    @FieldResolver()
+    @Mutation(returns => Boolean)
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
         ensureSession(context);
 
@@ -149,9 +150,11 @@ export class AuthenticationResolver {
         context.user = user;
         userSessions.set(context.sessionToken, user);
 
+        return true;
     }
 
     @Authorized(Role.ADMIN)
+    @Mutation(returns => Boolean)
     async loginScreener(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
 
@@ -177,9 +180,12 @@ export class AuthenticationResolver {
         context.user = user;
         userSessions.set(context.sessionToken, user);
         logger.info(`[${context.sessionToken}] Screener(${screener.id}) successfully logged in`);
+
+        return true;
     }
 
     @Authorized(Role.ADMIN)
+    @Mutation(returns => Boolean)
     async logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
 
@@ -191,5 +197,7 @@ export class AuthenticationResolver {
         assert(deleted, "User session is successfully deleted");
 
         context.user = undefined;
+
+        return true;
     }
 }
