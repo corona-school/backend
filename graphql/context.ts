@@ -48,7 +48,7 @@ export default async function injectContext({ req }) {
             throw new Error("Invalid Admin Password");
         }
 
-        user = { firstName: "Admin", lastName: "Admin", email: "test@lern-fair.de", roles: [Role.ADMIN] };
+        user = { firstname: "Ed", lastname: "Min", email: "test@lern-fair.de", roles: [Role.ADMIN] };
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (req.headers["authorization"] && req.headers["authorization"].startsWith("Bearer ")) {
         sessionToken = req.headers["authorization"].slice("Bearer ".length);
