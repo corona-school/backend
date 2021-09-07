@@ -88,12 +88,15 @@ export async function verifyToken(token: string): Promise<string | null> {
                 if (student.isInstructor) {
                     // Invite to instructor screening
                     await sendFirstScreeningInvitationToInstructor(entityManager, student);
+                    await Notification.actionTaken(student, "instructor_screening_invitation", {});
                 } else if (student.isProjectCoach && !student.isStudent && !student.isUniversityStudent) {
                     //... then the only way of beeing part of Corona School is as a Jufo alumni, so send them this invitation
                     await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
+                    await Notification.actionTaken(student, "coach_screening_invitation", {});
                 } else {
                     // Invite to tutor screening
                     await sendFirstScreeningInvitationToTutor(entityManager, student);
+                    await Notification.actionTaken(student, "tutor_screening_invitation", {});
                 }
             } catch (mailerror) {
                 logger.error(`Can't send emails to student ${student.email} after verification due to mail error...`);
@@ -101,6 +104,8 @@ export async function verifyToken(token: string): Promise<string | null> {
             }
 
             await transactionLog.log(new VerifiedEvent(student));
+
+            await Notification.actionTaken(student, "user_registration_verified_email", {});
 
             return uuid;
         }
@@ -126,6 +131,8 @@ export async function verifyToken(token: string): Promise<string | null> {
             await entityManager.save(pupil);
             await transactionLog.log(new VerifiedEvent(pupil));
 
+            await Notification.actionTaken(pupil, "user_registration_verified_email", {});
+            await Notification.actionTaken(pupil, "pupil_registration_finished", {});
             return uuid;
         }
 

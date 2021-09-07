@@ -14,8 +14,10 @@ import { ExtendedFieldsCourseResolver } from "./course/fields";
 import { ExtendedFieldsMatchResolver } from "./match/fields";
 import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
 import { MutateNotificationResolver } from "./notification/mutations";
+import { complexityEnhanceMap } from "./complexity";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
+applyResolversEnhanceMap(complexityEnhanceMap);
 
 const schema = buildSchemaSync({
     resolvers: [
