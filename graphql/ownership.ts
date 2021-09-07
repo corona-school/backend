@@ -17,5 +17,6 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         }
         const instructor= await prisma.course_instructors_student.findFirst({ where: { courseId: course.id, studentId: user.studentId}});
         return !!instructor;
-    }
+    },
+    Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId
 };

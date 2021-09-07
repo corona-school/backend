@@ -65,7 +65,7 @@ const allAdminOrOwner = { _all: [Authorized(Role.ADMIN, Role.OWNER)] };
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course: allAdmin,
     Pupil: allAdminOrOwner,
-    Match: allAdmin,
+    Match: allAdminOrOwner,
     Lecture: allAdmin,
     Log: allAdmin,
     Subcourse: allAdmin,
