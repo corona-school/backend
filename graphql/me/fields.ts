@@ -17,25 +17,25 @@ class Me {
 
 @Resolver(of => Me)
 export class FieldMeResolver {
-    @Query()
+    @Query(returns => Me)
     @Authorized(Role.STUDENT, Role.PUPIL, Role.SCREENER)
     async me(@Ctx() context: GraphQLContext): Promise<Me> {
         return getSessionUser(context);
     }
 
-    @FieldResolver()
+    @FieldResolver(returns => Pupil)
     @Authorized(Role.PUPIL)
     async pupil(@Ctx() context: GraphQLContext): Promise<Pupil> {
         return await getSessionPupil(context);
     }
 
-    @FieldResolver()
+    @FieldResolver(returns => Student)
     @Authorized(Role.STUDENT)
     async student(@Ctx() context: GraphQLContext): Promise<Student> {
         return await getSessionStudent(context);
     }
 
-    @FieldResolver()
+    @FieldResolver(returns => Screener)
     @Authorized(Role.SCREENER)
     async screener(@Ctx() context: GraphQLContext): Promise<Screener> {
         return await getSessionScreener(context);
