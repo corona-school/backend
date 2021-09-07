@@ -38,7 +38,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }
         return true;
     }
 
-    /* If the user could access this field if they are owning the entity, 
+    /* If the user could access this field if they are owning the entity,
        we have to compare the user to the rootValue (e.g. for course.id that would be the course)
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {

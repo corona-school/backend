@@ -54,7 +54,7 @@ export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     return context.user;
 }
 
-export async function getSessionStudent(context: GraphQLContext): Promise<Student | null> {
+export async function getSessionStudent(context: GraphQLContext): Promise<Student | never> {
     const { studentId } = getSessionUser(context);
     if (!studentId) {
         throw new Error("Expected user to be student");
@@ -62,7 +62,7 @@ export async function getSessionStudent(context: GraphQLContext): Promise<Studen
     return await getStudent(studentId);
 }
 
-export async function getSessionPupil(context: GraphQLContext, returnNull = false): Promise<Pupil | null> {
+export async function getSessionPupil(context: GraphQLContext): Promise<Pupil | never> {
     const { pupilId } = getSessionUser(context);
     if (!pupilId) {
         throw new Error("Expected user to be pupil");
@@ -70,7 +70,7 @@ export async function getSessionPupil(context: GraphQLContext, returnNull = fals
     return await getPupil(pupilId);
 }
 
-export async function getSessionScreener(context: GraphQLContext, returnNull = false): Promise<Screener | null> {
+export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
         throw new Error("Expected user to be screener");
