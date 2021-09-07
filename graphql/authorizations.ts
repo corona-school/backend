@@ -39,16 +39,17 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }
     }
 
     /* If the user could access this field if they are owning the entity,
-       we have to compare the user to the rootValue (e.g. for course.id that would be the course)
+       we have to compare the user to the returnType
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {
         assert(info.parentType, "Type must be resolved to determine ownership");
 
-        const ownershipCheck = isOwnedBy[info.parentType.name as ResolverModelNames];
-        assert(!!ownershipCheck, `Entity ${info.parentType.name} must have ownership definition if Role.OWNER is used`);
+        const typeName = info.schema.getQueryType().name as ResolverModelNames;
+        const ownershipCheck = isOwnedBy[typeName];
+        assert(!!ownershipCheck, `Entity ${typeName} must have ownership definition if Role.OWNER is used`);
 
         const isOwner = await ownershipCheck(context.user, info.rootValue);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${info.parentType.name}`, context.user, info.rootValue);
+        authLogger.debug(`Ownership check, result: ${isOwner} for ${typeName}`, context.user, info.rootValue);
 
         if (isOwner) {
             return true;
