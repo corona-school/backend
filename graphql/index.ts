@@ -1,7 +1,7 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap } from "./generated";
+import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap } from "./generated";
 import { buildSchemaSync } from "type-graphql";
 import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver } from "./generated/resolvers/crud";
-import { authChecker, authorizationEnhanceMap } from "./authorizations";
+import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
 import { ApolloServer } from "apollo-server-express";
@@ -20,6 +20,7 @@ import { FieldMeResolver } from "./me/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
+applyModelsEnhanceMap(authorizationModelEnhanceMap);
 
 const schema = buildSchemaSync({
     resolvers: [

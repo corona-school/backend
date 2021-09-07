@@ -1,4 +1,4 @@
-import { ResolversEnhanceMap } from "./generated";
+import { ModelsEnhanceMap, ResolversEnhanceMap } from "./generated";
 import { Authorized } from "type-graphql";
 
 import { AuthChecker } from "type-graphql";
@@ -96,4 +96,12 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_participation_certificate: allAdmin,
     Notification: allAdmin,
     Pupil_tutoring_interest_confirmation_request: allAdmin
+};
+
+export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
+    Pupil: {
+        fields: {
+            authToken: [Authorized(Role.OWNER)]
+        }
+    }
 };
