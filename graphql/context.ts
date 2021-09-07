@@ -70,6 +70,6 @@ export default function injectContext({ req }) {
     // All users own the UNAUTHENTICATED role
     user.roles.push(Role.UNAUTHENTICATED);
 
-    const context: GraphQLContext = { user, prisma };
+    const context: GraphQLContext = { user, prisma, sessionToken };
     return context;
 }
