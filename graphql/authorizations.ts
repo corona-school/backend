@@ -60,17 +60,16 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }
 };
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
-const allAdminOrOwner = { _all: [Authorized(Role.ADMIN, Role.OWNER)] };
 
 // Although we do not expose all Prisma entities, we make sure authorization is present for all of them
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course: allAdmin,
-    Pupil: allAdminOrOwner,
-    Match: allAdminOrOwner,
+    Pupil: allAdmin,
+    Match: allAdmin,
     Lecture: allAdmin,
     Log: allAdmin,
     Subcourse: allAdmin,
-    Student: allAdminOrOwner,
+    Student: allAdmin,
     Screening: allAdmin,
     Screener: allAdmin,
     Project_match: allAdmin,

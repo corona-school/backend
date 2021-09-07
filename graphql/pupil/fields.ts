@@ -8,7 +8,7 @@ import { LimitEstimated } from "../complexity";
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
     @FieldResolver(type => [Subcourse])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     async subcourses(@Root() pupil: Pupil) {
 
