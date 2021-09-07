@@ -91,7 +91,7 @@ function ensureSession(context: GraphQLContext) {
 
 @Resolver(of => Me)
 export class AuthenticationResolver {
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
         ensureSession(context);
@@ -153,7 +153,7 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
     async loginScreener(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
@@ -184,7 +184,7 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.PUPIL, Role.STUDENT, Role.SCREENER)
     @Mutation(returns => Boolean)
     async logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
