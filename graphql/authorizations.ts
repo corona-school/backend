@@ -10,6 +10,8 @@ import { isOwnedBy, ResolverModelNames } from "./ownership";
 export enum Role {
     /* Access via Retool */
     ADMIN = "ADMIN",
+    /* Shortcut role for Screeners, Pupils and Students: */
+    USER = "USER",
     /* Access via Screener Admin Interface */
     SCREENER = "SCREENER",
     /* Access via User Interface */

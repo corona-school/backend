@@ -54,7 +54,7 @@ export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     return context.user;
 }
 
-export async function getSessionStudent(context: GraphQLContext): Promise<Student | never> {
+export async function getSessionStudent(context: GraphQLContext): Promise<Student | null> {
     const { studentId } = getSessionUser(context);
     if (!studentId) {
         throw new Error("Expected user to be student");
@@ -62,7 +62,7 @@ export async function getSessionStudent(context: GraphQLContext): Promise<Studen
     return await getStudent(studentId);
 }
 
-export async function getSessionPupil(context: GraphQLContext): Promise<Pupil | never> {
+export async function getSessionPupil(context: GraphQLContext, returnNull = false): Promise<Pupil | null> {
     const { pupilId } = getSessionUser(context);
     if (!pupilId) {
         throw new Error("Expected user to be pupil");
@@ -70,7 +70,7 @@ export async function getSessionPupil(context: GraphQLContext): Promise<Pupil | 
     return await getPupil(pupilId);
 }
 
-export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
+export async function getSessionScreener(context: GraphQLContext, returnNull = false): Promise<Screener | null> {
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
         throw new Error("Expected user to be screener");
@@ -113,7 +113,8 @@ export class AuthenticationResolver {
                 firstName: pupil.firstname,
                 lastName: pupil.lastname,
                 email: pupil.email,
-                roles: [Role.PUPIL]
+                pupilId: pupil.id,
+                roles: [Role.USER, Role.PUPIL]
             };
 
             logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in`);
@@ -136,7 +137,8 @@ export class AuthenticationResolver {
                 firstName: student.firstname,
                 lastName: student.lastname,
                 email: student.email,
-                roles: [Role.STUDENT]
+                studentId: student.id,
+                roles: [Role.USER, Role.STUDENT]
             };
 
             logger.info(`[${context.sessionToken}] Student(${student.id}) successfully logged in`);
@@ -174,7 +176,7 @@ export class AuthenticationResolver {
             firstName: screener.firstname,
             lastName: screener.lastname,
             email: screener.email,
-            roles: [Role.SCREENER]
+            roles: [Role.USER, Role.SCREENER]
         };
 
         context.user = user;
