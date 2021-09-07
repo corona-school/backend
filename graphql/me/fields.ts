@@ -26,13 +26,13 @@ export class FieldMeResolver {
     @FieldResolver(returns => String)
     @Authorized(Role.USER)
     async firstName(@Ctx() context: GraphQLContext): Promise<string> {
-        return getSessionUser(context).firstName;
+        return getSessionUser(context).firstname;
     }
 
     @FieldResolver(returns => String)
     @Authorized(Role.USER)
     async lastName(@Ctx() context: GraphQLContext): Promise<string> {
-        return getSessionUser(context).lastName;
+        return getSessionUser(context).lastname;
     }
 
     @FieldResolver(returns => String)
