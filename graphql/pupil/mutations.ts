@@ -1,11 +1,12 @@
-import { Resolver, Mutation, Root, Arg, Authorized } from "type-graphql";
+import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
-import { Role } from "../authorizations";
+import { AuthorizedDeferred, hasAccess, Role } from "../authorizations";
 import { getPupil, getSubcourse } from "../util";
 import { joinSubcourse, leaveSubcourse } from "../../common/courses/participants";
 import * as Notification from "../../common/notification";
 import { refreshToken } from "../../common/pupil/token";
+import { GraphQLContext } from "graphql/context";
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
@@ -38,9 +39,12 @@ export class MutatePupilResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilJoinSubcourse(@Arg("pupilId") pupilId: number, @Arg("subcourseId") subcourseId: number): Promise<boolean> {
+    @AuthorizedDeferred(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
+    async pupilJoinSubcourse(@Ctx() context: GraphQLContext, @Arg("pupilId") pupilId: number, @Arg("subcourseId") subcourseId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
+        await hasAccess(context, "Pupil", pupil);
+
         const subcourse = await getSubcourse(subcourseId);
 
         await joinSubcourse(subcourse, pupil);

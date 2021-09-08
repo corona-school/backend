@@ -26,6 +26,7 @@ export interface GraphQLContext {
     user?: GraphQLUser;
     sessionToken?: string;
     prisma: PrismaClient;
+    deferredRequiredRoles?: Role[];
 }
 
 const authLogger = getLogger("GraphQL Authentication");

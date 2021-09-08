@@ -1,11 +1,13 @@
 import { ModelsEnhanceMap, ResolversEnhanceMap } from "./generated";
-import { Authorized } from "type-graphql";
+import { Authorized, createMethodDecorator } from "type-graphql";
 
 import { AuthChecker } from "type-graphql";
 import { GraphQLContext } from "./context";
 import assert from "assert";
 import { getLogger } from "log4js";
-import { isOwnedBy, ResolverModelNames } from "./ownership";
+import { isOwnedBy, ResolverModel, ResolverModelNames } from "./ownership";
+
+/* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
 export enum Role {
     /* Access via Retool */
@@ -25,32 +27,64 @@ export enum Role {
 
 const authLogger = getLogger("GraphQL Authentication");
 
+/* The auth checker performs the authorization check for the @Authorized() annotation before the resolver runs
+    It checks whether the user session created in graphql/context has all the roles required */
 export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, root }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
+    assert(context.user?.roles, "Roles must have been initialized in context");
 
+    return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
+};
 
-    if (!context.user || !context.user.roles) {
-        return false;
+/* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during 
+   mutation execution. Thus with AuthorizedDeferred one can move the access check into the mutation, and call
+   hasAccess once the value is ready, like:
+
+   @AuthorizedDeferred(Role.OWNER)
+   courseCancel(@Ctx() context, @Arg() courseId: number) {
+       const course = await getCourse(courseId);
+       await hasAccess(context, "Course", course);
+       // ...
+   }
+
+   Note that this leaks the information whether an entity exists, though as we use artificial primary keys this should not reveal 
+    anything of value
+*/
+export function AuthorizedDeferred(...requiredRoles: Role[]) {
+    assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
+
+    return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
+        context.deferredRequiredRoles = requiredRoles;
+        return next();
+    });
+}
+
+export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void  | never> {
+    assert(context.deferredRequiredRoles, "hasAccess may only be used in @AuthorizedDeferred methods");
+    const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
+    if (!success) {
+        throw new Error("Not Authorized");
     }
+}
 
+async function accessCheck(context: GraphQLContext, requiredRoles: Role[], modelName: ResolverModelNames | undefined, root: any) {
     if (requiredRoles.some(requiredRole => context.user.roles.includes(requiredRole as Role))) {
         return true;
     }
 
     /* If the user could access this field if they are owning the entity,
-       we have to compare the user to the returnType
+       we have to compare the user to the root value of this resolver
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {
-        assert(info.parentType, "Type must be resolved to determine ownership");
-        assert(root, "root value must be bound for Role.OWNER check");
+        assert(modelName, "Type must be resolved to determine ownership");
+        assert(root, "root value must be bound to determine ownership");
 
-        const typeName = info.parentType.name;
-        const ownershipCheck = isOwnedBy[typeName];
-        assert(!!ownershipCheck, `Entity ${typeName} must have ownership definition if Role.OWNER is used`);
+        const ownershipCheck = isOwnedBy[modelName];
+        assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
 
         const isOwner = await ownershipCheck(context.user, root);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${typeName}`, context.user, root);
+        authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, context.user, root);
 
         if (isOwner) {
             return true;
@@ -58,7 +92,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     }
 
     return false;
-};
+}
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 
