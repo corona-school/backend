@@ -2,17 +2,18 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from "../prisma";
-import { debug } from "console";
 import { Notification, NotificationID } from "./types";
 import { NotificationRecipient } from "../entity/Notification";
 import { Prisma } from "@prisma/client";
+import { getLogger } from "log4js";
 
 type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
 let _notificationsPerAction: NotificationsPerAction;
 
+const logger = getLogger("Notification Management");
 
 export function invalidateCache() {
-    debug("Invalidated Notification cache");
+    logger.debug("Invalidated Notification cache");
     _notificationsPerAction = undefined;
 }
 
@@ -43,6 +44,8 @@ export async function getNotifications(): Promise<NotificationsPerAction> {
         }
     }
 
+    logger.debug(`Loaded ${notifications.length} notification into the cache`);
+
     return result;
 }
 
@@ -70,6 +73,14 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
         throw new Error(`Failed to toggle activation of Notification(${id}) as it was not found`);
     }
 
+    if (active) {
+        logger.info(`Notification(${id}) activated`);
+    } else {
+        logger.info(`Notification(${id}) deactivated`);
+    }
+
+
+
     invalidateCache();
 }
 
@@ -83,6 +94,8 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
     if (!matched) {
         throw new Error(`Failed to toggle activation of Notification(${id}) as it was not found`);
     }
+
+    logger.info(`Notification(${id}) updated`);
 
     invalidateCache();
 }
@@ -100,9 +113,89 @@ export async function create(notification: Prisma.notificationCreateInput) {
         throw new Error("As long as Mailjet is our main channel, it is required to set the mailjetTemplateId");
     }
 
-    await prisma.notification.create({
+    const result = await prisma.notification.create({
         data: { ...notification }
     });
 
+    logger.info(`Notification(${result.id}) created\n`);
+
     invalidateCache();
+}
+
+export async function importNotifications(notifications: Notification[], force = false): Promise<string | never> {
+    let log = `Import Log ${new Date().toLocaleString("en-US")}\n`;
+
+    const untouched = await prisma.notification.count({
+        where: { id: { notIn: notifications.map(it => it.id) } }
+    });
+
+    log += `${untouched} existing notifications will not be modified\n`;
+
+    for (const notification of notifications) {
+        const templateExists = await prisma.notification.findFirst({ where: {
+            mailjetTemplateId: notification.mailjetTemplateId,
+            NOT: { id: notification.id }
+        }});
+
+        if (templateExists) {
+            throw new Error(`Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`);
+        }
+
+        const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id }});
+
+        if (notificationExists) {
+            const { active, id, ...update } = notification;
+            await prisma.notification.update({
+                data: update,
+                where: { id: id }
+            });
+
+            log += `Updated Notification(${notification.id})\n`;
+            log += diff(notificationExists, notification, 1);
+
+            if (notificationExists.active && !active) {
+                log += `Did not deactivate Notification(${notification.id}) please do that manually\n`;
+            } else if (!notificationExists.active && active) {
+                log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+            }
+        } else {
+            const { active, id, ...creation } = notification;
+            const result = await prisma.notification.create({
+                data: { ...creation, active: false }
+            });
+
+            log += `Created Notification(${notification.id})\n`;
+            log += diff({}, creation, 1);
+
+            if (active) {
+                log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+            }
+
+            if (result.id !== id) {
+                log += `Imported Notification(${id}) was created as Notification(${result.id}), please ensure parity between QA and PROD!\n`;
+            }
+        }
+    }
+
+    invalidateCache();
+
+    logger.info(log);
+    return log;
+}
+
+function diff(prev: any, curr: any, depth = 0) {
+    let result = "";
+    const keys = new Set([...Object.keys(prev), ...Object.keys(curr)]);
+    for (const key of keys) {
+        if (curr[key] === prev[key] || Array.isArray(curr[key]) && Array.isArray(prev[key]) && curr[key].every((v, i) => v === prev[key][i])) {
+            continue;
+        }
+
+        if (key in prev) {
+            result += " ".repeat(depth * 2) + `- ${key}: ${prev[key]}\n`;
+        }
+        if (key in curr) {
+            result += " ".repeat(depth * 2) + `+ ${key}: ${curr[key]}\n`;
+        }
+    }
 }

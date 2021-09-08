@@ -1,9 +1,11 @@
-import { Resolver, Mutation, Root, Arg, Authorized } from "type-graphql";
+import { Resolver, Mutation, Root, Arg, Authorized, InputType } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { Role } from "../authorizations";
 import * as Notification from "../../common/notification/notification";
-import { NotificationCreateInput } from "../generated";
+import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 
+@InputType()
+class NotificationInput extends GraphQLModel.Notification {}
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {
 
@@ -19,5 +21,27 @@ export class MutateNotificationResolver {
     async notificationActivate(@Arg("notificationId") notificationId: number, @Arg("active") active: boolean): Promise<boolean> {
         await Notification.activate(notificationId, active);
         return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async notificationUpdate(@Arg("notificationId") notificationId: number, @Arg("update") update: NotificationUpdateInput): Promise<boolean> {
+        if ("active" in update) {
+            throw new Error("Cannot change active field through update");
+        }
+
+        await Notification.update(notificationId, update as any);
+    }
+
+    @Mutation(returns => String)
+    @Authorized(Role.ADMIN)
+    async notificationImport(@Arg("notifications") notifications: NotificationInput[], @Arg("force", { nullable: true }) force: boolean = false) {
+        for (const notification of notifications) {
+            if (!notification.mailjetTemplateId) {
+                throw new Error("Mailjet Template ID is required");
+            }
+        }
+
+        return await Notification.importNotifications(notifications as any, force);
     }
 }
