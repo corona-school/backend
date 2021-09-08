@@ -6,7 +6,7 @@ import { getPupil, getSubcourse } from "../util";
 import { joinSubcourse, leaveSubcourse } from "../../common/courses/participants";
 import * as Notification from "../../common/notification";
 import { refreshToken } from "../../common/pupil/token";
-import { GraphQLContext } from "graphql/context";
+import { GraphQLContext } from "../context";
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
