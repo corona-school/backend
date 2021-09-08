@@ -31,6 +31,7 @@ export class MutateNotificationResolver {
         }
 
         await Notification.update(notificationId, update as any);
+        return true;
     }
 
     @Mutation(returns => String)
