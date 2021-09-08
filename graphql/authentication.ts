@@ -152,7 +152,7 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
-    async loginScreener(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
+    async loginPassword(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
 
         const screener = await prisma.screener.findFirst({
@@ -165,7 +165,7 @@ export class AuthenticationResolver {
         const passwordValid = screener && await verifyPassword(password, screener.password);
 
         if (!screener || !passwordValid) {
-            logger.info(`[${context.sessionToken}] Invalid screener email or password`, screener, passwordValid);
+            logger.info(`[${context.sessionToken}] Invalid email or password`, screener, passwordValid);
             throw new Error("Invalid email or password");
         }
 
