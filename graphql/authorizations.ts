@@ -25,7 +25,7 @@ export enum Role {
 
 const authLogger = getLogger("GraphQL Authentication");
 
-export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }, requiredRoles) => {
+export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, root }, requiredRoles) => {
     assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
     assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
 
@@ -42,7 +42,9 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info }
        we have to compare the user to the returnType
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {
+        console.log("Role.OWNER info", info, "root", root);
         assert(info.parentType, "Type must be resolved to determine ownership");
+        assert(info.rootValue, "root value must be bound for Role.OWNER check");
 
         const typeName = info.parentType.name;
         const ownershipCheck = isOwnedBy[typeName];

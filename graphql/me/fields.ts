@@ -1,17 +1,23 @@
 import { Student, Pupil, Screener } from "../generated";
-import { Authorized, Ctx, FieldResolver, ObjectType, Query, Resolver } from "type-graphql";
+import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from "type-graphql";
 import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser } from "../authentication";
 import { GraphQLContext } from "../context";
 import { Role } from "../authorizations";
 import { prisma } from "../../common/prisma";
 @ObjectType()
 export class Me {
+    @Field({ nullable: true })
     firstname?: string;
+    @Field({ nullable: true })
     lastname?: string;
+    @Field({ nullable: true })
     email?: string;
 
+    @Field({ nullable: true })
     pupil?: Pupil;
+    @Field({ nullable: true })
     student?: Student;
+    @Field({ nullable: true })
     screener?: Screener;
 }
 
@@ -25,13 +31,13 @@ export class FieldMeResolver {
 
     @FieldResolver(returns => String)
     @Authorized(Role.USER)
-    async firstName(@Ctx() context: GraphQLContext): Promise<string> {
+    async firstname(@Ctx() context: GraphQLContext): Promise<string> {
         return getSessionUser(context).firstname;
     }
 
     @FieldResolver(returns => String)
     @Authorized(Role.USER)
-    async lastName(@Ctx() context: GraphQLContext): Promise<string> {
+    async lastname(@Ctx() context: GraphQLContext): Promise<string> {
         return getSessionUser(context).lastname;
     }
 
