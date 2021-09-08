@@ -94,9 +94,20 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     return false;
 }
 
-const allAdmin = { _all: [Authorized(Role.ADMIN)] };
+/* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
 
-// Although we do not expose all Prisma entities, we make sure authorization is present for all of them
+const allAdmin = { _all: [Authorized(Role.ADMIN)] };
+const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
+const onlyOwner = [Authorized(Role.OWNER)];
+
+/* Although we do not expose all Prisma entities, we make sure authorization is present for all queries and mutations
+   We use query and mutation authorizations as our main authorization strategy,
+    as users usually have access to none or all fields.
+    E.g. for pupils(take: 10) { id firstname } we do not check 10 times whether the user has access to id and firstname,
+     but once whether he has access to "pupils".
+    This however also means that through FieldResolver associations, one can leak user data in powerful ways,
+     so always make sure to apply proper authorizations to those
+*/
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course: allAdmin,
     Pupil: allAdmin,
@@ -133,10 +144,26 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Pupil_tutoring_interest_confirmation_request: allAdmin
 };
 
+/* Some entities are generally accessible by multiple users, however some fields of them are
+   only supposed to be accessed by some users.
+   By annotating the fields with extra checks, for every entity where the field is resolved the check is performed.
+   Thus when running pupils(take: 10) { authToken } this will perform the ownership check for all 10 pupils retrieved
+    (and will fail if one of them is not owned by the user)
+
+   For various reasons query authorizations should be preferred, and field authorizations should only be used for
+    extra sensitive data */
 export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Pupil: {
         fields: {
-            authToken: [Authorized(Role.OWNER)]
+            authToken: onlyOwner,
+            email: adminOrOwner
         }
+    },
+    Student: {
+        fields: {
+            authToken: onlyOwner,
+            email: adminOrOwner
+        }
+
     }
 };
