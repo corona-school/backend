@@ -29,13 +29,14 @@ module.exports = {
                     return;
                 }
 
-                const authorizationCheck = methodNode.body.body.some(statement => 
+                const authorizationCheck = methodNode.value.body.body.some(statement => 
                     statement.type === "ExpressionStatement" && 
                     statement.expression.type === "AwaitExpression" &&
                     statement.expression.argument.type === "CallExpression" &&
-                    statement.expression.argument.callee === "hasAccess"
+                    statement.expression.argument.callee.name === "hasAccess"
                 );
-        
+                
+                
                 if(!authorizationCheck) {
                     context.report({ 
                         node: methodNode.key,
