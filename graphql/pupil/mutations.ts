@@ -39,8 +39,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(returns => Boolean)
-    @AuthorizedDeferred(Role.ADMIN)
-    @Authorized(Role.UNAUTHENTICATED)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async pupilJoinSubcourse(@Ctx() context: GraphQLContext, @Arg("pupilId") pupilId: number, @Arg("subcourseId") subcourseId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await hasAccess(context, "Pupil", pupil);

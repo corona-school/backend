@@ -37,7 +37,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
 };
 
-/* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during 
+/* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during
    mutation execution. Thus with AuthorizedDeferred one can move the access check into the mutation, and call
    hasAccess once the value is ready, like:
 
@@ -48,7 +48,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
        // ...
    }
 
-   Note that this leaks the information whether an entity exists, though as we use artificial primary keys this should not reveal 
+   Note that this leaks the information whether an entity exists, though as we use artificial primary keys this should not reveal
     anything of value
 */
 export function AuthorizedDeferred(...requiredRoles: Role[]) {
@@ -60,7 +60,7 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
     });
 }
 
-export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void  | never> {
+export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, "hasAccess may only be used in @AuthorizedDeferred methods");
     const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
     if (!success) {
