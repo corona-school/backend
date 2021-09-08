@@ -157,14 +157,15 @@ export class AuthenticationResolver {
 
         const screener = await prisma.screener.findFirst({
             where: {
-                email
+                email,
+                active: true
             }
         });
 
         const passwordValid = screener && await verifyPassword(password, screener.password);
 
         if (!screener || !passwordValid) {
-            logger.info(`[${context.sessionToken}] Invalid screener email or password`);
+            logger.info(`[${context.sessionToken}] Invalid screener email or password`, screener, passwordValid);
             throw new Error("Invalid email or password");
         }
 
