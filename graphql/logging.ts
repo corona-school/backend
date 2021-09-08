@@ -20,7 +20,13 @@ export const GraphQLLogger: any = {
             sessionID = "ADMIN";
         }
 
-        logger.debug(`[${sessionID}] Started processing query`, requestContext.request.query);
+        let query = requestContext.request.query;
+
+        if (query.includes("password") || query.includes("authToken")) {
+            query = "REDACTED - CONTAINED SECRETS";
+        }
+
+        logger.debug(`[${sessionID}] Started processing query`, query);
 
         const handler: any = { // Actually GraphQLRequestListener, but we're on v2 and not on v3
             didEncounterErrors(requestContext: GraphQLRequestContext) {
