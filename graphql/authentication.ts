@@ -165,7 +165,7 @@ export class AuthenticationResolver {
         const passwordValid = screener && await verifyPassword(password, screener.password);
 
         if (!screener || !passwordValid) {
-            logger.info(`[${context.sessionToken}] Invalid email or password`, screener, passwordValid);
+            logger.warn(`[${context.sessionToken}] Invalid email (${email}) or password`);
             throw new Error("Invalid email or password");
         }
 
