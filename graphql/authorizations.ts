@@ -42,16 +42,15 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
        we have to compare the user to the returnType
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {
-        console.log("Role.OWNER info", info, "root", root);
         assert(info.parentType, "Type must be resolved to determine ownership");
-        assert(info.rootValue, "root value must be bound for Role.OWNER check");
+        assert(root, "root value must be bound for Role.OWNER check");
 
         const typeName = info.parentType.name;
         const ownershipCheck = isOwnedBy[typeName];
         assert(!!ownershipCheck, `Entity ${typeName} must have ownership definition if Role.OWNER is used`);
 
-        const isOwner = await ownershipCheck(context.user, info.rootValue);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${typeName}`, context.user, info.rootValue);
+        const isOwner = await ownershipCheck(context.user, root);
+        authLogger.debug(`Ownership check, result: ${isOwner} for ${typeName}`, context.user, root);
 
         if (isOwner) {
             return true;
