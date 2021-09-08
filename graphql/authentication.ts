@@ -8,7 +8,7 @@ import { assert } from "console";
 import { getPupil, getScreener, getStudent } from "./util";
 import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
-import { hashToken } from "../common/util/hashing";
+import { hashPassword, hashToken } from "../common/util/hashing";
 import { getLogger } from "log4js";
 import { Me } from "./me/fields";
 
@@ -100,10 +100,8 @@ export class AuthenticationResolver {
 
         const pupil = await prisma.pupil.findFirst({
             where: {
-                OR: [
-                    { authToken: hashToken(authToken) },
-                    { authToken }
-                ],
+                // This drops support for unhashed tokens as present in the REST authentication
+                authToken: hashToken(authToken),
                 active: true
             }
         });
@@ -122,10 +120,7 @@ export class AuthenticationResolver {
 
         const student = await prisma.student.findFirst({
             where: {
-                OR: [
-                    { authToken: hashToken(authToken) },
-                    { authToken }
-                ],
+                authToken: hashToken(authToken),
                 active: true
             }
         });
@@ -163,7 +158,7 @@ export class AuthenticationResolver {
         const screener = await prisma.screener.findFirst({
             where: {
                 email,
-                password // TODO: Plaintext?
+                password: await hashPassword(password)
             }
         });
 
