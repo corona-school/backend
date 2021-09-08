@@ -8,7 +8,7 @@ import { assert } from "console";
 import { getPupil, getScreener, getStudent } from "./util";
 import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
-import { hashPassword, hashToken } from "../common/util/hashing";
+import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
 import { Me } from "./me/fields";
 
@@ -157,12 +157,13 @@ export class AuthenticationResolver {
 
         const screener = await prisma.screener.findFirst({
             where: {
-                email,
-                password: await hashPassword(password)
+                email
             }
         });
 
-        if (!screener) {
+        const passwordValid = screener && await verifyPassword(password, screener.password);
+
+        if (!screener || !passwordValid) {
             logger.info(`[${context.sessionToken}] Invalid screener email or password`);
             throw new Error("Invalid email or password");
         }
