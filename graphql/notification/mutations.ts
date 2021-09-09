@@ -5,9 +5,27 @@ import * as Notification from "../../common/notification/notification";
 import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 
 @InputType()
-class NotificationInput extends GraphQLModel.Notification {
-    @Field(type => Int)
-    id: number;
+class NotificationInput { // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
+  @Field(_type => Int, { nullable: false })
+  id!: number;
+  @Field(_type => Int, { nullable: true })
+  mailjetTemplateId?: number | null;
+  @Field(_type => String, { nullable: false })
+  description!: string;
+  @Field(_type => Boolean, { nullable: false })
+  active!: boolean;
+  @Field(_type => Int, { nullable: false })
+  recipient!: number;
+  @Field(_type => [String], { nullable: false })
+  onActions!: string[];
+  @Field(_type => [String], { nullable: false })
+  category!: string[];
+  @Field(_type => [String], { nullable: false })
+  cancelledOnAction!: string[];
+  @Field(_type => Int, { nullable: true })
+  delay?: number | null;
+  @Field(_type => Int, { nullable: true })
+  interval?: number | null;
 }
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {
