@@ -43,12 +43,12 @@ You can either open the `index.html` manually or start the web server for servin
 
 ### Contributing
 
-We're always happy and open about contributions, please  [contact us](mailto:support@lern-fair.de) in case you are interested in joining our 
+We're always happy and open about contributions, please  [contact the HR team](mailto:team@lern-fair.de) in case you are interested in joining our 
  team of volunteers. 
 ### Security Issues
 
 We follow the guidelines for responsible disclosure:
-If you find a vulnerability, we would encourage you inform us and gives us some time to tackle the issues, before publishing it.
+If you find a vulnerability, we would encourage you to [contact Support](mailto:support@lern-fair.de) and gives us some time to tackle the issues, before publishing it.
 We take security very seriously and these issues are automatically highest priority for us.
 
 Since we are a non-profit organization with not much of a budget, we can't offer a bug bounty program.
