@@ -198,4 +198,6 @@ function diff(prev: any, curr: any, depth = 0) {
             result += " ".repeat(depth * 2) + `+ ${key}: ${curr[key]}\n`;
         }
     }
+
+    return result;
 }

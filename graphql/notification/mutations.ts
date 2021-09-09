@@ -5,7 +5,7 @@ import * as Notification from "../../common/notification/notification";
 import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 
 @InputType()
-class NotificationInput extends NotificationCreateInput {
+class NotificationInput extends GraphQLModel.Notification {
     @Field(type => Int)
     id: number;
 }
