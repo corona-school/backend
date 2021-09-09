@@ -36,7 +36,7 @@ export class MutateNotificationResolver {
 
     @Mutation(returns => String)
     @Authorized(Role.ADMIN)
-    async notificationImport(@Arg("notifications") notifications: NotificationInput[], @Arg("force", { nullable: true }) force: boolean = false) {
+    async notificationImport(@Arg("notifications", type => [NotificationInput]) notifications: NotificationInput[], @Arg("force", { nullable: true }) force: boolean = false) {
         for (const notification of notifications) {
             if (!notification.mailjetTemplateId) {
                 throw new Error("Mailjet Template ID is required");
