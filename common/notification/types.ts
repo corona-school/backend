@@ -1,12 +1,20 @@
-import { Person } from "../entity/Person";
-import { Pupil } from "../entity/Pupil";
-import { Student } from "../entity/Student";
-
 // Prisma exports lowercase types, but we want capitalized types
 import {
     concrete_notification as ConcreteNotification,
-    notification as Notification
+    notification as Notification,
+    pupil as PrismaPupil,
+    student as PrismaStudent,
+    mentor as PrismaMentor
 } from '.prisma/client';
+import { Pupil as TypeORMPupil } from './../entity/Pupil';
+import { Student as TypeORMStudent } from './../entity/Student';
+import { Mentor as TypeORMMentor } from './../entity/Mentor';
+
+// Temporary interop between TypeORM and Prisma
+type Pupil = PrismaPupil | TypeORMPupil;
+type Student = PrismaStudent | TypeORMStudent;
+type Mentor = PrismaMentor | TypeORMMentor;
+export type Person = Pupil | Student | Mentor;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails

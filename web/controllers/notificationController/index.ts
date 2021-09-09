@@ -1,6 +1,7 @@
-import { Person } from "../../../common/entity/Person";
 import * as Express from "express";
 import * as Notification from "../../../common/notification";
+import { Pupil } from "../../../common/entity/Pupil";
+import { Student } from "../../../common/entity/Student";
 export const notificationRoute = Express.Router();
 
 /* Internal API endpoint for debugging / manual testing purposes */
@@ -9,7 +10,7 @@ export async function triggerActionHandler(req: Express.Request, res: Express.Re
         return res.status(404).send("This endpoint is only accessible in development environments");
     }
 
-    const user = res.locals.user as Person;
+    const user = res.locals.user as Pupil | Student;
     const { actionId, context } = req.body;
 
     if (typeof actionId !== "string" || typeof context !== "object") {
