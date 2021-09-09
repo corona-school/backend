@@ -1,11 +1,14 @@
-import { Resolver, Mutation, Root, Arg, Authorized, InputType } from "type-graphql";
+import { Resolver, Mutation, Root, Arg, Authorized, InputType, Field, Int } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { Role } from "../authorizations";
 import * as Notification from "../../common/notification/notification";
 import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 
 @InputType()
-class NotificationInput extends GraphQLModel.Notification {}
+class NotificationInput extends NotificationCreateInput {
+    @Field(type => Int)
+    id: number;
+}
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {
 
