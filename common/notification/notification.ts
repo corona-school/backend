@@ -141,7 +141,7 @@ export async function importNotifications(notifications: Notification[], overwri
                 const removed = await prisma.notification.deleteMany({ });
                 log += `Through Overwrite ${removed.count} existing Notifications were removed`;
             }
-            const untouched = await prisma.notification.findMany({
+            const untouched = await prisma.notification.count({
                 where: { id: { notIn: notifications.map(it => it.id) } }
             });
 
