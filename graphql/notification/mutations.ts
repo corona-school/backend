@@ -9,7 +9,7 @@ class NotificationInput { // Notification Model as Input type, see https://githu
   @Field(_type => Int, { nullable: false })
   id!: number;
   @Field(_type => Int, { nullable: false })
-  mailjetTemplateId?: number;
+  mailjetTemplateId: number;
   @Field(_type => String, { nullable: false })
   description!: string;
   @Field(_type => Boolean, { nullable: false })
@@ -23,9 +23,9 @@ class NotificationInput { // Notification Model as Input type, see https://githu
   @Field(_type => [String], { nullable: false })
   cancelledOnAction!: string[];
   @Field(_type => Int, { nullable: true })
-  delay?: number | null;
+  delay: number | null;
   @Field(_type => Int, { nullable: true })
-  interval?: number | null;
+  interval: number | null;
 }
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {
@@ -57,7 +57,7 @@ export class MutateNotificationResolver {
 
     @Mutation(returns => String)
     @Authorized(Role.ADMIN)
-    async notificationImport(@Arg("notifications", type => [NotificationInput]) notifications: NotificationInput[], @Arg("force", { nullable: true }) force: boolean = false) {
-        return await Notification.importNotifications(notifications, force);
+    async notificationImport(@Arg("notifications", type => [NotificationInput]) notifications: NotificationInput[], @Arg("overwrite", { nullable: true }) overwrite: boolean = false, @Arg("apply", { nullable: true }) apply: boolean = false) {
+        return await Notification.importNotifications(notifications, overwrite, apply);
     }
 }

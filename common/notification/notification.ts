@@ -122,62 +122,98 @@ export async function create(notification: Prisma.notificationCreateInput) {
     invalidateCache();
 }
 
-export async function importNotifications(notifications: Notification[], force = false): Promise<string | never> {
-    let log = `Import Log ${new Date().toLocaleString("en-US")}\n`;
-
-    const untouched = await prisma.notification.count({
-        where: { id: { notIn: notifications.map(it => it.id) } }
-    });
-
-    log += `${untouched} existing notifications will not be modified\n`;
-
-    for (const notification of notifications) {
-        const templateExists = await prisma.notification.findFirst({ where: {
-            mailjetTemplateId: notification.mailjetTemplateId,
-            NOT: { id: notification.id }
-        }});
-
-        if (templateExists) {
-            throw new Error(`Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`);
-        }
-
-        const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id }});
-
-        if (notificationExists) {
-            const { active, id, ...update } = notification;
-            await prisma.notification.update({
-                data: update,
-                where: { id: id }
-            });
-
-            log += `Updated Notification(${notification.id})\n`;
-            log += diff(notificationExists, notification, 1);
-
-            if (notificationExists.active && !active) {
-                log += `Did not deactivate Notification(${notification.id}) please do that manually\n`;
-            } else if (!notificationExists.active && active) {
-                log += `Did not activate Notification(${notification.id}) please do that manually\n`;
-            }
-        } else {
-            const { active, id, ...creation } = notification;
-            const result = await prisma.notification.create({
-                data: { ...creation, active: false }
-            });
-
-            log += `Created Notification(${notification.id})\n`;
-            log += diff({}, creation, 1);
-
-            if (active) {
-                log += `Did not activate Notification(${notification.id}) please do that manually\n`;
-            }
-
-            if (result.id !== id) {
-                log += `Imported Notification(${id}) was created as Notification(${result.id}), please ensure parity between QA and PROD!\n`;
-            }
-        }
+/* Imports Changes to the Notification System
+   If overwrite is set, all existing notifications will be dropped and the passed notifications will be recreated exactly as they are.
+   Unless apply is set, the transaction is rolled back and no import is actually done. This is an extra safety net to not break the notification system
+*/
+export async function importNotifications(notifications: Notification[], overwrite = false, apply = false): Promise<string | never> {
+    if (process.env.ENV !== "dev" && overwrite) {
+        throw new Error("Cannot overwrite productive configuration");
     }
 
-    invalidateCache();
+    let log = `Import Log ${new Date().toLocaleString("en-US")}\n`;
+
+    try {
+        await prisma.$transaction(async (prisma) => {
+            if (overwrite) {
+                const removed = await prisma.notification.deleteMany({ });
+                log += `Through Overwrite ${removed.count} existing Notifications were removed`;
+            }
+            const untouched = await prisma.notification.findMany({
+                where: { id: { notIn: notifications.map(it => it.id) } }
+            });
+
+            if (overwrite) {
+
+            }
+
+            log += `${untouched} existing notifications will not be modified\n`;
+
+            for (const notification of notifications) {
+                const templateExists = await prisma.notification.findFirst({ where: {
+                    mailjetTemplateId: notification.mailjetTemplateId,
+                    NOT: { id: notification.id }
+                }});
+
+                if (templateExists) {
+                    throw new Error(`Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`);
+                }
+
+                const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id }});
+
+                if (notificationExists) {
+                    const { active, id, ...update } = notification;
+                    await prisma.notification.update({
+                        data: update,
+                        where: { id: id }
+                    });
+
+                    log += `Updated Notification(${notification.id})\n`;
+                    log += diff(notificationExists, notification, 1);
+
+                    if (notificationExists.active && !active) {
+                        log += `Did not deactivate Notification(${notification.id}) please do that manually\n`;
+                    } else if (!notificationExists.active && active) {
+                        log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+                    }
+                } else {
+                    const { active, id, ...creation } = notification;
+                    const result = await prisma.notification.create({
+                        data: { ...creation, active: false }
+                    });
+
+                    log += `Created Notification(${notification.id})\n`;
+                    log += diff({}, creation, 1);
+
+                    if (active) {
+                        log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+                    }
+
+                    if (result.id !== id) {
+                        log += `Imported Notification(${id}) was created as Notification(${result.id}), please ensure parity between QA and PROD!\n`;
+                    }
+                }
+            }
+
+            if (!apply) {
+                throw new TestRollbackError();
+            }
+        });
+        // Only once the import succeeded and the transaction is commited, the cache is flushed:
+        invalidateCache();
+
+    } catch (error) {
+        if (error instanceof TestRollbackError) {
+            log += `Rolled back test changes\nRerun with 'apply: true' to actually apply\n`;
+            // Don't raise error but show log instead
+        } else {
+            log += `An Error occured:\n`;
+            log += `${error.message}\n`;
+            log += `${error.stack}\n`;
+            log += `Change was rolled back and not actually applied\n`;
+            throw new Error(log);
+        }
+    }
 
     logger.info(log);
     return log;
@@ -201,3 +237,5 @@ function diff(prev: any, curr: any, depth = 0) {
 
     return result;
 }
+
+class TestRollbackError extends Error {}
