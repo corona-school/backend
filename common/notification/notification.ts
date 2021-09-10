@@ -127,6 +127,8 @@ export async function create(notification: Prisma.notificationCreateInput) {
    Unless apply is set, the transaction is rolled back and no import is actually done. This is an extra safety net to not break the notification system
 */
 export async function importNotifications(notifications: Notification[], overwrite = false, apply = false): Promise<string | never> {
+    notifications.sort((a, b) => a.id - b.id);
+
     if (process.env.ENV !== "dev" && overwrite) {
         throw new Error("Cannot overwrite productive configuration");
     }
@@ -143,10 +145,6 @@ export async function importNotifications(notifications: Notification[], overwri
                 where: { id: { notIn: notifications.map(it => it.id) } }
             });
 
-            if (overwrite) {
-
-            }
-
             log += `${untouched} existing notifications will not be modified\n`;
 
             for (const notification of notifications) {
@@ -162,7 +160,7 @@ export async function importNotifications(notifications: Notification[], overwri
                 const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id }});
 
                 if (notificationExists) {
-                    const { active, id, ...update } = notification;
+                    const { id, ...update } = notification;
                     await prisma.notification.update({
                         data: update,
                         where: { id: id }
@@ -171,22 +169,22 @@ export async function importNotifications(notifications: Notification[], overwri
                     log += `Updated Notification(${notification.id})\n`;
                     log += diff(notificationExists, notification, 1);
 
-                    if (notificationExists.active && !active) {
-                        log += `Did not deactivate Notification(${notification.id}) please do that manually\n`;
-                    } else if (!notificationExists.active && active) {
-                        log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+                    if (notificationExists.active && !notification.active) {
+                        log += `Deactivated Notification(${notification.id})\n`;
+                    } else if (!notificationExists.active && notification.active) {
+                        log += `Activated Notification(${notification.id})\n`;
                     }
                 } else {
-                    const { active, id, ...creation } = notification;
+                    const { id, ...creation } = notification;
                     const result = await prisma.notification.create({
-                        data: { ...creation, active: false }
+                        data: creation
                     });
 
                     log += `Created Notification(${notification.id})\n`;
                     log += diff({}, creation, 1);
 
-                    if (active) {
-                        log += `Did not activate Notification(${notification.id}) please do that manually\n`;
+                    if (creation.active) {
+                        log += `Activated Notification(${notification.id})\n`;
                     }
 
                     if (result.id !== id) {
