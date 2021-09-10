@@ -8,8 +8,8 @@ import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 class NotificationInput { // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
   @Field(_type => Int, { nullable: false })
   id!: number;
-  @Field(_type => Int, { nullable: true })
-  mailjetTemplateId?: number | null;
+  @Field(_type => Int, { nullable: false })
+  mailjetTemplateId?: number;
   @Field(_type => String, { nullable: false })
   description!: string;
   @Field(_type => Boolean, { nullable: false })
@@ -58,12 +58,6 @@ export class MutateNotificationResolver {
     @Mutation(returns => String)
     @Authorized(Role.ADMIN)
     async notificationImport(@Arg("notifications", type => [NotificationInput]) notifications: NotificationInput[], @Arg("force", { nullable: true }) force: boolean = false) {
-        for (const notification of notifications) {
-            if (!notification.mailjetTemplateId) {
-                throw new Error("Mailjet Template ID is required");
-            }
-        }
-
-        return await Notification.importNotifications(notifications as any, force);
+        return await Notification.importNotifications(notifications, force);
     }
 }
