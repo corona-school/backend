@@ -175,20 +175,15 @@ export async function importNotifications(notifications: Notification[], overwri
                         log += `Activated Notification(${notification.id})\n`;
                     }
                 } else {
-                    const { id, ...creation } = notification;
                     const result = await prisma.notification.create({
-                        data: creation
+                        data: notification
                     });
 
                     log += `Created Notification(${notification.id})\n`;
-                    log += diff({}, creation, 1);
+                    log += diff({}, notification, 1);
 
-                    if (creation.active) {
+                    if (notification.active) {
                         log += `Activated Notification(${notification.id})\n`;
-                    }
-
-                    if (result.id !== id) {
-                        log += `Imported Notification(${id}) was created as Notification(${result.id}), please ensure parity between QA and PROD!\n`;
                     }
                 }
             }
