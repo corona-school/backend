@@ -29,6 +29,8 @@ import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
+import {CertificateOfConduct} from "./CertificateOfConduct";
+import {CertificateFingerprint} from "aws-sdk/clients/cloudhsm";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -199,6 +201,13 @@ export class Student extends Person {
         cascade: true
     })
     projectCoachingScreening: Promise<ProjectCoachingScreening>;
+
+
+    @OneToOne((type) => CertificateOfConduct, (cocScreening) => cocScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    cocScreening: Promise<CertificateOfConduct>;
 
     @Column({
         nullable: false,
