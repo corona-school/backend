@@ -536,6 +536,21 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
+
+model certificate_of_conduct {
+    id                               Int                                @id @default(autoincrement())
+    createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
+    updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
+    dateOfInspection                 DateTime
+    dateOfIssue                      DateTime
+    criminalRecords                  Boolean
+    inspectingScreenerId             Int?
+    studentId                        Int?                                @unique
+    inspectingScreener               screener?                           @relation(fields: [screenerId], references: [id])
+    student                          student?                            @relation(fields: [studentId], references: [id])
+}
+
+
 enum course_category_enum {
   revision
   club
