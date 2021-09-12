@@ -259,7 +259,7 @@ function allowedToRequestToken(person: Person): boolean {
     return true;
 }
 
-export async function sendLoginTokenMail(person: Person, token: string, redirectTo?: string) {
+export async function sendLoginTokenMail(person: Pupil | Student, token: string, redirectTo?: string) {
     const dashboardURL = `https://my.lern-fair.de/login?token=${token}&path=${redirectTo ?? ""}`;
 
     console.log(dashboardURL);
