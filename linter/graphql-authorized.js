@@ -13,7 +13,7 @@ module.exports = {
 
         return {
             "ClassDeclaration": function(classNode) {
-                inResolver = classNode.decorators?.some(it => it.expression.callee.name === "Resolver");
+                inResolver = classNode.decorators.some(it => it.expression.callee.name === "Resolver");
             },
             "ClassDeclaration:exit": function(classNode) {
                 inResolver = false;
@@ -23,7 +23,7 @@ module.exports = {
                     return;
                 }
 
-                const authorizationCheck = methodNode.decorators?.some(it => it.expression.callee.name === "Authorized");
+                const authorizationCheck = methodNode.decorators.some(it => it.expression.callee.name === "Authorized");
 
                 if(!authorizationCheck) {
                     context.report({ 
