@@ -25,6 +25,10 @@ export function getFriendlyName(category: MentoringCategory) {
 }
 
 export function contactEmailAddress(category: MentoringCategory) {
+    if (process.env.ENV === "dev") {
+        return `test+${category}@lern-fair.de`;
+    }
+
     switch (category) {
         case MentoringCategory.LANGUAGE:
             return "sprachliches@lern-fair.de";
