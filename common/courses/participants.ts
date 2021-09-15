@@ -8,6 +8,7 @@ import ParticipantLeftCourseEvent from "../transactionlog/types/ParticipantLeftC
 import moment from "moment";
 import { sendTemplateMail, mailjetTemplates } from "../mails";
 import * as Notification from "../notification";
+import { hasStarted } from "./states";
 
 const delay = (time: number) => new Promise(res => setTimeout(res, time));
 
@@ -20,24 +21,24 @@ const PUPIL_MAX_SUBCOURSES = 5;
 
 const logger = getLogger("Course");
 
-async function aquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: () => Promise<T>): Promise<T> {
+async function acquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: () => Promise<T>): Promise<T> {
     let waitCount = BUSY_SPIN;
 
     // WAIT
     while (subcourseLock.has(subcourse.id) || pupilLock.has(pupil.id)) {
         if (waitCount-- <= 0) {
-            throw new Error(`Busy lock failed to aquire after ${BUSY_SPIN}x ${BUSY_WAIT_TIME}ms`);
+            throw new Error(`Busy lock failed to acquire after ${BUSY_SPIN}x ${BUSY_WAIT_TIME}ms`);
         }
 
         logger.debug(`Lock waiting for Subcourse(${subcourse.id}) and Pupil(${pupil.id})`);
         await delay(BUSY_WAIT_TIME);
     }
 
-    // AQUIRE
+    // ACQUIRE
     try {
         subcourseLock.add(subcourse.id);
         pupilLock.add(pupil.id);
-        logger.debug(`Aquired Lock for Subcourse(${subcourse.id}) and Pupil(${pupil.id})`);
+        logger.debug(`Acquired Lock for Subcourse(${subcourse.id}) and Pupil(${pupil.id})`);
 
         return await transaction();
     } finally {
@@ -45,6 +46,20 @@ async function aquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: ()
         subcourseLock.delete(subcourse.id);
         pupilLock.delete(pupil.id);
         logger.debug(`Released Lock for Subcourse(${subcourse.id}) and Pupil(${pupil.id})`);
+    }
+}
+
+export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil) {
+    if (await hasStarted(subcourse)) {
+        throw new Error(`Subourse has already started, cannot join waiting list`);
+    }
+
+    try {
+        await prisma.subcourse_waiting_list_pupil.create({
+            data: { pupilId: pupil.id, subcourseId: subcourse.id }
+        });
+    } catch (error) {
+        throw new Error(`Failed to join waiting list, pupil is already on it`);
     }
 }
 
@@ -57,14 +72,14 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     });
 
     if (waitingListDeletion.count === 1) {
-        logger.info(`Removed Pupil(${pupil.id}) from waiting list of SUbcourse(${subcourse.id})`);
+        logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
     } else if (force) {
         throw new Error(`Pupil is not on the waiting list`);
     }
 }
 
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
-    await aquireLock(subcourse, pupil, async () => {
+    await acquireLock(subcourse, pupil, async () => {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
@@ -82,7 +97,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
             throw new Error("Subcourse has no lectures");
         }
 
-        if (firstLecture[0].start < new Date()) {
+        if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
             throw new Error("Subcourse already started");
         }
 
@@ -104,7 +119,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
             throw new Error(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
-        await leaveSubcourseWaitinglist(subcourse, pupil, /* foce: */ false);
+        await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
 
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
