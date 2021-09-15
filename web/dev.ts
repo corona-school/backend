@@ -1344,61 +1344,6 @@ export async function setupDevDB() {
         await entityManager.save(pticrs[i]);
         console.log("Inserted Pupil Tutoring Interest Request " + i);
     }
-
-    /* NOTIFICATION SYSTEM */
-
-    await prisma.notification.createMany({
-        data: [
-            {
-                mailjetTemplateId: 3026265, /* notification_system_test */
-                active: true,
-                description: 'TEST: Instant notification on registration',
-                recipient: NotificationRecipient.USER,
-                cancelledOnAction: [],
-                category: [],
-                onActions: ["test_start"]
-            },
-            {
-                active: false,
-                description: 'TEST: Disabled notification - If you see this, something is wrong',
-                recipient: NotificationRecipient.USER,
-                cancelledOnAction: [],
-                category: [],
-                onActions: ["test_start"]
-            },
-            {
-                mailjetTemplateId: 3026840, /* notification_system_test_reminder */
-                active: true,
-                description: 'TEST: One Minute delayed notification on registration',
-                recipient: NotificationRecipient.USER,
-                cancelledOnAction: ["test_cancel"],
-                category: [],
-                onActions: ["test_start"],
-                delay: 60_000 /*ms*/,
-            },
-            {
-                active: false,
-                description: 'TEST: Delayed disabled notification - If you see this, something is wrong',
-                recipient: NotificationRecipient.USER,
-                cancelledOnAction: ["test_cancel"],
-                category: [],
-                onActions: ["test_start"],
-                delay: 60_000 /*ms*/,
-            },
-            {
-                mailjetTemplateId: 3026840, /* notification_system_test_reminder */
-                active: true,
-                description: 'TEST: One Minute delayed notification on registration, repeated',
-                recipient: NotificationRecipient.USER,
-                cancelledOnAction: ["test_cancel"],
-                category: [],
-                onActions: ["test_start"],
-                delay: 60_000 /*ms*/,
-                interval: 60_000 /*ms*/
-            },
-
-        ]
-    });
 }
 
 function sha512(input: string): string {

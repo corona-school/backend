@@ -56,7 +56,7 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
     }
 }
 
-export async function sendCourseUpcomingReminderInstructor(instructor: Person, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
+export async function sendCourseUpcomingReminderInstructor(instructor: Student | Prisma.student, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
         participantFirstname: instructor.firstname,
         courseName: course.name,
@@ -72,7 +72,7 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Person, c
     });
 }
 
-export async function sendCourseUpcomingReminderParticipant(participant: Person, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
+export async function sendCourseUpcomingReminderParticipant(participant: Pupil | Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,

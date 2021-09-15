@@ -1,8 +1,13 @@
 import { Role } from "../authorizations";
-import { Authorized, Field, FieldResolver, Resolver, Root } from "type-graphql";
+import { Authorized, Field, FieldResolver, Int, ObjectType, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Subcourse, Pupil, Match, Student } from "../generated";
 import { LimitEstimated } from "../complexity";
+import { getStudent, getPupil } from "../util";
+import { getOverlappingSubjects } from "../../common/match/util";
+import { Subject } from "../types/subject";
+
+
 
 @Resolver(of => Match)
 export class ExtendedFieldsMatchResolver {
@@ -22,5 +27,14 @@ export class ExtendedFieldsMatchResolver {
         return await prisma.student.findUnique({
             where: { id: match.studentId }
         });
+    }
+
+    @FieldResolver(returns => [Subject])
+    @Authorized(Role.ADMIN)
+    async subjectsFormatted(@Root() match: Match) {
+        const student = await getStudent(match.studentId);
+        const pupil = await getPupil(match.pupilId);
+
+        return getOverlappingSubjects(pupil, student);
     }
 }

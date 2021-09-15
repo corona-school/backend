@@ -141,7 +141,7 @@ export async function dissolveProjectMatch(projectMatch: ProjectMatch, reason: n
     }
 }
 
-export async function sendProjectMatchDissolvedMail(to: Person, dissolver: Person) {
+export async function sendProjectMatchDissolvedMail(to: Pupil | Student, dissolver: Pupil | Student) {
     try {
         let mail: TemplateMail;
         if (to instanceof Pupil) {
