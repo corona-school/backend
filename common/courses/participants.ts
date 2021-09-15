@@ -52,9 +52,25 @@ async function acquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: (
     }
 }
 
+export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
+    return await prisma.subcourse_participants_pupil.count({
+        where: { pupilId: pupil.id, subcourseId: subcourse.id }
+    }) > 0;
+}
+
+export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
+    return await prisma.subcourse_waiting_list_pupil.count({
+        where: { pupilId: pupil.id, subcourseId: subcourse.id }
+    }) > 0;
+}
+
 export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil) {
     if (await hasStarted(subcourse)) {
         throw new Error(`Subourse has already started, cannot join waiting list`);
+    }
+
+    if (await isParticipant(subcourse, pupil)) {
+        throw new Error(`Pupil is already participant`);
     }
 
     try {
