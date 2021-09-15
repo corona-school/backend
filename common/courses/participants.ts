@@ -21,6 +21,9 @@ const PUPIL_MAX_SUBCOURSES = 5;
 
 const logger = getLogger("Course");
 
+/* The subcourse-pupil-lock needs to be used when multiple users could get into a conflict on the database.
+   The only thing where that is currently the case is joining a course, as the number of participants is limited.
+   This consistency guarantee cannot be enforced on database level and thus we need to synchronize on application level */
 async function acquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: () => Promise<T>): Promise<T> {
     let waitCount = BUSY_SPIN;
 
