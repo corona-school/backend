@@ -9,6 +9,7 @@ import moment from "moment";
 import { sendTemplateMail, mailjetTemplates } from "../mails";
 import * as Notification from "../notification";
 import { hasStarted } from "./states";
+import { logTransaction } from "../transactionlog/log";
 
 const delay = (time: number) => new Promise(res => setTimeout(res, time));
 
@@ -77,6 +78,8 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
         await prisma.subcourse_waiting_list_pupil.create({
             data: { pupilId: pupil.id, subcourseId: subcourse.id }
         });
+
+        await logTransaction("participantJoinedWaitingList", pupil, { courseID: subcourse.id });
     } catch (error) {
         throw new Error(`Failed to join waiting list, pupil is already on it`);
     }
@@ -92,6 +95,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
 
     if (waitingListDeletion.count === 1) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
+        await logTransaction("participantLeftWaitingList", pupil, { courseID: subcourse.id });
     } else if (force) {
         throw new Error(`Pupil is not on the waiting list`);
     }
@@ -152,6 +156,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         }
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
+        await logTransaction("participantJoinedCourse", pupil, { subcourseID: subcourse.id });
 
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }});
@@ -177,13 +182,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         } catch (error) {
             logger.warn(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`);
         }
-
-        try {
-            const transactionLog = getTransactionLog();
-            await transactionLog.log(new ParticipantJoinedCourseEvent(pupil, subcourse));
-        } catch (error) {
-            logger.warn(`Failed to add ParticipationJoinedCourseEvent to transaction log, but pupil still joined the course`, error);
-        }
     });
 }
 
@@ -201,13 +199,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     }
 
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);
-
-    try {
-        const transactionLog = getTransactionLog();
-        await transactionLog.log(new ParticipantLeftCourseEvent(pupil, subcourse));
-    } catch (error) {
-        logger.warn(`Failed to add ParticpationLeftCourseEvent to transaction log, but pupil still left the subcourse`);
-    }
+    await logTransaction("participantLeftCourse", pupil, { subcourseID: subcourse.id });
 
     const course = prisma.course.findUnique({ where: { id: subcourse.courseId }});
 

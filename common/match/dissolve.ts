@@ -3,6 +3,7 @@ import { sendTemplateMail, mailjetTemplates } from "../mails";
 import { getLogger } from "log4js";
 import { prisma } from "../prisma";
 import { isStudent, isPupil } from "../user";
+import { logTransaction } from "../transactionlog/log";
 
 const logger = getLogger("Match");
 
@@ -17,6 +18,10 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
             dissolved: true,
             dissolveReason
         }
+    });
+
+    await logTransaction("matchDissolve", dissolver, {
+        matchId: match.id
     });
 
     logger.info(`Match(${match.id}) was dissolved by ${dissolver?.firstname ?? "an admin"}`);
