@@ -3,7 +3,7 @@ import * as GraphQLModel from "../generated/models";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { Role } from "../authorizations";
 import { getPupil, getSubcourse } from "../util";
-import { joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse } from "../../common/courses/participants";
+import { joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from "../../common/courses/participants";
 import * as Notification from "../../common/notification";
 import { refreshToken } from "../../common/pupil/token";
 
@@ -55,6 +55,17 @@ export class MutatePupilResolver {
         const subcourse = await getSubcourse(subcourseId);
 
         await joinSubcourseWaitinglist(subcourse, pupil);
+
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilLeaveSubcourseWaitinglist(@Arg("pupilId") pupilId: number, @Arg("subcourseId") subcourseId: number): Promise<boolean> {
+        const pupil = await getPupil(pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+
+        await leaveSubcourseWaitinglist(subcourse, pupil);
 
         return true;
     }
