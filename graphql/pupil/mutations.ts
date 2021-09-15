@@ -65,7 +65,7 @@ export class MutatePupilResolver {
         const pupil = await getPupil(pupilId);
         const subcourse = await getSubcourse(subcourseId);
 
-        await leaveSubcourseWaitinglist(subcourse, pupil);
+        await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
 
         return true;
     }
