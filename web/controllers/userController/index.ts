@@ -1024,7 +1024,6 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                     .where("instructorsSelect.id = :id", { id: person.id})
                     .leftJoinAndSelect("course.subcourses", "subcourses")
                     .getMany();
-                    //.where("instructors.id = :id", { id: person.id})
 
                 logger.debug("Trying to cancel following courses: ", courses);
 
