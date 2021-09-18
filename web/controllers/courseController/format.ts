@@ -294,11 +294,13 @@ export interface ApiCourseTag {
  *
  * @apiSuccess (GroupMail Object) {string} subject Subject <em>maximum 80 chars</em>
  * @apiSuccess (GroupMail Object) {string} body Plaintext body of the mail <em>maximum 2000 chars</em>
+ * @apiSuccess (GroupMail Object) {string} addressees List of all selected participants' IDs
  *
  */
 export interface ApiPostGroupMail {
     subject: string,
-    body: string
+    body: string,
+    addressees: string[]
 }
 
 /**
