@@ -2727,9 +2727,9 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
  * @api {POST} /course/:id/subcourse/:subid/groupmail GroupMail
  * @apiVersion 1.1.0
  * @apiDescription
- * Send a group mail to all participants.
+ * Send a group mail to the specified participants.
  *
- * The course and subcourse instructors may use this endpoint to send a mail to all participants
+ * The course and subcourse instructors may use this endpoint to send a mail to select participants
  *
  * @apiParam (URL Parameter) {int} id ID of the main course
  * @apiParam (URL Parameter) {int} subid ID of the subcourse
@@ -2757,9 +2757,11 @@ export async function groupMailHandler(req: Request, res: Response) {
     if (res.locals.user instanceof Student) {
         if (req.params.id != undefined
             && req.params.subid != undefined
+            && req.body.addressees != undefined && req.body.addressees.length > 0
             && typeof req.body.subject == "string"
-            && typeof req.body.body == "string") {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+            && typeof req.body.body == "string"
+        ) {
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, req.body.addressees);
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
             status = 400;
@@ -2772,7 +2774,7 @@ export async function groupMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[]) {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
@@ -2806,7 +2808,12 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     try {
-        for (let participant of subcourse.participants) {
+        const addressees = [];
+        for (let rawAddressee of rawAddressees) {
+            const pupil = await entityManager.findOne(Pupil, { wix_id: rawAddressee});
+            addressees.push(pupil);
+        }
+        for (let participant of addressees) {
             await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
             await Notification.actionTaken(participant, "participant_course_message", {
                 instructor: student,
