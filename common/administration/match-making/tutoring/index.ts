@@ -38,7 +38,6 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
     const result: MatchMakingResult = {
         dryRun: options.dryRun,
         matchingStats: stats,
-        notifications: options.notifications,
         failedNotifications: null,
         createdMatches: null
     };
@@ -51,7 +50,8 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
         logger.info(`Successfully created ${savedDatabaseMatches.length} new tutoring matches.`);
 
         //notify all matches
-        const notificationStates = await notifyMatches(savedDatabaseMatches, options.notifications, manager);
+
+        const notificationStates = options.silent ? [] : await notifyMatches(savedDatabaseMatches, manager);
 
         return {
             ...result,
@@ -69,7 +69,7 @@ export async function matchMakingWithPersons(tutorsToMatch: Student[], tuteesToM
     }
 }
 
-export async function matchMakingOfAllPossibleMatches(manager: EntityManager, restrictToThoseWithConfirmedInterest: boolean, options: MatchMakingOptions = { dryRun: false, notifications: { email: true, sms: false}}) {
+export async function matchMakingOfAllPossibleMatches(manager: EntityManager, restrictToThoseWithConfirmedInterest: boolean, options: MatchMakingOptions = { dryRun: false, silent: false }) {
     // get data for matching
     const tutors = await tutorsToMatch(manager);
     const tutees = await tuteesToMatch(manager, restrictToThoseWithConfirmedInterest);

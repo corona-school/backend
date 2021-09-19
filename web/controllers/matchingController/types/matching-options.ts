@@ -3,8 +3,6 @@ import { IsBoolean, IsEnum, IsNotEmptyObject, IsNumber, IsObject, ValidateIf, Va
 
 export enum ApiNotificationOption {
     email = "email",
-    sms = "sms",
-    emailAndSMS = "email+sms",
     dbEntryOnly = "dbonly" //= no notification at all
 }
 

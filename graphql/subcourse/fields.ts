@@ -2,11 +2,13 @@ import { Course, Lecture, Subcourse, Pupil } from "../generated";
 import { Authorized, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
+import { LimitEstimated } from "../complexity";
 
 @Resolver(of => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(returns => Course)
     @Authorized(Role.ADMIN)
+    @LimitEstimated(1)
     async course(@Root() subcourse: Subcourse) {
         return await prisma.course.findUnique({
             where: { id: subcourse.courseId }
@@ -15,6 +17,7 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver(returns => [Lecture])
     @Authorized(Role.ADMIN)
+    @LimitEstimated(10)
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
@@ -25,6 +28,7 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver(returns => [Pupil])
     @Authorized(Role.ADMIN)
+    @LimitEstimated(100)
     async participants(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
             where: {

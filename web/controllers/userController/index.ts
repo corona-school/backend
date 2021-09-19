@@ -723,20 +723,31 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
-        let matchCount = await entityManager.count(Match, {
-            pupil: person,
-            dissolved: false
-        });
-        if (req.matchesRequested > 1 ||
-            req.matchesRequested < 0 ||
-            !Number.isInteger(req.matchesRequested) ||
-            req.matchesRequested + matchCount > 1) {
+        if (req.matchesRequested !== undefined && person.openMatchRequestCount !== req.matchesRequested) {
+            if (!Number.isInteger(req.matchesRequested) || req.matchesRequested < 0) {
+                logger.warn(`While updating Pupil(${person.id}): matchRequested ${req.matchesRequested} is not an integer or below zero`);
+                return 400;
+            }
 
-            logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
-            return 400;
+            if (req.matchesRequested > 1) {
+                // NOTE: Admins can enter a larger number into the database
+                logger.warn(`While updating Pupil(${person.id}): Pupils may only have one open match request (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount})`);
+                return 400;
+            }
+
+            let matchCount = await entityManager.count(Match, {
+                pupil: person,
+                dissolved: false
+            });
+
+            if (req.matchesRequested > person.openMatchRequestCount && (req.matchesRequested + matchCount) > 1) {
+                // NOTE: The opposite scenario can happen when an admin manually increased the match request count. The user can then decrease that number
+                logger.warn(`While updating Pupil(${person.id}): Pupils may only request more matches when they do not have a Match already (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount}, actual: ${matchCount})`);
+                return 400;
+            }
+
+            person.openMatchRequestCount = req.matchesRequested;
         }
-
-        person.openMatchRequestCount = req.matchesRequested;
 
         // ++++ GRADE ++++
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {

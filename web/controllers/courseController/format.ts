@@ -267,7 +267,6 @@ export interface ApiParticipant {
     uuid: string;
     firstname: string;
     lastname: string;
-    email: string;
     grade: number;
     schooltype: string;
 }

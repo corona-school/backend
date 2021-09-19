@@ -9,6 +9,7 @@ import { sendTemplateMail, mailjetTemplates } from "../../../common/mails";
 import { TemplateMail } from "../../../common/mails/templates";
 import { getTransactionLog } from "../../../common/transactionlog";
 import MatchDissolveEvent from "../../../common/transactionlog/types/MatchDissolveEvent";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -132,33 +133,38 @@ export async function dissolveMatch(match: Match, reason: number, dissolver: Per
     match.dissolveReason = reason;
     await entityManager.save(Match, match);
 
-    // Send notification mail to partner
-    if (dissolver instanceof Student) {
-        await sendMatchDissolvedMail(match.pupil, match.student);
-    } else {
-        await sendMatchDissolvedMail(match.student, match.pupil);
-    }
-}
-
-export async function sendMatchDissolvedMail(to: Person, dissolver: Person) {
-    // dashboardURL for the person still available (the one getting this mail)
     try {
-        let mail: TemplateMail;
-        if (to instanceof Pupil) {
-            // Send mail to (remaining) pupil
-            mail = mailjetTemplates.PUPILMATCHDISSOLVED({
+    // Send notification mail to partner
+        if (dissolver instanceof Student) {
+            const mail = mailjetTemplates.PUPILMATCHDISSOLVED({
                 studentFirstname: dissolver.firstname,
-                pupilFirstname: to.firstname
+                pupilFirstname: match.pupil.firstname
+            });
+
+            await sendTemplateMail(mail, match.pupil.email);
+
+            await Notification.actionTaken(match.pupil, "student_match_dissolved_other", {
+                student: match.student
             });
         } else {
-            // Send mail to (remaining) student
-            mail = mailjetTemplates.STUDENTMATCHDISSOLVED({
-                studentFirstname: to.firstname,
+            const mail = mailjetTemplates.STUDENTMATCHDISSOLVED({
+                studentFirstname: match.student.firstname,
                 pupilFirstname: dissolver.firstname
             });
+
+            await sendTemplateMail(mail, match.student.email);
+
+            await Notification.actionTaken(match.student, "pupil_match_dissolved_other", {
+                pupil: match.pupil
+            });
         }
-        //send out mail...
-        await sendTemplateMail(mail, to.email);
+
+        await Notification.actionTaken(match.pupil, "pupil_match_dissolved", {
+            student: match.student
+        });
+        await Notification.actionTaken(match.student, "student_match_dissolved", {
+            pupil: match.pupil
+        });
     } catch (e) {
         logger.error("Can't send match dissolved mail: ", e.message);
         logger.debug(e);
