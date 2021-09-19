@@ -2773,7 +2773,6 @@ export async function groupMailHandler(req: Request, res: Response) {
 }
 
 async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[]) {
-    console.log("DEBUG", "Addressees", rawAddressees);
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
