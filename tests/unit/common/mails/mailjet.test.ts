@@ -6,12 +6,12 @@ describe("The mailjet API", function () {
         // Arrange
         const subject: string = "testmail";
         const sender: string = '"Gero von der Corona School" <gero@corona-school.de>';
-        const receiver: string = "testmailadr@cmail.com";
+        const receiver: string = "test@lern-fair.de";
         const templateID: number = 1336704;
         const variables: object = {
             personFirstname: "Gero",
             pupilFirstname: "Christopher",
-            pupilEmail: "chris@coole-mail.de",
+            pupilEmail: "test@lern-fair.de",
             pupilGrade: "2. Klasse",
             subjects: "Englisch/Deutsch",
             meetingProposalDate: "18. April 2020",
