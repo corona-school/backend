@@ -8,7 +8,7 @@ import { DEFAULTSENDERS } from "../../../../../common/mails/config";
 describe("The screening invitation mails", function() {
     beforeEach(function() {
         this.TestStudent = new Student();
-        this.TestStudent.email = "max@example.org";
+        this.TestStudent.email = "test+dev+s@lern-fair.de";
         this.TestStudent.firstname = "Max";
         this.TestStudent.lastname = "Musterfrau";
         this.sendTemplateMailStub = sinon.stub(mailHandler, "sendTemplateMail").returns(

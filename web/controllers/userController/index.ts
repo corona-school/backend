@@ -1,5 +1,5 @@
 import { getLogger } from "log4js";
-import { EntityManager, getManager, ObjectType } from "typeorm";
+import { EntityManager, getConnection, getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import {
     ApiGetUser,
@@ -38,6 +38,10 @@ import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 import { ExpertData } from "../../../common/entity/ExpertData";
 import { getDefaultScreener } from "../../../common/entity/Screener";
+import { Course, CourseState } from "../../../common/entity/Course";
+import { sendSubcourseCancelNotifications } from "../../../common/mails/courses";
+import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
+import { Subcourse } from "../../../common/entity/Subcourse";
 
 const logger = getLogger();
 
@@ -988,6 +992,9 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         return 500;
     }
 
+    let debugCancelledCourses = [];
+    let debugRemovedFrom = [];
+
     try {
         if (active && !person.active) {
             // Activate if deactivated
@@ -1018,7 +1025,54 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                 await dissolveMatch(matches[i], 0, person);
             }
 
-            // Step 2: Deactivate
+            // Step 2: Cancel all courses if user is student
+            if (type == Student) {
+                let courses = await getConnection()
+                    .getRepository(Course)
+                    .createQueryBuilder("course")
+                    .leftJoinAndSelect("course.instructors", "instructors")
+                    .innerJoin("course.instructors", "instructorsSelect")
+                    .where("instructorsSelect.id = :id", { id: person.id})
+                    .leftJoinAndSelect("course.subcourses", "subcourses")
+                    .getMany();
+
+                logger.debug("Trying to cancel following courses: ", courses);
+
+                await entityManager.transaction(async em => {
+                    for (const course of courses) {
+                        logger.debug("Iterating through courses:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
+                        if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
+                            continue;
+                        }
+
+                        if (course.instructors.length > 1) {
+                        // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
+                            course.instructors = course.instructors.filter(s => s.id !== person.id);
+                            await em.save(Course, course);
+                            debugRemovedFrom.push(course);
+                        } else {
+                        // Our person is the only instructor in the course. Cancel it.
+                            for (const subcourse of course.subcourses) {
+                                if (!subcourse.cancelled) {
+                                    subcourse.cancelled = true;
+                                    await em.save(Subcourse, subcourse);
+                                    //await sendSubcourseCancelNotifications(course, subcourse);
+                                }
+                            }
+
+                            course.courseState = CourseState.CANCELLED;
+                            await em.save(Course, course);
+                            transactionLog.log(new CancelCourseEvent(person as Student, course));
+                            debugCancelledCourses.push(course);
+                        }
+
+                    }
+                });
+                logger.info("Courses user was removed from (as an instructor): ", debugRemovedFrom);
+                logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
+            }
+
+            // Step 3: Deactivate
             person.active = false;
 
             await entityManager.save(type, person);
@@ -1026,10 +1080,10 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         }
     } catch (e) {
         logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);
-        logger.debug(person, e);
+        logger.debug(person);
+        logger.debug(e);
         return 500;
     }
-
     return 204;
 }
 
