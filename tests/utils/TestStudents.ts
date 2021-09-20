@@ -6,7 +6,7 @@ function generateMax() {
     s.firstname = "Max";
     s.lastname = "Mustermann";
     s.active = true;
-    s.email = "max@familie-musterfrau.de";
+    s.email = "test+dev+s@lern-fair.de";
     s.wix_id =
         "TEST_WIX_ID_ÖKJSÖDF83-A39ASFASD83RAFSD-LAÖSDÜF9AUÖ3ASDÖFA-A-DSFLAHSDF";
     s.subjects = `["Deutsch7:29", "Englisch1:12"]`;
