@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["interactiveTransactions"]
 }
 
@@ -408,6 +408,7 @@ model screener {
   instructor_screening       instructor_screening[]
   project_coaching_screening project_coaching_screening[]
   screening                  screening[]
+  certificate_of_conduct     certificate_of_conduct[]
 }
 
 model screening {
@@ -482,6 +483,7 @@ model student {
   project_match                             project_match[]
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
+  certificate_of_conduct                    certificate_of_conduct[]
 }
 
 model subcourse {
@@ -536,20 +538,18 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
-
 model certificate_of_conduct {
-    id                               Int                                @id @default(autoincrement())
-    createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
-    updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
-    dateOfInspection                 DateTime
-    dateOfIssue                      DateTime
-    criminalRecords                  Boolean
-    inspectingScreenerId             Int?
-    studentId                        Int?                                @unique
-    inspectingScreener               screener?                           @relation(fields: [screenerId], references: [id])
-    student                          student?                            @relation(fields: [studentId], references: [id])
+  id                   Int       @id @default(autoincrement())
+  createdAt            DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt            DateTime  @default(now()) @db.Timestamp(6)
+  dateOfInspection     DateTime
+  dateOfIssue          DateTime
+  criminalRecords      Boolean
+  inspectingScreenerId Int?
+  studentId            Int?      @unique
+  inspectingScreener   screener? @relation(fields: [inspectingScreenerId], references: [id])
+  student              student?  @relation(fields: [studentId], references: [id])
 }
-
 
 enum course_category_enum {
   revision
@@ -619,19 +619,19 @@ enum mentor_division_enum {
 }
 
 enum mentor_expertise_enum {
-  language_difficulties_and_communication @map("language difficulties and communication")
-  specialized_expertise_in_subjects @map("specialized expertise in subjects")
-  educational_and_didactic_expertise @map("educational and didactic expertise")
-  technical_support @map("technical support")
-  self_organization @map("self-organization")
+  language_difficulties_and_communication  @map("language difficulties and communication")
+  specialized_expertise_in_subjects        @map("specialized expertise in subjects")
+  educational_and_didactic_expertise       @map("educational and didactic expertise")
+  technical_support                        @map("technical support")
+  self_organization                        @map("self-organization")
 }
 
 enum project_field_with_grade_restriction_projectfield_enum {
   Arbeitswelt
   Biologie
   Chemie
-  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
-  Mathematik_Informatik @map("Mathematik/Informatik")
+  Geo_und_Raumwissenschaften  @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik       @map("Mathematik/Informatik")
   Physik
   Technik
 }
@@ -646,14 +646,14 @@ enum pupil_languages_enum {
   Chinesisch
   Deutsch
   Englisch
-  Franz_sisch @map("Französisch")
+  Franz_sisch        @map("Französisch")
   Italienisch
   Kasachisch
   Kurdisch
   Polnisch
   Portugiesisch
   Russisch
-  T_rkisch @map("Türkisch")
+  T_rkisch           @map("Türkisch")
   Spanisch
   Ukrainisch
   Vietnamesisch
@@ -661,27 +661,27 @@ enum pupil_languages_enum {
 }
 
 enum pupil_learninggermansince_enum {
-  more_than_four @map(">4")
-  two_to_four @map("2-4")
-  one_to_two @map("1-2")
-  less_than_one @map("<1")
+  more_than_four  @map(">4")
+  two_to_four     @map("2-4")
+  one_to_two      @map("1-2")
+  less_than_one   @map("<1")
 }
 
 enum pupil_projectfields_enum {
   Arbeitswelt
   Biologie
   Chemie
-  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
-  Mathematik_Informatik @map("Mathematik/Informatik")
+  Geo_und_Raumwissenschaften  @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik       @map("Mathematik/Informatik")
   Physik
   Technik
 }
 
 enum pupil_registrationsource_enum {
-  normal @map("0")
-  cooperation @map("1")
-  drehtuer @map("2")
-  other @map("3")
+  normal       @map("0")
+  cooperation  @map("1")
+  drehtuer     @map("2")
+  other        @map("3")
 }
 
 enum pupil_schooltype_enum {
@@ -690,7 +690,7 @@ enum pupil_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule  @map("förderschule")
   berufsschule
   other
 }
@@ -721,7 +721,7 @@ enum school_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule  @map("förderschule")
   berufsschule
   other
 }
@@ -756,14 +756,14 @@ enum student_languages_enum {
   Chinesisch
   Deutsch
   Englisch
-  Franz_sisch @map("Französisch")
+  Franz_sisch        @map("Französisch")
   Italienisch
   Kasachisch
   Kurdisch
   Polnisch
   Portugiesisch
   Russisch
-  T_rkisch @map("Türkisch")
+  T_rkisch           @map("Türkisch")
   Spanisch
   Ukrainisch
   Vietnamesisch
@@ -777,10 +777,10 @@ enum student_module_enum {
 }
 
 enum student_registrationsource_enum {
-  normal @map("0")
-  cooperation @map("1")
-  drehtuer @map("2")
-  other @map("3")
+  normal       @map("0")
+  cooperation  @map("1")
+  drehtuer     @map("2")
+  other        @map("3")
 }
 
 enum student_state_enum {
