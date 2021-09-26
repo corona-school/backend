@@ -1,5 +1,5 @@
 import { getLogger } from "log4js";
-import { EntityManager, getManager, ObjectType } from "typeorm";
+import { EntityManager, getConnection, getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import {
     ApiGetUser,
@@ -28,7 +28,7 @@ import {
 } from "../../../common/administration/screening/initial-invitations";
 import { State } from "../../../common/entity/State";
 import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { Mentor } from "../../../common/entity/Mentor";
 import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { ApiSubject } from "../format";
@@ -38,6 +38,10 @@ import { ProjectMatch } from "../../../common/entity/ProjectMatch";
 import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
 import { ExpertData } from "../../../common/entity/ExpertData";
 import { getDefaultScreener } from "../../../common/entity/Screener";
+import { Course, CourseState } from "../../../common/entity/Course";
+import { sendSubcourseCancelNotifications } from "../../../common/mails/courses";
+import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
+import { Subcourse } from "../../../common/entity/Subcourse";
 
 const logger = getLogger();
 
@@ -70,7 +74,7 @@ const logger = getLogger();
  *
  */
 export async function getSelfHandler(req: Request, res: Response) {
-    if (res.locals.user instanceof Person) {
+    if (res.locals.user instanceof Pupil || res.locals.user instanceof Student) {
         req.params.id = res.locals.user.wix_id;
     }
 
@@ -109,7 +113,7 @@ export async function getHandler(req: Request, res: Response) {
     let status;
 
     try {
-        if (req.params.id != undefined && res.locals.user instanceof Person) {
+        if (req.params.id != undefined && (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
             try {
                 let obj = await get(req.params.id, res.locals.user);
                 if (obj != null) {
@@ -171,7 +175,9 @@ export async function putHandler(req: Request, res: Response) {
             (b.grade == undefined || typeof b.grade == "number") &&
             (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
             (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
-            if (req.params.id != undefined && res.locals.user instanceof Person) {
+            if (req.params.id != undefined &&
+                (res.locals.user instanceof Student || res.locals.user instanceof Pupil)
+            ) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
                 } catch (e) {
@@ -281,7 +287,8 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             }
         }
 
-        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
+        if (status < 300 && req.params.id != undefined &&
+            (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
             try {
                 status = await putSubjects(req.params.id, b, res.locals.user);
             } catch (e) {
@@ -346,7 +353,8 @@ export async function putProjectFieldsHandler(req: Request, res: Response) {
             logger.error(`Put user project fields has invalid project field grade restriction!`);
         }
 
-        if (status < 300 && req.params.id != undefined && res.locals.user instanceof Person) {
+        if (status < 300 && req.params.id != undefined &&
+            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
                 status = await putProjectFields(req.params.id, projectFields, res.locals.user);
             } catch (e) {
@@ -398,7 +406,7 @@ export async function putActiveHandler(req: Request, res: Response) {
     try {
         if (req.params.id != undefined &&
             req.params.active != undefined &&
-            res.locals.user instanceof Person) {
+            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
 
                 let active: boolean;
@@ -415,7 +423,9 @@ export async function putActiveHandler(req: Request, res: Response) {
                     status = await putActive(
                         req.params.id,
                         active,
-                        res.locals.user
+                        res.locals.user,
+                        req.body.deactivationReason,
+                        req.body.deactivationFeedback
                     );
                 }
             } catch (e) {
@@ -713,20 +723,31 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
-        let matchCount = await entityManager.count(Match, {
-            pupil: person,
-            dissolved: false
-        });
-        if (req.matchesRequested > 1 ||
-            req.matchesRequested < 0 ||
-            !Number.isInteger(req.matchesRequested) ||
-            req.matchesRequested + matchCount > 1) {
+        if (req.matchesRequested !== undefined && person.openMatchRequestCount !== req.matchesRequested) {
+            if (!Number.isInteger(req.matchesRequested) || req.matchesRequested < 0) {
+                logger.warn(`While updating Pupil(${person.id}): matchRequested ${req.matchesRequested} is not an integer or below zero`);
+                return 400;
+            }
 
-            logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
-            return 400;
+            if (req.matchesRequested > 1) {
+                // NOTE: Admins can enter a larger number into the database
+                logger.warn(`While updating Pupil(${person.id}): Pupils may only have one open match request (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount})`);
+                return 400;
+            }
+
+            let matchCount = await entityManager.count(Match, {
+                pupil: person,
+                dissolved: false
+            });
+
+            if (req.matchesRequested > person.openMatchRequestCount && (req.matchesRequested + matchCount) > 1) {
+                // NOTE: The opposite scenario can happen when an admin manually increased the match request count. The user can then decrease that number
+                logger.warn(`While updating Pupil(${person.id}): Pupils may only request more matches when they do not have a Match already (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount}, actual: ${matchCount})`);
+                return 400;
+            }
+
+            person.openMatchRequestCount = req.matchesRequested;
         }
-
-        person.openMatchRequestCount = req.matchesRequested;
 
         // ++++ GRADE ++++
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
@@ -947,7 +968,7 @@ async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], pers
     return 204;
 }
 
-async function putActive(wix_id: string, active: boolean, person: Pupil | Student): Promise<number> {
+async function putActive(wix_id: string, active: boolean, person: Pupil | Student, deactivationReason?: string, deactivationFeedback?: string): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -970,6 +991,9 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         logger.debug(person);
         return 500;
     }
+
+    let debugCancelledCourses = [];
+    let debugRemovedFrom = [];
 
     try {
         if (active && !person.active) {
@@ -1001,18 +1025,65 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                 await dissolveMatch(matches[i], 0, person);
             }
 
-            // Step 2: Deactivate
+            // Step 2: Cancel all courses if user is student
+            if (type == Student) {
+                let courses = await getConnection()
+                    .getRepository(Course)
+                    .createQueryBuilder("course")
+                    .leftJoinAndSelect("course.instructors", "instructors")
+                    .innerJoin("course.instructors", "instructorsSelect")
+                    .where("instructorsSelect.id = :id", { id: person.id})
+                    .leftJoinAndSelect("course.subcourses", "subcourses")
+                    .getMany();
+
+                logger.debug("Trying to cancel following courses: ", courses);
+
+                await entityManager.transaction(async em => {
+                    for (const course of courses) {
+                        logger.debug("Iterating through courses:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
+                        if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
+                            continue;
+                        }
+
+                        if (course.instructors.length > 1) {
+                        // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
+                            course.instructors = course.instructors.filter(s => s.id !== person.id);
+                            await em.save(Course, course);
+                            debugRemovedFrom.push(course);
+                        } else {
+                        // Our person is the only instructor in the course. Cancel it.
+                            for (const subcourse of course.subcourses) {
+                                if (!subcourse.cancelled) {
+                                    subcourse.cancelled = true;
+                                    await em.save(Subcourse, subcourse);
+                                    //await sendSubcourseCancelNotifications(course, subcourse);
+                                }
+                            }
+
+                            course.courseState = CourseState.CANCELLED;
+                            await em.save(Course, course);
+                            transactionLog.log(new CancelCourseEvent(person as Student, course));
+                            debugCancelledCourses.push(course);
+                        }
+
+                    }
+                });
+                logger.info("Courses user was removed from (as an instructor): ", debugRemovedFrom);
+                logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
+            }
+
+            // Step 3: Deactivate
             person.active = false;
 
             await entityManager.save(type, person);
-            await transactionLog.log(new DeActivateEvent(person, false));
+            await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
         logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);
-        logger.debug(person, e);
+        logger.debug(person);
+        logger.debug(e);
         return 500;
     }
-
     return 204;
 }
 

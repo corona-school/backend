@@ -31,6 +31,8 @@ import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication"
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
+import { prisma } from "../common/prisma/";
+import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
 
 export async function setupDevDB() {
@@ -46,7 +48,7 @@ export async function setupDevDB() {
     p.lastname = "Musterschüler";
     p.active = true;
     p.isPupil = true;
-    p.email = "max@gamil.com";
+    p.email = "test+dev+p1@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
     p.authToken = sha512("authtokenP1");
@@ -63,7 +65,7 @@ export async function setupDevDB() {
     p.firstname = "Tom";
     p.lastname = "Müller";
     p.active = true;
-    p.email = "müller@hotmail.de";
+    p.email = "test+dev+p2@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
     p.authToken = sha512("authtokenP2");
@@ -80,7 +82,7 @@ export async function setupDevDB() {
     p.isParticipant = true;
     p.isPupil = false;
     p.active = true;
-    p.email = "müller2@hotmail.de";
+    p.email = "test+dev+p3@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
     p.authToken = sha512("authtokenP3");
@@ -100,7 +102,7 @@ export async function setupDevDB() {
     p.isJufoParticipant = TuteeJufoParticipationIndication.YES;
     p.isProjectCoachee = true;
     p.projectFields = [ProjectField.ARBEITSWELT, ProjectField.BIOLOGIE];
-    p.email = "jjifi@hotmail.de";
+    p.email = "test+dev+p4@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
     p.authToken = sha512("authtokenP4");
@@ -118,7 +120,7 @@ export async function setupDevDB() {
     p.isParticipant = false;
     p.isPupil = true;
     p.isProjectCoachee = false;
-    p.email = "martinulzs@example.corona-school.de"; //no @example.org, if you wanna test matching
+    p.email = "test+dev+p5@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
     p.authToken = sha512("authtokenP5");
@@ -136,7 +138,7 @@ export async function setupDevDB() {
     p.isParticipant = false;
     p.isPupil = true;
     p.isProjectCoachee = false;
-    p.email = "ipsla@example.org";
+    p.email = "test+dev+p6@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 700000);
     p.authToken = sha512("authtokenP6");
@@ -154,7 +156,7 @@ export async function setupDevDB() {
     p.isParticipant = false;
     p.isPupil = true;
     p.isProjectCoachee = false;
-    p.email = "larifari@example.org";
+    p.email = "test+dev+p7@lern-fair.de";
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 800000);
     p.authToken = sha512("authtokenP7");
@@ -164,6 +166,61 @@ export async function setupDevDB() {
     p.grade = "7. Klasse";
     p.openMatchRequestCount = 1;
     pupils.push(p);
+
+    const p8 = p = new Pupil();
+    p.firstname = "Max8";
+    p.lastname = "Musterschüler8";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "test+dev+p8@lern-fair.de";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP8");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526371";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
+    const p9 = p = new Pupil();
+    p.firstname = "Max9";
+    p.lastname = "Musterschüler9";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "test+dev+p9@lern-fair.de";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP9");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526372";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
+    const p10 = p = new Pupil();
+    p.firstname = "Max10";
+    p.lastname = "Musterschüler10";
+    p.active = true;
+    p.isPupil = true;
+    p.email = "test+dev+p10@lern-fair.de";
+    p.verification = null;
+    p.verifiedAt = new Date(new Date().getTime() - 100000);
+    p.authToken = sha512("authtokenP10");
+    p.wix_id = "00000000-0000-0001-0001-1b4c4c526373";
+    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
+    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.grade = "3. Klasse";
+    p.openMatchRequestCount = 0;
+    p.languages = [Language.bg, Language.it];
+    p.learningGermanSince = LearningGermanSince.lessThanOne;
+    pupils.push(p);
+
 
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
@@ -175,7 +232,7 @@ export async function setupDevDB() {
     s1.firstname = "Leon";
     s1.lastname = "Jackson";
     s1.active = true;
-    s1.email = "leon-jackson@t-online.de";
+    s1.email = "test+dev+s1@lern-fair.de";
     s1.isInstructor = true;
     s1.isStudent = true;
     s1.verification = null;
@@ -197,7 +254,7 @@ export async function setupDevDB() {
     s2.firstname = "Melanie";
     s2.lastname = "Meiers";
     s2.active = true;
-    s2.email = "mel-98@gmail.com";
+    s2.email = "test+dev+s2@lern-fair.de";
     s2.isInstructor = true;
     s2.isStudent = true;
     s2.verification = null;
@@ -213,7 +270,7 @@ export async function setupDevDB() {
     s3.firstname = "Leon";
     s3.lastname = "Erath";
     s3.active = true;
-    s3.email = "leon-erath@test.de";
+    s3.email = "test+dev+s3@lern-fair.de";
     s3.isInstructor = true;
     s3.isStudent = true;
     s3.verification = null;
@@ -232,7 +289,7 @@ export async function setupDevDB() {
     s4.firstname = "Leon2";
     s4.lastname = "Erath2";
     s4.active = true;
-    s4.email = "leon-erath@test.de2";
+    s4.email = "test+dev+s4@lern-fair.de";
     s4.isInstructor = true;
     s4.isStudent = false;
     s4.verification = null;
@@ -251,7 +308,7 @@ export async function setupDevDB() {
     s5.firstname = "Leon5";
     s5.lastname = "Erath5";
     s5.active = true;
-    s5.email = "leon-erath@test.de5";
+    s5.email = "test+dev+s5@lern-fair.de";
     s5.isInstructor = false;
     s5.isStudent = true;
     s5.verification = null;
@@ -272,7 +329,7 @@ export async function setupDevDB() {
     s6.firstname = "Jufo";
     s6.lastname = "Tufo";
     s6.active = true;
-    s6.email = "jufo-tufo@test.de";
+    s6.email = "test+dev+s6@lern-fair.de";
     s6.isInstructor = false;
     s6.isProjectCoach = true;
     s6.isStudent = false;
@@ -296,7 +353,7 @@ export async function setupDevDB() {
     s7.firstname = "Jufo";
     s7.lastname = "Mufo";
     s7.active = true;
-    s7.email = "jufo-mufo@test.de5";
+    s7.email = "test+dev+s7@lern-fair.de";
     s7.isInstructor = false;
     s7.isStudent = true;
     s7.isProjectCoach = true;
@@ -507,7 +564,7 @@ export async function setupDevDB() {
     mentor1.firstname = "Aurelie";
     mentor1.lastname = "Streich";
     mentor1.active = true;
-    mentor1.email = "aurelie.streich@example.com";
+    mentor1.email = "test+dev+m3@lern-fair.de";
     mentor1.verification = null;
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
     mentor1.authToken = sha512("authtokenM3");
@@ -753,16 +810,16 @@ export async function setupDevDB() {
     course8.subcourses = [];
     course8.courseState = CourseState.ALLOWED;
 
-    let guest1 = new CourseGuest("test1@gmail.com", "Tim1", "Marx1", course8, s1, "guestToken1");
-    let guest2 = new CourseGuest("test2@gmail.com", "Tim2", "Marx2", course8, s1, "guestToken2");
-    let guest3 = new CourseGuest("test3@gmail.com", "Tim3", "Marx3", course8, s1, "guestToken3");
-    let guest4 = new CourseGuest("test4@gmail.com", "Tim4", "Marx4", course8, s1, "guestToken4");
-    let guest5 = new CourseGuest("test5@gmail.com", "Tim5", "Marx5", course8, s1, "guestToken5");
-    let guest6 = new CourseGuest("test6@gmail.com", "Tim6", "Marx6", course8, s1, "guestToken6");
-    let guest7 = new CourseGuest("test7@gmail.com", "Tim7", "Marx7", course8, s1, "guestToken7");
-    let guest8 = new CourseGuest("test8@gmail.com", "Tim8", "Marx8", course8, s1, "guestToken8");
-    let guest9 = new CourseGuest("test9@gmail.com", "Tim9", "Marx9", course8, s1, "guestToken9");
-    let guest10 = new CourseGuest("test10@gmail.com", "Tim10", "Marx10", course8, s1, "guestToken10");
+    let guest1 = new CourseGuest("test+dev+g1@lern-fair.de", "Tim1", "Marx1", course8, s1, "guestToken1");
+    let guest2 = new CourseGuest("test+dev+g2@lern-fair.de", "Tim2", "Marx2", course8, s1, "guestToken2");
+    let guest3 = new CourseGuest("test+dev+g3@lern-fair.de", "Tim3", "Marx3", course8, s1, "guestToken3");
+    let guest4 = new CourseGuest("test+dev+g4@lern-fair.de", "Tim4", "Marx4", course8, s1, "guestToken4");
+    let guest5 = new CourseGuest("test+dev+g5@lern-fair.de", "Tim5", "Marx5", course8, s1, "guestToken5");
+    let guest6 = new CourseGuest("test+dev+g6@lern-fair.de", "Tim6", "Marx6", course8, s1, "guestToken6");
+    let guest7 = new CourseGuest("test+dev+g7@lern-fair.de", "Tim7", "Marx7", course8, s1, "guestToken7");
+    let guest8 = new CourseGuest("test+dev+g8@lern-fair.de", "Tim8", "Marx8", course8, s1, "guestToken8");
+    let guest9 = new CourseGuest("test+dev+g9@lern-fair.de", "Tim9", "Marx9", course8, s1, "guestToken9");
+    let guest10 = new CourseGuest("test+dev+g10@lern-fair.de", "Tim10", "Marx10", course8, s1, "guestToken10");
     await entityManager.save(CourseGuest, guest1);
     await entityManager.save(CourseGuest, guest2);
     await entityManager.save(CourseGuest, guest3);
@@ -879,7 +936,7 @@ export async function setupDevDB() {
     subcourse7.instructors = [s1, s2];
     subcourse7.maxParticipants = 4;
     subcourse7.published = true;
-    subcourse7.participants = pupils;
+    subcourse7.participants = pupils.slice(0, 5);
 
     subcourses.push(subcourse7);
 
@@ -891,7 +948,7 @@ export async function setupDevDB() {
     subcourse8.instructors = [s1];
     subcourse8.maxParticipants = 10;
     subcourse8.published = true;
-    subcourse8.participants = pupils;
+    subcourse8.participants = pupils.slice(0, 5);
 
     subcourses.push(subcourse8);
 
@@ -903,7 +960,7 @@ export async function setupDevDB() {
     subcourse9.instructors = [s1];
     subcourse9.maxParticipants = 7;
     subcourse9.published = true;
-    subcourse9.participants = pupils;
+    subcourse9.participants = pupils.slice(0, 7);
 
     subcourses.push(subcourse9);
 
@@ -1025,7 +1082,7 @@ export async function setupDevDB() {
     const lecture13: Lecture = new Lecture();
     lecture13.subcourse = subcourse11;
     lecture13.duration = 60;
-    lecture13.start = new Date(year, month, date + 12, 20, 0, 0, 0);
+    lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
 
     lectures.push(
@@ -1056,7 +1113,7 @@ export async function setupDevDB() {
     screener.firstname = "Maxi";
     screener.lastname = "Screenerfrau";
     screener.active = true;
-    screener.email = "maxi-screening@example.org";
+    screener.email = "test+dev+sc1@lern-fair.de";
     screener.oldNumberID = -1;
     // Screeners use another hashing algorithm than regular users
     screener.password = await hashPassword("screener");
@@ -1068,7 +1125,7 @@ export async function setupDevDB() {
     screener2.firstname = "Hanna";
     screener2.lastname = "Falkland";
     screener2.active = true;
-    screener2.email = "hanna@corona-school.de";
+    screener2.email = "test+dev+sc2@lern-fair.de";
     screener2.oldNumberID = -2;
     screener2.password = await hashPassword("smsmsms"); //Don't be a fool, try Corona School ❤️
     screener2.verified = true;
@@ -1230,14 +1287,14 @@ export async function setupDevDB() {
 
     const expert1 = new ExpertData();
     expert1.student = students[5];
-    expert1.contactEmail = "contact@jufo-tufo.de";
+    expert1.contactEmail = "test+dev+j1@lern-fair.de";
     expert1.description = "JuFo is great!";
 
     experts.push(expert1);
 
     const expert2 = new ExpertData();
     expert2.student = students[6];
-    expert2.contactEmail = "contact@jufo-tufo.de";
+    expert2.contactEmail = "test+dev+j1@lern-fair.de";
     expert2.description =
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis gravida, erat in dignissim vestibulum, ex nisl consequat nisl, at sagittis mauris Glasfaser eu nisl. Cras quis dui blandit, tincidunt libero id, porttitor nisi. Sed eu tellus interdum, luctus quam id, pretium dolor. Praesent feugiat quis sem in porttitor. Ut auctor erat nisl, vitae tempus nisl ullamcorper nec.";
     expert2.active = true;
@@ -1248,7 +1305,7 @@ export async function setupDevDB() {
 
     const expert3 = new ExpertData();
     expert3.student = students[3];
-    expert3.contactEmail = "contact2@jufo-tufo.de";
+    expert3.contactEmail = "test+dev+j3@lern-fair.de";
     expert3.description =
         "Die Elektronik ist ein Hauptgebiet der Elektrotechnik. Sie ist die Wissenschaft von der Steuerung des elektrischen Stromes durch elektronische Schaltungen, das heißt Schaltungen, in denen mindestens ein Bauelement aufgrund von Vakuum- oder Halbleiter-Leitung funktioniert. Elektronische Elemente verhalten sich nichtlinear, während das Verhalten anderer elektrischer (nicht-elektronischer) Elemente als linear bezeichnet wird";
     expert3.active = true;
@@ -1259,7 +1316,7 @@ export async function setupDevDB() {
 
     const expert4 = new ExpertData();
     expert4.student = students[4];
-    expert4.contactEmail = "contact3@jufo-tufo.de";
+    expert4.contactEmail = "test+dev+j4@lern-fair.de";
     expert4.description =
         "Chemie ([çeˈmi:]; mittel- und norddeutsch auch [ʃeˈmi:]; süddeutsch: [keˈmi:]) ist diejenige Naturwissenschaft, die sich mit dem Aufbau, den Eigenschaften und der Umwandlung von chemischen Stoffen beschäftigt. Ein Stoff besteht aus Atomen, Molekülen oder beidem. Er kann außerdem Ionen enthalten. Die chemischen Reaktionen sind Vorgänge in den Elektronenhüllen der Atome, Moleküle und Ionen.";
     expert4.active = true;

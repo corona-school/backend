@@ -28,6 +28,7 @@ import { ProjectMatch } from "./ProjectMatch";
 import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
+import * as Notification from "../notification";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -320,6 +321,12 @@ export class Student extends Person {
         }
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
+
+        if (currentScreening.success) {
+            await Notification.actionTaken(this, "tutor_screening_success", {});
+        } else {
+            await Notification.actionTaken(this, "tutor_screening_rejection", {});
+        }
     }
 
     async setInstructorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
@@ -338,6 +345,12 @@ export class Student extends Person {
         }
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.instructorScreening = Promise.resolve(currentScreening);
+
+        if (currentScreening.success) {
+            await Notification.actionTaken(this, "instructor_screening_success", {});
+        } else {
+            await Notification.actionTaken(this, "instructor_screening_rejection", {});
+        }
     }
 
     async setProjectCoachingScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
@@ -356,6 +369,12 @@ export class Student extends Person {
         }
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.projectCoachingScreening = Promise.resolve(currentScreening);
+
+        if (currentScreening.success) {
+            await Notification.actionTaken(this, "coach_screening_success", {});
+        } else {
+            await Notification.actionTaken(this, "coach_screening_rejection", {});
+        }
     }
 
     // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors

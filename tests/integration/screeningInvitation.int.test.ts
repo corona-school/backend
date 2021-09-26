@@ -1,5 +1,5 @@
 import {assert} from "chai";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import mailjet from "../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../common/mails/config";
 import {Connection} from "typeorm";
@@ -45,7 +45,7 @@ describe("Screening Invitation", function() {
         testStudent.verification = verificationToken;
 
         // save test student
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
             manager.save(testStudent).then(() => {
                 //setup mailjetStub
                 const mailjetStub = sandbox.spy(mailjet, "sendTemplate");

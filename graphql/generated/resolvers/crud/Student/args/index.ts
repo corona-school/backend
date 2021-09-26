@@ -1,0 +1,12 @@
+export { AggregateStudentArgs } from "./AggregateStudentArgs";
+export { CreateManyStudentArgs } from "./CreateManyStudentArgs";
+export { CreateStudentArgs } from "./CreateStudentArgs";
+export { DeleteManyStudentArgs } from "./DeleteManyStudentArgs";
+export { DeleteStudentArgs } from "./DeleteStudentArgs";
+export { FindFirstStudentArgs } from "./FindFirstStudentArgs";
+export { FindManyStudentArgs } from "./FindManyStudentArgs";
+export { FindUniqueStudentArgs } from "./FindUniqueStudentArgs";
+export { GroupByStudentArgs } from "./GroupByStudentArgs";
+export { UpdateManyStudentArgs } from "./UpdateManyStudentArgs";
+export { UpdateStudentArgs } from "./UpdateStudentArgs";
+export { UpsertStudentArgs } from "./UpsertStudentArgs";

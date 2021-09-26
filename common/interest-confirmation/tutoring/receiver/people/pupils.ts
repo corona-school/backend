@@ -1,7 +1,7 @@
 import { EntityManager } from "typeorm";
 import { InterestConfirmationStatus } from "../../../../entity/PupilTutoringInterestConfirmationRequest";
 import { allMatchablePupilsUnremindedWithPendingConfirmation, allMatchablePupilsWithoutInterestConfirmationRequestLimitedQuery, allMatchablePupilsWithRequestConfirmationStatusLimitedQuery, createFilterPupilRequestByStatusQueryFrom, createOrderedAndLimitedPupilsQueryFrom } from "./db-queries";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 
 
 /// Return all pupils which are matchable, have received the interest-confirmation request and which is in the given status.

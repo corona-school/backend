@@ -1,4 +1,4 @@
-import * as cron from "cron";
+import cron from "cron";
 import {Mutex} from 'async-mutex';
 import { getLogger } from "log4js";
 import { Connection, createConnection, EntityManager } from "typeorm";

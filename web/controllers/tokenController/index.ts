@@ -9,13 +9,14 @@ import { v4 as uuidv4 } from "uuid";
 import { hashToken } from "../../../common/util/hashing";
 import { getTransactionLog } from "../../../common/transactionlog";
 import VerifiedEvent from "../../../common/transactionlog/types/VerifiedEvent";
-import * as moment from "moment";
+import moment from "moment";
 import {
     sendFirstScreeningInvitationToInstructor,
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
     sendFirstScreeningInvitationToTutor
 } from "../../../common/administration/screening/initial-invitations";
 import { generateToken, sendVerificationMail } from "../../../jobs/periodic/fetch/utils/verification";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -87,12 +88,15 @@ export async function verifyToken(token: string): Promise<string | null> {
                 if (student.isInstructor) {
                     // Invite to instructor screening
                     await sendFirstScreeningInvitationToInstructor(entityManager, student);
+                    await Notification.actionTaken(student, "instructor_screening_invitation", {});
                 } else if (student.isProjectCoach && !student.isStudent && !student.isUniversityStudent) {
                     //... then the only way of beeing part of Corona School is as a Jufo alumni, so send them this invitation
                     await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
+                    await Notification.actionTaken(student, "coach_screening_invitation", {});
                 } else {
                     // Invite to tutor screening
                     await sendFirstScreeningInvitationToTutor(entityManager, student);
+                    await Notification.actionTaken(student, "tutor_screening_invitation", {});
                 }
             } catch (mailerror) {
                 logger.error(`Can't send emails to student ${student.email} after verification due to mail error...`);
@@ -100,6 +104,8 @@ export async function verifyToken(token: string): Promise<string | null> {
             }
 
             await transactionLog.log(new VerifiedEvent(student));
+
+            await Notification.actionTaken(student, "user_registration_verified_email", {});
 
             return uuid;
         }
@@ -125,6 +131,8 @@ export async function verifyToken(token: string): Promise<string | null> {
             await entityManager.save(pupil);
             await transactionLog.log(new VerifiedEvent(pupil));
 
+            await Notification.actionTaken(pupil, "user_registration_verified_email", {});
+            await Notification.actionTaken(pupil, "pupil_registration_finished", {});
             return uuid;
         }
 
@@ -198,7 +206,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authTokenUsed = false;
 
                     logger.info("Generated and sending UUID " + uuid + " to " + person.email);
-                    await sendLoginTokenMail(person, uuid, req.query.redirectTo);
+                    await sendLoginTokenMail(person, uuid, req.query.redirectTo as string);
 
 
                     // Save new token to database and log action
@@ -251,7 +259,7 @@ function allowedToRequestToken(person: Person): boolean {
     return true;
 }
 
-export async function sendLoginTokenMail(person: Person, token: string, redirectTo?: string) {
+export async function sendLoginTokenMail(person: Pupil | Student, token: string, redirectTo?: string) {
     const dashboardURL = `https://my.lern-fair.de/login?token=${token}&path=${redirectTo ?? ""}`;
 
     console.log(dashboardURL);
@@ -262,6 +270,9 @@ export async function sendLoginTokenMail(person: Person, token: string, redirect
             dashboardURL: dashboardURL
         });
         await sendTemplateMail(mail, person.email);
+        await Notification.actionTaken(person, "user_login_email", {
+            dashboardURL
+        });
     } catch (e) {
         logger.error("Can't send login token mail: ", e.message);
         logger.debug(e);

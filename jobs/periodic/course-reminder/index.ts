@@ -1,6 +1,6 @@
 import { EntityManager } from "typeorm";
 import { CourseState } from "../../../common/entity/Course";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { sendCourseUpcomingReminderInstructor, sendCourseUpcomingReminderParticipant } from "../../../common/mails/courses";
 import { prisma } from "../../../common/prisma";
@@ -61,11 +61,11 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
             logger.info("Sending reminders to instructor and " + subcourse.subcourse_participants_pupil.length + " participants");
 
             // notify instructor
-            sendCourseUpcomingReminderInstructor(firstLecture.student, course, firstLecture.start);
+            sendCourseUpcomingReminderInstructor(firstLecture.student, course, subcourse, firstLecture.start);
 
             // notify all participants
             for (let i = 0; i < subcourse.subcourse_participants_pupil.length; i++) {
-                sendCourseUpcomingReminderParticipant(subcourse.subcourse_participants_pupil[i].pupil, course, firstLecture.start);
+                sendCourseUpcomingReminderParticipant(subcourse.subcourse_participants_pupil[i].pupil, course, subcourse, firstLecture.start);
             }
         }
     }

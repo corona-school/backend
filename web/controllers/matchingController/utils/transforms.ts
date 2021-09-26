@@ -1,24 +1,16 @@
 import { MatchMakingResult } from "../../../../common/administration/match-making/tutoring/types/matchmaking-result";
-import { MatchNotificationStatus, NotificationOptions } from "../../../../common/administration/match-making/tutoring/types/notifications";
+import { MatchNotificationStatus } from "../../../../common/administration/match-making/tutoring/types/notifications";
 import { MatchMakingOptions } from "../../../../common/administration/match-making/tutoring/types/options";
 import { MatchPair } from "../../../../common/entity/Match";
 import { ApiMatchingOptions, ApiNotificationOption } from "../types/matching-options";
 import { ApiFailedNotification, ApiMatch, ApiMatchMakingResult } from "../types/matchmaking-result";
 
-export function transformApiNotificationOptionToInternal(notificationOption: ApiNotificationOption): NotificationOptions {
-    const sms = [ApiNotificationOption.sms, ApiNotificationOption.emailAndSMS].includes(notificationOption);
-    const email = [ApiNotificationOption.email, ApiNotificationOption.emailAndSMS].includes(notificationOption);
-    return {
-        email,
-        sms
-    };
-}
 
 export function transformApiMatchingOptionsToInternal(options: ApiMatchingOptions): MatchMakingOptions {
     return {
         dryRun: options.dryRun,
-        notifications: transformApiNotificationOptionToInternal(options.notifications),
-        matchingAlgoSettings: options.matchingAlgoSettings
+        matchingAlgoSettings: options.matchingAlgoSettings,
+        silent: options.notifications === ApiNotificationOption.dbEntryOnly
     };
 }
 
@@ -43,7 +35,6 @@ export function transformMatchPairToApiMatch(matchPair: MatchPair): ApiMatch {
 export function transformMatchNotificationStatusToApi(notificationStatus: MatchNotificationStatus): ApiFailedNotification {
     return {
         matchUUID: notificationStatus.match.uuid,
-        type: notificationStatus.type,
         errorMessage: notificationStatus.error?.underlyingError?.message,
         affectedTuteeEmail: notificationStatus.error?.affectedTutee?.email,
         affectedTutorEmail: notificationStatus.error?.affectedTutor?.email
@@ -54,7 +45,6 @@ export function transformInternalMatchMakingResultToApi(result: MatchMakingResul
         wasDryRun: result.dryRun,
         stats: result.matchingStats,
         matches: result.createdMatches?.map(m => transformMatchPairToApiMatch(m)),
-        notificationChannelsUsed: result.notifications,
         failedNotifications: result.failedNotifications?.map(ns => transformMatchNotificationStatusToApi(ns))
     };
 }

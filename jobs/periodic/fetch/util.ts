@@ -1,5 +1,5 @@
 import { apiKey, apiUrl } from "./config";
-import * as https from "https";
+import https from "https";
 import { getLogger } from "log4js";
 
 const logger = getLogger();

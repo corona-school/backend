@@ -74,6 +74,7 @@ export interface ApiSubcourse {
     joinAfterStart?: boolean;
     joined?: boolean;
     onWaitingList?: boolean;
+    waitingListCount?: number;
     published?: boolean;
     cancelled?: boolean;
 }

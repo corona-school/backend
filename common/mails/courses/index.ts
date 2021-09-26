@@ -1,14 +1,25 @@
 import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from "../index";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { getLogger } from "log4js";
 import { Student } from "../../entity/Student";
 import { Pupil } from "../../entity/Pupil";
 import { DEFAULTSENDERS } from "../config";
 import { CourseGuest } from "../../entity/CourseGuest";
+import * as Notification from "../../../common/notification";
+import { Person } from '../../../common/entity/Person';
+import { getFullName } from "../../../common/user";
+import * as Prisma from "@prisma/client";
 
 const logger = getLogger();
+
+const dropCourseRelations = (course: Course) =>
+    ({ ...course, instructors: undefined, guests: undefined, correspondent: undefined, subcourses: undefined });
+
+const dropSubcourseRelations = (subcourse: Subcourse) =>
+    ({ ...subcourse, instructors: undefined, participants: undefined, waitingList: undefined, course: undefined });
+
 
 export async function sendSubcourseCancelNotifications(course: Course, subcourse: Subcourse) {
 
@@ -35,10 +46,17 @@ export async function sendSubcourseCancelNotifications(course: Course, subcourse
             firstLectureTime: moment(firstLecture).format("HH:mm")
         });
         await sendTemplateMail(mail, participant.email);
+        await Notification.actionTaken(participant, "participant_course_cancelled", {
+            uniqueId: `${subcourse.id}`,
+            course: dropCourseRelations(course),
+            subcourse: dropSubcourseRelations(subcourse),
+            firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+            firstLectureTime: moment(firstLecture).format("HH:mm")
+        });
     }
 }
 
-export async function sendCourseUpcomingReminderInstructor(instructor: {firstname: string, email: string}, course: {name: string}, firstLecture: Date) {
+export async function sendCourseUpcomingReminderInstructor(instructor: Student | Prisma.student, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
         participantFirstname: instructor.firstname,
         courseName: course.name,
@@ -46,9 +64,15 @@ export async function sendCourseUpcomingReminderInstructor(instructor: {firstnam
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, instructor.email);
+    await Notification.actionTaken(instructor, "instructor_course_reminder", {
+        course,
+        subcourse,
+        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+        firstLectureTime: moment(firstLecture).format("HH:mm")
+    });
 }
 
-export async function sendCourseUpcomingReminderParticipant(participant: {firstname: string, email: string}, course: {name: string}, firstLecture: Date) {
+export async function sendCourseUpcomingReminderParticipant(participant: Pupil | Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,
@@ -56,6 +80,12 @@ export async function sendCourseUpcomingReminderParticipant(participant: {firstn
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
     await sendTemplateMail(mail, participant.email);
+    await Notification.actionTaken(participant, "participant_subcourse_reminder", {
+        subcourse,
+        course,
+        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
+        firstLectureTime: moment(firstLecture).format("HH:mm")
+    });
 }
 
 export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
@@ -90,6 +120,12 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
     });
 
     await sendTemplateMail(mail, participant.email);
+
+    await Notification.actionTaken(participant, "participant_subcourse_joined", {
+        course,
+        firstLectureDate: firstLectureMoment.format("DD.MM.YYYY"),
+        firstLectureTime: firstLectureMoment.format("HH:mm")
+    });
 }
 
 export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
@@ -98,10 +134,10 @@ export async function sendParticipantToInstructorMail(participant: Pupil, instru
         messageBody, //email text
         DEFAULTSENDERS.noreply, //sender address
         instructor.email, //receiver
-        `${participant.fullName()} via Lern-Fair`, //sender name
-        `${instructor.fullName()}`, //receiver name
+        `${getFullName(participant)} via Lern-Fair`, //sender name
+        `${getFullName(instructor)}`, //receiver name
         participant.email, //replyTo address
-        `${participant.fullName()}` //replyTo name
+        `${getFullName(participant)}` //replyTo name
     );
 }
 
