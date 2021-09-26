@@ -4,6 +4,8 @@ import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { getUserId } from "../../common/user";
 import { LimitEstimated } from "../complexity";
+import { Subject } from "../types/subject";
+import { parseSubjectString } from "../../common/util/subjectsutils";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -40,5 +42,11 @@ export class ExtendFieldsPupilResolver {
             where: { user: pupil.wix_id },
             orderBy: { createdAt: "asc" }
         });
+    }
+
+    @FieldResolver(type => [Subject])
+    @Authorized(Role.ADMIN)
+    async subjectsFormatted(@Root() pupil: Required<Pupil>) {
+        return parseSubjectString(pupil.subjects);
     }
 }

@@ -1,6 +1,5 @@
-import { Person } from '../entity/Person';
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
