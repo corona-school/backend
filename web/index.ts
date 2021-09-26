@@ -74,8 +74,6 @@ createConnection().then(setupPDFGenerationEnvironment)
         configureCertificateAPI();
         configureTokenAPI();
         configureCourseAPI();
-        // configureServiceApis();
-        configCourse();
         configureScreenerAPI();
         configureCoursesAPI();
         configureRegistrationAPI();
