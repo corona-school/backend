@@ -1,4 +1,5 @@
 export * from "./Bbb_meeting/args";
+export * from "./Certificate_of_conduct/args";
 export * from "./Concrete_notification/args";
 export * from "./Course/args";
 export * from "./Course_attendance_log/args";

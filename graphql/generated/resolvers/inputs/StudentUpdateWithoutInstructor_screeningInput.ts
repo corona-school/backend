@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
+import { Certificate_of_conductUpdateManyWithoutStudentInput } from "../inputs/Certificate_of_conductUpdateManyWithoutStudentInput";
 import { CourseUpdateManyWithoutStudentInput } from "../inputs/CourseUpdateManyWithoutStudentInput";
 import { Course_guestUpdateManyWithoutStudentInput } from "../inputs/Course_guestUpdateManyWithoutStudentInput";
 import { Course_instructors_studentUpdateManyWithoutStudentInput } from "../inputs/Course_instructors_studentUpdateManyWithoutStudentInput";
@@ -312,4 +313,9 @@ export class StudentUpdateWithoutInstructor_screeningInput {
     nullable: true
   })
   subcourse_instructors_student?: Subcourse_instructors_studentUpdateManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Certificate_of_conductUpdateManyWithoutStudentInput, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductUpdateManyWithoutStudentInput | undefined;
 }

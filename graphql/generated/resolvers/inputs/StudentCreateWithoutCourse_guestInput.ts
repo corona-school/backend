@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
+import { Certificate_of_conductCreateNestedManyWithoutStudentInput } from "../inputs/Certificate_of_conductCreateNestedManyWithoutStudentInput";
 import { CourseCreateNestedManyWithoutStudentInput } from "../inputs/CourseCreateNestedManyWithoutStudentInput";
 import { Course_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Course_instructors_studentCreateNestedManyWithoutStudentInput";
 import { Course_participation_certificateCreateNestedManyWithoutStudentInput } from "../inputs/Course_participation_certificateCreateNestedManyWithoutStudentInput";
@@ -304,4 +305,9 @@ export class StudentCreateWithoutCourse_guestInput {
     nullable: true
   })
   subcourse_instructors_student?: Subcourse_instructors_studentCreateNestedManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedManyWithoutStudentInput, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductCreateNestedManyWithoutStudentInput | undefined;
 }
