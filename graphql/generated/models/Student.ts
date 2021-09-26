@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
+import { Certificate_of_conduct } from "../models/Certificate_of_conduct";
 import { Course } from "../models/Course";
 import { Course_guest } from "../models/Course_guest";
 import { Course_instructors_student } from "../models/Course_instructors_student";
@@ -270,4 +271,6 @@ export class Student {
   screening?: Screening | null;
 
   subcourse_instructors_student?: Subcourse_instructors_student[];
+
+  certificate_of_conduct?: Certificate_of_conduct[];
 }

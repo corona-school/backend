@@ -1,4 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
+import { Certificate_of_conduct } from "../../../models/Certificate_of_conduct";
 import { Course } from "../../../models/Course";
 import { Course_guest } from "../../../models/Course_guest";
 import { Course_instructors_student } from "../../../models/Course_instructors_student";
@@ -15,6 +16,7 @@ import { Project_match } from "../../../models/Project_match";
 import { Screening } from "../../../models/Screening";
 import { Student } from "../../../models/Student";
 import { Subcourse_instructors_student } from "../../../models/Subcourse_instructors_student";
+import { StudentCertificate_of_conductArgs } from "./args/StudentCertificate_of_conductArgs";
 import { StudentCourseArgs } from "./args/StudentCourseArgs";
 import { StudentCourse_guestArgs } from "./args/StudentCourse_guestArgs";
 import { StudentCourse_instructors_studentArgs } from "./args/StudentCourse_instructors_studentArgs";
@@ -192,5 +194,16 @@ export class StudentRelationsResolver {
         id: student.id,
       },
     }).subcourse_instructors_student(args);
+  }
+
+  @TypeGraphQL.FieldResolver(_type => [Certificate_of_conduct], {
+    nullable: false
+  })
+  async certificate_of_conduct(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: StudentCertificate_of_conductArgs): Promise<Certificate_of_conduct[]> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).certificate_of_conduct(args);
   }
 }

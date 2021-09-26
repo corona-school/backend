@@ -1,3 +1,4 @@
+export { Certificate_of_conductRelationsResolver } from "./Certificate_of_conduct/Certificate_of_conductRelationsResolver";
 export { CourseRelationsResolver } from "./Course/CourseRelationsResolver";
 export { Course_attendance_logRelationsResolver } from "./Course_attendance_log/Course_attendance_logRelationsResolver";
 export { Course_guestRelationsResolver } from "./Course_guest/Course_guestRelationsResolver";
