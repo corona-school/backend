@@ -68,6 +68,7 @@ import isEmail from "validator/lib/isEmail";
 import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
+import { getFullName } from '../../../common/user';
 
 const logger = getLogger();
 
@@ -2630,7 +2631,7 @@ export async function testJoinCourseMeeting(user: Student | Pupil | undefined) {
     // start the meeting
     await startBBBMeeting(meeting);
 
-    const userName = user?.fullName() ?? uniqueNamesGenerator({
+    const userName = user ? getFullName(user) : uniqueNamesGenerator({
         dictionaries: [NAME_GENERATOR_ADJECTIVES, NAME_GENERATOR_NAMES],
         separator: " ",
         length: 2,
@@ -2924,7 +2925,7 @@ export async function joinCourseMeetingExternalGuest(token: string): Promise<num
     }
 
     //create the join url
-    const joinURL = getMeetingUrl(meeting.meetingID, guest.fullName(), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
+    const joinURL = getMeetingUrl(meeting.meetingID, getFullName(guest), meeting.attendeePW, undefined); // no last parameter `userID` since guests should be "anonymous"
 
     return {
         url: joinURL
@@ -2999,7 +3000,7 @@ export async function issueCourseCertificate(certificateData: IIssueCertificate)
             const certificateBuffer = await getCourseCertificate(
                 student.wix_id,
                 participant.wix_id,
-                participant.fullName(),
+                getFullName(participant),
                 course.name,
                 subcourse.lectures,
                 courseDuration
