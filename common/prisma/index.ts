@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
    which is the SQL query sent to the database.
    Through that, queries can be optimized for performance */
 export const prisma = new PrismaClient(
-    process.env.ENV === "production"
+    process.env.ENV !== "dev"
         ? undefined
         : { log: ['query', 'info', `warn`, `error`] }
 );

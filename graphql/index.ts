@@ -17,6 +17,7 @@ import { MutateNotificationResolver } from "./notification/mutations";
 import { complexityEnhanceMap } from "./complexity";
 import { AuthenticationResolver } from "./authentication";
 import { FieldMeResolver } from "./me/fields";
+import { MutateMatchResolver } from "./match/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -41,6 +42,7 @@ const schema = buildSchemaSync({
         /* Match */
         FindManyMatchResolver,
         ExtendedFieldsMatchResolver,
+        MutateMatchResolver,
 
         /* Projects */
         FindManyProject_matchResolver,
