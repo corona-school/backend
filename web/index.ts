@@ -28,9 +28,6 @@ import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import * as rateLimit from "express-rate-limit";
-// Testing services imports starts here
-import * as courseREST from '../web/controllers_new/courseController';
-// Testing services imports ends here
 
 // Logger setup
 try {
@@ -226,30 +223,6 @@ createConnection().then(setupPDFGenerationEnvironment)
 
             app.use("/api/courses", coursesRouter);
         }
-
-        /* ===================TESTING SERVICES ================= */
-
-        function configCourse() {
-            const cr = express.Router();
-
-            cr.use(authCheckFactory(true));
-            cr.get("/:id", courseREST.getCourseHandlerREST);
-
-            app.use('/api/test_course', cr);
-
-        }
-
-        // function configureServiceApis() {
-        //     const courseService = express.Router();
-
-        //     courseService.use(authCheckFactory(true));
-        //     courseService.get('/', courseREST.getCoursesHandlerREST);
-        //     courseService.get('/tags', courseREST.getCourseTagsHandlerREST);
-
-        //     app.use('/api/course-service', courseService);
-        // }
-
-        /* ================ END TESTING SERVICS ================== */
 
         function configureRegistrationAPI() {
             const checkEmailRateLimit = rateLimit({

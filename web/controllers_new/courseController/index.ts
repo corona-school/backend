@@ -1,18 +1,27 @@
-import { IDeleteLecture, IDeletesubcourse, IJoinleaveInterface, IPostCourse, IPostlecture, IPostSubcourse, IPutcourse, IPutlecture, IPutsubcourse, responseError, IGroupMail, IInstructormail, IGetCourses, IGetCourse, IPostaddcourseInstructor, IImageHandler, IIssueCertificate } from './../../controllers/courseController/format';
+import { IDeleteLecture, IDeletesubcourse, IJoinleaveInterface, IPostCourse,
+         IPostlecture, IPostSubcourse, IPutcourse, IPutlecture, IPutsubcourse,
+         IGroupMail, IInstructormail, IGetCourses, IGetCourse,
+         IPostaddcourseInstructor, IImageHandler, IIssueCertificate, ApiCourseTag }
+    from './../../controllers/courseController/format';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { deleteCourse, deleteLecture, deleteSubcourse, getCourse, getCourses, getCourseTags, groupMail, instructorMail, inviteExternal, issueCourseCertificate, joinCourseMeetingExternalGuest, joinCourseMeetingHandler, joinSubcourse, joinWaitingList, leaveSubcourse, leaveWaitingList, postAddCourseInstructor, postCourse, postLecture, postSubcourse, putCourse, putLecture, putSubcourse, setCourseImage } from '../../../web/services/courseService';
-import { testJoinCourseMeetingHandler } from 'web/controllers/courseController';
+import { deleteCourse, deleteLecture, deleteSubcourse, getCourse,
+         getCourses, getCourseTags, groupMail, instructorMail,
+         inviteExternal, issueCourseCertificate, joinCourseMeeting,
+         joinCourseMeetingExternalGuest, joinSubcourse, joinWaitingList,
+         leaveSubcourse, leaveWaitingList,
+         postAddCourseInstructor, postCourse, postLecture, postSubcourse,
+         putCourse, putLecture, putSubcourse, setCourseImage, testJoinCourseMeeting
+} from '../../../web/services/courseService';
 
 
 const logger = getLogger();
 
-export const getCoursesHandlerREST = async (
+export const getCoursesHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
     try {
@@ -84,10 +93,9 @@ export const getCoursesHandlerREST = async (
     res.status(status).end();
 };
 
-export const getCourseHandlerREST = async (
+export const getCourseHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
     try {
@@ -139,14 +147,13 @@ export const getCourseHandlerREST = async (
     res.status(status).end();
 };
 
-export const getCourseTagsREST = async (
+export const getCourseTagsHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
     try {
-        const requestHandler = await getCourseTags();
+        const requestHandler: ApiCourseTag[] = await getCourseTags();
         res.json(requestHandler);
     } catch (e) {
         logger.error('Get course tags failed with: ', e);
@@ -155,10 +162,9 @@ export const getCourseTagsREST = async (
     res.status(status).end();
 };
 
-export const postCourseREST = async (
+export const postCourseHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
 
@@ -232,10 +238,9 @@ export const postCourseREST = async (
     res.status(status).end();
 };
 
-export const postSubCourseHandlerREST = async (
+export const postSubCourseHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
 
@@ -303,10 +308,9 @@ export const postSubCourseHandlerREST = async (
     res.status(status).end();
 };
 
-export const postLectureHandlerREST = async (
+export const postLectureHandler = async (
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     let status = 200;
     try {
@@ -364,11 +368,7 @@ export const postLectureHandlerREST = async (
     res.status(status).end();
 };
 
-export const postCourseHandlerREST = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const putCourseHandler = async (req: Request, res: Response) => {
     let status = 204;
 
     try {
@@ -432,7 +432,7 @@ export const postCourseHandlerREST = async (
     res.status(status).end();
 };
 
-export const putSubcourseHandlerREST = async (req: Request, res:Response, next: NextFunction) => {
+export const putSubcourseHandler = async (req: Request, res:Response) => {
     let status = 204;
     try {
         if (res.locals.user instanceof Student) {
@@ -480,7 +480,7 @@ export const putSubcourseHandlerREST = async (req: Request, res:Response, next: 
     res.status(status).end();
 };
 
-export const putLectureHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const putLectureHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Student) {
@@ -519,7 +519,7 @@ export const putLectureHandlerREST = async (req: Request, res: Response, next: N
     res.status(status).end();
 };
 
-export const deleteCourseHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCourseHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Student) {
@@ -548,7 +548,7 @@ export const deleteCourseHandlerREST = async (req: Request, res: Response, next:
     res.status(status).end();
 };
 
-export const deleteSubcourseHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteSubcourseHandler = async (req: Request, res: Response) => {
     let status = 204;
     try {
         if (res.locals.user instanceof Student) {
@@ -579,7 +579,7 @@ export const deleteSubcourseHandlerREST = async (req: Request, res: Response, ne
     res.status(status).end();
 };
 
-export const deleteLectureHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteLectureHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Student) {
@@ -613,7 +613,7 @@ export const deleteLectureHandlerREST = async (req: Request, res: Response, next
 };
 
 
-export const joinSubcourseHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const joinSubcourseHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Pupil) {
@@ -648,7 +648,7 @@ export const joinSubcourseHandlerREST = async (req: Request, res: Response, next
 };
 
 
-export const joinWaitingListHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const joinWaitingListHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Pupil) {
@@ -681,7 +681,7 @@ export const joinWaitingListHandlerREST = async (req: Request, res: Response, ne
     res.status(status).end();
 };
 
-export const leaveSubcourseHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const leaveSubcourseHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Pupil) {
@@ -715,7 +715,7 @@ export const leaveSubcourseHandlerREST = async (req: Request, res: Response, nex
     res.status(status).end();
 };
 
-export const leaveWaitingListHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const leaveWaitingListHandler = async (req: Request, res: Response) => {
     let status: number;
     try {
         if (res.locals.user instanceof Pupil) {
@@ -749,7 +749,7 @@ export const leaveWaitingListHandlerREST = async (req: Request, res: Response, n
     res.status(status).end();
 };
 
-export const groupMailHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const groupMailHandler = async (req: Request, res: Response) => {
     let status = 204;
 
     if (res.locals.user instanceof Student) {
@@ -778,7 +778,7 @@ export const groupMailHandlerREST = async (req: Request, res: Response, next: Ne
     res.status(status).end();
 };
 
-export const instructorMailHandlerREST = async (req: Request, res: Response, next: NextFunction) => {
+export const instructorMailHandler = async (req: Request, res: Response) => {
     let status = 204;
 
     if (res.locals.user instanceof Pupil) {
@@ -806,8 +806,7 @@ export const instructorMailHandlerREST = async (req: Request, res: Response, nex
     res.status(status).end();
 };
 
-export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
-    next: NextFunction) => {
+export const joinCourseMeetingHandler = async(req: Request, res:Response) => {
     const courseId = req.params.id ? req.params.id : null;
     const subcourseId = req.params.subid ? String(req.params.subid) : null;
     const ip = req.connection.remoteAddress ? req.connection.remoteAddress : null;
@@ -821,7 +820,7 @@ export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
             ip
         };
 
-        const requestHandler = await joinCourseMeetingHandler(requestObject);
+        const requestHandler = await joinCourseMeeting(requestObject);
 
         if (typeof requestHandler == 'number') {
             status = requestHandler;
@@ -838,12 +837,12 @@ export const joinCourseMeetingHandlerREST = async(req: Request, res:Response,
     res.status(status).end();
 };
 
-export const testJoinCourseMeetingHandlerREST = async(req: Request, res:Response, next: NextFunction) => {
+export const testJoinCourseMeetingHandler = async(req: Request, res:Response) => {
     let status = 200;
     const user: Student | Pupil | undefined = res.locals.user;
 
     try {
-        const requestHandler: string = await testJoinCourseMeetingHandler(user);
+        const requestHandler: string = await testJoinCourseMeeting(user);
         res.redirect(requestHandler);
     } catch (e) {
         logger.error("An error occurred during GET /course/test/meeting/join: " + e.message);
@@ -854,7 +853,7 @@ export const testJoinCourseMeetingHandlerREST = async(req: Request, res:Response
     res.status(status).end();
 };
 
-export async function postAddCourseInstructorHandlerREST(req: Request, res:Response, next: NextFunction) {
+export async function postAddCourseInstructorHandler(req: Request, res:Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student) {
@@ -888,7 +887,7 @@ export async function postAddCourseInstructorHandlerREST(req: Request, res:Respo
     res.status(status).end();
 }
 
-export async function putCourseImageHandlerREST(req: Request, res: Response) {
+export async function putCourseImageHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student) {
@@ -930,7 +929,7 @@ export async function putCourseImageHandlerREST(req: Request, res: Response) {
     res.status(status).end();
 }
 
-export async function deleteCourseImageHandlerREST(req: Request, res: Response) {
+export async function deleteCourseImageHandler(req: Request, res: Response) {
     let status = 200;
     try {
         if (res.locals.user instanceof Student) {
@@ -969,7 +968,7 @@ export async function deleteCourseImageHandlerREST(req: Request, res: Response) 
     res.status(status).end();
 }
 
-export async function inviteExternalHandlerREST(req: Request, res: Response) {
+export async function inviteExternalHandler(req: Request, res: Response) {
     let status: number;
     try {
         if (res.locals.user instanceof Student) {
@@ -978,13 +977,13 @@ export async function inviteExternalHandlerREST(req: Request, res: Response) {
                 typeof req.body.lastname === "string" && req.body.lastname.length > 0 &&
                 typeof req.body.email === "string" && req.body.email.length > 0) {
 
-                const reqquestObject = {
+                const requestObject = {
                     student: res.locals.user,
                     courseID: Number.parseInt(req.params.id, 10),
                     inviteeInfo: req.body
                 };
 
-                status = await inviteExternal(reqquestObject);
+                status = await inviteExternal(requestObject);
 
             } else {
                 status = 400;
@@ -1004,7 +1003,7 @@ export async function inviteExternalHandlerREST(req: Request, res: Response) {
     res.status(status).end();
 }
 
-export async function joinCourseMeetingExternalHandlerREST(req: Request, res: Response) {
+export async function joinCourseMeetingExternalHandler(req: Request, res: Response) {
     try {
         if (req.params.token != undefined) {
             const token = req.params.token;
@@ -1029,7 +1028,7 @@ export async function joinCourseMeetingExternalHandlerREST(req: Request, res: Re
     }
 }
 
-export async function issueCourseCertificateHandlerREST(req: Request, res: Response) {
+export async function issueCourseCertificateHandler(req: Request, res: Response) {
 
     let status = 204;
 

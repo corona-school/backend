@@ -69,7 +69,6 @@ import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 
-
 const logger = getLogger();
 
 export async function getCourses(coursesData: IGetCourses): Promise<ApiCourse[] | number> {
@@ -666,10 +665,7 @@ export async function getCourse(
         }
 
         if (!authorizedStudent && course.courseState != CourseState.ALLOWED) {
-            logger.error(
-                'Unauthorized user tried to access course of state ' +
-                    course.courseState
-            );
+            logger.error("Unauthorized user tried to access course of state " + course.courseState);
             logger.debug(student);
             return 403;
         }
@@ -2514,7 +2510,7 @@ export async function instructorMail(instructormailData: IInstructormail) {
  * @apiUse StatusInternalServerError
  */
 
-export async function joinCourseMeetingHandler(joinCourseMeetingData: IJoincourseMeeting) {
+export async function joinCourseMeeting(joinCourseMeetingData: IJoincourseMeeting) {
     // Destructuring the data from the object
     const { user, courseId, subcourseId, ip} = joinCourseMeetingData;
     const meetingInDB: boolean = await isBBBMeetingInDB(subcourseId);
@@ -2618,7 +2614,7 @@ export async function joinCourseMeetingHandler(joinCourseMeetingData: IJoincours
  * @apiUse StatusUnauthorized
  * @apiUse StatusInternalServerError
  */
-export async function testJoinCourseMeetingHandler(user: Student | Pupil | undefined) {
+export async function testJoinCourseMeeting(user: Student | Pupil | undefined) {
 
     const meeting: BBBMeeting = {
         id: -1, // default value, because of we're not creating a database instance of BBBMeeting (through typeorm) – IMPORTANT: this is not the meetingID!
