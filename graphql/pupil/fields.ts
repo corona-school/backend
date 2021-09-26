@@ -12,13 +12,25 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver(type => [Subcourse])
     @Authorized(Role.ADMIN)
     @LimitEstimated(10)
-    async subcourses(@Root() pupil: Pupil) {
-
-        console.log(`pupil.subcourses pupilId:`, pupil.id);
-
+    async subcoursesJoined(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
             where: {
                 subcourse_participants_pupil: {
+                    some: {
+                        pupilId: pupil.id
+                    }
+                }
+            }
+        });
+    }
+
+    @FieldResolver(type => [Subcourse])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(10)
+    async subcoursesWaitingList(@Root() pupil: Pupil) {
+        return await prisma.subcourse.findMany({
+            where: {
+                subcourse_waiting_list_pupil: {
                     some: {
                         pupilId: pupil.id
                     }
