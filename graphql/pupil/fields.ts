@@ -62,7 +62,7 @@ export class ExtendFieldsPupilResolver {
         return parseSubjectString(pupil.subjects);
     }
 
-    @FieldResolver({ nullable: true }, type => TutoringInterestConfirmation)
+    @FieldResolver(type => TutoringInterestConfirmation, { nullable: true })
     @Authorized(Role.ADMIN)
     async tutoringInterestConfirmation(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
