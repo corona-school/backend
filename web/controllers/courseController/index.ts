@@ -2801,7 +2801,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     if (lastLecture != null) {
         const lectureEnd = moment(lastLecture.start)
             .add(lastLecture.duration, 'minutes');
-        if (moment().isAfter(lectureEnd.add(4, 'days'))) {
+        if (moment().isAfter(lectureEnd.add(14, 'days'))) {
             logger.warn("Tried to send group mail after 14 days passed since the course has ended");
             return 400;
         }
