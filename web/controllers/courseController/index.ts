@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { getManager } from 'typeorm';
+import { getManager, In } from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 import {
@@ -2777,9 +2777,9 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
     }
-
     const entityManager = getManager();
     const course = await entityManager.findOne(Course, { id: courseId });
+
 
     if (course == undefined) {
         logger.warn("Tried to send group mail to invalid course");
@@ -2790,6 +2790,22 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     if (subcourse == undefined) {
         logger.warn("Tried to send group mail to invalid subcourse");
         return 404;
+    }
+
+    const lectures = subcourse.lectures.sort(
+        (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
+    );
+    const lastLecture = lectures[lectures.length - 1];
+    if (lastLecture != null) {
+        const lectureEnd = moment(lastLecture.start)
+            .add(lastLecture.duration, 'minutes');
+        if (moment().isAfter(lectureEnd.add(4, 'days'))) {
+            logger.warn("Tried to send group mail after 14 days passed since the course has ended");
+            return 400;
+        }
+    } else {
+        logger.warn("Can't determine the end date of the course");
+        return 400;
     }
 
     let authorized = false;
@@ -2806,11 +2822,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     try {
-        const addressees = [];
-        for (let rawAddressee of rawAddressees) {
-            const pupil = await entityManager.findOne(Pupil, { wix_id: rawAddressee});
-            addressees.push(pupil);
-        }
+        const addressees = await entityManager.find(Pupil, {wix_id: In(rawAddressees)});
         for (let participant of addressees) {
             await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
             await Notification.actionTaken(participant, "participant_course_message", {
