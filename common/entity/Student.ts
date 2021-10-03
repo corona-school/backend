@@ -30,7 +30,6 @@ import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
 import {CertificateOfConduct} from "./CertificateOfConduct";
-import {CertificateFingerprint} from "aws-sdk/clients/cloudhsm";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
