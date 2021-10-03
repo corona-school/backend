@@ -29,7 +29,7 @@ export class CertificateOfConduct {
         eager: true
     })
     @JoinColumn()
-    inspactingScreener: Screener;
+    inspectingScreener: Screener;
 
     @OneToOne((type) => Student, (student) => student.cocScreening, {
         eager: true
