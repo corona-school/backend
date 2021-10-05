@@ -61,5 +61,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
     Notification: allAdmin,
-    Pupil_tutoring_interest_confirmation_request: allAdmin
+    Pupil_tutoring_interest_confirmation_request: allAdmin,
+    Certificate_of_conduct: allAdmin
 };
