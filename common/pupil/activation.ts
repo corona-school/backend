@@ -1,4 +1,4 @@
-import { pupil as Pupil } from "@prisma/client";
+import { pupil as Pupil, student as Student} from "@prisma/client";
 import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
@@ -39,4 +39,28 @@ export async function deactivatePupil(pupil: Pupil) {
     });
 
     await getTransactionLog().log(new DeActivateEvent(pupil, false));
+}
+
+
+export async function deactivateStudent(student: Student) {
+    if (!student.active) {
+        throw new Error("Student was already deactivated");
+    }
+
+    let matches = await prisma.match.findMany({
+        where: {
+            studentId: student.id
+        }
+    });
+
+    for (const match of matches) {
+        await dissolveMatch(match, 0, student);
+    }
+
+    await prisma.student.update({
+        data: { active: false },
+        where: { id: student.id }
+    });
+
+    await getTransactionLog().log(new DeActivateEvent(student, false));
 }
