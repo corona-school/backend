@@ -1,4 +1,4 @@
-import { Subcourse, Pupil, Concrete_notification, Log } from "../generated";
+import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation } from "../generated";
 import { Authorized, Field, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
@@ -12,13 +12,25 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver(type => [Subcourse])
     @Authorized(Role.ADMIN)
     @LimitEstimated(10)
-    async subcourses(@Root() pupil: Pupil) {
-
-        console.log(`pupil.subcourses pupilId:`, pupil.id);
-
+    async subcoursesJoined(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
             where: {
                 subcourse_participants_pupil: {
+                    some: {
+                        pupilId: pupil.id
+                    }
+                }
+            }
+        });
+    }
+
+    @FieldResolver(type => [Subcourse])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(10)
+    async subcoursesWaitingList(@Root() pupil: Pupil) {
+        return await prisma.subcourse.findMany({
+            where: {
+                subcourse_waiting_list_pupil: {
                     some: {
                         pupilId: pupil.id
                     }
@@ -48,5 +60,13 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
+    }
+
+    @FieldResolver(type => TutoringInterestConfirmation, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async tutoringInterestConfirmation(@Root() pupil: Required<Pupil>) {
+        return await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
+            where: { pupilId: pupil.id }
+        });
     }
 }
