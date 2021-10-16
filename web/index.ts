@@ -204,7 +204,14 @@ createConnection().then(setupPDFGenerationEnvironment)
             coursesRouter.delete("/:id/subcourse/:subid/waitinglist/:userid", courseController.leaveWaitingListHandler);
 
             coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
-            coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+
+            const groupMailUpload = multer({
+                limits: {
+                    fileSize: 25 * (10 ** 6) //25mb
+                },
+                storage: multer.memoryStorage() //store in memory
+            });
+            coursesRouter.post("/:id/subcourse/:subid/groupmail", groupMailUpload.any(), courseController.groupMailHandler);
             coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
             coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
             coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
