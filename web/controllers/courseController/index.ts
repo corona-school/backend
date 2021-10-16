@@ -2759,7 +2759,7 @@ export async function groupMailHandler(req: Request, res: Response) {
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string"
         ) {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, req.body.addressees);
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, JSON.parse(req.body.addressees), <Express.Multer.File[]>req.files);
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
             status = 400;
@@ -2772,7 +2772,7 @@ export async function groupMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[]) {
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[], files: Express.Multer.File[]) {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
@@ -2822,9 +2822,9 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     try {
-        const addressees = await entityManager.find(Pupil, {wix_id: In(rawAddressees)});
+        const addressees = await entityManager.getRepository(Pupil).find({wix_id: In(rawAddressees)});
         for (let participant of addressees) {
-            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
+            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody, files);
             await Notification.actionTaken(participant, "participant_course_message", {
                 instructor: student,
                 course: dropCourseRelations(course),

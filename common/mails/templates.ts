@@ -356,14 +356,23 @@ export const mailjet = {
         messageTitle: string;
         messageBody: string;
         instructorMail: string;
-    }) => {
+    }, attachments: Express.Multer.File[]) => {
+        const files = attachments != null ? attachments.map(f => {
+            return {
+                contentType: f.mimetype,
+                filename: f.originalname,
+                base64Content: f.buffer.toString('base64')
+            };
+        }) : [];
+
         return <TemplateMail>{
             type: "courseinstructorgroupmail",
             id: 1518580,
             sender: DEFAULTSENDERS.support,
             title: "Nachricht zu deinem Kurs",
             disabled: false,
-            variables: variables
+            variables: variables,
+            attachements: files
         };
     },
     PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {

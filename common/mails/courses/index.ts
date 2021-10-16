@@ -88,7 +88,7 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil |
     });
 }
 
-export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
+export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string, files?: Express.Multer.File[]) {
     const mail = mailjetTemplates.COURSEINSTRUCTORGROUPMAIL({
         participantFirstName: participant.firstname,
         instructorFirstName: instructor.firstname,
@@ -96,7 +96,7 @@ export async function sendInstructorGroupMail(participant: Pupil, instructor: St
         messageTitle: messageTitle,
         messageBody: messageBody,
         instructorMail: instructor.email
-    });
+    }, files);
 
     await sendTemplateMail(mail, participant.email, instructor.email);
 }
