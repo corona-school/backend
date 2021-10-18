@@ -17,6 +17,8 @@ import { MutateNotificationResolver } from "./notification/mutations";
 import { complexityEnhanceMap } from "./complexity";
 import { MutateMatchResolver } from "./match/mutations";
 import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_confirmation/mutations";
+import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
+import {ExtendedFieldsCertificateOfConductResolver} from "./certificate_of_conduct/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -52,7 +54,11 @@ const schema = buildSchemaSync({
         FindManyConcrete_notificationResolver,
 
         /* TutoringInterestConfirmation */
-        MutateTutoringInterestConfirmationResolver
+        MutateTutoringInterestConfirmationResolver,
+
+
+        MutateCertificateOfConductResolver,
+        ExtendedFieldsCertificateOfConductResolver
     ],
     authChecker
 });
