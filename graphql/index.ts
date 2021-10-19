@@ -18,6 +18,7 @@ import { complexityEnhanceMap } from "./complexity";
 import { AuthenticationResolver } from "./authentication";
 import { FieldMeResolver } from "./me/fields";
 import { MutateMatchResolver } from "./match/mutations";
+import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_confirmation/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -25,6 +26,10 @@ applyModelsEnhanceMap(authorizationModelEnhanceMap);
 
 const schema = buildSchemaSync({
     resolvers: [
+        /* User Authentication & Information */
+        AuthenticationResolver,
+        FieldMeResolver,
+      
         /* Course */
         FindManyCourseResolver,
         ExtendedFieldsCourseResolver,
@@ -53,9 +58,8 @@ const schema = buildSchemaSync({
         MutateNotificationResolver,
         FindManyConcrete_notificationResolver,
 
-        AuthenticationResolver,
-
-        FieldMeResolver
+        /* TutoringInterestConfirmation */
+        MutateTutoringInterestConfirmationResolver
     ],
     authChecker
 });
