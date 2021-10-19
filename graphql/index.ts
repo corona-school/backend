@@ -29,7 +29,7 @@ const schema = buildSchemaSync({
         /* User Authentication & Information */
         AuthenticationResolver,
         FieldMeResolver,
-      
+
         /* Course */
         FindManyCourseResolver,
         ExtendedFieldsCourseResolver,
