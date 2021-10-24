@@ -386,10 +386,6 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
 export async function getRemissionRequestEndpoint(req: Request, res: Response) {
     const student = res.locals.user as Student;
 
-    if (!student.active) {
-        return res.status(403).send("Non-active students are not entitled to remission requests.");
-    }
-
     try {
         const pdf = await createRemissionRequestPDF(student);
 
