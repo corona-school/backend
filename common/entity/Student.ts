@@ -29,6 +29,7 @@ import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
+import { RemissionRequest } from "./RemissionRequest";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -304,6 +305,11 @@ export class Student extends Person {
         nullable: true
     })
     invitedGuests: CourseGuest[];
+
+    @OneToOne(type => RemissionRequest, remissionRequest => remissionRequest.student, {
+        nullable: true
+    })
+    remissionRequest: RemissionRequest;
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;

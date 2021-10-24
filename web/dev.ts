@@ -34,6 +34,7 @@ import { PupilTutoringInterestConfirmationRequest } from "../common/entity/Pupil
 import { prisma } from "../common/prisma/";
 import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
+import { RemissionRequest } from "../common/entity/RemissionRequest";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -1344,6 +1345,15 @@ export async function setupDevDB() {
         await entityManager.save(pticrs[i]);
         console.log("Inserted Pupil Tutoring Interest Request " + i);
     }
+
+    //Insert remission request
+    const remissionRequest = new RemissionRequest();
+    remissionRequest.student = students[0];
+    remissionRequest.uuid = randomBytes(5).toString("hex")
+        .toUpperCase();
+
+    await entityManager.save(remissionRequest);
+    console.log("Inserted remission request");
 }
 
 function sha512(input: string): string {

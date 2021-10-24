@@ -19,6 +19,7 @@ import EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 import { createAutoLoginLink } from '../utils';
 import * as Notification from "../../../common/notification";
+import { createRemissionRequestPDF } from "../../../common/remission-request";
 
 const logger = getLogger();
 
@@ -382,7 +383,31 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
     }
 }
 
+export async function getRemissionRequestEndpoint(req: Request, res: Response) {
+    const student = res.locals.user as Student;
 
+    if (!student.active) {
+        return res.status(403).send("Non-active students are not entitled to remission requests.");
+    }
+
+    try {
+        const pdf = await createRemissionRequestPDF(student);
+
+        if (pdf === undefined) {
+            return res.status(404).send("Could not find a remission request for this user.");
+        }
+
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdf.length
+        });
+
+        return res.end(pdf);
+    } catch (error) {
+        logger.error("Generating remission request failed with: ", error);
+        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+    }
+}
 
 enum State {
     manual = "manual", // student did not request approval
