@@ -18,7 +18,7 @@ export async function createRemissionRequest(student: Student) {
         where: { studentId: student.id }
     });
 
-    if (remissionRequest === null) {
+    if (!remissionRequest) {
         while (true) {
             try {
                 await prisma.remission_request.create({

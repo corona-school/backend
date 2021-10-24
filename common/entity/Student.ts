@@ -30,6 +30,7 @@ import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
 import { RemissionRequest } from "./RemissionRequest";
+import { createRemissionRequest } from "../remission-request";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -329,6 +330,7 @@ export class Student extends Person {
         this.screening = Promise.resolve(currentScreening);
 
         if (currentScreening.success) {
+            await createRemissionRequest(this);
             await Notification.actionTaken(this, "tutor_screening_success", {});
         } else {
             await Notification.actionTaken(this, "tutor_screening_rejection", {});
@@ -377,6 +379,9 @@ export class Student extends Person {
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
         if (currentScreening.success) {
+            if (!this.remissionRequest) {
+                await createRemissionRequest(this);
+            }
             await Notification.actionTaken(this, "coach_screening_success", {});
         } else {
             await Notification.actionTaken(this, "coach_screening_rejection", {});
