@@ -383,6 +383,24 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
     }
 }
 
+/**
+ * @api {GET} /certificate/remissionRequest getRemissionRequest
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * View a remission request
+ *
+ * Returns the remission request as PDF
+ *
+ *
+ * @apiName getRemissionRequest
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/remissionRequest
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusInternalServerError
+ */
 export async function getRemissionRequestEndpoint(req: Request, res: Response) {
     const student = res.locals.user as Student;
 
