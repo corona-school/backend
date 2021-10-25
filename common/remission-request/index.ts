@@ -10,7 +10,10 @@ import QRCode from "qrcode";
 
 const logger = getLogger();
 
-const templatePath = `./assets/remissionRequestTemplate.html`;
+const assetPath = "./assets";
+const remissionRequestTemplateName = "remissionRequestTemplate";
+const verificationPageName = "verifiedRemissionRequestPage";
+
 const dateFormatOptions = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
 
 export async function createRemissionRequest(student: Student) {
@@ -39,26 +42,30 @@ export async function createRemissionRequest(student: Student) {
     }
 }
 
-function loadTemplate(): EJS.ClientFunction {
+function loadTemplate(name: string): EJS.ClientFunction {
+    const templatePath = `${assetPath}/${name}.html`;
+
     if (existsSync(templatePath)) {
         const result = readFileSync(templatePath, "utf8");
         return EJS.compile(result);
     } else {
-        throw new Error(`Cannot find remission request template`);
+        throw new Error(`Cannot find template "${name}"`);
     }
 }
 
 async function createQRCode(uuid: string): Promise<string> {
-    return QRCode.toDataURL(uuid);
+    const verificationURL = `https://verify.lern-fair.de/${uuid}?ctype=remission`;
+    return QRCode.toDataURL(verificationURL);
 }
 
 export async function createRemissionRequestPDF(student: Student): Promise<Buffer> {
-    const template = loadTemplate();
     const remissionRequest = await prisma.remission_request.findUnique({ where: {studentId: student.id}});
 
     if (remissionRequest === null) {
         return undefined;
     }
+
+    const template = loadTemplate(remissionRequestTemplateName);
 
     let name = student.firstname + " " + student.lastname;
 
@@ -77,5 +84,26 @@ export async function createRemissionRequestPDF(student: Student): Promise<Buffe
         includePaths: [
             path.resolve(ASSETS)
         ]
+    });
+}
+
+export async function createRemissionRequestVerificationPage(remissionRequestUUID: string): Promise<string> {
+    const remissionRequest = await prisma.remission_request.findUnique({ where: { uuid: remissionRequestUUID }, include: { student: true }});
+
+    if (remissionRequest === null) {
+        return undefined;
+    }
+
+    const template = loadTemplate(verificationPageName);
+
+    let name = `${remissionRequest.student.firstname} ${remissionRequest.student.lastname}`;
+
+    if (process.env.ENV == 'dev') {
+        name = `[TEST] ${name}`;
+    }
+
+    return template({
+        NAMESTUDENT: name,
+        DATUM: remissionRequest.createdAt.toLocaleDateString('de-DE')
     });
 }

@@ -19,7 +19,7 @@ import EJS from "ejs";
 import { mailjetTemplates, sendTemplateMail } from '../../../common/mails';
 import { createAutoLoginLink } from '../utils';
 import * as Notification from "../../../common/notification";
-import { createRemissionRequestPDF } from "../../../common/remission-request";
+import { createRemissionRequestPDF, createRemissionRequestVerificationPage } from "../../../common/remission-request";
 
 const logger = getLogger();
 
@@ -27,6 +27,11 @@ const logger = getLogger();
 const LANGUAGES = ["de", "en"] as const;
 type Language = (typeof LANGUAGES)[number];
 const DefaultLanguage = "de";
+
+// certificate types
+const CERTIFICATETYPES = ["participation", "remission"] as const;
+type CertificateType = (typeof CERTIFICATETYPES)[number];
+const DefaultCertificateType = "participation";
 
 const MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
 
@@ -238,7 +243,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
 export async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
     try {
         const { certificateId } = req.params;
-        let { lang } = req.query;
+        let { lang, ctype } = req.query;
 
         const entityManager = getManager();
 
@@ -246,22 +251,39 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             lang = DefaultLanguage;
         }
 
+        if (ctype === undefined) {
+            ctype = DefaultCertificateType;
+        }
+
         if (!LANGUAGES.includes(lang as Language)) {
             return res.status(400).send("Language not known");
+        }
+
+        if (!CERTIFICATETYPES.includes(ctype as CertificateType)) {
+            return res.status(400).send("Certificate type not known");
         }
 
         if (typeof certificateId !== "string") {
             return res.status(400).send("Missing parameter certificateId");
         }
 
-        const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
+        if (ctype === "participation") {
+            const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
 
-        if (!certificate) {
-            return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+            if (!certificate) {
+                return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+            }
+
+            return res.send(await viewParticipationCertificate(certificate, lang as Language));
+        } else {
+            const remissionRequestVerificationPage = await createRemissionRequestVerificationPage(certificateId.toUpperCase());
+
+            if (!remissionRequestVerificationPage) {
+                return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+            }
+
+            return res.send(remissionRequestVerificationPage);
         }
-
-
-        return res.send(await viewParticipationCertificate(certificate, lang as Language));
     } catch (error) {
         logger.error("Failed to generate certificate confirmation", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");

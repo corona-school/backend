@@ -162,6 +162,9 @@ createConnection().then(setupPDFGenerationEnvironment)
             certificateRouter.post("/:certificateId/sign", authCheckFactory(), certificateController.signCertificateEndpoint);
 
             app.use("/api/certificate", certificateRouter);
+
+            // TODO Find better solution
+            app.use("/api/certificate/:certificateId/public", express.static("./assets/public"));
             app.get("/api/certificates", authCheckFactory(), certificateController.getCertificatesEndpoint);
         }
 
