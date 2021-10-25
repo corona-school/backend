@@ -13,7 +13,8 @@ export async function deactivateStudent(student: Student) {
     // Dissolve matches for the student.
     let matches = await prisma.match.findMany({
         where: {
-            studentId: student.id
+            studentId: student.id,
+            dissolved: false
         }
     });
 
@@ -23,7 +24,8 @@ export async function deactivateStudent(student: Student) {
 
     let projectMatches = await prisma.project_match.findMany({
         where: {
-            studentId: student.id
+            studentId: student.id,
+            dissolved: false
         }
     });
 
