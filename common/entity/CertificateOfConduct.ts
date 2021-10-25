@@ -1,4 +1,13 @@
-import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn} from "typeorm";
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from "typeorm";
 import {Student} from "./Student";
 import {Screener} from "./Screener";
 
@@ -9,6 +18,9 @@ export class CertificateOfConduct {
 
     @CreateDateColumn({ type: "timestamp" })
     createdAt: Date;
+
+    @UpdateDateColumn({ type: "timestamp" })
+    updatedAt: Date;
 
     @Column({
         nullable: false
@@ -25,13 +37,13 @@ export class CertificateOfConduct {
     })
     criminalRecords:Boolean;
 
-    @ManyToOne((type) => Screener, (inspectingScreener) => inspectingScreener.screenings, {
+    @ManyToOne((type) => Screener, (inspectingScreener) => inspectingScreener.inscpectedCertificatesOfConduct, {
         eager: true
     })
     @JoinColumn()
     inspectingScreener: Screener;
 
-    @OneToOne((type) => Student, (student) => student.cocScreening, {
+    @OneToOne((type) => Student, (student) => student.certificateOfConduct, {
         eager: true
     })
     @JoinColumn()

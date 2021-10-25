@@ -206,7 +206,7 @@ export class Student extends Person {
         nullable: true,
         cascade: true
     })
-    cocScreening: Promise<CertificateOfConduct>;
+    certificateOfConduct: Promise<CertificateOfConduct>;
 
     @Column({
         nullable: false,
