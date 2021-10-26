@@ -425,7 +425,7 @@ model screening {
 }
 
 model student {
-  id                                        Int                                    @id @default(autoincrement())
+  id                                        Int                                    @id @default(autoincrement())wix_creation_date
   createdAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   updatedAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   firstname                                 String?                                @db.VarChar
