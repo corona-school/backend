@@ -2761,7 +2761,7 @@ export async function groupMailHandler(req: Request, res: Response) {
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string"
         ) {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, JSON.parse(req.body.addressees), <Express.Multer.File[]>req.files);
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, JSON.parse(req.body.addressees), req.files as Express.Multer.File[]);
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
             status = 400;
@@ -2823,24 +2823,45 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 403;
     }
 
-    try {
-        const addressees = await entityManager.getRepository(Pupil).find({wix_id: In(rawAddressees)});
-        for (let participant of addressees) {
-            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody, files);
-            await Notification.actionTaken(participant, "participant_course_message", {
-                instructor: student,
-                course: dropCourseRelations(course),
-                subcourse: dropSubcourseRelations(subcourse),
-                subject: mailSubject,
-                body: mailBody
-            });
-        }
-    } catch (e) {
-        logger.warn("Unable to send group mail");
-        logger.debug(e);
+    const addressees = await entityManager.getRepository(Pupil).find({wix_id: In(rawAddressees)});
+
+    if (addressees.length !== rawAddressees.length) {
+        let invalids = rawAddressees.map(r => {
+            if (!addressees.some(a => a.wix_id === r)) {
+                return `- ${r}`;
+            }
+        });
+        logger.warn(`Not all provided addressees are valid: ${invalids.join("\n")}`);
         return 400;
     }
 
+    // Run the sending part in the background, so that the endpoint responds immediately (can take longer than 30s with large attachments)
+    setTimeout(async () => {
+        try {
+            let data = files.map(f => {
+                return {
+                    contentType: f.mimetype,
+                    filename: f.originalname,
+                    base64Content: f.buffer.toString('base64')
+                };
+            });
+            await Promise.all(addressees.map(async (participant) => {
+                await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody, data);
+                await Notification.actionTaken(participant, "participant_course_message", {
+                    instructor: student,
+                    course: dropCourseRelations(course),
+                    subcourse: dropSubcourseRelations(subcourse),
+                    subject: mailSubject,
+                    body: mailBody
+                });
+
+            }));
+        } catch (e) {
+            logger.warn("Unable to send group mail");
+            logger.debug(e);
+            // TODO: Send instructor a message saying that sending their mail has failed
+        }
+    }, 0);
     return 204;
 }
 

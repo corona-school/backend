@@ -32,6 +32,7 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
         return result;
     } catch (e) {
         logger.warn("Unable to send mail (type " + templateMail.type + ") to " + recipient + ": Status code " + e.statusCode);
+        logger.debug(e);
         throw e;
     }
 }
