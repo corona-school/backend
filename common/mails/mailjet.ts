@@ -27,8 +27,10 @@ async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox:
         ]
     };
 
+    const {Attachments, ...restOfMessage} = message;  // remove attachments from debug message
+
     //log what is sent to mailjet, so we can better debug some problems with mails
-    logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
+    logger.info(`Sending send-request to Mailjet: ${JSON.stringify({SandboxMode: sandboxMode, Messages: [restOfMessage]})}`);
 
     return await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
 }

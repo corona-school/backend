@@ -356,14 +356,12 @@ export const mailjet = {
         messageTitle: string;
         messageBody: string;
         instructorMail: string;
-    }, attachments: Express.Multer.File[]) => {
-        const files = attachments != null ? attachments.map(f => {
-            return {
-                contentType: f.mimetype,
-                filename: f.originalname,
-                base64Content: f.buffer.toString('base64')
-            };
-        }) : [];
+    //}, attachments: Express.Multer.File[]) => {
+    }, attachments: {
+        contentType: string,
+        filename: string,
+        base64Content: string;
+    }[]) => {
 
         return <TemplateMail>{
             type: "courseinstructorgroupmail",
@@ -372,7 +370,7 @@ export const mailjet = {
             title: "Nachricht zu deinem Kurs",
             disabled: false,
             variables: variables,
-            attachements: files
+            attachements: attachments
         };
     },
     PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {

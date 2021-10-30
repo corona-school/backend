@@ -294,12 +294,13 @@ export interface ApiCourseTag {
  * @apiSuccess (GroupMail Object) {string} subject Subject <em>maximum 80 chars</em>
  * @apiSuccess (GroupMail Object) {string} body Plaintext body of the mail <em>maximum 2000 chars</em>
  * @apiSuccess (GroupMail Object) {string} addressees List of all selected participants' IDs
- *
+ * @apiSuccess (GroupMail Object) {array} files Array of files that should be attached to the mails.
  */
 export interface ApiPostGroupMail {
     subject: string,
     body: string,
-    addressees: string[]
+    addressees: string[],
+    files: Express.Multer.File[]
 }
 
 /**
