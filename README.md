@@ -22,7 +22,7 @@ backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningCon
                                        +--------------------------------------------------------------------------------+
 ```
 
-#### Build & Run
+### Build & Run
 
 To run the backend, compile it first using `npm run build`. Make sure to have all dependencies installed before building by using `npm ci`. 
 You also need to set your environment accordingly (for further details see [.env.example](.env.example)) and set up a local database server.
@@ -33,7 +33,15 @@ The development version of the jobs can be run using `npm run jobs:dev`.
 The `/assets` folder contains development versions of various files. During Heroku builds, the folder is replaced by a secret version that is maintained in a [separate private repository](https://github.com/corona-school/coronaschool-certificate). The commit id of the version pulled is 
 stored in `.certificate-version`. 
 
-#### Docs
+#### Command line arguments
+
+The following command line arguments are available:
+
+| Argument | Description                                                                        |
+|----------|------------------------------------------------------------------------------------|
+| \--noPDF | Skips Puppeteer and PDF initialization, which is handy for speeding up development |
+
+### Docs
 
 For building the API Docs you need [apidoc](https://apidocjs.com/) in your PATH. 
 If you use the reference from the development dependencies, you will probably have to add `node_modules/.bin` manually to your PATH. 
