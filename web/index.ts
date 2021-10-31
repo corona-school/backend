@@ -54,6 +54,7 @@ const app = express();
 //SETUP PDF generation environment
 async function setupPDFGenerationEnvironment() {
     if(isCommandArg("--noPDF")) {
+        logger.info("Skipping browser initialization due to supplied --noPDF arg")
         return;
     }
     await setupBrowser({
