@@ -27,7 +27,7 @@ import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import { apolloServer } from "./../graphql";
+import { apolloServer } from "../graphql";
 import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notificationController";
 import {isCommandArg} from "../common/util/basic";
@@ -391,7 +391,7 @@ createConnection().then(setupPDFGenerationEnvironment)
             process.on("SIGTERM", async () => {
                 logger.debug("SIGTERM signal received: Starting graceful shutdown procedures...");
                 //Close Server
-                await new Promise<void>((resolve, reject) => server.close(() => {
+                await new Promise<void>((resolve) => server.close(() => {
                     resolve();
                 }));
                 logger.debug("✅ HTTP server closed!");
