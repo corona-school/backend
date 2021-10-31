@@ -501,7 +501,6 @@ async function getAPICourses(student: Student | undefined,
                                             uuid: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id,
                                             firstname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.firstname,
                                             lastname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.lastname,
-                                            email: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.email,
                                             grade: parseInt(courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.grade),
                                             schooltype: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.schooltype
                                         });
@@ -748,7 +747,6 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                         uuid: course.subcourses[i].participants[j].wix_id,
                         firstname: course.subcourses[i].participants[j].firstname,
                         lastname: course.subcourses[i].participants[j].lastname,
-                        email: course.subcourses[i].participants[j].email,
                         grade: parseInt(course.subcourses[i].participants[j].grade),
                         schooltype: course.subcourses[i].participants[j].schooltype
                     });
