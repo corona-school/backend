@@ -28,7 +28,15 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
+import {
+    sendSubcourseCancelNotifications,
+    sendInstructorGroupMail,
+    sendParticipantToInstructorMail,
+    sendParticipantRegistrationConfirmationMail,
+    sendGuestInvitationMail,
+    sendParticipantCourseCertificate,
+    sendCourseMailFailed
+} from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -2859,7 +2867,8 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         } catch (e) {
             logger.warn("Unable to send group mail");
             logger.debug(e);
-            // TODO: Send instructor a message saying that sending their mail has failed
+            //TODO mail error gets caught and doesn't get propagated yet (verify)
+            await sendCourseMailFailed(student, course, addressees);
         }
     }, 0);
     return 204;

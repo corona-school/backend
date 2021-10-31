@@ -101,6 +101,26 @@ export async function sendInstructorGroupMail(participant: Pupil, instructor: St
     await sendTemplateMail(mail, participant.email, instructor.email);
 }
 
+// Instructor > Course failed
+export async function sendCourseMailFailed(instructor: Student, course: Course, addressees: Pupil[]) {
+    const mail = mailjetTemplates.COURSEMAILFAILED({
+        courseName: course.name,
+        instructorFirstName: instructor.firstname,
+        studentAmount: addressees.length
+    });
+
+    await sendTemplateMail(mail, instructor.email);
+}
+
+// Participant > Instructors failed
+export async function sendInstructorMailFailed(participant: Pupil, course: Course) {
+    const mail = mailjetTemplates.INSTRUCTORMAILFAILED({
+        courseName: course.name,
+        participantFirstName: participant.firstname
+    });
+
+    await sendTemplateMail(mail, participant.email);
+}
 export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
     const firstLecture = subcourse.firstLecture();
 

@@ -373,6 +373,37 @@ export const mailjet = {
             attachements: attachments
         };
     },
+    // Instructor sent mail to students of their course, but it resulted in an error
+    COURSEMAILFAILED: (variables: {
+        instructorFirstName: string;
+        studentAmount: number;
+        courseName: string;
+    }) => {
+        return <TemplateMail>{
+            disabled: false,
+            //id: 0,
+            id: 3305321,
+            sender: DEFAULTSENDERS.support,
+            title: "Fehler beim Senden deiner E-Mail",
+            type: "coursemailfailed",
+            variables: variables
+        }
+    },
+    // participant sent mail to instructors of their course, but it resulted in an error
+    INSTRUCTORMAILFAILED: (variables: {
+        participantFirstName: string;
+        courseName: string;
+    }) => {
+        return <TemplateMail>{
+            disabled: false,
+            //id: 0,
+            id: 3305323,
+            sender: DEFAULTSENDERS.support,
+            title: "Fehler beim Senden deiner E-Mail",
+            type: "instructormailfailed",
+            variables: variables
+        }
+    },
     PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {
         personFirstname: string;
         confirmationURL: string;
