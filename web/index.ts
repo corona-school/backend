@@ -207,7 +207,8 @@ createConnection().then(setupPDFGenerationEnvironment)
 
             const groupMailUpload = multer({
                 limits: {
-                    fileSize: 25 * (10 ** 6) //25mb
+                    fileSize: 15 * (10 ** 6), //15mb,
+                    files: 5
                 },
                 storage: multer.memoryStorage() //store in memory
             });
