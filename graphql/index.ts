@@ -1,7 +1,8 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap, FindManyStudentResolver } from "./generated";
+
+import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap } from "./generated";
 import { buildSchemaSync } from "type-graphql";
 import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver } from "./generated/resolvers/crud";
-import { authChecker, authorizationEnhanceMap } from "./authorizations";
+import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
 import { ApolloServer } from "apollo-server-express";
@@ -15,6 +16,8 @@ import { ExtendedFieldsMatchResolver } from "./match/fields";
 import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
 import { MutateNotificationResolver } from "./notification/mutations";
 import { complexityEnhanceMap } from "./complexity";
+import { AuthenticationResolver } from "./authentication";
+import { FieldMeResolver } from "./me/fields";
 import { MutateMatchResolver } from "./match/mutations";
 import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_confirmation/mutations";
 import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
@@ -23,9 +26,14 @@ import { ExtendedFieldsStudentResolver } from "./student/field";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
+applyModelsEnhanceMap(authorizationModelEnhanceMap);
 
 const schema = buildSchemaSync({
     resolvers: [
+        /* User Authentication & Information */
+        AuthenticationResolver,
+        FieldMeResolver,
+
         /* Course */
         FindManyCourseResolver,
         ExtendedFieldsCourseResolver,
