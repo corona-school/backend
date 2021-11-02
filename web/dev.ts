@@ -1357,7 +1357,7 @@ export async function setupDevDB() {
     certi.dateOfInspection=new Date();
 
     //Toggle this to test JOB for sreening missing COCs
-      certificates.push(certi);
+    certificates.push(certi);
 
     for (let i = 0; i < certificates.length; i++) {
         await entityManager.save(certificates[i]);
