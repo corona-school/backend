@@ -10,7 +10,7 @@ import { parseSubjectString } from "../../common/util/subjectsutils";
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
     @FieldResolver(type => [Subcourse])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     async subcoursesJoined(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
