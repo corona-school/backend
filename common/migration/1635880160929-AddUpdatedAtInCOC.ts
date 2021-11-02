@@ -1,10 +1,11 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class AddUpdatedAtInCoC1635874676579 implements MigrationInterface {
-    name = 'AddUpdatedAtInCoC1635874676579'
+export class AddUpdatedAtInCOC1635880160929 implements MigrationInterface {
+    name = 'AddUpdatedAtInCOC1635880160929';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" ADD "updatedAt" TIMESTAMP NOT NULL DEFAULT now()`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" DROP CONSTRAINT "FK_05729540b3678f1917321b621bf"`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" RENAME COLUMN "inspectingScreenerId" TO "updatedAt"`);
         await queryRunner.query(`COMMENT ON COLUMN "project_match"."dissolveReason" IS NULL`);
         await queryRunner.query(`ALTER TABLE "project_match" ALTER COLUMN "dissolveReason" SET DEFAULT null`);
         await queryRunner.query(`COMMENT ON COLUMN "pupil_tutoring_interest_confirmation_request"."reminderSentDate" IS NULL`);
@@ -61,6 +62,8 @@ export class AddUpdatedAtInCoC1635874676579 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentInstructorScreeningInvitationDate" SET DEFAULT null`);
         await queryRunner.query(`COMMENT ON COLUMN "student"."lastUpdatedSettingsViaBlocker" IS NULL`);
         await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastUpdatedSettingsViaBlocker" SET DEFAULT null`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" DROP COLUMN "updatedAt"`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" ADD "updatedAt" TIMESTAMP NOT NULL DEFAULT now()`);
         await queryRunner.query(`COMMENT ON COLUMN "mentor"."verification" IS NULL`);
         await queryRunner.query(`ALTER TABLE "mentor" ALTER COLUMN "verification" SET DEFAULT null`);
         await queryRunner.query(`COMMENT ON COLUMN "mentor"."verifiedAt" IS NULL`);
@@ -80,6 +83,8 @@ export class AddUpdatedAtInCoC1635874676579 implements MigrationInterface {
         await queryRunner.query(`COMMENT ON COLUMN "mentor"."verifiedAt" IS NULL`);
         await queryRunner.query(`ALTER TABLE "mentor" ALTER COLUMN "verification" DROP DEFAULT`);
         await queryRunner.query(`COMMENT ON COLUMN "mentor"."verification" IS NULL`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" DROP COLUMN "updatedAt"`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" ADD "updatedAt" integer`);
         await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastUpdatedSettingsViaBlocker" DROP DEFAULT`);
         await queryRunner.query(`COMMENT ON COLUMN "student"."lastUpdatedSettingsViaBlocker" IS NULL`);
         await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastSentInstructorScreeningInvitationDate" DROP DEFAULT`);
@@ -136,7 +141,8 @@ export class AddUpdatedAtInCoC1635874676579 implements MigrationInterface {
         await queryRunner.query(`COMMENT ON COLUMN "pupil_tutoring_interest_confirmation_request"."reminderSentDate" IS NULL`);
         await queryRunner.query(`ALTER TABLE "project_match" ALTER COLUMN "dissolveReason" DROP DEFAULT`);
         await queryRunner.query(`COMMENT ON COLUMN "project_match"."dissolveReason" IS NULL`);
-        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" DROP COLUMN "updatedAt"`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" RENAME COLUMN "updatedAt" TO "inspectingScreenerId"`);
+        await queryRunner.query(`ALTER TABLE "certificate_of_conduct" ADD CONSTRAINT "FK_05729540b3678f1917321b621bf" FOREIGN KEY ("inspectingScreenerId") REFERENCES "screener"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
 }

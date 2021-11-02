@@ -3,7 +3,7 @@ generator client {
   previewFeatures = ["interactiveTransactions"]
 }
 
-//generator typegraphql {
+//  generator typegraphql {
 //  provider = "typegraphql-prisma"
 //  output   = "../graphql/generated"
 //}

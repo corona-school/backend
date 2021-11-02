@@ -1,5 +1,9 @@
-
-import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap } from "./generated";
+import {
+    FindManyCourseResolver,
+    applyResolversEnhanceMap,
+    applyModelsEnhanceMap,
+    FindManyStudentResolver
+} from "./generated";
 import { buildSchemaSync } from "type-graphql";
 import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
