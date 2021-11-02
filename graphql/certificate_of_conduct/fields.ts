@@ -8,18 +8,6 @@ import { Role } from "../authorizations";
 // eslint-disable-next-line camelcase
 @Resolver(of => Certificate_of_conduct)
 export class ExtendedFieldsCertificateOfConductResolver {
-    // eslint-disable-next-line camelcase
-    @FieldResolver(returns => [Screener])
-    @Authorized(Role.ADMIN)
-    // eslint-disable-next-line camelcase
-    async certificate(@Root() certificate: Certificate_of_conduct) {
-        return await prisma.screener.findMany({
-            where: {
-                id: certificate.inspectingScreenerId
-            }
-        });
-    }
-
     @FieldResolver(returns => [Student])
     @Authorized(Role.ADMIN)
     // eslint-disable-next-line camelcase

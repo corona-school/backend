@@ -37,12 +37,6 @@ export class CertificateOfConduct {
     })
     criminalRecords:Boolean;
 
-    @ManyToOne((type) => Screener, (inspectingScreener) => inspectingScreener.inscpectedCertificatesOfConduct, {
-        eager: true
-    })
-    @JoinColumn()
-    inspectingScreener: Screener;
-
     @OneToOne((type) => Student, (student) => student.certificateOfConduct, {
         eager: true
     })

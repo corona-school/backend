@@ -190,7 +190,7 @@ export async function putHandler(req: Request, res: Response) {
             }
         } else {
             status = 400;
-        }
+        }3000
     } catch (e) {
         logger.error("Unexpected format of express request: " + e.message);
         logger.debug(req, e);

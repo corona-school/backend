@@ -19,6 +19,5 @@ export async function create(dateOfInspection, dateOfIssue, criminalRecords, ins
     if (criminalRecords) {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
-        //TODO: Get the student and dissolve the matches, delete courses if sole instructor, and remove from course if there are other instructors.
     }
 }

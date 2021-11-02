@@ -26,11 +26,6 @@ export class Screener extends Person {
     })
     screenings: Promise<Screening[]>;
 
-    @OneToMany((type) => CertificateOfConduct, (certificateOfConduct) => certificateOfConduct.inspectingScreener, {
-        nullable: true
-    })
-    inscpectedCertificatesOfConduct: Promise<CertificateOfConduct[]>;
-
     async addScreenerDTO(screenerDTO: ScreenerDTO) {
         this.firstname = screenerDTO.firstname;
         this.lastname = screenerDTO.lastname;

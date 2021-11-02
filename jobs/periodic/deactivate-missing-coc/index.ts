@@ -2,6 +2,7 @@ import {getLogger} from "log4js";
 import { prisma } from "../../../common/prisma";
 import validator from "validator";
 import toDate = validator.toDate;
+import {deactivateStudent} from "../../../common/student/activation";
 
 const logger = getLogger();
 
@@ -10,12 +11,11 @@ export default async function execute() {
     await deactivateMissingCoc();
 }
 
-async function deactivateMissingCoc() {
+export async function deactivateMissingCoc() {
     const today = new Date();
     const eightWeeksAgoDate = new Date();
     var eightWeeksAgo = today.getDate() - 56;
     eightWeeksAgoDate.setDate(eightWeeksAgo);
-
     const defaultingStudents = await prisma.student.findMany({
         where: {
             createdAt: {
@@ -28,9 +28,16 @@ async function deactivateMissingCoc() {
                     lt: eightWeeksAgoDate
                 }
             },
+            // eslint-disable-next-line camelcase
             certificate_of_conduct: {
                 none: {}
             }
         }
+    });
+
+    logger.info(defaultingStudents.length+ " Defaulting students are ::: "+JSON.stringify(defaultingStudents));
+
+    defaultingStudents.forEach(async (student) => {
+        await deactivateStudent(student);
     });
 }

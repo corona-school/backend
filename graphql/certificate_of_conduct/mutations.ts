@@ -1,12 +1,14 @@
 import {Arg, Authorized, Mutation, Resolver} from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import {Role} from "../authorizations";
-// eslint-disable-next-line camelcase
-import {Certificate_of_conductCreateInput} from "../generated";
+
 import {deactivateStudent} from "../../common/student/activation";
 import {getStudent} from "../util";
 import * as CertificateOfConduct from "../../common/certificate-of-conduct/certificateOfConduct";
 import {updateCertificateOfConduct} from "../../common/student";
+import {getLogger} from "log4js";
+const logger = getLogger("Certificate of Conduct");
+
 
 @Resolver(of => GraphQLModel.Certificate_of_conduct)
 export class MutateCertificateOfConductResolver {
@@ -19,6 +21,7 @@ export class MutateCertificateOfConductResolver {
         @Arg("dateOfInspection") dateOfInspection: Date) {
         const student = await getStudent(studentId);
         if (criminalRecord) {
+            logger.info(`Updating criminal record for student ${studentId}`);
             await deactivateStudent(student);
         }
         await updateCertificateOfConduct(student, criminalRecord, dateOfIssue, dateOfInspection);

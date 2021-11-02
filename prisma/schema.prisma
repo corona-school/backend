@@ -545,9 +545,7 @@ model certificate_of_conduct {
   dateOfInspection     DateTime
   dateOfIssue          DateTime
   criminalRecords      Boolean
-  inspectingScreenerId Int
   studentId            Int      @unique
-  inspectingScreener   screener @relation(fields: [inspectingScreenerId], references: [id])
   student              student  @relation(fields: [studentId], references: [id])
 }
 

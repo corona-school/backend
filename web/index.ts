@@ -363,11 +363,12 @@ createConnection().then(setupPDFGenerationEnvironment)
             if (isDev) {
                 await setupDevDB();
             }
-
             // Start listening
             return http.createServer(app).listen(port, () =>
                 logger.info(`${isDev ? "DEV-": ""}Server listening on port ${port}`)
             ); //return server such that it can be used afterwards
+
+
         }
 
         function configureGracefulShutdown(server: http.Server) {
@@ -402,4 +403,5 @@ createConnection().then(setupPDFGenerationEnvironment)
                 logger.debug("Graceful Shutdown completed 🎉"); //event loop now fully cleaned up
             });
         }
+
     });

@@ -34,6 +34,7 @@ import { PupilTutoringInterestConfirmationRequest } from "../common/entity/Pupil
 import { prisma } from "../common/prisma/";
 import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
+import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -1138,10 +1139,12 @@ export async function setupDevDB() {
     }
 
     const screenings: Screening[] = [];
-
+    // The created date here is modified so this student becomes a defaulter
+    // for the 8 weeks certificate submission rule.
     let sres = new Screening();
     sres.success = true;
     sres.comment = "🎉";
+    sres.createdAt=new Date("2021-09-01");
     sres.knowsCoronaSchoolFrom = "Internet";
     sres.screener = screeners[0];
     sres.student = students[0];
@@ -1343,6 +1346,22 @@ export async function setupDevDB() {
     for (let i = 0; i < pticrs.length; i++) {
         await entityManager.save(pticrs[i]);
         console.log("Inserted Pupil Tutoring Interest Request " + i);
+    }
+
+
+    const certificates : CertificateOfConduct[] = [];
+    const certi = new CertificateOfConduct();
+    certi.student= students[0];
+    certi.criminalRecords=true;
+    certi.dateOfIssue=new Date();
+    certi.dateOfInspection=new Date();
+
+    //Toggle this to test JOB for sreening missing COCs
+      certificates.push(certi);
+
+    for (let i = 0; i < certificates.length; i++) {
+        await entityManager.save(certificates[i]);
+        console.log("Inserted COC " + i);
     }
 }
 
