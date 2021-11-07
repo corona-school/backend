@@ -42,8 +42,9 @@ export class MutateParticipationCertificateResolver {
 
         const pupil = await getSessionPupil(context);
 
-        if (!signaturePupil && !signatureParent)
+        if (!signaturePupil && !signatureParent) {
             throw new Error(`Either signatureParent or signaturePupil must be present`);
+        }
 
         await signCertificate(certificateId, pupil, signatureParent, signaturePupil, signatureLocation);
         return true;

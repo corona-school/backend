@@ -10,8 +10,9 @@ export class ExtendedFieldsParticipationCertificateResolver {
     @FieldResolver(returns => String)
     @Authorized(Role.STUDENT)
     async pdf(@Ctx() context, @Root() certificate: participation_certificate, @Arg("language") language: string) {
-        if (!LANGUAGES.includes(language as Language))
+        if (!LANGUAGES.includes(language as Language)) {
             throw new Error(`Unknown language '${language}'`);
+        }
 
         const student = await getSessionStudent(context);
         return await getCertificatePDF(certificate.uuid, student, language as Language);
