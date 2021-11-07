@@ -12,10 +12,13 @@ import { createAutoLoginLink } from '../../web/controllers/utils';
 import * as Notification from "../notification";
 import { Pupil } from '../entity/Pupil';
 import { Student } from '../entity/Student';
+import { pupil as PrismaPupil, student as PrismaStudent } from "@prisma/client";
 import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '..//entity/ParticipationCertificate';
 import { assert } from 'console';
+
+// TODO: Replace TypeORM operations with Prisma
 
 export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
@@ -65,8 +68,10 @@ export async function getCertificatesFor(user: Pupil | Student) {
 }
 
 /* Students can download their certificates as PDF */
-export async function getCertificatePDF(certificateId: string, requestor: Student, lang: Language): Promise<Buffer> {
+export async function getCertificatePDF(certificateId: string, _requestor: Student | PrismaStudent, lang: Language): Promise<Buffer> {
     const entityManager = getManager();
+
+    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
 
     /* Retrieve the certificate and also get the signature columns that are usually hidden for performance reasons */
     const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase(), student: requestor }, {
@@ -100,12 +105,20 @@ export interface ICertificateCreationParams {
 }
 
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(requestor: Student, pupil: Pupil, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
+export async function createCertificate(_requestor: Student | PrismaStudent, pupilId: number, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
+    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
+    const pupil = await entityManager.findOne(Pupil, { id: pupilId });
+
+    if(!pupil) {
+        throw new CertificateError(`Pupil not found`);
+    }
+
     const match = await entityManager.findOne(Match, { student: requestor, pupil: pupil });
-    if (match == undefined) {
+
+    if (!match) {
         throw new CertificateError(`No Match found with uuid '${pupil}'`);
     }
 
@@ -179,13 +192,16 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
 }
 
 /* Pupils can sign certificates for their students through a webinterface */
-export async function signCertificate(certificateId: string, signer: Pupil, signatureParent: string | undefined, signaturePupil: string | undefined, signatureLocation: string) {
+export async function signCertificate(certificateId: string, _signer: Pupil | PrismaPupil, signatureParent: string | undefined, signaturePupil: string | undefined, signatureLocation: string) {
     assert(signaturePupil || signatureParent, "Parent or Pupil signs certificate");
     assert(!signaturePupil || signaturePupil.match(VALID_BASE64), "Pupil Signature is valid Base 64");
     assert(!signatureParent || signatureParent.match(VALID_BASE64), "Parent Signature is valid Base 64");
     assert(signatureLocation, "Singature location must be set");
 
     const entityManager = getManager();
+
+    const signer = await entityManager.findOneOrFail(Pupil, { id: _signer.id });
+
     const certificate = await entityManager.findOne(ParticipationCertificate, { pupil: signer, uuid: certificateId.toUpperCase() }, { relations: ["student", "pupil"] });
 
     if (!certificate) {
