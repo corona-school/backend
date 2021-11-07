@@ -106,7 +106,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
 
         return res.json({ uuid: certificate.uuid, automatic });
     } catch (error) {
-        if(error instanceof CertificateError) {
+        if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
         }
 
@@ -167,7 +167,7 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         });
         return res.end(pdf);
     } catch (error) {
-        if(error instanceof CertificateError) {
+        if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
         }
 
@@ -220,7 +220,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
 
         return res.send(confirmation);
     } catch (error) {
-        if(error instanceof CertificateError) {
+        if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
         }
 
@@ -280,7 +280,7 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
         await signCertificate(certificateId, signer, signatureParent, signaturePupil, signatureLocation);
         return res.send("Certificate signed");
     } catch (error) {
-        if(error instanceof CertificateError) {
+        if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
         }
 

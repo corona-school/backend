@@ -112,7 +112,7 @@ export async function createCertificate(_requestor: Student | PrismaStudent, pup
     const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
     const pupil = await entityManager.findOne(Pupil, { id: pupilId });
 
-    if(!pupil) {
+    if (!pupil) {
         throw new CertificateError(`Pupil not found`);
     }
 

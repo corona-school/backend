@@ -43,7 +43,7 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
     async concreteNotifications(@Root() pupil: Required<Pupil>) {
-        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) }});
+        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) } });
     }
 
     @FieldResolver(type => [Log])
