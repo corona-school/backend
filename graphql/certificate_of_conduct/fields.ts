@@ -12,7 +12,7 @@ export class ExtendedFieldsCertificateOfConductResolver {
     @Authorized(Role.ADMIN)
     // eslint-disable-next-line camelcase
     async student(@Root() certificate: Certificate_of_conduct) {
-        return await prisma.student.findMany({
+        return await prisma.student.findUnique({
             where: {
                 id: certificate.studentId
             }
