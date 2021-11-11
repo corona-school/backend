@@ -2,7 +2,7 @@ import { prisma } from "../../common/prisma";
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { Role } from "../authorizations";
-import { createCertificate, signCertificate, ICertificateCreationParams, CertificateState } from "../../common/certificate";
+import { createCertificate, signCertificate, ICertificateCreationParams, CertificateState, getCertificatePDF, Language, LANGUAGES } from "../../common/certificate";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent } from "../authentication";
 import { IsIn } from "class-validator";
@@ -56,5 +56,17 @@ export class MutateParticipationCertificateResolver {
         const requestor = await getSessionStudent(context);
         await createCertificate(requestor, pupilId, certificateData);
         return true;
+    }
+
+    @Mutation(returns => String)
+    @Authorized(Role.STUDENT)
+    async participationCertificateAsPDF(@Ctx() context, @Arg("uuid") uuid: string, @Arg("language") language: string) {
+        if (!LANGUAGES.includes(language as Language)) {
+            throw new Error(`Unknown language '${language}'`);
+        }
+
+        const student = await getSessionStudent(context);
+        const pdf = await getCertificatePDF(uuid, student, language as Language);
+        return pdf.toString("utf-8");
     }
 }
