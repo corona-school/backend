@@ -16,7 +16,7 @@ import { pupil as PrismaPupil, student as PrismaStudent } from "@prisma/client";
 import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '..//entity/ParticipationCertificate';
-import { assert } from 'console';
+import assert from 'assert';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -257,10 +257,11 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
         return _templates[name][lang];
     }
 
-    let path = `./assets/${name}.${lang}.html`;
+    let file = path.join(__dirname, `/assets/${name}.${lang}.html`);
+    console.log("Loading template from ", file);
 
-    if (existsSync(path)) {
-        const result = readFileSync(path, "utf8");
+    if (existsSync(file)) {
+        const result = readFileSync(file, "utf8");
         if (!_templates[name]) {
             _templates[name] = {};
         }
