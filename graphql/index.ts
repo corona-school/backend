@@ -69,7 +69,7 @@ const schema = buildSchemaSync({
 
         /* ParticipationCertificate */
         ExtendedFieldsParticipationCertificateResolver,
-        MutateParticipationCertificateResolver,
+        MutateParticipationCertificateResolver
     ],
     authChecker
 });
