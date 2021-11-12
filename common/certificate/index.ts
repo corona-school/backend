@@ -121,7 +121,7 @@ export async function createCertificate(_requestor: Student | PrismaStudent, pup
     const match = await entityManager.findOne(Match, { student: requestor, pupil: pupil });
 
     if (!match) {
-        throw new CertificateError(`No Match found with uuid '${pupil}'`);
+        throw new CertificateError(`No Match found with pupil '${pupilId}'`);
     }
 
     let pc = new ParticipationCertificate();

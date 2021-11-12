@@ -51,7 +51,7 @@ export class MutateParticipationCertificateResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.STUDENT)
     async participationCertificateCreate(@Ctx() context: GraphQLContext, @Arg("pupilId") pupilId: number, @Arg("certificateData") certificateData: CertificateCreationInput): Promise<boolean> {
         const requestor = await getSessionStudent(context);
         await createCertificate(requestor, pupilId, certificateData);
