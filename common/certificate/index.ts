@@ -257,7 +257,7 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
         return _templates[name][lang];
     }
 
-    let file = path.join(__dirname, `../../assets/${name}.${lang}.html`);
+    let file = path.join(__dirname, `../../../assets/${name}.${lang}.html`);
     console.log("Loading template from ", file);
 
     if (existsSync(file)) {
