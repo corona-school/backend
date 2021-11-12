@@ -20,6 +20,8 @@ import assert from 'assert';
 
 // TODO: Replace TypeORM operations with Prisma
 
+const ASSETS = path.join(__dirname, `../../../assets/`);
+
 export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
 // supported certificate languages:
@@ -257,7 +259,7 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
         return _templates[name][lang];
     }
 
-    let file = path.join(__dirname, `../../../assets/${name}.${lang}.html`);
+    let file = path.join(ASSETS, `${name}.${lang}.html`);
     console.log("Loading template from ", file);
 
     if (existsSync(file)) {
@@ -326,7 +328,6 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format("D.M.YYYY")
     });
 
-    const ASSETS = __dirname + "/../../../../assets";
     return await generatePDFFromHTMLString(result, {
         includePaths: [
             path.resolve(ASSETS)
