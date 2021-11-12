@@ -32,7 +32,7 @@ class CertificateCreationInput implements ICertificateCreationParams {
 export class MutateParticipationCertificateResolver {
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.STUDENT)
+    @Authorized(Role.PUPIL)
     async participationCertificateSign(
         @Ctx() context: GraphQLContext,
         @Arg("certificateId") certificateId: string,
