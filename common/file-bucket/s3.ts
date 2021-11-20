@@ -3,6 +3,7 @@ import { assert } from "console";
 
 export const AWS_BUCKET_ENDPOINT = process.env.AWS_BUCKET_ENDPOINT;
 export const DEFAULT_BUCKET = process.env.AWS_DEFAULT_BUCKET;
+export const ATTACHMENT_BUCKET = process.env.AWS_ATTACHMENT_BUCKET;
 
 /// The domain that can be used to access the files in the bucket
 export const ACCESS_DOMAIN_NAME = DEFAULT_BUCKET && AWS_BUCKET_ENDPOINT ? `${DEFAULT_BUCKET}.${AWS_BUCKET_ENDPOINT}` : undefined;
