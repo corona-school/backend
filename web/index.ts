@@ -51,8 +51,8 @@ const app = express();
 
 //SETUP PDF generation environment
 async function setupPDFGenerationEnvironment() {
-    if(isCommandArg("--noPDF")) {
-        logger.info("Skipping browser initialization due to supplied --noPDF arg")
+    if (isCommandArg("--noPDF")) {
+        logger.info("Skipping browser initialization due to supplied --noPDF arg");
         return;
     }
     await setupBrowser({
@@ -394,7 +394,7 @@ createConnection().then(setupPDFGenerationEnvironment)
 
                 //close puppeteer (because if all connections are finished, it is no longer needed at the moment)
                 //even though this is not the cleanest solution (because it could still lead to some queued callbacks on node's event loop that uses puppeteer for pdf generation), it is called here, because for now all pdf generation is awaited for until a server-route's response was delivered.
-                if(!isCommandArg("--noPDF")) {
+                if (!isCommandArg("--noPDF")) {
                     await closeBrowser();
                     logger.debug("✅ Puppeteer gracefully shut down!");
                 }
