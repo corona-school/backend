@@ -12,7 +12,7 @@ import { Subject } from "../types/subject";
 @Resolver(of => Match)
 export class ExtendedFieldsMatchResolver {
     @FieldResolver(returns => Pupil)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(1)
     async pupil(@Root() match: Match) {
         return await prisma.pupil.findUnique({
@@ -21,7 +21,7 @@ export class ExtendedFieldsMatchResolver {
     }
 
     @FieldResolver(returns => Student)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(1)
     async student(@Root() match: Match) {
         return await prisma.student.findUnique({
@@ -31,6 +31,7 @@ export class ExtendedFieldsMatchResolver {
 
     @FieldResolver(returns => [Subject])
     @Authorized(Role.ADMIN)
+    @LimitEstimated(1)
     async subjectsFormatted(@Root() match: Match) {
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
