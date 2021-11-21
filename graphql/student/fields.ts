@@ -4,7 +4,7 @@ import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
-import { parseSubjectString } from "common/util/subjectsutils";
+import { parseSubjectString } from "../../common/util/subjectsutils";
 
 @Resolver(of => Student)
 export class ExtendFieldsStudentResolver {
