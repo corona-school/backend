@@ -75,7 +75,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         addSecurityMiddleware();
 
 
-        if (isCommandArg("--noPDF")) {
+        if (!isCommandArg("--noPDF")) {
             configureParticipationCertificateAPI();
             configureCertificateAPI();
         }
