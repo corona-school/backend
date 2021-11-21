@@ -22,7 +22,9 @@ export enum Role {
     /* Accessible to everyone */
     UNAUTHENTICATED = "UNAUTHENTICATED",
     /* User owns the entity as defined in graphql/ownership */
-    OWNER = "OWNER"
+    OWNER = "OWNER",
+    /* No one should have access */
+    NOBODY = "NOBODY"
 }
 
 const authLogger = getLogger("GraphQL Authentication");
@@ -99,6 +101,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
 const onlyOwner = [Authorized(Role.OWNER)];
+const nobody = [Authorized(Role.NOBODY)];
 
 /* Although we do not expose all Prisma entities, we make sure authorization is present for all queries and mutations
    We use query and mutation authorizations as our main authorization strategy,
@@ -165,5 +168,12 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             email: adminOrOwner
         }
 
+    },
+    Participation_certificate: {
+        fields: {
+            // these are Buffers and are not supposed to be retrieved directly by anyone (only rendered into a PDF)
+            signatureParent: nobody,
+            signaturePupil: nobody
+        }
     }
 };
