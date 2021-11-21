@@ -317,7 +317,7 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
 
 
     try {
-        const certificates = getCertificatesFor(res.locals.user);
+        const certificates = await getCertificatesFor(res.locals.user);
         return res.json({ certificates });
     } catch (error) {
         logger.error("Retrieving certificates for user failed with", error);
