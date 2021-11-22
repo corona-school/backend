@@ -5,7 +5,7 @@ class Range { // GraphQL Type for common/entity/Student -> Subject.range
     @Field(type => Int)
     min: number;
     @Field(type => Int)
-    field: number;
+    max: number;
 }
 
 @ObjectType()
