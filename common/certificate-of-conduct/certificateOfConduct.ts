@@ -10,7 +10,6 @@ export async function create(dateOfInspection, dateOfIssue, criminalRecords, ins
             dateOfInspection: dateOfInspection,
             dateOfIssue: dateOfIssue,
             criminalRecords: criminalRecords,
-            inspectingScreenerId: inspectingScreenerId,
             studentId: studentId
         }
     });

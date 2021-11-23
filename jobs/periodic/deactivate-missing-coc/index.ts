@@ -29,9 +29,7 @@ export async function deactivateMissingCoc() {
                 }
             },
             // eslint-disable-next-line camelcase
-            certificate_of_conduct: {
-                none: {}
-            }
+            certificate_of_conduct: null
         }
     });
 

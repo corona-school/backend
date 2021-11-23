@@ -229,6 +229,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             moduleHours: adminOrOwner,
             createdAt: adminOrOwner,
             openProjectMatchRequestCount: adminOrOwner,
+            certificate_of_conduct: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -271,6 +272,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             jufo_verification_transmission: nobody,
             expert_data: nobody,
             instructor_screening: nobody
+
         })
 
     },
