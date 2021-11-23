@@ -35,7 +35,7 @@ export async function deactivateMissingCoc() {
         }
     });
 
-    logger.info(defaultingStudents.length+ " Defaulting students are ::: "+JSON.stringify(defaultingStudents));
+    logger.info(defaultingStudents.length+ " Defaulting students are going to be removed because of a missing CoC");
 
     defaultingStudents.forEach(async (student) => {
         await deactivateStudent(student);

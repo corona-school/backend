@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["interactiveTransactions"]
 }
 
@@ -390,25 +390,25 @@ model school {
 }
 
 model screener {
-  id                         Int                          @id @default(autoincrement())
-  createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
-  firstname                  String?                      @db.VarChar
-  lastname                   String?                      @db.VarChar
-  active                     Boolean                      @default(true)
-  email                      String                       @unique @db.VarChar
-  verification               String?                      @unique @db.VarChar
-  verifiedAt                 DateTime?                    @db.Timestamp(6)
-  authToken                  String?                      @unique @db.VarChar
-  authTokenUsed              Boolean                      @default(false)
-  authTokenSent              DateTime?                    @db.Timestamp(6)
-  password                   String                       @db.VarChar
-  verified                   Boolean?                     @default(false)
-  oldNumberID                Int?                         @unique
-  instructor_screening       instructor_screening[]
-  project_coaching_screening project_coaching_screening[]
-  screenings                  screening[]
-  inscpectedCertificatesOfConduct     certificate_of_conduct[]
+  id                              Int                          @id @default(autoincrement())
+  createdAt                       DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                       DateTime                     @default(now()) @db.Timestamp(6)
+  firstname                       String?                      @db.VarChar
+  lastname                        String?                      @db.VarChar
+  active                          Boolean                      @default(true)
+  email                           String                       @unique @db.VarChar
+  verification                    String?                      @unique @db.VarChar
+  verifiedAt                      DateTime?                    @db.Timestamp(6)
+  authToken                       String?                      @unique @db.VarChar
+  authTokenUsed                   Boolean                      @default(false)
+  authTokenSent                   DateTime?                    @db.Timestamp(6)
+  password                        String                       @db.VarChar
+  verified                        Boolean?                     @default(false)
+  oldNumberID                     Int?                         @unique
+  instructor_screening            instructor_screening[]
+  project_coaching_screening      project_coaching_screening[]
+  screenings                      screening[]
+  inscpectedCertificatesOfConduct certificate_of_conduct[]
 }
 
 model screening {
@@ -425,7 +425,7 @@ model screening {
 }
 
 model student {
-  id                                        Int                                    @id @default(autoincrement())wix_creation_date
+  id                                        Int                                    @id @default(autoincrement())
   createdAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   updatedAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   firstname                                 String?                                @db.VarChar
@@ -539,14 +539,16 @@ model subcourse_waiting_list_pupil {
 }
 
 model certificate_of_conduct {
-  id                   Int       @id @default(autoincrement())
-  createdAt            DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt            DateTime  @default(now()) @db.Timestamp(6)
-  dateOfInspection     DateTime
-  dateOfIssue          DateTime
-  criminalRecords      Boolean
-  studentId            Int      @unique
-  student              student  @relation(fields: [studentId], references: [id])
+  id               Int       @id @default(autoincrement())
+  createdAt        DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
+  dateOfInspection DateTime
+  dateOfIssue      DateTime
+  criminalRecords  Boolean
+  studentId        Int       @unique
+  student          student   @relation(fields: [studentId], references: [id])
+  screener         screener? @relation(fields: [screenerId], references: [id])
+  screenerId       Int?
 }
 
 enum course_category_enum {

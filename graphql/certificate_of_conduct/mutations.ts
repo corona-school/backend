@@ -32,7 +32,7 @@ export class MutateCertificateOfConductResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.ADMIN)
     // eslint-disable-next-line camelcase
-    async createCertificate(
+    async certificateOfConductCreate(
         @Arg("dateOfInspection") dateOfInspection: Date,
         @Arg("dateOfIssue") dateOfIssue: Date,
         @Arg("criminalRecords") criminalRecords: boolean,
