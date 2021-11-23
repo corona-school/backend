@@ -28,6 +28,7 @@ import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutat
 import {ExtendedFieldsCertificateOfConductResolver} from "./certificate_of_conduct/fields";
 import { ExtendedFieldsStudentResolver } from "./student/field";
 
+
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
 applyModelsEnhanceMap(authorizationModelEnhanceMap);
@@ -51,7 +52,7 @@ const schema = buildSchemaSync({
         FindManyPupilResolver,
         ExtendFieldsPupilResolver,
         MutatePupilResolver,
-
+      
         /*Student*/
         FindManyStudentResolver,
         ExtendedFieldsStudentResolver,
@@ -76,6 +77,7 @@ const schema = buildSchemaSync({
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
         ExtendedFieldsCertificateOfConductResolver
+
     ],
     authChecker
 });

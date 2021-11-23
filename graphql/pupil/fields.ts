@@ -1,4 +1,4 @@
-import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation } from "../generated";
+import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation, Participation_certificate as ParticipationCertificate, Match } from "../generated";
 import { Authorized, Field, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
@@ -43,7 +43,7 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
     async concreteNotifications(@Root() pupil: Required<Pupil>) {
-        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) }});
+        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) } });
     }
 
     @FieldResolver(type => [Log])
@@ -57,15 +57,34 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver(type => [Subject])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.USER)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
 
     @FieldResolver(type => TutoringInterestConfirmation, { nullable: true })
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(1)
     async tutoringInterestConfirmation(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
+            where: { pupilId: pupil.id }
+        });
+    }
+
+    @FieldResolver(type => [ParticipationCertificate])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(10)
+    async participationCertificatesToSign(@Root() pupil: Required<Pupil>) {
+        return await prisma.participation_certificate.findMany({
+            where: { pupilId: pupil.id }
+        });
+    }
+
+    @FieldResolver(type => [Match])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(10)
+    async matches(@Root() pupil: Required<Pupil>) {
+        return await prisma.match.findMany({
             where: { pupilId: pupil.id }
         });
     }
