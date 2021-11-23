@@ -35,6 +35,7 @@ import { prisma } from "../common/prisma/";
 import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
 import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
+import execute from "../jobs/periodic/deactivate-missing-coc";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -1363,6 +1364,7 @@ export async function setupDevDB() {
         await entityManager.save(certificates[i]);
         console.log("Inserted COC " + i);
     }
+
 }
 
 function sha512(input: string): string {

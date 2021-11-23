@@ -52,7 +52,7 @@ const schema = buildSchemaSync({
         FindManyPupilResolver,
         ExtendFieldsPupilResolver,
         MutatePupilResolver,
-      
+
         /*Student*/
         FindManyStudentResolver,
         ExtendedFieldsStudentResolver,
