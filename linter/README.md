@@ -13,3 +13,7 @@ To have a look at the AST, [ASTExplorer](https://astexplorer.net) can be used.
 
 Ensures that all GraphQL Resolvers annotated with @AuthorizedDeferred actually perform an authorization check by calling 
  `await hasAccess(...)`.
+
+## lernfair-lint/graphql-cache
+
+Ensures that every request annotated with @PublicCache does not have authorization requirements. 
