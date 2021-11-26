@@ -62,7 +62,7 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver(returns => [Lecture])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(10)
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
@@ -88,7 +88,7 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver(returns => Number)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async participantsCount(@Root() subcourse: Subcourse) {
         return await prisma.subcourse_participants_pupil.count({
             where: { subcourseId: subcourse.id }
