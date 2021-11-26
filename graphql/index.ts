@@ -22,6 +22,8 @@ import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_
 import { MutateParticipationCertificateResolver } from "./certificate/mutations";
 import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
 import { ExtendFieldsStudentResolver } from "./student/fields";
+import responseCachePlugin from 'apollo-server-plugin-response-cache';
+
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -75,7 +77,8 @@ const schema = buildSchemaSync({
 });
 
 const plugins: PluginDefinition[] = [
-    GraphQLLogger as any
+    GraphQLLogger as any,
+    responseCachePlugin()
 ];
 
 const isDev = process.env.ENV === "dev";

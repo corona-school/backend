@@ -4,6 +4,7 @@ import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { LimitedQuery, LimitEstimated } from "../complexity";
 import { CourseState } from "../../common/entity/Course";
+import { PublicCache } from "../cache";
 
 @Resolver(of => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -11,6 +12,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Query(returns => [Subcourse])
     @Authorized(Role.UNAUTHENTICATED)
     @LimitedQuery()
+    @PublicCache()
     async subcoursesPublic(
         @Arg("take", { nullable: true }) take?: number,
         @Arg("skip", { nullable: true }) skip?: number,
