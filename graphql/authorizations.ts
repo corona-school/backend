@@ -6,7 +6,6 @@ import { GraphQLContext } from "./context";
 import assert from "assert";
 import { getLogger } from "log4js";
 import { isOwnedBy, ResolverModel, ResolverModelNames } from "./ownership";
-import { admin } from "googleapis/build/src/apis/admin";
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
