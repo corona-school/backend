@@ -302,7 +302,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
-            instructorId: nobody,
+            instructorId: nobody
         })
     },
     Participation_certificate: {
