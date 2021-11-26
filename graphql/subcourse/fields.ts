@@ -12,10 +12,10 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @LimitedQuery()
     async subcoursesPublic(
-        @Arg("take") take?: number,
-        @Arg("skip") skip?: number,
-        @Arg("search") search?: string,
-        @Arg("onlyJoinable") onlyJoinable?: boolean
+        @Arg("take", { nullable: true }) take?: number,
+        @Arg("skip", { nullable: true }) skip?: number,
+        @Arg("search", { nullable: true }) search?: string,
+        @Arg("onlyJoinable", { nullable: true }) onlyJoinable?: boolean
     ) {
 
         const filters: SubcourseWhereInput[] = [{
