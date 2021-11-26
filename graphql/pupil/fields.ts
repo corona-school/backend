@@ -6,6 +6,7 @@ import { getUserId } from "../../common/user";
 import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
+import { PublicCache } from "../cache";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -26,6 +27,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver(type => [Subcourse])
     @Authorized(Role.ADMIN)
+    @PublicCache()
     @LimitEstimated(10)
     async subcoursesWaitingList(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
