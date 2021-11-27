@@ -32,15 +32,13 @@ export const GraphQLLogger: any = {
             didEncounterErrors(requestContext: GraphQLRequestContext) {
                 logger.warn(`[${sessionID}] Errors occurred:`, requestContext.errors);
             },
-            willSendResponse(_requestContext: GraphQLRequestContext) {
-                if (!isDev) {
-                    return;
+            willSendResponse(requestContext: GraphQLRequestContext) {
+                logger.info(`[${sessionID}] Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${requestContext.metrics.responseCacheHit ? "hit" : "missed"}`);
+                logger.info(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
+
+                if (isDev) {
+                    logger.debug(`[${sessionID}] Responding with`, requestContext.response.data);
                 }
-                logger.debug(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
-                logger.debug(`[${sessionID}] Responding with`, requestContext.response.data);
-                logger.debug(`outer Metrics`, requestContext.metrics);
-                logger.debug(`inner Metrics`, _requestContext.metrics);
-                logger.debug(`[${sessionID}] Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${requestContext.metrics.responseCacheHit ? "hit" : "missed"}`);
             }
         };
 
