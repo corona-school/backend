@@ -6,7 +6,6 @@ import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
 import { ApolloServer } from "apollo-server-express";
 import { GraphQLLogger } from "./logging";
-import { plugin as apolloTracing } from "apollo-tracing";
 import { PluginDefinition } from "apollo-server-core";
 import { ExtendFieldsPupilResolver } from "./pupil/fields";
 import { ExtendedFieldsSubcourseResolver } from "./subcourse/fields";
@@ -24,8 +23,7 @@ import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fi
 import { ExtendFieldsStudentResolver } from "./student/fields";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
-import { isDev } from "../common/util/environment";
-import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core/src/plugin/index";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -85,10 +83,6 @@ const plugins: PluginDefinition[] = [
     ApolloServerPluginLandingPageGraphQLPlayground()
 ];
 
-
-if (isDev) {
-    // plugins.push(apolloTracing());
-}
 
 export const apolloServer = new ApolloServer({
     schema,

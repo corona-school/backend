@@ -5,8 +5,8 @@
 
 import { createMethodDecorator, Directive } from "type-graphql";
 import { GraphQLContext } from "./context";
-import { CacheScope } from "apollo-cache-control";
 import { ModelsEnhanceMap } from "./generated";
+import { CacheScope } from "apollo-server-types";
 
 export function PublicCache(duration: number = 60 /*s*/) {
     return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
