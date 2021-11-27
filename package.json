@@ -54,7 +54,7 @@
     "express-favicon": "^2.0.1",
     "express-rate-limit": "^5.2.6",
     "googleapis": "^59.0.0",
-    "graphql": "16.0.0",
+    "graphql": "15.7.2",
     "graphql-fields": "^2.0.3",
     "graphql-scalars": "^1.10.0",
     "helmet": "^3.22.0",
