@@ -80,8 +80,8 @@ const schema = buildSchemaSync({
 });
 
 const plugins: PluginDefinition[] = [
-    GraphQLLogger as any,
-    responseCachePlugin() as any
+    responseCachePlugin() as any,
+    GraphQLLogger as any
 ];
 
 
