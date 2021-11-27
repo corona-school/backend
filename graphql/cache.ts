@@ -8,7 +8,7 @@ import { GraphQLContext } from "./context";
 import { CacheScope } from "apollo-cache-control";
 import { ModelsEnhanceMap } from "./generated";
 
-export function PublicCache(duration: number = 10_000) {
+export function PublicCache(duration: number = 60 /*s*/) {
     return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
         info.cacheControl.setCacheHint({
             maxAge: duration,
