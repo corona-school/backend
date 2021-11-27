@@ -3,30 +3,40 @@
 // The following sets cache hints as documented in https://www.apollographql.com/docs/apollo-server/performance/caching
 // The actual caching is then done by the apollo-server-plugin-response-cache plugin
 
-import { createMethodDecorator, Directive } from "type-graphql";
+import { createMethodDecorator } from "type-graphql";
 import { GraphQLContext } from "./context";
-import { CacheScope } from "apollo-cache-control";
-import { ModelsEnhanceMap } from "./generated";
+import { createHash } from "crypto";
+
 
 export function PublicCache(duration: number = 60 /*s*/) {
-    return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
-        info.cacheControl.setCacheHint({
-            maxAge: duration,
-            scope: CacheScope.Public
-        });
+    let lastResults = new Map();
 
-        return next();
+    setInterval(() => lastResults.clear(), duration * 1000);
+
+    return createMethodDecorator<GraphQLContext>(async ({ args, root, info, context }, next) => {
+        const query = JSON.stringify({ args, query: info.operation });
+        const queryUUID = createHash('sha1')
+            .update(query)
+            .digest('base64');
+
+
+        if (lastResults.has(queryUUID)) {
+            console.log(`Cache hit with UUID: ${queryUUID}`);
+            return lastResults.get(queryUUID);
+        }
+
+        console.log(`Cache miss with UUID: ${queryUUID}`);
+
+        const result = await next();
+        lastResults.set(queryUUID, result);
+
+        console.log(`Cached result: `, result);
+
+        return result;
     });
 }
 
-const cacheAllFields = {
-    fields: {
-        _all: [Directive("@cacheControl(inheritMaxAge: true)")]
-    }
-};
 
-export const cacheModelEnhancementMap: ModelsEnhanceMap = {
-    Course: cacheAllFields,
-    Subcourse: cacheAllFields,
-    Lecture: cacheAllFields
-};
+
+
+

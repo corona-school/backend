@@ -57,7 +57,6 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(returns => Course)
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(1)
-    @PublicCache()
     async course(@Root() subcourse: Subcourse) {
         return await prisma.course.findUnique({
             where: { id: subcourse.courseId }
@@ -67,7 +66,6 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(returns => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(10)
-    @PublicCache()
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
@@ -93,7 +91,6 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver(returns => Number)
     @Authorized(Role.UNAUTHENTICATED)
-    @PublicCache()
     async participantsCount(@Root() subcourse: Subcourse) {
         return await prisma.subcourse_participants_pupil.count({
             where: { subcourseId: subcourse.id }
