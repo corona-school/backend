@@ -30,8 +30,8 @@ import "reflect-metadata"; //leave it here...
 import { apolloServer } from "./../graphql";
 import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notificationController";
+import { isDev } from "../common/util/environment";
 
-const isDev = process.env.ENV === "dev";
 
 // Logger setup
 try {

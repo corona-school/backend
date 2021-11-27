@@ -24,6 +24,7 @@ import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fi
 import { ExtendFieldsStudentResolver } from "./student/fields";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
+import { isDev } from "../common/util/environment";
 
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
@@ -83,7 +84,6 @@ const plugins: PluginDefinition[] = [
     responseCachePlugin() as any
 ];
 
-const isDev = process.env.ENV === "dev";
 
 if (isDev) {
     // plugins.push(apolloTracing());
