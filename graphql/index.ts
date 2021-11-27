@@ -80,7 +80,7 @@ const schema = buildSchemaSync({
 
 const plugins: PluginDefinition[] = [
     // GraphQLLogger as any,
-    responseCachePlugin()
+    responseCachePlugin() as any
 ];
 
 const isDev = process.env.ENV === "dev";
