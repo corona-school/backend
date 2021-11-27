@@ -377,7 +377,8 @@ createConnection().then(setupPDFGenerationEnvironment)
             app.use("/api/notification", authCheckFactory(), router);
         }
 
-        function configureApolloServer() {
+        async function configureApolloServer() {
+            await apolloServer.start();
             apolloServer.applyMiddleware({ app, path: "/apollo" });
         }
 
