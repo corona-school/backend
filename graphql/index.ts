@@ -79,14 +79,14 @@ const schema = buildSchemaSync({
 });
 
 const plugins: PluginDefinition[] = [
-    GraphQLLogger as any,
+    // GraphQLLogger as any,
     responseCachePlugin()
 ];
 
 const isDev = process.env.ENV === "dev";
 
 if (isDev) {
-    plugins.push(apolloTracing());
+    // plugins.push(apolloTracing());
 }
 
 export const apolloServer = new ApolloServer({
