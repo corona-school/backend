@@ -23,13 +23,11 @@ import { MutateParticipationCertificateResolver } from "./certificate/mutations"
 import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
 import { ExtendFieldsStudentResolver } from "./student/fields";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
-import { cacheModelEnhancementMap } from "./cache";
 
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
 applyModelsEnhanceMap(authorizationModelEnhanceMap);
-applyModelsEnhanceMap(cacheModelEnhancementMap);
 
 const schema = buildSchemaSync({
     resolvers: [
