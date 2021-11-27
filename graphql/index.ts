@@ -25,7 +25,7 @@ import { ExtendFieldsStudentResolver } from "./student/fields";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { isDev } from "../common/util/environment";
-
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core/src/plugin/index";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -81,7 +81,8 @@ const schema = buildSchemaSync({
 
 const plugins: PluginDefinition[] = [
     responseCachePlugin() as any,
-    GraphQLLogger as any
+    GraphQLLogger as any,
+    ApolloServerPluginLandingPageGraphQLPlayground()
 ];
 
 
@@ -94,7 +95,5 @@ export const apolloServer = new ApolloServer({
     context: injectContext,
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
-    introspection: true,
-    playground: true,
-    cacheControl: true
+    introspection: true
 });
