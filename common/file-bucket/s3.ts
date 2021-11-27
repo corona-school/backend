@@ -21,3 +21,22 @@ export function accessURLForKey(key: string) {
     assert(ACCESS_DOMAIN_NAME, `Cannot create access URL for key ${key} because the ACCESS_DOMAIN_NAME is undefined. Please consider setting the appropriate environment variables to make the file bucket work.`);
     return new URL(key, `https://${ACCESS_DOMAIN_NAME}`).href;
 }
+
+export async function generatePredefinedURL(key: string, bucket: string) {
+    return await s3.getSignedUrlPromise("getObject", {Bucket: bucket, Key: key, Expires: 3600, Method: "GET"})
+}
+
+
+
+/*
+const remindersCreated = await prisma.concrete_notification.createMany({
+                    data: reminders.map(it => ({
+                        notificationID: it.id,
+                        state: ConcreteNotificationState.DELAYED,
+                        sentAt: new Date(Date.now() + it.delay),
+                        userId: getUserId(user),
+                        contextID: notificationContext.uniqueId,
+                        context: notificationContext
+                    }))
+});
+ */

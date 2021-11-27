@@ -13,6 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+// Attachment
+// s3://attachmentGroupId/attachmentId/file.txt
+model attachment {
+  id                  Int @id //unique attachment ID
+  uploaderID          String @db.VarChar
+  filename            String @db.VarChar
+  attachmentGroupId   Int @id  // unique per group of attachments
+  date                DateTime @default(now()) @db.Timestamp(6)
+}
+
+
 model bbb_meeting {
   id             Int      @id @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)

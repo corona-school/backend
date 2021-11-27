@@ -41,7 +41,7 @@ import moment from 'moment-timezone';
 import { putFile } from '../../../common/file-bucket';
 import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
-import { accessURLForKey } from '../../../common/file-bucket/s3';
+import {accessURLForKey, DEFAULT_BUCKET} from '../../../common/file-bucket/s3';
 import mime from 'mime-types';
 import { v4 as uuidv4 } from "uuid";
 import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
@@ -3393,12 +3393,12 @@ async function setCourseImage(student: Student, courseID: number, imageFile?: Ex
             const key = courseImageKey(courseID, fileExtension);
 
             // TODO: resize images to provide different resolutions
-            await putFile(imageFile.buffer, key);
+            await putFile(imageFile.buffer, key, DEFAULT_BUCKET);
 
             course.imageKey = key;
         } else if (course.imageKey) { //otherwise, there's nothing to delete
             //delete image if no image is given
-            await deleteFile(course.imageKey);
+            await deleteFile(course.imageKey, DEFAULT_BUCKET);
 
             course.imageKey = null;
         }
