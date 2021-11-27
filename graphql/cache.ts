@@ -3,9 +3,10 @@
 // The following sets cache hints as documented in https://www.apollographql.com/docs/apollo-server/performance/caching
 // The actual caching is then done by the apollo-server-plugin-response-cache plugin
 
-import { createMethodDecorator } from "type-graphql";
+import { createMethodDecorator, Directive } from "type-graphql";
 import { GraphQLContext } from "./context";
 import { CacheScope } from "apollo-cache-control";
+import { ModelsEnhanceMap } from "./generated";
 
 export function PublicCache(duration: number = 10_000) {
     return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
@@ -17,3 +18,15 @@ export function PublicCache(duration: number = 10_000) {
         return next();
     });
 }
+
+const cacheAllFields = {
+    fields: {
+        _all: [Directive("@cacheControl(inheritMaxAge: true)")]
+    }
+};
+
+export const cacheModelEnhancementMap: ModelsEnhanceMap = {
+    Course: cacheAllFields,
+    Subcourse: cacheAllFields,
+    Lecture: cacheAllFields
+};
