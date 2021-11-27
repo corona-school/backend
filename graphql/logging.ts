@@ -38,6 +38,7 @@ export const GraphQLLogger: any = {
                 }
                 logger.debug(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
                 logger.debug(`[${sessionID}] Responding with`, requestContext.response.data);
+                logger.debug(`Metrics`, requestContext.metrics);
                 logger.debug(`[${sessionID}] Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${requestContext.metrics.responseCacheHit ? "hit" : "missed"}`);
             }
         };
