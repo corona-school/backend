@@ -31,9 +31,33 @@ import { apolloServer } from "./../graphql";
 import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notificationController";
 
+const isDev = process.env.ENV === "dev";
+
 // Logger setup
 try {
-    configure("web/logconfig.json");
+    configure({
+        appenders: {
+            "file": { type: "dateFile", filename: "logs/web.log", keepFileExt: true },
+            "file-filtered": { type: "logLevelFilter", appender: "file", level: "info" },
+            "file-webaccess": { type: "dateFile", filename: "logs/access.log", keepFileExt: true },
+
+            "stdout": { type: "stdout" },
+            "stdout-filtered": { type: "logLevelFilter", appender: "stdout", level: (isDev ? "debug" : "info") },
+
+            "stderr": { type: "stderr" },
+            "stderr-filtered": { type: "logLevelFilter", appender: "stdout", level: "all", maxLevel: "debug" }
+        },
+        categories: {
+            "default": {
+                appenders: ["stderr-filtered", "stdout-filtered", "file-filtered"],
+                level: "all"
+            },
+            "access": {
+                appenders: ["file-webaccess", "stdout-filtered"],
+                level: "all"
+            }
+        }
+    });
 } catch (e) {
     console.warn("Couldn't setup logger", e);
 }
@@ -358,7 +382,6 @@ createConnection().then(setupPDFGenerationEnvironment)
         }
 
         async function deployServer() {
-            const isDev = process.env.ENV === "dev";
             const port = process.env.PORT || 5000;
             if (isDev) {
                 await setupDevDB();
