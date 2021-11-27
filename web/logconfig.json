@@ -21,7 +21,7 @@
       "stdout-filtered": {
         "type": "logLevelFilter",
         "appender": "stdout",
-        "level": "info"
+        "level": "debug"
       },
       "stderr": {
         "type": "stderr"

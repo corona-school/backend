@@ -36,6 +36,7 @@ export const GraphQLLogger: any = {
                 logger.debug(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
                 if (isDev) {
                     logger.debug(`[${sessionID}] Responding with`, requestContext.response.data);
+                    logger.debug(`[${sessionID}] Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was hit ${requestContext.metrics.responseCacheHit}`);
                 }
             }
         };

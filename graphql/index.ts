@@ -79,7 +79,7 @@ const schema = buildSchemaSync({
 });
 
 const plugins: PluginDefinition[] = [
-    // GraphQLLogger as any,
+    GraphQLLogger as any,
     responseCachePlugin() as any
 ];
 
@@ -95,5 +95,6 @@ export const apolloServer = new ApolloServer({
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
     introspection: true,
-    playground: true
+    playground: true,
+    cacheControl: true
 });
