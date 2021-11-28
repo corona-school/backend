@@ -71,6 +71,8 @@ export class Student extends Person {
     /*
      *  Student data
      */
+
+    // This should really rather be "isTutor" cause that's what it means: the user is doing one on one tutoring
     @Column({
         default: false
     })
@@ -445,15 +447,6 @@ export class Student extends Person {
         return ScreeningStatus.Rejected;
     }
 
-    //Returns the URL that the student can use to get to his screening video call
-    screeningURL(): string {
-        //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
-        return "https://authentication.lern-fair.de/";
-    }
-
-    instructorScreeningURL(): string {
-        return "https://authentication.lern-fair.de/";
-    }
 
     // Return the subjects formatted in the Subject Format
     getSubjectsFormatted(): Subject[] {
