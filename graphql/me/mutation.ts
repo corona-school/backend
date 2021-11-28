@@ -6,7 +6,7 @@ import { Subject } from "../types/subject";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser } from "../authentication";
 import { prisma } from "../../common/prisma";
-import { deactivatePupil } from "../../common/pupil/activation";
+import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { ProjectField } from "../../common/jufo/projectFields";
 import { pupil_projectfields_enum } from ".prisma/client";
 import { project_field_with_grade_restriction_projectfield_enum } from "@prisma/client";
@@ -147,4 +147,21 @@ export class MutateMeResolver {
 
         throw new Error(`This mutation is currently not supported for this user type`);
     }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.USER)
+    async meActivate(@Ctx() context: GraphQLContext) {
+        const user = getSessionUser(context);
+
+        if (user.pupilId) {
+            const pupil = await getSessionPupil(context);
+            await activatePupil(pupil);
+            return true;
+        }
+
+        // TODO Student activation
+
+        throw new Error(`This mutation is currently not supported for this user type`);
+    }
+
 }
