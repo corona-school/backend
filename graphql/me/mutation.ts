@@ -11,7 +11,7 @@ import { deactivatePupil } from "../../common/pupil/activation";
 @InputType()
 class PupilUpdateInput {
     @Field(type => Int, { nullable: true })
-    grade?: number;
+    gradeAsInt?: number;
 
     @Field(type => [Subject], { nullable: true })
     subjects?: Subject[];
@@ -54,14 +54,14 @@ export class MutateMeResolver {
                 throw new Error(`Tried to update student data on a pupil`);
             }
 
-            const { subjects, grade } = pupil;
+            const { subjects, gradeAsInt } = pupil;
 
             await prisma.pupil.update({
                 data: {
                     firstname,
                     lastname,
                     // TODO: Store numbers as numbers maybe ...
-                    grade: `${grade}. Klasse`,
+                    grade: `${gradeAsInt}. Klasse`,
                     subjects: JSON.stringify(subjects)
                 },
                 where: { id: user.pupilId }
