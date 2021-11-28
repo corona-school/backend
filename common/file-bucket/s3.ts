@@ -13,6 +13,7 @@ const s3Endpoint = AWS_BUCKET_ENDPOINT ? new aws.Endpoint(AWS_BUCKET_ENDPOINT) :
 
 /// Returns the default s3 instance
 export const s3 = new aws.S3({
+    signatureVersion: 'v4',
     ...(s3Endpoint && {endpoint: s3Endpoint})
 });
 
@@ -22,21 +23,6 @@ export function accessURLForKey(key: string) {
     return new URL(key, `https://${ACCESS_DOMAIN_NAME}`).href;
 }
 
-export async function generatePredefinedURL(key: string, bucket: string) {
-    return await s3.getSignedUrlPromise("getObject", {Bucket: bucket, Key: key, Expires: 3600, Method: "GET"})
+export async function generatePresignedURL(key: string, bucket: string) {
+    return s3.getSignedUrl("getObject", {Bucket: bucket, Key: key, Expires: 3600})
 }
-
-
-
-/*
-const remindersCreated = await prisma.concrete_notification.createMany({
-                    data: reminders.map(it => ({
-                        notificationID: it.id,
-                        state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + it.delay),
-                        userId: getUserId(user),
-                        contextID: notificationContext.uniqueId,
-                        context: notificationContext
-                    }))
-});
- */

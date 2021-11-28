@@ -30,6 +30,7 @@ import "reflect-metadata"; //leave it here...
 import { apolloServer } from "./../graphql";
 import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notificationController";
+import {getAttachmentUrlEndpoint} from "./controllers/attachmentController";
 
 // Logger setup
 try {
@@ -70,6 +71,8 @@ createConnection().then(setupPDFGenerationEnvironment)
         addSecurityMiddleware();
 
         configureParticipationCertificateAPI();
+
+        configureAttachmentAPI();
         configureUserAPI();
         configureCertificateAPI();
         configureTokenAPI();
@@ -126,6 +129,12 @@ createConnection().then(setupPDFGenerationEnvironment)
         function addSecurityMiddleware() {
             app.use(hpp());
             app.use(helmet());
+        }
+
+        function configureAttachmentAPI() {
+            const attachmentApiRouter = express.Router();
+            attachmentApiRouter.get("/:attachmentId/:filename", getAttachmentUrlEndpoint);
+            app.use("/api/attachments", attachmentApiRouter);
         }
 
         function configureUserAPI() {
@@ -204,7 +213,15 @@ createConnection().then(setupPDFGenerationEnvironment)
             coursesRouter.delete("/:id/subcourse/:subid/waitinglist/:userid", courseController.leaveWaitingListHandler);
 
             coursesRouter.post("/:id/subcourse/:subid/lecture", courseController.postLectureHandler);
-            coursesRouter.post("/:id/subcourse/:subid/groupmail", courseController.groupMailHandler);
+
+            const groupMailUpload = multer({
+                limits: {
+                    fileSize: 15 * (10 ** 6), //15mb,
+                    files: 5
+                },
+                storage: multer.memoryStorage() //store in memory
+            });
+            coursesRouter.post("/:id/subcourse/:subid/groupmail", groupMailUpload.any(), courseController.groupMailHandler);
             coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
             coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
             coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);

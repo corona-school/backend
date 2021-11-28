@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { getManager } from 'typeorm';
+import {getManager, In} from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 import {
@@ -59,6 +59,10 @@ import InstructorIssuedCertificateEvent from '../../../common/transactionlog/typ
 import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
 import * as Notification from "../../../common/notification";
+import {createAttachment, getAttachmentURL} from "../../../common/attachments";
+import { v4 as uuid } from "uuid";
+
+
 
 const dropCourseRelations = (course: Course) =>
     ({ ...course, instructors: undefined, guests: undefined, correspondent: undefined, subcourses: undefined });
@@ -2759,7 +2763,7 @@ export async function groupMailHandler(req: Request, res: Response) {
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, JSON.parse(req.body.addressees), req.files as Express.Multer.File[]);
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
             status = 400;
@@ -2772,7 +2776,7 @@ export async function groupMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[], files: Express.Multer.File[]) {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
@@ -2805,22 +2809,68 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 403;
     }
 
-    try {
-        for (let participant of subcourse.participants) {
-            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
-            await Notification.actionTaken(participant, "participant_course_message", {
-                instructor: student,
-                course: dropCourseRelations(course),
-                subcourse: dropSubcourseRelations(subcourse),
-                subject: mailSubject,
-                body: mailBody
-            });
+    const lectures = subcourse.lectures.sort(
+        (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
+    );
+    const lastLecture = lectures[lectures.length - 1];
+    if (lastLecture != null) {
+        const lectureEnd = moment(lastLecture.start)
+            .add(lastLecture.duration, 'minutes');
+        if (moment().isAfter(lectureEnd.add(14, 'days'))) {
+            logger.warn("Tried to send group mail after 14 days passed since the course has ended");
+            return 400;
         }
+    } else {
+        logger.warn("Can't determine the end date of the course");
+        return 400;
+    }
+
+
+
+    const addressees = await entityManager.getRepository(Pupil).find({wix_id: In(rawAddressees)});
+
+    if (addressees.length !== rawAddressees.length) {
+        let invalids = rawAddressees.map(r => {
+            if (!addressees.some(a => a.wix_id === r)) {
+                return `- ${r}`;
+            }
+        });
+        logger.warn(`Not all provided addressees are valid: ${invalids.join("\n")}`);
+        return 400;
+    }
+
+
+
+
+    try {
+        let attachmentGroupId = uuid().toString();
+        let attachments: {attachmentId: string, filename: string}[] = await Promise.all(files.map(async f => {
+            let attachmentId = await createAttachment(f, student, attachmentGroupId);
+            return {
+                attachmentId,
+                filename: f.originalname,
+            }}));
+
+        //TODO: Implement notification that sends the attachment links (api/attachments/:attachmentId/:filename) to the recipients
+
+
+        // await Promise.all(addressees.map(async (participant) => {
+        //     await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody, attachments);
+        //     await Notification.actionTaken(participant, "participant_course_message", {
+        //         instructor: student,
+        //         course: dropCourseRelations(course),
+        //         subcourse: dropSubcourseRelations(subcourse),
+        //         subject: mailSubject,
+        //         body: mailBody
+        //     });
+        //
+        // }));
     } catch (e) {
         logger.warn("Unable to send group mail");
         logger.debug(e);
-        return 400;
+        return 500;
     }
+
 
     return 204;
 }

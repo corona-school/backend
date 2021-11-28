@@ -1,29 +1,20 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["interactiveTransactions"]
 }
-
-// generator typegraphql {
-//  provider           = "typegraphql-prisma"
-//  output             = "../graphql/generated"
-// }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-
-// Attachment
-// s3://attachmentGroupId/attachmentId/file.txt
 model attachment {
-  id                  Int @id //unique attachment ID
-  uploaderID          String @db.VarChar
-  filename            String @db.VarChar
-  attachmentGroupId   Int @id  // unique per group of attachments
-  date                DateTime @default(now()) @db.Timestamp(6)
+  id                String   @id @db.Uuid
+  uploaderID        String   @db.VarChar
+  filename          String   @db.VarChar
+  attachmentGroupId String   @db.Uuid
+  date              DateTime @db.Timestamp(6)
 }
-
 
 model bbb_meeting {
   id             Int      @id @default(autoincrement())
