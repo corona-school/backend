@@ -4,8 +4,9 @@ import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 
 import { Me } from "./fields";
 import { Subject } from "../types/subject";
 import { GraphQLContext } from "../context";
-import { getSessionUser } from "../authentication";
+import { getSessionPupil, getSessionUser } from "../authentication";
 import { prisma } from "../../common/prisma";
+import { deactivatePupil } from "../../common/pupil/activation";
 
 @InputType()
 class PupilUpdateInput {
@@ -87,6 +88,23 @@ export class MutateMeResolver {
 
             return true;
         }
+        throw new Error(`This mutation is currently not supported for this user type`);
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.USER)
+    async meDeactivate(@Ctx() context: GraphQLContext) {
+        const user = getSessionUser(context);
+
+        if (user.pupilId) {
+            const pupil = await getSessionPupil(context);
+            await deactivatePupil(pupil);
+
+            return true;
+        }
+
+        // TODO: Student deactivation
+
         throw new Error(`This mutation is currently not supported for this user type`);
     }
 }
