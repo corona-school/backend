@@ -4,9 +4,23 @@ import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 
 import { Me } from "./fields";
 import { Subject } from "../types/subject";
 import { GraphQLContext } from "../context";
-import { getSessionPupil, getSessionUser } from "../authentication";
+import { getSessionPupil, getSessionStudent, getSessionUser } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { deactivatePupil } from "../../common/pupil/activation";
+import { ProjectField } from "../../common/jufo/projectFields";
+import { pupil_projectfields_enum } from ".prisma/client";
+import { project_field_with_grade_restriction_projectfield_enum } from "@prisma/client";
+
+@InputType()
+class ProjectFieldWithGradeInput {
+
+    @Field(type => ProjectField)
+    name: ProjectField;
+    @Field(type => Int, { nullable: true })
+    min?: number;
+    @Field(type => Int, { nullable: true })
+    max?: number;
+};
 
 @InputType()
 class PupilUpdateInput {
@@ -15,12 +29,18 @@ class PupilUpdateInput {
 
     @Field(type => [Subject], { nullable: true })
     subjects?: Subject[];
+
+    @Field(type => [ProjectField], { nullable: true })
+    projectFields: ProjectField[];
 }
 
 @InputType()
 class StudentUpdateInput {
     @Field(type => [Subject], { nullable: true })
     subjects?: Subject[];
+
+    @Field(type => [ProjectFieldWithGradeInput], { nullable: true })
+    projectFields: ProjectFieldWithGradeInput[];
 }
 
 
@@ -50,11 +70,17 @@ export class MutateMeResolver {
         const { firstname, lastname, pupil, student } = update;
 
         if (user.pupilId) {
+            const prevPupil = await getSessionPupil(context);
+
             if (student) {
                 throw new Error(`Tried to update student data on a pupil`);
             }
 
-            const { subjects, gradeAsInt } = pupil;
+            const { subjects, gradeAsInt, projectFields } = pupil;
+
+            if (projectFields && !prevPupil.isProjectCoachee) {
+                throw new Error(`Only project coachees can set the project fields`);
+            }
 
             await prisma.pupil.update({
                 data: {
@@ -62,7 +88,8 @@ export class MutateMeResolver {
                     lastname,
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
-                    subjects: JSON.stringify(subjects)
+                    subjects: JSON.stringify(subjects),
+                    projectFields: projectFields as pupil_projectfields_enum[]
                 },
                 where: { id: user.pupilId }
             });
@@ -71,11 +98,24 @@ export class MutateMeResolver {
         }
 
         if (user.studentId) {
+            const prevStudent = await getSessionStudent(context);
+
             if (pupil) {
                 throw new Error(`Tried to update pupil data on student`);
             }
 
-            const { subjects } = student;
+            const { projectFields, subjects } = student;
+
+            if (projectFields && !prevStudent.isProjectCoach) {
+                throw new Error(`Only project coaches can set the project fields`);
+            }
+
+            if (projectFields) {
+                await prisma.$transaction(async prisma => {
+                    await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: user.studentId}});
+                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: user.studentId })) });
+                });
+            }
 
             await prisma.student.update({
                 data: {
