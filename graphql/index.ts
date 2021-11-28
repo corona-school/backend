@@ -22,6 +22,7 @@ import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_
 import { MutateParticipationCertificateResolver } from "./certificate/mutations";
 import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
 import { ExtendFieldsStudentResolver } from "./student/fields";
+import { MutateMeResolver } from "./me/mutation";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -32,6 +33,7 @@ const schema = buildSchemaSync({
         /* User Authentication & Information */
         AuthenticationResolver,
         FieldMeResolver,
+        MutateMeResolver,
 
         /* Course */
         FindManyCourseResolver,
