@@ -34,7 +34,7 @@ describe("The screening invitation mails", function() {
                         type: "studentfirstscreeninginvitation",
                         variables: {
                             personFirstname: this.TestStudent.firstname,
-                            confirmationURL: this.TestStudent.screeningURL()
+                            confirmationURL: screening.SCREENING_USER_URL
                         },
                         disabled: false
                     },
@@ -57,7 +57,7 @@ describe("The screening invitation mails", function() {
                         type: "studentscreeningreminder",
                         variables: {
                             personFirstname: this.TestStudent.firstname,
-                            confirmationURL: this.TestStudent.screeningURL()
+                            confirmationURL: screening.SCREENING_USER_URL
                         },
                         disabled: false
                     },
@@ -80,7 +80,7 @@ describe("The screening invitation mails", function() {
                         type: "instructorfirstscreeninginvitation",
                         variables: {
                             instructorFirstName: this.TestStudent.firstname,
-                            confirmationURL: this.TestStudent.instructorScreeningURL()
+                            confirmationURL: screening.SCREENING_USER_URL
                         },
                         disabled: false
                     },
