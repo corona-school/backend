@@ -316,7 +316,7 @@ export class MutateMeResolver {
         if (projectFields) {
             await prisma.$transaction(async prisma => {
                 await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: student.id }});
-                await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: user.studentId })) });
+                await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: student.id })) });
             });
         }
 
