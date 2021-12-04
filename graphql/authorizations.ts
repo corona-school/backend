@@ -24,7 +24,15 @@ export enum Role {
     /* User owns the entity as defined in graphql/ownership */
     OWNER = "OWNER",
     /* No one should have access */
-    NOBODY = "NOBODY"
+    NOBODY = "NOBODY",
+
+    /* User is a student, requested to be a tutor and was successfully screened */
+    TUTOR = "TUTOR",
+    /* User is a student, requested to be a course instructor and was successfully "instructor screened" */
+    INSTRUCTOR = "INSTRUCTOR",
+    /* User is a student, requested to be a project coach and was successfully screened */
+    PROJECT_COACH = "PROJECT_COACH"
+
 }
 
 const authLogger = getLogger("GraphQL Authentication");

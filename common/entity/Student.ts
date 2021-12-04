@@ -72,7 +72,8 @@ export class Student extends Person {
      *  Student data
      */
 
-    // This should really rather be "isTutor" cause that's what it means: the user is doing one on one tutoring
+    // This should really rather be "isTutor" cause that's what it means: the user wants to do one on one tutoring
+    // ATTENTION: This does not mean the user is authorized to do tutoring. A successful screening record must exist for the user
     @Column({
         default: false
     })
@@ -97,6 +98,8 @@ export class Student extends Person {
     /*
      * Instructor data
      */
+    // The user expressed the intent to instruct courses
+    // ATTENTION: This does not mean the user is authorized to create courses. A successful instructor_screening record must exist for the user
     @Column({
         default: false
     })
@@ -149,6 +152,8 @@ export class Student extends Person {
     /*
      * Project Coaching data
      */
+    // THe user expressed the intent to do project coaching
+    // ATTENTION: This does not mean the user is authorized to do tutoring. A successful screening record must exist for the user (same screening as for tutors)
     @Column({
         default: false,
         nullable: false

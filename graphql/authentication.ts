@@ -112,7 +112,7 @@ export class AuthenticationResolver {
                 lastname: pupil.lastname,
                 email: pupil.email,
                 pupilId: pupil.id,
-                roles: [Role.USER, Role.PUPIL]
+                roles: [Role.USER, Role.PUPIL, Role.UNAUTHENTICATED]
             };
 
             logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in`);
@@ -133,10 +133,33 @@ export class AuthenticationResolver {
                 lastname: student.lastname,
                 email: student.email,
                 studentId: student.id,
-                roles: [Role.USER, Role.STUDENT]
+                roles: [Role.USER, Role.STUDENT, Role.UNAUTHENTICATED]
             };
 
             logger.info(`[${context.sessionToken}] Student(${student.id}) successfully logged in`);
+
+            if (student.isStudent || student.isProjectCoach) {
+                // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
+                const wasScreened = await prisma.screening.count({ where: { studentId: student.id, success: true }}) > 0;
+                if (wasScreened && student.isStudent) { // "isStudent" means the student wants to be a tutor
+                    logger.info(`[${context.sessionToken}] Student(${student.id}) was screened and has TUTOR role`);
+                    user.roles.push(Role.TUTOR);
+                }
+
+                if (wasScreened && student.isProjectCoach) {
+                    logger.info(`[${context.sessionToken}] Student(${student.id}) was screened and has PROJECT_COACH role`);
+                    user.roles.push(Role.PROJECT_COACH);
+                }
+            }
+
+            if (student.isInstructor) {
+                // the user wants to be a course instructor, let's check if they were screened and are authorized to do so
+                const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+                if (wasInstructorScreened) {
+                    logger.info(`[${context.sessionToken}] Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
+                    user.roles.push(Role.INSTRUCTOR);
+                }
+            }
         }
 
         if (!user) {
@@ -173,7 +196,7 @@ export class AuthenticationResolver {
             firstname: screener.firstname,
             lastname: screener.lastname,
             email: screener.email,
-            roles: [Role.USER, Role.SCREENER],
+            roles: [Role.USER, Role.SCREENER, Role.UNAUTHENTICATED],
             screenerId: screener.id
         };
 
