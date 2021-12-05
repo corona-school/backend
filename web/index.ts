@@ -222,7 +222,7 @@ createConnection().then(setupPDFGenerationEnvironment)
                 storage: multer.memoryStorage() //store in memory
             });
             coursesRouter.post("/:id/subcourse/:subid/groupmail", groupMailUpload.any(), courseController.groupMailHandler);
-            coursesRouter.post("/:id/subcourse/:subid/instructormail", courseController.instructorMailHandler);
+            coursesRouter.post("/:id/subcourse/:subid/instructormail", groupMailUpload.any(), courseController.instructorMailHandler);
             coursesRouter.put("/:id/subcourse/:subid/lecture/:lecid", courseController.putLectureHandler);
             coursesRouter.delete("/:id/subcourse/:subid/lecture/:lecid", courseController.deleteLectureHandler);
 

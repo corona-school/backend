@@ -12,7 +12,8 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
             id,
             uploaderID: uploader.wix_id,
             filename: file.originalname,
-            attachmentGroupId
+            attachmentGroupId,
+            date: new Date()
         }
     });
 

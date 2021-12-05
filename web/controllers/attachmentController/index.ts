@@ -1,6 +1,5 @@
 import {getLogger} from "log4js";
 import {Request, Response} from "express";
-import {getManager} from "typeorm";
 import {getAttachmentURL} from "../../../common/attachments";
 
 const logger = getLogger();
@@ -53,7 +52,7 @@ export async function getAttachmentUrlEndpoint(req: Request, res: Response) {
 
         let s3url = await getAttachmentURL(attachmentId, filename);
 
-        return res.json({url: s3url});
+        return res.redirect(s3url);
     } catch (error) {
         logger.error("Failed to generate attachment URL", error);
         return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");

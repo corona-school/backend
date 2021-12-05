@@ -59,8 +59,9 @@ import InstructorIssuedCertificateEvent from '../../../common/transactionlog/typ
 import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
 import * as Notification from "../../../common/notification";
-import {createAttachment, getAttachmentURL} from "../../../common/attachments";
+import { createAttachment } from "../../../common/attachments";
 import { v4 as uuid } from "uuid";
+import { friendlyFileSize } from "../../../common/util/basic";
 
 
 
@@ -2839,32 +2840,30 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 400;
     }
 
-
-
-
     try {
         let attachmentGroupId = uuid().toString();
-        let attachments: {attachmentId: string, filename: string}[] = await Promise.all(files.map(async f => {
-            let attachmentId = await createAttachment(f, student, attachmentGroupId);
-            return {
-                attachmentId,
-                filename: f.originalname,
-            }}));
 
-        //TODO: Implement notification that sends the attachment links (api/attachments/:attachmentId/:filename) to the recipients
+        let attachmentURLs = "";
 
+        if (files.length > 0) {
+            attachmentURLs += "<h3>Anhänge</h3>";
 
-        // await Promise.all(addressees.map(async (participant) => {
-        //     await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody, attachments);
-        //     await Notification.actionTaken(participant, "participant_course_message", {
-        //         instructor: student,
-        //         course: dropCourseRelations(course),
-        //         subcourse: dropSubcourseRelations(subcourse),
-        //         subject: mailSubject,
-        //         body: mailBody
-        //     });
-        //
-        // }));
+            await Promise.all(files.map(async f => {
+                let attachmentId = await createAttachment(f, student, attachmentGroupId);
+                attachmentURLs = attachmentURLs + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
+            }))
+        }
+
+        await Promise.all(addressees.map(async (participant) => {
+            await Notification.actionTaken(participant, "participant_course_message", {
+                instructor: student,
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse),
+                subject: mailSubject,
+                body: mailBody,
+                attachmentURLs
+            });
+        }));
     } catch (e) {
         logger.warn("Unable to send group mail");
         logger.debug(e);
@@ -2911,7 +2910,7 @@ export async function instructorMailHandler(req: Request, res: Response) {
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, req.files as Express.Multer.File[]);
         } else {
             logger.warn("Missing or invalid parameters for instructorMailHandler");
             status = 400;
@@ -2924,7 +2923,7 @@ export async function instructorMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, files: Express.Multer.File[]) {
     if (!pupil.isParticipant || !pupil.active) {
         logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
         return 403;
@@ -2956,14 +2955,27 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
 
 
     try {
-        // send mail to correspondnet
-        await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
+        let attachmentGroupId = uuid().toString();
+
+        let attachmentURLs = "";
+
+        if (files.length > 0) {
+            attachmentURLs += "<h3>Anhänge</h3>";
+
+            await Promise.all(files.map(async f => {
+                let attachmentId = await createAttachment(f, pupil, attachmentGroupId);
+                attachmentURLs = attachmentURLs + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
+            }))
+        }
+
+
         await Notification.actionTaken(pupil, "instructor_course_participant_message", {
             participant: pupil,
             course: dropCourseRelations(course),
             subcourse: dropSubcourseRelations(subcourse),
             subject: mailSubject,
-            body: mailBody
+            body: mailBody,
+            attachmentURLs
         });
     } catch (e) {
         logger.warn("Unable to send instructor mail");
