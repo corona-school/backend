@@ -6,7 +6,6 @@ import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
 import { ApolloServer } from "apollo-server-express";
 import { GraphQLLogger } from "./logging";
-import { plugin as apolloTracing } from "apollo-tracing";
 import { PluginDefinition } from "apollo-server-core";
 import { ExtendFieldsPupilResolver } from "./pupil/fields";
 import { ExtendedFieldsSubcourseResolver } from "./subcourse/fields";
@@ -22,10 +21,14 @@ import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_
 import { MutateParticipationCertificateResolver } from "./certificate/mutations";
 import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
 import { ExtendFieldsStudentResolver } from "./student/fields";
+import responseCachePlugin from 'apollo-server-plugin-response-cache';
+import { cacheModelEnhancementMap } from "./cache";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
 applyModelsEnhanceMap(authorizationModelEnhanceMap);
+applyModelsEnhanceMap(cacheModelEnhancementMap);
 
 const schema = buildSchemaSync({
     resolvers: [
@@ -75,20 +78,16 @@ const schema = buildSchemaSync({
 });
 
 const plugins: PluginDefinition[] = [
-    GraphQLLogger as any
+    responseCachePlugin() as any,
+    GraphQLLogger as any,
+    ApolloServerPluginLandingPageGraphQLPlayground()
 ];
 
-const isDev = process.env.ENV === "dev";
-
-if (isDev) {
-    plugins.push(apolloTracing());
-}
 
 export const apolloServer = new ApolloServer({
     schema,
     context: injectContext,
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
-    introspection: true,
-    playground: true
+    introspection: true
 });
