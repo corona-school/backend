@@ -11,11 +11,13 @@ import { pupil_projectfields_enum, student_languages_enum, student_state_enum } 
 import { project_field_with_grade_restriction_projectfield_enum } from "@prisma/client";
 import { TeacherModule } from "../../common/entity/Student";
 import { MaxLength } from "class-validator";
-import { sendFirstInstructorScreeningInvitationMail } from "../../common/mails/screening";
+import { sendFirstInstructorScreeningInvitationMail, sendFirstProjectCoachingJufoAlumniScreeningInvitationMail, sendFirstScreeningInvitationMail } from "../../common/mails/screening";
 import { Language } from "../../common/daz/language";
 import * as Notification from "../../common/notification";
 import { DEFAULT_SCREENER_NUMBER_ID } from "../../common/entity/Screener";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../common/jufo/participationIndication";
+import { sendFirstScreeningInvitationToTutor } from "../../common/administration/screening/initial-invitations";
+import { sendFirstScreeningInvitationToProjectCoachingJufoAlumni } from "../../common/administration/screening/initial-invitations";
 
 @InputType()
 class ProjectFieldWithGradeInput {
@@ -254,7 +256,11 @@ export class MutateMeResolver {
             where: { id: student.id }
         });
 
-        await sendFirstInstructorScreeningInvitationMail(student);
+
+        const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        if (!wasInstructorScreened) {
+            await sendFirstInstructorScreeningInvitationMail(student);
+        }
 
 
         return true;
@@ -299,6 +305,8 @@ export class MutateMeResolver {
             await Notification.actionTaken(student, "tutor_screening_success", {});
         }
 
+        // TODO: Currently students are not invited for screening again when they want to become tutors? Why is that?
+
         return true;
     }
 
@@ -331,16 +339,24 @@ export class MutateMeResolver {
             where: { id: student.id }
         });
 
-        /* TODO:
-        if (!student.isStudent && !(student.isUniversityStudent === false && student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === false)) {
+
+        const wasScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+
+        if (!wasScreened) {
             if (student.isUniversityStudent) {
-                //send usual tutor screening invitation
-                await sendFirstScreeningInvitationToTutor(entityManager, student);
-            } else if (student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === true) {
-                //invite to jufo specific screening
-                await sendFirstScreeningInvitationToProjectCoachingJufoAlumni(entityManager, student);
+                await sendFirstScreeningInvitationMail(student);
+                await prisma.student.update({
+                    data: { lastSentScreeningInvitationDate: new Date() },
+                    where: { id: student.id }
+                });
+            } else {
+                await sendFirstProjectCoachingJufoAlumniScreeningInvitationMail(student);
+                await prisma.student.update({
+                    data: { lastSentJufoAlumniScreeningInvitationDate: new Date() },
+                    where: { id: student.id }
+                });
             }
-        } */
+        }
 
         return true;
     }

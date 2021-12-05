@@ -141,12 +141,15 @@ export class AuthenticationResolver {
             if (student.isStudent || student.isProjectCoach) {
                 // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
                 const wasScreened = await prisma.screening.count({ where: { studentId: student.id, success: true }}) > 0;
-                if (wasScreened && student.isStudent) { // "isStudent" means the student wants to be a tutor
+                if (wasScreened) {
                     logger.info(`[${context.sessionToken}] Student(${student.id}) was screened and has TUTOR role`);
                     user.roles.push(Role.TUTOR);
                 }
+            }
 
-                if (wasScreened && student.isProjectCoach) {
+            if (student.isProjectCoach) {
+                const wasCoachScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+                if (wasCoachScreened) {
                     logger.info(`[${context.sessionToken}] Student(${student.id}) was screened and has PROJECT_COACH role`);
                     user.roles.push(Role.PROJECT_COACH);
                 }
