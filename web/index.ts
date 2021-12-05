@@ -27,10 +27,11 @@ import moment from "moment-timezone";
 import { closeBrowser, setupBrowser } from "html-pppdf";
 import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
-import { apolloServer } from "./../graphql";
+import { apolloServer } from "../graphql";
 import rateLimit from "express-rate-limit";
 import * as notificationController from "./controllers/notificationController";
 import { isDev } from "../common/util/environment";
+import {isCommandArg} from "../common/util/basic";
 
 
 // Logger setup
@@ -74,6 +75,10 @@ const app = express();
 
 //SETUP PDF generation environment
 async function setupPDFGenerationEnvironment() {
+    if (isCommandArg("--noPDF")) {
+        logger.info("Skipping browser initialization due to supplied --noPDF arg");
+        return;
+    }
     await setupBrowser({
         args: ["--no-sandbox"], //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
         handleSIGTERM: false //don't close chrome on sigterm, which heroku sends to all processes
@@ -93,9 +98,12 @@ createConnection().then(setupPDFGenerationEnvironment)
         addCorsMiddleware();
         addSecurityMiddleware();
 
-        configureParticipationCertificateAPI();
+
+        if (!isCommandArg("--noPDF")) {
+            configureParticipationCertificateAPI();
+            configureCertificateAPI();
+        }
         configureUserAPI();
-        configureCertificateAPI();
         configureTokenAPI();
         configureCourseAPI();
         configureScreenerAPI();
@@ -399,7 +407,7 @@ createConnection().then(setupPDFGenerationEnvironment)
             process.on("SIGTERM", async () => {
                 logger.debug("SIGTERM signal received: Starting graceful shutdown procedures...");
                 //Close Server
-                await new Promise<void>((resolve, reject) => server.close(() => {
+                await new Promise<void>((resolve) => server.close(() => {
                     resolve();
                 }));
                 logger.debug("✅ HTTP server closed!");
@@ -410,9 +418,10 @@ createConnection().then(setupPDFGenerationEnvironment)
 
                 //close puppeteer (because if all connections are finished, it is no longer needed at the moment)
                 //even though this is not the cleanest solution (because it could still lead to some queued callbacks on node's event loop that uses puppeteer for pdf generation), it is called here, because for now all pdf generation is awaited for until a server-route's response was delivered.
-                await closeBrowser();
-                logger.debug("✅ Puppeteer gracefully shut down!");
-
+                if (!isCommandArg("--noPDF")) {
+                    await closeBrowser();
+                    logger.debug("✅ Puppeteer gracefully shut down!");
+                }
             //now, the process will automatically exit if node has no more async operations to perform (i.e. finished sending out all open mails that weren't awaited for etc.)
             });
 
