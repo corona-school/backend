@@ -110,6 +110,7 @@ const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
+const everyone = [Authorized(Role.UNAUTHENTICATED)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = "never", PublicFields extends keyof Entity = never> (otherFields: { [key in Exclude<keyof Entity, PublicFields>]: PropertyDecorator[] }) => otherFields;
@@ -147,7 +148,11 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Participation_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
-    School: allAdmin,
+    School: {
+        _all: nobody,
+        // School data is public knowledge and can be queried by everyone
+        schools: everyone
+    },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Subcourse_waiting_list_pupil: allAdmin,
