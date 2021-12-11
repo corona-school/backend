@@ -27,6 +27,7 @@ export interface GraphQLContext {
     sessionToken?: string;
     prisma: PrismaClient;
     deferredRequiredRoles?: Role[];
+    ip: string;
 }
 
 const authLogger = getLogger("GraphQL Authentication");
@@ -71,6 +72,6 @@ export default async function injectContext({ req }) {
     }
 
 
-    const context: GraphQLContext = { user, prisma, sessionToken };
+    const context: GraphQLContext = { user, prisma, sessionToken, ip };
     return context;
 }

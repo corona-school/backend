@@ -16,8 +16,10 @@ import { Language } from "../../common/daz/language";
 import * as Notification from "../../common/notification";
 import { DEFAULT_SCREENER_NUMBER_ID } from "../../common/entity/Screener";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../common/jufo/participationIndication";
-import { sendFirstScreeningInvitationToTutor } from "../../common/administration/screening/initial-invitations";
-import { sendFirstScreeningInvitationToProjectCoachingJufoAlumni } from "../../common/administration/screening/initial-invitations";
+import { RegistrationSource } from "../../common/entity/Person";
+import { School } from "../../common/entity/School";
+import { State } from "../../common/entity/State";
+import { RateLimit } from "../rate-limit";
 
 @InputType()
 class ProjectFieldWithGradeInput {
@@ -28,6 +30,43 @@ class ProjectFieldWithGradeInput {
     min?: number;
     @Field(type => Int, { nullable: true })
     max?: number;
+}
+
+@InputType()
+class RegisterStudentInput {
+  @Field(type => String)
+  firstname: string;
+
+  @Field(type => String)
+  lastname: string;
+
+  @Field(type => String)
+  email: string;
+
+  @Field(type => Boolean)
+  newsletter: boolean;
+}
+
+
+@InputType()
+class RegisterPupilInput {
+  @Field(type => String)
+  firstname: string;
+
+  @Field(type => String)
+  lastname: string;
+
+  @Field(type => String)
+  email: string;
+
+  @Field(type => Boolean)
+  newsletter: boolean;
+
+  @Field(type => School)
+  school: School;
+
+  @Field(type => State)
+  state: State;
 }
 
 @InputType()
@@ -84,6 +123,9 @@ class BecomeInstructorInput {
     @Field(type => String)
     @MaxLength(3000)
     message: string;
+
+    @Field(type => RegistrationSource)
+    registrationSource: RegistrationSource;
 }
 
 @InputType()
@@ -131,6 +173,22 @@ class BecomeProjectCoacheeInput {
 
 @Resolver(of => Me)
 export class MutateMeResolver {
+    @Mutation(returns => Boolean)
+    @Authorized(Role.UNAUTHENTICATED)
+    async meRegisterStudent(@Arg("data") data: RegisterStudentInput) {
+        throw new Error(`Not implemented`); // TODO: implement
+
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.UNAUTHENTICATED)
+    async meRegisterPupil(@Arg("data") data: RegisterPupilInput) {
+        throw new Error(`Not implemented`); // TODO: implement
+
+        return true;
+    }
+
     @Mutation(returns => Boolean)
     @Authorized(Role.USER)
     async meUpdate(@Ctx() context: GraphQLContext, @Arg("update") update: MeUpdateInput) {
@@ -385,4 +443,24 @@ export class MutateMeResolver {
 
         return true;
     }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.PUPIL)
+    async meBecomeTutee(@Ctx() context: GraphQLContext) {
+        const pupil = await getSessionPupil(context);
+
+        throw new Error(`Not implemented.`); // TODO: implement
+
+        return true;
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.UNAUTHENTICATED)
+    @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    async isEmailAvailable(@Arg("email") email: string) {
+        const pupilHasEmail = await prisma.pupil.count({ where: { email }}) > 0;
+        const studentHasEmail = await prisma.pupil.count({ where: { email }}) > 0;
+        return !(pupilHasEmail || studentHasEmail);
+    }
+
 }
