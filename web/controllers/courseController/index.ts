@@ -2952,7 +2952,24 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         logger.warn("Tried to send instructor mail to invalid subcourse");
         return 404;
     }
-
+    
+    
+    const lectures = subcourse.lectures.sort(
+        (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
+    );
+    const lastLecture = lectures[lectures.length - 1];
+    if (lastLecture != null) {
+        const lectureEnd = moment(lastLecture.start)
+            .add(lastLecture.duration, 'minutes');
+        if (moment().isAfter(lectureEnd.add(14, 'days'))) {
+            logger.warn("Tried to send instructor mail after 14 days passed since the course has ended");
+            return 400;
+        }
+    } else {
+        logger.warn("Can't determine the end date of the course");
+        return 400;
+    }
+    
 
     try {
         let attachmentGroupId = uuid().toString();
