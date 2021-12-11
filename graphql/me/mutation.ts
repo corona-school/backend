@@ -3,7 +3,7 @@ import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 
 import { Me } from "./fields";
 import { Subject } from "../types/subject";
 import { GraphQLContext } from "../context";
-import { getSessionPupil, getSessionStudent, getSessionUser } from "../authentication";
+import { getSessionPupil, getSessionStudent, getSessionUser, logInAsPupil, logInAsStudent } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { ProjectField } from "../../common/jufo/projectFields";
@@ -20,7 +20,14 @@ import { RegistrationSource } from "../../common/entity/Person";
 import { School } from "../../common/entity/School";
 import { State } from "../../common/entity/State";
 import { RateLimit } from "../rate-limit";
+import { v4 as uuidv4 } from "uuid";
+import { sendVerificationMail, generateToken } from "../../jobs/periodic/fetch/utils/verification";
+import { getTransactionLog } from '../../common/transactionlog';
+import VerificationRequestEvent from "../../common/transactionlog/types/VerificationRequestEvent";
+import { getLogger } from "log4js";
+import { Context } from "mocha";
 
+const log = getLogger("Me Mutations");
 @InputType()
 class ProjectFieldWithGradeInput {
 
@@ -34,39 +41,62 @@ class ProjectFieldWithGradeInput {
 
 @InputType()
 class RegisterStudentInput {
-  @Field(type => String)
-  firstname: string;
+    @Field(type => String)
+    @MaxLength(100)
+    firstname: string;
 
-  @Field(type => String)
-  lastname: string;
+    @Field(type => String)
+    @MaxLength(100)
+    lastname: string;
 
-  @Field(type => String)
-  email: string;
+    @Field(type => String)
+    @MaxLength(100)
+    email: string;
 
-  @Field(type => Boolean)
-  newsletter: boolean;
+    @Field(type => Boolean)
+    newsletter: boolean;
+
+    @Field(type => RegistrationSource)
+    registrationSource: RegistrationSource;
+
+    /* After registration, the user receives an email to verify their account.
+   The user is redirected to this URL afterwards to continue with whatever they're registering for */
+    @Field(type => String, { nullable: true })
+    redirectTo?: string;
 }
 
 
 @InputType()
 class RegisterPupilInput {
-  @Field(type => String)
-  firstname: string;
+    @Field(type => String)
+    @MaxLength(100)
+    firstname: string;
 
-  @Field(type => String)
-  lastname: string;
+    @Field(type => String)
+    @MaxLength(100)
+    lastname: string;
 
-  @Field(type => String)
-  email: string;
+    @Field(type => String)
+    @MaxLength(100)
+    email: string;
 
-  @Field(type => Boolean)
-  newsletter: boolean;
+    @Field(type => Boolean)
+    newsletter: boolean;
 
-  @Field(type => School)
-  school: School;
+    @Field(type => Int)
+    schoolId: School["id"];
 
-  @Field(type => State)
-  state: State;
+    @Field(type => State)
+    state: State;
+
+    @Field(type => RegistrationSource)
+    registrationSource: RegistrationSource;
+
+    /* After registration, the user receives an email to verify their account.
+       The user is redirected to this URL afterwards to continue with whatever they're registering for */
+    @Field(type => String, { nullable: true })
+    redirectTo?: string;
+
 }
 
 @InputType()
@@ -93,26 +123,29 @@ class StudentUpdateInput {
 
 @InputType()
 class MeUpdateInput {
-  @Field(type => String, { nullable: true })
-  firstname?: string;
+    @Field(type => String, { nullable: true })
+    @MaxLength(100)
+    firstname?: string;
 
-  @Field(type => String, { nullable: true })
-  lastname?: string;
+    @Field(type => String, { nullable: true })
+    @MaxLength(100)
+    lastname?: string;
 
-  @Field(type => PupilUpdateInput, { nullable: true })
-  pupil?: PupilUpdateInput;
+    @Field(type => PupilUpdateInput, { nullable: true })
+    pupil?: PupilUpdateInput;
 
-  @Field(type => StudentUpdateInput, { nullable: true })
-  student?: StudentUpdateInput;
+    @Field(type => StudentUpdateInput, { nullable: true })
+    student?: StudentUpdateInput;
 }
 
 @InputType()
 class BecomeInstructorInput {
     @Field(type => String, { nullable: true })
+    @MaxLength(100)
     university: string;
 
-    @Field(type => String, { nullable: true })
-    state: string;
+    @Field(type => State, { nullable: true })
+    state: State;
 
     @Field(type => TeacherModule, { nullable: true })
     teacherModule: TeacherModule;
@@ -123,9 +156,6 @@ class BecomeInstructorInput {
     @Field(type => String)
     @MaxLength(3000)
     message: string;
-
-    @Field(type => RegistrationSource)
-    registrationSource: RegistrationSource;
 }
 
 @InputType()
@@ -156,6 +186,7 @@ class BecomeProjectCoachInput {
     hasJufoCertificate: boolean;
 
     @Field(type => String)
+    @MaxLength(3000)
     jufoPastParticipationInfo: string;
 }
 
@@ -171,22 +202,110 @@ class BecomeProjectCoacheeInput {
     projectMemberCount: number;
 }
 
+async function isEmailAvailable(email: string) {
+    email = email.toLowerCase();
+    const pupilHasEmail = await prisma.pupil.count({ where: { email } }) > 0;
+    const studentHasEmail = await prisma.student.count({ where: { email } }) > 0;
+    return !pupilHasEmail && !studentHasEmail;
+}
+
+
 @Resolver(of => Me)
 export class MutateMeResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    async meRegisterStudent(@Arg("data") data: RegisterStudentInput) {
-        throw new Error(`Not implemented`); // TODO: implement
+    @RateLimit("RegisterStudent", 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg("data") data: RegisterStudentInput) {
+        if (!(await isEmailAvailable(data.email))) {
+            throw new Error(`Email is already used by another account`);
+        }
+
+        const student = await prisma.student.create({
+            data: {
+                email: data.email.toLowerCase(),
+                firstname: data.firstname,
+                lastname: data.lastname,
+                newsletter: data.newsletter,
+                registrationSource: data.registrationSource as any,
+
+                // Compatibility with legacy foreign keys
+                wix_id: "Z-" + uuidv4(),
+                wix_creation_date: new Date(),
+
+                // the authToken is used to verify the e-mail instead
+                verification: "DEPRECATED"
+            }
+        });
+
+        // TODO: Create a new E-Mail for registration
+        // TODO: Send authToken with this
+        await Notification.actionTaken(student, "student_registration_started", { redirectTo: data.redirectTo });
+        await getTransactionLog().log(new VerificationRequestEvent(student));
+
+        log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
+
+        await logInAsStudent(student, context);
 
         return true;
+
+
+        /* The student can now use the authToken passed to them via E-Mail to re authenticate the session.
+           This will mark them as verified, and grant them the STUDENT role.
+           With this role, they can use the meBecomeTutor, meBecomeInstructor or meBecomeProjectCoach to enhance their user account.
+           With the STUDENT Role alone they can't do much (but at least deactivate their account and change their settings) */
     }
 
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    async meRegisterPupil(@Arg("data") data: RegisterPupilInput) {
-        throw new Error(`Not implemented`); // TODO: implement
+    @RateLimit("RegisterPupil", 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg("data") data: RegisterPupilInput) {
+        if (!(await isEmailAvailable(data.email))) {
+            throw new Error(`Email is already used by another account`);
+        }
+
+        const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
+        if (!school) {
+            throw new Error(`Invalid School ID '${data.schoolId}'`);
+        }
+
+        const pupil = await prisma.pupil.create({
+            data: {
+                email: data.email.toLowerCase(),
+                firstname: data.firstname,
+                lastname: data.lastname,
+                newsletter: data.newsletter,
+                createdAt: new Date(),
+                schooltype: school.schooltype,
+                school: { connect: school },
+                state: data.state,
+                registrationSource: data.registrationSource as any,
+
+                // Compatibility with legacy foreign keys
+                wix_id: "Z-" + uuidv4(),
+                wix_creation_date: new Date(),
+
+                // Every pupil can participate in courses
+                isParticipant: true,
+
+                // the authToken is used to verify the e-mail instead
+                verification: "DEPRECATED"
+            }
+        });
+
+        // TODO: Create a new E-Mail for registration
+        // TODO: Send auth token with this
+        await Notification.actionTaken(pupil, "pupil_registration_started", { redirectTo: data.redirectTo });
+        await getTransactionLog().log(new VerificationRequestEvent(pupil));
+
+        log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
+
+        await logInAsPupil(pupil, context);
 
         return true;
+
+        /* The pupil can now use the authToken passed to them via E-Mail to re authenticate the session.
+           This will mark them as verified, and grant them the PUPIL role.
+           With this role, they can use the meBecomeStatePupil, meBecomeTutee or meBecomeProjectCoachee to enhance their user account */
     }
 
     @Mutation(returns => Boolean)
@@ -239,7 +358,7 @@ export class MutateMeResolver {
 
             if (projectFields) {
                 await prisma.$transaction(async prisma => {
-                    await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: user.studentId}});
+                    await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: user.studentId } });
                     await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: user.studentId })) });
                 });
             }
@@ -257,6 +376,7 @@ export class MutateMeResolver {
         }
         throw new Error(`This mutation is currently not supported for this user type`);
     }
+
 
     @Mutation(returns => Boolean)
     @Authorized(Role.USER)
@@ -315,7 +435,7 @@ export class MutateMeResolver {
         });
 
 
-        const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } }) > 0;
         if (!wasInstructorScreened) {
             await sendFirstInstructorScreeningInvitationMail(student);
         }
@@ -381,7 +501,7 @@ export class MutateMeResolver {
 
         if (projectFields) {
             await prisma.$transaction(async prisma => {
-                await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: student.id }});
+                await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: student.id } });
                 await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: student.id })) });
             });
         }
@@ -398,7 +518,7 @@ export class MutateMeResolver {
         });
 
 
-        const wasScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        const wasScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } }) > 0;
 
         if (!wasScreened) {
             if (student.isUniversityStudent) {
@@ -455,12 +575,18 @@ export class MutateMeResolver {
     }
 
     @Mutation(returns => Boolean)
+    @Authorized(Role.PUPIL)
+    async meBecomeStatePupil(@Ctx() context: GraphQLContext) {
+        const pupil = await getSessionPupil(context);
+
+        throw new Error(`Not implemented.`); // TODO: Implement
+    }
+
+    @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async isEmailAvailable(@Arg("email") email: string) {
-        const pupilHasEmail = await prisma.pupil.count({ where: { email }}) > 0;
-        const studentHasEmail = await prisma.pupil.count({ where: { email }}) > 0;
-        return !(pupilHasEmail || studentHasEmail);
+        return await isEmailAvailable(email);
     }
 
 }
