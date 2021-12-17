@@ -740,7 +740,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
                 dissolved: false
             });
 
-            if (req.matchesRequested > person.openMatchRequestCount && (req.matchesRequested + matchCount) > 1) {
+            if (req.matchesRequested > person.openMatchRequestCount && (req.matchesRequested + matchCount) > 3) {
                 // NOTE: The opposite scenario can happen when an admin manually increased the match request count. The user can then decrease that number
                 logger.warn(`While updating Pupil(${person.id}): Pupils may only request more matches when they do not have a Match already (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount}, actual: ${matchCount})`);
                 return 400;
