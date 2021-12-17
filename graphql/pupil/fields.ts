@@ -7,6 +7,8 @@ import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
 import { gradeAsInt } from "../../common/util/gradestrings";
+import { Decision } from "../types/reason";
+import { canPupilRequestMatch } from "../../common/match/request";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -94,5 +96,11 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
+    }
+
+    @FieldResolver(type => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canRequestMatch(@Root() pupil: Required<Pupil>) {
+        return await canPupilRequestMatch(pupil);
     }
 }

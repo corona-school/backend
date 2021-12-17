@@ -55,19 +55,50 @@ export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     return context.user;
 }
 
-export async function getSessionStudent(context: GraphQLContext): Promise<Student | never> {
+/* In a lot of scenarios, Admins and Screeners can perform actions on behalf of the user, that's what we call 'elevated' */
+export function isElevated(context: GraphQLContext) {
+    const { roles } = getSessionUser(context);
+    return roles.includes(Role.ADMIN) || roles.includes(Role.SCREENER);
+}
+
+export function assertElevated(context: GraphQLContext) {
+    if (!isElevated(context)) {
+        throw new Error(`Only Admins or Screeners can override the session pupil`);
+    }
+}
+
+export const isSessionStudent = (context: GraphQLContext) => getSessionUser(context).studentId !== undefined;
+export const isSessionPupil = (context: GraphQLContext) => getSessionUser(context).pupilId !== undefined;
+export const isSessionScreener = (context: GraphQLContext) => getSessionUser(context).screenerId !== undefined;
+
+export async function getSessionStudent(context: GraphQLContext, studentIdOverride?: number): Promise<Student | never> {
+    if (studentIdOverride !== undefined) {
+        assertElevated(context);
+        return await getStudent(studentIdOverride);
+    }
+
     const { studentId } = getSessionUser(context);
+
     if (!studentId) {
-        throw new Error("Expected user to be student");
+        throw new Error("Expected user to be student or if elevated, a studentId must be passed in");
     }
     return await getStudent(studentId);
 }
 
-export async function getSessionPupil(context: GraphQLContext): Promise<Pupil | never> {
+
+
+export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?: number): Promise<Pupil | never> {
     const { pupilId } = getSessionUser(context);
-    if (!pupilId) {
-        throw new Error("Expected user to be pupil");
+
+    if (pupilIdOverride !== undefined) {
+        assertElevated(context);
+        return await getPupil(pupilIdOverride);
     }
+
+    if (!pupilId) {
+        throw new Error("Expected user to be pupil or if elevated, a pupilId must be passed in");
+    }
+
     return await getPupil(pupilId);
 }
 

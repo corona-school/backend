@@ -5,6 +5,8 @@ import { Role } from "../authorizations";
 import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
+import { Decision } from "../types/reason";
+import { canStudentRequestMatch } from "../../common/match/request";
 
 @Resolver(of => Student)
 export class ExtendFieldsStudentResolver {
@@ -30,5 +32,11 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.USER)
     async subjectsFormatted(@Root() pupil: Required<Student>) {
         return parseSubjectString(pupil.subjects);
+    }
+
+    @FieldResolver(type => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    canRequestMatch(@Root() student: Required<Student>) {
+        return canStudentRequestMatch(student);
     }
 }
