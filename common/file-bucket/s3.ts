@@ -24,5 +24,5 @@ export function accessURLForKey(key: string) {
 }
 
 export async function generatePresignedURL(key: string, bucket: string) {
-    return s3.getSignedUrl("getObject", {Bucket: bucket, Key: key, Expires: 3600})
+    return s3.getSignedUrl("getObject", {Bucket: bucket, Key: key, Expires: 3600});
 }

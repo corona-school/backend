@@ -247,20 +247,27 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
-export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup> {
-    let attachmentGroupId = uuid().toString();
-
-    let attachmentListHTML = "";
-    let attachmentIds = [];
+/*
+Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
+These objects include HTML for the attachment list which gets inserted into messages.
+ */
+export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
 
     if (files.length > 0) {
+        let attachmentGroupId = uuid().toString();
+
+        let attachmentListHTML = "";
+        let attachmentIds = [];
+
         attachmentListHTML += "<h3>Anhänge</h3>";
 
         await Promise.all(files.map(async f => {
             let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
-            attachmentIds.push(attachmentId)
-            attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
-        }))
+            attachmentIds.push(attachmentId);
+            attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`;
+        }));
+        return {attachmentListHTML, attachmentGroupId, attachmentIds};
     }
-    return {attachmentListHTML, attachmentGroupId, attachmentIds};
+
+    return null;
 }

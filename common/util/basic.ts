@@ -45,7 +45,7 @@ function friendlyFileSize(bytes, si = false, dp = 1) {
     } while (
         Math.round(Math.abs(size) * r) / r >= thresh &&
         u < units.length - 1
-        );
+    );
 
     return `${size.toFixed(dp)} ${units[u]}`;
 }

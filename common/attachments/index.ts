@@ -10,11 +10,17 @@ export interface AttachmentGroup {
     attachmentIds: string[];
 }
 
+/*
+Creates an attachment in the database and uploads the specified file to the S3 bucket.
+
+attachmentGroupId: Unique per group of attachments (per message)
+returns: attachmentId: Unique per individual attachment
+ */
 export async function createAttachment(file: Express.Multer.File, uploader: Student | Pupil, attachmentGroupId: string) {
-    let id = uuid().toString();
+    let attachmentId = uuid().toString();
     await prisma.attachment.create({
         data: {
-            id,
+            id: attachmentId,
             uploaderID: uploader.wix_id,
             filename: file.originalname,
             attachmentGroupId,
@@ -22,23 +28,25 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
         }
     });
 
-    await putFile(file.buffer, `${attachmentGroupId}/${id}/${file.originalname}`, ATTACHMENT_BUCKET);
+    await putFile(file.buffer, `${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET);
 
-    return id;
+    return attachmentId;
 }
 
-
-export async function getAttachmentURL(id, key, attachmentGroupId?) {
+/*
+If not provided, this function fetches the corresponding attachmentGroupId for the provided attachmentId and generates the presigned URL.
+ */
+export async function getAttachmentURL(attachmentId: string, key: string, attachmentGroupId?: string) {
     if (attachmentGroupId == null) {
         let dbAttachment = await prisma.attachment.findUnique({
             where: {
-                id
+                id: attachmentId
             },
             select: {
                 attachmentGroupId: true
             }
-        })
+        });
         attachmentGroupId = dbAttachment.attachmentGroupId;
     }
-    return await generatePresignedURL(`${attachmentGroupId}/${id}/${key}`, ATTACHMENT_BUCKET);
+    return await generatePresignedURL(`${attachmentGroupId}/${attachmentId}/${key}`, ATTACHMENT_BUCKET);
 }

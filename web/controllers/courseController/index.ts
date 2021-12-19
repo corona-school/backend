@@ -2955,16 +2955,15 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
     }
 
     try {
-        let attachmentURLs = await Notification.createAttachments(files, pupil);
+        let attachmentGroup = await Notification.createAttachments(files, pupil);
 
         await Notification.actionTaken(pupil, "instructor_course_participant_message", {
             participant: pupil,
             course: dropCourseRelations(course),
             subcourse: dropSubcourseRelations(subcourse),
             subject: mailSubject,
-            body: mailBody,
-            attachmentURLs
-        });
+            body: mailBody
+        }, attachmentGroup);
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);
