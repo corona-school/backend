@@ -4,6 +4,11 @@ import { prisma } from '../prisma';
 import { v4 as uuid } from "uuid";
 import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
 
+export interface AttachmentGroup {
+    attachmentGroupId: string;
+    attachmentListHTML: string;
+    attachmentIds: string[];
+}
 
 export async function createAttachment(file: Express.Multer.File, uploader: Student | Pupil, attachmentGroupId: string) {
     let id = uuid().toString();

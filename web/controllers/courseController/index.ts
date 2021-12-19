@@ -2808,11 +2808,9 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 403;
     }
 
-    const lectures = subcourse.lectures.sort(
-        (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
-    );
-    const lastLecture = lectures[lectures.length - 1];
-    if (lastLecture != null) {
+    const lastLecture = subcourse.lectures.reduce((a, b) => a.start.getMilliseconds() > b.start.getMilliseconds() ? a : b);
+
+    if (lastLecture) {
         const lectureEnd = moment(lastLecture.start)
             .add(lastLecture.duration, 'minutes');
         if (moment().isAfter(lectureEnd.add(14, 'days'))) {
@@ -2839,18 +2837,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
     }
 
     try {
-        let attachmentGroupId = uuid().toString();
-
-        let attachmentURLs = "";
-
-        if (files.length > 0) {
-            attachmentURLs += "<h3>Anhänge</h3>";
-
-            await Promise.all(files.map(async f => {
-                let attachmentId = await createAttachment(f, student, attachmentGroupId);
-                attachmentURLs = attachmentURLs + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
-            }))
-        }
+        let attachmentGroup = await Notification.createAttachments(files, student);
 
         await Promise.all(addressees.map(async (participant) => {
             await Notification.actionTaken(participant, "participant_course_message", {
@@ -2858,9 +2845,8 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
                 course: dropCourseRelations(course),
                 subcourse: dropSubcourseRelations(subcourse),
                 subject: mailSubject,
-                body: mailBody,
-                attachmentURLs
-            });
+                body: mailBody
+            }, attachmentGroup);
         }));
     } catch (e) {
         logger.warn("Unable to send group mail");
@@ -2950,8 +2936,8 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         logger.warn("Tried to send instructor mail to invalid subcourse");
         return 404;
     }
-    
-    
+
+
     const lectures = subcourse.lectures.sort(
         (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
     );
@@ -2967,22 +2953,9 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         logger.warn("Can't determine the end date of the course");
         return 400;
     }
-    
 
     try {
-        let attachmentGroupId = uuid().toString();
-
-        let attachmentURLs = "";
-
-        if (files.length > 0) {
-            attachmentURLs += "<h3>Anhänge</h3>";
-
-            await Promise.all(files.map(async f => {
-                let attachmentId = await createAttachment(f, pupil, attachmentGroupId);
-                attachmentURLs = attachmentURLs + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
-            }))
-        }
-
+        let attachmentURLs = await Notification.createAttachments(files, pupil);
 
         await Notification.actionTaken(pupil, "instructor_course_participant_message", {
             participant: pupil,

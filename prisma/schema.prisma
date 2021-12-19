@@ -17,7 +17,7 @@ model attachment {
   id                String   @id @db.Uuid
   uploaderID        String   @db.VarChar
   filename          String   @db.VarChar
-  attachmentGroupId String   @db.Uuid
+  attachmentGroupId String   @db.VarChar
   date              DateTime @db.Timestamp(6)
 }
 
@@ -40,6 +40,7 @@ model concrete_notification {
   context        Json     @db.Json
   sentAt         DateTime @db.Timestamp(6)
   state          Int
+  attachmentGroupId String?   @db.VarChar
   error          String?  @db.VarChar
 }
 

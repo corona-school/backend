@@ -4,6 +4,11 @@ import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
 import { getLogger } from 'log4js';
+import {Student} from "../entity/Student";
+import {v4 as uuid} from "uuid";
+import {AttachmentGroup, createAttachment} from "../attachments";
+import {friendlyFileSize} from "../util/basic";
+import {Pupil} from "../entity/Pupil";
 
 const logger = getLogger("Notification");
 
@@ -27,7 +32,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
+export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
     // Delivering notifications can be async while answering the API request continues
     (async function fireAndForget() {
         const startTime = Date.now();
@@ -72,7 +77,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
-                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext);
+                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
                 await deliverNotification(concreteNotification, directSend, user, notificationContext);
             }
 
@@ -85,7 +90,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                         sentAt: new Date(Date.now() + it.delay),
                         userId: getUserId(user),
                         contextID: notificationContext.uniqueId,
-                        context: notificationContext
+                        context: notificationContext,
+                        attachmentGroupId: attachments?.attachmentGroupId
                     }))
                 });
 
@@ -139,7 +145,8 @@ export async function checkReminders() {
                     sentAt: new Date(Date.now() + notification.interval),
                     userId: getUserId(user),
                     contextID: reminder.contextID,
-                    context: reminder.context
+                    context: reminder.context,
+                    attachmentGroupId: reminder.attachmentGroupId
                 }
             });
 
@@ -156,7 +163,7 @@ export async function checkReminders() {
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
-async function createConcreteNotification(notification: Notification, user: Person, context: NotificationContext): Promise<ConcreteNotification> {
+async function createConcreteNotification(notification: Notification, user: Person, context: NotificationContext, attachments?: AttachmentGroup): Promise<ConcreteNotification> {
     if (context.uniqueId) {
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
@@ -180,7 +187,8 @@ async function createConcreteNotification(notification: Notification, user: Pers
             userId: getUserId(user),
             sentAt: new Date(),
             contextID: context.uniqueId,
-            context
+            context,
+            attachmentGroupId: attachments.attachmentGroupId
         }
     });
 
@@ -189,7 +197,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
     return concreteNotification;
 }
 
-async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext): Promise<void> {
+async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext, attachments?: AttachmentGroup): Promise<void> {
     logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
     const context: Context = {
@@ -205,7 +213,7 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification, user, context, concreteNotification.id);
+        await channel.send(notification, user, context, concreteNotification.id, attachments);
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
@@ -239,3 +247,20 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup> {
+    let attachmentGroupId = uuid().toString();
+
+    let attachmentListHTML = "";
+    let attachmentIds = [];
+
+    if (files.length > 0) {
+        attachmentListHTML += "<h3>Anhänge</h3>";
+
+        await Promise.all(files.map(async f => {
+            let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
+            attachmentIds.push(attachmentId)
+            attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`
+        }))
+    }
+    return {attachmentListHTML, attachmentGroupId, attachmentIds};
+}

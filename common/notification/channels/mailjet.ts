@@ -4,12 +4,13 @@ import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
 import { Person } from "../../entity/Person";
 import { assert } from "console";
+import {AttachmentGroup} from "../../attachments";
 
 const logger = getLogger();
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    async send(notification: Notification, to: Person, context: Context, concreteID: number) {
+    async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification deliviered via Mailjet must have a 'mailjetTemplateId'");
 
         const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
@@ -23,7 +24,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID: notification.mailjetTemplateId,
             TemplateLanguage: true,
-            Variables: context,
+            Variables: {context, ...{attachmentGroup: attachments.attachmentListHTML}},
             Attachments: context.attachments,
             CustomID: `${concreteID}`
         };

@@ -7,7 +7,7 @@ const logger = getLogger();
 
 
 /**
- * @api {GET} /attachments/:attachmentId/:filename getCertificateConfirmation
+ * @api {GET} /attachments/:attachmentId/:filename getS3AttachmentLink
  * @apiVersion 1.1.0
  * @apiDescription
  * Generate an AWS S3 URL for the given attachment path.
