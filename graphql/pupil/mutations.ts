@@ -87,7 +87,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.TUTEE)
     async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg("pupilId", { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
 
@@ -98,7 +98,7 @@ export class MutatePupilResolver {
 
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.TUTEE)
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg("pupilId", { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);

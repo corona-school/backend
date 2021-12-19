@@ -8,7 +8,7 @@ import * as GraphQLModel from "../generated/models";
 @Resolver(of => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.TUTOR)
     async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
 
@@ -19,7 +19,7 @@ export class MutateStudentResolver {
 
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.TUTOR)
     async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
         await deleteStudentMatchRequest(student);
