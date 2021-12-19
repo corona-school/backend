@@ -132,7 +132,7 @@ export async function logInAsPupil(pupil: Pupil, context: GraphQLContext) {
     };
 
     userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in (and only has USER role)`);
+    logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in and has USER and PUPIL role`);
 
     await evaluatePupilRoles(pupil, context);
 }
@@ -140,11 +140,21 @@ export async function logInAsPupil(pupil: Pupil, context: GraphQLContext) {
 export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
     const logger = logInContext(`GraphQL Authentication`, context);
 
-    context.user.roles = [Role.UNAUTHENTICATED, Role.USER];
+    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
 
-    if (pupil.verifiedAt) {
-        context.user.roles.push(Role.PUPIL);
-        logger.info(`Pupil(${pupil.id}) was verified and has PUPIL role`);
+    if (pupil.isPupil) {
+        context.user.roles.push(Role.TUTEE);
+        logger.info(`Pupil(${pupil.id}) has TUTEE role`);
+    }
+
+    if (pupil.isParticipant) {
+        context.user.roles.push(Role.PARTICIPANT);
+        logger.info(`Pupil(${pupil.id}) has PARTICIPANT role`);
+    }
+
+    if (pupil.isProjectCoachee) {
+        context.user.roles.push(Role.PROJECT_COACHEE);
+        logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
     }
 }
 
@@ -169,12 +179,12 @@ export async function logInAsStudent(student: Student, context: GraphQLContext) 
 export async function evaluateStudentRoles(student: Student, context: GraphQLContext) {
     const logger = logInContext(`GraphQL Authentication`, context);
 
-    context.user.roles = [Role.UNAUTHENTICATED, Role.USER];
+    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.STUDENT];
 
-    // In general we only trust users who have validated their email
-    if (student.verifiedAt) {
-        logger.info(`Student(${student.id}) was verified and has STUDENT role`);
-        context.user.roles.push(Role.STUDENT);
+    // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
+    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
+    if (!student.verifiedAt && student.verification) {
+        return;
     }
 
     if (student.isStudent || student.isProjectCoach) {
