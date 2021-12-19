@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as Notification from "../notification";
 import VerificationRequestEvent from "../transactionlog/types/VerificationRequestEvent";
 import { getTransactionLog } from "../transactionlog";
-import { student as Student, student_languages_enum, student_state_enum } from "@prisma/client";
+import { project_field_with_grade_restriction_projectfield_enum, student as Student, student_languages_enum, student_state_enum } from "@prisma/client";
 import { Subject, TeacherModule } from "../entity/Student";
 import { State } from "../entity/State";
 import { sendFirstInstructorScreeningInvitationMail, sendFirstProjectCoachingJufoAlumniScreeningInvitationMail, sendFirstScreeningInvitationMail } from "../mails/screening";

@@ -9,7 +9,7 @@ import { getTransactionLog } from "../transactionlog";
 import * as Notification from "../notification";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectField } from "../jufo/projectFields";
-import { pupil_projectfields_enum } from "@prisma/client";
+import { pupil_projectfields_enum, pupil as Pupil } from "@prisma/client";
 
 interface RegisterPupilData {
     firstname: string;
