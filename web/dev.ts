@@ -377,11 +377,12 @@ export async function setupDevDB() {
 
     const matches: Match[] = [];
 
-    let m = new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364");
-    matches.push(m);
 
-    m = new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364");
-    matches.push(m);
+    matches.push(
+        new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364"),
+        new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526365"),
+        new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364")
+    );
 
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
