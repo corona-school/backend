@@ -38,8 +38,9 @@ export enum Role {
     /* User is a pupil and requested to participate in courses */
     PARTICIPANT = "PARTICIPANT",
     /* User is a pupil and requested to participate in project coaching */
-    PROJECT_COACHEE = "PROJECT_COACHEE"
-
+    PROJECT_COACHEE = "PROJECT_COACHEE",
+    /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
+    STATE_PUPIL = "STATE_PUPIL"
 }
 
 const authLogger = getLogger("GraphQL Authentication");

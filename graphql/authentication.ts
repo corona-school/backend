@@ -168,6 +168,11 @@ export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) 
         context.user.roles.push(Role.PROJECT_COACHEE);
         logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
     }
+
+    if (pupil.teacherEmailAddress) {
+        context.user.roles.push(Role.STATE_PUPIL);
+        logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
+    }
 }
 
 export async function logInAsStudent(student: Student, context: GraphQLContext) {

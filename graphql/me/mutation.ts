@@ -27,7 +27,7 @@ import VerificationRequestEvent from "../../common/transactionlog/types/Verifica
 import { getLogger } from "log4js";
 import { Context } from "mocha";
 import { becomeInstructor, becomeProjectCoach, becomeTutor, registerStudent } from "../../common/student/registration";
-import { becomeProjectCoachee, becomeTutee, registerPupil } from "../../common/pupil/registration";
+import { becomeProjectCoachee, becomeStatePupil, becomeTutee, registerPupil } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
 @InputType()
@@ -215,6 +215,14 @@ class BecomeTuteeInput {
     @Field(type => pupil_learninggermansince_enum, { nullable: true })
     learningGermanSince?: pupil_learninggermansince_enum;
 
+    @Field(type => Int, { nullable: true })
+    gradeAsInt?: number;
+}
+
+@InputType()
+class BecomeStatePupilData {
+    @Field(type => String)
+    teacherEmail: string;
     @Field(type => Int, { nullable: true })
     gradeAsInt?: number;
 }
@@ -446,10 +454,16 @@ export class MutateMeResolver {
 
     @Mutation(returns => Boolean)
     @Authorized(Role.PUPIL)
-    async meBecomeStatePupil(@Ctx() context: GraphQLContext) {
+    async meBecomeStatePupil(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeStatePupilInput) {
         const pupil = await getSessionPupil(context);
+        const log = logInContext("Me", context);
 
-        throw new Error(`Not implemented.`); // TODO: Implement
+        const updatedPupil = await becomeStatePupil(pupil, data);
+        await logInAsPupil(updatedPupil, context);
+
+        log.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
+
+        return true;
     }
 
     @Mutation(returns => Boolean)
