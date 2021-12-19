@@ -3,6 +3,7 @@ import {Pupil} from "../entity/Pupil";
 import { prisma } from '../prisma';
 import { v4 as uuid } from "uuid";
 import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
+import {getUserId} from "../user";
 
 export interface AttachmentGroup {
     attachmentGroupId: string;
@@ -21,7 +22,7 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
     await prisma.attachment.create({
         data: {
             id: attachmentId,
-            uploaderID: uploader.wix_id,
+            uploaderID: getUserId(uploader),
             filename: file.originalname,
             attachmentGroupId,
             date: new Date()
