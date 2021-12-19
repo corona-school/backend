@@ -9,12 +9,14 @@ export async function activatePupil(pupil: Pupil) {
         throw new Error("Pupil was already activated");
     }
 
-    await prisma.pupil.update({
+    const updatedPupil = await prisma.pupil.update({
         data: { active: true },
         where: { id: pupil.id }
     });
 
     await getTransactionLog().log(new DeActivateEvent(pupil, true));
+
+    return updatedPupil;
 }
 
 
@@ -33,10 +35,12 @@ export async function deactivatePupil(pupil: Pupil) {
         await dissolveMatch(match, 0, pupil);
     }
 
-    await prisma.pupil.update({
+    const updatedPupil = await prisma.pupil.update({
         data: { active: false },
         where: { id: pupil.id }
     });
 
     await getTransactionLog().log(new DeActivateEvent(pupil, false));
+
+    return updatedPupil;
 }

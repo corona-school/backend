@@ -325,8 +325,8 @@ export class MutateMeResolver {
 
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            await deactivatePupil(pupil);
-
+            const updatedPupil = await deactivatePupil(pupil);
+            await logInAsPupil(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
@@ -344,8 +344,8 @@ export class MutateMeResolver {
 
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            await activatePupil(pupil);
-
+            const updatedPupil = await activatePupil(pupil);
+            await logInAsPupil(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) reactivated their account`);
 
             return true;

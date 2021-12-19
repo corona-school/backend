@@ -142,6 +142,18 @@ export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) 
 
     context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
 
+    // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
+    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
+    if (!pupil.verifiedAt && pupil.verification) {
+        logger.info(`Pupil(${pupil.id}) was not verified yet, they should re authenticate`);
+        return;
+    }
+
+    if (!pupil.active) {
+        logger.info(`Pupil(${pupil.id}) had deactivated their account, no roles granted`);
+        return;
+    }
+
     if (pupil.isPupil) {
         context.user.roles.push(Role.TUTEE);
         logger.info(`Pupil(${pupil.id}) has TUTEE role`);
@@ -184,6 +196,12 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
     // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
     if (!student.verifiedAt && student.verification) {
+        logger.info(`Student(${student.id}) was not verified yet, they should re authenticate`);
+        return;
+    }
+
+    if (!student.active) {
+        logger.info(`Student(${student.id}) had deactivated their account, no roles granted`);
         return;
     }
 
