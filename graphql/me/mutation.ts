@@ -8,7 +8,7 @@ import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { ProjectField } from "../../common/jufo/projectFields";
 import { pupil_projectfields_enum, student_languages_enum, student_state_enum } from ".prisma/client";
-import { project_field_with_grade_restriction_projectfield_enum } from "@prisma/client";
+import { project_field_with_grade_restriction_projectfield_enum, pupil_learninggermansince_enum } from "@prisma/client";
 import { TeacherModule } from "../../common/entity/Student";
 import { MaxLength } from "class-validator";
 import { sendFirstInstructorScreeningInvitationMail, sendFirstProjectCoachingJufoAlumniScreeningInvitationMail, sendFirstScreeningInvitationMail } from "../../common/mails/screening";
@@ -27,10 +27,9 @@ import VerificationRequestEvent from "../../common/transactionlog/types/Verifica
 import { getLogger } from "log4js";
 import { Context } from "mocha";
 import { becomeInstructor, becomeProjectCoach, becomeTutor, registerStudent } from "../../common/student/registration";
-import { becomeProjectCoachee, registerPupil } from "../../common/pupil/registration";
+import { becomeProjectCoachee, becomeTutee, registerPupil } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
-
 @InputType()
 class ProjectFieldWithGradeInput {
 
@@ -203,6 +202,21 @@ class BecomeProjectCoacheeInput {
 
     @Field(type => Int)
     projectMemberCount: number;
+}
+
+@InputType()
+class BecomeTuteeInput {
+    @Field(type => [Subject])
+    subjects: Subject[];
+
+    @Field(type => [Language])
+    languages: Language[];
+
+    @Field(type => pupil_learninggermansince_enum, { nullable: true })
+    learningGermanSince?: pupil_learninggermansince_enum;
+
+    @Field(type => Int, { nullable: true })
+    gradeAsInt?: number;
 }
 
 
@@ -419,10 +433,13 @@ export class MutateMeResolver {
 
     @Mutation(returns => Boolean)
     @Authorized(Role.PUPIL)
-    async meBecomeTutee(@Ctx() context: GraphQLContext) {
+    async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTuteeInput) {
         const pupil = await getSessionPupil(context);
+        const log = logInContext("Me", context);
+        const updatedPupil = await becomeTutee(pupil, data);
+        await logInAsPupil(updatedPupil, context);
 
-        throw new Error(`Not implemented.`); // TODO: implement
+        log.info(`Pupil(${pupil.id}) upgraded their account to a TUTEE`);
 
         return true;
     }

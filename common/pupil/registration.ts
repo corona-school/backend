@@ -9,7 +9,10 @@ import { getTransactionLog } from "../transactionlog";
 import * as Notification from "../notification";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectField } from "../jufo/projectFields";
-import { pupil_projectfields_enum, pupil as Pupil } from "@prisma/client";
+import { pupil_projectfields_enum, pupil as Pupil, pupil_registrationsource_enum, pupil_languages_enum, pupil_learninggermansince_enum } from "@prisma/client";
+import { Subject } from "../entity/Student";
+import { Language } from "../daz/language";
+import { Address } from "address-rfc2821";
 
 interface RegisterPupilData {
     firstname: string;
@@ -30,6 +33,18 @@ interface BecomeProjectCoacheeData {
     isJufoParticipant: TuteeJufoParticipationIndication;
     projectMemberCount: number;
 }
+interface BecomeTuteeData {
+    subjects: Subject[];
+    gradeAsInt?: number;
+    languages: Language[];
+    learningGermanSince?: pupil_learninggermansince_enum;
+}
+
+interface BecomeStatePupilData {
+    teacherEmail: string;
+    gradeAsInt?: number;
+}
+
 
 export async function registerPupil(data: RegisterPupilData) {
     if (!(await isEmailAvailable(data.email))) {
@@ -39,6 +54,10 @@ export async function registerPupil(data: RegisterPupilData) {
     const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
     if (!school) {
         throw new Error(`Invalid School ID '${data.schoolId}'`);
+    }
+
+    if (data.registrationSource === RegistrationSource.COOPERATION && !school.activeCooperation) {
+        throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
     }
 
     const pupil = await prisma.pupil.create({
@@ -86,6 +105,48 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
             isJufoParticipant,
             projectFields: projectFields as pupil_projectfields_enum[],
             projectMemberCount
+        },
+        where: { id: pupil.id }
+    });
+
+    return updatedPupil;
+}
+
+export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
+    const updatedPupil = await prisma.pupil.update({
+        data: {
+            isPupil: true,
+            subjects: JSON.stringify(data.subjects),
+            grade: `${data.gradeAsInt}. Klasse`,
+            languages: data.languages ? { set: data.languages as pupil_languages_enum[] } : undefined,
+            learningGermanSince: data.learningGermanSince
+        },
+        where: { id: pupil.id }
+    });
+
+    return updatedPupil;
+}
+
+export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData) {
+    if (!pupil.grade && !data.gradeAsInt) {
+        throw new Error(`State Pupils must set their grade field`);
+    }
+
+    if (pupil.registrationSource !== "" + RegistrationSource.COOPERATION) {
+        throw new Error(`For pupils to become a state pupil, they must register with COOPERATION as registration source`);
+    }
+
+    const school = await prisma.school.findUnique({ where: { id: pupil.schoolId }, rejectOnNotFound: true });
+    const teacherEmail = new Address(data.teacherEmail);
+
+    if (school.emailDomain !== teacherEmail.host) {
+        throw new Error(`Invalid Teacher Email '${data.teacherEmail} as School Domain is '${school.emailDomain}'`);
+    }
+
+    const updatedPupil = await prisma.pupil.update({
+        data: {
+            teacherEmailAddress: data.teacherEmail,
+            grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse`: undefined
         },
         where: { id: pupil.id }
     });

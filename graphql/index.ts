@@ -25,6 +25,7 @@ import { MutateMeResolver } from "./me/mutation";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+import { ExtendedFieldsSchoolResolver } from "./school/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -78,7 +79,8 @@ const schema = buildSchemaSync({
         MutateParticipationCertificateResolver,
 
         /* Schools */
-        FindManySchoolResolver
+        FindManySchoolResolver,
+        ExtendedFieldsSchoolResolver
     ],
     authChecker
 });
