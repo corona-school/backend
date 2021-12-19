@@ -220,7 +220,7 @@ class BecomeTuteeInput {
 }
 
 @InputType()
-class BecomeStatePupilData {
+class BecomeStatePupilInput {
     @Field(type => String)
     teacherEmail: string;
     @Field(type => Int, { nullable: true })
