@@ -8,10 +8,11 @@ const logger = getLogger("Match");
 
 const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
-const PUPIL_MAX_MATCHES = 3;
+const PUPIL_MAX_MATCHES = 1;
+const PUPIL_MAX_DISSOLVED_MATCHES = 3;
 
 
-type RequestBlockReasons = "max-requests" | "max-matches";
+type RequestBlockReasons = "max-requests" | "max-matches" | "max-dissolved-matches";
 
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
@@ -27,9 +28,14 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
     const lastYear = new Date();
     lastYear.setFullYear(lastYear.getFullYear() - 1);
 
-    const matchCountLastYear = await prisma.match.count({ where: { pupilId: pupil.id, createdAt: { gte: lastYear } } });
-    if (pupil.openMatchRequestCount + matchCountLastYear >= PUPIL_MAX_MATCHES) {
+    const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
+    if (pupil.openMatchRequestCount + activeMatchCount >= PUPIL_MAX_MATCHES) {
         return { allowed: false, reason: "max-matches", limit: PUPIL_MAX_MATCHES };
+    }
+
+    const dissolvedMatchCountLastYear = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: true, createdAt: { gte: lastYear } } });
+    if (pupil.openMatchRequestCount + activeMatchCount + dissolvedMatchCountLastYear >= PUPIL_MAX_DISSOLVED_MATCHES) {
+        return { allowed: false, reason: "max-dissolved-matches", limit: PUPIL_MAX_DISSOLVED_MATCHES };
     }
 
     return { allowed: true };
