@@ -24,7 +24,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID: notification.mailjetTemplateId,
             TemplateLanguage: true,
-            Variables: {...context, attachmentGroup: attachments.attachmentListHTML},
+            Variables: {...context, attachmentGroup: attachments ? attachments.attachmentListHTML : ""},
             Attachments: context.attachments,
             CustomID: `${concreteID}`
         };

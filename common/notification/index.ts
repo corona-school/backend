@@ -78,7 +78,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
                 const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
-                await deliverNotification(concreteNotification, directSend, user, notificationContext);
+                await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
             }
 
             // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
@@ -188,7 +188,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
             sentAt: new Date(),
             contextID: context.uniqueId,
             context,
-            attachmentGroupId: attachments.attachmentGroupId
+            attachmentGroupId: attachments?.attachmentGroupId
         }
     });
 
