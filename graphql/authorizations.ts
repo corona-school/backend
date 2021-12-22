@@ -157,7 +157,11 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
     School: {
-        _all: nobody,
+        createSchool: adminOrOwner,
+        deleteSchool: adminOrOwner,
+        updateSchool: adminOrOwner,
+        // Don't release bulk actions without adding authorizations here!
+
         // School data is public knowledge and can be queried by everyone
         schools: everyone
     },
