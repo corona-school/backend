@@ -26,6 +26,7 @@ import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ExtendedFieldsSchoolResolver } from "./school/fields";
+import { MutateStudentResolver } from "./student/mutation";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -56,6 +57,7 @@ const schema = buildSchemaSync({
         /* Student */
         FindManyStudentResolver,
         ExtendFieldsStudentResolver,
+        MutateStudentResolver,
 
         /* Match */
         FindManyMatchResolver,
