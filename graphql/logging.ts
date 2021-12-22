@@ -17,7 +17,7 @@ export const GraphQLLogger: any = {
             query = "REDACTED - CONTAINED SECRETS";
         }
 
-        logger.debug(`Started processing query`, query);
+        logger.info(`Started processing query`, query);
 
         const handler: any = { // Actually GraphQLRequestListener, but we're on v2 and not on v3
             didEncounterErrors(requestContext: GraphQLRequestContext) {
