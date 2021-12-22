@@ -1,6 +1,7 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { Field, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
+@InputType()
 class Range { // GraphQL Type for common/entity/Student -> Subject.range
     @Field(type => Int)
     min: number;
@@ -9,6 +10,7 @@ class Range { // GraphQL Type for common/entity/Student -> Subject.range
 }
 
 @ObjectType()
+@InputType()
 export class Subject { // GraphQL Type for common/entity/Student -> Subject
     @Field()
     name: string;
