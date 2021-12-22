@@ -4,8 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 import { RegistrationSource } from "../entity/Person";
 import { School } from "../entity/School";
 import { State } from "../entity/State";
-import VerificationRequestEvent from "../transactionlog/types/VerificationRequestEvent";
-import { getTransactionLog } from "../transactionlog";
 import * as Notification from "../notification";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectField } from "../jufo/projectFields";
@@ -13,6 +11,7 @@ import { pupil_projectfields_enum, pupil as Pupil, pupil_registrationsource_enum
 import { Subject } from "../entity/Student";
 import { Language } from "../daz/language";
 import { Address } from "address-rfc2821";
+import { logTransaction } from "../transactionlog/log";
 
 interface RegisterPupilData {
     firstname: string;
@@ -87,7 +86,7 @@ export async function registerPupil(data: RegisterPupilData) {
     // TODO: Create a new E-Mail for registration
     // TODO: Send auth token with this
     await Notification.actionTaken(pupil, "pupil_registration_started", { redirectTo: data.redirectTo });
-    await getTransactionLog().log(new VerificationRequestEvent(pupil));
+    await logTransaction("verificationRequets", pupil, {});
 
     return pupil;
 }

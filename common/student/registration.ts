@@ -3,8 +3,6 @@ import { RegistrationSource } from "../entity/Person";
 import { prisma } from "../prisma";
 import { v4 as uuidv4 } from "uuid";
 import * as Notification from "../notification";
-import VerificationRequestEvent from "../transactionlog/types/VerificationRequestEvent";
-import { getTransactionLog } from "../transactionlog";
 import { project_field_with_grade_restriction_projectfield_enum, student as Student, student_languages_enum, student_state_enum } from "@prisma/client";
 import { Subject, TeacherModule } from "../entity/Student";
 import { State } from "../entity/State";
@@ -13,6 +11,7 @@ import { Language } from "../daz/language";
 import { DEFAULT_SCREENER_NUMBER_ID } from "../entity/Screener";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { ProjectField } from "../jufo/projectFields";
+import { logTransaction } from "../transactionlog/log";
 
 interface RegisterStudentData {
     firstname: string;
@@ -79,7 +78,7 @@ export async function registerStudent(data: RegisterStudentData) {
     // TODO: Create a new E-Mail for registration
     // TODO: Send authToken with this
     await Notification.actionTaken(student, "student_registration_started", { redirectTo: data.redirectTo });
-    await getTransactionLog().log(new VerificationRequestEvent(student));
+    await logTransaction("verificationRequets", student, {});
 
     return student;
 }
