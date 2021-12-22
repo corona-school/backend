@@ -7,8 +7,7 @@ import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isS
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { ProjectField } from "../../common/jufo/projectFields";
-import { pupil_projectfields_enum, student_languages_enum, student_state_enum } from ".prisma/client";
-import { project_field_with_grade_restriction_projectfield_enum, pupil_learninggermansince_enum } from "@prisma/client";
+import { pupil_learninggermansince_enum as LearningGermanSince } from "@prisma/client";
 import { TeacherModule } from "../../common/entity/Student";
 import { MaxLength } from "class-validator";
 import { Language } from "../../common/daz/language";
@@ -203,8 +202,8 @@ class BecomeTuteeInput {
     @Field(type => [Language])
     languages: Language[];
 
-    @Field(type => pupil_learninggermansince_enum, { nullable: true })
-    learningGermanSince?: pupil_learninggermansince_enum;
+    @Field(type => LearningGermanSince, { nullable: true })
+    learningGermanSince?: LearningGermanSince;
 
     @Field(type => Int, { nullable: true })
     gradeAsInt?: number;
@@ -284,7 +283,7 @@ export class MutateMeResolver {
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
                     subjects: JSON.stringify(subjects),
-                    projectFields: projectFields as pupil_projectfields_enum[]
+                    projectFields: projectFields as any
                 },
                 where: { id: prevPupil.id }
             });
@@ -310,7 +309,7 @@ export class MutateMeResolver {
             if (projectFields) {
                 await prisma.$transaction(async prisma => {
                     await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: prevStudent.id } });
-                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: prevStudent.id })) });
+                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as any, min: it.min, max: it.max, studentId: prevStudent.id })) });
                 });
             }
 
