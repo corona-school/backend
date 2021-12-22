@@ -34,7 +34,7 @@ registerEnumType(Language, {
 });
 
 registerEnumType(TuteeJufoParticipationIndication, {
-    name: "TuteeJufoParticipationIndication", 
+    name: "TuteeJufoParticipationIndication",
     description: "A complicated way of storing TRUE / FALSE / NULL"
 });
 

@@ -20,6 +20,7 @@ import { becomeInstructor, becomeProjectCoach, becomeTutor, registerStudent } fr
 import { becomeProjectCoachee, becomeStatePupil, becomeTutee, registerPupil } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
+import "../types/enums";
 @InputType()
 class ProjectFieldWithGradeInput {
 
