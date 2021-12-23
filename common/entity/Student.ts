@@ -41,12 +41,15 @@ export class Student extends Person {
     /*
      * Management data
      */
+    /* This is the "userID" (called differently for historical reasons) and should be unique
+       among all Persons. Use this as a foreign key if the subclass is unknown! */
     @Column()
     @Index({
         unique: true
     })
     wix_id: string;
 
+    /* OBSOLETE */
     @Column()
     wix_creation_date: Date;
 

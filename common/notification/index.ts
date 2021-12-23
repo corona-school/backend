@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserId, getUser, getFullName } from '../user';
+import { getUserId, getUserTypeORM, getFullName } from '../user';
 import { getLogger } from 'log4js';
 
 const logger = getLogger("Notification");
@@ -119,7 +119,7 @@ export async function checkReminders() {
         }
 
         const notification = await getNotification(reminder.notificationID);
-        const user = await getUser(reminder.userId);
+        const user = await getUserTypeORM(reminder.userId);
         await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
 
         // For recurring reminders, we simply create another DELAYED concrete notification

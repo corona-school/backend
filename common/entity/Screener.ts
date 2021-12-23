@@ -1,10 +1,18 @@
-import { Entity, Column, OneToMany, EntityManager } from "typeorm";
+import { Entity, Column, OneToMany, EntityManager, Index } from "typeorm";
 import { ScreenerDTO } from "../dto/ScreenerDTO";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
 
 @Entity()
 export class Screener extends Person {
+    /* Like all Persons, the Screener also has a unique UserID (across all entities).
+       In other Persons this is called "wix_id" for historical reasons */
+    @Column()
+    @Index({
+        unique: true
+    })
+    userID: string;
+
     @Column()
     password: string;
 
