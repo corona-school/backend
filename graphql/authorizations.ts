@@ -187,13 +187,12 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     // ATTENTION: Pupil entities can be seen by other users, e.g. through the Match -> pupil edge
     Pupil: {
         fields: withPublicFields<Pupil, "id" | "firstname" | "lastname" | "active" | "grade" | "isJufoParticipant" | "isParticipant" | "isProjectCoachee" | "isPupil" | "languages" | "projectFields">({
-            // authentication data shall only be accessible to the user itself
-            authToken: onlyOwner,
-            authTokenSent: onlyOwner,
-            authTokenUsed: onlyOwner,
+            authToken: nobody,
+            authTokenSent: adminOrOwner,
+            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
-            verification: adminOrOwner,
+            verification: nobody,
             verifiedAt: adminOrOwner,
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
@@ -236,14 +235,13 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     // ATTENTION: Student entities can be seen by other users, e.g. through the Match -> student edge
     Student: {
         fields: withPublicFields<Student, "id" | "firstname" | "lastname" | "active" | "isStudent" | "isInstructor" | "isProjectCoach" | "isUniversityStudent" | "languages">({
-            // authentication data shall only be accessible to the user itself
-            authToken: onlyOwner,
-            authTokenSent: onlyOwner,
-            authTokenUsed: onlyOwner,
+            authToken: nobody,
+            authTokenSent: adminOrOwner,
+            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
             phone: adminOrOwner,
-            verification: adminOrOwner,
+            verification: nobody,
             verifiedAt: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,

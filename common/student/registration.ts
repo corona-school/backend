@@ -67,7 +67,7 @@ export async function registerStudent(data: RegisterStudentData) {
             wix_creation_date: new Date(),
 
             // the authToken is used to verify the e-mail instead
-            verification: "DEPRECATED"
+            verification: uuidv4()
         }
     });
 
