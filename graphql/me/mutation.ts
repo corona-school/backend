@@ -1,26 +1,29 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
 import { Me } from "./fields";
-import { Subject } from "../types/subject";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, logInAsPupil, logInAsStudent } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
-import { ProjectField } from "../../common/jufo/projectFields";
-import { pupil_learninggermansince_enum as LearningGermanSince } from "@prisma/client";
-import { TeacherModule } from "../../common/entity/Student";
+import {
+    pupil_learninggermansince_enum as LearningGermanSince,
+    pupil_languages_enum as Language,
+    pupil_projectfields_enum as ProjectField,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_schooltype_enum as SchoolType,
+    pupil_state_enum as State,
+    student_module_enum as TeacherModule
+} from "@prisma/client";
 import { MaxLength } from "class-validator";
-import { Language } from "../../common/daz/language";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../common/jufo/participationIndication";
-import { RegistrationSource } from "../../common/entity/Person";
 import { School } from "../../common/entity/School";
-import { State } from "../../common/entity/State";
 import { RateLimit } from "../rate-limit";
 import { becomeInstructor, becomeProjectCoach, becomeTutor, registerStudent } from "../../common/student/registration";
 import { becomeProjectCoachee, becomeStatePupil, becomeTutee, registerPupil } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
+import { Subject } from "../types/subject";
 @InputType()
 class ProjectFieldWithGradeInput {
 

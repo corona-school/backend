@@ -1,13 +1,20 @@
 /* Enums need to be registered as documented in https://typegraphql.com/docs/0.16.0/enums.html */
 import { registerEnumType } from "type-graphql";
 
-import { State } from "../../common/entity/State";
-import { TeacherModule } from "../../common/entity/Student";
-import { Language } from "../../common/daz/language";
 import { TutorJufoParticipationIndication, TuteeJufoParticipationIndication } from "../../common/jufo/participationIndication";
-import { pupil_learninggermansince_enum as LearningGermanSince } from "@prisma/client";
-import { RegistrationSource } from "../../common/entity/Person";
-import { ProjectField } from "../../common/jufo/projectFields";
+import {
+    pupil_learninggermansince_enum as LearningGermanSince,
+    pupil_languages_enum as Language,
+    pupil_projectfields_enum as ProjectField,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_schooltype_enum as SchoolType,
+    pupil_state_enum as State,
+    student_module_enum as TeacherModule
+} from "@prisma/client";
+
+registerEnumType(SchoolType, {
+    name: "SchoolType"
+});
 
 registerEnumType(RegistrationSource, {
     name: "RegistrationSource",

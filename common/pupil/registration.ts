@@ -1,15 +1,11 @@
 import { prisma } from "../prisma";
 import { isEmailAvailable } from "../user/email";
 import { v4 as uuidv4 } from "uuid";
-import { RegistrationSource } from "../entity/Person";
 import { School } from "../entity/School";
-import { State } from "../entity/State";
 import * as Notification from "../notification";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
-import { ProjectField } from "../jufo/projectFields";
-import { pupil_projectfields_enum, pupil as Pupil, pupil_registrationsource_enum, pupil_languages_enum, pupil_learninggermansince_enum } from "@prisma/client";
+import { pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_languages_enum as Language, pupil_learninggermansince_enum } from "@prisma/client";
 import { Subject } from "../entity/Student";
-import { Language } from "../daz/language";
 import { Address } from "address-rfc2821";
 import { logTransaction } from "../transactionlog/log";
 
@@ -55,7 +51,7 @@ export async function registerPupil(data: RegisterPupilData) {
         throw new Error(`Invalid School ID '${data.schoolId}'`);
     }
 
-    if (data.registrationSource === RegistrationSource.COOPERATION && !school.activeCooperation) {
+    if (data.registrationSource === RegistrationSource.cooperation && !school.activeCooperation) {
         throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
     }
 
@@ -67,9 +63,9 @@ export async function registerPupil(data: RegisterPupilData) {
             newsletter: data.newsletter,
             createdAt: new Date(),
             schooltype: school.schooltype,
-            school: { connect: school },
+            schoolId: school.id,
             state: data.state,
-            registrationSource: data.registrationSource as any,
+            registrationSource: data.registrationSource,
 
             // Compatibility with legacy foreign keys
             wix_id: "Z-" + uuidv4(),
@@ -102,7 +98,7 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
         data: {
             isProjectCoachee: true,
             isJufoParticipant,
-            projectFields: projectFields as pupil_projectfields_enum[],
+            projectFields,
             projectMemberCount
         },
         where: { id: pupil.id }
@@ -117,7 +113,7 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
             isPupil: true,
             subjects: JSON.stringify(data.subjects),
             grade: `${data.gradeAsInt}. Klasse`,
-            languages: data.languages ? { set: data.languages as pupil_languages_enum[] } : undefined,
+            languages: data.languages ? { set: data.languages } : undefined,
             learningGermanSince: data.learningGermanSince
         },
         where: { id: pupil.id }
@@ -131,7 +127,7 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
         throw new Error(`State Pupils must set their grade field`);
     }
 
-    if (pupil.registrationSource !== "" + RegistrationSource.COOPERATION) {
+    if (pupil.registrationSource !== RegistrationSource.cooperation) {
         throw new Error(`For pupils to become a state pupil, they must register with COOPERATION as registration source`);
     }
 

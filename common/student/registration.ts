@@ -1,16 +1,12 @@
 import { isEmailAvailable } from "../user/email";
-import { RegistrationSource } from "../entity/Person";
 import { prisma } from "../prisma";
 import { v4 as uuidv4 } from "uuid";
 import * as Notification from "../notification";
-import { project_field_with_grade_restriction_projectfield_enum, student as Student, student_languages_enum, student_state_enum } from "@prisma/client";
-import { Subject, TeacherModule } from "../entity/Student";
-import { State } from "../entity/State";
+import { project_field_with_grade_restriction_projectfield_enum as ProjectField, student_registrationsource_enum as RegistrationSource, student as Student, student_languages_enum as Language, student_state_enum as State, student_module_enum as TeacherModule } from "@prisma/client";
+import { Subject } from "../entity/Student";
 import { sendFirstInstructorScreeningInvitationMail, sendFirstProjectCoachingJufoAlumniScreeningInvitationMail, sendFirstScreeningInvitationMail } from "../mails/screening";
-import { Language } from "../daz/language";
 import { DEFAULT_SCREENER_NUMBER_ID } from "../entity/Screener";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
-import { ProjectField } from "../jufo/projectFields";
 import { logTransaction } from "../transactionlog/log";
 
 interface RegisterStudentData {
@@ -93,7 +89,7 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
     await prisma.student.update({
         data: {
             isInstructor: true,
-            state: state as student_state_enum,
+            state,
             university,
             msg: message,
             module: teacherModule,
@@ -122,7 +118,7 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
             isStudent: true,
             openMatchRequestCount: 1,
             subjects: JSON.stringify(subjects),
-            languages: languages as student_languages_enum[],
+            languages,
             supportsInDaZ
         },
         where: { id: student.id }
@@ -159,7 +155,7 @@ export async function becomeProjectCoach(student: Student, data: BecomeProjectCo
     if (projectFields) {
         await prisma.$transaction(async prisma => {
             await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: student.id } });
-            await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as project_field_with_grade_restriction_projectfield_enum, min: it.min, max: it.max, studentId: student.id })) });
+            await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name, min: it.min, max: it.max, studentId: student.id })) });
         });
     }
 
