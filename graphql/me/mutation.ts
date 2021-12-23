@@ -100,8 +100,8 @@ class PupilUpdateInput {
     @Field(type => Int, { nullable: true })
     gradeAsInt?: number;
 
-    @Field(type => [Subject], { nullable: true })
-    subjects?: Subject[];
+    @Field(type => [String], { nullable: true })
+    subjects?: string[];
 
     @Field(type => [ProjectField], { nullable: true })
     projectFields: ProjectField[];
@@ -287,7 +287,7 @@ export class MutateMeResolver {
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
                     subjects: JSON.stringify(subjects),
-                    projectFields: projectFields as any
+                    projectFields
                 },
                 where: { id: prevPupil.id }
             });
@@ -313,7 +313,7 @@ export class MutateMeResolver {
             if (projectFields) {
                 await prisma.$transaction(async prisma => {
                     await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: prevStudent.id } });
-                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name as any, min: it.min, max: it.max, studentId: prevStudent.id })) });
+                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name, min: it.min, max: it.max, studentId: prevStudent.id })) });
                 });
             }
 
