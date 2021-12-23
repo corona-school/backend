@@ -56,13 +56,17 @@ export async function createMatch(pupil: Pupil, student: Student) {
         callURL
     });
 
+    const tutorFirstMatch = await prisma.match.count({ where: { studentId: student.id } }) === 1;
+    const tuteeFirstMatch = await prisma.match.count({ where: { pupilId: pupil.id } }) === 1;
+
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
         uniqueId: "" + match.id,
         pupil,
         pupilGrade: getPupilGradeAsString(pupil),
         subjects,
-        callURL
+        callURL,
+        firstMatch: tutorFirstMatch
     });
 
     const tuteeMail = mailjetTemplates.TUTEENEWMATCH({
@@ -78,7 +82,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
         uniqueId: "" + match.id,
         student,
         subjects,
-        callURL
+        callURL,
+        firstMatch: tuteeFirstMatch
     });
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);

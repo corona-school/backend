@@ -3,6 +3,7 @@ import { Match } from "../../../../../entity/Match";
 import { mailjetTemplates, sendTemplateMail } from "../../../../../mails";
 import * as Notification from "../../../../../../common/notification";
 import { getPupilGradeAsString } from "../../../../../../common/pupil";
+import { prisma } from "../../../../../../common/prisma";
 
 
 
@@ -25,6 +26,8 @@ async function commonMailParameters(match: Match) {
 export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
 
+    const firstMatch = await prisma.match.count({ where: { pupilId: tutee.id } }) === 1;
+
     const mail = mailjetTemplates.TUTEENEWMATCH({
         pupilFirstname: tutee.firstname,
         studentFirstname: tutor.firstname,
@@ -38,12 +41,15 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
         uniqueId: "" + match.id,
         student: tutor,
         subjects: subjectsString,
-        callURL: callURL
+        callURL: callURL,
+        firstMatch
     });
 }
 
 export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
+
+    const firstMatch = await prisma.match.count({ where: { studentId: tutor.id } }) === 1;
 
     const mail = mailjetTemplates.TUTORNEWMATCH({
         pupilFirstname: tutee.firstname,
@@ -60,6 +66,7 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
         pupil: tutee,
         pupilGrade: getPupilGradeAsString(tutee),
         subjects: subjectsString,
-        callURL: callURL
+        callURL: callURL,
+        firstMatch
     });
 }
