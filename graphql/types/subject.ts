@@ -17,6 +17,6 @@ export class Subject { // GraphQL Type for common/entity/Student -> Subject
     @Field()
     name: string;
 
-    @Field(type => Range)
+    @Field(type => Range, { nullable: true })
     grade: Range;
 }
