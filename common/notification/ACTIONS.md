@@ -469,7 +469,7 @@ Send mail to student to sign certificate
 
 ## Tutoring
 
-### pupil_match_dissolved
+### tutee_match_dissolved
 
 *description*
 
@@ -483,7 +483,7 @@ Match was dissolved.
 }
 ```
 
-### pupil_match_dissolved_other
+### tutee_match_dissolved_other
 
 *description*
 
@@ -498,7 +498,7 @@ Match was dissolved by Pupil.
 ```
 
 
-### student_match_dissolved
+### tutor_match_dissolved
 
 *description*
 
@@ -512,7 +512,7 @@ Match was dissolved.
 }
 ```
 
-### student_match_dissolved_other
+### tutor_match_dissolved_other
 
 *description*
 
