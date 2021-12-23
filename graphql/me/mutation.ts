@@ -201,7 +201,7 @@ class BecomeProjectCoacheeInput {
 @InputType()
 class BecomeTuteeInput {
     @Field(type => [String])
-    subjects: [String];
+    subjects: string[];
 
     @Field(type => [Language])
     languages: Language[];
