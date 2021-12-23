@@ -58,7 +58,7 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
-        uniqueId: `${pupil.id}`,
+        uniqueId: "" + match.id,
         pupil,
         pupilGrade: getPupilGradeAsString(pupil),
         subjects,
@@ -75,7 +75,7 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
     await sendTemplateMail(tuteeMail, pupil.email);
     await Notification.actionTaken(pupil, "tutee_matching_success", {
-        uniqueId: `${student.id}`,
+        uniqueId: "" + match.id,
         student,
         subjects,
         callURL
