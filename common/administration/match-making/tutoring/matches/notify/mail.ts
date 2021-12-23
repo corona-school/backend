@@ -23,7 +23,7 @@ async function commonMailParameters(match: Match) {
     };
 }
 
-export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager) {
+export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager, matchHash: string) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
 
     const firstMatch = await prisma.match.count({ where: { pupilId: tutee.id } }) === 1;
@@ -33,7 +33,7 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
         studentFirstname: tutor.firstname,
         studentEmail: tutor.email,
         subjects: subjectsString,
-        callURL: callURL
+        callURL
     });
 
     await sendTemplateMail(mail, tutee.email);
@@ -41,12 +41,13 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
         uniqueId: "" + match.id,
         student: tutor,
         subjects: subjectsString,
-        callURL: callURL,
-        firstMatch
+        callURL,
+        firstMatch,
+        matchHash
     });
 }
 
-export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
+export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager, matchHash: string) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
 
     const firstMatch = await prisma.match.count({ where: { studentId: tutor.id } }) === 1;
@@ -57,7 +58,7 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
         pupilEmail: tutee.email,
         pupilGrade: `${tutee.gradeAsNumber()}. Klasse`,
         subjects: subjectsString,
-        callURL: callURL
+        callURL
     });
 
     await sendTemplateMail(mail, tutor.email);
@@ -66,7 +67,8 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
         pupil: tutee,
         pupilGrade: getPupilGradeAsString(tutee),
         subjects: subjectsString,
-        callURL: callURL,
-        firstMatch
+        callURL,
+        firstMatch,
+        matchHash
     });
 }

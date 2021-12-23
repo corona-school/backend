@@ -5,13 +5,16 @@ import { Pupil } from "../../../../../entity/Pupil";
 import { Student } from "../../../../../entity/Student";
 import { MatchNotificationStatus } from "../../types/notifications";
 import { mailNotifyTuteeAboutMatch, mailNotifyTutorAboutMatch } from "./mail";
+import { v4 as generateUUID } from "uuid";
 
 const logger = getLogger();
 
 
 async function notifyMatch(match: Match, manager: EntityManager): Promise<MatchNotificationStatus> {
+    const matchHash = generateUUID();
+
     try {
-        await mailNotifyTuteeAboutMatch(match, manager);
+        await mailNotifyTuteeAboutMatch(match, manager, matchHash);
     } catch (e) {
         return new MatchNotificationStatus(match, {
             affectedTutee: match.pupil,
@@ -22,7 +25,7 @@ async function notifyMatch(match: Match, manager: EntityManager): Promise<MatchN
 
     //notify tutors part
     try {
-        await mailNotifyTutorAboutMatch(match, manager);
+        await mailNotifyTutorAboutMatch(match, manager, matchHash);
     } catch (e) {
         return new MatchNotificationStatus(match, {
             affectedTutor: match.student, //now only the tutor is affected, because tutee notification above was successful
