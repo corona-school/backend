@@ -29,7 +29,7 @@ interface BecomeProjectCoacheeData {
     projectMemberCount: number;
 }
 interface BecomeTuteeData {
-    subjects: Subject[];
+    subjects: string[];
     gradeAsInt?: number;
     languages: Language[];
     learningGermanSince?: pupil_learninggermansince_enum;
@@ -108,6 +108,10 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
 }
 
 export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
+    if (pupil.isPupil) {
+        throw new Error(`Pupil is already tutee`);
+    }
+
     const updatedPupil = await prisma.pupil.update({
         data: {
             isPupil: true,

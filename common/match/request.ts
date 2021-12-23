@@ -12,10 +12,14 @@ const PUPIL_MAX_MATCHES = 1;
 const PUPIL_MAX_DISSOLVED_MATCHES = 3;
 
 
-type RequestBlockReasons = "max-requests" | "max-matches" | "max-dissolved-matches";
+type RequestBlockReasons = "not-tutee" | "not-tutor" | "not-screened" | "max-requests" | "max-matches" | "max-dissolved-matches";
 
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
+
+    if (!pupil.isPupil) {
+        return { allowed: false, reason: "not-tutee" };
+    }
 
     if (pupil.openMatchRequestCount >= PUPIL_MAX_REQUESTS) {
         return { allowed: false, reason: "max-requests", limit: PUPIL_MAX_REQUESTS };
@@ -67,7 +71,16 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
     logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
 }
 
-export function canStudentRequestMatch(student: Student): Decision<RequestBlockReasons> {
+export async function canStudentRequestMatch(student: Student): Promise<Decision<RequestBlockReasons>> {
+    if (!student.isStudent) {
+        return { allowed: false, reason: "not-tutor" };
+    }
+
+    const wasScreened = await prisma.screening.count({ where: { studentId: student.id, success: true }}) > 0;
+    if (!wasScreened) {
+        return { allowed: false, reason: "not-screened" };
+    }
+
     if (student.openMatchRequestCount >= STUDENT_MAX_REQUESTS) {
         return { allowed: false, reason: "max-requests", limit: STUDENT_MAX_REQUESTS };
     }
@@ -75,9 +88,10 @@ export function canStudentRequestMatch(student: Student): Decision<RequestBlockR
     return { allowed: true };
 }
 
+
 export async function createStudentMatchRequest(student: Student, adminOverride = false) {
     if (!adminOverride) {
-        assertAllowed(canStudentRequestMatch(student));
+        assertAllowed(await canStudentRequestMatch(student));
     }
 
     const result = await prisma.student.update({

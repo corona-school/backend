@@ -200,8 +200,8 @@ class BecomeProjectCoacheeInput {
 
 @InputType()
 class BecomeTuteeInput {
-    @Field(type => [Subject])
-    subjects: Subject[];
+    @Field(type => [String])
+    subjects: [String];
 
     @Field(type => [Language])
     languages: Language[];
@@ -209,8 +209,8 @@ class BecomeTuteeInput {
     @Field(type => LearningGermanSince, { nullable: true })
     learningGermanSince?: LearningGermanSince;
 
-    @Field(type => Int, { nullable: true })
-    gradeAsInt?: number;
+    @Field(type => Int)
+    gradeAsInt: number;
 }
 
 @InputType()

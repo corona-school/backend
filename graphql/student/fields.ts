@@ -36,7 +36,7 @@ export class ExtendFieldsStudentResolver {
 
     @FieldResolver(type => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    canRequestMatch(@Root() student: Required<Student>) {
-        return canStudentRequestMatch(student);
+    async canRequestMatch(@Root() student: Required<Student>) {
+        return await canStudentRequestMatch(student);
     }
 }
