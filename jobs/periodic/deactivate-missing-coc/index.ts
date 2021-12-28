@@ -1,7 +1,6 @@
 import {getLogger} from "log4js";
 import { prisma } from "../../../common/prisma";
 import validator from "validator";
-import toDate = validator.toDate;
 import {deactivateStudent} from "../../../common/student/activation";
 
 const logger = getLogger();

@@ -332,12 +332,10 @@ export class Student extends Person {
 
         if (currentScreening.success) {
             await Notification.actionTaken(this, "tutor_screening_success",
-                                           {certificateURL: 'dummy_certificate_url',
-                                            authToken: currentScreening.student.authToken});
+                                           {certificateURL: 'dummy_certificate_url'});
         } else {
             await Notification.actionTaken(this, "tutor_screening_rejection",
-                                           {certificateURL: 'dummy_certificate_url',
-                                            authToken: currentScreening.student.authToken});
+                                           {certificateURL: 'dummy_certificate_url'});
         }
     }
 
@@ -384,12 +382,10 @@ export class Student extends Person {
 
         if (currentScreening.success) {
             await Notification.actionTaken(this, "coach_screening_success",
-                                           {certificateURL: 'dummy_certificate_url',
-                                            authToken: currentScreening.student.authToken});
+                                           {certificateURL: 'dummy_certificate_url'});
         } else {
             await Notification.actionTaken(this, "coach_screening_rejection",
-                                           {certificateURL: 'dummy_certificate_url',
-                                            authToken: currentScreening.student.authToken});
+                                           {certificateURL: 'dummy_certificate_url'});
         }
     }
 
