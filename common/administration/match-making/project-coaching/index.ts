@@ -5,7 +5,7 @@ import { validateMatching } from "./matching/validate";
 import { coacheesToMatch } from "./people/coachees";
 import { coachesToMatch } from "./people/coaches";
 import { notifyMatches } from "./matches/notify";
-import { getLogger } from "../../../../jobs/utils/logging";
+import { getLogger } from "../../../../common/util/logs";
 
 
 const logger = getLogger();

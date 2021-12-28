@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { getLogger } from "../../../../../../jobs/utils/logging";
+import { getLogger } from "../../../../../../common/util/logs";
 import { Match } from "../../../../../entity/Match";
 import { Pupil } from "../../../../../entity/Pupil";
 import { Student } from "../../../../../entity/Student";

@@ -5,7 +5,7 @@ import { validateMatching } from "./matching/validate";
 import { tuteesToMatch } from "./people/tutees";
 import { tutorsToMatch } from "./people/tutors";
 import { notifyMatches } from "./matches/notify";
-import { getLogger } from "../../../../jobs/utils/logging";
+import { getLogger } from "../../../../common/util/logs";
 import { getStudentByWixID, Student } from "../../../entity/Student";
 import { getPupilByWixID, Pupil } from "../../../entity/Pupil";
 import { MatchMakingOptions } from "./types/options";
