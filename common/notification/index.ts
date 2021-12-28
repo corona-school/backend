@@ -194,7 +194,8 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
     const context: Context = {
         ...notificationContext,
-        user: { ...user, fullName: getFullName(user) }
+        user: { ...user, fullName: getFullName(user) },
+        authToken: user.authToken
     };
 
     try {
@@ -209,9 +210,10 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
-                sentAt: new Date(),
+                sentAt: new Date()
                 // drop the context, as it is irrelevant from now on, and only eats up memory
-                context: {}
+                // TODO: Clarify if in the future notifications should be shown in the user section
+                // context: {}
             },
             where: {
                 id: concreteNotification.id
