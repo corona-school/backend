@@ -1,12 +1,10 @@
 import moment from "moment-timezone";
-import { setup as setupLogging, getLogger } from "./utils/logging";
+import { getLogger } from "./../common/util/logs";
 import { scheduleJobs } from "./scheduler";
 import * as scheduler from "./scheduler";
 import { allJobs } from "./list";
 import { configureGracefulShutdown } from "./shutdown";
 
-//SETUP: logger
-setupLogging();
 getLogger().info("Backend started");
 
 //SETUP: moment
