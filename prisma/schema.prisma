@@ -467,6 +467,8 @@ model student {
   sentInstructorScreeningReminderCount      Int                                    @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
+  sentCoCReminderCount                      Int                                    @default(0)
+  lastSentCoCReminder                       DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
   course                                    course[]
   course_guest                              course_guest[]

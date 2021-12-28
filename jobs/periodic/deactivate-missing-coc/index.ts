@@ -28,12 +28,13 @@ export async function deactivateMissingCoc() {
                     lt: eightWeeksAgoDate
                 }
             },
+            sentCoCReminderCount: 5,
             // eslint-disable-next-line camelcase
             certificate_of_conduct: null
         }
     });
 
-    logger.info(defaultingStudents.length+ " Defaulting students are going to be removed because of a missing CoC");
+    logger.info(defaultingStudents.length+ " defaulting students are going to be removed because of a missing CoC");
 
     defaultingStudents.forEach(async (student) => {
         await deactivateStudent(student);

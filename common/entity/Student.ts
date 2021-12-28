@@ -331,9 +331,13 @@ export class Student extends Person {
         this.screening = Promise.resolve(currentScreening);
 
         if (currentScreening.success) {
-            await Notification.actionTaken(this, "tutor_screening_success", {});
+            await Notification.actionTaken(this, "tutor_screening_success",
+                                           {certificateURL: 'dummy_certificate_url',
+                                            authToken: currentScreening.student.authToken});
         } else {
-            await Notification.actionTaken(this, "tutor_screening_rejection", {});
+            await Notification.actionTaken(this, "tutor_screening_rejection",
+                                           {certificateURL: 'dummy_certificate_url',
+                                            authToken: currentScreening.student.authToken});
         }
     }
 
@@ -379,9 +383,13 @@ export class Student extends Person {
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
         if (currentScreening.success) {
-            await Notification.actionTaken(this, "coach_screening_success", {});
+            await Notification.actionTaken(this, "coach_screening_success",
+                                           {certificateURL: 'dummy_certificate_url',
+                                            authToken: currentScreening.student.authToken});
         } else {
-            await Notification.actionTaken(this, "coach_screening_rejection", {});
+            await Notification.actionTaken(this, "coach_screening_rejection",
+                                           {certificateURL: 'dummy_certificate_url',
+                                            authToken: currentScreening.student.authToken});
         }
     }
 

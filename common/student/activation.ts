@@ -4,6 +4,7 @@ import {dissolveMatch, dissolveProjectMatch} from "../match/dissolve";
 import {getTransactionLog} from "../transactionlog";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import {CourseState} from "../entity/Course";
+import * as Notification from "../notification";
 
 
 export async function deactivateStudent(student: Student) {
@@ -70,14 +71,11 @@ export async function deactivateStudent(student: Student) {
         }
     }
 
-
-
-
-
     await prisma.student.update({
         data: { active: false },
         where: { id: student.id }
     });
 
+    Notification.actionTaken(student, 'student_account_deactivated', {});
     await getTransactionLog().log(new DeActivateEvent(student, false));
 }

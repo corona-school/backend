@@ -1,5 +1,4 @@
-// eslint-disable-next-line camelcase
-import {Certificate_of_conduct, Course, Screener, Student} from "../generated";
+import {Certificate_of_conduct, Student} from "../generated";
 import { Authorized, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
