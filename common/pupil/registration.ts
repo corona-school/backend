@@ -9,7 +9,7 @@ import { Subject } from "../entity/Student";
 import { Address } from "address-rfc2821";
 import { logTransaction } from "../transactionlog/log";
 
-interface RegisterPupilData {
+export interface RegisterPupilData {
     firstname: string;
     lastname: string;
     email: string;
@@ -23,19 +23,19 @@ interface RegisterPupilData {
     redirectTo?: string;
 }
 
-interface BecomeProjectCoacheeData {
+export interface BecomeProjectCoacheeData {
     projectFields: ProjectField[];
     isJufoParticipant: TuteeJufoParticipationIndication;
     projectMemberCount: number;
 }
-interface BecomeTuteeData {
+export interface BecomeTuteeData {
     subjects: string[];
     gradeAsInt?: number;
     languages: Language[];
     learningGermanSince?: pupil_learninggermansince_enum;
 }
 
-interface BecomeStatePupilData {
+export interface BecomeStatePupilData {
     teacherEmail: string;
     gradeAsInt?: number;
 }

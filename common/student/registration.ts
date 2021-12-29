@@ -8,8 +8,9 @@ import { sendFirstInstructorScreeningInvitationMail, sendFirstProjectCoachingJuf
 import { DEFAULT_SCREENER_NUMBER_ID } from "../entity/Screener";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { logTransaction } from "../transactionlog/log";
+import { setProjectFields } from "./update";
 
-interface RegisterStudentData {
+export interface RegisterStudentData {
     firstname: string;
     lastname: string;
     email: string;
@@ -20,7 +21,7 @@ interface RegisterStudentData {
     redirectTo?: string;
 }
 
-interface BecomeInstructorData {
+export interface BecomeInstructorData {
     university: string;
     state: State;
     teacherModule: TeacherModule;
@@ -28,19 +29,19 @@ interface BecomeInstructorData {
     message: string;
 }
 
-interface BecomeTutorData {
+export interface BecomeTutorData {
     subjects: Subject[];
     languages: Language[];
     supportsInDaZ: boolean;
 }
 
-class ProjectFieldWithGradeData {
-    name: ProjectField;
-    min?: number;
-    max?: number;
+export interface ProjectFieldWithGradeData {
+    projectField: ProjectField;
+    min: number;
+    max: number;
 }
 
-class BecomeProjectCoachData {
+export interface BecomeProjectCoachData {
     projectFields: ProjectFieldWithGradeData[];
     wasJufoParticipant: TutorJufoParticipationIndication;
     isUniversityStudent: boolean;
@@ -153,10 +154,7 @@ export async function becomeProjectCoach(student: Student, data: BecomeProjectCo
     const { hasJufoCertificate, isUniversityStudent, jufoPastParticipationInfo, projectFields, wasJufoParticipant } = data;
 
     if (projectFields) {
-        await prisma.$transaction(async prisma => {
-            await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: student.id } });
-            await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name, min: it.min, max: it.max, studentId: student.id })) });
-        });
+        await setProjectFields(student, projectFields);
     }
 
     await prisma.student.update({

@@ -5,10 +5,12 @@ import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, logInAsPupil, logInAsStudent } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
+import { setProjectFields } from "../../common/student/update";
 import {
     pupil_learninggermansince_enum as LearningGermanSince,
     pupil_languages_enum as Language,
     pupil_projectfields_enum as ProjectField,
+    project_field_with_grade_restriction as ProjectFieldWithGrade,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
@@ -18,25 +20,24 @@ import { MaxLength } from "class-validator";
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../../common/jufo/participationIndication";
 import { School } from "../../common/entity/School";
 import { RateLimit } from "../rate-limit";
-import { becomeInstructor, becomeProjectCoach, becomeTutor, registerStudent } from "../../common/student/registration";
-import { becomeProjectCoachee, becomeStatePupil, becomeTutee, registerPupil } from "../../common/pupil/registration";
+import { becomeInstructor, BecomeInstructorData, becomeProjectCoach, BecomeProjectCoachData, becomeTutor, BecomeTutorData, ProjectFieldWithGradeData, registerStudent, RegisterStudentData } from "../../common/student/registration";
+import { becomeProjectCoachee, BecomeProjectCoacheeData, becomeStatePupil, BecomeStatePupilData, becomeTutee, BecomeTuteeData, registerPupil, RegisterPupilData } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 @InputType()
-class ProjectFieldWithGradeInput {
-
+class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
-    name: ProjectField;
+    projectField: ProjectField;
     @Field(type => Int, { nullable: true })
-    min?: number;
+    min: number;
     @Field(type => Int, { nullable: true })
-    max?: number;
+    max: number;
 }
 
 @InputType()
-class RegisterStudentInput {
+class RegisterStudentInput implements RegisterStudentData {
     @Field(type => String)
     @MaxLength(100)
     firstname: string;
@@ -63,7 +64,7 @@ class RegisterStudentInput {
 
 
 @InputType()
-class RegisterPupilInput {
+class RegisterPupilInput implements RegisterPupilData {
     @Field(type => String)
     @MaxLength(100)
     firstname: string;
@@ -135,7 +136,7 @@ class MeUpdateInput {
 }
 
 @InputType()
-class BecomeInstructorInput {
+class BecomeInstructorInput implements BecomeInstructorData {
     @Field(type => String, { nullable: true })
     @MaxLength(100)
     university: string;
@@ -155,7 +156,7 @@ class BecomeInstructorInput {
 }
 
 @InputType()
-class BecomeTutorInput {
+class BecomeTutorInput implements BecomeTutorData {
     @Field(type => [Subject])
     subjects: Subject[];
 
@@ -167,7 +168,7 @@ class BecomeTutorInput {
 }
 
 @InputType()
-class BecomeProjectCoachInput {
+class BecomeProjectCoachInput implements BecomeProjectCoachData {
     @Field(type => [ProjectFieldWithGradeInput])
     projectFields: ProjectFieldWithGradeInput[];
 
@@ -187,7 +188,7 @@ class BecomeProjectCoachInput {
 }
 
 @InputType()
-class BecomeProjectCoacheeInput {
+class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
     @Field(type => [ProjectField])
     projectFields: ProjectField[];
 
@@ -199,7 +200,7 @@ class BecomeProjectCoacheeInput {
 }
 
 @InputType()
-class BecomeTuteeInput {
+class BecomeTuteeInput implements BecomeTuteeData {
     @Field(type => [String])
     subjects: string[];
 
@@ -214,7 +215,7 @@ class BecomeTuteeInput {
 }
 
 @InputType()
-class BecomeStatePupilInput {
+class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field(type => String)
     teacherEmail: string;
     @Field(type => Int, { nullable: true })
@@ -311,10 +312,7 @@ export class MutateMeResolver {
             }
 
             if (projectFields) {
-                await prisma.$transaction(async prisma => {
-                    await prisma.project_field_with_grade_restriction.deleteMany({ where: { studentId: prevStudent.id } });
-                    await prisma.project_field_with_grade_restriction.createMany({ data: projectFields.map(it => ({ projectField: it.name, min: it.min, max: it.max, studentId: prevStudent.id })) });
-                });
+                await setProjectFields(prevStudent, projectFields);
             }
 
             await prisma.student.update({
