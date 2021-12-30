@@ -16,7 +16,7 @@ import * as registrationController from "./controllers/registrationController";
 import * as mentoringController from "./controllers/mentoringController";
 import * as expertController from "./controllers/expertController";
 import * as interestConfirmationController from "./controllers/interestConfirmationController";
-import { getLogger } from "../common/util/log";
+import { getLogger, connectLogger } from "../common/util/logs";
 import { createConnection, getConnection } from "typeorm";
 import { authCheckFactory, screenerAuthCheck } from "./middleware/auth";
 import { setupDevDB } from "./dev";
