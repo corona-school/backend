@@ -4,7 +4,7 @@ import { isDev } from "./environment";
 configure({
     appenders: {
         "stderr": { type: "stderr" },
-        "stderr-filtered": { type: "logLevelFilter", appender: "stdout", level: (isDev ? "all" : "info") }
+        "stderr-filtered": { type: "logLevelFilter", appender: "stderr", level: (isDev ? "all" : "info") }
     },
     categories: {
         "default": {
