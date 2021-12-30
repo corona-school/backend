@@ -376,22 +376,22 @@ createConnection().then(setupPDFGenerationEnvironment)
         function configureGracefulShutdown(server: http.Server) {
         //NOTE: use this to cleanup node's event loop
             process.on("SIGTERM", async () => {
-                logger.debug("SIGTERM signal received: Starting graceful shutdown procedures...");
+                logger.info("SIGTERM signal received: Starting graceful shutdown procedures...");
                 //Close Server
                 await new Promise<void>((resolve) => server.close(() => {
                     resolve();
                 }));
-                logger.debug("✅ HTTP server closed!");
+                logger.info("✅ HTTP server closed!");
 
                 //remove intervals to cleanup, and anything else that have registered as cleanup actions
                 performCleanupActions();
-                logger.debug("✅ All other custom graceful shutdown actions completed!");
+                logger.info("✅ All other custom graceful shutdown actions completed!");
 
                 //close puppeteer (because if all connections are finished, it is no longer needed at the moment)
                 //even though this is not the cleanest solution (because it could still lead to some queued callbacks on node's event loop that uses puppeteer for pdf generation), it is called here, because for now all pdf generation is awaited for until a server-route's response was delivered.
                 if (!isCommandArg("--noPDF")) {
                     await closeBrowser();
-                    logger.debug("✅ Puppeteer gracefully shut down!");
+                    logger.info("✅ Puppeteer gracefully shut down!");
                 }
             //now, the process will automatically exit if node has no more async operations to perform (i.e. finished sending out all open mails that weren't awaited for etc.)
             });
@@ -401,9 +401,9 @@ createConnection().then(setupPDFGenerationEnvironment)
                 console.log("BEFORE EXIT TRIGGERED....");
                 //Close database connection
                 await getConnection()?.close();
-                logger.debug("✅ Default database connection successfully closed!");
+                logger.info("✅ Default database connection successfully closed!");
                 //Finish...
-                logger.debug("Graceful Shutdown completed 🎉"); //event loop now fully cleaned up
+                logger.info("Graceful Shutdown completed 🎉"); //event loop now fully cleaned up
             });
         }
     });

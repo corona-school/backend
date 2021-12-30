@@ -55,7 +55,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         return bbbMeeting;
     } catch (e) {
         logger.error("Can't save new bbb meeting: " + e.message);
-        logger.debug(bbbMeeting, e);
+        logger.error(bbbMeeting, e);
     }
 }
 
@@ -116,7 +116,7 @@ export async function isBBBMeetingRunning(id: string): Promise<boolean> {
         .then(jsonResponse => jsonResponse && jsonResponse.response && jsonResponse.response.running &&
             jsonResponse.response.running.length > 0 && jsonResponse.response.running[0] === "true")
         .catch(error => {
-            logger.debug(error);
+            logger.error(error);
             return Promise.reject("An error occurred.");
         });
 }
@@ -132,7 +132,7 @@ export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
 
         return mapJSONtoApiBBBMeetings(jsonResponse);
     } catch (error) {
-        logger.debug(error);
+        logger.error(error);
         return null;
     }
 }
@@ -251,7 +251,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
 
     if (subcourseId == null) {
         logger.error("Can't save new course attendance: subcourseId is null");
-        logger.debug(courseAttendanceLog);
+        logger.error(courseAttendanceLog);
     } else {
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
@@ -282,7 +282,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     logger.info("Successfully saved new Course Attendance to lecture with id ", activeLecture.id);
                 } catch (e) {
                     logger.error("Can't save new course attendance: " + e.message);
-                    logger.debug(courseAttendanceLog, e);
+                    logger.error(courseAttendanceLog, e);
                 }
             }
         } else {
@@ -300,7 +300,7 @@ export async function getRunningBBBMeetingAttendees(meetingID: string): Promise<
         const jsonResponse = await parser.parseStringPromise(response.data);
         return mapJSONtoAttendees(jsonResponse);
     } catch (error) {
-        logger.debug(error);
+        logger.error(error);
         return null;
     }
 }

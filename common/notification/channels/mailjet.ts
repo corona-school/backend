@@ -4,6 +4,7 @@ import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
 import { Person } from "../../entity/Person";
 import { assert } from "console";
+import { getUserId } from "../../user";
 
 const logger = getLogger();
 
@@ -73,7 +74,7 @@ export const mailjetChannel: Channel = {
             throw new Error(`Mailjet Message Delivery failed: ${errorMessages}`);
         }
 
-        logger.info(`Sent Mail(${message.TemplateID})`);
+        logger.info(`Sent Mail(${message.TemplateID}) of type Notification(${notification.id}) to User(${getUserId(to)})`);
     },
 
     canSend: (notification: Notification) => {

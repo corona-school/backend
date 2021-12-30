@@ -44,7 +44,7 @@ export async function getNotifications(): Promise<NotificationsPerAction> {
         }
     }
 
-    logger.debug(`Loaded ${notifications.length} notification into the cache`);
+    logger.info(`Loaded ${notifications.length} notification into the cache`);
 
     return result;
 }
