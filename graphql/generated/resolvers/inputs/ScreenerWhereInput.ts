@@ -121,5 +121,5 @@ export class ScreenerWhereInput {
   @TypeGraphQL.Field(_type => ScreeningListRelationFilter, {
     nullable: true
   })
-  screening?: ScreeningListRelationFilter | undefined;
+  screenings?: ScreeningListRelationFilter | undefined;
 }

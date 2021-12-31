@@ -8,7 +8,7 @@ import { Project_coaching_screeningCreateNestedManyWithoutScreenerInput } from "
 @TypeGraphQL.InputType({
   isAbstract: true
 })
-export class ScreenerCreateWithoutScreeningInput {
+export class ScreenerCreateWithoutScreeningsInput {
   @TypeGraphQL.Field(_type => Date, {
     nullable: true
   })

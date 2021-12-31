@@ -87,5 +87,5 @@ export class ScreenerCreateWithoutInstructor_screeningInput {
   @TypeGraphQL.Field(_type => ScreeningCreateNestedManyWithoutScreenerInput, {
     nullable: true
   })
-  screening?: ScreeningCreateNestedManyWithoutScreenerInput | undefined;
+  screenings?: ScreeningCreateNestedManyWithoutScreenerInput | undefined;
 }

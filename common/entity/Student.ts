@@ -29,6 +29,9 @@ import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
+import { RemissionRequest } from "./RemissionRequest";
+import { createRemissionRequest } from "../remission-request";
+import {CertificateOfConduct} from "./CertificateOfConduct";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -200,6 +203,13 @@ export class Student extends Person {
     })
     projectCoachingScreening: Promise<ProjectCoachingScreening>;
 
+
+    @OneToOne((type) => CertificateOfConduct, (cocScreening) => cocScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    certificateOfConduct: Promise<CertificateOfConduct>;
+
     @Column({
         nullable: false,
         default: 0
@@ -305,6 +315,11 @@ export class Student extends Person {
     })
     invitedGuests: CourseGuest[];
 
+    @OneToOne(type => RemissionRequest, remissionRequest => remissionRequest.student, {
+        nullable: true
+    })
+    remissionRequest: RemissionRequest;
+
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
 
@@ -322,8 +337,13 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
 
-        if (currentScreening.success) {
-            await Notification.actionTaken(this, "tutor_screening_success", {});
+        const registrationDate = await this.createdAt;
+
+        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
+            if (!this.remissionRequest) {
+                await createRemissionRequest(this);
+                await Notification.actionTaken(this, "tutor_screening_success", {});
+            }
         } else {
             await Notification.actionTaken(this, "tutor_screening_rejection", {});
         }
@@ -370,7 +390,12 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
-        if (currentScreening.success) {
+        const registrationDate = await this.createdAt;
+        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
+            if (!this.remissionRequest) {
+                await createRemissionRequest(this);
+                await Notification.actionTaken(this, "coach_screening_success", {});
+            }
             await Notification.actionTaken(this, "coach_screening_success", {});
         } else {
             await Notification.actionTaken(this, "coach_screening_rejection", {});
