@@ -1,9 +1,9 @@
-import {student as Student} from "@prisma/client";
+/* eslint-disable camelcase */
+import {course_coursestate_enum, student as Student} from "@prisma/client";
 import {prisma} from "../prisma";
 import {dissolveMatch, dissolveProjectMatch} from "../match/dissolve";
 import {getTransactionLog} from "../transactionlog";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
-import {CourseState} from "../entity/Course";
 import * as Notification from "../notification";
 
 
@@ -35,39 +35,51 @@ export async function deactivateStudent(student: Student) {
     }
 
     //Delete course records for the student.
-    let studentCourses = await prisma.course_instructors_student.groupBy({
-        by: ['courseId'],
+    let courses = await prisma.course.findMany({
         where: {
-            studentId: student.id
+            course_instructors_student: {
+                some: {
+                    studentId: student.id
+                }
+            }
+        },
+        include: {
+            course_instructors_student: true
         }
     });
 
-    for (const course of studentCourses) {
-        await prisma.course_instructors_student.deleteMany({
-            where: {
-                studentId: student.id,
-                courseId: course.courseId
-            }
-        });
-        if (studentCourses.length === 1) {
-            await prisma.course.updateMany({
+    for (let i=0; i<courses.length; i++) {
+        if (courses[i].course_instructors_student.length > 1) {
+            await prisma.course.update({
                 where: {
-                    id: course.courseId
+                    id: courses[i].id
                 },
                 data: {
-                    courseState: CourseState.CANCELLED
+                    course_instructors_student: {
+                        deleteMany: {
+                            studentId: student.id
+                        }
+                    }
                 }
             });
-
-            await prisma.subcourse.updateMany({
+        } else {
+            await prisma.course.update({
                 where: {
-                    courseId: course.courseId
+                    id: courses[i].id
                 },
                 data: {
-                    cancelled: true
+                    subcourse: {
+                        updateMany: {
+                            where: {},
+                            data: {
+                                cancelled: true
+                            }
+                        }
+                    },
+                    courseState: course_coursestate_enum.cancelled
                 }
             });
-
+            // TODO Notify participants
         }
     }
 
