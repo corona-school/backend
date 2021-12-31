@@ -380,7 +380,6 @@ export async function setupDevDB() {
 
     matches.push(
         new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364"),
-        new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526365"),
         new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364")
     );
 
