@@ -2,7 +2,6 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { ScreenerCreateNestedOneWithoutCertificate_of_conductInput } from "../inputs/ScreenerCreateNestedOneWithoutCertificate_of_conductInput";
 import { StudentCreateNestedOneWithoutCertificate_of_conductInput } from "../inputs/StudentCreateNestedOneWithoutCertificate_of_conductInput";
 
 @TypeGraphQL.InputType({
@@ -33,11 +32,6 @@ export class Certificate_of_conductCreateInput {
     nullable: false
   })
   criminalRecords!: boolean;
-
-  @TypeGraphQL.Field(_type => ScreenerCreateNestedOneWithoutCertificate_of_conductInput, {
-    nullable: true
-  })
-  inspectingScreener?: ScreenerCreateNestedOneWithoutCertificate_of_conductInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreateNestedOneWithoutCertificate_of_conductInput, {
     nullable: true

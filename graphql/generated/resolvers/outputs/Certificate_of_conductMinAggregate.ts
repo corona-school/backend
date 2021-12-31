@@ -40,10 +40,5 @@ export class Certificate_of_conductMinAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  inspectingScreenerId!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
   studentId!: number | null;
 }

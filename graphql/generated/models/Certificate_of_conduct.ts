@@ -2,7 +2,6 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
-import { Screener } from "../models/Screener";
 import { Student } from "../models/Student";
 
 @TypeGraphQL.ObjectType({
@@ -42,14 +41,7 @@ export class Certificate_of_conduct {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  inspectingScreenerId?: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
   studentId?: number | null;
-
-  inspectingScreener?: Screener | null;
 
   student?: Student | null;
 }

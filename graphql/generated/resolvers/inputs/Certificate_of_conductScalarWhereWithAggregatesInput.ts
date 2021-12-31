@@ -59,10 +59,5 @@ export class Certificate_of_conductScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
     nullable: true
   })
-  inspectingScreenerId?: IntNullableWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
-    nullable: true
-  })
   studentId?: IntNullableWithAggregatesFilter | undefined;
 }

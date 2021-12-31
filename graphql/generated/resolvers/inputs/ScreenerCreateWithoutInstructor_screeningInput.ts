@@ -2,7 +2,6 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { Certificate_of_conductCreateNestedManyWithoutInspectingScreenerInput } from "../inputs/Certificate_of_conductCreateNestedManyWithoutInspectingScreenerInput";
 import { Project_coaching_screeningCreateNestedManyWithoutScreenerInput } from "../inputs/Project_coaching_screeningCreateNestedManyWithoutScreenerInput";
 import { ScreeningCreateNestedManyWithoutScreenerInput } from "../inputs/ScreeningCreateNestedManyWithoutScreenerInput";
 
@@ -88,10 +87,5 @@ export class ScreenerCreateWithoutInstructor_screeningInput {
   @TypeGraphQL.Field(_type => ScreeningCreateNestedManyWithoutScreenerInput, {
     nullable: true
   })
-  screening?: ScreeningCreateNestedManyWithoutScreenerInput | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedManyWithoutInspectingScreenerInput, {
-    nullable: true
-  })
-  certificate_of_conduct?: Certificate_of_conductCreateNestedManyWithoutInspectingScreenerInput | undefined;
+  screenings?: ScreeningCreateNestedManyWithoutScreenerInput | undefined;
 }

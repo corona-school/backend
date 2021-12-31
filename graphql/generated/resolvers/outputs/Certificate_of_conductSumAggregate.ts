@@ -15,10 +15,5 @@ export class Certificate_of_conductSumAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  inspectingScreenerId!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
   studentId!: number | null;
 }

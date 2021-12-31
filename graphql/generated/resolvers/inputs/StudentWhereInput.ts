@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { BoolNullableFilter } from "../inputs/BoolNullableFilter";
-import { Certificate_of_conductListRelationFilter } from "../inputs/Certificate_of_conductListRelationFilter";
+import { Certificate_of_conductRelationFilter } from "../inputs/Certificate_of_conductRelationFilter";
 import { CourseListRelationFilter } from "../inputs/CourseListRelationFilter";
 import { Course_guestListRelationFilter } from "../inputs/Course_guestListRelationFilter";
 import { Course_instructors_studentListRelationFilter } from "../inputs/Course_instructors_studentListRelationFilter";
@@ -265,6 +265,11 @@ export class StudentWhereInput {
   })
   registrationSource?: Enumstudent_registrationsource_enumFilter | undefined;
 
+  @TypeGraphQL.Field(_type => Certificate_of_conductRelationFilter, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductRelationFilter | undefined;
+
   @TypeGraphQL.Field(_type => CourseListRelationFilter, {
     nullable: true
   })
@@ -339,9 +344,4 @@ export class StudentWhereInput {
     nullable: true
   })
   subcourse_instructors_student?: Subcourse_instructors_studentListRelationFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductListRelationFilter, {
-    nullable: true
-  })
-  certificate_of_conduct?: Certificate_of_conductListRelationFilter | undefined;
 }

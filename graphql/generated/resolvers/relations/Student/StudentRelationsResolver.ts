@@ -16,7 +16,6 @@ import { Project_match } from "../../../models/Project_match";
 import { Screening } from "../../../models/Screening";
 import { Student } from "../../../models/Student";
 import { Subcourse_instructors_student } from "../../../models/Subcourse_instructors_student";
-import { StudentCertificate_of_conductArgs } from "./args/StudentCertificate_of_conductArgs";
 import { StudentCourseArgs } from "./args/StudentCourseArgs";
 import { StudentCourse_guestArgs } from "./args/StudentCourse_guestArgs";
 import { StudentCourse_instructors_studentArgs } from "./args/StudentCourse_instructors_studentArgs";
@@ -31,6 +30,17 @@ import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRel
 
 @TypeGraphQL.Resolver(_of => Student)
 export class StudentRelationsResolver {
+  @TypeGraphQL.FieldResolver(_type => Certificate_of_conduct, {
+    nullable: true
+  })
+  async certificate_of_conduct(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any): Promise<Certificate_of_conduct | null> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).certificate_of_conduct({});
+  }
+
   @TypeGraphQL.FieldResolver(_type => [Course], {
     nullable: false
   })
@@ -194,16 +204,5 @@ export class StudentRelationsResolver {
         id: student.id,
       },
     }).subcourse_instructors_student(args);
-  }
-
-  @TypeGraphQL.FieldResolver(_type => [Certificate_of_conduct], {
-    nullable: false
-  })
-  async certificate_of_conduct(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: StudentCertificate_of_conductArgs): Promise<Certificate_of_conduct[]> {
-    return getPrismaFromContext(ctx).student.findUnique({
-      where: {
-        id: student.id,
-      },
-    }).certificate_of_conduct(args);
   }
 }

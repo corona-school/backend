@@ -7,19 +7,14 @@ import { Certificate_of_conductWhereInput } from "../inputs/Certificate_of_condu
 @TypeGraphQL.InputType({
   isAbstract: true
 })
-export class Certificate_of_conductListRelationFilter {
+export class Certificate_of_conductRelationFilter {
   @TypeGraphQL.Field(_type => Certificate_of_conductWhereInput, {
     nullable: true
   })
-  every?: Certificate_of_conductWhereInput | undefined;
+  is?: Certificate_of_conductWhereInput | undefined;
 
   @TypeGraphQL.Field(_type => Certificate_of_conductWhereInput, {
     nullable: true
   })
-  some?: Certificate_of_conductWhereInput | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductWhereInput, {
-    nullable: true
-  })
-  none?: Certificate_of_conductWhereInput | undefined;
+  isNot?: Certificate_of_conductWhereInput | undefined;
 }

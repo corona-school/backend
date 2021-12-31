@@ -36,9 +36,8 @@ export class MutateCertificateOfConductResolver {
         @Arg("dateOfInspection") dateOfInspection: Date,
         @Arg("dateOfIssue") dateOfIssue: Date,
         @Arg("criminalRecords") criminalRecords: boolean,
-        @Arg("inspectingScreenerId") inspectingScreenerId: number,
         @Arg("studentId") studentId: number) {
-        await CertificateOfConduct.create(dateOfInspection, dateOfIssue, criminalRecords, inspectingScreenerId, studentId);
+        await CertificateOfConduct.create(dateOfInspection, dateOfIssue, criminalRecords, studentId);
         return true;
     }
 }

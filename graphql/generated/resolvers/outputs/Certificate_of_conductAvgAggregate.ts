@@ -15,10 +15,5 @@ export class Certificate_of_conductAvgAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true
   })
-  inspectingScreenerId!: number | null;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
-    nullable: true
-  })
   studentId!: number | null;
 }

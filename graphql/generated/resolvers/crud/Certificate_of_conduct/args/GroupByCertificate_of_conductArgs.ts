@@ -20,7 +20,7 @@ export class GroupByCertificate_of_conductArgs {
   @TypeGraphQL.Field(_type => [Certificate_of_conductScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "dateOfInspection" | "dateOfIssue" | "criminalRecords" | "inspectingScreenerId" | "studentId">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "dateOfInspection" | "dateOfIssue" | "criminalRecords" | "studentId">;
 
   @TypeGraphQL.Field(_type => Certificate_of_conductScalarWhereWithAggregatesInput, {
     nullable: true

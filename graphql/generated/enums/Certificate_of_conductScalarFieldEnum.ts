@@ -7,7 +7,6 @@ export enum Certificate_of_conductScalarFieldEnum {
   dateOfInspection = "dateOfInspection",
   dateOfIssue = "dateOfIssue",
   criminalRecords = "criminalRecords",
-  inspectingScreenerId = "inspectingScreenerId",
   studentId = "studentId"
 }
 TypeGraphQL.registerEnumType(Certificate_of_conductScalarFieldEnum, {

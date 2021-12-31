@@ -1,4 +1,3 @@
-export { StudentCertificate_of_conductArgs } from "./StudentCertificate_of_conductArgs";
 export { StudentCourseArgs } from "./StudentCourseArgs";
 export { StudentCourse_guestArgs } from "./StudentCourse_guestArgs";
 export { StudentCourse_instructors_studentArgs } from "./StudentCourse_instructors_studentArgs";

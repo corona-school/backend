@@ -31,11 +31,8 @@ import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication"
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
-import { prisma } from "../common/prisma/";
-import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
 import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
-import execute from "../jobs/periodic/deactivate-missing-coc";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -382,7 +379,7 @@ export async function setupDevDB() {
 
     matches.push(
         new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364"),
-        new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526365"),
+        // new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526365"),
         new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364")
     );
 

@@ -242,6 +242,8 @@ export class Student {
   })
   registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
 
+  certificate_of_conduct?: Certificate_of_conduct | null;
+
   course?: Course[];
 
   course_guest?: Course_guest[];
@@ -271,6 +273,4 @@ export class Student {
   screening?: Screening | null;
 
   subcourse_instructors_student?: Subcourse_instructors_student[];
-
-  certificate_of_conduct?: Certificate_of_conduct[];
 }

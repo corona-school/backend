@@ -2,7 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { Certificate_of_conductCreateNestedManyWithoutStudentInput } from "../inputs/Certificate_of_conductCreateNestedManyWithoutStudentInput";
+import { Certificate_of_conductCreateNestedOneWithoutStudentInput } from "../inputs/Certificate_of_conductCreateNestedOneWithoutStudentInput";
 import { CourseCreateNestedManyWithoutStudentInput } from "../inputs/CourseCreateNestedManyWithoutStudentInput";
 import { Course_guestCreateNestedManyWithoutStudentInput } from "../inputs/Course_guestCreateNestedManyWithoutStudentInput";
 import { Course_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Course_instructors_studentCreateNestedManyWithoutStudentInput";
@@ -236,6 +236,11 @@ export class StudentCreateWithoutSubcourse_instructors_studentInput {
   })
   languages?: StudentCreatelanguagesInput | undefined;
 
+  @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedOneWithoutStudentInput, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductCreateNestedOneWithoutStudentInput | undefined;
+
   @TypeGraphQL.Field(_type => CourseCreateNestedManyWithoutStudentInput, {
     nullable: true
   })
@@ -305,9 +310,4 @@ export class StudentCreateWithoutSubcourse_instructors_studentInput {
     nullable: true
   })
   screening?: ScreeningCreateNestedOneWithoutStudentInput | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedManyWithoutStudentInput, {
-    nullable: true
-  })
-  certificate_of_conduct?: Certificate_of_conductCreateNestedManyWithoutStudentInput | undefined;
 }

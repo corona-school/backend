@@ -10,13 +10,12 @@ import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDa
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { Project_coaching_screeningUpdateManyWithoutScreenerInput } from "../inputs/Project_coaching_screeningUpdateManyWithoutScreenerInput";
-import { ScreeningUpdateManyWithoutScreenerInput } from "../inputs/ScreeningUpdateManyWithoutScreenerInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
 @TypeGraphQL.InputType({
   isAbstract: true
 })
-export class ScreenerUpdateWithoutCertificate_of_conductInput {
+export class ScreenerUpdateWithoutScreeningsInput {
   @TypeGraphQL.Field(_type => DateTimeFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -96,9 +95,4 @@ export class ScreenerUpdateWithoutCertificate_of_conductInput {
     nullable: true
   })
   project_coaching_screening?: Project_coaching_screeningUpdateManyWithoutScreenerInput | undefined;
-
-  @TypeGraphQL.Field(_type => ScreeningUpdateManyWithoutScreenerInput, {
-    nullable: true
-  })
-  screening?: ScreeningUpdateManyWithoutScreenerInput | undefined;
 }

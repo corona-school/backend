@@ -4,7 +4,6 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { BoolNullableFilter } from "../inputs/BoolNullableFilter";
-import { Certificate_of_conductListRelationFilter } from "../inputs/Certificate_of_conductListRelationFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { DateTimeNullableFilter } from "../inputs/DateTimeNullableFilter";
 import { Instructor_screeningListRelationFilter } from "../inputs/Instructor_screeningListRelationFilter";
@@ -122,10 +121,5 @@ export class ScreenerWhereInput {
   @TypeGraphQL.Field(_type => ScreeningListRelationFilter, {
     nullable: true
   })
-  screening?: ScreeningListRelationFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductListRelationFilter, {
-    nullable: true
-  })
-  certificate_of_conduct?: Certificate_of_conductListRelationFilter | undefined;
+  screenings?: ScreeningListRelationFilter | undefined;
 }

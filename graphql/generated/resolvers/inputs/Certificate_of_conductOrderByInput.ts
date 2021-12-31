@@ -41,10 +41,5 @@ export class Certificate_of_conductOrderByInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
-  inspectingScreenerId?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
   studentId?: "asc" | "desc" | undefined;
 }

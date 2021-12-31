@@ -40,11 +40,6 @@ export class Certificate_of_conductCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  inspectingScreenerId!: number;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
   studentId!: number;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {

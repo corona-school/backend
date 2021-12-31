@@ -35,5 +35,5 @@ export class FindManyCertificate_of_conductArgs {
   @TypeGraphQL.Field(_type => [Certificate_of_conductScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "createdAt" | "updatedAt" | "dateOfInspection" | "dateOfIssue" | "criminalRecords" | "inspectingScreenerId" | "studentId"> | undefined;
+  distinct?: Array<"id" | "createdAt" | "updatedAt" | "dateOfInspection" | "dateOfIssue" | "criminalRecords" | "studentId"> | undefined;
 }

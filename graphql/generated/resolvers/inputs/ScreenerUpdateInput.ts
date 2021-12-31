@@ -3,7 +3,6 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
-import { Certificate_of_conductUpdateManyWithoutInspectingScreenerInput } from "../inputs/Certificate_of_conductUpdateManyWithoutInspectingScreenerInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { Instructor_screeningUpdateManyWithoutScreenerInput } from "../inputs/Instructor_screeningUpdateManyWithoutScreenerInput";
 import { NullableBoolFieldUpdateOperationsInput } from "../inputs/NullableBoolFieldUpdateOperationsInput";
@@ -101,10 +100,5 @@ export class ScreenerUpdateInput {
   @TypeGraphQL.Field(_type => ScreeningUpdateManyWithoutScreenerInput, {
     nullable: true
   })
-  screening?: ScreeningUpdateManyWithoutScreenerInput | undefined;
-
-  @TypeGraphQL.Field(_type => Certificate_of_conductUpdateManyWithoutInspectingScreenerInput, {
-    nullable: true
-  })
-  certificate_of_conduct?: Certificate_of_conductUpdateManyWithoutInspectingScreenerInput | undefined;
+  screenings?: ScreeningUpdateManyWithoutScreenerInput | undefined;
 }

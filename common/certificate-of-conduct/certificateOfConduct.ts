@@ -6,7 +6,7 @@ import * as Notification from "../notification";
 
 const logger = getLogger("Certificate of Conduct");
 
-export async function create(dateOfInspection, dateOfIssue, criminalRecords, inspectingScreenerId, studentId) {
+export async function create(dateOfInspection, dateOfIssue, criminalRecords, studentId) {
     const student = await getStudent(studentId);
     const result = await prisma.certificate_of_conduct.create({
         data: {

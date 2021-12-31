@@ -6,7 +6,6 @@ import { BoolFilter } from "../inputs/BoolFilter";
 import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
-import { ScreenerRelationFilter } from "../inputs/ScreenerRelationFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
 @TypeGraphQL.InputType({
@@ -61,17 +60,7 @@ export class Certificate_of_conductWhereInput {
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true
   })
-  inspectingScreenerId?: IntNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => IntNullableFilter, {
-    nullable: true
-  })
   studentId?: IntNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => ScreenerRelationFilter, {
-    nullable: true
-  })
-  inspectingScreener?: ScreenerRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => StudentRelationFilter, {
     nullable: true

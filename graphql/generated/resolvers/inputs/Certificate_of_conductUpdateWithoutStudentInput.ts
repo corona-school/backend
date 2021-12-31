@@ -4,7 +4,6 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
-import { ScreenerUpdateOneWithoutCertificate_of_conductInput } from "../inputs/ScreenerUpdateOneWithoutCertificate_of_conductInput";
 
 @TypeGraphQL.InputType({
   isAbstract: true
@@ -34,9 +33,4 @@ export class Certificate_of_conductUpdateWithoutStudentInput {
     nullable: true
   })
   criminalRecords?: BoolFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => ScreenerUpdateOneWithoutCertificate_of_conductInput, {
-    nullable: true
-  })
-  inspectingScreener?: ScreenerUpdateOneWithoutCertificate_of_conductInput | undefined;
 }

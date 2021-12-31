@@ -40,10 +40,5 @@ export class Certificate_of_conductCreateManyInput {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  inspectingScreenerId?: number | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
   studentId?: number | undefined;
 }
