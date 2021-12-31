@@ -1,4 +1,4 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student } from "./generated";
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture } from "./generated";
 import { Authorized, createMethodDecorator } from "type-graphql";
 
 import { AuthChecker } from "type-graphql";
@@ -275,6 +275,37 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
 
         })
 
+    },
+    Subcourse: {
+        fields: withPublicFields<Subcourse, "id" | "published" | "cancelled" | "course" | "courseId" | "createdAt" | "updatedAt" | "joinAfterStart" | "minGrade" | "maxGrade" | "maxParticipants">({
+            course_participation_certificate: nobody,
+            lecture: nobody,
+            subcourse_instructors_student: nobody,
+            subcourse_participants_pupil: nobody,
+            subcourse_waiting_list_pupil: nobody
+        })
+    },
+    Course: {
+        fields: withPublicFields<Course, "id" | "name" | "outline" | "category" | "allowContact" | "courseState" | "publicRanking" | "description" | "createdAt" | "updatedAt">({
+            screeningComment: adminOrOwner,
+            correspondentId: adminOrOwner,
+
+            course_guest: nobody,
+            course_instructors_student: nobody,
+            course_tags_course_tag: nobody,
+            subcourse: nobody,
+            student: nobody,
+            imageKey: nobody
+        })
+    },
+    Lecture: {
+        fields: withPublicFields<Lecture, "id" | "start" | "duration" | "createdAt" | "updatedAt">({
+            course_attendance_log: nobody,
+            subcourseId: nobody,
+            subcourse: nobody,
+            student: nobody,
+            instructorId: nobody
+        })
     },
     Participation_certificate: {
         fields: {
