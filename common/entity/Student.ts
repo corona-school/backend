@@ -337,13 +337,15 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
 
-        if (currentScreening.success) {
-            await createRemissionRequest(this);
-            await Notification.actionTaken(this, "tutor_screening_success",
-                                           {certificateURL: 'dummy_certificate_url'});
+        const registrationDate = await this.createdAt;
+
+        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
+            if (!this.remissionRequest) {
+                await createRemissionRequest(this);
+                await Notification.actionTaken(this, "tutor_screening_success", {});
+            }
         } else {
-            await Notification.actionTaken(this, "tutor_screening_rejection",
-                                           {certificateURL: 'dummy_certificate_url'});
+            await Notification.actionTaken(this, "tutor_screening_rejection", {});
         }
     }
 
@@ -388,16 +390,15 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
-        if (currentScreening.success) {
-            await Notification.actionTaken(this, "coach_screening_success",
-                                           {certificateURL: 'dummy_certificate_url'});
+        const registrationDate = await this.createdAt;
+        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
             if (!this.remissionRequest) {
                 await createRemissionRequest(this);
+                await Notification.actionTaken(this, "coach_screening_success", {});
             }
             await Notification.actionTaken(this, "coach_screening_success", {});
         } else {
-            await Notification.actionTaken(this, "coach_screening_rejection",
-                                           {certificateURL: 'dummy_certificate_url'});
+            await Notification.actionTaken(this, "coach_screening_rejection", {});
         }
     }
 
