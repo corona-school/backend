@@ -56,13 +56,23 @@ export async function createMatch(pupil: Pupil, student: Student) {
         callURL
     });
 
+    const tutorFirstMatch = await prisma.match.count({ where: { studentId: student.id } }) === 1;
+    const tuteeFirstMatch = await prisma.match.count({ where: { pupilId: pupil.id } }) === 1;
+
+    // Used for showing Questionnaires to users and associate the ones of a match
+    // NOTE: This is only anonymous once the ConcreteNotifications created by this Action are dropped from the database
+    // Till then, this is at least pseudonymous and requires direct database access
+    const matchHash = generateUUID();
+
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
-        uniqueId: `${pupil.id}`,
+        uniqueId: "" + match.id,
         pupil,
         pupilGrade: getPupilGradeAsString(pupil),
         subjects,
-        callURL
+        callURL,
+        firstMatch: tutorFirstMatch,
+        matchHash
     });
 
     const tuteeMail = mailjetTemplates.TUTEENEWMATCH({
@@ -75,10 +85,12 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
     await sendTemplateMail(tuteeMail, pupil.email);
     await Notification.actionTaken(pupil, "tutee_matching_success", {
-        uniqueId: `${student.id}`,
+        uniqueId: "" + match.id,
         student,
         subjects,
-        callURL
+        callURL,
+        firstMatch: tuteeFirstMatch,
+        matchHash
     });
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
