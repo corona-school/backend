@@ -9,7 +9,7 @@ export default async function execute() {
     await deactivateMissingCoc();
 }
 
-export async function deactivateMissingCoc() {
+async function deactivateMissingCoc() {
     const today = new Date();
     const eightWeeksAgoDate = new Date();
     var eightWeeksAgo = today.getDate() - 56;
@@ -20,12 +20,19 @@ export async function deactivateMissingCoc() {
                 gt: new Date("2022-01-01")
             },
             active: true,
-            screening: {
+            OR: [{screening: {
                 success: true,
                 createdAt: {
                     lt: eightWeeksAgoDate
                 }
-            },
+            }}, {
+                // eslint-disable-next-line camelcase
+                project_coaching_screening: {
+                    success: true,
+                    createdAt: {
+                        lt: eightWeeksAgoDate
+                    }
+                }}],
             // eslint-disable-next-line camelcase
             certificate_of_conduct: null
         }
