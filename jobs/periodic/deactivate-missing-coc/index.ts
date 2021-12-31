@@ -1,6 +1,5 @@
 import {getLogger} from "log4js";
 import { prisma } from "../../../common/prisma";
-import validator from "validator";
 import {deactivateStudent} from "../../../common/student/activation";
 
 const logger = getLogger();
@@ -18,7 +17,7 @@ export async function deactivateMissingCoc() {
     const defaultingStudents = await prisma.student.findMany({
         where: {
             createdAt: {
-                gt: new Date("2021-11-01")
+                gt: new Date("2022-01-01")
             },
             active: true,
             screening: {
@@ -27,7 +26,6 @@ export async function deactivateMissingCoc() {
                     lt: eightWeeksAgoDate
                 }
             },
-            sentCoCReminderCount: 5,
             // eslint-disable-next-line camelcase
             certificate_of_conduct: null
         }

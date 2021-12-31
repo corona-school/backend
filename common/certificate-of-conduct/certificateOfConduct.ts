@@ -17,7 +17,7 @@ export async function create(dateOfInspection, dateOfIssue, criminalRecords, ins
         }
     });
     logger.info(`Certificate of Conduct (${result.id}) created\n`);
-    await Notification.actionTaken(student, 'student_coc_updated', {certificateURL: "dummy_certificate_url"});
+    await Notification.actionTaken(student, 'student_coc_updated', {});
     if (criminalRecords) {
         await deactivateStudent(student);
     }
