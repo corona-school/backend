@@ -1,4 +1,5 @@
 export { Bbb_meeting } from "./Bbb_meeting";
+export { Certificate_of_conduct } from "./Certificate_of_conduct";
 export { Concrete_notification } from "./Concrete_notification";
 export { Course } from "./Course";
 export { Course_attendance_log } from "./Course_attendance_log";

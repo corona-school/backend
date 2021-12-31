@@ -1,10 +1,10 @@
 import { GraphQLRequestContext } from "apollo-server-plugin-base";
+import { isDev } from "../common/util/environment";
 import { getLogger } from "log4js";
 import { toPublicToken } from "./authentication";
 import { Role } from "./authorizations";
 import { GraphQLContext } from "./context";
 const logger = getLogger("GraphQL Processing");
-const isDev = process.env.NODE_ENV === "dev";
 
 export const GraphQLLogger: any = {
     requestDidStart(requestContext: GraphQLRequestContext) {
@@ -33,7 +33,9 @@ export const GraphQLLogger: any = {
                 logger.warn(`[${sessionID}] Errors occurred:`, requestContext.errors);
             },
             willSendResponse(requestContext: GraphQLRequestContext) {
-                logger.debug(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
+                logger.info(`[${sessionID}] Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${requestContext.metrics.responseCacheHit ? "hit" : "missed"}`);
+                logger.info(`[${sessionID}] Finished processing after ${Date.now() - startTime}ms`);
+
                 if (isDev) {
                     logger.debug(`[${sessionID}] Responding with`, requestContext.response.data);
                 }

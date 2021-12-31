@@ -5,7 +5,7 @@ import { Screener } from "../../../models/Screener";
 import { Screening } from "../../../models/Screening";
 import { ScreenerInstructor_screeningArgs } from "./args/ScreenerInstructor_screeningArgs";
 import { ScreenerProject_coaching_screeningArgs } from "./args/ScreenerProject_coaching_screeningArgs";
-import { ScreenerScreeningArgs } from "./args/ScreenerScreeningArgs";
+import { ScreenerScreeningsArgs } from "./args/ScreenerScreeningsArgs";
 import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRelationsCount } from "../../../helpers";
 
 @TypeGraphQL.Resolver(_of => Screener)
@@ -35,11 +35,11 @@ export class ScreenerRelationsResolver {
   @TypeGraphQL.FieldResolver(_type => [Screening], {
     nullable: false
   })
-  async screening(@TypeGraphQL.Root() screener: Screener, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: ScreenerScreeningArgs): Promise<Screening[]> {
+  async screenings(@TypeGraphQL.Root() screener: Screener, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Args() args: ScreenerScreeningsArgs): Promise<Screening[]> {
     return getPrismaFromContext(ctx).screener.findUnique({
       where: {
         id: screener.id,
       },
-    }).screening(args);
+    }).screenings(args);
   }
 }

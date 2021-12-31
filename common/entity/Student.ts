@@ -31,6 +31,7 @@ import { Language } from "../daz/language";
 import * as Notification from "../notification";
 import { RemissionRequest } from "./RemissionRequest";
 import { createRemissionRequest } from "../remission-request";
+import {CertificateOfConduct} from "./CertificateOfConduct";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -202,6 +203,13 @@ export class Student extends Person {
     })
     projectCoachingScreening: Promise<ProjectCoachingScreening>;
 
+
+    @OneToOne((type) => CertificateOfConduct, (cocScreening) => cocScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    certificateOfConduct: Promise<CertificateOfConduct>;
+
     @Column({
         nullable: false,
         default: 0
@@ -331,9 +339,11 @@ export class Student extends Person {
 
         if (currentScreening.success) {
             await createRemissionRequest(this);
-            await Notification.actionTaken(this, "tutor_screening_success", {});
+            await Notification.actionTaken(this, "tutor_screening_success",
+                                           {certificateURL: 'dummy_certificate_url'});
         } else {
-            await Notification.actionTaken(this, "tutor_screening_rejection", {});
+            await Notification.actionTaken(this, "tutor_screening_rejection",
+                                           {certificateURL: 'dummy_certificate_url'});
         }
     }
 
@@ -379,12 +389,15 @@ export class Student extends Person {
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
         if (currentScreening.success) {
+            await Notification.actionTaken(this, "coach_screening_success",
+                                           {certificateURL: 'dummy_certificate_url'});
             if (!this.remissionRequest) {
                 await createRemissionRequest(this);
             }
             await Notification.actionTaken(this, "coach_screening_success", {});
         } else {
-            await Notification.actionTaken(this, "coach_screening_rejection", {});
+            await Notification.actionTaken(this, "coach_screening_rejection",
+                                           {certificateURL: 'dummy_certificate_url'});
         }
     }
 

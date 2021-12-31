@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
-import { ScreenerUpdateOneWithoutScreeningInput } from "../inputs/ScreenerUpdateOneWithoutScreeningInput";
+import { ScreenerUpdateOneWithoutScreeningsInput } from "../inputs/ScreenerUpdateOneWithoutScreeningsInput";
 import { StudentUpdateOneWithoutScreeningInput } from "../inputs/StudentUpdateOneWithoutScreeningInput";
 
 @TypeGraphQL.InputType({
@@ -37,10 +37,10 @@ export class ScreeningUpdateInput {
   })
   updatedAt?: DateTimeFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => ScreenerUpdateOneWithoutScreeningInput, {
+  @TypeGraphQL.Field(_type => ScreenerUpdateOneWithoutScreeningsInput, {
     nullable: true
   })
-  screener?: ScreenerUpdateOneWithoutScreeningInput | undefined;
+  screener?: ScreenerUpdateOneWithoutScreeningsInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentUpdateOneWithoutScreeningInput, {
     nullable: true

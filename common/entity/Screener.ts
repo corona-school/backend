@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany, EntityManager } from "typeorm";
 import { ScreenerDTO } from "../dto/ScreenerDTO";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
+import { CertificateOfConduct } from "./CertificateOfConduct";
 
 @Entity()
 export class Screener extends Person {

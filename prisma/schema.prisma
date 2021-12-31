@@ -1,12 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["interactiveTransactions"]
 }
 
-// generator typegraphql {
-//  provider           = "typegraphql-prisma"
-//  output             = "../graphql/generated"
-// }
+//generator typegraphql {
+//  provider = "typegraphql-prisma"
+//  output   = "../graphql/generated"
+//}
 
 datasource db {
   provider = "postgresql"
@@ -416,7 +416,7 @@ model screener {
   oldNumberID                Int?                         @unique
   instructor_screening       instructor_screening[]
   project_coaching_screening project_coaching_screening[]
-  screening                  screening[]
+  screenings                 screening[]
 }
 
 model screening {
@@ -476,6 +476,7 @@ model student {
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
   course_instructors_student                course_instructors_student[]
@@ -544,6 +545,17 @@ model subcourse_waiting_list_pupil {
   @@id([subcourseId, pupilId])
   @@index([pupilId], name: "IDX_3bd25f377afc44f574f7ac3d09")
   @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
+}
+
+model certificate_of_conduct {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime @default(now()) @db.Timestamp(6)
+  dateOfInspection DateTime @db.Timestamp(6)
+  dateOfIssue      DateTime @db.Timestamp(6)
+  criminalRecords  Boolean
+  studentId        Int?     @unique
+  student          student? @relation(fields: [studentId], references: [id])
 }
 
 enum course_category_enum {
