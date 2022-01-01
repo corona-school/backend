@@ -94,6 +94,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         // Express setup
         app.use(bodyParser.json());
         app.use(favicon('./assets/favicon.ico'));
+        app.use("/public", express.static('./assets/public'));
 
         addCorsMiddleware();
         addSecurityMiddleware();

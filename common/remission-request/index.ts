@@ -91,6 +91,7 @@ export async function createRemissionRequestVerificationPage(remissionRequestUUI
     const remissionRequest = await prisma.remission_request.findUnique({ where: { uuid: remissionRequestUUID }, include: { student: true }});
 
     if (remissionRequest === null) {
+        logger.info(`Could not find remission request with UUID ${remissionRequestUUID}`);
         return undefined;
     }
 
