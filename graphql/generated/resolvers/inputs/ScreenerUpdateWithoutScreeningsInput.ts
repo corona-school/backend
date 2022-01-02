@@ -15,7 +15,7 @@ import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOpe
 @TypeGraphQL.InputType({
   isAbstract: true
 })
-export class ScreenerUpdateWithoutScreeningInput {
+export class ScreenerUpdateWithoutScreeningsInput {
   @TypeGraphQL.Field(_type => DateTimeFieldUpdateOperationsInput, {
     nullable: true
   })

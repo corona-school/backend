@@ -1,4 +1,3 @@
-
 import { readFileSync, existsSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
@@ -15,7 +14,7 @@ import { Student } from '../entity/Student';
 import { pupil as PrismaPupil, student as PrismaStudent } from "@prisma/client";
 import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
-import { ParticipationCertificate } from '..//entity/ParticipationCertificate';
+import { ParticipationCertificate } from "../entity/ParticipationCertificate";
 import assert from 'assert';
 
 // TODO: Replace TypeORM operations with Prisma
@@ -107,25 +106,19 @@ export interface ICertificateCreationParams {
 }
 
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(_requestor: Student | PrismaStudent, pupilId: number, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
+export async function createCertificate(_requestor: Student | PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
     const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
-    const pupil = await entityManager.findOne(Pupil, { id: pupilId });
 
-    if (!pupil) {
-        throw new CertificateError(`Pupil not found`);
-    }
-
-    const match = await entityManager.findOne(Match, { student: requestor, pupil: pupil });
-
+    const match = await entityManager.findOne(Match, { uuid: matchId, student: requestor });
     if (!match) {
-        throw new CertificateError(`No Match found with pupil '${pupilId}'`);
+        throw new CertificateError(`No Match found with id '${matchId}'`);
     }
 
     let pc = new ParticipationCertificate();
-    pc.pupil = pupil;
+    pc.pupil = match.pupil;
     pc.student = requestor;
     pc.subjects = params.subjects;
     pc.categories = params.activities;

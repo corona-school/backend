@@ -6,7 +6,7 @@ import { ScreeningWhereUniqueInput } from "../../../inputs/ScreeningWhereUniqueI
 import { ScreeningScalarFieldEnum } from "../../../../enums/ScreeningScalarFieldEnum";
 
 @TypeGraphQL.ArgsType()
-export class ScreenerScreeningArgs {
+export class ScreenerScreeningsArgs {
   @TypeGraphQL.Field(_type => ScreeningWhereInput, {
     nullable: true
   })

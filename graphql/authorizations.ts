@@ -172,7 +172,8 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
     Notification: allAdmin,
-    Pupil_tutoring_interest_confirmation_request: allAdmin
+    Pupil_tutoring_interest_confirmation_request: allAdmin,
+    Certificate_of_conduct: allAdmin
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -251,6 +252,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             moduleHours: adminOrOwner,
             createdAt: adminOrOwner,
             openProjectMatchRequestCount: adminOrOwner,
+            certificate_of_conduct: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -293,6 +295,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             jufo_verification_transmission: nobody,
             expert_data: nobody,
             instructor_screening: nobody
+
         })
 
     },

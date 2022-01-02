@@ -100,5 +100,5 @@ export class ScreenerUpdateInput {
   @TypeGraphQL.Field(_type => ScreeningUpdateManyWithoutScreenerInput, {
     nullable: true
   })
-  screening?: ScreeningUpdateManyWithoutScreenerInput | undefined;
+  screenings?: ScreeningUpdateManyWithoutScreenerInput | undefined;
 }

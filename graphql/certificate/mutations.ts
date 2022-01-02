@@ -1,5 +1,4 @@
-import { prisma } from "../../common/prisma";
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field } from "type-graphql";
+import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { Role } from "../authorizations";
 import { createCertificate, signCertificate, ICertificateCreationParams, CertificateState, getCertificatePDF, Language, LANGUAGES } from "../../common/certificate";
@@ -52,9 +51,9 @@ export class MutateParticipationCertificateResolver {
 
     @Mutation(returns => Boolean)
     @Authorized(Role.STUDENT)
-    async participationCertificateCreate(@Ctx() context: GraphQLContext, @Arg("pupilId") pupilId: number, @Arg("certificateData") certificateData: CertificateCreationInput): Promise<boolean> {
+    async participationCertificateCreate(@Ctx() context: GraphQLContext, @Arg("matchId") matchId: string, @Arg("certificateData") certificateData: CertificateCreationInput): Promise<boolean> {
         const requestor = await getSessionStudent(context);
-        await createCertificate(requestor, pupilId, certificateData);
+        await createCertificate(requestor, matchId, certificateData);
         return true;
     }
 

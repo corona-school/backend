@@ -94,6 +94,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         // Express setup
         app.use(bodyParser.json());
         app.use(favicon('./assets/favicon.ico'));
+        app.use("/public", express.static('./assets/public'));
 
         addCorsMiddleware();
         addSecurityMiddleware();
@@ -188,11 +189,15 @@ createConnection().then(setupPDFGenerationEnvironment)
         function configureCertificateAPI() {
             const certificateRouter = express.Router();
             certificateRouter.post("/create", authCheckFactory(), certificateController.createCertificateEndpoint);
+            certificateRouter.get("/remissionRequest", authCheckFactory(), certificateController.getRemissionRequestEndpoint);
             certificateRouter.get("/:certificateId", authCheckFactory(), certificateController.getCertificateEndpoint);
             certificateRouter.get("/:certificateId/confirmation", /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
             certificateRouter.post("/:certificateId/sign", authCheckFactory(), certificateController.signCertificateEndpoint);
 
             app.use("/api/certificate", certificateRouter);
+
+            // TODO Find better solution
+            app.use("/api/certificate/:certificateId/public", express.static("./assets/public"));
             app.get("/api/certificates", authCheckFactory(), certificateController.getCertificatesEndpoint);
         }
 

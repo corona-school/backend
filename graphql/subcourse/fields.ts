@@ -1,5 +1,6 @@
-import { Course, Lecture, Subcourse, Pupil, SubcourseWhereInput, SubcourseOrderByInput } from "../generated";
+import { Course, Lecture, Subcourse, Pupil } from "../generated";
 import { Arg, Authorized, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { LimitedQuery, LimitEstimated } from "../complexity";
@@ -20,7 +21,7 @@ export class ExtendedFieldsSubcourseResolver {
         @Arg("onlyJoinable", { nullable: true }) onlyJoinable?: boolean
     ) {
 
-        const filters: SubcourseWhereInput[] = [{
+        const filters: Prisma.subcourseWhereInput[] = [{
             published: { equals: true },
             cancelled: { equals: false },
             course: {

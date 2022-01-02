@@ -1,4 +1,5 @@
 export { Bbb_meetingScalarFieldEnum } from "./Bbb_meetingScalarFieldEnum";
+export { Certificate_of_conductScalarFieldEnum } from "./Certificate_of_conductScalarFieldEnum";
 export { Concrete_notificationScalarFieldEnum } from "./Concrete_notificationScalarFieldEnum";
 export { CourseScalarFieldEnum } from "./CourseScalarFieldEnum";
 export { Course_attendance_logScalarFieldEnum } from "./Course_attendance_logScalarFieldEnum";

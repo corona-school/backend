@@ -1,6 +1,11 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap } from "./generated";
+import {
+    FindManyCourseResolver,
+    applyResolversEnhanceMap,
+    applyModelsEnhanceMap,
+    FindManyStudentResolver
+} from "./generated";
 import { buildSchemaSync } from "type-graphql";
-import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver, FindManySchoolResolver, FindManyStudentResolver } from "./generated/resolvers/crud";
+import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver, FindManySchoolResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
@@ -27,6 +32,8 @@ import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ExtendedFieldsSchoolResolver } from "./school/fields";
 import { MutateStudentResolver } from "./student/mutation";
+import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
+import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -59,6 +66,10 @@ const schema = buildSchemaSync({
         ExtendFieldsStudentResolver,
         MutateStudentResolver,
 
+        /*Student*/
+        FindManyStudentResolver,
+        ExtendFieldsStudentResolver,
+
         /* Match */
         FindManyMatchResolver,
         ExtendedFieldsMatchResolver,
@@ -82,7 +93,11 @@ const schema = buildSchemaSync({
 
         /* Schools */
         FindManySchoolResolver,
-        ExtendedFieldsSchoolResolver
+        ExtendedFieldsSchoolResolver,
+
+        /* Certificate of Conduct */
+        MutateCertificateOfConductResolver,
+        ExtendedFieldsCertificateOfConductResolver
     ],
     authChecker
 });
