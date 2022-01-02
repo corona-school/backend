@@ -89,5 +89,5 @@ export class Screener {
 
   project_coaching_screening?: Project_coaching_screening[];
 
-  screening?: Screening[];
+  screenings?: Screening[];
 }

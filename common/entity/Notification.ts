@@ -41,7 +41,7 @@ export class Notification {
     @Column("text", { array: true })
     cancelledOnAction: string[];
     @Column({ type: "int", nullable: true })
-    delay?: number;
+    delay?: number; /* in hours */
     @Column({ type: "int", nullable: true })
-    interval?: number;
+    interval?: number; /* in hours */
 }

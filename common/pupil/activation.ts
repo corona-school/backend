@@ -1,4 +1,4 @@
-import { pupil as Pupil } from "@prisma/client";
+import { pupil as Pupil, student as Student} from "@prisma/client";
 import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";

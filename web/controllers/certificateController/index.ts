@@ -3,11 +3,16 @@ import { Request, Response } from 'express';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { assert } from 'console';
+import { createRemissionRequestPDF, createRemissionRequestVerificationPage } from "../../../common/remission-request";
 import { CERTIFICATE_MEDIUMS, CertificateState, ICertificateCreationParams, createCertificate, DefaultLanguage, LANGUAGES, Language, signCertificate, VALID_BASE64, getCertificatePDF, getConfirmationPage, getCertificatesFor, CertificateError } from '../../../common/certificate';
 
 const logger = getLogger();
 
 
+// certificate types
+const CERTIFICATETYPES = ["participation", "remission"] as const;
+type CertificateType = (typeof CERTIFICATETYPES)[number];
+const DefaultCertificateType = "participation";
 
 /**
  * @api {POST} /certificate/create getCertificate
@@ -202,23 +207,40 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
 export async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
     try {
         const { certificateId } = req.params;
-        let { lang } = req.query;
+        let { lang, ctype } = req.query;
 
         if (lang === undefined) {
             lang = DefaultLanguage;
+        }
+
+        if (ctype === undefined) {
+            ctype = DefaultCertificateType;
         }
 
         if (!LANGUAGES.includes(lang as Language)) {
             return res.status(400).send("Language not known");
         }
 
+        if (!CERTIFICATETYPES.includes(ctype as CertificateType)) {
+            return res.status(400).send("Certificate type not known");
+        }
+
         if (typeof certificateId !== "string") {
             return res.status(400).send("Missing parameter certificateId");
         }
+        if (ctype === "participation") {
+            const confirmation = await getConfirmationPage(certificateId, lang as Language);
 
-        const confirmation = await getConfirmationPage(certificateId, lang as Language);
+            return res.send(confirmation);
+        } else {
+            const remissionRequestVerificationPage = await createRemissionRequestVerificationPage(certificateId.toUpperCase());
 
-        return res.send(confirmation);
+            if (!remissionRequestVerificationPage) {
+                return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+            }
+
+            return res.send(remissionRequestVerificationPage);
+        }
     } catch (error) {
         if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
@@ -322,5 +344,45 @@ export async function getCertificatesEndpoint(req: Request, res: Response) {
     } catch (error) {
         logger.error("Retrieving certificates for user failed with", error);
         return res.status(500).send("Internal Server error");
+    }
+}
+
+/**
+ * @api {GET} /certificate/remissionRequest getRemissionRequest
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * View a remission request
+ *
+ * Returns the remission request as PDF
+ *
+ *
+ * @apiName getRemissionRequest
+ * @apiGroup Certificate
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X GET -H "Token: <AUTHTOKEN>" https://api.corona-school.de/api/remissionRequest
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusInternalServerError
+ */
+export async function getRemissionRequestEndpoint(req: Request, res: Response) {
+    const student = res.locals.user as Student;
+
+    try {
+        const pdf = await createRemissionRequestPDF(student);
+
+        if (pdf === undefined) {
+            return res.status(404).send("Could not find a remission request for this user.");
+        }
+
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdf.length
+        });
+
+        return res.end(pdf);
+    } catch (error) {
+        logger.error("Generating remission request failed with: ", error);
+        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
     }
 }

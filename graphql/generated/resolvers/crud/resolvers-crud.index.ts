@@ -1,4 +1,5 @@
 export { Bbb_meetingCrudResolver } from "./Bbb_meeting/Bbb_meetingCrudResolver";
+export { Certificate_of_conductCrudResolver } from "./Certificate_of_conduct/Certificate_of_conductCrudResolver";
 export { Concrete_notificationCrudResolver } from "./Concrete_notification/Concrete_notificationCrudResolver";
 export { CourseCrudResolver } from "./Course/CourseCrudResolver";
 export { Course_attendance_logCrudResolver } from "./Course_attendance_log/Course_attendance_logCrudResolver";
