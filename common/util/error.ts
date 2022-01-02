@@ -1,8 +1,8 @@
 /* Unlike server errors, client errors are the ones caused by faulty client-side logic */
 export class ClientError extends Error {
-    /* The internalMessage stays in server logs */
-    constructor(public readonly type: string, public readonly internalMessage: string) {
-        super(`ClientError(${type}): ${internalMessage}`);
+    /* ATTENTION: The message is sent to the client and may not contain secrets! */
+    constructor(public readonly type: string, public readonly message: string) {
+        super(`ClientError(${type}): ${message}`);
     }
 }
 
