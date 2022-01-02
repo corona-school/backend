@@ -6,6 +6,7 @@ import { getPupilGradeAsString } from "../pupil";
 import * as Notification from "../notification";
 import { getJitsiTutoringLink, getOverlappingSubjects } from "./util";
 import { getLogger } from "log4js";
+import { PrerequisiteError } from "common/util/error";
 
 const logger = getLogger("Match");
 
@@ -13,11 +14,11 @@ export async function createMatch(pupil: Pupil, student: Student) {
     const uuid = generateUUID();
 
     if (pupil.openMatchRequestCount < 1) {
-        throw new Error(`Cannot create Match for Pupil without open match requests`);
+        throw new PrerequisiteError(`Cannot create Match for Pupil without open match requests`);
     }
 
     if (student.openMatchRequestCount < 1) {
-        throw new Error(`Cannot create Match for Student without open match request count`);
+        throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
     }
 
     const match = await prisma.match.create({

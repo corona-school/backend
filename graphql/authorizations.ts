@@ -6,6 +6,7 @@ import { GraphQLContext } from "./context";
 import assert from "assert";
 import { getLogger } from "log4js";
 import { isOwnedBy, ResolverModel, ResolverModelNames } from "./ownership";
+import { ForbiddenError } from "./error";
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -66,7 +67,7 @@ export async function hasAccess<Name extends ResolverModelNames>(context: GraphQ
     assert(context.deferredRequiredRoles, "hasAccess may only be used in @AuthorizedDeferred methods");
     const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
     if (!success) {
-        throw new Error("Not Authorized");
+        throw new ForbiddenError("Not Authorized");
     }
 }
 

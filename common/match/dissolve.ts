@@ -6,12 +6,13 @@ import { isStudent, isPupil } from "../user";
 import { logTransaction } from "../transactionlog/log";
 // eslint-disable-next-line camelcase
 import {Project_match} from "../../graphql/generated";
+import { RedundantError } from "../util/error";
 
 const logger = getLogger("Match");
 
 export async function dissolveMatch(match: Match, dissolveReason: number, dissolver: Pupil | Student | null) {
     if (match.dissolved) {
-        throw new Error("The match was already dissolved");
+        throw new RedundantError("The match was already dissolved");
     }
 
     await prisma.match.update({
@@ -87,7 +88,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
 
 export async function dissolveProjectMatch(match: Project_match, dissolveReason: number, dissolver: Pupil | Student | null) {
     if (match.dissolved) {
-        throw new Error("The match was already dissolved");
+        throw new RedundantError("The match was already dissolved");
     }
 
     await prisma.project_match.update({

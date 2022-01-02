@@ -31,6 +31,8 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-co
 import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
 import {ExtendedFieldsCertificateOfConductResolver} from "./certificate_of_conduct/fields";
 import { ExtendedFieldsStudentResolver } from "./student/field";
+import { isDev } from "../common/util/environment";
+import { formatError } from "./error";
 
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
@@ -102,5 +104,7 @@ export const apolloServer = new ApolloServer({
     context: injectContext,
     plugins,
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
-    introspection: true
+    introspection: true,
+    debug: isDev,
+    formatError
 });
