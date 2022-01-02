@@ -9,11 +9,7 @@ Before the setup make sure that you have the following things ready:
 - GitHub Repository cloned
 
 ## Setup
-
-<aside>
 ☝🏼 This setup is **only** for local development!
-
-</aside>
 
 1. Create a `.env` file in the root directory, which includes at least the database URL and the node environment.
     
