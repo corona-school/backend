@@ -50,8 +50,8 @@ export async function getUserTypeORM(userID: string): Promise<TypeORMPerson | ne
     const user = (
         (await manager.findOne(Pupil, { where: { wix_id: userID }})) ??
         (await manager.findOne(Student, { where: { wix_id: userID }})) ??
-        (await manager.findOne(Mentor, { where: { wix_id: userID }})) ??
-        (await manager.findOne(Screener, { where: { userID }}))
+        (await manager.findOne(Mentor, { where: { wix_id: userID }})) /* ??
+        (await manager.findOne(Screener, { where: { userID }})) */
     );
 
     if (user) {
@@ -65,8 +65,8 @@ export async function getUser(userID: string) {
     const user = (
         (await prisma.pupil.findUnique({ where: { wix_id: userID }, rejectOnNotFound: false })) ??
         (await prisma.student.findUnique({ where: { wix_id: userID }, rejectOnNotFound: false })) ??
-        (await prisma.mentor.findUnique({ where: { wix_id: userID }, rejectOnNotFound: false })) ??
-        (await prisma.screener.findUnique({ where: { userID }, rejectOnNotFound: false }))
+        (await prisma.mentor.findUnique({ where: { wix_id: userID }, rejectOnNotFound: false })) /* ??
+        (await prisma.screener.findUnique({ where: { userID }, rejectOnNotFound: false })) */
     );
 
     if (user) {
