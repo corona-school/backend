@@ -11,6 +11,7 @@ import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
 import { Me } from "./me/fields";
+import { logInContext } from "./logging";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -54,19 +55,50 @@ export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     return context.user;
 }
 
-export async function getSessionStudent(context: GraphQLContext): Promise<Student | never> {
+/* In a lot of scenarios, Admins and Screeners can perform actions on behalf of the user, that's what we call 'elevated' */
+export function isElevated(context: GraphQLContext) {
+    const { roles } = getSessionUser(context);
+    return roles.includes(Role.ADMIN) || roles.includes(Role.SCREENER);
+}
+
+export function assertElevated(context: GraphQLContext) {
+    if (!isElevated(context)) {
+        throw new Error(`Only Admins or Screeners can override the session pupil`);
+    }
+}
+
+export const isSessionStudent = (context: GraphQLContext) => getSessionUser(context).studentId !== undefined;
+export const isSessionPupil = (context: GraphQLContext) => getSessionUser(context).pupilId !== undefined;
+export const isSessionScreener = (context: GraphQLContext) => getSessionUser(context).screenerId !== undefined;
+
+export async function getSessionStudent(context: GraphQLContext, studentIdOverride?: number): Promise<Student | never> {
+    if (studentIdOverride !== undefined) {
+        assertElevated(context);
+        return await getStudent(studentIdOverride);
+    }
+
     const { studentId } = getSessionUser(context);
+
     if (!studentId) {
-        throw new Error("Expected user to be student");
+        throw new Error("Expected user to be student or if elevated, a studentId must be passed in");
     }
     return await getStudent(studentId);
 }
 
-export async function getSessionPupil(context: GraphQLContext): Promise<Pupil | never> {
+
+
+export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?: number): Promise<Pupil | never> {
     const { pupilId } = getSessionUser(context);
-    if (!pupilId) {
-        throw new Error("Expected user to be pupil");
+
+    if (pupilIdOverride !== undefined) {
+        assertElevated(context);
+        return await getPupil(pupilIdOverride);
     }
+
+    if (!pupilId) {
+        throw new Error("Expected user to be pupil or if elevated, a pupilId must be passed in");
+    }
+
     return await getPupil(pupilId);
 }
 
@@ -88,6 +120,123 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
+export async function logInAsPupil(pupil: Pupil, context: GraphQLContext) {
+    ensureSession(context);
+
+    context.user = {
+        firstname: pupil.firstname,
+        lastname: pupil.lastname,
+        email: pupil.email,
+        pupilId: pupil.id,
+        roles: []
+    };
+
+    userSessions.set(context.sessionToken, context.user);
+    logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in and has USER and PUPIL role`);
+
+    await evaluatePupilRoles(pupil, context);
+}
+
+export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
+    const logger = logInContext(`GraphQL Authentication`, context);
+
+    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
+
+    // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
+    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
+    if (!pupil.verifiedAt && pupil.verification) {
+        logger.info(`Pupil(${pupil.id}) was not verified yet, they should re authenticate`);
+        return;
+    }
+
+    if (!pupil.active) {
+        logger.info(`Pupil(${pupil.id}) had deactivated their account, no roles granted`);
+        return;
+    }
+
+    if (pupil.isPupil) {
+        context.user.roles.push(Role.TUTEE);
+        logger.info(`Pupil(${pupil.id}) has TUTEE role`);
+    }
+
+    if (pupil.isParticipant) {
+        context.user.roles.push(Role.PARTICIPANT);
+        logger.info(`Pupil(${pupil.id}) has PARTICIPANT role`);
+    }
+
+    if (pupil.isProjectCoachee) {
+        context.user.roles.push(Role.PROJECT_COACHEE);
+        logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
+    }
+
+    if (pupil.teacherEmailAddress) {
+        context.user.roles.push(Role.STATE_PUPIL);
+        logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
+    }
+}
+
+export async function logInAsStudent(student: Student, context: GraphQLContext) {
+    ensureSession(context);
+    const logger = logInContext(`GraphQL Authentication`, context);
+
+    context.user = {
+        firstname: student.firstname,
+        lastname: student.lastname,
+        email: student.email,
+        studentId: student.id,
+        roles: []
+    };
+
+    logger.info(`Student(${student.id}) successfully logged in`);
+
+    userSessions.set(context.sessionToken, context.user);
+    await evaluateStudentRoles(student, context);
+}
+
+export async function evaluateStudentRoles(student: Student, context: GraphQLContext) {
+    const logger = logInContext(`GraphQL Authentication`, context);
+
+    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.STUDENT];
+
+    // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
+    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
+    if (!student.verifiedAt && student.verification) {
+        logger.info(`Student(${student.id}) was not verified yet, they should re authenticate`);
+        return;
+    }
+
+    if (!student.active) {
+        logger.info(`Student(${student.id}) had deactivated their account, no roles granted`);
+        return;
+    }
+
+    if (student.isStudent || student.isProjectCoach) {
+        // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
+        const wasScreened = await prisma.screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        if (wasScreened) {
+            logger.info(`Student(${student.id}) was screened and has TUTOR role`);
+            context.user.roles.push(Role.TUTOR);
+        }
+    }
+
+    if (student.isProjectCoach) {
+        const wasCoachScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        if (wasCoachScreened) {
+            logger.info(`Student(${student.id}) was screened and has PROJECT_COACH role`);
+            context.user.roles.push(Role.PROJECT_COACH);
+        }
+    }
+
+    if (student.isInstructor) {
+        // the user wants to be a course instructor, let's check if they were screened and are authorized to do so
+        const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        if (wasInstructorScreened) {
+            logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
+            context.user.roles.push(Role.INSTRUCTOR);
+        }
+    }
+}
+
 
 @Resolver(of => Me)
 export class AuthenticationResolver {
@@ -95,8 +244,7 @@ export class AuthenticationResolver {
     @Mutation(returns => Boolean)
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
         ensureSession(context);
-
-        let user: GraphQLUser;
+        const logger = logInContext(`GraphQL Authentication`, context);
 
         const pupil = await prisma.pupil.findFirst({
             where: {
@@ -107,15 +255,24 @@ export class AuthenticationResolver {
         });
 
         if (pupil) {
-            user = {
-                firstname: pupil.firstname,
-                lastname: pupil.lastname,
-                email: pupil.email,
-                pupilId: pupil.id,
-                roles: [Role.USER, Role.PUPIL]
-            };
+            if (!pupil.verifiedAt) {
+                /* Previously there was an extra database field for verifying the E-Mail.
+                   I do not see the purpose of that, as presenting a valid authToken is also proof that the account exists.
+                   This can co-exist with the current "verification" implementation.
+                   TODO: Drop the verification column once we moved to GraphQL on the frontend */
+                logger.info(`Pupil(${pupil.id}) did not verify their e-mail yet, but presented legacy token (thus proved their ownership)`);
+                await prisma.pupil.update({
+                    data: {
+                        verification: null,
+                        verifiedAt: new Date()
+                    },
+                    where: { id: pupil.id }
+                });
+            }
 
-            logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in`);
+            await logInAsPupil(pupil, context);
+
+            return true;
         }
 
         const student = await prisma.student.findFirst({
@@ -126,34 +283,35 @@ export class AuthenticationResolver {
         });
 
         if (student) {
-            assert(!user, "AuthTokens may not collide");
+            if (!student.verifiedAt) {
+                /* Previously there was an extra database field for verifying the E-Mail.
+                   I do not see the purpose of that, as presenting a valid authToken is also proof that the account exists.
+                   This can co-exist with the current "verification" implementation.
+                   TODO: Drop the verification column once we moved to GraphQL on the frontend */
+                logger.info(`Student(${student.id}) did not verify their e-mail yet, but presented legacy token (thus proved their ownership)`);
+                await prisma.student.update({
+                    data: {
+                        verification: null,
+                        verifiedAt: new Date()
+                    },
+                    where: { id: student.id }
+                });
+            }
 
-            user = {
-                firstname: student.firstname,
-                lastname: student.lastname,
-                email: student.email,
-                studentId: student.id,
-                roles: [Role.USER, Role.STUDENT]
-            };
+            await logInAsStudent(student, context);
 
-            logger.info(`[${context.sessionToken}] Student(${student.id}) successfully logged in`);
+            return true;
         }
 
-        if (!user) {
-            logger.warn(`[${context.sessionToken}] Invalid authToken`);
-            throw new Error("Invalid authToken");
-        }
-
-        context.user = user;
-        userSessions.set(context.sessionToken, user);
-
-        return true;
+        logger.warn(`Invalid authToken`);
+        throw new Error("Invalid authToken");
     }
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
+        const logger = logInContext(`GraphQL Authentication`, context);
 
         const screener = await prisma.screener.findFirst({
             where: {
@@ -165,7 +323,7 @@ export class AuthenticationResolver {
         const passwordValid = screener && await verifyPassword(password, screener.password);
 
         if (!screener || !passwordValid) {
-            logger.warn(`[${context.sessionToken}] Invalid email (${email}) or password`);
+            logger.warn(`Invalid email (${email}) or password`);
             throw new Error("Invalid email or password");
         }
 
@@ -173,21 +331,23 @@ export class AuthenticationResolver {
             firstname: screener.firstname,
             lastname: screener.lastname,
             email: screener.email,
-            roles: [Role.USER, Role.SCREENER],
+            roles: [Role.USER, Role.SCREENER, Role.UNAUTHENTICATED],
             screenerId: screener.id
         };
 
         context.user = user;
         userSessions.set(context.sessionToken, user);
-        logger.info(`[${context.sessionToken}] Screener(${screener.id}) successfully logged in`);
+        logger.info(`Screener(${screener.id}) successfully logged in`);
 
         return true;
     }
 
     @Authorized(Role.PUPIL, Role.STUDENT, Role.SCREENER)
     @Mutation(returns => Boolean)
-    async logout(@Ctx() context: GraphQLContext) {
+    logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
+        const logger = logInContext(`GraphQL Authentication`, context);
+
 
         if (!context.user) {
             throw new Error("User already logged out");
@@ -197,6 +357,7 @@ export class AuthenticationResolver {
         assert(deleted, "User session is successfully deleted");
 
         context.user = undefined;
+        logger.info(`Successfully logged out`);
 
         return true;
     }

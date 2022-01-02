@@ -1,6 +1,9 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { Field, InputType, Int, ObjectType } from "type-graphql";
 
-@ObjectType()
+// c.f. https://github.com/MichalLytek/type-graphql/issues/76
+
+@InputType("RangeInput")
+@ObjectType("Range")
 class Range { // GraphQL Type for common/entity/Student -> Subject.range
     @Field(type => Int)
     min: number;
@@ -8,11 +11,12 @@ class Range { // GraphQL Type for common/entity/Student -> Subject.range
     max: number;
 }
 
-@ObjectType()
+@InputType("SubjectInput")
+@ObjectType("Subject")
 export class Subject { // GraphQL Type for common/entity/Student -> Subject
     @Field()
     name: string;
 
-    @Field(type => Range)
+    @Field(type => Range, { nullable: true })
     grade: Range;
 }

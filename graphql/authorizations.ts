@@ -10,13 +10,13 @@ import { isOwnedBy, ResolverModel, ResolverModelNames } from "./ownership";
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
 export enum Role {
-    /* Access via Retool */
+    /* Elevated Access via Retool */
     ADMIN = "ADMIN",
-    /* Shortcut role for Screeners, Pupils and Students: */
+    /* Shortcut role for everyone with an account */
     USER = "USER",
-    /* Access via Screener Admin Interface */
+    /* Elevated Access via Screener Admin Interface */
     SCREENER = "SCREENER",
-    /* Access via User Interface */
+    /* Access via User Interface, not yet E-Mail verified */
     PUPIL = "PUPIL",
     STUDENT = "STUDENT",
     /* Accessible to everyone */
@@ -24,7 +24,23 @@ export enum Role {
     /* User owns the entity as defined in graphql/ownership */
     OWNER = "OWNER",
     /* No one should have access */
-    NOBODY = "NOBODY"
+    NOBODY = "NOBODY",
+
+    /* User is a student, requested to be a tutor and was successfully screened (E-Mail also verified) */
+    TUTOR = "TUTOR",
+    /* User is a student, requested to be a course instructor and was successfully "instructor screened" (E-Mail also verified) */
+    INSTRUCTOR = "INSTRUCTOR",
+    /* User is a student, requested to be a project coach and was successfully screened (E-Mail also verified) */
+    PROJECT_COACH = "PROJECT_COACH",
+
+    /* User is a pupil and requested to receive one-on-one tutoring */
+    TUTEE = "TUTEE",
+    /* User is a pupil and requested to participate in courses */
+    PARTICIPANT = "PARTICIPANT",
+    /* User is a pupil and requested to participate in project coaching */
+    PROJECT_COACHEE = "PROJECT_COACHEE",
+    /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
+    STATE_PUPIL = "STATE_PUPIL"
 }
 
 const authLogger = getLogger("GraphQL Authentication");
@@ -102,6 +118,7 @@ const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
+const everyone = [Authorized(Role.UNAUTHENTICATED)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = "never", PublicFields extends keyof Entity = never> (otherFields: { [key in Exclude<keyof Entity, PublicFields>]: PropertyDecorator[] }) => otherFields;
@@ -139,7 +156,15 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Participation_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
-    School: allAdmin,
+    School: {
+        createSchool: adminOrOwner,
+        deleteSchool: adminOrOwner,
+        updateSchool: adminOrOwner,
+        // Don't release bulk actions without adding authorizations here!
+
+        // School data is public knowledge and can be queried by everyone
+        schools: everyone
+    },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Subcourse_waiting_list_pupil: allAdmin,
@@ -163,13 +188,12 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     // ATTENTION: Pupil entities can be seen by other users, e.g. through the Match -> pupil edge
     Pupil: {
         fields: withPublicFields<Pupil, "id" | "firstname" | "lastname" | "active" | "grade" | "isJufoParticipant" | "isParticipant" | "isProjectCoachee" | "isPupil" | "languages" | "projectFields">({
-            // authentication data shall only be accessible to the user itself
-            authToken: onlyOwner,
-            authTokenSent: onlyOwner,
-            authTokenUsed: onlyOwner,
+            authToken: nobody,
+            authTokenSent: adminOrOwner,
+            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
-            verification: adminOrOwner,
+            verification: nobody,
             verifiedAt: adminOrOwner,
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
@@ -212,14 +236,13 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     // ATTENTION: Student entities can be seen by other users, e.g. through the Match -> student edge
     Student: {
         fields: withPublicFields<Student, "id" | "firstname" | "lastname" | "active" | "isStudent" | "isInstructor" | "isProjectCoach" | "isUniversityStudent" | "languages">({
-            // authentication data shall only be accessible to the user itself
-            authToken: onlyOwner,
-            authTokenSent: onlyOwner,
-            authTokenUsed: onlyOwner,
+            authToken: nobody,
+            authTokenSent: adminOrOwner,
+            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
             phone: adminOrOwner,
-            verification: adminOrOwner,
+            verification: nobody,
             verifiedAt: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,
