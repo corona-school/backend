@@ -4,6 +4,7 @@ import { getLogger } from "log4js";
 import { toPublicToken } from "./authentication";
 import { Role } from "./authorizations";
 import { GraphQLContext } from "./context";
+import { isUnexpectedError } from "./error";
 
 export const GraphQLLogger: any = {
     requestDidStart(requestContext: GraphQLRequestContext) {
@@ -21,7 +22,16 @@ export const GraphQLLogger: any = {
 
         const handler: any = { // Actually GraphQLRequestListener, but we're on v2 and not on v3
             didEncounterErrors(requestContext: GraphQLRequestContext) {
-                logger.warn(`Errors occurred:`, requestContext.errors);
+                const unexpected = requestContext.errors.some(isUnexpectedError);
+                if (unexpected) {
+                    logger.info(
+                        `Errors occurred:\n`,
+                        requestContext.errors.map(it => `  - ${it.name} (${it.message})\n`)
+                    );
+                } else {
+                    const errorLogger = logInContext(`GraphQL Error`, requestContext.context as GraphQLContext);
+                    errorLogger.error(`Errors occured:`, ...requestContext.errors);
+                }
             },
             willSendResponse(requestContext: GraphQLRequestContext) {
                 logger.info(`Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${requestContext.metrics.responseCacheHit ? "hit" : "missed"}`);
