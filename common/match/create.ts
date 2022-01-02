@@ -6,7 +6,7 @@ import { getPupilGradeAsString } from "../pupil";
 import * as Notification from "../notification";
 import { getJitsiTutoringLink, getOverlappingSubjects } from "./util";
 import { getLogger } from "log4js";
-import { PrerequisiteError } from "common/util/error";
+import { PrerequisiteError } from "../util/error";
 
 const logger = getLogger("Match");
 
