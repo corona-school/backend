@@ -27,6 +27,7 @@ export interface GraphQLContext {
     sessionToken?: string;
     prisma: PrismaClient;
     deferredRequiredRoles?: Role[];
+    ip: string;
 }
 
 const authLogger = getLogger("GraphQL Authentication");
@@ -40,7 +41,7 @@ export default async function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    let user: GraphQLUser= { roles: [] };
+    let user: GraphQLUser= { roles: [Role.UNAUTHENTICATED] };
     let sessionToken: string | undefined = undefined;
 
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
@@ -49,7 +50,7 @@ export default async function injectContext({ req }) {
             throw new Error("Invalid Admin Password");
         }
 
-        user = { firstname: "Ed", lastname: "Min", email: "test@lern-fair.de", roles: [Role.ADMIN] };
+        user = { firstname: "Ed", lastname: "Min", email: "test@lern-fair.de", roles: [Role.ADMIN, Role.UNAUTHENTICATED] };
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (req.headers["authorization"] && req.headers["authorization"].startsWith("Bearer ")) {
         sessionToken = req.headers["authorization"].slice("Bearer ".length);
@@ -70,9 +71,7 @@ export default async function injectContext({ req }) {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
 
-    // All users own the UNAUTHENTICATED role
-    user.roles.push(Role.UNAUTHENTICATED);
 
-    const context: GraphQLContext = { user, prisma, sessionToken };
+    const context: GraphQLContext = { user, prisma, sessionToken, ip };
     return context;
 }

@@ -1,6 +1,11 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap } from "./generated";
+import {
+    FindManyCourseResolver,
+    applyResolversEnhanceMap,
+    applyModelsEnhanceMap,
+    FindManyStudentResolver
+} from "./generated";
 import { buildSchemaSync } from "type-graphql";
-import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver } from "./generated/resolvers/crud";
+import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver, FindManySchoolResolver } from "./generated/resolvers/crud";
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
 import { MutatePupilResolver } from "./pupil/mutations";
 import injectContext from "./context";
@@ -21,9 +26,14 @@ import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_
 import { MutateParticipationCertificateResolver } from "./certificate/mutations";
 import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
 import { ExtendFieldsStudentResolver } from "./student/fields";
+import { MutateMeResolver } from "./me/mutation";
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+import { ExtendedFieldsSchoolResolver } from "./school/fields";
+import { MutateStudentResolver } from "./student/mutation";
+import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
+import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -35,6 +45,7 @@ const schema = buildSchemaSync({
         /* User Authentication & Information */
         AuthenticationResolver,
         FieldMeResolver,
+        MutateMeResolver,
 
         /* Course */
         FindManyCourseResolver,
@@ -51,6 +62,12 @@ const schema = buildSchemaSync({
         MutatePupilResolver,
 
         /* Student */
+        FindManyStudentResolver,
+        ExtendFieldsStudentResolver,
+        MutateStudentResolver,
+
+        /*Student*/
+        FindManyStudentResolver,
         ExtendFieldsStudentResolver,
 
         /* Match */
@@ -72,7 +89,15 @@ const schema = buildSchemaSync({
 
         /* ParticipationCertificate */
         ExtendedFieldsParticipationCertificateResolver,
-        MutateParticipationCertificateResolver
+        MutateParticipationCertificateResolver,
+
+        /* Schools */
+        FindManySchoolResolver,
+        ExtendedFieldsSchoolResolver,
+
+        /* Certificate of Conduct */
+        MutateCertificateOfConductResolver,
+        ExtendedFieldsCertificateOfConductResolver
     ],
     authChecker
 });

@@ -2,7 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { ScreenerCreateNestedOneWithoutScreeningInput } from "../inputs/ScreenerCreateNestedOneWithoutScreeningInput";
+import { ScreenerCreateNestedOneWithoutScreeningsInput } from "../inputs/ScreenerCreateNestedOneWithoutScreeningsInput";
 
 @TypeGraphQL.InputType({
   isAbstract: true
@@ -33,8 +33,8 @@ export class ScreeningCreateWithoutStudentInput {
   })
   updatedAt?: Date | undefined;
 
-  @TypeGraphQL.Field(_type => ScreenerCreateNestedOneWithoutScreeningInput, {
+  @TypeGraphQL.Field(_type => ScreenerCreateNestedOneWithoutScreeningsInput, {
     nullable: true
   })
-  screener?: ScreenerCreateNestedOneWithoutScreeningInput | undefined;
+  screener?: ScreenerCreateNestedOneWithoutScreeningsInput | undefined;
 }

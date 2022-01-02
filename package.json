@@ -71,6 +71,7 @@
     "node-mailjet": "^3.3.1",
     "parse-domain": "^3.0.2",
     "pg": "^8.3.0",
+    "qrcode": "^1.4.4",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^5.21.5",
     "type-graphql": "^1.1.1",

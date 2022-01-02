@@ -6,8 +6,9 @@ import { getPupil, getSubcourse } from "../util";
 import { joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from "../../common/courses/participants";
 import * as Notification from "../../common/notification";
 import { refreshToken } from "../../common/pupil/token";
-import { createMatchRequest, deleteMatchRequest } from "../../common/match/request";
+import { createPupilMatchRequest, deletePupilMatchRequest } from "../../common/match/request";
 import { GraphQLContext } from "../context";
+import { getSessionPupil, isElevated } from "../authentication";
 
 @Resolver(of => GraphQLModel.Pupil)
 export class MutatePupilResolver {
@@ -86,22 +87,21 @@ export class MutatePupilResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilCreateMatchRequest(@Arg("pupilId") pupilId: number, @Ctx() context: GraphQLContext): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        const isAdmin = context.user.roles.includes(Role.ADMIN);
+    @Authorized(Role.ADMIN, Role.TUTEE)
+    async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg("pupilId", { nullable: true }) pupilId?: number): Promise<boolean> {
+        const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
 
-        await createMatchRequest(pupil, isAdmin);
+        await createPupilMatchRequest(pupil, isElevated(context));
 
         return true;
     }
 
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilDeleteMatchRequest(@Arg("pupilId") pupilId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        await deleteMatchRequest(pupil);
+    @Authorized(Role.ADMIN, Role.TUTEE)
+    async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg("pupilId", { nullable: true }) pupilId?: number): Promise<boolean> {
+        const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
+        await deletePupilMatchRequest(pupil);
 
         return true;
     }

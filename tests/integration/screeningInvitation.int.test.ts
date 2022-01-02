@@ -6,6 +6,7 @@ import {Connection} from "typeorm";
 import TestStudents from "../utils/TestStudents";
 import {verifyToken} from "../../web/controllers/tokenController";
 import databaseHelper from "../utils/databaseHelper";
+import { SCREENING_USER_URL } from "../../common/mails/screening";
 
 describe("Screening Invitation", function() {
     this.timeout(5000);
@@ -73,7 +74,7 @@ describe("Screening Invitation", function() {
                     assert.strictEqual(mailjetStub.getCall(1).args[2], testStudent.email);
                     assert.strictEqual(mailjetStub.getCall(1).args[3], 1362938);
                     assert.strictEqual(mailjetStub.getCall(1).args[4].personFirstname, testStudent.firstname);
-                    assert.strictEqual(mailjetStub.getCall(1).args[4].confirmationURL, testStudent.screeningURL());
+                    assert.strictEqual(mailjetStub.getCall(1).args[4].confirmationURL, SCREENING_USER_URL);
                     assert.strictEqual(mailjetStub.getCall(1).args[5], false);
 
                     resolve();

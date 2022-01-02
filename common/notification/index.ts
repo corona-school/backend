@@ -82,7 +82,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                     data: reminders.map(it => ({
                         notificationID: it.id,
                         state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + it.delay),
+                        sentAt: new Date(Date.now() + (it.delay /* in hours */ * 60 * 60 * 1000)),
                         userId: getUserId(user),
                         contextID: notificationContext.uniqueId,
                         context: notificationContext
@@ -126,7 +126,7 @@ export async function checkReminders() {
         // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
         // This ends once the user takes an action of the cancelOnActions
         if (notification.interval) {
-            logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}, thus another reminder gets scheduled to be sent out in the future`);
+            logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`);
 
             if (notification.cancelledOnAction.length === 0) {
                 logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
@@ -136,7 +136,7 @@ export async function checkReminders() {
                 data: {
                     notificationID: notification.id,
                     state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + notification.interval),
+                    sentAt: new Date(Date.now() + (notification.interval /* in hours */ * 60 * 60 * 1000)),
                     userId: getUserId(user),
                     contextID: reminder.contextID,
                     context: reminder.context
@@ -194,7 +194,8 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
     const context: Context = {
         ...notificationContext,
-        user: { ...user, fullName: getFullName(user) }
+        user: { ...user, fullName: getFullName(user) },
+        authToken: user.authToken
     };
 
     try {
@@ -209,9 +210,10 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
-                sentAt: new Date(),
+                sentAt: new Date()
                 // drop the context, as it is irrelevant from now on, and only eats up memory
-                context: {}
+                // TODO: Clarify if in the future notifications should be shown in the user section
+                // context: {}
             },
             where: {
                 id: concreteNotification.id

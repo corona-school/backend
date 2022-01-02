@@ -1,4 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
+import { Certificate_of_conduct } from "../../../models/Certificate_of_conduct";
 import { Course } from "../../../models/Course";
 import { Course_guest } from "../../../models/Course_guest";
 import { Course_instructors_student } from "../../../models/Course_instructors_student";
@@ -29,6 +30,17 @@ import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRel
 
 @TypeGraphQL.Resolver(_of => Student)
 export class StudentRelationsResolver {
+  @TypeGraphQL.FieldResolver(_type => Certificate_of_conduct, {
+    nullable: true
+  })
+  async certificate_of_conduct(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any): Promise<Certificate_of_conduct | null> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).certificate_of_conduct({});
+  }
+
   @TypeGraphQL.FieldResolver(_type => [Course], {
     nullable: false
   })
