@@ -13,6 +13,5 @@ export function formatError(error: ApolloError) {
     }
 
     /* All other kinds of errors are not expected here. Better not share them with clients, they might contain secrets! */
-    log.error(error.originalError);
     throw new Error(`Internal Server Error - Consult logs for details`);
 }
