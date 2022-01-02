@@ -32,6 +32,6 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo},
-    { cronTime: "00 30 00 * * 7", jobFunction: deactivateMissingCoc},
+    { cronTime: "00 30 00 * * 0", jobFunction: deactivateMissingCoc},
     { cronTime: "00 00 09 * * *", jobFunction: Notification.checkReminders }
 ];
