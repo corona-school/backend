@@ -10,9 +10,8 @@ import { sendTemplateMail, mailjetTemplates } from "../mails";
 import * as Notification from "../notification";
 import { hasStarted } from "./states";
 import { logTransaction } from "../transactionlog/log";
-import { TooLateError } from "common/util/error";
-import { RedundantError } from "common/util/error";
-import { CapacityReachedError } from "common/util/error";
+import { TooLateError, RedundantError, CapacityReachedError } from "../util/error";
+import { Decision } from "../util/decision";
 
 const delay = (time: number) => new Promise(res => setTimeout(res, time));
 
@@ -104,7 +103,21 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     }
 }
 
+type CourseDecision = "not-participant";
+
+export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
+    if (!pupil.isParticipant) {
+        return { allowed: false, reason: "not-participant" };
+    }
+
+    return { allowed: true };
+}
+
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
+    if (!pupil.isParticipant) {
+        throw new Error(`Only pupils with PARTICIPANT role can join course`);
+    }
+
     await acquireLock(subcourse, pupil, async () => {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);

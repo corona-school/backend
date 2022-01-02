@@ -57,7 +57,7 @@ export function getScreenersWithFirstname(manager: EntityManager, firstname: str
 }
 
 const DEFAULT_SCREENER_FIRSTNAME = "DEFAULT_SCREENER";
-const DEFAULT_SCREENER_NUMBER_ID = -1;
+export const DEFAULT_SCREENER_NUMBER_ID = -1;
 
 export async function getDefaultScreener(manager: EntityManager) {
     let defaultScreener = await getScreenerWithNumberFromOldDB(manager, DEFAULT_SCREENER_NUMBER_ID);
