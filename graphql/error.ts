@@ -7,8 +7,8 @@ export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } 
 const log = getLogger("GraphQL Error");
 
 export function formatError(error: ApolloError) {
-    /* We expect ClientErrors here, these are intended to be shared with users */
-    if (error.originalError instanceof ClientError) {
+    /* We expect ClientErrors and ApolloErrors here (the ones without an originalError), these are intended to be shared with users */
+    if (!error.originalError || error.originalError instanceof ClientError) {
         return error;
     }
 
