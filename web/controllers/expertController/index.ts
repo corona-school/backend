@@ -265,7 +265,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
 async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag[]> {
     const entityManager = getManager();
 
-    const tags: ExpertiseTag[] = await entityManager.find(ExpertiseTag, { where: tagNames.map(t => ({ name: t }))});
+    const tags: {name: string}[] = await entityManager.find(ExpertiseTag, { where: tagNames.map(t => ({ name: t }))});
 
     for (let i = 0; i < tagNames.length; i++) {
         if (!tags.map(t => (t.name)).includes(tagNames[i])) {
@@ -274,8 +274,13 @@ async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag
             tags.push(newTag);
         }
     }
+    const expertiseTags = tags.map(tag => {
+        const newTag = new ExpertiseTag();
+        newTag.name = tag.name;
+        return newTag;
+    });
 
-    return tags;
+    return expertiseTags;
 }
 
 /**

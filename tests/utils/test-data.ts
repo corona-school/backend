@@ -31,7 +31,7 @@ export function createStudent(props?: TestableStudentProps, id?: number): Studen
     }
 
 
-    s.wix_id = `Student-${faker.random.uuid()}`;
+    s.wix_id = `Student-${faker.datatype.uuid()}`;
     s.firstname = faker.name.firstName();
     s.lastname = faker.name.lastName();
     s.active = props?.active ?? true;
@@ -40,7 +40,7 @@ export function createStudent(props?: TestableStudentProps, id?: number): Studen
     s.isStudent = true;
     s.verification = null;
     s.verifiedAt = new Date("2021-01-01");
-    s.authToken = faker.random.uuid();
+    s.authToken = faker.datatype.uuid();
     s.wix_creation_date = props?.registrationDate ?? faker.date.past();
     s.setSubjectsFormatted(props?.subjects ?? [{
         name: "Englisch",
@@ -49,9 +49,9 @@ export function createStudent(props?: TestableStudentProps, id?: number): Studen
             max: 12
         }
     }]);
-    s.module = (props?.intern ?? faker.random.boolean()) ? TeacherModule.INTERNSHIP : null;
-    s.openMatchRequestCount = props?.openMatchRequestCount ?? faker.random.number({ min: 0, max: 5 });
-    s.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.random.number({ min: 0, max: 5 });
+    s.module = (props?.intern ?? faker.datatype.boolean()) ? TeacherModule.INTERNSHIP : null;
+    s.openMatchRequestCount = props?.openMatchRequestCount ?? faker.datatype.number({ min: 0, max: 5 });
+    s.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.datatype.number({ min: 0, max: 5 });
     s.state = props?.state ?? faker.random.arrayElement(Object.values(State));
     s.screening = Promise.resolve(props?.screening ?? null);
 
@@ -75,7 +75,7 @@ export function createPupil(props?: TestablePupilProps, id?: number) {
         p.id = id;
     }
 
-    p.wix_id = `Pupil-${faker.random.uuid()}`;
+    p.wix_id = `Pupil-${faker.datatype.uuid()}`;
     p.firstname = faker.name.firstName();
     p.lastname = faker.name.lastName();
     p.active = true;
@@ -84,18 +84,18 @@ export function createPupil(props?: TestablePupilProps, id?: number) {
     p.isPupil = true;
     p.verification = null;
     p.verifiedAt = new Date("2021-01-01");
-    p.authToken = faker.random.uuid();
+    p.authToken = faker.datatype.uuid();
     p.wix_creation_date = props?.registrationDate ?? faker.date.past();
     p.setSubjectsFormatted(props?.subjects ?? [
         {
             name: "Englisch"
         }
     ]);
-    p.openMatchRequestCount = props?.openMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
-    p.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.random.number({ min: 0, max: 1 });
+    p.openMatchRequestCount = props?.openMatchRequestCount ?? faker.datatype.number({ min: 0, max: 1 });
+    p.openProjectMatchRequestCount = props?.openProjectMatchRequestCount ?? faker.datatype.number({ min: 0, max: 1 });
     p.state = props?.state ?? faker.random.arrayElement(Object.values(State));
-    p.matchingPriority = props?.matchingPriority ?? faker.random.number({ min: 0 });
-    p.setGradeAsNumber(props?.grade ?? faker.random.number({ min: 1, max: 13 }));
+    p.matchingPriority = props?.matchingPriority ?? faker.datatype.number({ min: 0 });
+    p.setGradeAsNumber(props?.grade ?? faker.datatype.number({ min: 1, max: 13 }));
 
     return p;
 }
@@ -109,7 +109,7 @@ export interface TestableMatchProps {
 export function createMatch(props?: TestableMatchProps) {
     const pupil = props?.pupil ?? createPupil();
     const student = props?.student ?? createStudent();
-    const uuid = props?.uuid ?? faker.random.uuid();
+    const uuid = props?.uuid ?? faker.datatype.uuid();
 
     const m = new Match(pupil, student, uuid);
 

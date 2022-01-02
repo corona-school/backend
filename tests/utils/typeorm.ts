@@ -216,13 +216,13 @@ export async function createTestingConnections(
             // create new schemas
             const schemaPaths: string[] = [];
             connection.entityMetadatas
-                .filter((entityMetadata) => !!entityMetadata.schemaPath)
+                .filter((entityMetadata) => !!entityMetadata.schema)
                 .forEach((entityMetadata) => {
                     const existSchemaPath = schemaPaths.find(
-                        (path) => path === entityMetadata.schemaPath
+                        (path) => path === entityMetadata.schema
                     );
                     if (!existSchemaPath) {
-                        schemaPaths.push(entityMetadata.schemaPath!);
+                        schemaPaths.push(entityMetadata.schema!);
                     }
                 });
 
