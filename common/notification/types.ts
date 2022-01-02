@@ -18,7 +18,7 @@ type Student = PrismaStudent | TypeORMStudent;
 type Mentor = PrismaMentor | TypeORMMentor;
 type Screener = PrismaScreener | TypeORMScreener;
 
-export type Person = Pupil | Student | Mentor | Screener;
+export type Person = Pupil | Student | Mentor /* | Screener */ ; // TODO: Reenable when migration was created
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails

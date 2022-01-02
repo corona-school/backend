@@ -18,7 +18,7 @@ import { prisma } from "../prisma";
 
 type Person = { wix_id?: string, userID?: string, isPupil?: boolean, isStudent?: boolean };
 
-type TypeORMPerson = Student | Pupil | Mentor | Screener;
+type TypeORMPerson = Student | Pupil | Mentor /* | Screener */; // TODO: Reenable
 
 /* Unfortunately the wix_id / userID does not know where the user entity came from.
    We would have to query all the different tables which would be a significant overhead as this is used quite often.
