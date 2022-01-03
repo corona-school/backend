@@ -5,6 +5,7 @@ import { getLogger } from "log4js";
 import basicAuth from "basic-auth";
 import * as crypto from "crypto";
 import { getUserForSession, GraphQLUser, toPublicToken } from "./authentication";
+import { AuthenticationError } from "apollo-server-errors";
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -47,7 +48,7 @@ export default async function injectContext({ req }) {
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
             authLogger.warn(`Admin failed to authenticate from ${ip}`);
-            throw new Error("Invalid Admin Password");
+            throw new AuthenticationError("Invalid Admin Password");
         }
 
         user = { firstname: "Ed", lastname: "Min", email: "test@lern-fair.de", roles: [Role.ADMIN, Role.UNAUTHENTICATED] };
@@ -56,7 +57,7 @@ export default async function injectContext({ req }) {
         sessionToken = req.headers["authorization"].slice("Bearer ".length);
 
         if (sessionToken.length < 20) {
-            throw new Error("Session Tokens must have at least 20 characters");
+            throw new AuthenticationError("Session Tokens must have at least 20 characters");
         }
 
         const sessionUser = await getUserForSession(sessionToken);

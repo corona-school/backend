@@ -3,10 +3,11 @@ import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import { dissolveMatch } from "../match/dissolve";
+import { RedundantError } from "../util/error";
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
-        throw new Error("Pupil was already activated");
+        throw new RedundantError("Pupil was already activated");
     }
 
     const updatedPupil = await prisma.pupil.update({
@@ -22,7 +23,7 @@ export async function activatePupil(pupil: Pupil) {
 
 export async function deactivatePupil(pupil: Pupil) {
     if (!pupil.active) {
-        throw new Error("Pupil was already deactivated");
+        throw new RedundantError("Pupil was already deactivated");
     }
 
     let matches = await prisma.match.findMany({

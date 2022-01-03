@@ -8,6 +8,7 @@ import { pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pu
 import { Subject } from "../entity/Student";
 import { Address } from "address-rfc2821";
 import { logTransaction } from "../transactionlog/log";
+import { PrerequisiteError, RedundantError } from "../util/error";
 
 export interface RegisterPupilData {
     firstname: string;
@@ -43,7 +44,7 @@ export interface BecomeStatePupilData {
 
 export async function registerPupil(data: RegisterPupilData) {
     if (!(await isEmailAvailable(data.email))) {
-        throw new Error(`Email is already used by another account`);
+        throw new PrerequisiteError(`Email is already used by another account`);
     }
 
     const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
@@ -89,7 +90,7 @@ export async function registerPupil(data: RegisterPupilData) {
 
 export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoacheeData) {
     if (pupil.isProjectCoachee) {
-        throw new Error(`Pupil is already project coachee`);
+        throw new RedundantError(`Pupil is already project coachee`);
     }
 
     const { isJufoParticipant, projectFields, projectMemberCount } = data;
@@ -109,7 +110,7 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
 
 export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     if (pupil.isPupil) {
-        throw new Error(`Pupil is already tutee`);
+        throw new RedundantError(`Pupil is already tutee`);
     }
 
     const updatedPupil = await prisma.pupil.update({

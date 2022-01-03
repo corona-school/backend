@@ -26,6 +26,7 @@ import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
+import { PrerequisiteError } from "common/util/error";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -272,13 +273,13 @@ export class MutateMeResolver {
             const prevPupil = await getSessionPupil(context);
 
             if (student) {
-                throw new Error(`Tried to update student data on a pupil`);
+                throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
             const { subjects, gradeAsInt, projectFields } = pupil;
 
             if (projectFields && !prevPupil.isProjectCoachee) {
-                throw new Error(`Only project coachees can set the project fields`);
+                throw new PrerequisiteError(`Only project coachees can set the project fields`);
             }
 
             await prisma.pupil.update({
@@ -302,13 +303,13 @@ export class MutateMeResolver {
             const prevStudent = await getSessionStudent(context);
 
             if (pupil) {
-                throw new Error(`Tried to update pupil data on student`);
+                throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
             const { projectFields, subjects } = student;
 
             if (projectFields && !prevStudent.isProjectCoach) {
-                throw new Error(`Only project coaches can set the project fields`);
+                throw new PrerequisiteError(`Only project coaches can set the project fields`);
             }
 
             if (projectFields) {

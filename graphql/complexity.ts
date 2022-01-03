@@ -1,6 +1,7 @@
 import { createMethodDecorator } from "type-graphql";
 import { ResolversEnhanceMap } from "./generated";
 import { GraphQLResolveInfo } from "graphql";
+import { ValidationError } from "apollo-server-errors";
 
 /* We expose the whole Prisma query functionality to GraphQL users.
    As such they can write queries that fetch thousands of entries
@@ -45,7 +46,7 @@ function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQuery
             .map(([key, limit]) => `${key}:${limit}`)
             .join(", ");
 
-        throw new Error(`Overcomplex Query: The nested query might return more than 1000 entries (${limitInfo})`);
+        throw new ValidationError(`Overcomplex Query: The nested query might return more than 1000 entries (${limitInfo})`);
     }
 }
 
@@ -62,11 +63,11 @@ export function LimitedQuery(limit = 100) {
         const isIDQuery = !!args.where?.id;
 
         if (numberLimited && !numberLimitedLow) {
-            throw new Error(`Overcomplex Query: Please reduce the TAKE arg to less than ${limit} entries`);
+            throw new ValidationError(`Overcomplex Query: Please reduce the TAKE arg to less than ${limit} entries`);
         }
 
         if (!isIDQuery && !numberLimitedLow) {
-            throw new Error(`Overcomplex Query: Please implement pagination with TAKE and SKIP`);
+            throw new ValidationError(`Overcomplex Query: Please implement pagination with TAKE and SKIP`);
         }
 
         const cardinality = isIDQuery ? 1 : args.take;
