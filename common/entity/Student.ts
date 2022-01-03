@@ -344,14 +344,9 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.screening = Promise.resolve(currentScreening);
 
-        const registrationDate = await this.createdAt;
-
-        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
-            if (!this.remissionRequest) {
-                await createRemissionRequest(this);
-                await Notification.actionTaken(this, "tutor_screening_success", {});
-            }
-        } else if (!currentScreening.success) {
+        if (currentScreening.success) {
+            await Notification.actionTaken(this, "tutor_screening_success", {});
+        } else {
             await Notification.actionTaken(this, "tutor_screening_rejection", {});
         }
     }
@@ -397,13 +392,9 @@ export class Student extends Person {
         await currentScreening.updateScreeningInfo(screeningInfo, screener);
         this.projectCoachingScreening = Promise.resolve(currentScreening);
 
-        const registrationDate = await this.createdAt;
-        if (currentScreening.success && registrationDate >= new Date('2022-01-01')) {
-            if (!this.remissionRequest) {
-                await createRemissionRequest(this);
-                await Notification.actionTaken(this, "coach_screening_success", {});
-            }
-        } else if (!currentScreening.success) {
+        if (currentScreening.success) {
+            await Notification.actionTaken(this, "coach_screening_success", {});
+        } else {
             await Notification.actionTaken(this, "coach_screening_rejection", {});
         }
     }
@@ -474,6 +465,24 @@ export class Student extends Person {
         }
 
         return ScreeningStatus.Rejected;
+    }
+
+    async scheduleCoCReminders() {
+        if (this.createdAt < new Date('2022-01-01')) {
+            return;
+        }
+
+        if (this.remissionRequest) {
+            return;
+        }
+
+        if (
+            await this.screeningStatus() === ScreeningStatus.Accepted ||
+            await this.projectCoachingScreeningStatus() === ScreeningStatus.Accepted
+        ) {
+            await createRemissionRequest(this);
+            await Notification.actionTaken(this, 'coc_reminder', {});
+        }
     }
 
 
