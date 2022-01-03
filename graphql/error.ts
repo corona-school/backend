@@ -11,6 +11,11 @@ export const isUnexpectedError = (error: ApolloError) => error.name === "INTERNA
 export function formatError(error: ApolloError) {
     /* Expected errors are intended to be shared with users */
     if (!isUnexpectedError(error)) {
+        // Send ClientError Type to client
+        if (error.originalError instanceof ClientError) {
+            throw new ApolloError(error.originalError.publicMessage, error.originalError.type);
+        }
+
         return error;
     }
 
