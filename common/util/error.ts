@@ -12,7 +12,7 @@ const createClientError = (type: string) => class extends ClientError {
     }
 };
 
-export const RedundantError = createClientError("Redundant");
-export const TooLateError = createClientError("TooLate");
-export const CapacityReachedError = createClientError("CapacityReached");
-export const PrerequisiteError = createClientError("Prerequisite");
+export const RedundantError = createClientError("REDUNDANT");
+export const TooLateError = createClientError("TOO_LATE");
+export const CapacityReachedError = createClientError("CAPACITY_REACHED");
+export const PrerequisiteError = createClientError("PREREQUISITE");
