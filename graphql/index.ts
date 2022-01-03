@@ -66,10 +66,6 @@ const schema = buildSchemaSync({
         ExtendFieldsStudentResolver,
         MutateStudentResolver,
 
-        /*Student*/
-        FindManyStudentResolver,
-        ExtendFieldsStudentResolver,
-
         /* Match */
         FindManyMatchResolver,
         ExtendedFieldsMatchResolver,
