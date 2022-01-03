@@ -6,11 +6,11 @@ export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } 
 
 const log = getLogger("GraphQL Error");
 
-export const isUnexpectedError = (error: Error) => !(error instanceof ClientError || error instanceof ApolloError);
+export const isUnexpectedError = (error: ApolloError) => error.name === "INTERNAL_SERVER_ERROR" && !(error.originalError instanceof ClientError);
 
 export function formatError(error: ApolloError) {
-    /* We expect ClientErrors and ApolloErrors here (the ones without an originalError), these are intended to be shared with users */
-    if (!isUnexpectedError(error.originalError)) {
+    /* Expected errors are intended to be shared with users */
+    if (!isUnexpectedError(error)) {
         return error;
     }
 

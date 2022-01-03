@@ -25,12 +25,12 @@ export const GraphQLLogger: any = {
                 const unexpected = requestContext.errors.some(isUnexpectedError);
                 if (unexpected) {
                     logger.info(
-                        `Errors occurred:\n`,
-                        requestContext.errors.map(it => `  - ${it.name} (${it.message})\n`)
+                        `Expected Errors occurred:\n`,
+                        ...requestContext.errors.map(it => `  - ${it.name} (${it.message})`)
                     );
                 } else {
                     const errorLogger = logInContext(`GraphQL Error`, requestContext.context as GraphQLContext);
-                    errorLogger.error(`Errors occured:`, ...requestContext.errors);
+                    errorLogger.error(`Unexpected Errors occurred:`, ...requestContext.errors);
                 }
             },
             willSendResponse(requestContext: GraphQLRequestContext) {
