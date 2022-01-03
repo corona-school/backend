@@ -351,7 +351,7 @@ export class Student extends Person {
                 await createRemissionRequest(this);
                 await Notification.actionTaken(this, "tutor_screening_success", {});
             }
-        } else {
+        } else if (!currentScreening.success) {
             await Notification.actionTaken(this, "tutor_screening_rejection", {});
         }
     }
@@ -403,8 +403,7 @@ export class Student extends Person {
                 await createRemissionRequest(this);
                 await Notification.actionTaken(this, "coach_screening_success", {});
             }
-            await Notification.actionTaken(this, "coach_screening_success", {});
-        } else {
+        } else if (!currentScreening.success) {
             await Notification.actionTaken(this, "coach_screening_rejection", {});
         }
     }
