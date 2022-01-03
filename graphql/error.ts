@@ -1,10 +1,7 @@
 import { ApolloError } from "apollo-server-errors";
-import { getLogger } from "log4js";
 import { ClientError } from "../common/util/error";
 
 export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from "apollo-server-errors";
-
-const log = getLogger("GraphQL Error");
 
 export const isUnexpectedError = (error: ApolloError) => error.name === "INTERNAL_SERVER_ERROR" && !(error.originalError instanceof ClientError);
 
