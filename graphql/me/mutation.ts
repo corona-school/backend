@@ -26,7 +26,7 @@ import { logInContext } from "../logging";
 import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
-import { PrerequisiteError } from "common/util/error";
+import { PrerequisiteError } from "../../common/util/error";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
