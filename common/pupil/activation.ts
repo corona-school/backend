@@ -3,6 +3,7 @@ import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import { dissolveMatch } from "../match/dissolve";
+import * as Notification from "../notification";
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
@@ -41,6 +42,8 @@ export async function deactivatePupil(pupil: Pupil) {
     });
 
     await getTransactionLog().log(new DeActivateEvent(pupil, false));
+
+    await Notification.cancelRemindersFor(pupil);
 
     return updatedPupil;
 }

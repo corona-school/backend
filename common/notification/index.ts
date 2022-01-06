@@ -241,3 +241,15 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+export async function cancelRemindersFor(user: Person) {
+    await prisma.concrete_notification.updateMany({
+        data: {
+            state: ConcreteNotificationState.ACTION_TAKEN,
+            error: "Cancelled due to Account deactivation"
+        },
+        where: {
+            state: ConcreteNotificationState.DELAYED,
+            userId: getUserId(user)
+        }
+    });
+}
