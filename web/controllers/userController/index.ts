@@ -42,6 +42,7 @@ import { Course, CourseState } from "../../../common/entity/Course";
 import { sendSubcourseCancelNotifications } from "../../../common/mails/courses";
 import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
 import { Subcourse } from "../../../common/entity/Subcourse";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -1076,6 +1077,9 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             person.active = false;
 
             await entityManager.save(type, person);
+
+            await Notification.cancelRemindersFor(person);
+
             await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
