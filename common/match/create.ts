@@ -61,6 +61,7 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
 
     const matchHash = getMatchHash(match);
+    const matchDate = +match.createdAt;
 
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
@@ -70,7 +71,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
         subjects,
         callURL,
         firstMatch: tutorFirstMatch,
-        matchHash
+        matchHash,
+        matchDate
     });
 
     const tuteeMail = mailjetTemplates.TUTEENEWMATCH({
@@ -88,7 +90,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
         subjects,
         callURL,
         firstMatch: tuteeFirstMatch,
-        matchHash
+        matchHash,
+        matchDate
     });
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
