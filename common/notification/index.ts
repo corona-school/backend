@@ -241,11 +241,13 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+const DEACTIVATION_MARKER = "ACCOUNT_DEACTIVATION";
+
 export async function cancelRemindersFor(user: Person) {
     await prisma.concrete_notification.updateMany({
         data: {
             state: ConcreteNotificationState.ACTION_TAKEN,
-            error: "Cancelled due to Account deactivation"
+            error: DEACTIVATION_MARKER
         },
         where: {
             state: ConcreteNotificationState.DELAYED,
