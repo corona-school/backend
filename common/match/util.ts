@@ -5,7 +5,7 @@ import { DEFAULT_TUTORING_GRADERESTRICTIONS } from "../entity/Student";
 import { hashToken } from "../util/hashing";
 
 export function getJitsiTutoringLink(match: Match) {
-    return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
+    return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(match.uuid)}`;
 }
 
 export function getOverlappingSubjects(pupil: Pupil, student: Student) {
