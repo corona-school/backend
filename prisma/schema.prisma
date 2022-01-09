@@ -17,6 +17,7 @@ model attachment {
   id                String   @id @db.Uuid
   uploaderID        String   @db.VarChar
   filename          String   @db.VarChar
+  size              Int
   attachmentGroupId String   @db.VarChar
   date              DateTime @db.Timestamp(6)
 }
@@ -33,15 +34,15 @@ model bbb_meeting {
 }
 
 model concrete_notification {
-  id             Int      @id @default(autoincrement())
-  userId         String   @db.VarChar
-  notificationID Int
-  contextID      String?  @db.VarChar
-  context        Json     @db.Json
-  sentAt         DateTime @db.Timestamp(6)
-  state          Int
-  attachmentGroupId String?   @db.VarChar
-  error          String?  @db.VarChar
+  id                Int      @id @default(autoincrement())
+  userId            String   @db.VarChar
+  notificationID    Int
+  contextID         String?  @db.VarChar
+  context           Json     @db.Json
+  attachmentGroupId String?  @db.VarChar
+  sentAt            DateTime @db.Timestamp(6)
+  state             Int
+  error             String?  @db.VarChar
 }
 
 model course {

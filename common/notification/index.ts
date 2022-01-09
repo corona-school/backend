@@ -6,8 +6,7 @@ import { getUserId, getUser, getFullName } from '../user';
 import { getLogger } from 'log4js';
 import {Student} from "../entity/Student";
 import {v4 as uuid} from "uuid";
-import {AttachmentGroup, createAttachment} from "../attachments";
-import {friendlyFileSize} from "../util/basic";
+import {AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML} from "../attachments";
 import {Pupil} from "../entity/Pupil";
 
 const logger = getLogger("Notification");
@@ -44,6 +43,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
             if (!relevantNotifications) {
                 logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
                 return;
+            } else {
+                logger.debug(`Relevant notifications: ${relevantNotifications.toSend.map(it => it.id)}`)
             }
 
             logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
@@ -126,7 +127,11 @@ export async function checkReminders() {
 
         const notification = await getNotification(reminder.notificationID);
         const user = await getUser(reminder.userId);
-        await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
+
+
+        const attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
+
+        await deliverNotification(reminder, notification, user, reminder.context as NotificationContext, attachmentGroup);
 
         // For recurring reminders, we simply create another DELAYED concrete notification
         // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
@@ -247,27 +252,26 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
-/*
-Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
-These objects include HTML for the attachment list which gets inserted into messages.
+/**
+ * Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
+ * These objects include HTML for the attachment list which gets inserted into messages.
+ * @param files     Multer files to be uploaded.
+ * @param uploader  User that intends to upload the files.
+ * @return          Object with attachmentListHTML, attachmentGroupId, and attachmentIds
  */
 export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
 
     if (files.length > 0) {
         let attachmentGroupId = uuid().toString();
 
-        let attachmentListHTML = "";
-        let attachmentIds = [];
-
-        attachmentListHTML += "<h3>Anhänge</h3>";
-
-        await Promise.all(files.map(async f => {
+        let attachments = await Promise.all(files.map(async f => {
             let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
-            attachmentIds.push(attachmentId);
-            attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${f.originalname}">${f.originalname}</a> (${friendlyFileSize(f.size, true)})</p>`;
+            return {attachmentId, filename: f.originalname, size: f.size};
         }));
-        return {attachmentListHTML, attachmentGroupId, attachmentIds};
-    }
 
+        let attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
+
+        return {attachmentListHTML, attachmentGroupId, attachmentIds: attachments.map(att => att.attachmentId)};
+    }
     return null;
 }

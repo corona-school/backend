@@ -16,6 +16,9 @@ export class Attachment {
     filename: string;
 
     @Column()
+    size: number;
+
+    @Column()
     attachmentGroupId: string;
 
     @Column({ type: "timestamp" })

@@ -4,6 +4,10 @@ import { prisma } from '../prisma';
 import { v4 as uuid } from "uuid";
 import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
 import {getUserId} from "../user";
+import {friendlyFileSize} from "../util/basic";
+import {getLogger} from "log4js";
+
+const logger = getLogger("Notification");
 
 export interface AttachmentGroup {
     attachmentGroupId: string;
@@ -11,11 +15,13 @@ export interface AttachmentGroup {
     attachmentIds: string[];
 }
 
-/*
-Creates an attachment in the database and uploads the specified file to the S3 bucket.
-
-attachmentGroupId: Unique per group of attachments (per message)
-returns: attachmentId: Unique per individual attachment
+/**
+ * Creates an attachment in the database and uploads the specified file to the S3 bucket.
+ *
+ * @param   file               File from multer to upload to S3
+ * @param   uploader           Entity that uploaded the file
+ * @param   attachmentGroupId  Unique per group of attachments (per message)
+ * @return  attachmentId       Unique per individual attachment
  */
 export async function createAttachment(file: Express.Multer.File, uploader: Student | Pupil, attachmentGroupId: string) {
     let attachmentId = uuid().toString();
@@ -24,6 +30,7 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
             id: attachmentId,
             uploaderID: getUserId(uploader),
             filename: file.originalname,
+            size: file.size,
             attachmentGroupId,
             date: new Date()
         }
@@ -34,8 +41,12 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
     return attachmentId;
 }
 
-/*
-If not provided, this function fetches the corresponding attachmentGroupId for the provided attachmentId and generates the presigned URL.
+/**
+ * If not provided, this function fetches the corresponding attachmentGroupId for the provided attachmentId and generates the presigned URL.
+ * @param attachmentId      The unique ID of the attachment.
+ * @param key               The location of the attachment in the bucket.
+ * @param attachmentGroupId (optional) The unique ID of the attachment group. Will be fetched if not available.
+ * @return                  Presigned URL which enables users to access the file temporarily.
  */
 export async function getAttachmentURL(attachmentId: string, key: string, attachmentGroupId?: string) {
     if (attachmentGroupId == null) {
@@ -50,4 +61,60 @@ export async function getAttachmentURL(attachmentId: string, key: string, attach
         attachmentGroupId = dbAttachment.attachmentGroupId;
     }
     return await generatePresignedURL(`${attachmentGroupId}/${attachmentId}/${key}`, ATTACHMENT_BUCKET);
+}
+
+
+/**
+ * Function creating the HTML which is attached to the email, consisting of a headline and a bulleted list with the attachment links, file names and file sizes.
+ * @param attachments   The attachments to be added to the list.
+ * @param attachmentGroupId
+ * @return              HTML of the list.
+ */
+export async function getAttachmentListHTML(attachments: { attachmentId: string, filename: string, size: number }[], attachmentGroupId: string) {
+    let attachmentListHTML = "<h3>Anhänge</h3>";
+
+    for (let {attachmentId, filename, size} of attachments) {
+        let key;
+        if(!filename || !size) {  // When sending reminders, for example, we don't have immediate access to data like size and the filename, we only have the attachmentGroupId
+            logger.warn("Fetching data for attachment with ID " + attachmentId);
+            const fetched_attachment = await prisma.attachment.findUnique({  // fetch the attachment by its attachmentId
+                where: {
+                    id: attachmentId
+                },
+                select: {
+                    size: true,
+                    filename: true
+                }
+            })
+            filename = fetched_attachment.filename;
+            key = `${attachmentId}/${filename}`;
+            size = fetched_attachment.size;
+        } else {
+            key = `${attachmentId}/${filename}`;
+        }
+
+        attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${key}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
+
+    }
+
+    return attachmentListHTML;
+}
+
+/**
+ * Returns an AttachmentGroup object using the attachmentGroupId.
+ * If you already have an Attachment object, better invoke getAttachmentListHTML directly and construct your object by hand,
+ * as this function assumes no values known, which causes fetching of unnecessary data.
+ * @param attachmentGroupId
+ * @return AttachmentGroup
+ */
+export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: string): Promise<AttachmentGroup> {
+    const attachments = await prisma.attachment.findMany({
+        where: {
+            attachmentGroupId
+        }
+    })
+    const attachmentList = attachments.map(a => ({attachmentId: a.id, filename: a.filename, size: a.size}))
+    const attachmentListHTML = await getAttachmentListHTML(attachmentList, attachmentGroupId);
+
+    return {attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map(a => a.id)}
 }
