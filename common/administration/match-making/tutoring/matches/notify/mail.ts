@@ -43,7 +43,8 @@ export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityMan
         subjects: subjectsString,
         callURL,
         firstMatch,
-        matchHash
+        matchHash,
+        matchDate: +match.createdAt
     });
 }
 
@@ -69,6 +70,7 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
         subjects: subjectsString,
         callURL,
         firstMatch,
-        matchHash
+        matchHash,
+        matchDate: +match.createdAt
     });
 }
