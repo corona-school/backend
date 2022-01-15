@@ -267,9 +267,11 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
         }
 
         let sendAt = reminder.delay * HOURS_TO_MS + +actionDate;
-        while (sendAt < Date.now()) {
+        if (sendAt < Date.now()) {
             assert(reminder.interval > 0);
-            sendAt += reminder.interval * HOURS_TO_MS;
+            const intervalCount = Math.ceil((Date.now() - sendAt) / (reminder.interval * HOURS_TO_MS));
+            sendAt += intervalCount * reminder.interval * HOURS_TO_MS;
+            assert(Date.now() > sendAt);
         }
 
         remindersToCreate.push({
