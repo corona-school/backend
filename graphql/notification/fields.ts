@@ -21,7 +21,7 @@ class BulkRun {
     apply: boolean;
     @Field()
     notificationCount: BulkRunNotificationCount;
-    @Field()
+    @Field(type => [String])
     errors: string[];
 }
 
