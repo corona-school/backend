@@ -66,5 +66,6 @@ export class MutateNotificationResolver {
     @Authorized(Role.ADMIN)
     async notificationBulkActionRun(@Arg("id") id: string, @Arg("apply") apply: boolean) {
         await runBulkAction(id, apply);
+        return true;
     }
 }
