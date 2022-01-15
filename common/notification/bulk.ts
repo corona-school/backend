@@ -60,10 +60,15 @@ function addBulkAction<Entity>(action: BulkAction<Entity>) {
 
 /* -------------------------------------- Actions ------------------------------------------------------------------- */
 
+const MATCH_SURVEYS_INTRODUCTION = new Date(1642286012775);
+
 addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date, uuid: string }>({
     name: "match-student-surveys",
     action: "tutor_matching_success",
-    getData: () => prisma.match.findMany({ where: { dissolved: false }, select: { id: true, pupilId: true, studentId: true, createdAt: true, uuid: true }}),
+    getData: () => prisma.match.findMany({
+        where: { dissolved: false, createdAt: { lte: MATCH_SURVEYS_INTRODUCTION } },
+        select: { id: true, pupilId: true, studentId: true, createdAt: true, uuid: true }
+    }),
     getActionDate: match => match.createdAt,
     getUser: match => prisma.student.findUnique({ where: { id: match.studentId }}),
     getContext: async match => ({
@@ -77,7 +82,10 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
 addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date, uuid: string }>({
     name: "match-pupil-surveys",
     action: "tutee_matching_success",
-    getData: () => prisma.match.findMany({ where: { dissolved: false }, select: { id: true, pupilId: true, studentId: true, createdAt: true, uuid: true }}),
+    getData: () => prisma.match.findMany({
+        where: { dissolved: false, createdAt: { lte: MATCH_SURVEYS_INTRODUCTION } },
+        select: { id: true, pupilId: true, studentId: true, createdAt: true, uuid: true }
+    }),
     getActionDate: match => match.createdAt,
     getUser: match => prisma.pupil.findUnique({ where: { id: match.pupilId }}),
     getContext: async match => ({
