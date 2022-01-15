@@ -275,6 +275,7 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
     for (const reminder of reminders) {
         if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
             // Reminder was sent in the past and will not be sent in the future
+            logger.debug(`Reminder(${reminder.id}) won't be scheduled in the future of ${actionDate.toISOString()}`);
             continue;
         }
 
@@ -285,6 +286,8 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
             sendAt += intervalCount * reminder.interval * HOURS_TO_MS;
             assert(Date.now() > sendAt);
         }
+
+        logger.debug(`Reminder(${reminder.id}) for action at ${actionDate.toISOString()} will be send at ${new Date(sendAt).toISOString()}`);
 
         remindersToCreate.push({
             notificationID: reminder.id,
