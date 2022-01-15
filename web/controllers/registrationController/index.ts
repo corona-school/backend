@@ -21,6 +21,7 @@ import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { isArray } from "class-validator";
 import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
 import * as Notification from "../../../common/notification";
+import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
 
 const logger = getLogger();
 
@@ -64,7 +65,8 @@ export async function postTutorHandler(req: Request, res: Response) {
             typeof req.body.isProjectCoach == 'boolean' &&
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
-            (!req.body.supportsInDaZ || typeof req.body.supportsInDaz == 'boolean')
+            (!req.body.supportsInDaZ || typeof req.body.supportsInDaz == 'boolean') &&
+            typeof req.body.isCodu == 'boolean'
         ) {
             if (req.body.isTutor) {
                 if (req.body.subjects instanceof Array) {
@@ -294,8 +296,16 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
         }
         tutor.languages = languages;
     }
-
     tutor.supportsInDaZ = apiTutor.supportsInDaz;
+
+    // CoDu
+    if (apiTutor.isCodu) {
+        if (!checkCoDuSubjectRequirements(tutor.getSubjectsFormatted())) {
+            logger.warn("Tutor does not fulfill subject requirements for CoDu");
+            return 400;
+        }
+    }
+    tutor.isCodu = apiTutor.isCodu;
 
     const result = await entityManager.findOne(Student, { email: tutor.email });
     if (result !== undefined) {

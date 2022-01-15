@@ -54,6 +54,7 @@ export interface ApiAddTutor {
     registrationSource?: string
     languages?: string[];
     supportsInDaz?: boolean;
+    isCodu: boolean;
 }
 
 /**
