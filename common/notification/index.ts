@@ -116,39 +116,51 @@ export async function checkReminders() {
     });
 
     for (const reminder of remindersToSend) {
-        logger.debug(`Processing reminder`, reminder);
+        try {
+            logger.debug(`Processing reminder`, reminder);
 
-        if (!reminder.context) {
-            throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
-        }
-
-        const notification = await getNotification(reminder.notificationID);
-        const user = await getUser(reminder.userId);
-        await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
-
-        // For recurring reminders, we simply create another DELAYED concrete notification
-        // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
-        // This ends once the user takes an action of the cancelOnActions
-        if (notification.interval) {
-            logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`);
-
-            if (notification.cancelledOnAction.length === 0) {
-                logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
+            if (!reminder.context) {
+                throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
             }
 
-            const recurringReminder = await prisma.concrete_notification.create({
-                data: {
-                    notificationID: notification.id,
-                    state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
-                    userId: getUserId(user),
-                    contextID: reminder.contextID,
-                    context: reminder.context
-                }
-            });
+            const notification = await getNotification(reminder.notificationID);
+            const user = await getUser(reminder.userId);
+            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
 
-            logger.info(`Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`);
+            // For recurring reminders, we simply create another DELAYED concrete notification
+            // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
+            // This ends once the user takes an action of the cancelOnActions
+            if (notification.interval) {
+                logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`);
+
+                if (notification.cancelledOnAction.length === 0) {
+                    logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
+                }
+
+                const recurringReminder = await prisma.concrete_notification.create({
+                    data: {
+                        notificationID: notification.id,
+                        state: ConcreteNotificationState.DELAYED,
+                        sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
+                        userId: getUserId(user),
+                        contextID: reminder.contextID,
+                        context: reminder.context
+                    }
+                });
+
+                logger.info(`Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`);
+            }
+        } catch (error) {
+            logger.error(`Sending Reminder ConcreteNotification(${reminder.id}) failed with error`, error);
+            prisma.concrete_notification.update({
+                data: {
+                    state: ConcreteNotificationState.ERROR,
+                    error: error.message
+                },
+                where: { id: reminder.id }
+            });
         }
+
     }
 
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
