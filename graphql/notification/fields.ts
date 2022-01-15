@@ -27,7 +27,7 @@ class BulkRun {
 
 @Resolver(of => BulkRun)
 export class NotificationBulkRunResolver {
-    @Query()
+    @Query(returns => [BulkRun])
     @Authorized(Role.ADMIN)
     notificationBulkRuns() {
         return bulkRuns.map(it => ({
