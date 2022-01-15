@@ -19,8 +19,8 @@ class BulkRun {
     progress: number;
     @Field()
     apply: boolean;
-    @Field()
-    notificationCount: BulkRunNotificationCount;
+    @Field(type => [BulkRunNotificationCount])
+    notificationCount: BulkRunNotificationCount[];
     @Field(type => [String])
     errors: string[];
 }
