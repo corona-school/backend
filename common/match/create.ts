@@ -61,7 +61,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
 
     const matchHash = getMatchHash(match);
-    const matchDate = +match.createdAt;
+    // NOTE: JSON numbers which are larger than 32 bit integers crash mailjet internally, so strings need to be used here
+    const matchDate = "" + (+match.createdAt);
 
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
