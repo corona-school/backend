@@ -58,3 +58,12 @@ export interface Channel {
     send(notification: Notification, to: Person, context: Context, concreteID: number): Promise<any>;
     canSend(notification: Notification): boolean;
 }
+
+export interface BulkAction<Entity> {
+    name: string;
+    action: string;
+    getData: () => Promise<Entity[]>;
+    getUser: (entity: Entity) => Promise<Person>;
+    getContext: (entity: Entity) => Promise<NotificationContext>;
+    getActionDate: (entity: Entity) => Date;
+}

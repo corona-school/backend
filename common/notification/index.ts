@@ -1,14 +1,18 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, BulkAction } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
 import { getLogger } from 'log4js';
+import { assert } from 'console';
+import { bulkActions } from './bulk';
 
 const logger = getLogger("Notification");
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
+
+const HOURS_TO_MS = 60 * 60 * 1000;
 
 /* -------------------------------- Public API exposed to other components ----------------------------------------------------------- */
 
@@ -82,7 +86,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                     data: reminders.map(it => ({
                         notificationID: it.id,
                         state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + (it.delay /* in hours */ * 60 * 60 * 1000)),
+                        sentAt: new Date(Date.now() + (it.delay /* in hours */ * HOURS_TO_MS)),
                         userId: getUserId(user),
                         contextID: notificationContext.uniqueId,
                         context: notificationContext
@@ -136,7 +140,7 @@ export async function checkReminders() {
                 data: {
                     notificationID: notification.id,
                     state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + (notification.interval /* in hours */ * 60 * 60 * 1000)),
+                    sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
                     userId: getUserId(user),
                     contextID: reminder.contextID,
                     context: reminder.context
@@ -241,3 +245,51 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+/* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
+   as if the user took that action at actionDate */
+export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean) {
+    const notifications = await getNotifications();
+    const relevantNotifications = notifications.get(actionId);
+
+    if (!relevantNotifications) {
+        throw new Error(`Notification.actionTakenAt found no notifications for action '${actionId}'`);
+    }
+
+    const reminders = relevantNotifications.toSend.filter(it => it.delay);
+    const remindersToCreate: Omit<ConcreteNotification, "id" | "error">[] = [];
+
+    const userId = getUserId(user);
+
+    for (const reminder of reminders) {
+        if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
+            // Reminder was sent in the past and will not be sent in the future
+            continue;
+        }
+
+        let sendAt = reminder.delay * HOURS_TO_MS + +actionDate;
+        while (sendAt < Date.now()) {
+            assert(reminder.interval > 0);
+            sendAt += reminder.interval * HOURS_TO_MS;
+        }
+
+        remindersToCreate.push({
+            notificationID: reminder.id,
+            state: ConcreteNotificationState.DELAYED,
+            sentAt: new Date(sendAt),
+            userId,
+            contextID: notificationContext.uniqueId,
+            context: notificationContext
+        });
+
+    }
+
+    if (apply && remindersToCreate.length > 0) {
+        const remindersCreated = await prisma.concrete_notification.createMany({
+            data: remindersToCreate
+        });
+
+        logger.info(`Notification.actionTakenAt scheduled ${remindersCreated.count} reminders for User(${userId}) at ${remindersToCreate.map(it => it.sentAt.toDateString())}`);
+    }
+
+    return remindersToCreate;
+}
