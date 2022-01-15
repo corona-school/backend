@@ -13,6 +13,8 @@ interface BulkRun {
     notificationCount: { [id: number]: number };
     errors: string[];
     currentUser?: string;
+    startedAt: string;
+    finishedAt?: string;
 }
 
 export const bulkActions: BulkAction<any>[] = [];
@@ -28,7 +30,7 @@ export async function runBulkAction(name: string, apply: boolean) {
 
     const entities = await bulkAction.getData();
 
-    const bulkRun: BulkRun = { name, count: entities.length, progress: 0, apply, notificationCount: {}, errors: [] };
+    const bulkRun: BulkRun = { name, count: entities.length, progress: 0, apply, notificationCount: {}, errors: [], startedAt: (new Date()).toISOString() };
     bulkRuns.push(bulkRun);
 
     (async function fireAndForget() {
@@ -54,6 +56,8 @@ export async function runBulkAction(name: string, apply: boolean) {
 
             bulkRun.progress += 1;
         }
+
+        bulkRun.finishedAt = (new Date().toISOString());
     })();
 }
 

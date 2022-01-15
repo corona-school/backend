@@ -25,6 +25,10 @@ class BulkRun {
     errors: string[];
     @Field()
     currentUser?: string;
+    @Field()
+    startedAt: string;
+    @Field()
+    finishedAt?: string;
 }
 
 @Resolver(of => BulkRun)
