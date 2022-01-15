@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { actionTakenAt } from "./index";
 import { NotificationContext, BulkAction } from "./types";
 import { getMatchHash } from "../match/util";
+import { getUserId } from "../user";
 
 interface BulkRun {
     name: string;
@@ -11,6 +12,7 @@ interface BulkRun {
     apply: boolean;
     notificationCount: { [id: number]: number };
     errors: string[];
+    currentUser?: string;
 }
 
 export const bulkActions: BulkAction<any>[] = [];
@@ -35,6 +37,8 @@ export async function runBulkAction(name: string, apply: boolean) {
                 const user = await bulkAction.getUser(entity);
                 const actionDate = bulkAction.getActionDate(entity);
                 const context = await bulkAction.getContext(entity);
+
+                bulkRun.currentUser = getUserId(user);
 
                 const result = await actionTakenAt(actionDate, user, bulkAction.action, context, apply);
                 for (const { notificationID } of result) {

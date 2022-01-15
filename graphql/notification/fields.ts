@@ -23,6 +23,8 @@ class BulkRun {
     notificationCount: BulkRunNotificationCount[];
     @Field(type => [String])
     errors: string[];
+    @Field()
+    currentUser?: string;
 }
 
 @Resolver(of => BulkRun)
