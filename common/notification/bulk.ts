@@ -75,7 +75,8 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
         uniqueId: "" + match.id,
         pupil: await prisma.pupil.findUnique({ where: { id: match.pupilId }}),
         firstMatch: (await prisma.match.count({ where: { studentId: match.studentId, createdAt: { lt: match.createdAt }}})) === 0,
-        matchHash: getMatchHash(match)
+        matchHash: getMatchHash(match),
+        matchDate: "" + (+match.createdAt)
     })
 });
 
@@ -92,6 +93,7 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
         uniqueId: "" + match.id,
         student: await prisma.student.findUnique({ where: { id: match.studentId }}),
         firstMatch: (await prisma.match.count({ where: { pupilId: match.pupilId, createdAt: { lt: match.createdAt }}})) === 0,
-        matchHash: getMatchHash(match)
+        matchHash: getMatchHash(match),
+        matchDate: "" + (+match.createdAt)
     })
 });
