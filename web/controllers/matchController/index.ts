@@ -163,7 +163,7 @@ export async function dissolveMatch(match: Match, reason: number, dissolver: Per
         }
 
         const matchHash = getMatchHash(match);
-        const matchDate = +match.createdAt;
+        const matchDate = "" + (+match.createdAt);
         const uniqueId = "" + match.id;
 
         await Notification.actionTaken(match.pupil, "tutee_match_dissolved", {

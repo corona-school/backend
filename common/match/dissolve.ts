@@ -33,7 +33,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     const student = await prisma.student.findUnique({ where: { id: match.studentId }});
     const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
     const matchHash = getMatchHash(match);
-    const matchDate = +match.createdAt;
+    const matchDate = "" + (+match.createdAt);
     const uniqueId = "" + match.id;
 
     await Notification.actionTaken(student, "tutor_match_dissolved", { pupil, matchHash, matchDate, uniqueId });
