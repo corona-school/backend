@@ -3,6 +3,13 @@ import { ObjectType, Field, Resolver, Query, Authorized } from "type-graphql";
 import { bulkRuns } from "../../common/notification/bulk";
 
 @ObjectType()
+class BulkRunNotificationCount {
+    @Field()
+    notificationID: number;
+    @Field()
+    count: number;
+}
+@ObjectType()
 class BulkRun {
     @Field()
     name: string;
@@ -13,7 +20,7 @@ class BulkRun {
     @Field()
     apply: boolean;
     @Field()
-    notificationCount: { [id: number]: number };
+    notificationCount: BulkRunNotificationCount;
     @Field()
     errors: string[];
 }
@@ -23,6 +30,9 @@ export class NotificationBulkRunResolver {
     @Query()
     @Authorized(Role.ADMIN)
     notificationBulkRuns() {
-        return bulkRuns;
+        return bulkRuns.map(it => ({
+            ...it,
+            notificationCount: Object.entries(it.notificationCount).map(([notificationID, count]) => ({ notificationID: +notificationID, count }))
+        }));
     }
 }
