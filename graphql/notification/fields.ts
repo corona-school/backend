@@ -23,11 +23,11 @@ class BulkRun {
     notificationCount: BulkRunNotificationCount[];
     @Field(type => [String])
     errors: string[];
-    @Field()
+    @Field(type => String, { nullable: true })
     currentUser?: string;
     @Field()
     startedAt: string;
-    @Field()
+    @Field(type => String, { nullable: true })
     finishedAt?: string;
 }
 
