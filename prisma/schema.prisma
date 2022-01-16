@@ -377,12 +377,12 @@ model pupil_tutoring_interest_confirmation_request {
 }
 
 model remission_request {
-  id               Int       @id @default(autoincrement())
-  createdAt        DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
-  uuid             String    @unique @db.VarChar
-  studentId        Int       @unique
-  student          student   @relation(fields: [studentId], references: [id])
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  uuid      String   @unique @db.VarChar
+  studentId Int?     @unique
+  student   student? @relation(fields: [studentId], references: [id])
 }
 
 model school {
@@ -453,6 +453,7 @@ model student {
   isStudent                                 Boolean                                @default(false)
   subjects                                  String?                                @db.VarChar
   openMatchRequestCount                     Int                                    @default(1)
+  isCodu                                    Boolean                                @default(false)
   isInstructor                              Boolean                                @default(false)
   msg                                       String?                                @db.VarChar
   state                                     student_state_enum?                    @default(other)
