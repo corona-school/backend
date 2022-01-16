@@ -590,6 +590,19 @@ Ask pupil if he is interested in the match for tutoring
 }
 ```
 
+### codu_student_registration
+
+*description*
+
+Send mail to student with further information on the CoDu study
+
+*context*
+```typescript
+{
+  student: User
+}
+```
+
 ## Feedback
 
 ### feedback_request_student

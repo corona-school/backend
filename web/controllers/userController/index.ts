@@ -42,6 +42,7 @@ import { Course, CourseState } from "../../../common/entity/Course";
 import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
 import { Subcourse } from "../../../common/entity/Subcourse";
 import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -190,6 +191,7 @@ export async function putHandler(req: Request, res: Response) {
                 status = 500;
             }
         } else {
+            console.log("Verification failed");
             status = 400;
         }
     } catch (e) {
@@ -869,6 +871,9 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     try {
         await entityManager.save(type, person);
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
+        if (person instanceof Student && req.isCodu) {
+            await Notification.actionTaken(person, "codu_student_registration", {});
+        }
         logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${person?.constructor?.name}`);
         logger.debug(person);
     } catch (e) {
