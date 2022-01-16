@@ -488,7 +488,7 @@ Match was dissolved.
 {
     student: Student;
     matchHash: string;
-    matchDate: number;
+    matchDate: number as string;
 }
 ```
 
@@ -519,7 +519,7 @@ Match was dissolved.
 {
     pupil: Pupil;
     matchHash: string;
-    matchDate: number;
+    matchDate: number as string;
 }
 ```
 
@@ -552,7 +552,7 @@ Send mail to tutee to notify after matching
     subjects: string,
     callURL: string,
     matchHash: string,
-    matchDate: number
+    matchDate: number as string
 }
 ```
 
@@ -571,7 +571,7 @@ Send mail to tutor to notify after matching
     subjects: string,
     callURL: string,
     matchHash: string,
-    matchDate: number
+    matchDate: number as string
 }
 ```
 
