@@ -114,6 +114,11 @@ export class StudentCreateManyInput {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
+  isCodu?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
   isInstructor?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => String, {

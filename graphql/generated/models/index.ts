@@ -24,6 +24,7 @@ export { Project_field_with_grade_restriction } from "./Project_field_with_grade
 export { Project_match } from "./Project_match";
 export { Pupil } from "./Pupil";
 export { Pupil_tutoring_interest_confirmation_request } from "./Pupil_tutoring_interest_confirmation_request";
+export { Remission_request } from "./Remission_request";
 export { School } from "./School";
 export { Screener } from "./Screener";
 export { Screening } from "./Screening";

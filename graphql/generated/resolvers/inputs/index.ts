@@ -790,6 +790,21 @@ export { Pupil_tutoring_interest_confirmation_requestUpdateWithoutPupilInput } f
 export { Pupil_tutoring_interest_confirmation_requestUpsertWithoutPupilInput } from "./Pupil_tutoring_interest_confirmation_requestUpsertWithoutPupilInput";
 export { Pupil_tutoring_interest_confirmation_requestWhereInput } from "./Pupil_tutoring_interest_confirmation_requestWhereInput";
 export { Pupil_tutoring_interest_confirmation_requestWhereUniqueInput } from "./Pupil_tutoring_interest_confirmation_requestWhereUniqueInput";
+export { Remission_requestCreateInput } from "./Remission_requestCreateInput";
+export { Remission_requestCreateManyInput } from "./Remission_requestCreateManyInput";
+export { Remission_requestCreateNestedOneWithoutStudentInput } from "./Remission_requestCreateNestedOneWithoutStudentInput";
+export { Remission_requestCreateOrConnectWithoutStudentInput } from "./Remission_requestCreateOrConnectWithoutStudentInput";
+export { Remission_requestCreateWithoutStudentInput } from "./Remission_requestCreateWithoutStudentInput";
+export { Remission_requestOrderByInput } from "./Remission_requestOrderByInput";
+export { Remission_requestRelationFilter } from "./Remission_requestRelationFilter";
+export { Remission_requestScalarWhereWithAggregatesInput } from "./Remission_requestScalarWhereWithAggregatesInput";
+export { Remission_requestUpdateInput } from "./Remission_requestUpdateInput";
+export { Remission_requestUpdateManyMutationInput } from "./Remission_requestUpdateManyMutationInput";
+export { Remission_requestUpdateOneWithoutStudentInput } from "./Remission_requestUpdateOneWithoutStudentInput";
+export { Remission_requestUpdateWithoutStudentInput } from "./Remission_requestUpdateWithoutStudentInput";
+export { Remission_requestUpsertWithoutStudentInput } from "./Remission_requestUpsertWithoutStudentInput";
+export { Remission_requestWhereInput } from "./Remission_requestWhereInput";
+export { Remission_requestWhereUniqueInput } from "./Remission_requestWhereUniqueInput";
 export { SchoolCreateInput } from "./SchoolCreateInput";
 export { SchoolCreateManyInput } from "./SchoolCreateManyInput";
 export { SchoolCreateNestedOneWithoutPupilInput } from "./SchoolCreateNestedOneWithoutPupilInput";
@@ -882,6 +897,7 @@ export { StudentCreateNestedOneWithoutParticipation_certificateInput } from "./S
 export { StudentCreateNestedOneWithoutProject_coaching_screeningInput } from "./StudentCreateNestedOneWithoutProject_coaching_screeningInput";
 export { StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput } from "./StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput";
 export { StudentCreateNestedOneWithoutProject_matchInput } from "./StudentCreateNestedOneWithoutProject_matchInput";
+export { StudentCreateNestedOneWithoutRemission_requestInput } from "./StudentCreateNestedOneWithoutRemission_requestInput";
 export { StudentCreateNestedOneWithoutScreeningInput } from "./StudentCreateNestedOneWithoutScreeningInput";
 export { StudentCreateNestedOneWithoutSubcourse_instructors_studentInput } from "./StudentCreateNestedOneWithoutSubcourse_instructors_studentInput";
 export { StudentCreateOrConnectWithoutCertificate_of_conductInput } from "./StudentCreateOrConnectWithoutCertificate_of_conductInput";
@@ -898,6 +914,7 @@ export { StudentCreateOrConnectWithoutParticipation_certificateInput } from "./S
 export { StudentCreateOrConnectWithoutProject_coaching_screeningInput } from "./StudentCreateOrConnectWithoutProject_coaching_screeningInput";
 export { StudentCreateOrConnectWithoutProject_field_with_grade_restrictionInput } from "./StudentCreateOrConnectWithoutProject_field_with_grade_restrictionInput";
 export { StudentCreateOrConnectWithoutProject_matchInput } from "./StudentCreateOrConnectWithoutProject_matchInput";
+export { StudentCreateOrConnectWithoutRemission_requestInput } from "./StudentCreateOrConnectWithoutRemission_requestInput";
 export { StudentCreateOrConnectWithoutScreeningInput } from "./StudentCreateOrConnectWithoutScreeningInput";
 export { StudentCreateOrConnectWithoutSubcourse_instructors_studentInput } from "./StudentCreateOrConnectWithoutSubcourse_instructors_studentInput";
 export { StudentCreateWithoutCertificate_of_conductInput } from "./StudentCreateWithoutCertificate_of_conductInput";
@@ -914,6 +931,7 @@ export { StudentCreateWithoutParticipation_certificateInput } from "./StudentCre
 export { StudentCreateWithoutProject_coaching_screeningInput } from "./StudentCreateWithoutProject_coaching_screeningInput";
 export { StudentCreateWithoutProject_field_with_grade_restrictionInput } from "./StudentCreateWithoutProject_field_with_grade_restrictionInput";
 export { StudentCreateWithoutProject_matchInput } from "./StudentCreateWithoutProject_matchInput";
+export { StudentCreateWithoutRemission_requestInput } from "./StudentCreateWithoutRemission_requestInput";
 export { StudentCreateWithoutScreeningInput } from "./StudentCreateWithoutScreeningInput";
 export { StudentCreateWithoutSubcourse_instructors_studentInput } from "./StudentCreateWithoutSubcourse_instructors_studentInput";
 export { StudentCreatelanguagesInput } from "./StudentCreatelanguagesInput";
@@ -937,6 +955,7 @@ export { StudentUpdateOneWithoutMatchInput } from "./StudentUpdateOneWithoutMatc
 export { StudentUpdateOneWithoutParticipation_certificateInput } from "./StudentUpdateOneWithoutParticipation_certificateInput";
 export { StudentUpdateOneWithoutProject_coaching_screeningInput } from "./StudentUpdateOneWithoutProject_coaching_screeningInput";
 export { StudentUpdateOneWithoutProject_matchInput } from "./StudentUpdateOneWithoutProject_matchInput";
+export { StudentUpdateOneWithoutRemission_requestInput } from "./StudentUpdateOneWithoutRemission_requestInput";
 export { StudentUpdateOneWithoutScreeningInput } from "./StudentUpdateOneWithoutScreeningInput";
 export { StudentUpdateWithoutCertificate_of_conductInput } from "./StudentUpdateWithoutCertificate_of_conductInput";
 export { StudentUpdateWithoutCourseInput } from "./StudentUpdateWithoutCourseInput";
@@ -952,6 +971,7 @@ export { StudentUpdateWithoutParticipation_certificateInput } from "./StudentUpd
 export { StudentUpdateWithoutProject_coaching_screeningInput } from "./StudentUpdateWithoutProject_coaching_screeningInput";
 export { StudentUpdateWithoutProject_field_with_grade_restrictionInput } from "./StudentUpdateWithoutProject_field_with_grade_restrictionInput";
 export { StudentUpdateWithoutProject_matchInput } from "./StudentUpdateWithoutProject_matchInput";
+export { StudentUpdateWithoutRemission_requestInput } from "./StudentUpdateWithoutRemission_requestInput";
 export { StudentUpdateWithoutScreeningInput } from "./StudentUpdateWithoutScreeningInput";
 export { StudentUpdateWithoutSubcourse_instructors_studentInput } from "./StudentUpdateWithoutSubcourse_instructors_studentInput";
 export { StudentUpdatelanguagesInput } from "./StudentUpdatelanguagesInput";
@@ -969,6 +989,7 @@ export { StudentUpsertWithoutParticipation_certificateInput } from "./StudentUps
 export { StudentUpsertWithoutProject_coaching_screeningInput } from "./StudentUpsertWithoutProject_coaching_screeningInput";
 export { StudentUpsertWithoutProject_field_with_grade_restrictionInput } from "./StudentUpsertWithoutProject_field_with_grade_restrictionInput";
 export { StudentUpsertWithoutProject_matchInput } from "./StudentUpsertWithoutProject_matchInput";
+export { StudentUpsertWithoutRemission_requestInput } from "./StudentUpsertWithoutRemission_requestInput";
 export { StudentUpsertWithoutScreeningInput } from "./StudentUpsertWithoutScreeningInput";
 export { StudentUpsertWithoutSubcourse_instructors_studentInput } from "./StudentUpsertWithoutSubcourse_instructors_studentInput";
 export { StudentWhereInput } from "./StudentWhereInput";

@@ -37,6 +37,7 @@ export class StudentInfoDTO extends StudentEditableInfoDTO {
         s.isTutor = student.isStudent;
         s.isInstructor = student.isInstructor;
         s.isProjectCoach = student.isProjectCoach;
+        s.isCodu = student.isCodu;
 
         //subjects + project fields
         s.subjects = student.getSubjectsFormatted();

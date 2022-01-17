@@ -248,6 +248,7 @@ export async function setupDevDB() {
     s1.isProjectCoach = true;
     s1.supportsInDaZ = true;
     s1.languages = [Language.ku, Language.en];
+    s1.isCodu = true;
     students.push(s1);
 
     const s2 = new Student();
