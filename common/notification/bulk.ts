@@ -38,6 +38,7 @@ export async function runBulkAction(name: string, apply: boolean) {
             try {
                 const user = await bulkAction.getUser(entity);
                 if (!user.active) {
+                    bulkRun.progress += 1;
                     continue;
                 }
 
