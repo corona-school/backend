@@ -260,6 +260,8 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 /* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
    as if the user took that action at actionDate */
 export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean) {
+    assert(user.active, "Cannot trigger action taken at for inactive users");
+
     const notifications = await getNotifications();
     const relevantNotifications = notifications.get(actionId);
 

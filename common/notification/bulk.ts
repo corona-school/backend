@@ -37,6 +37,10 @@ export async function runBulkAction(name: string, apply: boolean) {
         for (const entity of entities) {
             try {
                 const user = await bulkAction.getUser(entity);
+                if (!user.active) {
+                    continue;
+                }
+
                 const actionDate = bulkAction.getActionDate(entity);
                 const context = await bulkAction.getContext(entity);
 
