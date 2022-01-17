@@ -137,6 +137,11 @@ export class StudentScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
     nullable: true
   })
+  isCodu?: BoolWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolWithAggregatesFilter, {
+    nullable: true
+  })
   isInstructor?: BoolWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {

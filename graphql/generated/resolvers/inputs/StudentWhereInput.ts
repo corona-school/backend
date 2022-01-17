@@ -26,6 +26,7 @@ import { Participation_certificateListRelationFilter } from "../inputs/Participa
 import { Project_coaching_screeningRelationFilter } from "../inputs/Project_coaching_screeningRelationFilter";
 import { Project_field_with_grade_restrictionListRelationFilter } from "../inputs/Project_field_with_grade_restrictionListRelationFilter";
 import { Project_matchListRelationFilter } from "../inputs/Project_matchListRelationFilter";
+import { Remission_requestRelationFilter } from "../inputs/Remission_requestRelationFilter";
 import { ScreeningRelationFilter } from "../inputs/ScreeningRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
@@ -149,6 +150,11 @@ export class StudentWhereInput {
     nullable: true
   })
   openMatchRequestCount?: IntFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
+  isCodu?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
@@ -334,6 +340,11 @@ export class StudentWhereInput {
     nullable: true
   })
   project_match?: Project_matchListRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestRelationFilter, {
+    nullable: true
+  })
+  remission_request?: Remission_requestRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningRelationFilter, {
     nullable: true

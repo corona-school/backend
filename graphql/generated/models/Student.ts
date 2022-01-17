@@ -16,6 +16,7 @@ import { Participation_certificate } from "../models/Participation_certificate";
 import { Project_coaching_screening } from "../models/Project_coaching_screening";
 import { Project_field_with_grade_restriction } from "../models/Project_field_with_grade_restriction";
 import { Project_match } from "../models/Project_match";
+import { Remission_request } from "../models/Remission_request";
 import { Screening } from "../models/Screening";
 import { Subcourse_instructors_student } from "../models/Subcourse_instructors_student";
 import { student_languages_enum } from "../enums/student_languages_enum";
@@ -126,6 +127,11 @@ export class Student {
     nullable: false
   })
   openMatchRequestCount!: number;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
+  isCodu!: boolean;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
@@ -269,6 +275,8 @@ export class Student {
   project_field_with_grade_restriction?: Project_field_with_grade_restriction[];
 
   project_match?: Project_match[];
+
+  remission_request?: Remission_request | null;
 
   screening?: Screening | null;
 

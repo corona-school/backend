@@ -25,6 +25,7 @@ export { Project_matchScalarFieldEnum } from "./Project_matchScalarFieldEnum";
 export { PupilScalarFieldEnum } from "./PupilScalarFieldEnum";
 export { Pupil_tutoring_interest_confirmation_requestScalarFieldEnum } from "./Pupil_tutoring_interest_confirmation_requestScalarFieldEnum";
 export { QueryMode } from "./QueryMode";
+export { Remission_requestScalarFieldEnum } from "./Remission_requestScalarFieldEnum";
 export { SchoolScalarFieldEnum } from "./SchoolScalarFieldEnum";
 export { ScreenerScalarFieldEnum } from "./ScreenerScalarFieldEnum";
 export { ScreeningScalarFieldEnum } from "./ScreeningScalarFieldEnum";
