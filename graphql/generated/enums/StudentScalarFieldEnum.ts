@@ -21,6 +21,7 @@ export enum StudentScalarFieldEnum {
   isStudent = "isStudent",
   subjects = "subjects",
   openMatchRequestCount = "openMatchRequestCount",
+  isCodu = "isCodu",
   isInstructor = "isInstructor",
   msg = "msg",
   state = "state",

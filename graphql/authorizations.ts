@@ -156,6 +156,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Participation_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
+    Remission_request: allAdmin,
     School: {
         createSchool: adminOrOwner,
         deleteSchool: adminOrOwner,
@@ -253,6 +254,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             createdAt: adminOrOwner,
             openProjectMatchRequestCount: adminOrOwner,
             certificate_of_conduct: adminOrOwner,
+            isCodu: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -294,7 +296,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_participation_certificate: nobody,
             jufo_verification_transmission: nobody,
             expert_data: nobody,
-            instructor_screening: nobody
+            instructor_screening: nobody,
+            remission_request: nobody
 
         })
 

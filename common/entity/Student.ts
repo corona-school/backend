@@ -98,6 +98,9 @@ export class Student extends Person {
     })
     openMatchRequestCount: number;
 
+    @Column({ default: false })
+    isCodu: boolean;
+
     /*
      * Instructor data
      */

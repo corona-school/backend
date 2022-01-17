@@ -110,6 +110,11 @@ export class StudentCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
+  isCodu!: number;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
   isInstructor!: number;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {

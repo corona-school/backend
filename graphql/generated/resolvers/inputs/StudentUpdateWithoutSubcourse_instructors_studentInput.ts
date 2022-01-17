@@ -26,6 +26,7 @@ import { Participation_certificateUpdateManyWithoutStudentInput } from "../input
 import { Project_coaching_screeningUpdateOneWithoutStudentInput } from "../inputs/Project_coaching_screeningUpdateOneWithoutStudentInput";
 import { Project_field_with_grade_restrictionUpdateManyWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionUpdateManyWithoutStudentInput";
 import { Project_matchUpdateManyWithoutStudentInput } from "../inputs/Project_matchUpdateManyWithoutStudentInput";
+import { Remission_requestUpdateOneWithoutStudentInput } from "../inputs/Remission_requestUpdateOneWithoutStudentInput";
 import { ScreeningUpdateOneWithoutStudentInput } from "../inputs/ScreeningUpdateOneWithoutStudentInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdatelanguagesInput } from "../inputs/StudentUpdatelanguagesInput";
@@ -128,6 +129,11 @@ export class StudentUpdateWithoutSubcourse_instructors_studentInput {
     nullable: true
   })
   openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  isCodu?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -313,6 +319,11 @@ export class StudentUpdateWithoutSubcourse_instructors_studentInput {
     nullable: true
   })
   project_match?: Project_matchUpdateManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestUpdateOneWithoutStudentInput, {
+    nullable: true
+  })
+  remission_request?: Remission_requestUpdateOneWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningUpdateOneWithoutStudentInput, {
     nullable: true

@@ -24,6 +24,7 @@ export { Project_field_with_grade_restrictionCrudResolver } from "./Project_fiel
 export { Project_matchCrudResolver } from "./Project_match/Project_matchCrudResolver";
 export { PupilCrudResolver } from "./Pupil/PupilCrudResolver";
 export { Pupil_tutoring_interest_confirmation_requestCrudResolver } from "./Pupil_tutoring_interest_confirmation_request/Pupil_tutoring_interest_confirmation_requestCrudResolver";
+export { Remission_requestCrudResolver } from "./Remission_request/Remission_requestCrudResolver";
 export { SchoolCrudResolver } from "./School/SchoolCrudResolver";
 export { ScreenerCrudResolver } from "./Screener/ScreenerCrudResolver";
 export { ScreeningCrudResolver } from "./Screening/ScreeningCrudResolver";

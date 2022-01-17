@@ -119,6 +119,11 @@ export class StudentGroupBy {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: false
   })
+  isCodu!: boolean;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: false
+  })
   isInstructor!: boolean;
 
   @TypeGraphQL.Field(_type => String, {

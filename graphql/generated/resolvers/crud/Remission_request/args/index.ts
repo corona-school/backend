@@ -1,0 +1,12 @@
+export { AggregateRemission_requestArgs } from "./AggregateRemission_requestArgs";
+export { CreateManyRemission_requestArgs } from "./CreateManyRemission_requestArgs";
+export { CreateRemission_requestArgs } from "./CreateRemission_requestArgs";
+export { DeleteManyRemission_requestArgs } from "./DeleteManyRemission_requestArgs";
+export { DeleteRemission_requestArgs } from "./DeleteRemission_requestArgs";
+export { FindFirstRemission_requestArgs } from "./FindFirstRemission_requestArgs";
+export { FindManyRemission_requestArgs } from "./FindManyRemission_requestArgs";
+export { FindUniqueRemission_requestArgs } from "./FindUniqueRemission_requestArgs";
+export { GroupByRemission_requestArgs } from "./GroupByRemission_requestArgs";
+export { UpdateManyRemission_requestArgs } from "./UpdateManyRemission_requestArgs";
+export { UpdateRemission_requestArgs } from "./UpdateRemission_requestArgs";
+export { UpsertRemission_requestArgs } from "./UpsertRemission_requestArgs";
