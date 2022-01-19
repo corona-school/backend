@@ -16,6 +16,7 @@ import { Participation_certificateCreateNestedManyWithoutStudentInput } from "..
 import { Project_coaching_screeningCreateNestedOneWithoutStudentInput } from "../inputs/Project_coaching_screeningCreateNestedOneWithoutStudentInput";
 import { Project_field_with_grade_restrictionCreateNestedManyWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionCreateNestedManyWithoutStudentInput";
 import { Project_matchCreateNestedManyWithoutStudentInput } from "../inputs/Project_matchCreateNestedManyWithoutStudentInput";
+import { Remission_requestCreateNestedOneWithoutStudentInput } from "../inputs/Remission_requestCreateNestedOneWithoutStudentInput";
 import { ScreeningCreateNestedOneWithoutStudentInput } from "../inputs/ScreeningCreateNestedOneWithoutStudentInput";
 import { StudentCreatelanguagesInput } from "../inputs/StudentCreatelanguagesInput";
 import { Subcourse_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Subcourse_instructors_studentCreateNestedManyWithoutStudentInput";
@@ -121,6 +122,11 @@ export class StudentCreateInput {
     nullable: true
   })
   openMatchRequestCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  isCodu?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
@@ -306,6 +312,11 @@ export class StudentCreateInput {
     nullable: true
   })
   project_match?: Project_matchCreateNestedManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestCreateNestedOneWithoutStudentInput, {
+    nullable: true
+  })
+  remission_request?: Remission_requestCreateNestedOneWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningCreateNestedOneWithoutStudentInput, {
     nullable: true
