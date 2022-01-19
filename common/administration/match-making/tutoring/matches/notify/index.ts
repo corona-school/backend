@@ -6,12 +6,13 @@ import { Student } from "../../../../../entity/Student";
 import { MatchNotificationStatus } from "../../types/notifications";
 import { mailNotifyTuteeAboutMatch, mailNotifyTutorAboutMatch } from "./mail";
 import { v4 as generateUUID } from "uuid";
+import { getMatchHash } from "../../../../../match/util";
 
 const logger = getLogger();
 
 
 async function notifyMatch(match: Match, manager: EntityManager): Promise<MatchNotificationStatus> {
-    const matchHash = generateUUID();
+    const matchHash = getMatchHash(match);
 
     try {
         await mailNotifyTuteeAboutMatch(match, manager, matchHash);

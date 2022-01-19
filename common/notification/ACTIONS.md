@@ -487,6 +487,8 @@ Match was dissolved.
 ```typescript
 {
     student: Student;
+    matchHash: string;
+    matchDate: number as string;
 }
 ```
 
@@ -516,6 +518,8 @@ Match was dissolved.
 ```typescript
 {
     pupil: Pupil;
+    matchHash: string;
+    matchDate: number as string;
 }
 ```
 
@@ -546,7 +550,9 @@ Send mail to tutee to notify after matching
 {
     student: User,
     subjects: string,
-    callURL: string
+    callURL: string,
+    matchHash: string,
+    matchDate: number as string
 }
 ```
 
@@ -563,7 +569,9 @@ Send mail to tutor to notify after matching
     pupil: User,
     pupilGrade: string,
     subjects: string,
-    callURL: string
+    callURL: string,
+    matchHash: string,
+    matchDate: number as string
 }
 ```
 

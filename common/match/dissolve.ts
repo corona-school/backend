@@ -6,6 +6,8 @@ import { isStudent, isPupil } from "../user";
 import { logTransaction } from "../transactionlog/log";
 // eslint-disable-next-line camelcase
 import {Project_match} from "../../graphql/generated";
+import * as Notification from "../notification";
+import { getMatchHash } from "./util";
 
 const logger = getLogger("Match");
 
@@ -28,58 +30,14 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
 
     logger.info(`Match(${match.id}) was dissolved by ${dissolver?.firstname ?? "an admin"}`);
 
-    try {
-        if (dissolver && isStudent(dissolver)) {
-            if (dissolver.id !== match.studentId) {
-                throw new Error(`The Dissolver(${dissolver.id}) does not match the Student(${match.studentId}) when dissolving the Match`);
-            }
+    const student = await prisma.student.findUnique({ where: { id: match.studentId }});
+    const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
+    const matchHash = getMatchHash(match);
+    const matchDate = "" + (+match.createdAt);
+    const uniqueId = "" + match.id;
 
-            const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
-            await sendTemplateMail(
-                mailjetTemplates.PUPILMATCHDISSOLVED({
-                    studentFirstname: dissolver.firstname,
-                    pupilFirstname: pupil.firstname
-                }),
-                pupil.email
-            );
-        } else if (dissolver && isPupil(dissolver)) {
-            if (dissolver.id !== match.pupilId) {
-                throw new Error(`The Dissolver(${dissolver.id}) does not match the Student(${match.pupilId}) when dissolving the Match`);
-            }
-
-            const student = await prisma.pupil.findUnique({ where: { id: match.studentId }});
-            await sendTemplateMail(
-                mailjetTemplates.STUDENTMATCHDISSOLVED({
-                    studentFirstname: student.firstname,
-                    pupilFirstname: dissolver.firstname
-                }),
-                student.email
-            );
-        } else if (dissolver === null) { // dissolved by an admin
-            const student = await prisma.student.findUnique({ where: { id: match.studentId }});
-            const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
-
-            await sendTemplateMail(
-                mailjetTemplates.PUPILMATCHDISSOLVED({
-                    studentFirstname: student.firstname,
-                    pupilFirstname: pupil.firstname
-                }),
-                pupil.email
-            );
-
-            await sendTemplateMail(
-                mailjetTemplates.STUDENTMATCHDISSOLVED({
-                    studentFirstname: student.firstname,
-                    pupilFirstname: pupil.firstname
-                }),
-                student.email
-            );
-        } else {
-            throw new Error("Dissolver was neither student nor pupil nor admin");
-        }
-    } catch (error) {
-        logger.error("Can't send match dissolved mail: ", error);
-    }
+    await Notification.actionTaken(student, "tutor_match_dissolved", { pupil, matchHash, matchDate, uniqueId });
+    await Notification.actionTaken(pupil, "tutee_match_dissolved", { student, matchHash, matchDate, uniqueId });
 }
 
 

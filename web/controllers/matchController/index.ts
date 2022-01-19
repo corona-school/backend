@@ -10,6 +10,7 @@ import { TemplateMail } from "../../../common/mails/templates";
 import { getTransactionLog } from "../../../common/transactionlog";
 import MatchDissolveEvent from "../../../common/transactionlog/types/MatchDissolveEvent";
 import * as Notification from "../../../common/notification";
+import { getMatchHash } from "../../../common/match/util";
 
 const logger = getLogger();
 
@@ -161,13 +162,21 @@ export async function dissolveMatch(match: Match, reason: number, dissolver: Per
             });
         }
 
+        const matchHash = getMatchHash(match);
+        const matchDate = "" + (+match.createdAt);
+        const uniqueId = "" + match.id;
+
         await Notification.actionTaken(match.pupil, "tutee_match_dissolved", {
             student: match.student,
-            uniqueId: "" + match.id
+            matchHash,
+            matchDate,
+            uniqueId
         });
         await Notification.actionTaken(match.student, "tutor_match_dissolved", {
             pupil: match.pupil,
-            uniqueId: "" + match.id
+            matchHash,
+            matchDate,
+            uniqueId
         });
     } catch (e) {
         logger.error("Can't send match dissolved mail: ", e.message);
