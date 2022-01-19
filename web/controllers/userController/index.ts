@@ -1007,6 +1007,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         } else if (!active && person.active) {
             // Deactivate if active
             logger.info("Deactivating person " + person.firstname + " " + person.lastname);
+            person.active = false;
 
             // Step 1: Dissolve all matches
             let options;
@@ -1073,8 +1074,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                 logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
             }
 
-            // Step 3: Deactivate
-            person.active = false;
+
 
             await entityManager.save(type, person);
 

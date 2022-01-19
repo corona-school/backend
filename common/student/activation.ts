@@ -11,6 +11,12 @@ export async function deactivateStudent(student: Student) {
     if (!student.active) {
         throw new Error("Student was already deactivated");
     }
+
+    await Notification.actionTaken(student, 'student_account_deactivated', {});
+    await Notification.cancelRemindersFor(student);
+    // Setting 'active' to false will not send out any notifications during deactivation
+    student.active = false;
+
     // Dissolve matches for the student.
     let matches = await prisma.match.findMany({
         where: {
@@ -88,8 +94,5 @@ export async function deactivateStudent(student: Student) {
         where: { id: student.id }
     });
 
-    Notification.actionTaken(student, 'student_account_deactivated', {});
-
-    await Notification.cancelRemindersFor(student);
     await getTransactionLog().log(new DeActivateEvent(student, false));
 }

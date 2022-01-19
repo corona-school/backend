@@ -26,6 +26,11 @@ export async function deactivatePupil(pupil: Pupil) {
         throw new Error("Pupil was already deactivated");
     }
 
+    await Notification.actionTaken(pupil, 'pupil_account_deactivated', {});
+    await Notification.cancelRemindersFor(pupil);
+    // Setting 'active' to false will not send out any notifications during deactivation
+    pupil.active = false;
+
     let matches = await prisma.match.findMany({
         where: {
             pupilId: pupil.id
@@ -43,7 +48,6 @@ export async function deactivatePupil(pupil: Pupil) {
 
     await getTransactionLog().log(new DeActivateEvent(pupil, false));
 
-    await Notification.cancelRemindersFor(pupil);
 
     return updatedPupil;
 }

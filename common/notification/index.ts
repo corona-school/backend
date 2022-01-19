@@ -28,6 +28,11 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
+    if (!user.active) {
+        logger.debug(`No action '${actionId}' taken for User(${getUserId(user)}) as the account is deactivated`);
+        return;
+    }
+
     // Delivering notifications can be async while answering the API request continues
     (async function fireAndForget() {
         const startTime = Date.now();
@@ -64,6 +69,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
             });
 
             logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+
 
             const reminders = relevantNotifications.toSend.filter(it => it.delay);
             const directSends = relevantNotifications.toSend.filter(it => !it.delay);
@@ -120,6 +126,11 @@ export async function checkReminders() {
 
         const notification = await getNotification(reminder.notificationID);
         const user = await getUser(reminder.userId);
+
+        if (!user.active) {
+            throw new Error(`Reminder was found although account is deactivated`);
+        }
+
         await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
 
         // For recurring reminders, we simply create another DELAYED concrete notification
