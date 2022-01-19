@@ -135,33 +135,6 @@ export async function dissolveMatch(match: Match, reason: number, dissolver: Per
     await entityManager.save(Match, match);
 
     try {
-    // Send notification mail to partner
-        if (dissolver instanceof Student) {
-            const mail = mailjetTemplates.PUPILMATCHDISSOLVED({
-                studentFirstname: dissolver.firstname,
-                pupilFirstname: match.pupil.firstname
-            });
-
-            await sendTemplateMail(mail, match.pupil.email);
-
-            await Notification.actionTaken(match.pupil, "tutor_match_dissolved_other", {
-                student: match.student,
-                uniqueId: "" + match.id
-            });
-        } else {
-            const mail = mailjetTemplates.STUDENTMATCHDISSOLVED({
-                studentFirstname: match.student.firstname,
-                pupilFirstname: dissolver.firstname
-            });
-
-            await sendTemplateMail(mail, match.student.email);
-
-            await Notification.actionTaken(match.student, "tutee_match_dissolved_other", {
-                pupil: match.pupil,
-                uniqueId: "" + match.id
-            });
-        }
-
         const matchHash = getMatchHash(match);
         const matchDate = "" + (+match.createdAt);
         const uniqueId = "" + match.id;
