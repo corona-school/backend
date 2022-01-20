@@ -195,7 +195,7 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     const context: Context = {
         ...notificationContext,
         user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken
+        authToken: user.authToken ?? ""
     };
 
     try {
