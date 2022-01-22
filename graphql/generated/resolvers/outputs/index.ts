@@ -25,6 +25,7 @@ export { AggregateProject_field_with_grade_restriction } from "./AggregateProjec
 export { AggregateProject_match } from "./AggregateProject_match";
 export { AggregatePupil } from "./AggregatePupil";
 export { AggregatePupil_tutoring_interest_confirmation_request } from "./AggregatePupil_tutoring_interest_confirmation_request";
+export { AggregateRemission_request } from "./AggregateRemission_request";
 export { AggregateSchool } from "./AggregateSchool";
 export { AggregateScreener } from "./AggregateScreener";
 export { AggregateScreening } from "./AggregateScreening";
@@ -189,6 +190,12 @@ export { Pupil_tutoring_interest_confirmation_requestGroupBy } from "./Pupil_tut
 export { Pupil_tutoring_interest_confirmation_requestMaxAggregate } from "./Pupil_tutoring_interest_confirmation_requestMaxAggregate";
 export { Pupil_tutoring_interest_confirmation_requestMinAggregate } from "./Pupil_tutoring_interest_confirmation_requestMinAggregate";
 export { Pupil_tutoring_interest_confirmation_requestSumAggregate } from "./Pupil_tutoring_interest_confirmation_requestSumAggregate";
+export { Remission_requestAvgAggregate } from "./Remission_requestAvgAggregate";
+export { Remission_requestCountAggregate } from "./Remission_requestCountAggregate";
+export { Remission_requestGroupBy } from "./Remission_requestGroupBy";
+export { Remission_requestMaxAggregate } from "./Remission_requestMaxAggregate";
+export { Remission_requestMinAggregate } from "./Remission_requestMinAggregate";
+export { Remission_requestSumAggregate } from "./Remission_requestSumAggregate";
 export { SchoolAvgAggregate } from "./SchoolAvgAggregate";
 export { SchoolCountAggregate } from "./SchoolCountAggregate";
 export { SchoolGroupBy } from "./SchoolGroupBy";

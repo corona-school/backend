@@ -113,6 +113,11 @@ export class StudentMinAggregate {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
+  isCodu!: boolean | null;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
   isInstructor!: boolean | null;
 
   @TypeGraphQL.Field(_type => String, {

@@ -146,7 +146,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
                 subcourse: {
                     lecture: {
                         every: {
-                            start: { lte: new Date() }
+                            start: { gte: new Date() }
                         }
                     }
                 }

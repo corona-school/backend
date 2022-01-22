@@ -4,6 +4,7 @@ import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import { dissolveMatch } from "../match/dissolve";
 import { RedundantError } from "../util/error";
+import * as Notification from "../notification";
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
@@ -26,6 +27,11 @@ export async function deactivatePupil(pupil: Pupil) {
         throw new RedundantError("Pupil was already deactivated");
     }
 
+    await Notification.actionTaken(pupil, 'pupil_account_deactivated', {});
+    await Notification.cancelRemindersFor(pupil);
+    // Setting 'active' to false will not send out any notifications during deactivation
+    pupil.active = false;
+
     let matches = await prisma.match.findMany({
         where: {
             pupilId: pupil.id
@@ -42,6 +48,7 @@ export async function deactivatePupil(pupil: Pupil) {
     });
 
     await getTransactionLog().log(new DeActivateEvent(pupil, false));
+
 
     return updatedPupil;
 }

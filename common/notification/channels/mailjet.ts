@@ -25,7 +25,10 @@ export const mailjetChannel: Channel = {
             TemplateLanguage: true,
             Variables: context,
             Attachments: context.attachments,
-            CustomID: `${concreteID}`
+            CustomID: `${concreteID}`,
+            TemplateErrorReporting: {
+                Email: "backend@lern-fair.de"
+            }
         };
 
         if (context.replyToAddress) {

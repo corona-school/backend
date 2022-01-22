@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client";
 import { getLogger } from "log4js";
 
 type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
-let _notificationsPerAction: NotificationsPerAction;
+let _notificationsPerAction: Promise<NotificationsPerAction>;
 
 const logger = getLogger("Notification Management");
 
@@ -17,36 +17,38 @@ export function invalidateCache() {
     _notificationsPerAction = undefined;
 }
 
-export async function getNotifications(): Promise<NotificationsPerAction> {
-    if (_notificationsPerAction) {
-        return _notificationsPerAction;
-    }
+export function getNotifications(): Promise<NotificationsPerAction> {
+    if (_notificationsPerAction === undefined) {
+        _notificationsPerAction = (async function() {
+            const result = new Map();
 
-    const result = _notificationsPerAction = new Map();
+            const notifications = await prisma.notification.findMany({ where: { active: true }});
 
-    const notifications = await prisma.notification.findMany({ where: { active: true }});
+            for (const notification of notifications) {
+                for (const sendAction of notification.onActions) {
+                    if (!result.has(sendAction)) {
+                        result.set(sendAction, { toSend: [], toCancel: [] });
+                    }
 
-    for (const notification of notifications) {
-        for (const sendAction of notification.onActions) {
-            if (!result.has(sendAction)) {
-                result.set(sendAction, { toSend: [], toCancel: [] });
+                    result.get(sendAction).toSend.push(notification);
+                }
+
+                for (const cancelAction of notification.cancelledOnAction) {
+                    if (!result.has(cancelAction)) {
+                        result.set(cancelAction, { toSend: [], toCancel: [] });
+                    }
+
+                    result.get(cancelAction).toCancel.push(notification);
+                }
             }
 
-            result.get(sendAction).toSend.push(notification);
-        }
+            logger.debug(`Loaded ${notifications.length} notification into the cache`);
 
-        for (const cancelAction of notification.cancelledOnAction) {
-            if (!result.has(cancelAction)) {
-                result.set(cancelAction, { toSend: [], toCancel: [] });
-            }
-
-            result.get(cancelAction).toCancel.push(notification);
-        }
+            return result;
+        })();
     }
 
-    logger.debug(`Loaded ${notifications.length} notification into the cache`);
-
-    return result;
+    return _notificationsPerAction;
 }
 
 export async function getNotification(id: NotificationID, allowDeactivated = false): Promise<Notification | never> {

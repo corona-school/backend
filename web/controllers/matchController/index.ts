@@ -10,6 +10,7 @@ import { TemplateMail } from "../../../common/mails/templates";
 import { getTransactionLog } from "../../../common/transactionlog";
 import MatchDissolveEvent from "../../../common/transactionlog/types/MatchDissolveEvent";
 import * as Notification from "../../../common/notification";
+import { getMatchHash } from "../../../common/match/util";
 
 const logger = getLogger();
 
@@ -134,40 +135,21 @@ export async function dissolveMatch(match: Match, reason: number, dissolver: Per
     await entityManager.save(Match, match);
 
     try {
-    // Send notification mail to partner
-        if (dissolver instanceof Student) {
-            const mail = mailjetTemplates.PUPILMATCHDISSOLVED({
-                studentFirstname: dissolver.firstname,
-                pupilFirstname: match.pupil.firstname
-            });
-
-            await sendTemplateMail(mail, match.pupil.email);
-
-            await Notification.actionTaken(match.pupil, "tutor_match_dissolved_other", {
-                student: match.student,
-                uniqueId: "" + match.id
-            });
-        } else {
-            const mail = mailjetTemplates.STUDENTMATCHDISSOLVED({
-                studentFirstname: match.student.firstname,
-                pupilFirstname: dissolver.firstname
-            });
-
-            await sendTemplateMail(mail, match.student.email);
-
-            await Notification.actionTaken(match.student, "tutee_match_dissolved_other", {
-                pupil: match.pupil,
-                uniqueId: "" + match.id
-            });
-        }
+        const matchHash = getMatchHash(match);
+        const matchDate = "" + (+match.createdAt);
+        const uniqueId = "" + match.id;
 
         await Notification.actionTaken(match.pupil, "tutee_match_dissolved", {
             student: match.student,
-            uniqueId: "" + match.id
+            matchHash,
+            matchDate,
+            uniqueId
         });
         await Notification.actionTaken(match.student, "tutor_match_dissolved", {
             pupil: match.pupil,
-            uniqueId: "" + match.id
+            matchHash,
+            matchDate,
+            uniqueId
         });
     } catch (e) {
         logger.error("Can't send match dissolved mail: ", e.message);

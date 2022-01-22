@@ -58,6 +58,7 @@ export class StudentEditableInfoDTO {
         hours: number;
         module: TeacherModule;
     };
+    isCodu?: boolean;
 
     isValid(): boolean {
         const validEmail = typeof this.email === "string";

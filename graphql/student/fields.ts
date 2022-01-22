@@ -1,5 +1,10 @@
-import { Student, Participation_certificate as ParticipationCertificate, Match } from "../generated";
-import { Authorized, Field, FieldResolver, Resolver, Root } from "type-graphql";
+import {
+    Student,
+    Participation_certificate as ParticipationCertificate,
+    Match,
+    Certificate_of_conduct
+} from "../generated";
+import { Authorized, FieldResolver, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { LimitEstimated } from "../complexity";
@@ -38,5 +43,17 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canRequestMatch(@Root() student: Required<Student>) {
         return await canStudentRequestMatch(student);
+    }
+
+    // eslint-disable-next-line camelcase
+    @FieldResolver(type => Certificate_of_conduct, {nullable: true})
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(1)
+    async certificateOfConduct(@Root() student: Student) {
+        return await prisma.certificate_of_conduct.findUnique({
+            where: {
+                studentId: student.id
+            }
+        });
     }
 }

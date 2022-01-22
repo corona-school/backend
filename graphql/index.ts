@@ -32,12 +32,12 @@ import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ExtendedFieldsSchoolResolver } from "./school/fields";
 import { MutateStudentResolver } from "./student/mutation";
-import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
-import {ExtendedFieldsCertificateOfConductResolver} from "./certificate_of_conduct/fields";
+import { MutateCertificateOfConductResolver } from "./certificate_of_conduct/mutations";
+import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
 import { ExtendedFieldsStudentResolver } from "./student/field";
 import { isDev } from "../common/util/environment";
 import { formatError } from "./error";
-
+import { NotificationBulkRunResolver } from "./notification/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -70,10 +70,6 @@ const schema = buildSchemaSync({
         ExtendFieldsStudentResolver,
         MutateStudentResolver,
 
-        /*Student*/
-        FindManyStudentResolver,
-        ExtendFieldsStudentResolver,
-
         /* Match */
         FindManyMatchResolver,
         ExtendedFieldsMatchResolver,
@@ -86,6 +82,7 @@ const schema = buildSchemaSync({
         /* Notifications */
         FindManyNotificationResolver,
         MutateNotificationResolver,
+        NotificationBulkRunResolver,
         FindManyConcrete_notificationResolver,
 
         /* TutoringInterestConfirmation */

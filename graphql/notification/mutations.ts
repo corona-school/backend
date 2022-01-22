@@ -3,6 +3,7 @@ import * as GraphQLModel from "../generated/models";
 import { Role } from "../authorizations";
 import * as Notification from "../../common/notification/notification";
 import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
+import { runBulkAction } from "../../common/notification/bulk";
 
 @InputType()
 class NotificationInput { // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
@@ -59,5 +60,12 @@ export class MutateNotificationResolver {
     @Authorized(Role.ADMIN)
     async notificationImport(@Arg("notifications", type => [NotificationInput]) notifications: NotificationInput[], @Arg("overwrite", { nullable: true }) overwrite: boolean = false, @Arg("apply", { nullable: true }) apply: boolean = false) {
         return await Notification.importNotifications(notifications, overwrite, apply);
+    }
+
+    @Mutation(returns => Boolean)
+    @Authorized(Role.ADMIN)
+    async notificationBulkActionRun(@Arg("id") id: string, @Arg("apply") apply: boolean) {
+        await runBulkAction(id, apply);
+        return true;
     }
 }

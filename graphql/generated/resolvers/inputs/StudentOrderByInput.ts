@@ -111,6 +111,11 @@ export class StudentOrderByInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
+  isCodu?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => SortOrder, {
+    nullable: true
+  })
   isInstructor?: "asc" | "desc" | undefined;
 
   @TypeGraphQL.Field(_type => SortOrder, {
