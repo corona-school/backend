@@ -73,6 +73,7 @@ function addBulkAction<Entity>(action: BulkAction<Entity>) {
 
 /* -------------------------------------- Actions ------------------------------------------------------------------- */
 
+/* Run on 22.01.2022
 const MATCH_SURVEYS_INTRODUCTION = new Date(1642286012775);
 
 addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date, uuid: string }>({
@@ -110,3 +111,4 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
         matchDate: "" + (+match.createdAt)
     })
 });
+*/
