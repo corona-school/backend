@@ -34,6 +34,7 @@ import { ExtendedFieldsSchoolResolver } from "./school/fields";
 import { MutateStudentResolver } from "./student/mutation";
 import {MutateCertificateOfConductResolver} from "./certificate_of_conduct/mutations";
 import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
+import { NotificationBulkRunResolver } from "./notification/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -78,6 +79,7 @@ const schema = buildSchemaSync({
         /* Notifications */
         FindManyNotificationResolver,
         MutateNotificationResolver,
+        NotificationBulkRunResolver,
         FindManyConcrete_notificationResolver,
 
         /* TutoringInterestConfirmation */

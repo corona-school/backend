@@ -1,14 +1,18 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, BulkAction } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
 import { getLogger } from 'log4js';
+import { assert } from 'console';
+import { bulkActions } from './bulk';
 
 const logger = getLogger("Notification");
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
+
+const HOURS_TO_MS = 60 * 60 * 1000;
 
 /* -------------------------------- Public API exposed to other components ----------------------------------------------------------- */
 
@@ -82,7 +86,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                     data: reminders.map(it => ({
                         notificationID: it.id,
                         state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + (it.delay /* in hours */ * 60 * 60 * 1000)),
+                        sentAt: new Date(Date.now() + (it.delay /* in hours */ * HOURS_TO_MS)),
                         userId: getUserId(user),
                         contextID: notificationContext.uniqueId,
                         context: notificationContext
@@ -112,39 +116,51 @@ export async function checkReminders() {
     });
 
     for (const reminder of remindersToSend) {
-        logger.debug(`Processing reminder`, reminder);
+        try {
+            logger.debug(`Processing reminder`, reminder);
 
-        if (!reminder.context) {
-            throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
-        }
-
-        const notification = await getNotification(reminder.notificationID);
-        const user = await getUser(reminder.userId);
-        await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
-
-        // For recurring reminders, we simply create another DELAYED concrete notification
-        // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
-        // This ends once the user takes an action of the cancelOnActions
-        if (notification.interval) {
-            logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`);
-
-            if (notification.cancelledOnAction.length === 0) {
-                logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
+            if (!reminder.context) {
+                throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
             }
 
-            const recurringReminder = await prisma.concrete_notification.create({
-                data: {
-                    notificationID: notification.id,
-                    state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + (notification.interval /* in hours */ * 60 * 60 * 1000)),
-                    userId: getUserId(user),
-                    contextID: reminder.contextID,
-                    context: reminder.context
-                }
-            });
+            const notification = await getNotification(reminder.notificationID);
+            const user = await getUser(reminder.userId);
+            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
 
-            logger.info(`Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`);
+            // For recurring reminders, we simply create another DELAYED concrete notification
+            // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
+            // This ends once the user takes an action of the cancelOnActions
+            if (notification.interval) {
+                logger.debug(`Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`);
+
+                if (notification.cancelledOnAction.length === 0) {
+                    logger.warn(`Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`);
+                }
+
+                const recurringReminder = await prisma.concrete_notification.create({
+                    data: {
+                        notificationID: notification.id,
+                        state: ConcreteNotificationState.DELAYED,
+                        sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
+                        userId: getUserId(user),
+                        contextID: reminder.contextID,
+                        context: reminder.context
+                    }
+                });
+
+                logger.info(`Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`);
+            }
+        } catch (error) {
+            logger.error(`Sending Reminder ConcreteNotification(${reminder.id}) failed with error`, error);
+            prisma.concrete_notification.update({
+                data: {
+                    state: ConcreteNotificationState.ERROR,
+                    error: error.message
+                },
+                where: { id: reminder.id }
+            });
         }
+
     }
 
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
@@ -241,3 +257,58 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+/* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
+   as if the user took that action at actionDate */
+export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean) {
+    assert(user.active, "Cannot trigger action taken at for inactive users");
+
+    const notifications = await getNotifications();
+    const relevantNotifications = notifications.get(actionId);
+
+    if (!relevantNotifications) {
+        throw new Error(`Notification.actionTakenAt found no notifications for action '${actionId}'`);
+    }
+
+    const reminders = relevantNotifications.toSend.filter(it => it.delay);
+    const remindersToCreate: Omit<ConcreteNotification, "id" | "error">[] = [];
+
+    const userId = getUserId(user);
+
+    for (const reminder of reminders) {
+        if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
+            // Reminder was sent in the past and will not be sent in the future
+            logger.debug(`Reminder(${reminder.id}) won't be scheduled in the future of ${actionDate.toISOString()}`);
+            continue;
+        }
+
+        let sendAt = reminder.delay * HOURS_TO_MS + +actionDate;
+        if (sendAt < Date.now()) {
+            assert(reminder.interval > 0);
+            const intervalCount = Math.ceil((Date.now() - sendAt) / (reminder.interval * HOURS_TO_MS));
+            sendAt += intervalCount * reminder.interval * HOURS_TO_MS;
+            assert(Date.now() > sendAt);
+        }
+
+        logger.debug(`Reminder(${reminder.id}) for action at ${actionDate.toISOString()} will be send at ${new Date(sendAt).toISOString()}`);
+
+        remindersToCreate.push({
+            notificationID: reminder.id,
+            state: ConcreteNotificationState.DELAYED,
+            sentAt: new Date(sendAt),
+            userId,
+            contextID: notificationContext.uniqueId,
+            context: notificationContext
+        });
+
+    }
+
+    if (apply && remindersToCreate.length > 0) {
+        const remindersCreated = await prisma.concrete_notification.createMany({
+            data: remindersToCreate
+        });
+
+        logger.info(`Notification.actionTakenAt scheduled ${remindersCreated.count} reminders for User(${userId}) at ${remindersToCreate.map(it => it.sentAt.toDateString())}`);
+    }
+
+    return remindersToCreate;
+}
