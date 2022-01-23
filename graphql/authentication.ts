@@ -11,6 +11,7 @@ import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
 import { Me } from "./me/fields";
+import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
 
 const logger = getLogger("GraphQL Authentication");
@@ -49,7 +50,7 @@ export async function getUserForSession(sessionToken: string) {
 
 export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     if (!context.user) {
-        throw new Error("Unauthenticated! Please log in");
+        throw new AuthenticationError("Unauthenticated! Please log in");
     }
 
     return context.user;
@@ -80,7 +81,7 @@ export async function getSessionStudent(context: GraphQLContext, studentIdOverri
     const { studentId } = getSessionUser(context);
 
     if (!studentId) {
-        throw new Error("Expected user to be student or if elevated, a studentId must be passed in");
+        throw new ForbiddenError("Expected user to be student or if elevated, a studentId must be passed in");
     }
     return await getStudent(studentId);
 }
@@ -96,7 +97,7 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
     }
 
     if (!pupilId) {
-        throw new Error("Expected user to be pupil or if elevated, a pupilId must be passed in");
+        throw new ForbiddenError("Expected user to be student or if elevated, a studentId must be passed in");
     }
 
     return await getPupil(pupilId);
@@ -105,18 +106,17 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
 export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
-        throw new Error("Expected user to be screener");
+        throw new ForbiddenError("Expected user to be screener");
     }
     return await getScreener(screenerId);
 }
 
 function ensureSession(context: GraphQLContext) {
     if (!context.sessionToken) {
-        throw Error(
+        throw new AuthenticationError(
             `No session token is present\n\n` +
             `If you are using the GraphQL UI, paste the following into the HTTP Headers field\n` +
-            `{ "authorization": "Bearer ${suggestToken()}" }`
-        );
+            `{ "authorization": "Bearer ${suggestToken()}" }`);
     }
 }
 
@@ -304,7 +304,7 @@ export class AuthenticationResolver {
         }
 
         logger.warn(`Invalid authToken`);
-        throw new Error("Invalid authToken");
+        throw new AuthenticationError("Invalid authToken");
     }
 
     @Authorized(Role.UNAUTHENTICATED)
@@ -324,7 +324,7 @@ export class AuthenticationResolver {
 
         if (!screener || !passwordValid) {
             logger.warn(`Invalid email (${email}) or password`);
-            throw new Error("Invalid email or password");
+            throw new AuthenticationError("Invalid email or password");
         }
 
         const user: GraphQLUser = {
@@ -350,7 +350,7 @@ export class AuthenticationResolver {
 
 
         if (!context.user) {
-            throw new Error("User already logged out");
+            throw new ForbiddenError("User already logged out");
         }
 
         const deleted = userSessions.delete(context.sessionToken);

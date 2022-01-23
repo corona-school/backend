@@ -5,6 +5,7 @@ import { createCertificate, signCertificate, ICertificateCreationParams, Certifi
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent } from "../authentication";
 import { IsIn } from "class-validator";
+import { ValidationError } from "../error";
 
 @InputType()
 class CertificateCreationInput implements ICertificateCreationParams {
@@ -42,7 +43,7 @@ export class MutateParticipationCertificateResolver {
         const pupil = await getSessionPupil(context);
 
         if (!signaturePupil && !signatureParent) {
-            throw new Error(`Either signatureParent or signaturePupil must be present`);
+            throw new ValidationError(`Either signatureParent or signaturePupil must be present`);
         }
 
         await signCertificate(certificateId, pupil, signatureParent, signaturePupil, signatureLocation);

@@ -3,6 +3,7 @@ import { RegistrationSource } from "../entity/Person";
 import { getLogger } from "log4js";
 import { prisma } from "../prisma";
 import { assertAllowed, Decision } from "../util/decision";
+import { RedundantError } from "../util/error";
 
 const logger = getLogger("Match");
 
@@ -60,7 +61,7 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
 
 export async function deletePupilMatchRequest(pupil: Pupil) {
     if (pupil.openMatchRequestCount <= 0) {
-        throw new Error(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
+        throw new RedundantError(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
     }
 
     const result = await prisma.pupil.update({
@@ -104,7 +105,7 @@ export async function createStudentMatchRequest(student: Student, adminOverride 
 
 export async function deleteStudentMatchRequest(student: Student) {
     if (student.openMatchRequestCount <= 0) {
-        throw new Error(`Cannot delete match request for Student(${student.id}) as student has no request left`);
+        throw new RedundantError(`Cannot delete match request for Student(${student.id}) as student has no request left`);
     }
 
     const result = await prisma.student.update({

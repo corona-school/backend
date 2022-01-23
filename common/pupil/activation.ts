@@ -3,11 +3,12 @@ import { getTransactionLog } from "../transactionlog";
 import { prisma } from "../prisma";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import { dissolveMatch } from "../match/dissolve";
+import { RedundantError } from "../util/error";
 import * as Notification from "../notification";
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
-        throw new Error("Pupil was already activated");
+        throw new RedundantError("Pupil was already activated");
     }
 
     const updatedPupil = await prisma.pupil.update({
@@ -23,7 +24,7 @@ export async function activatePupil(pupil: Pupil) {
 
 export async function deactivatePupil(pupil: Pupil) {
     if (!pupil.active) {
-        throw new Error("Pupil was already deactivated");
+        throw new RedundantError("Pupil was already deactivated");
     }
 
     await Notification.actionTaken(pupil, 'pupil_account_deactivated', {});

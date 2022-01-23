@@ -9,6 +9,7 @@ import { DEFAULT_SCREENER_NUMBER_ID } from "../entity/Screener";
 import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
 import { logTransaction } from "../transactionlog/log";
 import { setProjectFields } from "./update";
+import { PrerequisiteError, RedundantError } from "../util/error";
 
 export interface RegisterStudentData {
     firstname: string;
@@ -52,7 +53,7 @@ export interface BecomeProjectCoachData {
 
 export async function registerStudent(data: RegisterStudentData) {
     if (!(await isEmailAvailable(data.email))) {
-        throw new Error(`Email is already used by another account`);
+        throw new PrerequisiteError(`Email is already used by another account`);
     }
 
     const student = await prisma.student.create({
@@ -82,7 +83,7 @@ export async function registerStudent(data: RegisterStudentData) {
 
 export async function becomeInstructor(student: Student, data: BecomeInstructorData) {
     if (student.isInstructor) {
-        throw new Error(`Student is already instructor`);
+        throw new RedundantError(`Student is already instructor`);
     }
 
     const { university, message, state, teacherModule, moduleHours } = data;
@@ -109,7 +110,7 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
 
 export async function becomeTutor(student: Student, data: BecomeTutorData) {
     if (student.isStudent) {
-        throw new Error(`Student is already tutor`);
+        throw new RedundantError(`Student is already tutor`);
     }
 
     const { languages, subjects, supportsInDaZ } = data;
@@ -148,7 +149,7 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
 
 export async function becomeProjectCoach(student: Student, data: BecomeProjectCoachData) {
     if (student.isProjectCoach) {
-        throw new Error(`Student is already a coach`);
+        throw new RedundantError(`Student is already a coach`);
     }
 
     const { hasJufoCertificate, isUniversityStudent, jufoPastParticipationInfo, projectFields, wasJufoParticipant } = data;
