@@ -201,6 +201,8 @@ export class Pupil extends Person {
     })
     tutoringInterestConfirmationRequest?: PupilTutoringInterestConfirmationRequest;
 
+    @Column({nullable: true, default: null})
+    cToken: string;
 
     gradeAsNumber(): number | null {
         if (this.grade == null) {

@@ -78,7 +78,8 @@ export interface ApiAddTutor {
  * @apiSuccess (Tutee Object) {number} [projectMemberCount] (for project coaching required) A number of persons that are making the project together. Values between 1 and 3 are allowed.
  * @apiSuccess (Tutee Object) {string} [registrationSource] (optional field) Can be used to indicate some registration source, allowed values are "NORMAL", "COOPERATION", "DREHTUER", "OTHER".
  * @apiSuccess (Tutee Object) {string[]} [languages] (optional field) Indicates fluently spoken languges.
- * @apiSuccess (Tutee Obkect) {string} [learningGermanSince] Indicates since when tutee learns German. Allowed values are ">4", "2-4", "1-2", "<1".
+ * @apiSuccess (Tutee Object) {string} [learningGermanSince] Indicates since when tutee learns German. Allowed values are ">4", "2-4", "1-2", "<1".
+ * @apiSuccess (Tutee Object) {string} [cToken] Token for CoDu pupils that gets stored in the DB.
  */
 export interface ApiAddTutee {
     firstname: string,
@@ -100,6 +101,7 @@ export interface ApiAddTutee {
     languages?: string[];
     learningGermanSince?: string;
     requestsAutoMatch?: boolean;
+    cToken?: string;
 }
 
 /**

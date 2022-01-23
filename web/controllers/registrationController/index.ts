@@ -423,7 +423,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
 
             if (status < 300) {
                 // try registering
-                status = await registerTutee(req.body);
+                status = await registerTutee(req.body, false);
             } else {
                 logger.error("Malformed parameters in optional fields for Tutee registration");
                 status = 400;
@@ -442,7 +442,7 @@ export async function postTuteeHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
+async function registerTutee(apiTutee: ApiAddTutee, isCoDuEndpoint: boolean): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -478,61 +478,70 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.registrationSource = EnumReverseMappings.RegistrationSource(apiTutee.registrationSource);
     }
 
-    switch (apiTutee.state) {
-        case "bw":
-            tutee.state = State.BW;
-            break;
-        case "by":
-            tutee.state = State.BY;
-            break;
-        case "be":
-            tutee.state = State.BE;
-            break;
-        case "bb":
-            tutee.state = State.BB;
-            break;
-        case "hb":
-            tutee.state = State.HB;
-            break;
-        case "hh":
-            tutee.state = State.HH;
-            break;
-        case "he":
-            tutee.state = State.HE;
-            break;
-        case "mv":
-            tutee.state = State.MV;
-            break;
-        case "ni":
-            tutee.state = State.NI;
-            break;
-        case "nw":
-            tutee.state = State.NW;
-            break;
-        case "rp":
-            tutee.state = State.RP;
-            break;
-        case "sl":
-            tutee.state = State.SL;
-            break;
-        case "sn":
-            tutee.state = State.SN;
-            break;
-        case "st":
-            tutee.state = State.ST;
-            break;
-        case "sh":
-            tutee.state = State.SH;
-            break;
-        case "th":
-            tutee.state = State.TH;
-            break;
-        case "other":
-            tutee.state = State.OTHER;
-            break;
-        default:
-            logger.error("Invalid value for Tutee registration state: " + apiTutee.state);
-            return 400;
+    if (apiTutee.cToken) {
+        tutee.cToken = apiTutee.cToken;
+    } else if (isCoDuEndpoint) {
+        logger.error("Didn't provide cToken");
+        return 400;
+    }
+
+    if (!isCoDuEndpoint) {
+        switch (apiTutee.state) {
+            case "bw":
+                tutee.state = State.BW;
+                break;
+            case "by":
+                tutee.state = State.BY;
+                break;
+            case "be":
+                tutee.state = State.BE;
+                break;
+            case "bb":
+                tutee.state = State.BB;
+                break;
+            case "hb":
+                tutee.state = State.HB;
+                break;
+            case "hh":
+                tutee.state = State.HH;
+                break;
+            case "he":
+                tutee.state = State.HE;
+                break;
+            case "mv":
+                tutee.state = State.MV;
+                break;
+            case "ni":
+                tutee.state = State.NI;
+                break;
+            case "nw":
+                tutee.state = State.NW;
+                break;
+            case "rp":
+                tutee.state = State.RP;
+                break;
+            case "sl":
+                tutee.state = State.SL;
+                break;
+            case "sn":
+                tutee.state = State.SN;
+                break;
+            case "st":
+                tutee.state = State.ST;
+                break;
+            case "sh":
+                tutee.state = State.SH;
+                break;
+            case "th":
+                tutee.state = State.TH;
+                break;
+            case "other":
+                tutee.state = State.OTHER;
+                break;
+            default:
+                logger.error("Invalid value for Tutee registration state: " + apiTutee.state);
+                return 400;
+        }
     }
 
     switch (apiTutee.school) {
@@ -640,6 +649,88 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 500;
     }
 }
+
+/**
+ * @api {POST} /register/tutee/codu RegisterCoDuTutee
+ * @apiVersion 1.1.0
+ * @apiDescription
+ * Register a user as a CoDu tutee.
+ *
+ * @apiName RegisterCoDuTutee
+ * @apiGroup Registration
+ *
+ * @apiUse ContentType
+ *
+ * @apiUse AddCoDuTutee
+ * @apiUse Subject
+ *
+ * @apiExample {curl} Curl
+ * curl -k -i -X POST -H "Content-Type: application/json" https://api.corona-school.de/api/register/tutee/codu -d "<REQUEST>"
+ *
+ * @apiUse StatusNoContent
+ * @apiUse StatusBadRequest
+ * @apiUse StatusConflict
+ * @apiUse StatusInternalServerError
+ */
+export async function postCoDuTuteeHandler(req: Request, res: Response) {
+    let status = 204;
+
+    logger.info(`GOT CODU TUTEE REGISTRATION \n\twith params: ${JSON.stringify(req.params)} \n\tand body: ${JSON.stringify(req.body)}`);
+    try {
+
+        if (typeof req.body.firstname == 'string' &&
+            typeof req.body.lastname == 'string' &&
+            typeof req.body.email == 'string' &&
+            typeof req.body.school == 'string' &&
+            typeof req.body.isTutee == 'boolean' &&  //TODO
+            typeof req.body.newsletter == 'boolean' &&
+            typeof req.body.msg == 'string' &&
+            typeof req.body.grade == 'number' &&
+            typeof req.body.cToken == 'string' &&
+            (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
+            (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')
+        ) {
+
+            if (req.body.isTutee) {  //TODO
+                if (req.body.subjects instanceof Array) {
+                    for (let i = 0; i < req.body.subjects.length; i++) {
+                        let elem = req.body.subjects[i];
+                        if (typeof elem.name !== 'string') {
+                            status = 400;
+                            logger.error("Tutee registration with isTutee has malformed subjects.");
+                        }
+                    }
+                } else {
+                    status = 400;
+                    logger.error("Tutee registration with isTutee missing subjects.");
+                }
+            }
+
+            if (req.body.redirectTo != undefined && typeof req.body.redirectTo !== "string") {
+                status = 400;
+            }
+
+            if (status < 300) {
+                // try registering
+                status = await registerTutee(req.body, true);
+            } else {
+                logger.error("Malformed parameters in optional fields for Tutee registration");
+                status = 400;
+            }
+
+        } else {
+            logger.error("Missing required parameters for Tutee registration");
+            status = 400;
+        }
+    } catch (e) {
+        logger.error("Unexpected request format: " + e.message);
+        logger.debug(req, e);
+        status = 500;
+    }
+
+    res.status(status).end();
+}
+
 
 /**
  * @api {POST} /register/mentor RegisterMentor

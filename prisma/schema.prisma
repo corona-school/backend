@@ -353,6 +353,7 @@ model pupil {
   lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
   teacherEmailAddress                          String?                                       @db.VarChar
   registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
+  cToken                                       String?                                       @db.VarChar
   schoolId                                     Int?
   school                                       school?                                       @relation(fields: [schoolId], references: [id])
   course_attendance_log                        course_attendance_log[]
