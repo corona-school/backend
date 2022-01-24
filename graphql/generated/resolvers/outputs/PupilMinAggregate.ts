@@ -169,7 +169,12 @@ export class PupilMinAggregate {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | null;
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | null;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  coduToken!: string | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

@@ -205,6 +205,11 @@ export class PupilScalarWhereInput {
   })
   registrationSource?: Enumpupil_registrationsource_enumFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  coduToken?: StringNullableFilter | undefined;
+
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true
   })

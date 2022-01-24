@@ -31,4 +31,9 @@ export class PupilWhereUniqueInput {
     nullable: true
   })
   wix_id?: string | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  coduToken?: string | undefined;
 }

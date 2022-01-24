@@ -1,22 +1,22 @@
-import { Request, Response } from 'express';
-import { getLogger } from 'log4js';
-import { ApiAddTutor, ApiAddTutee, ApiAddMentor, ApiAddCooperationTutee, ApiSchoolInfo } from './format';
-import { getManager } from 'typeorm';
-import { getTransactionLog } from '../../../common/transactionlog';
-import { Student, TeacherModule } from '../../../common/entity/Student';
-import VerificationRequestEvent from '../../../common/transactionlog/types/VerificationRequestEvent';
-import { checkSubject } from '../userController/format';
-import { Pupil } from '../../../common/entity/Pupil';
+import { Request, Response } from "express";
+import { getLogger } from "log4js";
+import { ApiAddCooperationTutee, ApiAddMentor, ApiAddTutee, ApiAddTutor, ApiSchoolInfo } from "./format";
+import { getManager } from "typeorm";
+import { getTransactionLog } from "../../../common/transactionlog";
+import { Student, TeacherModule } from "../../../common/entity/Student";
+import VerificationRequestEvent from "../../../common/transactionlog/types/VerificationRequestEvent";
+import { checkSubject } from "../userController/format";
+import { Pupil } from "../../../common/entity/Pupil";
 import { v4 as uuidv4 } from "uuid";
-import { State } from '../../../common/entity/State';
-import { generateToken, sendVerificationMail } from '../../../jobs/periodic/fetch/utils/verification';
+import { State } from "../../../common/entity/State";
+import { generateToken, sendVerificationMail } from "../../../jobs/periodic/fetch/utils/verification";
 import { Mentor } from "../../../common/entity/Mentor";
-import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
+import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
 import { Address } from "address-rfc2821";
-import { School } from '../../../common/entity/School';
-import { SchoolType } from '../../../common/entity/SchoolType';
-import { RegistrationSource } from '../../../common/entity/Person';
-import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
+import { School } from "../../../common/entity/School";
+import { SchoolType } from "../../../common/entity/SchoolType";
+import { RegistrationSource } from "../../../common/entity/Person";
+import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
 import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
 import { isArray } from "class-validator";
 import { LearningGermanSince } from "../../../common/daz/learningGermanSince";
@@ -368,7 +368,8 @@ export async function postTuteeHandler(req: Request, res: Response) {
             (typeof req.body.grade == 'number' || (req.body.isProjectCoachee && !req.body.isTutee)) && //require grade only if not only registering for project coaching
             (!req.body.registrationSource || (typeof req.body.registrationSource == "string" && EnumReverseMappings.RegistrationSource(req.body.registrationSource) != null)) &&
             (isArray(req.body.languages) && req.body.languages.every(l => typeof l == "string")) &&
-            (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string')
+            (!req.body.learningGermanSince || typeof req.body.learningGermanSince == 'string') &&
+            (!req.body.cToken || typeof req.body.cToken == 'string')
         ) {
 
             if (req.body.isTutee) {
@@ -623,6 +624,26 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         tutee.learningGermanSince = learningGermanSince;
     }
 
+    // CoDu
+    if (tutee.registrationSource === RegistrationSource.CODU) {
+        if (! apiTutee.isTutee) {
+            logger.error("CoDu tutee doesn't register for 1:1-tutoring");
+            return 400;
+        }
+        if (!apiTutee.coduToken) {
+            logger.error("CoDu tutee has no coduToken");
+            return 400;
+        }
+        if (!checkCoDuSubjectRequirements(tutee.getSubjectsFormatted())) {
+
+            logger.error("CoDu tutee does not fulfill subject requirements");
+            return 400;
+        }
+
+        tutee.coduToken = apiTutee.coduToken;
+    }
+
+
     const result = await entityManager.findOne(Pupil, { email: tutee.email });
     if (result !== undefined) {
         logger.error("Tutee with given email already exists.");
@@ -640,6 +661,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
         return 500;
     }
 }
+
 
 /**
  * @api {POST} /register/mentor RegisterMentor

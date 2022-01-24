@@ -102,9 +102,8 @@ export function checkCoDuSubjectRequirements(subjects: Subject[]) {
     // CoDu requires that one of Math, English, German is selected and that this
     // is taught in one of the grades 8 to 10
     const relevantSubjects = subjects.filter(s =>
-        ["Mathematik", "Deutsch", "Englisch"].includes(s.name) &&
-        s.grade.min <= 10 &&
-        s.grade.max >= 8
+        ["mathematik", "deutsch", "englisch"].includes(s.name.toLowerCase()) &&
+        (!s.grade || (s.grade.min <= 10 && s.grade.max >= 8))
     );
 
     return relevantSubjects.length > 0;

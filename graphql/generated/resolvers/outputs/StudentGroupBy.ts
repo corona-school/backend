@@ -234,7 +234,7 @@ export class StudentGroupBy {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
 
   @TypeGraphQL.Field(_type => StudentCountAggregate, {
     nullable: true

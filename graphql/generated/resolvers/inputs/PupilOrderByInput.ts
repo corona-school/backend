@@ -181,5 +181,10 @@ export class PupilOrderByInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
+  coduToken?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => SortOrder, {
+    nullable: true
+  })
   schoolId?: "asc" | "desc" | undefined;
 }

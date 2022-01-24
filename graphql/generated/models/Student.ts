@@ -246,7 +246,7 @@ export class Student {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
 
   certificate_of_conduct?: Certificate_of_conduct | null;
 

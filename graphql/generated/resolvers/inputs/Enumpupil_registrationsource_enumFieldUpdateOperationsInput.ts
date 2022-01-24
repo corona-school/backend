@@ -11,5 +11,5 @@ export class Enumpupil_registrationsource_enumFieldUpdateOperationsInput {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  set?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  set?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
 }
