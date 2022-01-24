@@ -201,7 +201,11 @@ export class Pupil extends Person {
     })
     tutoringInterestConfirmationRequest?: PupilTutoringInterestConfirmationRequest;
 
-    @Column({nullable: true, default: null})
+    @Column({
+        nullable: true,
+        default: null,
+        unique: true
+    })
     cToken: string;
 
     gradeAsNumber(): number | null {
