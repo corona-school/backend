@@ -271,7 +271,6 @@ createConnection().then(setupPDFGenerationEnvironment)
 
             const registrationRouter = express.Router();
             registrationRouter.post("/tutee", registrationController.postTuteeHandler);
-            registrationRouter.post("/tutee/codu", registrationController.postCoDuTuteeHandler);
             registrationRouter.post("/tutee/state", registrationController.postStateTuteeHandler);
             registrationRouter.post("/tutor", registrationController.postTutorHandler);
             registrationRouter.post("/mentor", registrationController.postMentorHandler);

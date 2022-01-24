@@ -67,5 +67,6 @@ export enum RegistrationSource {
     NORMAL,
     COOPERATION,
     DREHTUER,
-    OTHER
+    OTHER,
+    CODU
 }
