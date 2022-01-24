@@ -180,6 +180,11 @@ export class PupilCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
+  coduToken!: number;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
   schoolId!: number;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {

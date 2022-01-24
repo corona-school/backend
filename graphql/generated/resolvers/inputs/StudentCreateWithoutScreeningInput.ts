@@ -235,7 +235,7 @@ export class StudentCreateWithoutScreeningInput {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
     nullable: true

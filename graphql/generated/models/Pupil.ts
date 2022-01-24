@@ -190,7 +190,12 @@ export class Pupil {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  coduToken?: string | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

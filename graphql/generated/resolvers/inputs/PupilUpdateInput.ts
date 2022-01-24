@@ -183,6 +183,11 @@ export class PupilUpdateInput {
   })
   registrationSource?: Enumpupil_registrationsource_enumFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  coduToken?: NullableStringFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => PupilUpdateprojectFieldsInput, {
     nullable: true
   })

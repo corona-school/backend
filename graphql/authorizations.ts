@@ -210,6 +210,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             schooltype: adminOrOwner,
             state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
+            coduToken: adminOrOwner,
 
             // these should look differently in a clean data model
             // by blacklisting them we prevent accidental usage

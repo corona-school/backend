@@ -353,7 +353,7 @@ model pupil {
   lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
   teacherEmailAddress                          String?                                       @db.VarChar
   registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
-  cToken                                       String?                                       @db.VarChar
+  coduToken                                    String?                                       @unique @db.VarChar
   schoolId                                     Int?
   school                                       school?                                       @relation(fields: [schoolId], references: [id])
   course_attendance_log                        course_attendance_log[]
@@ -691,6 +691,7 @@ enum pupil_registrationsource_enum {
   cooperation @map("1")
   drehtuer @map("2")
   other @map("3")
+  codu @map("4")
 }
 
 enum pupil_schooltype_enum {
@@ -790,6 +791,7 @@ enum student_registrationsource_enum {
   cooperation @map("1")
   drehtuer @map("2")
   other @map("3")
+  codu @map("4")
 }
 
 enum student_state_enum {
