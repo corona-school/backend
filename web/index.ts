@@ -126,7 +126,8 @@ createConnection().then(setupPDFGenerationEnvironment)
                 ...allStateCooperationSubdomains,
                 "jufo",
                 "partnerschule",
-                "drehtuer"
+                "drehtuer",
+                "codu"
             ];
             if (process.env.ENV == "dev") {
                 origins = [
