@@ -206,7 +206,7 @@ export class Pupil extends Person {
         default: null,
         unique: true
     })
-    cToken: string;
+    coduToken: string;
 
     gradeAsNumber(): number | null {
         if (this.grade == null) {

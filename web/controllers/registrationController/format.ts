@@ -101,7 +101,7 @@ export interface ApiAddTutee {
     languages?: string[];
     learningGermanSince?: string;
     requestsAutoMatch?: boolean;
-    cToken?: string;
+    coduToken?: string;
 }
 
 /**

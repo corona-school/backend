@@ -630,7 +630,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             logger.error("CoDu tutee doesn't register for 1:1-tutoring");
             return 400;
         }
-        if (!apiTutee.cToken) {
+        if (!apiTutee.coduToken) {
             logger.error("CoDu tutee has no coduToken");
             return 400;
         }
@@ -640,7 +640,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
             return 400;
         }
 
-        tutee.cToken = apiTutee.cToken;
+        tutee.coduToken = apiTutee.coduToken;
     }
 
 
