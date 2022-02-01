@@ -163,7 +163,7 @@ export async function checkReminders() {
             }
         } catch (error) {
             logger.error(`Sending Reminder ConcreteNotification(${reminder.id}) failed with error`, error);
-            prisma.concrete_notification.update({
+            await prisma.concrete_notification.update({
                 data: {
                     state: ConcreteNotificationState.ERROR,
                     error: error.message
