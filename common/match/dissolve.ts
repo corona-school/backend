@@ -4,12 +4,17 @@ import { getLogger } from "log4js";
 import { prisma } from "../prisma";
 import { isStudent, isPupil } from "../user";
 import { logTransaction } from "../transactionlog/log";
+// eslint-disable-next-line camelcase
+import {Project_match} from "../../graphql/generated";
+import { RedundantError } from "../util/error";
+import * as Notification from "../notification";
+import { getMatchHash } from "./util";
 
 const logger = getLogger("Match");
 
 export async function dissolveMatch(match: Match, dissolveReason: number, dissolver: Pupil | Student | null) {
     if (match.dissolved) {
-        throw new Error("The match was already dissolved");
+        throw new RedundantError("The match was already dissolved");
     }
 
     await prisma.match.update({
@@ -25,6 +30,38 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     });
 
     logger.info(`Match(${match.id}) was dissolved by ${dissolver?.firstname ?? "an admin"}`);
+
+    const student = await prisma.student.findUnique({ where: { id: match.studentId }});
+    const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }});
+    const matchHash = getMatchHash(match);
+    const matchDate = "" + (+match.createdAt);
+    const uniqueId = "" + match.id;
+
+    await Notification.actionTaken(student, "tutor_match_dissolved", { pupil, matchHash, matchDate, uniqueId });
+    await Notification.actionTaken(pupil, "tutee_match_dissolved", { student, matchHash, matchDate, uniqueId });
+}
+
+
+
+
+export async function dissolveProjectMatch(match: Project_match, dissolveReason: number, dissolver: Pupil | Student | null) {
+    if (match.dissolved) {
+        throw new RedundantError("The match was already dissolved");
+    }
+
+    await prisma.project_match.update({
+        where: { id: match.id },
+        data: {
+            dissolved: true,
+            dissolveReason
+        }
+    });
+
+    await logTransaction("matchDissolve", dissolver, {
+        matchId: match.id
+    });
+
+    logger.info(`Project Match(${match.id}) was dissolved by ${dissolver?.firstname ?? "an admin"}`);
 
     try {
         if (dissolver && isStudent(dissolver)) {

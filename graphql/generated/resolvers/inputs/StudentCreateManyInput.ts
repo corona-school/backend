@@ -114,6 +114,11 @@ export class StudentCreateManyInput {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
+  isCodu?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
   isInstructor?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => String, {
@@ -219,7 +224,7 @@ export class StudentCreateManyInput {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreateManylanguagesInput, {
     nullable: true

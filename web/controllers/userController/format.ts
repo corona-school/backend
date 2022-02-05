@@ -193,6 +193,7 @@ export class ApiGetUser {
     expertData?: ApiExpertData;
     pupilTutoringInterestConfirmationStatus?: InterestConfirmationStatus;
     isOfficial?: boolean;
+    isCodu?: boolean;
     //TODO: Um Mentor erweitern
 }
 
@@ -259,6 +260,7 @@ export class ApiPutUser {
     languages?: string[];
     learningGermanSince?: string;
     supportsInDaz?: boolean;
+    isCodu?: boolean;
 }
 
 /**

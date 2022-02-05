@@ -29,6 +29,9 @@ import {ExpertData} from "./ExpertData";
 import { CourseGuest } from "./CourseGuest";
 import { Language } from "../daz/language";
 import * as Notification from "../notification";
+import { RemissionRequest } from "./RemissionRequest";
+import { createRemissionRequest } from "../remission-request";
+import {CertificateOfConduct} from "./CertificateOfConduct";
 
 export enum TeacherModule {
     INTERNSHIP = "internship",
@@ -71,6 +74,9 @@ export class Student extends Person {
     /*
      *  Student data
      */
+
+    // This should really rather be "isTutor" cause that's what it means: the user wants to do one on one tutoring
+    // ATTENTION: This does not mean the user is authorized to do tutoring. A successful screening record must exist for the user
     @Column({
         default: false
     })
@@ -92,9 +98,14 @@ export class Student extends Person {
     })
     openMatchRequestCount: number;
 
+    @Column({ default: false })
+    isCodu: boolean;
+
     /*
      * Instructor data
      */
+    // The user expressed the intent to instruct courses
+    // ATTENTION: This does not mean the user is authorized to create courses. A successful instructor_screening record must exist for the user
     @Column({
         default: false
     })
@@ -147,6 +158,8 @@ export class Student extends Person {
     /*
      * Project Coaching data
      */
+    // THe user expressed the intent to do project coaching
+    // ATTENTION: This does not mean the user is authorized to do tutoring. A successful screening record must exist for the user (same screening as for tutors)
     @Column({
         default: false,
         nullable: false
@@ -199,6 +212,13 @@ export class Student extends Person {
         cascade: true
     })
     projectCoachingScreening: Promise<ProjectCoachingScreening>;
+
+
+    @OneToOne((type) => CertificateOfConduct, (cocScreening) => cocScreening.student, {
+        nullable: true,
+        cascade: true
+    })
+    certificateOfConduct: Promise<CertificateOfConduct>;
 
     @Column({
         nullable: false,
@@ -304,6 +324,11 @@ export class Student extends Person {
         nullable: true
     })
     invitedGuests: CourseGuest[];
+
+    @OneToOne(type => RemissionRequest, remissionRequest => remissionRequest.student, {
+        nullable: true
+    })
+    remissionRequest: RemissionRequest;
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
@@ -445,15 +470,24 @@ export class Student extends Person {
         return ScreeningStatus.Rejected;
     }
 
-    //Returns the URL that the student can use to get to his screening video call
-    screeningURL(): string {
-        //for now, this is just static and does not dynamically depend on the student's email address (but this is planned for future, probably)
-        return "https://authentication.lern-fair.de/";
+    async scheduleCoCReminders() {
+        if (this.createdAt < new Date('2022-01-01')) {
+            return;
+        }
+
+        if (this.remissionRequest) {
+            return;
+        }
+
+        if (
+            await this.screeningStatus() === ScreeningStatus.Accepted ||
+            await this.projectCoachingScreeningStatus() === ScreeningStatus.Accepted
+        ) {
+            await createRemissionRequest(this);
+            await Notification.actionTaken(this, 'coc_reminder', {});
+        }
     }
 
-    instructorScreeningURL(): string {
-        return "https://authentication.lern-fair.de/";
-    }
 
     // Return the subjects formatted in the Subject Format
     getSubjectsFormatted(): Subject[] {

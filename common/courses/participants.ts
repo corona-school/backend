@@ -10,6 +10,8 @@ import { sendTemplateMail, mailjetTemplates } from "../mails";
 import * as Notification from "../notification";
 import { hasStarted } from "./states";
 import { logTransaction } from "../transactionlog/log";
+import { TooLateError, RedundantError, CapacityReachedError, PrerequisiteError } from "../util/error";
+import { Decision } from "../util/decision";
 
 const delay = (time: number) => new Promise(res => setTimeout(res, time));
 
@@ -67,11 +69,11 @@ export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
 
 export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil) {
     if (await hasStarted(subcourse)) {
-        throw new Error(`Subourse has already started, cannot join waiting list`);
+        throw new TooLateError(`Subourse has already started, cannot join waiting list`);
     }
 
     if (await isParticipant(subcourse, pupil)) {
-        throw new Error(`Pupil is already participant`);
+        throw new RedundantError(`Pupil is already participant`);
     }
 
     try {
@@ -81,7 +83,7 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
 
         await logTransaction("participantJoinedWaitingList", pupil, { courseID: subcourse.id });
     } catch (error) {
-        throw new Error(`Failed to join waiting list, pupil is already on it`);
+        throw new RedundantError(`Failed to join waiting list, pupil is already on it`);
     }
 }
 
@@ -97,17 +99,31 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
         await logTransaction("participantLeftWaitingList", pupil, { courseID: subcourse.id });
     } else if (force) {
-        throw new Error(`Pupil is not on the waiting list`);
+        throw new RedundantError(`Pupil is not on the waiting list`);
     }
 }
 
+type CourseDecision = "not-participant";
+
+export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
+    if (!pupil.isParticipant) {
+        return { allowed: false, reason: "not-participant" };
+    }
+
+    return { allowed: true };
+}
+
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
+    if (!pupil.isParticipant) {
+        throw new PrerequisiteError(`Only pupils with PARTICIPANT role can join course`);
+    }
+
     await acquireLock(subcourse, pupil, async () => {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
         if (participantCount > subcourse.maxParticipants) {
-            throw new Error(`Subcourse is full`);
+            throw new CapacityReachedError(`Subcourse is full`);
         }
 
         const firstLecture = await prisma.lecture.findMany({
@@ -121,7 +137,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         }
 
         if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
-            throw new Error("Subcourse already started");
+            throw new TooLateError("Subcourse already started");
         }
 
         const pupilSubCourseCount = await prisma.subcourse_participants_pupil.count({
@@ -130,7 +146,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
                 subcourse: {
                     lecture: {
                         every: {
-                            start: { lte: new Date() }
+                            start: { gte: new Date() }
                         }
                     }
                 }
@@ -139,7 +155,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         logger.debug(`Found ${pupilSubCourseCount} active subcourses where the Pupil(${pupil.id}) participates`);
 
         if (pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
-            throw new Error(`Pupil already has joined ${pupilSubCourseCount} courses`);
+            throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
@@ -195,7 +211,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     });
 
     if (deletion.count !== 1) {
-        throw new Error(`Failed to leave Subcourse as the Pupil is not a participant`);
+        throw new RedundantError(`Failed to leave Subcourse as the Pupil is not a participant`);
     }
 
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);

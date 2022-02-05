@@ -3,6 +3,7 @@ import { Match } from "../../../../../entity/Match";
 import { mailjetTemplates, sendTemplateMail } from "../../../../../mails";
 import * as Notification from "../../../../../../common/notification";
 import { getPupilGradeAsString } from "../../../../../../common/pupil";
+import { prisma } from "../../../../../../common/prisma";
 
 
 
@@ -22,28 +23,35 @@ async function commonMailParameters(match: Match) {
     };
 }
 
-export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager) {
+export async function mailNotifyTuteeAboutMatch(match: Match, manager: EntityManager, matchHash: string) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
+
+    const firstMatch = await prisma.match.count({ where: { pupilId: tutee.id } }) === 1;
 
     const mail = mailjetTemplates.TUTEENEWMATCH({
         pupilFirstname: tutee.firstname,
         studentFirstname: tutor.firstname,
         studentEmail: tutor.email,
         subjects: subjectsString,
-        callURL: callURL
+        callURL
     });
 
     await sendTemplateMail(mail, tutee.email);
     await Notification.actionTaken(tutee, "tutee_matching_success", {
-        uniqueId: `${tutor.id}`,
+        uniqueId: "" + match.id,
         student: tutor,
         subjects: subjectsString,
-        callURL: callURL
+        callURL,
+        firstMatch,
+        matchHash,
+        matchDate: "" + (+match.createdAt)
     });
 }
 
-export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager) {
+export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityManager, matchHash: string) {
     const { tutee, tutor, callURL, subjectsString } = await commonMailParameters(match);
+
+    const firstMatch = await prisma.match.count({ where: { studentId: tutor.id } }) === 1;
 
     const mail = mailjetTemplates.TUTORNEWMATCH({
         pupilFirstname: tutee.firstname,
@@ -51,15 +59,18 @@ export async function mailNotifyTutorAboutMatch(match: Match, manager: EntityMan
         pupilEmail: tutee.email,
         pupilGrade: `${tutee.gradeAsNumber()}. Klasse`,
         subjects: subjectsString,
-        callURL: callURL
+        callURL
     });
 
     await sendTemplateMail(mail, tutor.email);
     await Notification.actionTaken(tutor, "tutor_matching_success", {
-        uniqueId: `${tutee.id}`,
+        uniqueId: "" + match.id,
         pupil: tutee,
         pupilGrade: getPupilGradeAsString(tutee),
         subjects: subjectsString,
-        callURL: callURL
+        callURL,
+        firstMatch,
+        matchHash,
+        matchDate: "" + (+match.createdAt)
     });
 }

@@ -11,17 +11,17 @@ export class NestedEnumpupil_registrationsource_enumFilter {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  equals?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  equals?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  in?: Array<"normal" | "cooperation" | "drehtuer" | "other"> | undefined;
+  in?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other"> | undefined;
+  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
 
   @TypeGraphQL.Field(_type => NestedEnumpupil_registrationsource_enumFilter, {
     nullable: true

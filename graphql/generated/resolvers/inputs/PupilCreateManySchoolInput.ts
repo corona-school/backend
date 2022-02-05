@@ -171,7 +171,12 @@ export class PupilCreateManySchoolInput {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  coduToken?: string | undefined;
 
   @TypeGraphQL.Field(_type => PupilCreateManyprojectFieldsInput, {
     nullable: true

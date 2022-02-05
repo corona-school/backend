@@ -11,6 +11,8 @@ import tutoringMatchMaking from "./periodic/tutoring-match-making";
 import initialInterestConfirmationRequests from "./periodic/interest-confirmation-requests";
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import * as Notification from "../common/notification";
+import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
+
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
     // every morning, quite early (but only on Monday and Thursday)
@@ -30,5 +32,7 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo},
-    { cronTime: "00 00 09 * * *", jobFunction: Notification.checkReminders }
+    { cronTime: "00 30 00 * * 0", jobFunction: deactivateMissingCoc},
+    // every hour during day
+    { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders }
 ];

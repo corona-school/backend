@@ -47,9 +47,10 @@ export interface NotificationContext {
 }
 
 // The user is always known, also for notifications sent by Actions / Reminders
-// However we keep the authToken private from the external dependencies, and also pass the fullName as string
+// The authToken is passed as a separate variable, as authentication might change in the future
 export interface Context extends NotificationContext {
     user: Omit<Person, "fullName"> & { fullName: string; };
+    authToken: string;
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
@@ -57,4 +58,13 @@ export interface Channel {
     type: "mailjet";
     send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
     canSend(notification: Notification): boolean;
+}
+
+export interface BulkAction<Entity> {
+    name: string;
+    action: string;
+    getData: () => Promise<Entity[]>;
+    getUser: (entity: Entity) => Promise<Person>;
+    getContext: (entity: Entity) => Promise<NotificationContext>;
+    getActionDate: (entity: Entity) => Date;
 }

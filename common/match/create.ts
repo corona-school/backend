@@ -4,8 +4,9 @@ import { v4 as generateUUID } from "uuid";
 import { mailjetTemplates, sendTemplateMail } from "../mails";
 import { getPupilGradeAsString } from "../pupil";
 import * as Notification from "../notification";
-import { getJitsiTutoringLink, getOverlappingSubjects } from "./util";
+import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from "./util";
 import { getLogger } from "log4js";
+import { PrerequisiteError } from "../util/error";
 
 const logger = getLogger("Match");
 
@@ -13,11 +14,11 @@ export async function createMatch(pupil: Pupil, student: Student) {
     const uuid = generateUUID();
 
     if (pupil.openMatchRequestCount < 1) {
-        throw new Error(`Cannot create Match for Pupil without open match requests`);
+        throw new PrerequisiteError(`Cannot create Match for Pupil without open match requests`);
     }
 
     if (student.openMatchRequestCount < 1) {
-        throw new Error(`Cannot create Match for Student without open match request count`);
+        throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
     }
 
     const match = await prisma.match.create({
@@ -56,13 +57,24 @@ export async function createMatch(pupil: Pupil, student: Student) {
         callURL
     });
 
+    const tutorFirstMatch = await prisma.match.count({ where: { studentId: student.id } }) === 1;
+    const tuteeFirstMatch = await prisma.match.count({ where: { pupilId: pupil.id } }) === 1;
+
+
+    const matchHash = getMatchHash(match);
+    // NOTE: JSON numbers which are larger than 32 bit integers crash mailjet internally, so strings need to be used here
+    const matchDate = "" + (+match.createdAt);
+
     await sendTemplateMail(tutorMail, student.email);
     await Notification.actionTaken(student, "tutor_matching_success", {
-        uniqueId: `${pupil.id}`,
+        uniqueId: "" + match.id,
         pupil,
         pupilGrade: getPupilGradeAsString(pupil),
         subjects,
-        callURL
+        callURL,
+        firstMatch: tutorFirstMatch,
+        matchHash,
+        matchDate
     });
 
     const tuteeMail = mailjetTemplates.TUTEENEWMATCH({
@@ -75,10 +87,13 @@ export async function createMatch(pupil: Pupil, student: Student) {
 
     await sendTemplateMail(tuteeMail, pupil.email);
     await Notification.actionTaken(pupil, "tutee_matching_success", {
-        uniqueId: `${student.id}`,
+        uniqueId: "" + match.id,
         student,
         subjects,
-        callURL
+        callURL,
+        firstMatch: tuteeFirstMatch,
+        matchHash,
+        matchDate
     });
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);

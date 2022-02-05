@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
+import { Certificate_of_conductCreateNestedOneWithoutStudentInput } from "../inputs/Certificate_of_conductCreateNestedOneWithoutStudentInput";
 import { CourseCreateNestedManyWithoutStudentInput } from "../inputs/CourseCreateNestedManyWithoutStudentInput";
 import { Course_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Course_instructors_studentCreateNestedManyWithoutStudentInput";
 import { Course_participation_certificateCreateNestedManyWithoutStudentInput } from "../inputs/Course_participation_certificateCreateNestedManyWithoutStudentInput";
@@ -14,6 +15,7 @@ import { Participation_certificateCreateNestedManyWithoutStudentInput } from "..
 import { Project_coaching_screeningCreateNestedOneWithoutStudentInput } from "../inputs/Project_coaching_screeningCreateNestedOneWithoutStudentInput";
 import { Project_field_with_grade_restrictionCreateNestedManyWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionCreateNestedManyWithoutStudentInput";
 import { Project_matchCreateNestedManyWithoutStudentInput } from "../inputs/Project_matchCreateNestedManyWithoutStudentInput";
+import { Remission_requestCreateNestedOneWithoutStudentInput } from "../inputs/Remission_requestCreateNestedOneWithoutStudentInput";
 import { ScreeningCreateNestedOneWithoutStudentInput } from "../inputs/ScreeningCreateNestedOneWithoutStudentInput";
 import { StudentCreatelanguagesInput } from "../inputs/StudentCreatelanguagesInput";
 import { Subcourse_instructors_studentCreateNestedManyWithoutStudentInput } from "../inputs/Subcourse_instructors_studentCreateNestedManyWithoutStudentInput";
@@ -123,6 +125,11 @@ export class StudentCreateWithoutCourse_guestInput {
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
+  isCodu?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
   isInstructor?: boolean | undefined;
 
   @TypeGraphQL.Field(_type => String, {
@@ -228,12 +235,17 @@ export class StudentCreateWithoutCourse_guestInput {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
 
   @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
     nullable: true
   })
   languages?: StudentCreatelanguagesInput | undefined;
+
+  @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedOneWithoutStudentInput, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductCreateNestedOneWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => CourseCreateNestedManyWithoutStudentInput, {
     nullable: true
@@ -294,6 +306,11 @@ export class StudentCreateWithoutCourse_guestInput {
     nullable: true
   })
   project_match?: Project_matchCreateNestedManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestCreateNestedOneWithoutStudentInput, {
+    nullable: true
+  })
+  remission_request?: Remission_requestCreateNestedOneWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningCreateNestedOneWithoutStudentInput, {
     nullable: true

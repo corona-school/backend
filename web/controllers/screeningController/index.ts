@@ -220,6 +220,7 @@ export async function getStudentByMailHandler(req: Request, res: Response, next:
  *
  */
 export async function updateStudentByMailHandler(req: Request, res: Response, next: NextFunction) {
+    logger.info(req.originalUrl);
     const entityManager = getManager();
 
     // SCREENER
@@ -285,6 +286,7 @@ export async function updateStudentInformation(student: Student, info: StudentEd
     student.isStudent = info.isTutor;
     student.isInstructor = info.isInstructor;
     student.isProjectCoach = info.isProjectCoach;
+    student.isCodu = info.isCodu;
 
     // -> official
     student.moduleHours = info.official?.hours || null;
@@ -314,6 +316,8 @@ export async function updateStudentInformation(student: Student, info: StudentEd
     await student.setInstructorScreeningResult(info.screenings.instructor, screener);
     // --> Project Coach screening
     await student.setProjectCoachingScreeningResult(info.screenings.projectCoach, screener);
+
+    await student.scheduleCoCReminders();
 }
 
 /**

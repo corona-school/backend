@@ -35,6 +35,7 @@ export enum PupilScalarFieldEnum {
   lastUpdatedSettingsViaBlocker = "lastUpdatedSettingsViaBlocker",
   teacherEmailAddress = "teacherEmailAddress",
   registrationSource = "registrationSource",
+  coduToken = "coduToken",
   schoolId = "schoolId"
 }
 TypeGraphQL.registerEnumType(PupilScalarFieldEnum, {

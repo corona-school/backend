@@ -50,10 +50,22 @@ function friendlyFileSize(bytes, si = false, dp = 1) {
     return `${size.toFixed(dp)} ${units[u]}`;
 }
 
+/**
+ Checks whether a specified command line argument is set.
+ If there is a short version of the argument, it can be supplied to check for both.
+ Dashes are replaced.
+ **/
+function isCommandArg(arg: string, short?: string): boolean {
+    return process.argv
+        .slice(2)
+        .some(a => a.replace("--", "") === arg.replace("--", "") ||
+            a.replace("-", "") === short.replace("-", ""));
+}
 
 export {
     intersection,
     randomIntFromInterval,
     splitAtIndex,
-    friendlyFileSize
+    friendlyFileSize,
+    isCommandArg,
 };

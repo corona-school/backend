@@ -1,4 +1,5 @@
 export { Bbb_meetingCrudResolver } from "./Bbb_meeting/Bbb_meetingCrudResolver";
+export { Certificate_of_conductCrudResolver } from "./Certificate_of_conduct/Certificate_of_conductCrudResolver";
 export { Concrete_notificationCrudResolver } from "./Concrete_notification/Concrete_notificationCrudResolver";
 export { CourseCrudResolver } from "./Course/CourseCrudResolver";
 export { Course_attendance_logCrudResolver } from "./Course_attendance_log/Course_attendance_logCrudResolver";
@@ -23,6 +24,7 @@ export { Project_field_with_grade_restrictionCrudResolver } from "./Project_fiel
 export { Project_matchCrudResolver } from "./Project_match/Project_matchCrudResolver";
 export { PupilCrudResolver } from "./Pupil/PupilCrudResolver";
 export { Pupil_tutoring_interest_confirmation_requestCrudResolver } from "./Pupil_tutoring_interest_confirmation_request/Pupil_tutoring_interest_confirmation_requestCrudResolver";
+export { Remission_requestCrudResolver } from "./Remission_request/Remission_requestCrudResolver";
 export { SchoolCrudResolver } from "./School/SchoolCrudResolver";
 export { ScreenerCrudResolver } from "./Screener/ScreenerCrudResolver";
 export { ScreeningCrudResolver } from "./Screening/ScreeningCrudResolver";

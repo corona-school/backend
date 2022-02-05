@@ -27,6 +27,7 @@ query {
 - [TypegraphQL Documentation](https://typegraphql.com/docs/introduction.html)
 - [TypeGraphQL Prisma](https://prisma.typegraphql.com/docs/)
 
+- [Make a Walkthrough through the available queries and mutations](./WALKTHROUGH.md)
 ## Naming Conventions
 
 We generally use camelCase if no external constraints apply. 

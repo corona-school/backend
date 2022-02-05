@@ -1,4 +1,5 @@
 export * from "./Bbb_meeting/args";
+export * from "./Certificate_of_conduct/args";
 export * from "./Concrete_notification/args";
 export * from "./Course/args";
 export * from "./Course_attendance_log/args";
@@ -23,6 +24,7 @@ export * from "./Project_field_with_grade_restriction/args";
 export * from "./Project_match/args";
 export * from "./Pupil/args";
 export * from "./Pupil_tutoring_interest_confirmation_request/args";
+export * from "./Remission_request/args";
 export * from "./School/args";
 export * from "./Screener/args";
 export * from "./Screening/args";

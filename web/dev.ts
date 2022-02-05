@@ -31,9 +31,9 @@ import { ExpertAllowedIndication } from "../common/jufo/expertAllowedIndication"
 import { LearningGermanSince } from "../common/daz/learningGermanSince";
 import { Language } from "../common/daz/language";
 import { PupilTutoringInterestConfirmationRequest } from "../common/entity/PupilTutoringInterestConfirmationRequest";
-import { prisma } from "../common/prisma/";
-import { NotificationRecipient } from "../common/entity/Notification";
 import { CourseGuest } from "../common/entity/CourseGuest";
+import { RemissionRequest } from "../common/entity/RemissionRequest";
+import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -248,6 +248,7 @@ export async function setupDevDB() {
     s1.isProjectCoach = true;
     s1.supportsInDaZ = true;
     s1.languages = [Language.ku, Language.en];
+    s1.isCodu = true;
     students.push(s1);
 
     const s2 = new Student();
@@ -377,11 +378,11 @@ export async function setupDevDB() {
 
     const matches: Match[] = [];
 
-    let m = new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364");
-    matches.push(m);
 
-    m = new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364");
-    matches.push(m);
+    matches.push(
+        new Match(pupils[0], students[0], "000000001-0000-0000-0001-1b4c4c526364"),
+        new Match(pupils[1], students[0], "000000001-0000-0000-0002-1b4c4c526364")
+    );
 
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
@@ -1138,10 +1139,12 @@ export async function setupDevDB() {
     }
 
     const screenings: Screening[] = [];
-
+    // The created date here is modified so this student becomes a defaulter
+    // for the 8 weeks certificate submission rule.
     let sres = new Screening();
     sres.success = true;
     sres.comment = "🎉";
+    sres.createdAt=new Date("2021-09-01");
     sres.knowsCoronaSchoolFrom = "Internet";
     sres.screener = screeners[0];
     sres.student = students[0];
@@ -1344,6 +1347,32 @@ export async function setupDevDB() {
         await entityManager.save(pticrs[i]);
         console.log("Inserted Pupil Tutoring Interest Request " + i);
     }
+
+
+    const certificates : CertificateOfConduct[] = [];
+    const certi = new CertificateOfConduct();
+    certi.student= students[0];
+    certi.criminalRecords=true;
+    certi.dateOfIssue=new Date();
+    certi.dateOfInspection=new Date();
+
+    //Toggle this to test JOB for sreening missing COCs
+    certificates.push(certi);
+
+    for (let i = 0; i < certificates.length; i++) {
+        await entityManager.save(certificates[i]);
+        console.log("Inserted COC " + i);
+    }
+
+
+    //Insert remission request
+    const remissionRequest = new RemissionRequest();
+    remissionRequest.student = students[0];
+    remissionRequest.uuid = randomBytes(5).toString("hex")
+        .toUpperCase();
+
+    await entityManager.save(remissionRequest);
+    console.log("Inserted remission request");
 }
 
 function sha512(input: string): string {

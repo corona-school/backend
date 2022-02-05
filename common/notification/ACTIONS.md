@@ -5,37 +5,44 @@ Actions are global events going into the notification system. For a number of ac
  In each action, the following context is always available:
 
 ```ts
-user: {
-    id: number;
-    createdAt: Date;
-    updatedAt: Date;
-    firstname: string;
-    lastname: string;
-    fullName: string;
-    active: boolean;
-    email: string;
-    verification: string;
-    verifiedAt: Date;
-    registrationSource: RegistrationSource;
-    /* For actions prefixed with pupiL_ additionally these properties are set: */
-    state: State;
-    schooltype: SchoolType;
-    grade: string;
-    openMatchRequestCount: number;
-    isParticipant: boolean;
-    isProjectCoachee: boolean;
-    school: School;
-    teacherEmailAddress: string;
-    /* For actions prefixed with student_ additionally these properties are set: */
-    phone: string;
-    isInstructor: boolean;
-    state: State;
-    university?: string;
-    moduleHours: number;
-    isProjectCoach: boolean;
-    isUniversityStudent: boolean;
-    openProjectMatchRequestCount: number;
-    supportsInDaZ?: boolean;
+{
+    user: {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        firstname: string;
+        lastname: string;
+        fullName: string;
+        active: boolean;
+        email: string;
+        verification: string;
+        verifiedAt: Date;
+        registrationSource: RegistrationSource;
+        /* For actions prefixed with pupiL_ additionally these properties are set: */
+        state: State;
+        schooltype: SchoolType;
+        grade: string;
+        openMatchRequestCount: number;
+        isParticipant: boolean;
+        isProjectCoachee: boolean;
+        school: School;
+        teacherEmailAddress: string;
+        /* For actions prefixed with student_ additionally these properties are set: */
+        phone: string;
+        isInstructor: boolean;
+        state: State;
+        university?: string;
+        moduleHours: number;
+        isProjectCoach: boolean;
+        isUniversityStudent: boolean;
+        openProjectMatchRequestCount: number;
+        supportsInDaZ?: boolean;
+    }
+    
+    /* Legacy way to build up links to the frontend,
+       in the future, these should be concrete URLs instead (dashboardURL etc.)
+       to make the Emails independent to frontend changes */
+    authToken: string;
 }
 ```
 
@@ -469,7 +476,7 @@ Send mail to student to sign certificate
 
 ## Tutoring
 
-### pupil_match_dissolved
+### tutee_match_dissolved
 
 *description*
 
@@ -480,10 +487,12 @@ Match was dissolved.
 ```typescript
 {
     student: Student;
+    matchHash: string;
+    matchDate: number as string;
 }
 ```
 
-### pupil_match_dissolved_other
+### tutee_match_dissolved_other
 
 *description*
 
@@ -498,7 +507,7 @@ Match was dissolved by Pupil.
 ```
 
 
-### student_match_dissolved
+### tutor_match_dissolved
 
 *description*
 
@@ -509,10 +518,12 @@ Match was dissolved.
 ```typescript
 {
     pupil: Pupil;
+    matchHash: string;
+    matchDate: number as string;
 }
 ```
 
-### student_match_dissolved_other
+### tutor_match_dissolved_other
 
 *description*
 
@@ -539,7 +550,9 @@ Send mail to tutee to notify after matching
 {
     student: User,
     subjects: string,
-    callURL: string
+    callURL: string,
+    matchHash: string,
+    matchDate: number as string
 }
 ```
 
@@ -556,7 +569,9 @@ Send mail to tutor to notify after matching
     pupil: User,
     pupilGrade: string,
     subjects: string,
-    callURL: string
+    callURL: string,
+    matchHash: string,
+    matchDate: number as string
 }
 ```
 
@@ -572,6 +587,19 @@ Ask pupil if he is interested in the match for tutoring
 {
     confirmationURL: string,
     refusalURL: string
+}
+```
+
+### codu_student_registration
+
+*description*
+
+Send mail to student with further information on the CoDu study
+
+*context*
+```typescript
+{
+  student: User
 }
 ```
 

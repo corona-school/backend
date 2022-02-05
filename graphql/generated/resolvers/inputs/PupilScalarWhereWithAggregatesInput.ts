@@ -205,6 +205,11 @@ export class PupilScalarWhereWithAggregatesInput {
   })
   registrationSource?: Enumpupil_registrationsource_enumWithAggregatesFilter | undefined;
 
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  coduToken?: StringNullableWithAggregatesFilter | undefined;
+
   @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
     nullable: true
   })

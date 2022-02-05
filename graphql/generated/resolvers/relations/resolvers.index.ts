@@ -1,3 +1,4 @@
+export { Certificate_of_conductRelationsResolver } from "./Certificate_of_conduct/Certificate_of_conductRelationsResolver";
 export { CourseRelationsResolver } from "./Course/CourseRelationsResolver";
 export { Course_attendance_logRelationsResolver } from "./Course_attendance_log/Course_attendance_logRelationsResolver";
 export { Course_guestRelationsResolver } from "./Course_guest/Course_guestRelationsResolver";
@@ -18,6 +19,7 @@ export { Project_field_with_grade_restrictionRelationsResolver } from "./Project
 export { Project_matchRelationsResolver } from "./Project_match/Project_matchRelationsResolver";
 export { PupilRelationsResolver } from "./Pupil/PupilRelationsResolver";
 export { Pupil_tutoring_interest_confirmation_requestRelationsResolver } from "./Pupil_tutoring_interest_confirmation_request/Pupil_tutoring_interest_confirmation_requestRelationsResolver";
+export { Remission_requestRelationsResolver } from "./Remission_request/Remission_requestRelationsResolver";
 export { SchoolRelationsResolver } from "./School/SchoolRelationsResolver";
 export { ScreenerRelationsResolver } from "./Screener/ScreenerRelationsResolver";
 export { ScreeningRelationsResolver } from "./Screening/ScreeningRelationsResolver";

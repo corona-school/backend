@@ -1,4 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
+import { Certificate_of_conduct } from "../../../models/Certificate_of_conduct";
 import { Course } from "../../../models/Course";
 import { Course_guest } from "../../../models/Course_guest";
 import { Course_instructors_student } from "../../../models/Course_instructors_student";
@@ -12,6 +13,7 @@ import { Participation_certificate } from "../../../models/Participation_certifi
 import { Project_coaching_screening } from "../../../models/Project_coaching_screening";
 import { Project_field_with_grade_restriction } from "../../../models/Project_field_with_grade_restriction";
 import { Project_match } from "../../../models/Project_match";
+import { Remission_request } from "../../../models/Remission_request";
 import { Screening } from "../../../models/Screening";
 import { Student } from "../../../models/Student";
 import { Subcourse_instructors_student } from "../../../models/Subcourse_instructors_student";
@@ -29,6 +31,17 @@ import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRel
 
 @TypeGraphQL.Resolver(_of => Student)
 export class StudentRelationsResolver {
+  @TypeGraphQL.FieldResolver(_type => Certificate_of_conduct, {
+    nullable: true
+  })
+  async certificate_of_conduct(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any): Promise<Certificate_of_conduct | null> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).certificate_of_conduct({});
+  }
+
   @TypeGraphQL.FieldResolver(_type => [Course], {
     nullable: false
   })
@@ -170,6 +183,17 @@ export class StudentRelationsResolver {
         id: student.id,
       },
     }).project_match(args);
+  }
+
+  @TypeGraphQL.FieldResolver(_type => Remission_request, {
+    nullable: true
+  })
+  async remission_request(@TypeGraphQL.Root() student: Student, @TypeGraphQL.Ctx() ctx: any): Promise<Remission_request | null> {
+    return getPrismaFromContext(ctx).student.findUnique({
+      where: {
+        id: student.id,
+      },
+    }).remission_request({});
   }
 
   @TypeGraphQL.FieldResolver(_type => Screening, {

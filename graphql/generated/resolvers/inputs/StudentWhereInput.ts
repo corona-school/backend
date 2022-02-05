@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
 import { BoolNullableFilter } from "../inputs/BoolNullableFilter";
+import { Certificate_of_conductRelationFilter } from "../inputs/Certificate_of_conductRelationFilter";
 import { CourseListRelationFilter } from "../inputs/CourseListRelationFilter";
 import { Course_guestListRelationFilter } from "../inputs/Course_guestListRelationFilter";
 import { Course_instructors_studentListRelationFilter } from "../inputs/Course_instructors_studentListRelationFilter";
@@ -25,6 +26,7 @@ import { Participation_certificateListRelationFilter } from "../inputs/Participa
 import { Project_coaching_screeningRelationFilter } from "../inputs/Project_coaching_screeningRelationFilter";
 import { Project_field_with_grade_restrictionListRelationFilter } from "../inputs/Project_field_with_grade_restrictionListRelationFilter";
 import { Project_matchListRelationFilter } from "../inputs/Project_matchListRelationFilter";
+import { Remission_requestRelationFilter } from "../inputs/Remission_requestRelationFilter";
 import { ScreeningRelationFilter } from "../inputs/ScreeningRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
@@ -152,6 +154,11 @@ export class StudentWhereInput {
   @TypeGraphQL.Field(_type => BoolFilter, {
     nullable: true
   })
+  isCodu?: BoolFilter | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFilter, {
+    nullable: true
+  })
   isInstructor?: BoolFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableFilter, {
@@ -264,6 +271,11 @@ export class StudentWhereInput {
   })
   registrationSource?: Enumstudent_registrationsource_enumFilter | undefined;
 
+  @TypeGraphQL.Field(_type => Certificate_of_conductRelationFilter, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductRelationFilter | undefined;
+
   @TypeGraphQL.Field(_type => CourseListRelationFilter, {
     nullable: true
   })
@@ -328,6 +340,11 @@ export class StudentWhereInput {
     nullable: true
   })
   project_match?: Project_matchListRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestRelationFilter, {
+    nullable: true
+  })
+  remission_request?: Remission_requestRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningRelationFilter, {
     nullable: true

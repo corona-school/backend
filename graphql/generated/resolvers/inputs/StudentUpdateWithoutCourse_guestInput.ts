@@ -3,6 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperationsInput";
+import { Certificate_of_conductUpdateOneWithoutStudentInput } from "../inputs/Certificate_of_conductUpdateOneWithoutStudentInput";
 import { CourseUpdateManyWithoutStudentInput } from "../inputs/CourseUpdateManyWithoutStudentInput";
 import { Course_instructors_studentUpdateManyWithoutStudentInput } from "../inputs/Course_instructors_studentUpdateManyWithoutStudentInput";
 import { Course_participation_certificateUpdateManyWithoutStudentInput } from "../inputs/Course_participation_certificateUpdateManyWithoutStudentInput";
@@ -24,6 +25,7 @@ import { Participation_certificateUpdateManyWithoutStudentInput } from "../input
 import { Project_coaching_screeningUpdateOneWithoutStudentInput } from "../inputs/Project_coaching_screeningUpdateOneWithoutStudentInput";
 import { Project_field_with_grade_restrictionUpdateManyWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionUpdateManyWithoutStudentInput";
 import { Project_matchUpdateManyWithoutStudentInput } from "../inputs/Project_matchUpdateManyWithoutStudentInput";
+import { Remission_requestUpdateOneWithoutStudentInput } from "../inputs/Remission_requestUpdateOneWithoutStudentInput";
 import { ScreeningUpdateOneWithoutStudentInput } from "../inputs/ScreeningUpdateOneWithoutStudentInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdatelanguagesInput } from "../inputs/StudentUpdatelanguagesInput";
@@ -127,6 +129,11 @@ export class StudentUpdateWithoutCourse_guestInput {
     nullable: true
   })
   openMatchRequestCount?: IntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  isCodu?: BoolFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => BoolFieldUpdateOperationsInput, {
     nullable: true
@@ -243,6 +250,11 @@ export class StudentUpdateWithoutCourse_guestInput {
   })
   languages?: StudentUpdatelanguagesInput | undefined;
 
+  @TypeGraphQL.Field(_type => Certificate_of_conductUpdateOneWithoutStudentInput, {
+    nullable: true
+  })
+  certificate_of_conduct?: Certificate_of_conductUpdateOneWithoutStudentInput | undefined;
+
   @TypeGraphQL.Field(_type => CourseUpdateManyWithoutStudentInput, {
     nullable: true
   })
@@ -302,6 +314,11 @@ export class StudentUpdateWithoutCourse_guestInput {
     nullable: true
   })
   project_match?: Project_matchUpdateManyWithoutStudentInput | undefined;
+
+  @TypeGraphQL.Field(_type => Remission_requestUpdateOneWithoutStudentInput, {
+    nullable: true
+  })
+  remission_request?: Remission_requestUpdateOneWithoutStudentInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningUpdateOneWithoutStudentInput, {
     nullable: true

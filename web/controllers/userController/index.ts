@@ -39,9 +39,10 @@ import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/Updat
 import { ExpertData } from "../../../common/entity/ExpertData";
 import { getDefaultScreener } from "../../../common/entity/Screener";
 import { Course, CourseState } from "../../../common/entity/Course";
-import { sendSubcourseCancelNotifications } from "../../../common/mails/courses";
 import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
 import { Subcourse } from "../../../common/entity/Subcourse";
+import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
+import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
 
@@ -174,7 +175,8 @@ export async function putHandler(req: Request, res: Response) {
             typeof b.lastname == "string" &&
             (b.grade == undefined || typeof b.grade == "number") &&
             (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
-            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number")) {
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number") &&
+            (b.isCodu == undefined || typeof b.isCodu == "boolean")) {
             if (req.params.id != undefined &&
                 (res.locals.user instanceof Student || res.locals.user instanceof Pupil)
             ) {
@@ -189,6 +191,7 @@ export async function putHandler(req: Request, res: Response) {
                 status = 500;
             }
         } else {
+            console.log("Verification failed");
             status = 400;
         }
     } catch (e) {
@@ -485,6 +488,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.state = person.state;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
         apiResponse.isOfficial = person.module != null || person.moduleHours != null;
+        apiResponse.isCodu = person.isCodu;
         let matches = await entityManager.find(Match, {
             student: person,
             dissolved: false
@@ -718,6 +722,15 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         person.supportsInDaZ = req.supportsInDaz;
 
+        // ++++ CODU INFORMATION ++++
+        if (req.isCodu !== undefined) {
+            if (req.isCodu && !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
+                logger.warn("Student does not fulfill subject requirements for CoDu");
+                return 400;
+            }
+            person.isCodu = req.isCodu;
+        }
+
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -858,6 +871,9 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     try {
         await entityManager.save(type, person);
         await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
+        if (person instanceof Student && req.isCodu) {
+            await Notification.actionTaken(person, "codu_student_registration", {});
+        }
         logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${person?.constructor?.name}`);
         logger.debug(person);
     } catch (e) {
@@ -906,6 +922,13 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
     }
 
     person.subjects = JSON.stringify(req);
+
+    if (person instanceof Student &&
+        person.isCodu &&
+        !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
+        logger.warn("Student does not fulfill subject requirements for CoDu");
+        return 400;
+    }
 
     try {
         await entityManager.save(type, person);
@@ -1006,6 +1029,8 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
         } else if (!active && person.active) {
             // Deactivate if active
             logger.info("Deactivating person " + person.firstname + " " + person.lastname);
+            person.active = false;
+            await entityManager.save(type, person);
 
             // Step 1: Dissolve all matches
             let options;
@@ -1072,10 +1097,8 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
                 logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
             }
 
-            // Step 3: Deactivate
-            person.active = false;
+            await Notification.cancelRemindersFor(person);
 
-            await entityManager.save(type, person);
             await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
