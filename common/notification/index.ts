@@ -43,9 +43,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
             if (!relevantNotifications) {
                 logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
                 return;
-            } else {
-                logger.debug(`Relevant notifications: ${relevantNotifications.toSend.map(it => it.id)}`)
             }
+            logger.debug(`Relevant notifications: ${relevantNotifications.toSend.map(it => it.id)}`)
 
             logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
 
@@ -269,7 +268,7 @@ export async function createAttachments(files: Express.Multer.File[], uploader: 
             return {attachmentId, filename: f.originalname, size: f.size};
         }));
 
-        let attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
+        const attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
 
         return {attachmentListHTML, attachmentGroupId, attachmentIds: attachments.map(att => att.attachmentId)};
     }

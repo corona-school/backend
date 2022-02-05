@@ -5,9 +5,6 @@ import { v4 as uuid } from "uuid";
 import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
 import {getUserId} from "../user";
 import {friendlyFileSize} from "../util/basic";
-import {getLogger} from "log4js";
-
-const logger = getLogger("Notification");
 
 export interface AttachmentGroup {
     attachmentGroupId: string;
@@ -74,27 +71,7 @@ export async function getAttachmentListHTML(attachments: { attachmentId: string,
     let attachmentListHTML = "<h3>Anhänge</h3>";
 
     for (let {attachmentId, filename, size} of attachments) {
-        let key;
-        if(!filename || !size) {  // When sending reminders, for example, we don't have immediate access to data like size and the filename, we only have the attachmentGroupId
-            logger.warn("Fetching data for attachment with ID " + attachmentId);
-            const fetched_attachment = await prisma.attachment.findUnique({  // fetch the attachment by its attachmentId
-                where: {
-                    id: attachmentId
-                },
-                select: {
-                    size: true,
-                    filename: true
-                }
-            })
-            filename = fetched_attachment.filename;
-            key = `${attachmentId}/${filename}`;
-            size = fetched_attachment.size;
-        } else {
-            key = `${attachmentId}/${filename}`;
-        }
-
-        attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${key}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
-
+        attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
     }
 
     return attachmentListHTML;
