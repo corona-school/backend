@@ -1,5 +1,5 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, BulkAction } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserId, getUser, getFullName } from '../user';
@@ -9,7 +9,6 @@ import {v4 as uuid} from "uuid";
 import {AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML} from "../attachments";
 import {Pupil} from "../entity/Pupil";
 import { assert } from 'console';
-import { bulkActions } from './bulk';
 
 const logger = getLogger("Notification");
 
@@ -135,10 +134,6 @@ export async function checkReminders() {
             if (!reminder.context) {
                 throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
             }
-
-            const notification = await getNotification(reminder.notificationID);
-            const user = await getUser(reminder.userId);
-
 
             const attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
 
@@ -327,7 +322,7 @@ export async function cancelRemindersFor(user: Person) {
 
 /* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
    as if the user took that action at actionDate */
-export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean) {
+export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean, attachments?: AttachmentGroup) {
     assert(user.active, "Cannot trigger action taken at for inactive users");
 
     const notifications = await getNotifications();
@@ -365,7 +360,8 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
             sentAt: new Date(sendAt),
             userId,
             contextID: notificationContext.uniqueId,
-            context: notificationContext
+            context: notificationContext,
+            attachmentGroupId: attachments?.attachmentGroupId,
         });
 
     }
