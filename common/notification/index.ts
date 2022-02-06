@@ -53,7 +53,6 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                 logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
                 return;
             }
-            logger.debug(`Relevant notifications: ${relevantNotifications.toSend.map(it => it.id)}`)
 
             logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map(it => it.id)} to cancel for action '${actionId}'`);
 
@@ -361,7 +360,7 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
             userId,
             contextID: notificationContext.uniqueId,
             context: notificationContext,
-            attachmentGroupId: attachments?.attachmentGroupId,
+            attachmentGroupId: attachments?.attachmentGroupId
         });
 
     }
