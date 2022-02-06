@@ -134,8 +134,8 @@ export async function checkReminders() {
                 throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
             }
 
-            let attachmentGroup = undefined;
-            if (reminder.attachmentGroupId !== undefined) {
+            let attachmentGroup = null;
+            if (reminder.attachmentGroupId !== null) {
                 attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
             }
 
