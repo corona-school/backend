@@ -89,9 +89,9 @@ export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: s
         where: {
             attachmentGroupId
         }
-    })
-    const attachmentList = attachments.map(a => ({attachmentId: a.id, filename: a.filename, size: a.size}))
+    });
+    const attachmentList = attachments.map(a => ({attachmentId: a.id, filename: a.filename, size: a.size}));
     const attachmentListHTML = await getAttachmentListHTML(attachmentList, attachmentGroupId);
 
-    return {attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map(a => a.id)}
+    return { attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map(a => a.id) };
 }
