@@ -67,5 +67,5 @@ export {
     randomIntFromInterval,
     splitAtIndex,
     friendlyFileSize,
-    isCommandArg,
+    isCommandArg
 };
