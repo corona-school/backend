@@ -28,7 +28,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
