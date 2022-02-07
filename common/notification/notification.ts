@@ -121,7 +121,7 @@ export async function create(notification: Prisma.notificationCreateInput) {
     const result = await prisma.notification.create({
         data: {
             ...notification,
-            id: await prisma.notification.count()
+            id: await prisma.notification.count() + 1
         }
     });
 
