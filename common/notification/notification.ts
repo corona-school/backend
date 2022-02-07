@@ -115,8 +115,14 @@ export async function create(notification: Prisma.notificationCreateInput) {
         throw new Error("As long as Mailjet is our main channel, it is required to set the mailjetTemplateId");
     }
 
+    // To keep DEV and PROD parity, notifications are inserted with their id (see "importNotifications")
+    // Unfortunately this creates inconsistency between the ids present and the sequence used to generate new ids
+    // Thus the id is manually calculated and does not rely on the DEFAULT value
     const result = await prisma.notification.create({
-        data: { ...notification }
+        data: {
+            ...notification,
+            id: await prisma.notification.count()
+        }
     });
 
     logger.info(`Notification(${result.id}) created\n`);
