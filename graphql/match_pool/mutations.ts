@@ -12,10 +12,68 @@ class TemporaryMatch {
 }
 
 @ObjectType()
+class MatchingSubjectStats {
+    @Field()
+    offered: number;
+    @Field()
+    requested: number;
+    @Field()
+    fulfilledRequests: number;
+}
+
+@ObjectType()
+class MatchingSubjectNameStats {
+    @Field()
+    name: string;
+    @Field()
+    stats: MatchingSubjectStats;
+}
+@ObjectType()
+class MatchingStats {
+    @Field()
+    helperCount: number;
+    @Field()
+    helpeeCount: number;
+    @Field()
+    edgeCount: number;
+    @Field()
+    matchCount: number;
+    @Field()
+    matchingCost: number;
+    @Field()
+    averageWaitingDaysMatchedHelpee: number;
+    @Field()
+    mostWaitingDaysUnmatchedHelpee: number;
+    @Field()
+    numberOfCoveredSubjects: number;
+    @Field()
+    numberOfUncoveredSubjects: number;
+    @Field()
+    numberOfOfferedSubjects: number;
+    @Field()
+    numberOfMatchingEdgesWithMatchingState: number;
+    @Field()
+    subjectStats: MatchingSubjectNameStats[];
+    
+}
+
+@ObjectType()
+class MatchingTiming {
+    @Field()
+    preparation: number;
+    @Field()
+    matching: number;
+    @Field()
+    commit: number;
+}
+@ObjectType()
 class MatchPoolRunResult {
     @Field()
     matches: TemporaryMatch[];
-
+    @Field()
+    stats: MatchingStats;
+    @Field()
+    timing: MatchingTiming;
 }
 
 @Resolver(of => MatchPoolRunResult)

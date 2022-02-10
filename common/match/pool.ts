@@ -28,7 +28,7 @@ export interface MatchPool {
 const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
     active: true,
     verification: null,
-    email: { not: { contains: "test@lern-fair.de" }}
+    email: { not: { contains: "test@lern-fair.de" }} // TODO: Does that hold?
 };
 
 export async function getStudents(pool: MatchPool, take?: number, skip?: number) {
