@@ -12,7 +12,7 @@ const logger = getLogger("MatchingPool");
 
 /* A MatchPool is a Set of students and a Set of pupils,
     which can then be matched to a Set of matches */
-interface MatchPool {
+export interface MatchPool {
     name: string;
     studentsToMatch: Prisma.studentWhereInput;
     pupilsToMatch: Prisma.pupilWhereInput;
