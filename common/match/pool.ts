@@ -25,29 +25,35 @@ interface MatchPool {
     }
 }
 
+const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
+    active: true,
+    verification: null,
+    email: { not: { contains: "test@lern-fair.de" }}
+};
+
 export async function getStudents(pool: MatchPool, take?: number, skip?: number) {
     return await prisma.student.findMany({
-        where: pool.studentsToMatch,
+        where: { ...viableUsers, ...pool.studentsToMatch },
         take, skip
     });
 }
 
 export async function getPupils(pool: MatchPool, take?: number, skip?: number) {
     return await prisma.pupil.findMany({
-        where: pool.pupilsToMatch,
+        where: { ...viableUsers, ...pool.pupilsToMatch },
         take, skip
     });
 }
 
 export async function getStudentCount(pool: MatchPool) {
     return await prisma.student.count({
-        where: pool.studentsToMatch
+        where: { ...viableUsers, ...pool.studentsToMatch }
     });
 }
 
 export async function getPupilCount(pool: MatchPool) {
     return await prisma.pupil.count({
-        where: pool.pupilsToMatch
+        where: { ...viableUsers, ...pool.pupilsToMatch }
     });
 }
 
@@ -96,10 +102,22 @@ export const pools: MatchPool[] = [
     {
         name: "lern-fair-now",
         pupilsToMatch: {
+            isPupil: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: "[]"},
+            registrationSource: { not: "codu" },
+            OR: [
+                { registrationSource: "cooperation" },
+                { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
+            ]
 
         },
         studentsToMatch: {
-
+            isStudent: true,
+            openMatchRequestCount: { gt: 0},
+            subjects: { not: "[]" },
+            screening: { success: true },
+            isCodu: false
         },
         createMatch,
         settings: {
