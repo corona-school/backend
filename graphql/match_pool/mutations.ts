@@ -54,7 +54,7 @@ class MatchingStats {
     numberOfMatchingEdgesWithMatchingState: number;
     @Field(type => [MatchingSubjectNameStats])
     subjectStats: MatchingSubjectNameStats[];
-    
+
 }
 
 @ObjectType()
