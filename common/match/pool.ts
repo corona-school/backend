@@ -7,6 +7,7 @@ import { gradeAsInt } from "../util/gradestrings";
 import { assertExists } from "../util/basic";
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from "../entity/Student";
 import { getLogger } from "log4js";
+import { isDev } from "../util/environment";
 
 const logger = getLogger("MatchingPool");
 
@@ -27,9 +28,14 @@ export interface MatchPool {
 
 const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
     active: true,
-    verification: null,
-    email: { not: { contains: "test@lern-fair.de" }} // TODO: Does that hold?
+    verification: null
 };
+
+/* On production we want to avoid that our testusers test-prod-...@lern-fair.de
+   are accidentally matched to real users */
+if (!isDev) {
+    viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" }};
+}
 
 export async function getStudents(pool: MatchPool, take?: number, skip?: number) {
     return await prisma.student.findMany({
