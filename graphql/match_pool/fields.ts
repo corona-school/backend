@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener } from "../generated";
-import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from "type-graphql";
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from "type-graphql";
 import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools } from "../../common/match/pool";
 import { Role } from "../authorizations";
 
@@ -15,6 +15,12 @@ export class FieldsMatchPoolResolver {
     @Authorized(Role.ADMIN)
     match_pools() {
         return pools;
+    }
+
+    @Query(returns => MatchPool)
+    @Authorized(Role.ADMIN)
+    match_pool(@Arg("name") name: string) {
+        return pools.find(it => it.name === name);
     }
 
     @FieldResolver(returns => [Student])
