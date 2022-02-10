@@ -180,6 +180,12 @@ export async function runMatching(poolName: string, apply: boolean) {
 
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
+    
+        /* await prisma.match_pool_run.insert({ data: {
+            matchingPool: pool.name;
+            matchesCreated: matches.length
+            stats: result.stats
+        }}); */
     }
 
     return {
