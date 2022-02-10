@@ -25,14 +25,14 @@ export class FieldsMatchPoolResolver {
 
     @FieldResolver(returns => [Student])
     @Authorized(Role.ADMIN)
-    async studentsToMatch(@Root() matchPool: MatchPoolType) {
-        return await getStudents(matchPool);
+    async studentsToMatch(@Root() matchPool: MatchPoolType, @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
+        return await getStudents(matchPool, take, skip);
     }
 
     @FieldResolver(returns => [Pupil])
     @Authorized(Role.ADMIN)
-    async pupilsToMatch(@Root() matchPool: MatchPoolType) {
-        return await getPupils(matchPool);
+    async pupilsToMatch(@Root() matchPool: MatchPoolType,  @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
+        return await getPupils(matchPool, take, skip);
     }
 
     @FieldResolver(returns => Int)
