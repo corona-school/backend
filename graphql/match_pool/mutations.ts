@@ -30,28 +30,28 @@ class MatchingSubjectNameStats {
 }
 @ObjectType()
 class MatchingStats {
-    @Field()
-    helperCount: number;
-    @Field()
-    helpeeCount: number;
-    @Field()
-    edgeCount: number;
-    @Field()
-    matchCount: number;
-    @Field()
-    matchingCost: number;
-    @Field()
-    averageWaitingDaysMatchedHelpee: number;
-    @Field()
-    mostWaitingDaysUnmatchedHelpee: number;
-    @Field()
-    numberOfCoveredSubjects: number;
-    @Field()
-    numberOfUncoveredSubjects: number;
-    @Field()
-    numberOfOfferedSubjects: number;
-    @Field()
-    numberOfMatchingEdgesWithMatchingState: number;
+    @Field({ nullable: true })
+    helperCount?: number;
+    @Field({ nullable: true })
+    helpeeCount?: number;
+    @Field({ nullable: true })
+    edgeCount?: number;
+    @Field({ nullable: true })
+    matchCount?: number;
+    @Field({ nullable: true })
+    matchingCost?: number;
+    @Field({ nullable: true })
+    averageWaitingDaysMatchedHelpee?: number;
+    @Field({ nullable: true })
+    mostWaitingDaysUnmatchedHelpee?: number;
+    @Field({ nullable: true })
+    numberOfCoveredSubjects?: number;
+    @Field({ nullable: true })
+    numberOfUncoveredSubjects?: number;
+    @Field({ nullable: true })
+    numberOfOfferedSubjects?: number;
+    @Field({ nullable: true })
+    numberOfMatchingEdgesWithMatchingState?: number;
     @Field(type => [MatchingSubjectNameStats])
     subjectStats: MatchingSubjectNameStats[];
 
