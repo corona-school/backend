@@ -25,7 +25,7 @@ class MatchingSubjectStats {
 class MatchingSubjectNameStats {
     @Field()
     name: string;
-    @Field()
+    @Field(type => MatchingSubjectStats)
     stats: MatchingSubjectStats;
 }
 @ObjectType()
@@ -52,7 +52,7 @@ class MatchingStats {
     numberOfOfferedSubjects: number;
     @Field()
     numberOfMatchingEdgesWithMatchingState: number;
-    @Field()
+    @Field(type => [MatchingSubjectNameStats])
     subjectStats: MatchingSubjectNameStats[];
     
 }
@@ -68,11 +68,11 @@ class MatchingTiming {
 }
 @ObjectType()
 class MatchPoolRunResult {
-    @Field()
+    @Field(type => [TemporaryMatch])
     matches: TemporaryMatch[];
-    @Field()
+    @Field(type => MatchingStats)
     stats: MatchingStats;
-    @Field()
+    @Field(type => MatchingTiming)
     timing: MatchingTiming;
 }
 
