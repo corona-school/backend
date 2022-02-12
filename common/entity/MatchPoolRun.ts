@@ -13,7 +13,7 @@ import {
 
 /* Records statistics from match pool runs */
 @Entity()
-class MatchPoolRun {
+export class MatchPoolRun {
     @PrimaryGeneratedColumn()
     id: number;
 
