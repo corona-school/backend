@@ -139,11 +139,11 @@ export const pools: MatchPool[] = [
         name: "TEST-DO-NOT-USE",
         pupilsToMatch: {
             isPupil: true,
-            openMatchRequestCount: { gt: 0 },
+            openMatchRequestCount: { gt: 0 }
         },
         studentsToMatch: {
             isStudent: true,
-            openMatchRequestCount: { gt: 0 },
+            openMatchRequestCount: { gt: 0 }
         },
         createMatch(pupil, student) {
             if (!isDev) {
@@ -205,7 +205,7 @@ export async function runMatching(poolName: string, apply: boolean) {
 
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
-    
+
         /* await prisma.match_pool_run.insert({ data: {
             matchingPool: pool.name;
             matchesCreated: matches.length
