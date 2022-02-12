@@ -134,6 +134,26 @@ export const pools: MatchPool[] = [
                 waitingTime: 1
             }
         }
+    },
+    {
+        name: "TEST-DO-NOT-USE",
+        pupilsToMatch: {
+            isPupil: true,
+            openMatchRequestCount: { gt: 0 },
+        },
+        studentsToMatch: {
+            isStudent: true,
+            openMatchRequestCount: { gt: 0 },
+        },
+        createMatch,
+        settings: {
+            balancingCoefficients: {
+                matchingPriority: 1,
+                state: 1,
+                subjectMatching: 1,
+                waitingTime: 1
+            }
+        }
     }
 ];
 
