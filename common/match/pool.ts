@@ -145,7 +145,12 @@ export const pools: MatchPool[] = [
             isStudent: true,
             openMatchRequestCount: { gt: 0 },
         },
-        createMatch,
+        createMatch(pupil, student) {
+            if (!isDev) {
+                throw new Error(`The Test Pool may not be run in production!`);
+            }
+            return createMatch(pupil, student);
+        },
         settings: {
             balancingCoefficients: {
                 matchingPriority: 1,
