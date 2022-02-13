@@ -103,6 +103,12 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
     };
 }
 
+const balancingCoefficients =  {
+    subjectMatching: 0.65,
+    state: 0.05,
+    waitingTime: 0.2,
+    matchingPriority: 0.1
+};
 
 export const pools: MatchPool[] = [
     {
@@ -126,14 +132,7 @@ export const pools: MatchPool[] = [
             isCodu: false
         },
         createMatch,
-        settings: {
-            balancingCoefficients: { // TODO: Clarify with Gero
-                matchingPriority: 1,
-                state: 1,
-                subjectMatching: 1,
-                waitingTime: 1
-            }
-        }
+        settings: { balancingCoefficients }
     },
     {
         name: "codu",
@@ -151,14 +150,7 @@ export const pools: MatchPool[] = [
             isCodu: true
         },
         createMatch,
-        settings: {
-            balancingCoefficients: { // TODO: Clarify with Gero
-                matchingPriority: 1,
-                state: 1,
-                subjectMatching: 1,
-                waitingTime: 1
-            }
-        }
+        settings: { balancingCoefficients }
     },
     {
         name: "TEST-DO-NOT-USE",
@@ -176,14 +168,7 @@ export const pools: MatchPool[] = [
             }
             return createMatch(pupil, student);
         },
-        settings: {
-            balancingCoefficients: {
-                matchingPriority: 1,
-                state: 1,
-                subjectMatching: 1,
-                waitingTime: 1
-            }
-        }
+        settings: { balancingCoefficients }
     }
 ];
 
