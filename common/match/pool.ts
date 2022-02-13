@@ -103,7 +103,7 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
     };
 }
 
-const balancingCoefficients =  {
+const balancingCoefficients = {
     subjectMatching: 0.65,
     state: 0.05,
     waitingTime: 0.2,
