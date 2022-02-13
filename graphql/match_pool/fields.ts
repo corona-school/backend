@@ -1,6 +1,6 @@
-import { Student, Pupil, Screener } from "../generated";
+import { Student, Pupil, Screener, Match_pool_run as MatchPoolRun } from "../generated";
 import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from "type-graphql";
-import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools } from "../../common/match/pool";
+import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, getPoolRuns } from "../../common/match/pool";
 import { Role } from "../authorizations";
 
 @ObjectType()
@@ -31,7 +31,7 @@ export class FieldsMatchPoolResolver {
 
     @FieldResolver(returns => [Pupil])
     @Authorized(Role.ADMIN)
-    async pupilsToMatch(@Root() matchPool: MatchPoolType,  @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
+    async pupilsToMatch(@Root() matchPool: MatchPoolType, @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
         return await getPupils(matchPool, take, skip);
     }
 
@@ -45,5 +45,11 @@ export class FieldsMatchPoolResolver {
     @Authorized(Role.ADMIN)
     async pupilsToMatchCount(@Root() matchPool: MatchPoolType) {
         return await getPupilCount(matchPool);
+    }
+
+    @FieldResolver(returns => MatchPoolRun)
+    @Authorized(Role.ADMIN)
+    async runs(@Root() matchPool: MatchPoolType) {
+        return await getPoolRuns(matchPool);
     }
 }

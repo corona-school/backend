@@ -162,6 +162,10 @@ export const pools: MatchPool[] = [
     }
 ];
 
+export async function getPoolRuns(pool: MatchPool) {
+    return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name }});
+}
+
 export async function runMatching(poolName: string, apply: boolean) {
     const pool = pools.find(it => it.name === poolName);
     if (!pool) {
@@ -206,11 +210,11 @@ export async function runMatching(poolName: string, apply: boolean) {
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
 
-        /* await prisma.match_pool_run.insert({ data: {
-            matchingPool: pool.name;
-            matchesCreated: matches.length
-            stats: result.stats
-        }}); */
+        await prisma.match_pool_run.create({ data: {
+            matchingPool: pool.name,
+            matchesCreated: matches.length,
+            stats: (result.stats as any)
+        }});
     }
 
     return {
