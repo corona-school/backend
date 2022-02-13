@@ -20,7 +20,7 @@ export class GroupByPupilArgs {
   @TypeGraphQL.Field(_type => [PupilScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "state" | "schooltype" | "msg" | "grade" | "newsletter" | "isPupil" | "subjects" | "openMatchRequestCount" | "isParticipant" | "isProjectCoachee" | "projectFields" | "isJufoParticipant" | "openProjectMatchRequestCount" | "projectMemberCount" | "languages" | "learningGermanSince" | "matchingPriority" | "lastUpdatedSettingsViaBlocker" | "teacherEmailAddress" | "registrationSource" | "schoolId">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "state" | "schooltype" | "msg" | "grade" | "newsletter" | "isPupil" | "subjects" | "openMatchRequestCount" | "isParticipant" | "isProjectCoachee" | "projectFields" | "isJufoParticipant" | "openProjectMatchRequestCount" | "projectMemberCount" | "languages" | "learningGermanSince" | "matchingPriority" | "lastUpdatedSettingsViaBlocker" | "teacherEmailAddress" | "registrationSource" | "coduToken" | "schoolId">;
 
   @TypeGraphQL.Field(_type => PupilScalarWhereWithAggregatesInput, {
     nullable: true

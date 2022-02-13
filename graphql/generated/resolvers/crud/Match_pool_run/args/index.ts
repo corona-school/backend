@@ -1,0 +1,12 @@
+export { AggregateMatch_pool_runArgs } from "./AggregateMatch_pool_runArgs";
+export { CreateManyMatch_pool_runArgs } from "./CreateManyMatch_pool_runArgs";
+export { CreateMatch_pool_runArgs } from "./CreateMatch_pool_runArgs";
+export { DeleteManyMatch_pool_runArgs } from "./DeleteManyMatch_pool_runArgs";
+export { DeleteMatch_pool_runArgs } from "./DeleteMatch_pool_runArgs";
+export { FindFirstMatch_pool_runArgs } from "./FindFirstMatch_pool_runArgs";
+export { FindManyMatch_pool_runArgs } from "./FindManyMatch_pool_runArgs";
+export { FindUniqueMatch_pool_runArgs } from "./FindUniqueMatch_pool_runArgs";
+export { GroupByMatch_pool_runArgs } from "./GroupByMatch_pool_runArgs";
+export { UpdateManyMatch_pool_runArgs } from "./UpdateManyMatch_pool_runArgs";
+export { UpdateMatch_pool_runArgs } from "./UpdateMatch_pool_runArgs";
+export { UpsertMatch_pool_runArgs } from "./UpsertMatch_pool_runArgs";

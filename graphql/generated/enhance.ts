@@ -42,7 +42,8 @@ const crudResolversMap = {
   Subcourse_instructors_student: crudResolvers.Subcourse_instructors_studentCrudResolver,
   Subcourse_participants_pupil: crudResolvers.Subcourse_participants_pupilCrudResolver,
   Subcourse_waiting_list_pupil: crudResolvers.Subcourse_waiting_list_pupilCrudResolver,
-  Certificate_of_conduct: crudResolvers.Certificate_of_conductCrudResolver
+  Certificate_of_conduct: crudResolvers.Certificate_of_conductCrudResolver,
+  Match_pool_run: crudResolvers.Match_pool_runCrudResolver
 };
 const relationResolversMap = {
   Course: relationResolvers.CourseRelationsResolver,
@@ -566,6 +567,20 @@ const actionResolversMap = {
     upsertCertificate_of_conduct: actionResolvers.UpsertCertificate_of_conductResolver,
     aggregateCertificate_of_conduct: actionResolvers.AggregateCertificate_of_conductResolver,
     groupByCertificate_of_conduct: actionResolvers.GroupByCertificate_of_conductResolver
+  },
+  Match_pool_run: {
+    match_pool_run: actionResolvers.FindUniqueMatch_pool_runResolver,
+    findFirstMatch_pool_run: actionResolvers.FindFirstMatch_pool_runResolver,
+    match_pool_runs: actionResolvers.FindManyMatch_pool_runResolver,
+    createMatch_pool_run: actionResolvers.CreateMatch_pool_runResolver,
+    createManyMatch_pool_run: actionResolvers.CreateManyMatch_pool_runResolver,
+    deleteMatch_pool_run: actionResolvers.DeleteMatch_pool_runResolver,
+    updateMatch_pool_run: actionResolvers.UpdateMatch_pool_runResolver,
+    deleteManyMatch_pool_run: actionResolvers.DeleteManyMatch_pool_runResolver,
+    updateManyMatch_pool_run: actionResolvers.UpdateManyMatch_pool_runResolver,
+    upsertMatch_pool_run: actionResolvers.UpsertMatch_pool_runResolver,
+    aggregateMatch_pool_run: actionResolvers.AggregateMatch_pool_runResolver,
+    groupByMatch_pool_run: actionResolvers.GroupByMatch_pool_runResolver
   }
 };
 const resolversInfo = {
@@ -603,7 +618,8 @@ const resolversInfo = {
   Subcourse_instructors_student: ["subcourse_instructors_student", "findFirstSubcourse_instructors_student", "subcourse_instructors_students", "createSubcourse_instructors_student", "createManySubcourse_instructors_student", "deleteSubcourse_instructors_student", "updateSubcourse_instructors_student", "deleteManySubcourse_instructors_student", "updateManySubcourse_instructors_student", "upsertSubcourse_instructors_student", "aggregateSubcourse_instructors_student", "groupBySubcourse_instructors_student"],
   Subcourse_participants_pupil: ["subcourse_participants_pupil", "findFirstSubcourse_participants_pupil", "subcourse_participants_pupils", "createSubcourse_participants_pupil", "createManySubcourse_participants_pupil", "deleteSubcourse_participants_pupil", "updateSubcourse_participants_pupil", "deleteManySubcourse_participants_pupil", "updateManySubcourse_participants_pupil", "upsertSubcourse_participants_pupil", "aggregateSubcourse_participants_pupil", "groupBySubcourse_participants_pupil"],
   Subcourse_waiting_list_pupil: ["subcourse_waiting_list_pupil", "findFirstSubcourse_waiting_list_pupil", "subcourse_waiting_list_pupils", "createSubcourse_waiting_list_pupil", "createManySubcourse_waiting_list_pupil", "deleteSubcourse_waiting_list_pupil", "updateSubcourse_waiting_list_pupil", "deleteManySubcourse_waiting_list_pupil", "updateManySubcourse_waiting_list_pupil", "upsertSubcourse_waiting_list_pupil", "aggregateSubcourse_waiting_list_pupil", "groupBySubcourse_waiting_list_pupil"],
-  Certificate_of_conduct: ["certificate_of_conduct", "findFirstCertificate_of_conduct", "certificate_of_conducts", "createCertificate_of_conduct", "createManyCertificate_of_conduct", "deleteCertificate_of_conduct", "updateCertificate_of_conduct", "deleteManyCertificate_of_conduct", "updateManyCertificate_of_conduct", "upsertCertificate_of_conduct", "aggregateCertificate_of_conduct", "groupByCertificate_of_conduct"]
+  Certificate_of_conduct: ["certificate_of_conduct", "findFirstCertificate_of_conduct", "certificate_of_conducts", "createCertificate_of_conduct", "createManyCertificate_of_conduct", "deleteCertificate_of_conduct", "updateCertificate_of_conduct", "deleteManyCertificate_of_conduct", "updateManyCertificate_of_conduct", "upsertCertificate_of_conduct", "aggregateCertificate_of_conduct", "groupByCertificate_of_conduct"],
+  Match_pool_run: ["match_pool_run", "findFirstMatch_pool_run", "match_pool_runs", "createMatch_pool_run", "createManyMatch_pool_run", "deleteMatch_pool_run", "updateMatch_pool_run", "deleteManyMatch_pool_run", "updateManyMatch_pool_run", "upsertMatch_pool_run", "aggregateMatch_pool_run", "groupByMatch_pool_run"]
 };
 const relationResolversInfo = {
   Course: ["student", "course_guest", "course_instructors_student", "course_tags_course_tag", "subcourse"],
@@ -672,7 +688,8 @@ const modelsInfo = {
   Subcourse_instructors_student: ["subcourseId", "studentId"],
   Subcourse_participants_pupil: ["subcourseId", "pupilId"],
   Subcourse_waiting_list_pupil: ["subcourseId", "pupilId"],
-  Certificate_of_conduct: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"]
+  Certificate_of_conduct: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
+  Match_pool_run: ["id", "runAt", "matchingPool", "matchesCreated", "stats"]
 };
 const inputsInfo = {
   Bbb_meetingWhereInput: ["AND", "OR", "NOT", "id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
@@ -815,6 +832,10 @@ const inputsInfo = {
   Certificate_of_conductOrderByInput: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
   Certificate_of_conductWhereUniqueInput: ["id", "studentId"],
   Certificate_of_conductScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
+  Match_pool_runWhereInput: ["AND", "OR", "NOT", "id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  Match_pool_runOrderByInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  Match_pool_runWhereUniqueInput: ["id"],
+  Match_pool_runScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "runAt", "matchingPool", "matchesCreated", "stats"],
   Bbb_meetingCreateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingUpdateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingCreateManyInput: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
@@ -955,6 +976,10 @@ const inputsInfo = {
   Certificate_of_conductUpdateInput: ["createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "student"],
   Certificate_of_conductCreateManyInput: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
   Certificate_of_conductUpdateManyMutationInput: ["createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords"],
+  Match_pool_runCreateInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
+  Match_pool_runUpdateInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
+  Match_pool_runCreateManyInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  Match_pool_runUpdateManyMutationInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
   IntFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   DateTimeFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   StringFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "mode", "not"],
@@ -1893,6 +1918,8 @@ const outputsInfo = {
   Subcourse_waiting_list_pupilGroupBy: ["subcourseId", "pupilId", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateCertificate_of_conduct: ["_count", "_avg", "_sum", "_min", "_max"],
   Certificate_of_conductGroupBy: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId", "_count", "_avg", "_sum", "_min", "_max"],
+  AggregateMatch_pool_run: ["_count", "_avg", "_sum", "_min", "_max"],
+  Match_pool_runGroupBy: ["id", "runAt", "matchingPool", "matchesCreated", "stats", "_count", "_avg", "_sum", "_min", "_max"],
   AffectedRowsOutput: ["count"],
   Bbb_meetingCountAggregate: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl", "_all"],
   Bbb_meetingAvgAggregate: ["id"],
@@ -2068,7 +2095,12 @@ const outputsInfo = {
   Certificate_of_conductAvgAggregate: ["id", "studentId"],
   Certificate_of_conductSumAggregate: ["id", "studentId"],
   Certificate_of_conductMinAggregate: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
-  Certificate_of_conductMaxAggregate: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"]
+  Certificate_of_conductMaxAggregate: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
+  Match_pool_runCountAggregate: ["id", "runAt", "matchingPool", "matchesCreated", "stats", "_all"],
+  Match_pool_runAvgAggregate: ["id", "matchesCreated"],
+  Match_pool_runSumAggregate: ["id", "matchesCreated"],
+  Match_pool_runMinAggregate: ["id", "runAt", "matchingPool", "matchesCreated"],
+  Match_pool_runMaxAggregate: ["id", "runAt", "matchingPool", "matchesCreated"]
 };
 const argsInfo = {
   FindUniqueBbb_meetingArgs: ["where"],
@@ -2490,7 +2522,19 @@ const argsInfo = {
   UpdateManyCertificate_of_conductArgs: ["data", "where"],
   UpsertCertificate_of_conductArgs: ["where", "create", "update"],
   AggregateCertificate_of_conductArgs: ["where", "orderBy", "cursor", "take", "skip"],
-  GroupByCertificate_of_conductArgs: ["where", "orderBy", "by", "having", "take", "skip"]
+  GroupByCertificate_of_conductArgs: ["where", "orderBy", "by", "having", "take", "skip"],
+  FindUniqueMatch_pool_runArgs: ["where"],
+  FindFirstMatch_pool_runArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindManyMatch_pool_runArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  CreateMatch_pool_runArgs: ["data"],
+  CreateManyMatch_pool_runArgs: ["data", "skipDuplicates"],
+  DeleteMatch_pool_runArgs: ["where"],
+  UpdateMatch_pool_runArgs: ["data", "where"],
+  DeleteManyMatch_pool_runArgs: ["where"],
+  UpdateManyMatch_pool_runArgs: ["data", "where"],
+  UpsertMatch_pool_runArgs: ["where", "create", "update"],
+  AggregateMatch_pool_runArgs: ["where", "orderBy", "cursor", "take", "skip"],
+  GroupByMatch_pool_runArgs: ["where", "orderBy", "by", "having", "take", "skip"]
 };
 
 type ResolverModelNames = keyof typeof crudResolversMap;
