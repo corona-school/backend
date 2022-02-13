@@ -141,7 +141,7 @@ export const pools: MatchPool[] = [
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]"},
-            registrationSource: { equals: "codu" },
+            registrationSource: { equals: "codu" }
         },
         studentsToMatch: {
             isStudent: true,

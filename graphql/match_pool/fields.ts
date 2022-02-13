@@ -4,9 +4,19 @@ import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as Ma
 import { Role } from "../authorizations";
 
 @ObjectType()
+class MatchPoolAutomatic {
+    @Field()
+    minStudents: number;
+    @Field()
+    minPupils: number;
+}
+
+@ObjectType()
 class MatchPool {
     @Field()
     name: string;
+    @Field({ nullable: true })
+    automatic?: MatchPoolAutomatic;
 }
 
 @Resolver(of => MatchPool)
