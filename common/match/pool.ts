@@ -136,6 +136,31 @@ export const pools: MatchPool[] = [
         }
     },
     {
+        name: "codu",
+        pupilsToMatch: {
+            isPupil: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: "[]"},
+            registrationSource: { equals: "codu" },
+        },
+        studentsToMatch: {
+            isStudent: true,
+            openMatchRequestCount: { gt: 0},
+            subjects: { not: "[]" },
+            screening: { success: true },
+            isCodu: true
+        },
+        createMatch,
+        settings: {
+            balancingCoefficients: { // TODO: Clarify with Gero
+                matchingPriority: 1,
+                state: 1,
+                subjectMatching: 1,
+                waitingTime: 1
+            }
+        }
+    },
+    {
         name: "TEST-DO-NOT-USE",
         pupilsToMatch: {
             isPupil: true,
