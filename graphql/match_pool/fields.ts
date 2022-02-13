@@ -47,7 +47,7 @@ export class FieldsMatchPoolResolver {
         return await getPupilCount(matchPool);
     }
 
-    @FieldResolver(returns => MatchPoolRun)
+    @FieldResolver(returns => [MatchPoolRun])
     @Authorized(Role.ADMIN)
     async runs(@Root() matchPool: MatchPoolType) {
         return await getPoolRuns(matchPool);
