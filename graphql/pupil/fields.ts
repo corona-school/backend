@@ -61,7 +61,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver(type => [Subject])
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }

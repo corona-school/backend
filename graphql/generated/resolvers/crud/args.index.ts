@@ -16,6 +16,7 @@ export * from "./Jufo_verification_transmission/args";
 export * from "./Lecture/args";
 export * from "./Log/args";
 export * from "./Match/args";
+export * from "./Match_pool_run/args";
 export * from "./Mentor/args";
 export * from "./Notification/args";
 export * from "./Participation_certificate/args";

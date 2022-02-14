@@ -16,6 +16,7 @@ export { Jufo_verification_transmissionScalarFieldEnum } from "./Jufo_verificati
 export { LectureScalarFieldEnum } from "./LectureScalarFieldEnum";
 export { LogScalarFieldEnum } from "./LogScalarFieldEnum";
 export { MatchScalarFieldEnum } from "./MatchScalarFieldEnum";
+export { Match_pool_runScalarFieldEnum } from "./Match_pool_runScalarFieldEnum";
 export { MentorScalarFieldEnum } from "./MentorScalarFieldEnum";
 export { NotificationScalarFieldEnum } from "./NotificationScalarFieldEnum";
 export { Participation_certificateScalarFieldEnum } from "./Participation_certificateScalarFieldEnum";

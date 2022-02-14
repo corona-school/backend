@@ -12,6 +12,12 @@ export class DeleteManyRemission_requestResolver {
     nullable: false
   })
   async deleteManyRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: DeleteManyRemission_requestArgs): Promise<AffectedRowsOutput> {
-    return getPrismaFromContext(ctx).remission_request.deleteMany(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.deleteMany({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 }

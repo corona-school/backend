@@ -560,6 +560,14 @@ model certificate_of_conduct {
   student          student? @relation(fields: [studentId], references: [id])
 }
 
+model match_pool_run {
+  id             Int      @id @default(autoincrement())
+  runAt          DateTime @default(now()) @db.Timestamp(6)
+  matchingPool   String   @db.VarChar
+  matchesCreated Int
+  stats          Json     @db.Json
+}
+
 enum course_category_enum {
   revision
   club

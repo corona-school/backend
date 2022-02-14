@@ -11,6 +11,12 @@ export class UpsertRemission_requestResolver {
     nullable: false
   })
   async upsertRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: UpsertRemission_requestArgs): Promise<Remission_request> {
-    return getPrismaFromContext(ctx).remission_request.upsert(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.upsert({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 }
