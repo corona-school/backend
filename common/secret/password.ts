@@ -1,38 +1,40 @@
-import { student as Student, pupil as Pupil } from "@prisma/client";
-import { getUser, getUserId } from "../user";
+import { getUser, getUserByEmail, User } from "../user";
 import { prisma } from "../prisma";
 import { verifyPassword, hashPassword } from "../util/hashing";
 import { SecretType } from "../entity/Secret";
+import { getLogger } from "log4js";
 
-export function createPassword(user: Student | Pupil, password: string) {
+const logger = getLogger("Token");
+
+export async function createPassword(user: User, password: string) {
     const saltedHash = await hashPassword(password);
 
-    await prisma.$transaction(
-        prisma.secret.deleteMany({ userId: getUserId(user), type: SecretType.PASSWORD })
-        prisma.secret.insert({ data: {
-            type: SecretType.PASSWORD,
-            userId: getUserId(user),
-            secret: saltedHash
-            // expiresAt: NULL -> never
-        }})
-    );
+    await prisma.secret.deleteMany({ where: { userId: user.userID, type: SecretType.PASSWORD }}),
+    await prisma.secret.create({ data: {
+        type: SecretType.PASSWORD,
+        userId: user.userID,
+        secret: saltedHash,
+        expiresAt: null, // -> never
+        lastUsed: null
+    }});
 
 }
 
-export async function loginPassword(email: string, password: string): Promise<Student | Pupil | never> {
-    const user = (
-        (await prisma.student.findFirst({ where: { email }})) ??
-        (await prisma.pupil.findFirst({ where: { email }}))
-    );
+export async function loginPassword(email: string, password: string): Promise<User | never> {
+    const user = await getUserByEmail(email);
 
-    if (!user) {
-        throw new Error(`Invalid email`);
-    }
+    const secrets = await prisma.secret.findMany({
+        where: {
+            type: SecretType.PASSWORD,
+            userId: user.userID,
+            OR: [
+                { expiresAt: null },
+                { expiresAt: { gte: new Date() }}
+            ]
+        }});
 
-    const passwords = await prisma.secret.findMany({ where: { userId: getUserId(user) }});
-
-    for (const password of passwords) {
-        const isValid = await verifyPassword(password, password.secret);
+    for (const secret of secrets) {
+        const isValid = await verifyPassword(password, secret.secret);
         if (isValid) {
             return user;
         }

@@ -5,7 +5,7 @@ import Keyv from "keyv";
 import { v4 as uuid } from "uuid";
 import { GraphQLContext } from "./context";
 import { assert } from "console";
-import { getPupil, getScreener, getStudent } from "./util";
+import { Deprecated, getPupil, getScreener, getStudent } from "./util";
 import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
@@ -13,21 +13,15 @@ import { getLogger } from "log4js";
 import { Me } from "./me/fields";
 import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
+import { User, userForPupil, userForScreener, userForStudent } from "../common/user";
+import { loginPassword, loginToken } from "../common/secret";
 
 const logger = getLogger("GraphQL Authentication");
 
 // This interface is close to what might be a user entity in the future
 // As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
-export interface GraphQLUser {
+export interface GraphQLUser extends User {
     roles: Role[];
-
-    firstname?: string;
-    lastname?: string;
-    email?: string;
-
-    studentId?: number;
-    pupilId?: number;
-    screenerId?: number;
 }
 
 /* As we only have one backend, and there is probably no need to scale in the near future,
@@ -120,21 +114,27 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function logInAsPupil(pupil: Pupil, context: GraphQLContext) {
+export async function loginAsUser(user: User, context: GraphQLContext) {
     ensureSession(context);
 
-    context.user = {
-        firstname: pupil.firstname,
-        lastname: pupil.lastname,
-        email: pupil.email,
-        pupilId: pupil.id,
-        roles: []
-    };
+    context.user = { ...user, roles: [] };
 
     userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] Pupil(${pupil.id}) successfully logged in and has USER and PUPIL role`);
+    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
 
-    await evaluatePupilRoles(pupil, context);
+    if (user.studentId) {
+        const student = await getStudent(user.studentId);
+        await evaluateStudentRoles(student, context);
+    }
+
+    if (user.pupilId) {
+        const pupil = await getPupil(user.pupilId);
+        await evaluatePupilRoles(pupil, context);
+    }
+
+    if (user.screenerId) {
+        context.user.roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
+    }
 }
 
 export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
@@ -173,24 +173,6 @@ export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) 
         context.user.roles.push(Role.STATE_PUPIL);
         logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
     }
-}
-
-export async function logInAsStudent(student: Student, context: GraphQLContext) {
-    ensureSession(context);
-    const logger = logInContext(`GraphQL Authentication`, context);
-
-    context.user = {
-        firstname: student.firstname,
-        lastname: student.lastname,
-        email: student.email,
-        studentId: student.id,
-        roles: []
-    };
-
-    logger.info(`Student(${student.id}) successfully logged in`);
-
-    userSessions.set(context.sessionToken, context.user);
-    await evaluateStudentRoles(student, context);
 }
 
 export async function evaluateStudentRoles(student: Student, context: GraphQLContext) {
@@ -242,6 +224,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
 export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
+    @Deprecated("use loginPassword or loginToken instead")
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
@@ -270,7 +253,7 @@ export class AuthenticationResolver {
                 });
             }
 
-            await logInAsPupil(pupil, context);
+            await loginAsUser(userForPupil(pupil), context);
 
             return true;
         }
@@ -298,7 +281,7 @@ export class AuthenticationResolver {
                 });
             }
 
-            await logInAsStudent(student, context);
+            await loginAsUser(userForStudent(student), context);
 
             return true;
         }
@@ -309,7 +292,8 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)
-    async loginPassword(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
+    @Deprecated("Use loginPassword instead")
+    async loginPasswordLegacy(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
 
@@ -327,20 +311,34 @@ export class AuthenticationResolver {
             throw new AuthenticationError("Invalid email or password");
         }
 
-        const user: GraphQLUser = {
-            firstname: screener.firstname,
-            lastname: screener.lastname,
-            email: screener.email,
-            roles: [Role.USER, Role.SCREENER, Role.UNAUTHENTICATED],
-            screenerId: screener.id
-        };
-
-        context.user = user;
-        userSessions.set(context.sessionToken, user);
-        logger.info(`Screener(${screener.id}) successfully logged in`);
+        await loginAsUser(userForScreener(screener), context);
 
         return true;
     }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation(returns => Boolean)
+    async loginPassword(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
+        try {
+            const user = await loginPassword(email, password);
+            await loginAsUser(user, context);
+            return true;
+        } catch (error) {
+            throw new AuthenticationError("Invalid E-Mail or Password");
+        }
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    async loginToken(@Ctx() context: GraphQLContext, @Arg("token") token: string) {
+        try {
+            const user = await loginToken(token);
+            await loginAsUser(user, context);
+            return true;
+        } catch (error) {
+            throw new AuthenticationError("Invalid Token");
+        }
+    }
+
 
     @Authorized(Role.PUPIL, Role.STUDENT, Role.SCREENER)
     @Mutation(returns => Boolean)
