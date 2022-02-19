@@ -29,6 +29,7 @@ export { Remission_requestCrudResolver } from "./Remission_request/Remission_req
 export { SchoolCrudResolver } from "./School/SchoolCrudResolver";
 export { ScreenerCrudResolver } from "./Screener/ScreenerCrudResolver";
 export { ScreeningCrudResolver } from "./Screening/ScreeningCrudResolver";
+export { SecretCrudResolver } from "./Secret/SecretCrudResolver";
 export { StudentCrudResolver } from "./Student/StudentCrudResolver";
 export { SubcourseCrudResolver } from "./Subcourse/SubcourseCrudResolver";
 export { Subcourse_instructors_studentCrudResolver } from "./Subcourse_instructors_student/Subcourse_instructors_studentCrudResolver";

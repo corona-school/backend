@@ -43,7 +43,8 @@ const crudResolversMap = {
   Subcourse_participants_pupil: crudResolvers.Subcourse_participants_pupilCrudResolver,
   Subcourse_waiting_list_pupil: crudResolvers.Subcourse_waiting_list_pupilCrudResolver,
   Certificate_of_conduct: crudResolvers.Certificate_of_conductCrudResolver,
-  Match_pool_run: crudResolvers.Match_pool_runCrudResolver
+  Match_pool_run: crudResolvers.Match_pool_runCrudResolver,
+  Secret: crudResolvers.SecretCrudResolver
 };
 const relationResolversMap = {
   Course: relationResolvers.CourseRelationsResolver,
@@ -581,6 +582,20 @@ const actionResolversMap = {
     upsertMatch_pool_run: actionResolvers.UpsertMatch_pool_runResolver,
     aggregateMatch_pool_run: actionResolvers.AggregateMatch_pool_runResolver,
     groupByMatch_pool_run: actionResolvers.GroupByMatch_pool_runResolver
+  },
+  Secret: {
+    secret: actionResolvers.FindUniqueSecretResolver,
+    findFirstSecret: actionResolvers.FindFirstSecretResolver,
+    secrets: actionResolvers.FindManySecretResolver,
+    createSecret: actionResolvers.CreateSecretResolver,
+    createManySecret: actionResolvers.CreateManySecretResolver,
+    deleteSecret: actionResolvers.DeleteSecretResolver,
+    updateSecret: actionResolvers.UpdateSecretResolver,
+    deleteManySecret: actionResolvers.DeleteManySecretResolver,
+    updateManySecret: actionResolvers.UpdateManySecretResolver,
+    upsertSecret: actionResolvers.UpsertSecretResolver,
+    aggregateSecret: actionResolvers.AggregateSecretResolver,
+    groupBySecret: actionResolvers.GroupBySecretResolver
   }
 };
 const resolversInfo = {
@@ -619,7 +634,8 @@ const resolversInfo = {
   Subcourse_participants_pupil: ["subcourse_participants_pupil", "findFirstSubcourse_participants_pupil", "subcourse_participants_pupils", "createSubcourse_participants_pupil", "createManySubcourse_participants_pupil", "deleteSubcourse_participants_pupil", "updateSubcourse_participants_pupil", "deleteManySubcourse_participants_pupil", "updateManySubcourse_participants_pupil", "upsertSubcourse_participants_pupil", "aggregateSubcourse_participants_pupil", "groupBySubcourse_participants_pupil"],
   Subcourse_waiting_list_pupil: ["subcourse_waiting_list_pupil", "findFirstSubcourse_waiting_list_pupil", "subcourse_waiting_list_pupils", "createSubcourse_waiting_list_pupil", "createManySubcourse_waiting_list_pupil", "deleteSubcourse_waiting_list_pupil", "updateSubcourse_waiting_list_pupil", "deleteManySubcourse_waiting_list_pupil", "updateManySubcourse_waiting_list_pupil", "upsertSubcourse_waiting_list_pupil", "aggregateSubcourse_waiting_list_pupil", "groupBySubcourse_waiting_list_pupil"],
   Certificate_of_conduct: ["certificate_of_conduct", "findFirstCertificate_of_conduct", "certificate_of_conducts", "createCertificate_of_conduct", "createManyCertificate_of_conduct", "deleteCertificate_of_conduct", "updateCertificate_of_conduct", "deleteManyCertificate_of_conduct", "updateManyCertificate_of_conduct", "upsertCertificate_of_conduct", "aggregateCertificate_of_conduct", "groupByCertificate_of_conduct"],
-  Match_pool_run: ["match_pool_run", "findFirstMatch_pool_run", "match_pool_runs", "createMatch_pool_run", "createManyMatch_pool_run", "deleteMatch_pool_run", "updateMatch_pool_run", "deleteManyMatch_pool_run", "updateManyMatch_pool_run", "upsertMatch_pool_run", "aggregateMatch_pool_run", "groupByMatch_pool_run"]
+  Match_pool_run: ["match_pool_run", "findFirstMatch_pool_run", "match_pool_runs", "createMatch_pool_run", "createManyMatch_pool_run", "deleteMatch_pool_run", "updateMatch_pool_run", "deleteManyMatch_pool_run", "updateManyMatch_pool_run", "upsertMatch_pool_run", "aggregateMatch_pool_run", "groupByMatch_pool_run"],
+  Secret: ["secret", "findFirstSecret", "secrets", "createSecret", "createManySecret", "deleteSecret", "updateSecret", "deleteManySecret", "updateManySecret", "upsertSecret", "aggregateSecret", "groupBySecret"]
 };
 const relationResolversInfo = {
   Course: ["student", "course_guest", "course_instructors_student", "course_tags_course_tag", "subcourse"],
@@ -689,7 +705,8 @@ const modelsInfo = {
   Subcourse_participants_pupil: ["subcourseId", "pupilId"],
   Subcourse_waiting_list_pupil: ["subcourseId", "pupilId"],
   Certificate_of_conduct: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
-  Match_pool_run: ["id", "runAt", "matchingPool", "matchesCreated", "stats"]
+  Match_pool_run: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  Secret: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"]
 };
 const inputsInfo = {
   Bbb_meetingWhereInput: ["AND", "OR", "NOT", "id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
@@ -836,6 +853,10 @@ const inputsInfo = {
   Match_pool_runOrderByInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
   Match_pool_runWhereUniqueInput: ["id"],
   Match_pool_runScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  SecretWhereInput: ["AND", "OR", "NOT", "id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretOrderByInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretWhereUniqueInput: ["id"],
+  SecretScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
   Bbb_meetingCreateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingUpdateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingCreateManyInput: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
@@ -980,6 +1001,10 @@ const inputsInfo = {
   Match_pool_runUpdateInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
   Match_pool_runCreateManyInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
   Match_pool_runUpdateManyMutationInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
+  SecretCreateInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretUpdateInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretCreateManyInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretUpdateManyMutationInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
   IntFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   DateTimeFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   StringFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "mode", "not"],
@@ -1920,6 +1945,8 @@ const outputsInfo = {
   Certificate_of_conductGroupBy: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateMatch_pool_run: ["_count", "_avg", "_sum", "_min", "_max"],
   Match_pool_runGroupBy: ["id", "runAt", "matchingPool", "matchesCreated", "stats", "_count", "_avg", "_sum", "_min", "_max"],
+  AggregateSecret: ["_count", "_avg", "_sum", "_min", "_max"],
+  SecretGroupBy: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed", "_count", "_avg", "_sum", "_min", "_max"],
   AffectedRowsOutput: ["count"],
   Bbb_meetingCountAggregate: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl", "_all"],
   Bbb_meetingAvgAggregate: ["id"],
@@ -2100,7 +2127,12 @@ const outputsInfo = {
   Match_pool_runAvgAggregate: ["id", "matchesCreated"],
   Match_pool_runSumAggregate: ["id", "matchesCreated"],
   Match_pool_runMinAggregate: ["id", "runAt", "matchingPool", "matchesCreated"],
-  Match_pool_runMaxAggregate: ["id", "runAt", "matchingPool", "matchesCreated"]
+  Match_pool_runMaxAggregate: ["id", "runAt", "matchingPool", "matchesCreated"],
+  SecretCountAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed", "_all"],
+  SecretAvgAggregate: ["id", "type"],
+  SecretSumAggregate: ["id", "type"],
+  SecretMinAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretMaxAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"]
 };
 const argsInfo = {
   FindUniqueBbb_meetingArgs: ["where"],
@@ -2534,7 +2566,19 @@ const argsInfo = {
   UpdateManyMatch_pool_runArgs: ["data", "where"],
   UpsertMatch_pool_runArgs: ["where", "create", "update"],
   AggregateMatch_pool_runArgs: ["where", "orderBy", "cursor", "take", "skip"],
-  GroupByMatch_pool_runArgs: ["where", "orderBy", "by", "having", "take", "skip"]
+  GroupByMatch_pool_runArgs: ["where", "orderBy", "by", "having", "take", "skip"],
+  FindUniqueSecretArgs: ["where"],
+  FindFirstSecretArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindManySecretArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  CreateSecretArgs: ["data"],
+  CreateManySecretArgs: ["data", "skipDuplicates"],
+  DeleteSecretArgs: ["where"],
+  UpdateSecretArgs: ["data", "where"],
+  DeleteManySecretArgs: ["where"],
+  UpdateManySecretArgs: ["data", "where"],
+  UpsertSecretArgs: ["where", "create", "update"],
+  AggregateSecretArgs: ["where", "orderBy", "cursor", "take", "skip"],
+  GroupBySecretArgs: ["where", "orderBy", "by", "having", "take", "skip"]
 };
 
 type ResolverModelNames = keyof typeof crudResolversMap;

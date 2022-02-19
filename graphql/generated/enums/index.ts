@@ -30,6 +30,7 @@ export { Remission_requestScalarFieldEnum } from "./Remission_requestScalarField
 export { SchoolScalarFieldEnum } from "./SchoolScalarFieldEnum";
 export { ScreenerScalarFieldEnum } from "./ScreenerScalarFieldEnum";
 export { ScreeningScalarFieldEnum } from "./ScreeningScalarFieldEnum";
+export { SecretScalarFieldEnum } from "./SecretScalarFieldEnum";
 export { SortOrder } from "./SortOrder";
 export { StudentScalarFieldEnum } from "./StudentScalarFieldEnum";
 export { SubcourseScalarFieldEnum } from "./SubcourseScalarFieldEnum";

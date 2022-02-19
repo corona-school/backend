@@ -882,6 +882,14 @@ export { ScreeningUpsertWithWhereUniqueWithoutScreenerInput } from "./ScreeningU
 export { ScreeningUpsertWithoutStudentInput } from "./ScreeningUpsertWithoutStudentInput";
 export { ScreeningWhereInput } from "./ScreeningWhereInput";
 export { ScreeningWhereUniqueInput } from "./ScreeningWhereUniqueInput";
+export { SecretCreateInput } from "./SecretCreateInput";
+export { SecretCreateManyInput } from "./SecretCreateManyInput";
+export { SecretOrderByInput } from "./SecretOrderByInput";
+export { SecretScalarWhereWithAggregatesInput } from "./SecretScalarWhereWithAggregatesInput";
+export { SecretUpdateInput } from "./SecretUpdateInput";
+export { SecretUpdateManyMutationInput } from "./SecretUpdateManyMutationInput";
+export { SecretWhereInput } from "./SecretWhereInput";
+export { SecretWhereUniqueInput } from "./SecretWhereUniqueInput";
 export { StringFieldUpdateOperationsInput } from "./StringFieldUpdateOperationsInput";
 export { StringFilter } from "./StringFilter";
 export { StringNullableFilter } from "./StringNullableFilter";
