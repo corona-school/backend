@@ -30,3 +30,10 @@ export {
     splitAtIndex,
     isCommandArg
 };
+
+export const assertExists = <Type>(optional: Type | null | undefined): Type | never => {
+    if (optional === null || optional === undefined) {
+        throw new Error(`Unexpected null or undefined`);
+    }
+    return optional;
+};

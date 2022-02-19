@@ -500,6 +500,14 @@ export { MatchUpsertWithWhereUniqueWithoutPupilInput } from "./MatchUpsertWithWh
 export { MatchUpsertWithWhereUniqueWithoutStudentInput } from "./MatchUpsertWithWhereUniqueWithoutStudentInput";
 export { MatchWhereInput } from "./MatchWhereInput";
 export { MatchWhereUniqueInput } from "./MatchWhereUniqueInput";
+export { Match_pool_runCreateInput } from "./Match_pool_runCreateInput";
+export { Match_pool_runCreateManyInput } from "./Match_pool_runCreateManyInput";
+export { Match_pool_runOrderByInput } from "./Match_pool_runOrderByInput";
+export { Match_pool_runScalarWhereWithAggregatesInput } from "./Match_pool_runScalarWhereWithAggregatesInput";
+export { Match_pool_runUpdateInput } from "./Match_pool_runUpdateInput";
+export { Match_pool_runUpdateManyMutationInput } from "./Match_pool_runUpdateManyMutationInput";
+export { Match_pool_runWhereInput } from "./Match_pool_runWhereInput";
+export { Match_pool_runWhereUniqueInput } from "./Match_pool_runWhereUniqueInput";
 export { MentorCreateInput } from "./MentorCreateInput";
 export { MentorCreateManyInput } from "./MentorCreateManyInput";
 export { MentorCreateManydivisionInput } from "./MentorCreateManydivisionInput";

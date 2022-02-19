@@ -34,7 +34,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver(type => [Subject])
-    @Authorized(Role.USER)
+    @Authorized(Role.ADMIN, Role.USER)
     async subjectsFormatted(@Root() pupil: Required<Student>) {
         return parseSubjectString(pupil.subjects);
     }

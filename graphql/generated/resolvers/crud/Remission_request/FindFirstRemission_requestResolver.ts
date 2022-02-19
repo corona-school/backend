@@ -11,6 +11,12 @@ export class FindFirstRemission_requestResolver {
     nullable: true
   })
   async findFirstRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindFirstRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.findFirst(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.findFirst({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 }

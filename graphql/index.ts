@@ -38,6 +38,8 @@ import { ExtendedFieldsStudentResolver } from "./student/field";
 import { isDev } from "../common/util/environment";
 import { formatError } from "./error";
 import { NotificationBulkRunResolver } from "./notification/fields";
+import { FieldsMatchPoolResolver } from "./match_pool/fields";
+import { MutateMatchPoolResolver } from "./match_pool/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -98,7 +100,11 @@ const schema = buildSchemaSync({
 
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
-        ExtendedFieldsCertificateOfConductResolver
+        ExtendedFieldsCertificateOfConductResolver,
+
+        /* MatchPool */
+        FieldsMatchPoolResolver,
+        MutateMatchPoolResolver
     ],
     authChecker
 });

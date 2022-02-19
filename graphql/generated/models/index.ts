@@ -16,6 +16,7 @@ export { Jufo_verification_transmission } from "./Jufo_verification_transmission
 export { Lecture } from "./Lecture";
 export { Log } from "./Log";
 export { Match } from "./Match";
+export { Match_pool_run } from "./Match_pool_run";
 export { Mentor } from "./Mentor";
 export { Notification } from "./Notification";
 export { Participation_certificate } from "./Participation_certificate";
