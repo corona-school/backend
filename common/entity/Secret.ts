@@ -9,7 +9,7 @@ import {
 // Secret in the sense of https://en.wikipedia.org/wiki/Shared_secret
 //  used to prove the user's identity
 @Entity()
-class Secret {
+export class Secret {
     @PrimaryGeneratedColumn()
     id: number;
 

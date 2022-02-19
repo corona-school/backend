@@ -3,10 +3,10 @@ generator client {
   previewFeatures = ["interactiveTransactions"]
 }
 
-//generator typegraphql {
-//  provider = "typegraphql-prisma"
-//  output   = "../graphql/generated"
-//}
+generator typegraphql {
+  provider = "typegraphql-prisma"
+  output   = "../graphql/generated"
+}
 
 datasource db {
   provider = "postgresql"
@@ -566,6 +566,16 @@ model match_pool_run {
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
+}
+
+model secret {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  userId    String   @db.VarChar
+  type      Int
+  secret    String   @db.VarChar
+  expiresAt DateTime @db.Timestamp(6)
+  lastUsed  DateTime @db.Timestamp(6)
 }
 
 enum course_category_enum {
