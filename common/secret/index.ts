@@ -1,12 +1,15 @@
 import { User } from "../user";
 import { secret as Secret } from "@prisma/client";
 import { prisma } from "../prisma";
+import { getLogger } from "log4js";
 
 export * from "./password";
 export * from "./token";
 
+const logger = getLogger("Secret");
+
 export async function getSecrets(user: User): Promise<Omit<Secret, "secret">[]> {
-    return await prisma.secret.findMany({
+    const result = await prisma.secret.findMany({
         where: {
             userId: user.userID,
             OR: [
@@ -16,4 +19,17 @@ export async function getSecrets(user: User): Promise<Omit<Secret, "secret">[]> 
         },
         select: { createdAt: true, expiresAt: true, id: true, lastUsed: true, type: true, userId: true }
     });
+
+    logger.info(`User(${user.userID}) retrieved ${result.length} secrets`);
+    return result;
+}
+
+export async function cleanupSecrets() {
+    const result = await prisma.secret.deleteMany({
+        where: {
+            expiresAt: { lte: new Date() }
+        }
+    });
+
+    logger.info(`Cleaned up ${result.count} expired secrets`);
 }
