@@ -4,13 +4,15 @@ import { verifyPassword, hashPassword } from "../util/hashing";
 import { SecretType } from "../entity/Secret";
 import { getLogger } from "log4js";
 
-const logger = getLogger("Token");
+const logger = getLogger("Password");
 
 export async function createPassword(user: User, password: string) {
     const saltedHash = await hashPassword(password);
 
-    await prisma.secret.deleteMany({ where: { userId: user.userID, type: SecretType.PASSWORD }}),
-    await prisma.secret.create({ data: {
+    await prisma.secret.deleteMany({ where: { userId: user.userID, type: SecretType.PASSWORD }});
+    logger.info(`User(${user.userID}) removed previous passwords to set new one`);
+
+    const created = await prisma.secret.create({ data: {
         type: SecretType.PASSWORD,
         userId: user.userID,
         secret: saltedHash,
@@ -18,6 +20,7 @@ export async function createPassword(user: User, password: string) {
         lastUsed: null
     }});
 
+    logger.info(`User(${user.userID}) created password Secret(${created.id})`);
 }
 
 export async function loginPassword(email: string, password: string): Promise<User | never> {
@@ -36,9 +39,15 @@ export async function loginPassword(email: string, password: string): Promise<Us
     for (const secret of secrets) {
         const isValid = await verifyPassword(password, secret.secret);
         if (isValid) {
+            await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id }});
+
+            logger.info(`User(${user.userID}) successfully logged in with password Secret(${secret.id})`);
+
             return user;
         }
     }
+
+    logger.info(`User(${user.userID}) failed to log in with password, ${secrets.length} were checked`);
 
     throw new Error(`No matching password`);
 }

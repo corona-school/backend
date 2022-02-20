@@ -13,13 +13,15 @@ export async function revokeToken(user: User, id: number) {
     if (result.count !== 1) {
         throw new Error(`Failed to revoke token, does not exist`);
     }
+
+    logger.info(`User(${user.userID}) revoked token Secret(${id})`);
 }
 
-export async function createToken(user: User) {
+export async function createToken(user: User): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
 
-    await prisma.secret.create({
+    const result = await prisma.secret.create({
         data: {
             type: SecretType.TOKEN,
             userId: user.userID,
@@ -28,13 +30,17 @@ export async function createToken(user: User) {
             lastUsed: null
         }
     });
+
+    logger.info(`User(${user.userID}) created token Secret(${result.id})`);
+
+    return token;
 }
 
 export async function requestToken(user: User) {
     const token = uuid();
     const hash = hashToken(token);
 
-    await prisma.secret.create({
+    const result = await prisma.secret.create({
         data: {
             type: SecretType.EMAIL_TOKEN,
             userId: user.userID,
@@ -46,6 +52,8 @@ export async function requestToken(user: User) {
 
     const person = await getUserTypeORM(user.userID);
     await Notification.actionTaken(person, "user-authenticate", { token });
+
+    logger.info(`User(${user.userID}) requested token Secret(${result.id}) via E-Mail`);
 }
 
 export async function loginToken(token: string): Promise<User | never> {
@@ -64,11 +72,15 @@ export async function loginToken(token: string): Promise<User | never> {
         throw new Error(`Invalid Token`);
     }
 
+    const user = await getUser(secret.userId);
+
     if (secret.type === SecretType.EMAIL_TOKEN) {
         await prisma.secret.delete({ where: { id: secret.id }});
+        logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}), revoked token`);
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id }});
+        logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);
     }
 
-    return await getUser(secret.userId);
+    return await user;
 }
