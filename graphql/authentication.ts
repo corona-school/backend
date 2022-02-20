@@ -260,7 +260,7 @@ export class AuthenticationResolver {
     }
 
 
-    @Authorized(Role.PUPIL, Role.STUDENT, Role.SCREENER)
+    @Authorized(Role.USER)
     @Mutation(returns => Boolean)
     logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
@@ -279,4 +279,5 @@ export class AuthenticationResolver {
 
         return true;
     }
+
 }
