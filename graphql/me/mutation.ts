@@ -2,7 +2,7 @@ import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
 import { Me } from "./fields";
 import { GraphQLContext } from "../context";
-import { evaluatePupilRoles, getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { setProjectFields } from "../../common/student/update";
@@ -28,6 +28,7 @@ import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
 import { userForStudent, userForPupil } from "../../common/user";
+import { evaluatePupilRoles } from "../roles";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
