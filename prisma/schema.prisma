@@ -569,13 +569,13 @@ model match_pool_run {
 }
 
 model secret {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  userId    String   @db.VarChar
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  userId    String    @db.VarChar
   type      Int
-  secret    String   @db.VarChar
-  expiresAt DateTime @db.Timestamp(6)
-  lastUsed  DateTime @db.Timestamp(6)
+  secret    String    @db.VarChar
+  expiresAt DateTime? @db.Timestamp(6)
+  lastUsed  DateTime? @db.Timestamp(6)
 }
 
 enum course_category_enum {

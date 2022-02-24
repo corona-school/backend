@@ -33,12 +33,12 @@ export class SecretCreateManyInput {
   secret!: string;
 
   @TypeGraphQL.Field(_type => Date, {
-    nullable: false
+    nullable: true
   })
-  expiresAt!: Date;
+  expiresAt?: Date | undefined;
 
   @TypeGraphQL.Field(_type => Date, {
-    nullable: false
+    nullable: true
   })
-  lastUsed!: Date;
+  lastUsed?: Date | undefined;
 }
