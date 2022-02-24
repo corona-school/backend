@@ -87,6 +87,22 @@ A password can be set up with:
 mutation { passwordCreate(password: "secret") }
 ```
 
+To revoke tokens the `tokenRevoke` mutation can be used, and all secrets of the user can be queried with:
+
+```gql
+query {
+	me { 
+  	secrets { 
+    	id
+      type
+      createdAt
+      expiresAt
+      lastUsed  
+    }
+  }
+}
+```
+
 ### 3. Retrieving the User's data
 
 All data directly related to the logged-in user is available under the `me` resolver. 
