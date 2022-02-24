@@ -25,10 +25,10 @@ export class Secret {
     @Column()
     secret: string;
 
-    @Column()
+    @Column({ nullable: true })
     expiresAt?: Date;
 
-    @Column()
+    @Column({ nullable: true })
     lastUsed?: Date;
 }
 
