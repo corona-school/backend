@@ -120,9 +120,6 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
 
     context.user = { ...user, roles: [] };
 
-    userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
-
     if (user.studentId) {
         const student = await getStudent(user.studentId);
         await evaluateStudentRoles(student, context);
@@ -136,6 +133,10 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
     if (user.screenerId) {
         await evaluateScreenerRoles(user, context);
     }
+
+    userSessions.set(context.sessionToken, context.user);
+    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+
 }
 
 
