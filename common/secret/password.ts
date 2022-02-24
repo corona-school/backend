@@ -17,7 +17,7 @@ export async function createPassword(user: User, password: string) {
         userId: user.userID,
         secret: saltedHash,
         expiresAt: null, // -> never
-        lastUsed: null
+        lastUsed: new Date()
     }});
 
     logger.info(`User(${user.userID}) created password Secret(${created.id})`);

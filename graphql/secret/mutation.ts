@@ -11,20 +11,20 @@ import { RateLimit } from "../rate-limit";
 export class MutateSecretResolver {
     @Mutation(returns => String)
     @Authorized(Role.USER)
-    async createToken(@Ctx() context: GraphQLContext) {
+    async tokenCreate(@Ctx() context: GraphQLContext) {
         return await createToken(getSessionUser(context));
     }
 
     @Mutation(returns => Boolean)
     @Authorized(Role.USER)
-    async createPassword(@Ctx() context: GraphQLContext, @Arg("password") password: string) {
+    async passwordCreate(@Ctx() context: GraphQLContext, @Arg("password") password: string) {
         await createPassword(getSessionUser(context), password);
         return true;
     }
 
     @Mutation(returns => Boolean)
     @Authorized(Role.USER)
-    async revokeToken(@Ctx() context: GraphQLContext, @Arg("id") id: number) {
+    async tokenRevoke(@Ctx() context: GraphQLContext, @Arg("id") id: number) {
         await revokeToken(getSessionUser(context), id);
         return true;
     }
@@ -32,7 +32,7 @@ export class MutateSecretResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     @RateLimit("Request E-Mail Tokens", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async requestToken(email: string) {
+    async tokenRequest(email: string) {
         const user = await getUserByEmail(email);
         await requestToken(user);
         return true;
