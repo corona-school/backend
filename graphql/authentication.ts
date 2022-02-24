@@ -250,6 +250,7 @@ export class AuthenticationResolver {
     }
 
     @Authorized(Role.UNAUTHENTICATED)
+    @Mutation(returns => Boolean)
     async loginToken(@Ctx() context: GraphQLContext, @Arg("token") token: string) {
         try {
             const user = await loginToken(token);
