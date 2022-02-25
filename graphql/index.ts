@@ -40,6 +40,7 @@ import { formatError } from "./error";
 import { NotificationBulkRunResolver } from "./notification/fields";
 import { FieldsMatchPoolResolver } from "./match_pool/fields";
 import { MutateMatchPoolResolver } from "./match_pool/mutations";
+import { MutateCourseResolver } from "./course/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -61,6 +62,7 @@ const schema = buildSchemaSync({
         ExtendedFieldsSubcourseResolver,
 
         FindManyLectureResolver,
+				MutateCourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
