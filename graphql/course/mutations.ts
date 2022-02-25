@@ -7,22 +7,12 @@ import { GraphQLContext } from "../context";
 import { isSessionPupil, getSessionPupil, getSessionStudent } from "../authentication";
 import { CourseCreateInput } from "../generated";
 
-<<<<<<< Updated upstream
-@Resolver(of => GraphQLModel.Course)
-export class MutateCourseResolver {
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.ADMIN)
-    async courseCreate(@Arg("course") course: CourseCreateInput): Promise<boolean> {
-				
-=======
 @Resolver((of) => GraphQLModel.Course)
 export class MutateCourseResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async courseCreate(@Arg("course") course: CourseCreateInput): Promise<boolean> {
         await prisma.course.create({ data: course as any });
->>>>>>> Stashed changes
         return true;
     }
 }
