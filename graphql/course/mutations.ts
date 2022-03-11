@@ -6,7 +6,7 @@ import * as TypeGraphQL from "type-graphql";
 import { course_category_enum } from "@prisma/client";
 import { getLogger } from "log4js";
 import { getSessionStudent } from "../authentication";
-import { GraphQLContext } from "../context"
+import { GraphQLContext } from "../context";
 
 export class PublicCourseCreateInput {
   @TypeGraphQL.Field(_type => String, {
