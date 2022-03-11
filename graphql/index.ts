@@ -62,7 +62,7 @@ const schema = buildSchemaSync({
         ExtendedFieldsSubcourseResolver,
 
         FindManyLectureResolver,
-				MutateCourseResolver,
+        MutateCourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
