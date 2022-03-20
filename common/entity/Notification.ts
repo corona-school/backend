@@ -10,8 +10,8 @@ export enum NotificationRecipient {
 }
 
 export enum NotificationSender {
-    SUPPORT,
-    CERTIFICATE_OF_CONDUCT
+    SUPPORT = "SUPPORT",
+    CERTIFICATE_OF_CONDUCT = "CERTIFICATE_OF_CONDUCT"
 }
 
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
