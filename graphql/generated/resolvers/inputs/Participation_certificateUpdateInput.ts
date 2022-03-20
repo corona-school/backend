@@ -12,7 +12,7 @@ import { PupilUpdateOneWithoutParticipation_certificateInput } from "../inputs/P
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutParticipation_certificateInput } from "../inputs/StudentUpdateOneWithoutParticipation_certificateInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateUpdateInput", {
   isAbstract: true
 })
 export class Participation_certificateUpdateInput {

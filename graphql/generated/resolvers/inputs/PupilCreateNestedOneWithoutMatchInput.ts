@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutMatchInput } from "../inputs/PupilCreateOrCo
 import { PupilCreateWithoutMatchInput } from "../inputs/PupilCreateWithoutMatchInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateNestedOneWithoutMatchInput", {
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutMatchInput {

@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { CourseCreateWithoutStudentInput } from "../inputs/CourseCreateWithoutStudentInput";
 import { CourseWhereUniqueInput } from "../inputs/CourseWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("CourseCreateOrConnectWithoutStudentInput", {
   isAbstract: true
 })
 export class CourseCreateOrConnectWithoutStudentInput {

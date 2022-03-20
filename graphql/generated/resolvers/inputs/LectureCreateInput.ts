@@ -6,7 +6,7 @@ import { Course_attendance_logCreateNestedManyWithoutLectureInput } from "../inp
 import { StudentCreateNestedOneWithoutLectureInput } from "../inputs/StudentCreateNestedOneWithoutLectureInput";
 import { SubcourseCreateNestedOneWithoutLectureInput } from "../inputs/SubcourseCreateNestedOneWithoutLectureInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("LectureCreateInput", {
   isAbstract: true
 })
 export class LectureCreateInput {

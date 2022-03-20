@@ -11,7 +11,7 @@ import { Project_coaching_screeningUpdateWithWhereUniqueWithoutScreenerInput } f
 import { Project_coaching_screeningUpsertWithWhereUniqueWithoutScreenerInput } from "../inputs/Project_coaching_screeningUpsertWithWhereUniqueWithoutScreenerInput";
 import { Project_coaching_screeningWhereUniqueInput } from "../inputs/Project_coaching_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_coaching_screeningUpdateManyWithoutScreenerInput", {
   isAbstract: true
 })
 export class Project_coaching_screeningUpdateManyWithoutScreenerInput {
@@ -38,11 +38,6 @@ export class Project_coaching_screeningUpdateManyWithoutScreenerInput {
   @TypeGraphQL.Field(_type => [Project_coaching_screeningWhereUniqueInput], {
     nullable: true
   })
-  connect?: Project_coaching_screeningWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Project_coaching_screeningWhereUniqueInput], {
-    nullable: true
-  })
   set?: Project_coaching_screeningWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Project_coaching_screeningWhereUniqueInput], {
@@ -54,6 +49,11 @@ export class Project_coaching_screeningUpdateManyWithoutScreenerInput {
     nullable: true
   })
   delete?: Project_coaching_screeningWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Project_coaching_screeningWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: Project_coaching_screeningWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Project_coaching_screeningUpdateWithWhereUniqueWithoutScreenerInput], {
     nullable: true

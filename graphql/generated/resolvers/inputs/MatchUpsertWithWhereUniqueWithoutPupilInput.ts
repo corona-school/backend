@@ -6,7 +6,7 @@ import { MatchCreateWithoutPupilInput } from "../inputs/MatchCreateWithoutPupilI
 import { MatchUpdateWithoutPupilInput } from "../inputs/MatchUpdateWithoutPupilInput";
 import { MatchWhereUniqueInput } from "../inputs/MatchWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchUpsertWithWhereUniqueWithoutPupilInput", {
   isAbstract: true
 })
 export class MatchUpsertWithWhereUniqueWithoutPupilInput {

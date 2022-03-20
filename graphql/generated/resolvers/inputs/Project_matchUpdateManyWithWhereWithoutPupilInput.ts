@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Project_matchScalarWhereInput } from "../inputs/Project_matchScalarWhereInput";
 import { Project_matchUpdateManyMutationInput } from "../inputs/Project_matchUpdateManyMutationInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_matchUpdateManyWithWhereWithoutPupilInput", {
   isAbstract: true
 })
 export class Project_matchUpdateManyWithWhereWithoutPupilInput {

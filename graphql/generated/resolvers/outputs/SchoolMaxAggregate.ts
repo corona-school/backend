@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { school_schooltype_enum } from "../../enums/school_schooltype_enum";
 import { school_state_enum } from "../../enums/school_state_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("SchoolMaxAggregate", {
   isAbstract: true
 })
 export class SchoolMaxAggregate {

@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutParticipation_certificateInput } from "../in
 import { PupilCreateWithoutParticipation_certificateInput } from "../inputs/PupilCreateWithoutParticipation_certificateInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateNestedOneWithoutParticipation_certificateInput", {
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutParticipation_certificateInput {

@@ -8,7 +8,7 @@ import { Concrete_notificationMaxAggregate } from "../outputs/Concrete_notificat
 import { Concrete_notificationMinAggregate } from "../outputs/Concrete_notificationMinAggregate";
 import { Concrete_notificationSumAggregate } from "../outputs/Concrete_notificationSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateConcrete_notification", {
   isAbstract: true
 })
 export class AggregateConcrete_notification {

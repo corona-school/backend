@@ -11,7 +11,7 @@ import { PupilUpdateOneWithoutMatchInput } from "../inputs/PupilUpdateOneWithout
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutMatchInput } from "../inputs/StudentUpdateOneWithoutMatchInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchUpdateInput", {
   isAbstract: true
 })
 export class MatchUpdateInput {

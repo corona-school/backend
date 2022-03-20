@@ -8,7 +8,7 @@ import { Enumexpert_data_allowed_enumFieldUpdateOperationsInput } from "../input
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataUpdateManyMutationInput", {
   isAbstract: true
 })
 export class Expert_dataUpdateManyMutationInput {

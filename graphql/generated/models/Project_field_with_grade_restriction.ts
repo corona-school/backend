@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { Student } from "../models/Student";
 import { project_field_with_grade_restriction_projectfield_enum } from "../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Project_field_with_grade_restriction", {
   isAbstract: true
 })
 export class Project_field_with_grade_restriction {

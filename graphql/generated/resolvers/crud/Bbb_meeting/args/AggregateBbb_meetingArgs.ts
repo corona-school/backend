@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Bbb_meetingOrderByInput } from "../../../inputs/Bbb_meetingOrderByInput";
+import { Bbb_meetingOrderByWithRelationInput } from "../../../inputs/Bbb_meetingOrderByWithRelationInput";
 import { Bbb_meetingWhereInput } from "../../../inputs/Bbb_meetingWhereInput";
 import { Bbb_meetingWhereUniqueInput } from "../../../inputs/Bbb_meetingWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateBbb_meetingArgs {
   })
   where?: Bbb_meetingWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByInput], {
+  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Bbb_meetingOrderByInput[] | undefined;
+  orderBy?: Bbb_meetingOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Bbb_meetingWhereUniqueInput, {
     nullable: true

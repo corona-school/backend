@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Subcourse_participants_pupilOrderByInput } from "../../../inputs/Subcourse_participants_pupilOrderByInput";
+import { Subcourse_participants_pupilOrderByWithRelationInput } from "../../../inputs/Subcourse_participants_pupilOrderByWithRelationInput";
 import { Subcourse_participants_pupilWhereInput } from "../../../inputs/Subcourse_participants_pupilWhereInput";
 import { Subcourse_participants_pupilWhereUniqueInput } from "../../../inputs/Subcourse_participants_pupilWhereUniqueInput";
 import { Subcourse_participants_pupilScalarFieldEnum } from "../../../../enums/Subcourse_participants_pupilScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindManySubcourse_participants_pupilArgs {
   })
   where?: Subcourse_participants_pupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Subcourse_participants_pupilOrderByInput], {
+  @TypeGraphQL.Field(_type => [Subcourse_participants_pupilOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Subcourse_participants_pupilOrderByInput[] | undefined;
+  orderBy?: Subcourse_participants_pupilOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Subcourse_participants_pupilWhereUniqueInput, {
     nullable: true

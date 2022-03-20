@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Project_field_with_grade_restrictionWhereInput } from "../inputs/Project_field_with_grade_restrictionWhereInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionListRelationFilter", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionListRelationFilter {

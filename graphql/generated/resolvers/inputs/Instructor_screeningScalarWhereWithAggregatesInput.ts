@@ -8,7 +8,7 @@ import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggreg
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Instructor_screeningScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Instructor_screeningScalarWhereWithAggregatesInput {

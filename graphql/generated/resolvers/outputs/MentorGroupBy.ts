@@ -10,7 +10,7 @@ import { MentorSumAggregate } from "../outputs/MentorSumAggregate";
 import { mentor_division_enum } from "../../enums/mentor_division_enum";
 import { mentor_expertise_enum } from "../../enums/mentor_expertise_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("MentorGroupBy", {
   isAbstract: true
 })
 export class MentorGroupBy {

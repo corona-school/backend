@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateNestedOneWithoutMatchInput } from "../inputs/PupilCreateNestedOneWithoutMatchInput";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchCreateWithoutStudentInput", {
   isAbstract: true
 })
 export class MatchCreateWithoutStudentInput {

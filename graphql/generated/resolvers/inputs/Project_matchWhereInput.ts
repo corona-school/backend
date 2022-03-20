@@ -10,7 +10,7 @@ import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_matchWhereInput", {
   isAbstract: true
 })
 export class Project_matchWhereInput {

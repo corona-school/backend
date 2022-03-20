@@ -7,7 +7,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { JsonFilter } from "../inputs/JsonFilter";
 import { StringFilter } from "../inputs/StringFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Match_pool_runWhereInput", {
   isAbstract: true
 })
 export class Match_pool_runWhereInput {

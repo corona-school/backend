@@ -6,7 +6,7 @@ import { Course_participation_certificateCreateWithoutSubcourseInput } from "../
 import { Course_participation_certificateUpdateWithoutSubcourseInput } from "../inputs/Course_participation_certificateUpdateWithoutSubcourseInput";
 import { Course_participation_certificateWhereUniqueInput } from "../inputs/Course_participation_certificateWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateUpsertWithWhereUniqueWithoutSubcourseInput", {
   isAbstract: true
 })
 export class Course_participation_certificateUpsertWithWhereUniqueWithoutSubcourseInput {

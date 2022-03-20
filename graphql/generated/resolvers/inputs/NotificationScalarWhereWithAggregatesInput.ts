@@ -3,12 +3,13 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolWithAggregatesFilter } from "../inputs/BoolWithAggregatesFilter";
+import { Enumnotification_sender_enumNullableWithAggregatesFilter } from "../inputs/Enumnotification_sender_enumNullableWithAggregatesFilter";
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NotificationScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class NotificationScalarWhereWithAggregatesInput {
@@ -76,4 +77,9 @@ export class NotificationScalarWhereWithAggregatesInput {
     nullable: true
   })
   interval?: IntNullableWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Enumnotification_sender_enumNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  sender?: Enumnotification_sender_enumNullableWithAggregatesFilter | undefined;
 }

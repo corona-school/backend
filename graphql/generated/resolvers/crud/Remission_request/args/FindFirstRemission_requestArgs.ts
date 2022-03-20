@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Remission_requestOrderByInput } from "../../../inputs/Remission_requestOrderByInput";
+import { Remission_requestOrderByWithRelationInput } from "../../../inputs/Remission_requestOrderByWithRelationInput";
 import { Remission_requestWhereInput } from "../../../inputs/Remission_requestWhereInput";
 import { Remission_requestWhereUniqueInput } from "../../../inputs/Remission_requestWhereUniqueInput";
 import { Remission_requestScalarFieldEnum } from "../../../../enums/Remission_requestScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstRemission_requestArgs {
   })
   where?: Remission_requestWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Remission_requestOrderByInput], {
+  @TypeGraphQL.Field(_type => [Remission_requestOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Remission_requestOrderByInput[] | undefined;
+  orderBy?: Remission_requestOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Remission_requestWhereUniqueInput, {
     nullable: true

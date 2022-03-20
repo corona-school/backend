@@ -5,8 +5,9 @@ import { DecimalJSScalar } from "../scalars";
 import { Course_attendance_log } from "../models/Course_attendance_log";
 import { Student } from "../models/Student";
 import { Subcourse } from "../models/Subcourse";
+import { LectureCount } from "../resolvers/outputs/LectureCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Lecture", {
   isAbstract: true
 })
 export class Lecture {
@@ -50,4 +51,9 @@ export class Lecture {
   subcourse?: Subcourse | null;
 
   course_attendance_log?: Course_attendance_log[];
+
+  @TypeGraphQL.Field(_type => LectureCount, {
+    nullable: true
+  })
+  _count?: LectureCount | null;
 }

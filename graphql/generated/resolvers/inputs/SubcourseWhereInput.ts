@@ -13,7 +13,7 @@ import { Subcourse_instructors_studentListRelationFilter } from "../inputs/Subco
 import { Subcourse_participants_pupilListRelationFilter } from "../inputs/Subcourse_participants_pupilListRelationFilter";
 import { Subcourse_waiting_list_pupilListRelationFilter } from "../inputs/Subcourse_waiting_list_pupilListRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("SubcourseWhereInput", {
   isAbstract: true
 })
 export class SubcourseWhereInput {

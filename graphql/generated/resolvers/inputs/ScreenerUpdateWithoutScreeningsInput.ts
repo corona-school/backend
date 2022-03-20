@@ -12,7 +12,7 @@ import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStri
 import { Project_coaching_screeningUpdateManyWithoutScreenerInput } from "../inputs/Project_coaching_screeningUpdateManyWithoutScreenerInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreenerUpdateWithoutScreeningsInput", {
   isAbstract: true
 })
 export class ScreenerUpdateWithoutScreeningsInput {

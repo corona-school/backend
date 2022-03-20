@@ -8,7 +8,7 @@ import { JsonFilter } from "../inputs/JsonFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Concrete_notificationWhereInput", {
   isAbstract: true
 })
 export class Concrete_notificationWhereInput {

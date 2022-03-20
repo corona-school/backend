@@ -10,7 +10,8 @@ export enum NotificationScalarFieldEnum {
   category = "category",
   cancelledOnAction = "cancelledOnAction",
   delay = "delay",
-  interval = "interval"
+  interval = "interval",
+  sender = "sender"
 }
 TypeGraphQL.registerEnumType(NotificationScalarFieldEnum, {
   name: "NotificationScalarFieldEnum",

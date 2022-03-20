@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { log_logtype_enum } from "../../enums/log_logtype_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("LogMaxAggregate", {
   isAbstract: true
 })
 export class LogMaxAggregate {

@@ -18,7 +18,7 @@ export const mailjetChannel: Channel = {
     async send(notification: Notification, to: Person, context: Context, concreteID: number) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
-        const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
+        const senderEmail = senderEmails[NotificationSender.SUPPORT]; // senderEmails[notification.sender ?? NotificationSender.SUPPORT];
         assert(senderEmail !== undefined, "Unknown sender emails");
 
         const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send

@@ -7,7 +7,7 @@ import { Enumproject_field_with_grade_restriction_projectfield_enumWithAggregate
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionScalarWhereWithAggregatesInput {
