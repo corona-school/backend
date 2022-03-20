@@ -52,6 +52,6 @@ export class Notification {
 
     // Some emails are supposed to be sent out by email addresses other than support@lern-fair.de,
     //  as users can directly respond to the team responsible
-    @Column({ nullable: true })
+    @Column({ nullable: true, type: "enum", enum: NotificationSender })
     sender?: NotificationSender;
 }
