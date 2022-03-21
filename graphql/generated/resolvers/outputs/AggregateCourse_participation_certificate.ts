@@ -8,7 +8,7 @@ import { Course_participation_certificateMaxAggregate } from "../outputs/Course_
 import { Course_participation_certificateMinAggregate } from "../outputs/Course_participation_certificateMinAggregate";
 import { Course_participation_certificateSumAggregate } from "../outputs/Course_participation_certificateSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateCourse_participation_certificate", {
   isAbstract: true
 })
 export class AggregateCourse_participation_certificate {

@@ -8,7 +8,7 @@ import { Project_coaching_screeningMaxAggregate } from "../outputs/Project_coach
 import { Project_coaching_screeningMinAggregate } from "../outputs/Project_coaching_screeningMinAggregate";
 import { Project_coaching_screeningSumAggregate } from "../outputs/Project_coaching_screeningSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateProject_coaching_screening", {
   isAbstract: true
 })
 export class AggregateProject_coaching_screening {

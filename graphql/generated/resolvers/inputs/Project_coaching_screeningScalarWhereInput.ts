@@ -8,7 +8,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_coaching_screeningScalarWhereInput", {
   isAbstract: true
 })
 export class Project_coaching_screeningScalarWhereInput {

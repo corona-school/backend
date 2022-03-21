@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { NestedDecimalFilter } from "../inputs/NestedDecimalFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("DecimalFilter", {
   isAbstract: true
 })
 export class DecimalFilter {

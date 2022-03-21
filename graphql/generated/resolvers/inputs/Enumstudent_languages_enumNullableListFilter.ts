@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { student_languages_enum } from "../../enums/student_languages_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumstudent_languages_enumNullableListFilter", {
   isAbstract: true
 })
 export class Enumstudent_languages_enumNullableListFilter {

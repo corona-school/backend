@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { student_languages_enum } from "../../enums/student_languages_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("StudentCreatelanguagesInput", {
   isAbstract: true
 })
 export class StudentCreatelanguagesInput {

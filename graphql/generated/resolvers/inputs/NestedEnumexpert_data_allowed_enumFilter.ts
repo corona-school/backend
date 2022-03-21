@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { expert_data_allowed_enum } from "../../enums/expert_data_allowed_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumexpert_data_allowed_enumFilter", {
   isAbstract: true
 })
 export class NestedEnumexpert_data_allowed_enumFilter {

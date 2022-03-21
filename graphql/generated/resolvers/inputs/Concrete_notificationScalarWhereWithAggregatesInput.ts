@@ -8,7 +8,7 @@ import { JsonWithAggregatesFilter } from "../inputs/JsonWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Concrete_notificationScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Concrete_notificationScalarWhereWithAggregatesInput {

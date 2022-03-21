@@ -8,7 +8,7 @@ import { StudentUpdateWithoutCourse_participation_certificateInput } from "../in
 import { StudentUpsertWithoutCourse_participation_certificateInput } from "../inputs/StudentUpsertWithoutCourse_participation_certificateInput";
 import { StudentWhereUniqueInput } from "../inputs/StudentWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("StudentUpdateOneWithoutCourse_participation_certificateInput", {
   isAbstract: true
 })
 export class StudentUpdateOneWithoutCourse_participation_certificateInput {
@@ -27,11 +27,6 @@ export class StudentUpdateOneWithoutCourse_participation_certificateInput {
   })
   upsert?: StudentUpsertWithoutCourse_participation_certificateInput | undefined;
 
-  @TypeGraphQL.Field(_type => StudentWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: StudentWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class StudentUpdateOneWithoutCourse_participation_certificateInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => StudentWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: StudentWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentUpdateWithoutCourse_participation_certificateInput, {
     nullable: true

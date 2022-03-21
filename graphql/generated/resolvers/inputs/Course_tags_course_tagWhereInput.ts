@@ -6,7 +6,7 @@ import { CourseRelationFilter } from "../inputs/CourseRelationFilter";
 import { Course_tagRelationFilter } from "../inputs/Course_tagRelationFilter";
 import { IntFilter } from "../inputs/IntFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_tags_course_tagWhereInput", {
   isAbstract: true
 })
 export class Course_tags_course_tagWhereInput {

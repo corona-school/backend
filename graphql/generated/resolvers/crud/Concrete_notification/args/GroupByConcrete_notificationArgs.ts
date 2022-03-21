@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Concrete_notificationOrderByInput } from "../../../inputs/Concrete_notificationOrderByInput";
+import { Concrete_notificationOrderByWithAggregationInput } from "../../../inputs/Concrete_notificationOrderByWithAggregationInput";
 import { Concrete_notificationScalarWhereWithAggregatesInput } from "../../../inputs/Concrete_notificationScalarWhereWithAggregatesInput";
 import { Concrete_notificationWhereInput } from "../../../inputs/Concrete_notificationWhereInput";
 import { Concrete_notificationScalarFieldEnum } from "../../../../enums/Concrete_notificationScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByConcrete_notificationArgs {
   })
   where?: Concrete_notificationWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Concrete_notificationOrderByInput], {
+  @TypeGraphQL.Field(_type => [Concrete_notificationOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: Concrete_notificationOrderByInput[] | undefined;
+  orderBy?: Concrete_notificationOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Concrete_notificationScalarFieldEnum], {
     nullable: false

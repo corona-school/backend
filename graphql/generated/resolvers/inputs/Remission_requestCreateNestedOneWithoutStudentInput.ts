@@ -6,7 +6,7 @@ import { Remission_requestCreateOrConnectWithoutStudentInput } from "../inputs/R
 import { Remission_requestCreateWithoutStudentInput } from "../inputs/Remission_requestCreateWithoutStudentInput";
 import { Remission_requestWhereUniqueInput } from "../inputs/Remission_requestWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Remission_requestCreateNestedOneWithoutStudentInput", {
   isAbstract: true
 })
 export class Remission_requestCreateNestedOneWithoutStudentInput {

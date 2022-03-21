@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { school_schooltype_enum } from "../../enums/school_schooltype_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumschool_schooltype_enumFilter", {
   isAbstract: true
 })
 export class NestedEnumschool_schooltype_enumFilter {

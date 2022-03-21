@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Subcourse_instructors_studentCreateManySubcourseInput } from "../inputs/Subcourse_instructors_studentCreateManySubcourseInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Subcourse_instructors_studentCreateManySubcourseInputEnvelope", {
   isAbstract: true
 })
 export class Subcourse_instructors_studentCreateManySubcourseInputEnvelope {

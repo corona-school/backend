@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { LectureOrderByInput } from "../../../inputs/LectureOrderByInput";
+import { LectureOrderByWithRelationInput } from "../../../inputs/LectureOrderByWithRelationInput";
 import { LectureWhereInput } from "../../../inputs/LectureWhereInput";
 import { LectureWhereUniqueInput } from "../../../inputs/LectureWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateLectureArgs {
   })
   where?: LectureWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [LectureOrderByInput], {
+  @TypeGraphQL.Field(_type => [LectureOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: LectureOrderByInput[] | undefined;
+  orderBy?: LectureOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => LectureWhereUniqueInput, {
     nullable: true

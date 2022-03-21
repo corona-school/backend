@@ -7,7 +7,7 @@ import { Course_tags_course_tagCreateOrConnectWithoutCourse_tagInput } from "../
 import { Course_tags_course_tagCreateWithoutCourse_tagInput } from "../inputs/Course_tags_course_tagCreateWithoutCourse_tagInput";
 import { Course_tags_course_tagWhereUniqueInput } from "../inputs/Course_tags_course_tagWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_tags_course_tagCreateNestedManyWithoutCourse_tagInput", {
   isAbstract: true
 })
 export class Course_tags_course_tagCreateNestedManyWithoutCourse_tagInput {

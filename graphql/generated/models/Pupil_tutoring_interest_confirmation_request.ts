@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Pupil } from "../models/Pupil";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Pupil_tutoring_interest_confirmation_request", {
   isAbstract: true
 })
 export class Pupil_tutoring_interest_confirmation_request {

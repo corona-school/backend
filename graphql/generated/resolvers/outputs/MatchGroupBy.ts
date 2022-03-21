@@ -9,7 +9,7 @@ import { MatchMinAggregate } from "../outputs/MatchMinAggregate";
 import { MatchSumAggregate } from "../outputs/MatchSumAggregate";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("MatchGroupBy", {
   isAbstract: true
 })
 export class MatchGroupBy {

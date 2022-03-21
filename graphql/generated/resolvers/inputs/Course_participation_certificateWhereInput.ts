@@ -9,7 +9,7 @@ import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 import { SubcourseRelationFilter } from "../inputs/SubcourseRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateWhereInput", {
   isAbstract: true
 })
 export class Course_participation_certificateWhereInput {

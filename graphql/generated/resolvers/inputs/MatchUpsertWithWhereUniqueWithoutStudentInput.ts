@@ -6,7 +6,7 @@ import { MatchCreateWithoutStudentInput } from "../inputs/MatchCreateWithoutStud
 import { MatchUpdateWithoutStudentInput } from "../inputs/MatchUpdateWithoutStudentInput";
 import { MatchWhereUniqueInput } from "../inputs/MatchWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchUpsertWithWhereUniqueWithoutStudentInput", {
   isAbstract: true
 })
 export class MatchUpsertWithWhereUniqueWithoutStudentInput {

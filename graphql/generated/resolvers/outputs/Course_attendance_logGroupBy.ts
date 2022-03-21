@@ -8,7 +8,7 @@ import { Course_attendance_logMaxAggregate } from "../outputs/Course_attendance_
 import { Course_attendance_logMinAggregate } from "../outputs/Course_attendance_logMinAggregate";
 import { Course_attendance_logSumAggregate } from "../outputs/Course_attendance_logSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Course_attendance_logGroupBy", {
   isAbstract: true
 })
 export class Course_attendance_logGroupBy {

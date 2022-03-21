@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Participation_certificateWhereInput } from "../inputs/Participation_certificateWhereInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateListRelationFilter", {
   isAbstract: true
 })
 export class Participation_certificateListRelationFilter {

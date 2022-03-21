@@ -6,7 +6,7 @@ import { NestedEnumlog_logtype_enumFilter } from "../inputs/NestedEnumlog_logtyp
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { log_logtype_enum } from "../../enums/log_logtype_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumlog_logtype_enumWithAggregatesFilter", {
   isAbstract: true
 })
 export class NestedEnumlog_logtype_enumWithAggregatesFilter {

@@ -12,7 +12,7 @@ import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataWhereInput", {
   isAbstract: true
 })
 export class Expert_dataWhereInput {

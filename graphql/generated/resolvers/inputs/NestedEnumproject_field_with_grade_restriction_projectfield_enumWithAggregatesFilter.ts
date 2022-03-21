@@ -6,7 +6,7 @@ import { NestedEnumproject_field_with_grade_restriction_projectfield_enumFilter 
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { project_field_with_grade_restriction_projectfield_enum } from "../../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumproject_field_with_grade_restriction_projectfield_enumWithAggregatesFilter", {
   isAbstract: true
 })
 export class NestedEnumproject_field_with_grade_restriction_projectfield_enumWithAggregatesFilter {
