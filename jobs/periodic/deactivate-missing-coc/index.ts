@@ -12,8 +12,14 @@ export default async function execute() {
 async function deactivateMissingCoc() {
     const today = new Date();
     const eightWeeksAgoDate = new Date();
-    var eightWeeksAgo = today.getDate() - 56;
+    const twelveWeeksAgoDate = new Date();
+
+    const eightWeeksAgo = today.getDate() - 56;
     eightWeeksAgoDate.setDate(eightWeeksAgo);
+
+    const twelveWeeksAgo = today.getDate() - 96;
+    twelveWeeksAgoDate.setDate(twelveWeeksAgo);
+
     const defaultingStudents = await prisma.student.findMany({
         where: {
             createdAt: {
@@ -33,6 +39,12 @@ async function deactivateMissingCoc() {
                         lt: eightWeeksAgoDate
                     }
                 }}],
+            NOT: {
+                extendedCoCDeadline: true,
+                createdAt: {
+                    gt: twelveWeeksAgoDate
+                }
+            },
             // eslint-disable-next-line camelcase
             certificate_of_conduct: null
         }

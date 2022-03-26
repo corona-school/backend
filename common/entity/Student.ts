@@ -221,6 +221,11 @@ export class Student extends Person {
     certificateOfConduct: Promise<CertificateOfConduct>;
 
     @Column({
+        default: false
+    })  // Whether support manually extended the students' deadline for submitting their certificate of conduct by 4 weeks.
+    extendedCoCDeadline: boolean;
+
+    @Column({
         nullable: false,
         default: 0
     })

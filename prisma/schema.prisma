@@ -469,6 +469,7 @@ model student {
   isUniversityStudent                       Boolean?
   openProjectMatchRequestCount              Int                                    @default(1)
   sentJufoAlumniScreeningReminderCount      Int                                    @default(0)
+  extendedCoCDeadline                       Boolean                                @default(false)
   lastSentJufoAlumniScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   supportsInDaZ                             Boolean?
   languages                                 student_languages_enum[]

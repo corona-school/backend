@@ -191,6 +191,14 @@ The user should be able to log in with the provided `secretToken`.
 { secretToken: string; }
 ```
 
+## Certificates of Conduct
+
+### student_coc_deadline_extended
+
+*description*
+
+Triggered when the deadline until which a student has to submit their certificate of conduct has been extended by four weeks (to a total of 12 weeks) through support. 
+
 ## Courses
 
 ### participant_course_join
