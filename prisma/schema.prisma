@@ -242,9 +242,9 @@ model mentor {
 }
 
 model notification {
-  id                Int      @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  id                Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
   mailjetTemplateId Int?
-  description       String   @db.VarChar
+  description       String                    @db.VarChar
   active            Boolean
   recipient         Int
   onActions         String[]
@@ -252,6 +252,7 @@ model notification {
   cancelledOnAction String[]
   delay             Int?
   interval          Int?
+  sender            notification_sender_enum?
 }
 
 model participation_certificate {
@@ -820,4 +821,9 @@ enum student_state_enum {
   sh
   th
   other
+}
+
+enum notification_sender_enum {
+  SUPPORT
+  CERTIFICATE_OF_CONDUCT
 }
