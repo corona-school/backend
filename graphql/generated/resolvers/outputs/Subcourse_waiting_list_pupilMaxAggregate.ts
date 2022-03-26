@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Subcourse_waiting_list_pupilMaxAggregate", {
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilMaxAggregate {

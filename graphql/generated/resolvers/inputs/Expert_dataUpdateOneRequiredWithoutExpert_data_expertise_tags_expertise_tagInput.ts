@@ -8,7 +8,7 @@ import { Expert_dataUpdateWithoutExpert_data_expertise_tags_expertise_tagInput }
 import { Expert_dataUpsertWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expert_dataUpsertWithoutExpert_data_expertise_tags_expertise_tagInput";
 import { Expert_dataWhereUniqueInput } from "../inputs/Expert_dataWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput", {
   isAbstract: true
 })
 export class Expert_dataUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput {

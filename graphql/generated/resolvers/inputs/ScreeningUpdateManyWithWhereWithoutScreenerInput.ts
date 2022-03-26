@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { ScreeningScalarWhereInput } from "../inputs/ScreeningScalarWhereInput";
 import { ScreeningUpdateManyMutationInput } from "../inputs/ScreeningUpdateManyMutationInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreeningUpdateManyWithWhereWithoutScreenerInput", {
   isAbstract: true
 })
 export class ScreeningUpdateManyWithWhereWithoutScreenerInput {

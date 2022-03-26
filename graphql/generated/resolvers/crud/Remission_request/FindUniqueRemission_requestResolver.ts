@@ -11,6 +11,12 @@ export class FindUniqueRemission_requestResolver {
     nullable: true
   })
   async remission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindUniqueRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.findUnique(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.findUnique({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 }

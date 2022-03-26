@@ -16,6 +16,7 @@ export { Jufo_verification_transmissionCrudResolver } from "./Jufo_verification_
 export { LectureCrudResolver } from "./Lecture/LectureCrudResolver";
 export { LogCrudResolver } from "./Log/LogCrudResolver";
 export { MatchCrudResolver } from "./Match/MatchCrudResolver";
+export { Match_pool_runCrudResolver } from "./Match_pool_run/Match_pool_runCrudResolver";
 export { MentorCrudResolver } from "./Mentor/MentorCrudResolver";
 export { NotificationCrudResolver } from "./Notification/NotificationCrudResolver";
 export { Participation_certificateCrudResolver } from "./Participation_certificate/Participation_certificateCrudResolver";

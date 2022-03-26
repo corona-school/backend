@@ -8,7 +8,7 @@ import { Bbb_meetingMaxAggregate } from "../outputs/Bbb_meetingMaxAggregate";
 import { Bbb_meetingMinAggregate } from "../outputs/Bbb_meetingMinAggregate";
 import { Bbb_meetingSumAggregate } from "../outputs/Bbb_meetingSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateBbb_meeting", {
   isAbstract: true
 })
 export class AggregateBbb_meeting {

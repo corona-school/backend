@@ -6,7 +6,7 @@ import { SubcourseCreateOrConnectWithoutSubcourse_waiting_list_pupilInput } from
 import { SubcourseCreateWithoutSubcourse_waiting_list_pupilInput } from "../inputs/SubcourseCreateWithoutSubcourse_waiting_list_pupilInput";
 import { SubcourseWhereUniqueInput } from "../inputs/SubcourseWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("SubcourseCreateNestedOneWithoutSubcourse_waiting_list_pupilInput", {
   isAbstract: true
 })
 export class SubcourseCreateNestedOneWithoutSubcourse_waiting_list_pupilInput {

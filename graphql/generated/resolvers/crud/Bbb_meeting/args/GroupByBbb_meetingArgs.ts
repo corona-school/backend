@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Bbb_meetingOrderByInput } from "../../../inputs/Bbb_meetingOrderByInput";
+import { Bbb_meetingOrderByWithAggregationInput } from "../../../inputs/Bbb_meetingOrderByWithAggregationInput";
 import { Bbb_meetingScalarWhereWithAggregatesInput } from "../../../inputs/Bbb_meetingScalarWhereWithAggregatesInput";
 import { Bbb_meetingWhereInput } from "../../../inputs/Bbb_meetingWhereInput";
 import { Bbb_meetingScalarFieldEnum } from "../../../../enums/Bbb_meetingScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByBbb_meetingArgs {
   })
   where?: Bbb_meetingWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByInput], {
+  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: Bbb_meetingOrderByInput[] | undefined;
+  orderBy?: Bbb_meetingOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Bbb_meetingScalarFieldEnum], {
     nullable: false

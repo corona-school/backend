@@ -6,7 +6,7 @@ import { Expertise_tagCreateOrConnectWithoutExpert_data_expertise_tags_expertise
 import { Expertise_tagCreateWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expertise_tagCreateWithoutExpert_data_expertise_tags_expertise_tagInput";
 import { Expertise_tagWhereUniqueInput } from "../inputs/Expertise_tagWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expertise_tagCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput", {
   isAbstract: true
 })
 export class Expertise_tagCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput {

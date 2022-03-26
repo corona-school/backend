@@ -25,70 +25,130 @@ export class Remission_requestCrudResolver {
     nullable: true
   })
   async remission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindUniqueRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.findUnique(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.findUnique({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Query(_returns => Remission_request, {
     nullable: true
   })
   async findFirstRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindFirstRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.findFirst(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.findFirst({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Query(_returns => [Remission_request], {
     nullable: false
   })
   async remission_requests(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindManyRemission_requestArgs): Promise<Remission_request[]> {
-    return getPrismaFromContext(ctx).remission_request.findMany(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.findMany({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => Remission_request, {
     nullable: false
   })
   async createRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: CreateRemission_requestArgs): Promise<Remission_request> {
-    return getPrismaFromContext(ctx).remission_request.create(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.create({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => AffectedRowsOutput, {
     nullable: false
   })
   async createManyRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: CreateManyRemission_requestArgs): Promise<AffectedRowsOutput> {
-    return getPrismaFromContext(ctx).remission_request.createMany(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.createMany({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => Remission_request, {
     nullable: true
   })
   async deleteRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: DeleteRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.delete(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.delete({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => Remission_request, {
     nullable: true
   })
   async updateRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: UpdateRemission_requestArgs): Promise<Remission_request | null> {
-    return getPrismaFromContext(ctx).remission_request.update(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.update({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => AffectedRowsOutput, {
     nullable: false
   })
   async deleteManyRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: DeleteManyRemission_requestArgs): Promise<AffectedRowsOutput> {
-    return getPrismaFromContext(ctx).remission_request.deleteMany(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.deleteMany({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => AffectedRowsOutput, {
     nullable: false
   })
   async updateManyRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: UpdateManyRemission_requestArgs): Promise<AffectedRowsOutput> {
-    return getPrismaFromContext(ctx).remission_request.updateMany(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.updateMany({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Mutation(_returns => Remission_request, {
     nullable: false
   })
   async upsertRemission_request(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: UpsertRemission_requestArgs): Promise<Remission_request> {
-    return getPrismaFromContext(ctx).remission_request.upsert(args);
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).remission_request.upsert({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
   }
 
   @TypeGraphQL.Query(_returns => AggregateRemission_request, {

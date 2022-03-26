@@ -8,7 +8,7 @@ import { PupilUpdateWithoutParticipation_certificateInput } from "../inputs/Pupi
 import { PupilUpsertWithoutParticipation_certificateInput } from "../inputs/PupilUpsertWithoutParticipation_certificateInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilUpdateOneWithoutParticipation_certificateInput", {
   isAbstract: true
 })
 export class PupilUpdateOneWithoutParticipation_certificateInput {
@@ -27,11 +27,6 @@ export class PupilUpdateOneWithoutParticipation_certificateInput {
   })
   upsert?: PupilUpsertWithoutParticipation_certificateInput | undefined;
 
-  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: PupilWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class PupilUpdateOneWithoutParticipation_certificateInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: PupilWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => PupilUpdateWithoutParticipation_certificateInput, {
     nullable: true

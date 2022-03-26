@@ -2,11 +2,11 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { NotificationCreateManycancelledOnActionInput } from "../inputs/NotificationCreateManycancelledOnActionInput";
-import { NotificationCreateManycategoryInput } from "../inputs/NotificationCreateManycategoryInput";
-import { NotificationCreateManyonActionsInput } from "../inputs/NotificationCreateManyonActionsInput";
+import { NotificationCreatecancelledOnActionInput } from "../inputs/NotificationCreatecancelledOnActionInput";
+import { NotificationCreatecategoryInput } from "../inputs/NotificationCreatecategoryInput";
+import { NotificationCreateonActionsInput } from "../inputs/NotificationCreateonActionsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NotificationCreateManyInput", {
   isAbstract: true
 })
 export class NotificationCreateManyInput {
@@ -35,6 +35,21 @@ export class NotificationCreateManyInput {
   })
   recipient!: number;
 
+  @TypeGraphQL.Field(_type => NotificationCreateonActionsInput, {
+    nullable: true
+  })
+  onActions?: NotificationCreateonActionsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NotificationCreatecategoryInput, {
+    nullable: true
+  })
+  category?: NotificationCreatecategoryInput | undefined;
+
+  @TypeGraphQL.Field(_type => NotificationCreatecancelledOnActionInput, {
+    nullable: true
+  })
+  cancelledOnAction?: NotificationCreatecancelledOnActionInput | undefined;
+
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
@@ -44,19 +59,4 @@ export class NotificationCreateManyInput {
     nullable: true
   })
   interval?: number | undefined;
-
-  @TypeGraphQL.Field(_type => NotificationCreateManyonActionsInput, {
-    nullable: true
-  })
-  onActions?: NotificationCreateManyonActionsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NotificationCreateManycategoryInput, {
-    nullable: true
-  })
-  category?: NotificationCreateManycategoryInput | undefined;
-
-  @TypeGraphQL.Field(_type => NotificationCreateManycancelledOnActionInput, {
-    nullable: true
-  })
-  cancelledOnAction?: NotificationCreateManycancelledOnActionInput | undefined;
 }

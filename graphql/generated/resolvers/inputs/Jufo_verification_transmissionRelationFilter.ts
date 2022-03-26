@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Jufo_verification_transmissionWhereInput } from "../inputs/Jufo_verification_transmissionWhereInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Jufo_verification_transmissionRelationFilter", {
   isAbstract: true
 })
 export class Jufo_verification_transmissionRelationFilter {

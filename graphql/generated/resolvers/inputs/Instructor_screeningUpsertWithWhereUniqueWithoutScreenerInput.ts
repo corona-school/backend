@@ -6,7 +6,7 @@ import { Instructor_screeningCreateWithoutScreenerInput } from "../inputs/Instru
 import { Instructor_screeningUpdateWithoutScreenerInput } from "../inputs/Instructor_screeningUpdateWithoutScreenerInput";
 import { Instructor_screeningWhereUniqueInput } from "../inputs/Instructor_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Instructor_screeningUpsertWithWhereUniqueWithoutScreenerInput", {
   isAbstract: true
 })
 export class Instructor_screeningUpsertWithWhereUniqueWithoutScreenerInput {

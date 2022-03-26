@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Student } from "../models/Student";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Certificate_of_conduct", {
   isAbstract: true
 })
 export class Certificate_of_conduct {

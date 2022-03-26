@@ -8,7 +8,7 @@ import { Remission_requestMaxAggregate } from "../outputs/Remission_requestMaxAg
 import { Remission_requestMinAggregate } from "../outputs/Remission_requestMinAggregate";
 import { Remission_requestSumAggregate } from "../outputs/Remission_requestSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Remission_requestGroupBy", {
   isAbstract: true
 })
 export class Remission_requestGroupBy {

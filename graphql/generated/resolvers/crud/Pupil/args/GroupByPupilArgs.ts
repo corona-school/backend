@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { PupilOrderByInput } from "../../../inputs/PupilOrderByInput";
+import { PupilOrderByWithAggregationInput } from "../../../inputs/PupilOrderByWithAggregationInput";
 import { PupilScalarWhereWithAggregatesInput } from "../../../inputs/PupilScalarWhereWithAggregatesInput";
 import { PupilWhereInput } from "../../../inputs/PupilWhereInput";
 import { PupilScalarFieldEnum } from "../../../../enums/PupilScalarFieldEnum";
@@ -12,15 +12,15 @@ export class GroupByPupilArgs {
   })
   where?: PupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [PupilOrderByInput], {
+  @TypeGraphQL.Field(_type => [PupilOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: PupilOrderByInput[] | undefined;
+  orderBy?: PupilOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [PupilScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "state" | "schooltype" | "msg" | "grade" | "newsletter" | "isPupil" | "subjects" | "openMatchRequestCount" | "isParticipant" | "isProjectCoachee" | "projectFields" | "isJufoParticipant" | "openProjectMatchRequestCount" | "projectMemberCount" | "languages" | "learningGermanSince" | "matchingPriority" | "lastUpdatedSettingsViaBlocker" | "teacherEmailAddress" | "registrationSource" | "schoolId">;
+  by!: Array<"id" | "createdAt" | "updatedAt" | "firstname" | "lastname" | "active" | "email" | "verification" | "verifiedAt" | "authToken" | "authTokenUsed" | "authTokenSent" | "wix_id" | "wix_creation_date" | "state" | "schooltype" | "msg" | "grade" | "newsletter" | "isPupil" | "subjects" | "openMatchRequestCount" | "isParticipant" | "isProjectCoachee" | "projectFields" | "isJufoParticipant" | "openProjectMatchRequestCount" | "projectMemberCount" | "languages" | "learningGermanSince" | "matchingPriority" | "lastUpdatedSettingsViaBlocker" | "teacherEmailAddress" | "registrationSource" | "coduToken" | "schoolId">;
 
   @TypeGraphQL.Field(_type => PupilScalarWhereWithAggregatesInput, {
     nullable: true

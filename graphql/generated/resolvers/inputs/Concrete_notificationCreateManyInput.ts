@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Concrete_notificationCreateManyInput", {
   isAbstract: true
 })
 export class Concrete_notificationCreateManyInput {

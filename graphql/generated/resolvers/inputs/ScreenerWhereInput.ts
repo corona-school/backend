@@ -14,7 +14,7 @@ import { ScreeningListRelationFilter } from "../inputs/ScreeningListRelationFilt
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreenerWhereInput", {
   isAbstract: true
 })
 export class ScreenerWhereInput {

@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { mentor_expertise_enum } from "../../enums/mentor_expertise_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MentorCreateexpertiseInput", {
   isAbstract: true
 })
 export class MentorCreateexpertiseInput {

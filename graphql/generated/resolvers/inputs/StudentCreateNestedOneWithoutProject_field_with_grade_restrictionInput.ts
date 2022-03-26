@@ -6,7 +6,7 @@ import { StudentCreateOrConnectWithoutProject_field_with_grade_restrictionInput 
 import { StudentCreateWithoutProject_field_with_grade_restrictionInput } from "../inputs/StudentCreateWithoutProject_field_with_grade_restrictionInput";
 import { StudentWhereUniqueInput } from "../inputs/StudentWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput", {
   isAbstract: true
 })
 export class StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput {

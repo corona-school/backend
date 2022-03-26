@@ -10,7 +10,8 @@ export async function putFile(f: Buffer, key: string) {
     const request = s3.putObject({
         Key: key,
         Bucket: DEFAULT_BUCKET,
-        Body: f
+        Body: f,
+        ACL: 'public-read'
     });
 
     const result = await request.promise();

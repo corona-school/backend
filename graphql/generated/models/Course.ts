@@ -9,8 +9,9 @@ import { Student } from "../models/Student";
 import { Subcourse } from "../models/Subcourse";
 import { course_category_enum } from "../enums/course_category_enum";
 import { course_coursestate_enum } from "../enums/course_coursestate_enum";
+import { CourseCount } from "../resolvers/outputs/CourseCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Course", {
   isAbstract: true
 })
 export class Course {
@@ -88,4 +89,9 @@ export class Course {
   course_tags_course_tag?: Course_tags_course_tag[];
 
   subcourse?: Subcourse[];
+
+  @TypeGraphQL.Field(_type => CourseCount, {
+    nullable: true
+  })
+  _count?: CourseCount | null;
 }

@@ -6,7 +6,7 @@ import { ScreeningCreateWithoutScreenerInput } from "../inputs/ScreeningCreateWi
 import { ScreeningUpdateWithoutScreenerInput } from "../inputs/ScreeningUpdateWithoutScreenerInput";
 import { ScreeningWhereUniqueInput } from "../inputs/ScreeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreeningUpsertWithWhereUniqueWithoutScreenerInput", {
   isAbstract: true
 })
 export class ScreeningUpsertWithWhereUniqueWithoutScreenerInput {

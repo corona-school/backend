@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Subcourse_participants_pupilCountAggregate", {
   isAbstract: true
 })
 export class Subcourse_participants_pupilCountAggregate {

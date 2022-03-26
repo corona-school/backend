@@ -9,7 +9,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 import { SubcourseRelationFilter } from "../inputs/SubcourseRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("LectureWhereInput", {
   isAbstract: true
 })
 export class LectureWhereInput {

@@ -17,8 +17,9 @@ import { pupil_projectfields_enum } from "../enums/pupil_projectfields_enum";
 import { pupil_registrationsource_enum } from "../enums/pupil_registrationsource_enum";
 import { pupil_schooltype_enum } from "../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../enums/pupil_state_enum";
+import { PupilCount } from "../resolvers/outputs/PupilCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Pupil", {
   isAbstract: true
 })
 export class Pupil {
@@ -219,4 +220,9 @@ export class Pupil {
   subcourse_participants_pupil?: Subcourse_participants_pupil[];
 
   subcourse_waiting_list_pupil?: Subcourse_waiting_list_pupil[];
+
+  @TypeGraphQL.Field(_type => PupilCount, {
+    nullable: true
+  })
+  _count?: PupilCount | null;
 }

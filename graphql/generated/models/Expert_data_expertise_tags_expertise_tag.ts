@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { Expert_data } from "../models/Expert_data";
 import { Expertise_tag } from "../models/Expertise_tag";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Expert_data_expertise_tags_expertise_tag", {
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tag {

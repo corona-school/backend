@@ -7,7 +7,7 @@ import { Subcourse_waiting_list_pupilCreateOrConnectWithoutPupilInput } from "..
 import { Subcourse_waiting_list_pupilCreateWithoutPupilInput } from "../inputs/Subcourse_waiting_list_pupilCreateWithoutPupilInput";
 import { Subcourse_waiting_list_pupilWhereUniqueInput } from "../inputs/Subcourse_waiting_list_pupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Subcourse_waiting_list_pupilCreateNestedManyWithoutPupilInput", {
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilCreateNestedManyWithoutPupilInput {

@@ -7,7 +7,7 @@ import { Enumproject_field_with_grade_restriction_projectfield_enumFieldUpdateOp
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { StudentUpdateOneRequiredWithoutProject_field_with_grade_restrictionInput } from "../inputs/StudentUpdateOneRequiredWithoutProject_field_with_grade_restrictionInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionUpdateInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionUpdateInput {

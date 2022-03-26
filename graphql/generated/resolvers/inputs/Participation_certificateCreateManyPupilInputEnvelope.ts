@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Participation_certificateCreateManyPupilInput } from "../inputs/Participation_certificateCreateManyPupilInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateCreateManyPupilInputEnvelope", {
   isAbstract: true
 })
 export class Participation_certificateCreateManyPupilInputEnvelope {

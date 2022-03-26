@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Expert_dataCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expert_dataCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput";
 import { Expertise_tagCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expertise_tagCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_data_expertise_tags_expertise_tagCreateInput", {
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagCreateInput {

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Instructor_screeningOrderByInput } from "../../../inputs/Instructor_screeningOrderByInput";
+import { Instructor_screeningOrderByWithAggregationInput } from "../../../inputs/Instructor_screeningOrderByWithAggregationInput";
 import { Instructor_screeningScalarWhereWithAggregatesInput } from "../../../inputs/Instructor_screeningScalarWhereWithAggregatesInput";
 import { Instructor_screeningWhereInput } from "../../../inputs/Instructor_screeningWhereInput";
 import { Instructor_screeningScalarFieldEnum } from "../../../../enums/Instructor_screeningScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByInstructor_screeningArgs {
   })
   where?: Instructor_screeningWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Instructor_screeningOrderByInput], {
+  @TypeGraphQL.Field(_type => [Instructor_screeningOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: Instructor_screeningOrderByInput[] | undefined;
+  orderBy?: Instructor_screeningOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Instructor_screeningScalarFieldEnum], {
     nullable: false
