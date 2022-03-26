@@ -8,7 +8,7 @@ import { Match_pool_runMaxAggregate } from "../outputs/Match_pool_runMaxAggregat
 import { Match_pool_runMinAggregate } from "../outputs/Match_pool_runMinAggregate";
 import { Match_pool_runSumAggregate } from "../outputs/Match_pool_runSumAggregate";
 
-@TypeGraphQL.ObjectType("Match_pool_runGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Match_pool_runGroupBy {

@@ -10,7 +10,7 @@ import { SchoolSumAggregate } from "../outputs/SchoolSumAggregate";
 import { school_schooltype_enum } from "../../enums/school_schooltype_enum";
 import { school_state_enum } from "../../enums/school_state_enum";
 
-@TypeGraphQL.ObjectType("SchoolGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class SchoolGroupBy {

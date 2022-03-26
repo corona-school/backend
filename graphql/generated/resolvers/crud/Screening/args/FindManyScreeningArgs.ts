@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { ScreeningOrderByWithRelationInput } from "../../../inputs/ScreeningOrderByWithRelationInput";
+import { ScreeningOrderByInput } from "../../../inputs/ScreeningOrderByInput";
 import { ScreeningWhereInput } from "../../../inputs/ScreeningWhereInput";
 import { ScreeningWhereUniqueInput } from "../../../inputs/ScreeningWhereUniqueInput";
 import { ScreeningScalarFieldEnum } from "../../../../enums/ScreeningScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindManyScreeningArgs {
   })
   where?: ScreeningWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [ScreeningOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [ScreeningOrderByInput], {
     nullable: true
   })
-  orderBy?: ScreeningOrderByWithRelationInput[] | undefined;
+  orderBy?: ScreeningOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningWhereUniqueInput, {
     nullable: true

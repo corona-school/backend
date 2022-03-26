@@ -9,7 +9,7 @@ import { NullableEnumschool_state_enumFieldUpdateOperationsInput } from "../inpu
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("SchoolUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SchoolUpdateManyMutationInput {

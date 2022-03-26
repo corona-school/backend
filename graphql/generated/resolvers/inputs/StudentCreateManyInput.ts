@@ -2,12 +2,12 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { StudentCreatelanguagesInput } from "../inputs/StudentCreatelanguagesInput";
+import { StudentCreateManylanguagesInput } from "../inputs/StudentCreateManylanguagesInput";
 import { student_module_enum } from "../../enums/student_module_enum";
 import { student_registrationsource_enum } from "../../enums/student_registrationsource_enum";
 import { student_state_enum } from "../../enums/student_state_enum";
 
-@TypeGraphQL.InputType("StudentCreateManyInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentCreateManyInput {
@@ -196,11 +196,6 @@ export class StudentCreateManyInput {
   })
   supportsInDaZ?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
-    nullable: true
-  })
-  languages?: StudentCreatelanguagesInput | undefined;
-
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
@@ -230,4 +225,9 @@ export class StudentCreateManyInput {
     nullable: true
   })
   registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+
+  @TypeGraphQL.Field(_type => StudentCreateManylanguagesInput, {
+    nullable: true
+  })
+  languages?: StudentCreateManylanguagesInput | undefined;
 }

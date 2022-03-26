@@ -7,7 +7,7 @@ import { NestedEnummatch_source_enumWithAggregatesFilter } from "../inputs/Neste
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.InputType("Enummatch_source_enumWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enummatch_source_enumWithAggregatesFilter {

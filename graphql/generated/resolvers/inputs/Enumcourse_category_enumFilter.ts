@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedEnumcourse_category_enumFilter } from "../inputs/NestedEnumcourse_category_enumFilter";
 import { course_category_enum } from "../../enums/course_category_enum";
 
-@TypeGraphQL.InputType("Enumcourse_category_enumFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enumcourse_category_enumFilter {

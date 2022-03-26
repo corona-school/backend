@@ -7,7 +7,7 @@ import { Course_attendance_logCreateOrConnectWithoutLectureInput } from "../inpu
 import { Course_attendance_logCreateWithoutLectureInput } from "../inputs/Course_attendance_logCreateWithoutLectureInput";
 import { Course_attendance_logWhereUniqueInput } from "../inputs/Course_attendance_logWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_attendance_logCreateNestedManyWithoutLectureInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_attendance_logCreateNestedManyWithoutLectureInput {

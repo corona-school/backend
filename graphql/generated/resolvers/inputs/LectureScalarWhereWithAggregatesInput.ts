@@ -6,7 +6,7 @@ import { DateTimeWithAggregatesFilter } from "../inputs/DateTimeWithAggregatesFi
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 
-@TypeGraphQL.InputType("LectureScalarWhereWithAggregatesInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureScalarWhereWithAggregatesInput {

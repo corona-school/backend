@@ -8,7 +8,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionWhereInput {

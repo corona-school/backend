@@ -8,7 +8,7 @@ import { SchoolMaxAggregate } from "../outputs/SchoolMaxAggregate";
 import { SchoolMinAggregate } from "../outputs/SchoolMinAggregate";
 import { SchoolSumAggregate } from "../outputs/SchoolSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateSchool", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateSchool {

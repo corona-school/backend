@@ -6,7 +6,7 @@ import { SchoolCreateOrConnectWithoutPupilInput } from "../inputs/SchoolCreateOr
 import { SchoolCreateWithoutPupilInput } from "../inputs/SchoolCreateWithoutPupilInput";
 import { SchoolWhereUniqueInput } from "../inputs/SchoolWhereUniqueInput";
 
-@TypeGraphQL.InputType("SchoolCreateNestedOneWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SchoolCreateNestedOneWithoutPupilInput {

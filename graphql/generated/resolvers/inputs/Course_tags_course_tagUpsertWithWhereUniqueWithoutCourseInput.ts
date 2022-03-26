@@ -6,7 +6,7 @@ import { Course_tags_course_tagCreateWithoutCourseInput } from "../inputs/Course
 import { Course_tags_course_tagUpdateWithoutCourseInput } from "../inputs/Course_tags_course_tagUpdateWithoutCourseInput";
 import { Course_tags_course_tagWhereUniqueInput } from "../inputs/Course_tags_course_tagWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_tags_course_tagUpsertWithWhereUniqueWithoutCourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_tags_course_tagUpsertWithWhereUniqueWithoutCourseInput {

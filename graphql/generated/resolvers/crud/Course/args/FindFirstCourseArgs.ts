@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { CourseOrderByWithRelationInput } from "../../../inputs/CourseOrderByWithRelationInput";
+import { CourseOrderByInput } from "../../../inputs/CourseOrderByInput";
 import { CourseWhereInput } from "../../../inputs/CourseWhereInput";
 import { CourseWhereUniqueInput } from "../../../inputs/CourseWhereUniqueInput";
 import { CourseScalarFieldEnum } from "../../../../enums/CourseScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstCourseArgs {
   })
   where?: CourseWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [CourseOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [CourseOrderByInput], {
     nullable: true
   })
-  orderBy?: CourseOrderByWithRelationInput[] | undefined;
+  orderBy?: CourseOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => CourseWhereUniqueInput, {
     nullable: true

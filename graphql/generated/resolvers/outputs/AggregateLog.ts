@@ -8,7 +8,7 @@ import { LogMaxAggregate } from "../outputs/LogMaxAggregate";
 import { LogMinAggregate } from "../outputs/LogMinAggregate";
 import { LogSumAggregate } from "../outputs/LogSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateLog", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateLog {

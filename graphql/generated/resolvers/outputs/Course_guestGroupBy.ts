@@ -8,7 +8,7 @@ import { Course_guestMaxAggregate } from "../outputs/Course_guestMaxAggregate";
 import { Course_guestMinAggregate } from "../outputs/Course_guestMinAggregate";
 import { Course_guestSumAggregate } from "../outputs/Course_guestSumAggregate";
 
-@TypeGraphQL.ObjectType("Course_guestGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Course_guestGroupBy {

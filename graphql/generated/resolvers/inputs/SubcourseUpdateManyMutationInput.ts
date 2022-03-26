@@ -6,7 +6,7 @@ import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperati
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("SubcourseUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SubcourseUpdateManyMutationInput {

@@ -7,7 +7,7 @@ import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperation
 import { StudentUpdateOneWithoutLectureInput } from "../inputs/StudentUpdateOneWithoutLectureInput";
 import { SubcourseUpdateOneWithoutLectureInput } from "../inputs/SubcourseUpdateOneWithoutLectureInput";
 
-@TypeGraphQL.InputType("LectureUpdateWithoutCourse_attendance_logInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureUpdateWithoutCourse_attendance_logInput {

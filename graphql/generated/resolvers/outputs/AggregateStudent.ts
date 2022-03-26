@@ -8,7 +8,7 @@ import { StudentMaxAggregate } from "../outputs/StudentMaxAggregate";
 import { StudentMinAggregate } from "../outputs/StudentMinAggregate";
 import { StudentSumAggregate } from "../outputs/StudentSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateStudent", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateStudent {

@@ -6,7 +6,7 @@ import { ScreenerCreateOrConnectWithoutProject_coaching_screeningInput } from ".
 import { ScreenerCreateWithoutProject_coaching_screeningInput } from "../inputs/ScreenerCreateWithoutProject_coaching_screeningInput";
 import { ScreenerWhereUniqueInput } from "../inputs/ScreenerWhereUniqueInput";
 
-@TypeGraphQL.InputType("ScreenerCreateNestedOneWithoutProject_coaching_screeningInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class ScreenerCreateNestedOneWithoutProject_coaching_screeningInput {

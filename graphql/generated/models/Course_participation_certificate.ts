@@ -6,7 +6,7 @@ import { Pupil } from "../models/Pupil";
 import { Student } from "../models/Student";
 import { Subcourse } from "../models/Subcourse";
 
-@TypeGraphQL.ObjectType("Course_participation_certificate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Course_participation_certificate {

@@ -6,7 +6,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { SubcourseRelationFilter } from "../inputs/SubcourseRelationFilter";
 
-@TypeGraphQL.InputType("Subcourse_waiting_list_pupilWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilWhereInput {

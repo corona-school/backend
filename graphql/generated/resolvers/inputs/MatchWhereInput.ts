@@ -12,7 +12,7 @@ import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType("MatchWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MatchWhereInput {

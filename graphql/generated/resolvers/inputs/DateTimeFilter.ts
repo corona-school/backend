@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { NestedDateTimeFilter } from "../inputs/NestedDateTimeFilter";
 
-@TypeGraphQL.InputType("DateTimeFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class DateTimeFilter {

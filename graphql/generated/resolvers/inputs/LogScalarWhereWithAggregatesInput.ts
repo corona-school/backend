@@ -7,7 +7,7 @@ import { Enumlog_logtype_enumWithAggregatesFilter } from "../inputs/Enumlog_logt
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType("LogScalarWhereWithAggregatesInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LogScalarWhereWithAggregatesInput {

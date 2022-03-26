@@ -12,7 +12,7 @@ import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType("MentorScalarWhereWithAggregatesInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MentorScalarWhereWithAggregatesInput {

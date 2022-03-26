@@ -6,7 +6,7 @@ import { StudentCreateOrConnectWithoutProject_matchInput } from "../inputs/Stude
 import { StudentCreateWithoutProject_matchInput } from "../inputs/StudentCreateWithoutProject_matchInput";
 import { StudentWhereUniqueInput } from "../inputs/StudentWhereUniqueInput";
 
-@TypeGraphQL.InputType("StudentCreateNestedOneWithoutProject_matchInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentCreateNestedOneWithoutProject_matchInput {

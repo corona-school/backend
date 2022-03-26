@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("Expertise_tagUpdateWithoutExpert_data_expertise_tags_expertise_tagInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expertise_tagUpdateWithoutExpert_data_expertise_tags_expertise_tagInput {

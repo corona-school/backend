@@ -11,7 +11,7 @@ import { LectureUpdateManyWithoutSubcourseInput } from "../inputs/LectureUpdateM
 import { Subcourse_instructors_studentUpdateManyWithoutSubcourseInput } from "../inputs/Subcourse_instructors_studentUpdateManyWithoutSubcourseInput";
 import { Subcourse_participants_pupilUpdateManyWithoutSubcourseInput } from "../inputs/Subcourse_participants_pupilUpdateManyWithoutSubcourseInput";
 
-@TypeGraphQL.InputType("SubcourseUpdateWithoutSubcourse_waiting_list_pupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SubcourseUpdateWithoutSubcourse_waiting_list_pupilInput {

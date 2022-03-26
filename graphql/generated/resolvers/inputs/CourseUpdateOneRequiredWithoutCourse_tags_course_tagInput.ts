@@ -8,7 +8,7 @@ import { CourseUpdateWithoutCourse_tags_course_tagInput } from "../inputs/Course
 import { CourseUpsertWithoutCourse_tags_course_tagInput } from "../inputs/CourseUpsertWithoutCourse_tags_course_tagInput";
 import { CourseWhereUniqueInput } from "../inputs/CourseWhereUniqueInput";
 
-@TypeGraphQL.InputType("CourseUpdateOneRequiredWithoutCourse_tags_course_tagInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class CourseUpdateOneRequiredWithoutCourse_tags_course_tagInput {

@@ -11,7 +11,7 @@ import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDa
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("MentorUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MentorUpdateManyMutationInput {
@@ -80,16 +80,6 @@ export class MentorUpdateManyMutationInput {
   })
   wix_creation_date?: DateTimeFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => MentorUpdatedivisionInput, {
-    nullable: true
-  })
-  division?: MentorUpdatedivisionInput | undefined;
-
-  @TypeGraphQL.Field(_type => MentorUpdateexpertiseInput, {
-    nullable: true
-  })
-  expertise?: MentorUpdateexpertiseInput | undefined;
-
   @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -114,4 +104,14 @@ export class MentorUpdateManyMutationInput {
     nullable: true
   })
   imageUrl?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => MentorUpdatedivisionInput, {
+    nullable: true
+  })
+  division?: MentorUpdatedivisionInput | undefined;
+
+  @TypeGraphQL.Field(_type => MentorUpdateexpertiseInput, {
+    nullable: true
+  })
+  expertise?: MentorUpdateexpertiseInput | undefined;
 }

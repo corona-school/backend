@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Match_pool_runOrderByWithAggregationInput } from "../../../inputs/Match_pool_runOrderByWithAggregationInput";
+import { Match_pool_runOrderByInput } from "../../../inputs/Match_pool_runOrderByInput";
 import { Match_pool_runScalarWhereWithAggregatesInput } from "../../../inputs/Match_pool_runScalarWhereWithAggregatesInput";
 import { Match_pool_runWhereInput } from "../../../inputs/Match_pool_runWhereInput";
 import { Match_pool_runScalarFieldEnum } from "../../../../enums/Match_pool_runScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByMatch_pool_runArgs {
   })
   where?: Match_pool_runWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Match_pool_runOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Match_pool_runOrderByInput], {
     nullable: true
   })
-  orderBy?: Match_pool_runOrderByWithAggregationInput[] | undefined;
+  orderBy?: Match_pool_runOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Match_pool_runScalarFieldEnum], {
     nullable: false

@@ -6,7 +6,7 @@ import { Course_attendance_logCreateWithoutLectureInput } from "../inputs/Course
 import { Course_attendance_logUpdateWithoutLectureInput } from "../inputs/Course_attendance_logUpdateWithoutLectureInput";
 import { Course_attendance_logWhereUniqueInput } from "../inputs/Course_attendance_logWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_attendance_logUpsertWithWhereUniqueWithoutLectureInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_attendance_logUpsertWithWhereUniqueWithoutLectureInput {

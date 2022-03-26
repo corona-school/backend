@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Pupil_tutoring_interest_confirmation_requestOrderByWithAggregationInput } from "../../../inputs/Pupil_tutoring_interest_confirmation_requestOrderByWithAggregationInput";
+import { Pupil_tutoring_interest_confirmation_requestOrderByInput } from "../../../inputs/Pupil_tutoring_interest_confirmation_requestOrderByInput";
 import { Pupil_tutoring_interest_confirmation_requestScalarWhereWithAggregatesInput } from "../../../inputs/Pupil_tutoring_interest_confirmation_requestScalarWhereWithAggregatesInput";
 import { Pupil_tutoring_interest_confirmation_requestWhereInput } from "../../../inputs/Pupil_tutoring_interest_confirmation_requestWhereInput";
 import { Pupil_tutoring_interest_confirmation_requestScalarFieldEnum } from "../../../../enums/Pupil_tutoring_interest_confirmation_requestScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByPupil_tutoring_interest_confirmation_requestArgs {
   })
   where?: Pupil_tutoring_interest_confirmation_requestWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Pupil_tutoring_interest_confirmation_requestOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Pupil_tutoring_interest_confirmation_requestOrderByInput], {
     nullable: true
   })
-  orderBy?: Pupil_tutoring_interest_confirmation_requestOrderByWithAggregationInput[] | undefined;
+  orderBy?: Pupil_tutoring_interest_confirmation_requestOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Pupil_tutoring_interest_confirmation_requestScalarFieldEnum], {
     nullable: false

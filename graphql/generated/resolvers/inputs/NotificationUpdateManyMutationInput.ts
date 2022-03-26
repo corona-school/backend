@@ -7,11 +7,10 @@ import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperation
 import { NotificationUpdatecancelledOnActionInput } from "../inputs/NotificationUpdatecancelledOnActionInput";
 import { NotificationUpdatecategoryInput } from "../inputs/NotificationUpdatecategoryInput";
 import { NotificationUpdateonActionsInput } from "../inputs/NotificationUpdateonActionsInput";
-import { NullableEnumnotification_sender_enumFieldUpdateOperationsInput } from "../inputs/NullableEnumnotification_sender_enumFieldUpdateOperationsInput";
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("NotificationUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class NotificationUpdateManyMutationInput {
@@ -35,6 +34,16 @@ export class NotificationUpdateManyMutationInput {
   })
   recipient?: IntFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  delay?: NullableIntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  interval?: NullableIntFieldUpdateOperationsInput | undefined;
+
   @TypeGraphQL.Field(_type => NotificationUpdateonActionsInput, {
     nullable: true
   })
@@ -49,19 +58,4 @@ export class NotificationUpdateManyMutationInput {
     nullable: true
   })
   cancelledOnAction?: NotificationUpdatecancelledOnActionInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  delay?: NullableIntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  interval?: NullableIntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableEnumnotification_sender_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  sender?: NullableEnumnotification_sender_enumFieldUpdateOperationsInput | undefined;
 }

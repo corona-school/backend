@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateNestedOneWithoutSubcourse_waiting_list_pupilInput } from "../inputs/PupilCreateNestedOneWithoutSubcourse_waiting_list_pupilInput";
 
-@TypeGraphQL.InputType("Subcourse_waiting_list_pupilCreateWithoutSubcourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilCreateWithoutSubcourseInput {

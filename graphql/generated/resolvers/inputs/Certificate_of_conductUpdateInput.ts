@@ -6,7 +6,7 @@ import { BoolFieldUpdateOperationsInput } from "../inputs/BoolFieldUpdateOperati
 import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutCertificate_of_conductInput } from "../inputs/StudentUpdateOneWithoutCertificate_of_conductInput";
 
-@TypeGraphQL.InputType("Certificate_of_conductUpdateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Certificate_of_conductUpdateInput {

@@ -6,7 +6,7 @@ import { Project_field_with_grade_restrictionCreateWithoutStudentInput } from ".
 import { Project_field_with_grade_restrictionUpdateWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionUpdateWithoutStudentInput";
 import { Project_field_with_grade_restrictionWhereUniqueInput } from "../inputs/Project_field_with_grade_restrictionWhereUniqueInput";
 
-@TypeGraphQL.InputType("Project_field_with_grade_restrictionUpsertWithWhereUniqueWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionUpsertWithWhereUniqueWithoutStudentInput {

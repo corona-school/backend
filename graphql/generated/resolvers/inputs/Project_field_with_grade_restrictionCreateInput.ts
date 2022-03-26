@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput } from "../inputs/StudentCreateNestedOneWithoutProject_field_with_grade_restrictionInput";
 import { project_field_with_grade_restriction_projectfield_enum } from "../../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.InputType("Project_field_with_grade_restrictionCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionCreateInput {

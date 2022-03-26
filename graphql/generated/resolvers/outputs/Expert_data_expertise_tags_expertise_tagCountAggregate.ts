@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.ObjectType("Expert_data_expertise_tags_expertise_tagCountAggregate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagCountAggregate {

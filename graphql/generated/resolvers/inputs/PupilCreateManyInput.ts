@@ -2,14 +2,14 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { PupilCreatelanguagesInput } from "../inputs/PupilCreatelanguagesInput";
-import { PupilCreateprojectFieldsInput } from "../inputs/PupilCreateprojectFieldsInput";
+import { PupilCreateManylanguagesInput } from "../inputs/PupilCreateManylanguagesInput";
+import { PupilCreateManyprojectFieldsInput } from "../inputs/PupilCreateManyprojectFieldsInput";
 import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType("PupilCreateManyInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateManyInput {
@@ -133,11 +133,6 @@ export class PupilCreateManyInput {
   })
   isProjectCoachee?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
-    nullable: true
-  })
-  projectFields?: PupilCreateprojectFieldsInput | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -152,11 +147,6 @@ export class PupilCreateManyInput {
     nullable: true
   })
   projectMemberCount?: number | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
-    nullable: true
-  })
-  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => pupil_learninggermansince_enum, {
     nullable: true
@@ -192,4 +182,14 @@ export class PupilCreateManyInput {
     nullable: true
   })
   schoolId?: number | undefined;
+
+  @TypeGraphQL.Field(_type => PupilCreateManyprojectFieldsInput, {
+    nullable: true
+  })
+  projectFields?: PupilCreateManyprojectFieldsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PupilCreateManylanguagesInput, {
+    nullable: true
+  })
+  languages?: PupilCreateManylanguagesInput | undefined;
 }

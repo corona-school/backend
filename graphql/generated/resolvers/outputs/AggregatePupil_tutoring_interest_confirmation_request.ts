@@ -8,7 +8,7 @@ import { Pupil_tutoring_interest_confirmation_requestMaxAggregate } from "../out
 import { Pupil_tutoring_interest_confirmation_requestMinAggregate } from "../outputs/Pupil_tutoring_interest_confirmation_requestMinAggregate";
 import { Pupil_tutoring_interest_confirmation_requestSumAggregate } from "../outputs/Pupil_tutoring_interest_confirmation_requestSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregatePupil_tutoring_interest_confirmation_request", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregatePupil_tutoring_interest_confirmation_request {

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { PupilOrderByWithRelationInput } from "../../../inputs/PupilOrderByWithRelationInput";
+import { PupilOrderByInput } from "../../../inputs/PupilOrderByInput";
 import { PupilWhereInput } from "../../../inputs/PupilWhereInput";
 import { PupilWhereUniqueInput } from "../../../inputs/PupilWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregatePupilArgs {
   })
   where?: PupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [PupilOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [PupilOrderByInput], {
     nullable: true
   })
-  orderBy?: PupilOrderByWithRelationInput[] | undefined;
+  orderBy?: PupilOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
     nullable: true

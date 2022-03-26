@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Course_tagOrderByWithRelationInput } from "../../../inputs/Course_tagOrderByWithRelationInput";
+import { Course_tagOrderByInput } from "../../../inputs/Course_tagOrderByInput";
 import { Course_tagWhereInput } from "../../../inputs/Course_tagWhereInput";
 import { Course_tagWhereUniqueInput } from "../../../inputs/Course_tagWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateCourse_tagArgs {
   })
   where?: Course_tagWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Course_tagOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [Course_tagOrderByInput], {
     nullable: true
   })
-  orderBy?: Course_tagOrderByWithRelationInput[] | undefined;
+  orderBy?: Course_tagOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Course_tagWhereUniqueInput, {
     nullable: true

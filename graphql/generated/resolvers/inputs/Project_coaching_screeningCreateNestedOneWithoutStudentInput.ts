@@ -6,7 +6,7 @@ import { Project_coaching_screeningCreateOrConnectWithoutStudentInput } from "..
 import { Project_coaching_screeningCreateWithoutStudentInput } from "../inputs/Project_coaching_screeningCreateWithoutStudentInput";
 import { Project_coaching_screeningWhereUniqueInput } from "../inputs/Project_coaching_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType("Project_coaching_screeningCreateNestedOneWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_coaching_screeningCreateNestedOneWithoutStudentInput {

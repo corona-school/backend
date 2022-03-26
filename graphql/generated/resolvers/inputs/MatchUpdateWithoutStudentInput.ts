@@ -10,7 +10,7 @@ import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFiel
 import { PupilUpdateOneWithoutMatchInput } from "../inputs/PupilUpdateOneWithoutMatchInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("MatchUpdateWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MatchUpdateWithoutStudentInput {

@@ -9,7 +9,7 @@ import { Expert_data_expertise_tags_expertise_tagUpdateManyWithoutExpert_dataInp
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("Expert_dataUpdateWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expert_dataUpdateWithoutStudentInput {

@@ -6,7 +6,7 @@ import { StudentCreateOrConnectWithoutCertificate_of_conductInput } from "../inp
 import { StudentCreateWithoutCertificate_of_conductInput } from "../inputs/StudentCreateWithoutCertificate_of_conductInput";
 import { StudentWhereUniqueInput } from "../inputs/StudentWhereUniqueInput";
 
-@TypeGraphQL.InputType("StudentCreateNestedOneWithoutCertificate_of_conductInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentCreateNestedOneWithoutCertificate_of_conductInput {

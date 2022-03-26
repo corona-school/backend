@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Subcourse_participants_pupilWhereInput } from "../inputs/Subcourse_participants_pupilWhereInput";
 
-@TypeGraphQL.InputType("Subcourse_participants_pupilListRelationFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_participants_pupilListRelationFilter {

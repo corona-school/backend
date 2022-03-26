@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { LectureOrderByWithRelationInput } from "../../../inputs/LectureOrderByWithRelationInput";
+import { LectureOrderByInput } from "../../../inputs/LectureOrderByInput";
 import { LectureWhereInput } from "../../../inputs/LectureWhereInput";
 import { LectureWhereUniqueInput } from "../../../inputs/LectureWhereUniqueInput";
 import { LectureScalarFieldEnum } from "../../../../enums/LectureScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstLectureArgs {
   })
   where?: LectureWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [LectureOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [LectureOrderByInput], {
     nullable: true
   })
-  orderBy?: LectureOrderByWithRelationInput[] | undefined;
+  orderBy?: LectureOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => LectureWhereUniqueInput, {
     nullable: true

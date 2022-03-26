@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { ScreenerOrderByWithRelationInput } from "../../../inputs/ScreenerOrderByWithRelationInput";
+import { ScreenerOrderByInput } from "../../../inputs/ScreenerOrderByInput";
 import { ScreenerWhereInput } from "../../../inputs/ScreenerWhereInput";
 import { ScreenerWhereUniqueInput } from "../../../inputs/ScreenerWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateScreenerArgs {
   })
   where?: ScreenerWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [ScreenerOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [ScreenerOrderByInput], {
     nullable: true
   })
-  orderBy?: ScreenerOrderByWithRelationInput[] | undefined;
+  orderBy?: ScreenerOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => ScreenerWhereUniqueInput, {
     nullable: true

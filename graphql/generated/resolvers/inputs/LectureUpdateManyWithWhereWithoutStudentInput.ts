@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { LectureScalarWhereInput } from "../inputs/LectureScalarWhereInput";
 import { LectureUpdateManyMutationInput } from "../inputs/LectureUpdateManyMutationInput";
 
-@TypeGraphQL.InputType("LectureUpdateManyWithWhereWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureUpdateManyWithWhereWithoutStudentInput {

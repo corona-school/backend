@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { project_field_with_grade_restriction_projectfield_enum } from "../../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.ObjectType("Project_field_with_grade_restrictionMaxAggregate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionMaxAggregate {

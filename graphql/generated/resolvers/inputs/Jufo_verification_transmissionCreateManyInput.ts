@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionCreateManyInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionCreateManyInput {

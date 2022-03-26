@@ -11,7 +11,7 @@ import { Instructor_screeningUpdateWithWhereUniqueWithoutScreenerInput } from ".
 import { Instructor_screeningUpsertWithWhereUniqueWithoutScreenerInput } from "../inputs/Instructor_screeningUpsertWithWhereUniqueWithoutScreenerInput";
 import { Instructor_screeningWhereUniqueInput } from "../inputs/Instructor_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType("Instructor_screeningUpdateManyWithoutScreenerInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Instructor_screeningUpdateManyWithoutScreenerInput {
@@ -38,6 +38,11 @@ export class Instructor_screeningUpdateManyWithoutScreenerInput {
   @TypeGraphQL.Field(_type => [Instructor_screeningWhereUniqueInput], {
     nullable: true
   })
+  connect?: Instructor_screeningWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Instructor_screeningWhereUniqueInput], {
+    nullable: true
+  })
   set?: Instructor_screeningWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Instructor_screeningWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class Instructor_screeningUpdateManyWithoutScreenerInput {
     nullable: true
   })
   delete?: Instructor_screeningWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Instructor_screeningWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: Instructor_screeningWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Instructor_screeningUpdateWithWhereUniqueWithoutScreenerInput], {
     nullable: true

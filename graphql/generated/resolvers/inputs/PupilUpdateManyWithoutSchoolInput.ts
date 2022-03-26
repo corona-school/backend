@@ -11,7 +11,7 @@ import { PupilUpdateWithWhereUniqueWithoutSchoolInput } from "../inputs/PupilUpd
 import { PupilUpsertWithWhereUniqueWithoutSchoolInput } from "../inputs/PupilUpsertWithWhereUniqueWithoutSchoolInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilUpdateManyWithoutSchoolInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpdateManyWithoutSchoolInput {
@@ -38,6 +38,11 @@ export class PupilUpdateManyWithoutSchoolInput {
   @TypeGraphQL.Field(_type => [PupilWhereUniqueInput], {
     nullable: true
   })
+  connect?: PupilWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [PupilWhereUniqueInput], {
+    nullable: true
+  })
   set?: PupilWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [PupilWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class PupilUpdateManyWithoutSchoolInput {
     nullable: true
   })
   delete?: PupilWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [PupilWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: PupilWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [PupilUpdateWithWhereUniqueWithoutSchoolInput], {
     nullable: true

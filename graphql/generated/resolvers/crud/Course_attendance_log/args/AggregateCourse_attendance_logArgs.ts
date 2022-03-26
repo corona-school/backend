@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Course_attendance_logOrderByWithRelationInput } from "../../../inputs/Course_attendance_logOrderByWithRelationInput";
+import { Course_attendance_logOrderByInput } from "../../../inputs/Course_attendance_logOrderByInput";
 import { Course_attendance_logWhereInput } from "../../../inputs/Course_attendance_logWhereInput";
 import { Course_attendance_logWhereUniqueInput } from "../../../inputs/Course_attendance_logWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateCourse_attendance_logArgs {
   })
   where?: Course_attendance_logWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Course_attendance_logOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [Course_attendance_logOrderByInput], {
     nullable: true
   })
-  orderBy?: Course_attendance_logOrderByWithRelationInput[] | undefined;
+  orderBy?: Course_attendance_logOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Course_attendance_logWhereUniqueInput, {
     nullable: true

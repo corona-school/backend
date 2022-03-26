@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { mentor_division_enum } from "../../enums/mentor_division_enum";
 
-@TypeGraphQL.InputType("Enummentor_division_enumNullableListFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enummentor_division_enumNullableListFilter {

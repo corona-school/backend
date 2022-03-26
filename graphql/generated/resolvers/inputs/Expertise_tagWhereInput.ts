@@ -6,7 +6,7 @@ import { Expert_data_expertise_tags_expertise_tagListRelationFilter } from "../i
 import { IntFilter } from "../inputs/IntFilter";
 import { StringFilter } from "../inputs/StringFilter";
 
-@TypeGraphQL.InputType("Expertise_tagWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expertise_tagWhereInput {

@@ -23,7 +23,7 @@ import { student_module_enum } from "../../enums/student_module_enum";
 import { student_registrationsource_enum } from "../../enums/student_registrationsource_enum";
 import { student_state_enum } from "../../enums/student_state_enum";
 
-@TypeGraphQL.InputType("StudentCreateWithoutExpert_dataInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentCreateWithoutExpert_dataInput {
@@ -207,11 +207,6 @@ export class StudentCreateWithoutExpert_dataInput {
   })
   supportsInDaZ?: boolean | undefined;
 
-  @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
-    nullable: true
-  })
-  languages?: StudentCreatelanguagesInput | undefined;
-
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
@@ -241,6 +236,11 @@ export class StudentCreateWithoutExpert_dataInput {
     nullable: true
   })
   registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+
+  @TypeGraphQL.Field(_type => StudentCreatelanguagesInput, {
+    nullable: true
+  })
+  languages?: StudentCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => Certificate_of_conductCreateNestedOneWithoutStudentInput, {
     nullable: true

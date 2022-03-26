@@ -6,7 +6,7 @@ import { student_module_enum } from "../../enums/student_module_enum";
 import { student_registrationsource_enum } from "../../enums/student_registrationsource_enum";
 import { student_state_enum } from "../../enums/student_state_enum";
 
-@TypeGraphQL.ObjectType("StudentMaxAggregate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class StudentMaxAggregate {

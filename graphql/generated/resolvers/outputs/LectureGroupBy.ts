@@ -8,7 +8,7 @@ import { LectureMaxAggregate } from "../outputs/LectureMaxAggregate";
 import { LectureMinAggregate } from "../outputs/LectureMinAggregate";
 import { LectureSumAggregate } from "../outputs/LectureSumAggregate";
 
-@TypeGraphQL.ObjectType("LectureGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class LectureGroupBy {

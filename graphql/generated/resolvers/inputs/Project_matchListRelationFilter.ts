@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Project_matchWhereInput } from "../inputs/Project_matchWhereInput";
 
-@TypeGraphQL.InputType("Project_matchListRelationFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_matchListRelationFilter {

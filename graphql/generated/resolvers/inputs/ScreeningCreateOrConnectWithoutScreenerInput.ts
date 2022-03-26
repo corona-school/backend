@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { ScreeningCreateWithoutScreenerInput } from "../inputs/ScreeningCreateWithoutScreenerInput";
 import { ScreeningWhereUniqueInput } from "../inputs/ScreeningWhereUniqueInput";
 
-@TypeGraphQL.InputType("ScreeningCreateOrConnectWithoutScreenerInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class ScreeningCreateOrConnectWithoutScreenerInput {

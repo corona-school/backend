@@ -8,7 +8,7 @@ import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStri
 import { ScreenerUpdateOneWithoutInstructor_screeningInput } from "../inputs/ScreenerUpdateOneWithoutInstructor_screeningInput";
 import { StudentUpdateOneWithoutInstructor_screeningInput } from "../inputs/StudentUpdateOneWithoutInstructor_screeningInput";
 
-@TypeGraphQL.InputType("Instructor_screeningUpdateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Instructor_screeningUpdateInput {

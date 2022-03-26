@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { NestedBoolNullableFilter } from "../inputs/NestedBoolNullableFilter";
 
-@TypeGraphQL.InputType("BoolNullableFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class BoolNullableFilter {

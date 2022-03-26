@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutPupil_tutoring_interest_confirmation_request
 import { PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput } from "../inputs/PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilCreateNestedOneWithoutPupil_tutoring_interest_confirmation_requestInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutPupil_tutoring_interest_confirmation_requestInput {

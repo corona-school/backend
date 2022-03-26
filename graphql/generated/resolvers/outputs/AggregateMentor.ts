@@ -8,7 +8,7 @@ import { MentorMaxAggregate } from "../outputs/MentorMaxAggregate";
 import { MentorMinAggregate } from "../outputs/MentorMinAggregate";
 import { MentorSumAggregate } from "../outputs/MentorSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateMentor", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateMentor {

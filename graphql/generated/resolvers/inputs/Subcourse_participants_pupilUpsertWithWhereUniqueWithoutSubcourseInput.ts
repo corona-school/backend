@@ -6,7 +6,7 @@ import { Subcourse_participants_pupilCreateWithoutSubcourseInput } from "../inpu
 import { Subcourse_participants_pupilUpdateWithoutSubcourseInput } from "../inputs/Subcourse_participants_pupilUpdateWithoutSubcourseInput";
 import { Subcourse_participants_pupilWhereUniqueInput } from "../inputs/Subcourse_participants_pupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("Subcourse_participants_pupilUpsertWithWhereUniqueWithoutSubcourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_participants_pupilUpsertWithWhereUniqueWithoutSubcourseInput {

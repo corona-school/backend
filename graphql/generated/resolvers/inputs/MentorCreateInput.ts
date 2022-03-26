@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { MentorCreatedivisionInput } from "../inputs/MentorCreatedivisionInput";
 import { MentorCreateexpertiseInput } from "../inputs/MentorCreateexpertiseInput";
 
-@TypeGraphQL.InputType("MentorCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MentorCreateInput {
@@ -74,16 +74,6 @@ export class MentorCreateInput {
   })
   wix_creation_date!: Date;
 
-  @TypeGraphQL.Field(_type => MentorCreatedivisionInput, {
-    nullable: true
-  })
-  division?: MentorCreatedivisionInput | undefined;
-
-  @TypeGraphQL.Field(_type => MentorCreateexpertiseInput, {
-    nullable: true
-  })
-  expertise?: MentorCreateexpertiseInput | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -108,4 +98,14 @@ export class MentorCreateInput {
     nullable: true
   })
   imageUrl?: string | undefined;
+
+  @TypeGraphQL.Field(_type => MentorCreatedivisionInput, {
+    nullable: true
+  })
+  division?: MentorCreatedivisionInput | undefined;
+
+  @TypeGraphQL.Field(_type => MentorCreateexpertiseInput, {
+    nullable: true
+  })
+  expertise?: MentorCreateexpertiseInput | undefined;
 }

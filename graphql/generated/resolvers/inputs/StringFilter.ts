@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedStringFilter } from "../inputs/NestedStringFilter";
 import { QueryMode } from "../../enums/QueryMode";
 
-@TypeGraphQL.InputType("StringFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StringFilter {

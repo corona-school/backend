@@ -25,7 +25,7 @@ import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { Subcourse_participants_pupilListRelationFilter } from "../inputs/Subcourse_participants_pupilListRelationFilter";
 import { Subcourse_waiting_list_pupilListRelationFilter } from "../inputs/Subcourse_waiting_list_pupilListRelationFilter";
 
-@TypeGraphQL.InputType("PupilWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilWhereInput {

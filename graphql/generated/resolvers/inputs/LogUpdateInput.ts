@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { Enumlog_logtype_enumFieldUpdateOperationsInput } from "../inputs/Enumlog_logtype_enumFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("LogUpdateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LogUpdateInput {

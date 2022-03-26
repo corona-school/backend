@@ -7,9 +7,8 @@ import { NotificationCountAggregate } from "../outputs/NotificationCountAggregat
 import { NotificationMaxAggregate } from "../outputs/NotificationMaxAggregate";
 import { NotificationMinAggregate } from "../outputs/NotificationMinAggregate";
 import { NotificationSumAggregate } from "../outputs/NotificationSumAggregate";
-import { notification_sender_enum } from "../../enums/notification_sender_enum";
 
-@TypeGraphQL.ObjectType("NotificationGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class NotificationGroupBy {
@@ -62,11 +61,6 @@ export class NotificationGroupBy {
     nullable: true
   })
   interval!: number | null;
-
-  @TypeGraphQL.Field(_type => notification_sender_enum, {
-    nullable: true
-  })
-  sender!: "SUPPORT" | "CERTIFICATE_OF_CONDUCT" | null;
 
   @TypeGraphQL.Field(_type => NotificationCountAggregate, {
     nullable: true

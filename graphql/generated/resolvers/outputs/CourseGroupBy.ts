@@ -10,7 +10,7 @@ import { CourseSumAggregate } from "../outputs/CourseSumAggregate";
 import { course_category_enum } from "../../enums/course_category_enum";
 import { course_coursestate_enum } from "../../enums/course_coursestate_enum";
 
-@TypeGraphQL.ObjectType("CourseGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class CourseGroupBy {

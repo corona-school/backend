@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Remission_requestWhereInput } from "../inputs/Remission_requestWhereInput";
 
-@TypeGraphQL.InputType("Remission_requestRelationFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Remission_requestRelationFilter {

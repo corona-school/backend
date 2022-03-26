@@ -5,10 +5,10 @@ export const DecimalJSScalar = new GraphQLScalarType({
   name: "Decimal",
   description: "GraphQL Scalar representing the Prisma.Decimal type, based on Decimal.js library.",
   serialize: (value: unknown) => {
-    if (!(Prisma.Decimal.isDecimal(value))) {
-      throw new Error(`[DecimalError] Invalid argument: ${Object.prototype.toString.call(value)}. Expected Prisma.Decimal.`);
+    if (!(value instanceof Prisma.Decimal)) {
+      throw new Error(`[DecimalError] Invalid argument: ${typeof value}. Expected Prisma.Decimal instance.`);
     }
-    return (value as Prisma.Decimal).toString();
+    return value.toString();
   },
   parseValue: (value: unknown) => {
     if (!(typeof value === "string")) {

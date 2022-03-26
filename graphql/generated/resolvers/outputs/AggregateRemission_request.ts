@@ -8,7 +8,7 @@ import { Remission_requestMaxAggregate } from "../outputs/Remission_requestMaxAg
 import { Remission_requestMinAggregate } from "../outputs/Remission_requestMinAggregate";
 import { Remission_requestSumAggregate } from "../outputs/Remission_requestSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateRemission_request", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateRemission_request {

@@ -7,7 +7,7 @@ import { NestedEnumexpert_data_allowed_enumWithAggregatesFilter } from "../input
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { expert_data_allowed_enum } from "../../enums/expert_data_allowed_enum";
 
-@TypeGraphQL.InputType("Enumexpert_data_allowed_enumWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enumexpert_data_allowed_enumWithAggregatesFilter {

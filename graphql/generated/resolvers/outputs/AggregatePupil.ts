@@ -8,7 +8,7 @@ import { PupilMaxAggregate } from "../outputs/PupilMaxAggregate";
 import { PupilMinAggregate } from "../outputs/PupilMinAggregate";
 import { PupilSumAggregate } from "../outputs/PupilSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregatePupil", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregatePupil {

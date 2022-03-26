@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Student } from "../models/Student";
 
-@TypeGraphQL.ObjectType("Remission_request", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Remission_request {

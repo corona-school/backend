@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { course_category_enum } from "../../enums/course_category_enum";
 import { course_coursestate_enum } from "../../enums/course_coursestate_enum";
 
-@TypeGraphQL.ObjectType("CourseMinAggregate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class CourseMinAggregate {

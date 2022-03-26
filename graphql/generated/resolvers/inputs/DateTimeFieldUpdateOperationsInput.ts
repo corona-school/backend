@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("DateTimeFieldUpdateOperationsInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class DateTimeFieldUpdateOperationsInput {

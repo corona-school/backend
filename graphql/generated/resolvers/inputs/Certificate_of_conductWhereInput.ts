@@ -8,7 +8,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType("Certificate_of_conductWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Certificate_of_conductWhereInput {

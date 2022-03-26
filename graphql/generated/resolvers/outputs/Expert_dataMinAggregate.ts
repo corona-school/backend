@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { expert_data_allowed_enum } from "../../enums/expert_data_allowed_enum";
 
-@TypeGraphQL.ObjectType("Expert_dataMinAggregate", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Expert_dataMinAggregate {

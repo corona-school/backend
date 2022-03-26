@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { StudentCreateNestedOneWithoutJufo_verification_transmissionInput } from "../inputs/StudentCreateNestedOneWithoutJufo_verification_transmissionInput";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionCreateInput {

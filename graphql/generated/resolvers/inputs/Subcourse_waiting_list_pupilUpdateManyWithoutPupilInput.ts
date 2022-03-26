@@ -11,7 +11,7 @@ import { Subcourse_waiting_list_pupilUpdateWithWhereUniqueWithoutPupilInput } fr
 import { Subcourse_waiting_list_pupilUpsertWithWhereUniqueWithoutPupilInput } from "../inputs/Subcourse_waiting_list_pupilUpsertWithWhereUniqueWithoutPupilInput";
 import { Subcourse_waiting_list_pupilWhereUniqueInput } from "../inputs/Subcourse_waiting_list_pupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("Subcourse_waiting_list_pupilUpdateManyWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilUpdateManyWithoutPupilInput {
@@ -38,6 +38,11 @@ export class Subcourse_waiting_list_pupilUpdateManyWithoutPupilInput {
   @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilWhereUniqueInput], {
     nullable: true
   })
+  connect?: Subcourse_waiting_list_pupilWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilWhereUniqueInput], {
+    nullable: true
+  })
   set?: Subcourse_waiting_list_pupilWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class Subcourse_waiting_list_pupilUpdateManyWithoutPupilInput {
     nullable: true
   })
   delete?: Subcourse_waiting_list_pupilWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: Subcourse_waiting_list_pupilWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilUpdateWithWhereUniqueWithoutPupilInput], {
     nullable: true

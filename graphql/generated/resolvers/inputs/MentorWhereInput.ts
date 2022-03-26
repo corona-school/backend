@@ -12,7 +12,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType("MentorWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MentorWhereInput {

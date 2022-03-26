@@ -3,7 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("Course_attendance_logCreateManyInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_attendance_logCreateManyInput {

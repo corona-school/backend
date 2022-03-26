@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { PupilOrderByWithAggregationInput } from "../../../inputs/PupilOrderByWithAggregationInput";
+import { PupilOrderByInput } from "../../../inputs/PupilOrderByInput";
 import { PupilScalarWhereWithAggregatesInput } from "../../../inputs/PupilScalarWhereWithAggregatesInput";
 import { PupilWhereInput } from "../../../inputs/PupilWhereInput";
 import { PupilScalarFieldEnum } from "../../../../enums/PupilScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByPupilArgs {
   })
   where?: PupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [PupilOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [PupilOrderByInput], {
     nullable: true
   })
-  orderBy?: PupilOrderByWithAggregationInput[] | undefined;
+  orderBy?: PupilOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [PupilScalarFieldEnum], {
     nullable: false

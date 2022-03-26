@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { NotificationOrderByWithRelationInput } from "../../../inputs/NotificationOrderByWithRelationInput";
+import { NotificationOrderByInput } from "../../../inputs/NotificationOrderByInput";
 import { NotificationWhereInput } from "../../../inputs/NotificationWhereInput";
 import { NotificationWhereUniqueInput } from "../../../inputs/NotificationWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateNotificationArgs {
   })
   where?: NotificationWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [NotificationOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [NotificationOrderByInput], {
     nullable: true
   })
-  orderBy?: NotificationOrderByWithRelationInput[] | undefined;
+  orderBy?: NotificationOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => NotificationWhereUniqueInput, {
     nullable: true

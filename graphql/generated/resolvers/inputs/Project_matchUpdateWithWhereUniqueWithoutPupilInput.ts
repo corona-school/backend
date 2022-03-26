@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Project_matchUpdateWithoutPupilInput } from "../inputs/Project_matchUpdateWithoutPupilInput";
 import { Project_matchWhereUniqueInput } from "../inputs/Project_matchWhereUniqueInput";
 
-@TypeGraphQL.InputType("Project_matchUpdateWithWhereUniqueWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_matchUpdateWithWhereUniqueWithoutPupilInput {

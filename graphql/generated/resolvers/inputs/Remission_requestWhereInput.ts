@@ -8,7 +8,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType("Remission_requestWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Remission_requestWhereInput {

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { SubcourseOrderByWithRelationInput } from "../../../inputs/SubcourseOrderByWithRelationInput";
+import { SubcourseOrderByInput } from "../../../inputs/SubcourseOrderByInput";
 import { SubcourseWhereInput } from "../../../inputs/SubcourseWhereInput";
 import { SubcourseWhereUniqueInput } from "../../../inputs/SubcourseWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateSubcourseArgs {
   })
   where?: SubcourseWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [SubcourseOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [SubcourseOrderByInput], {
     nullable: true
   })
-  orderBy?: SubcourseOrderByWithRelationInput[] | undefined;
+  orderBy?: SubcourseOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => SubcourseWhereUniqueInput, {
     nullable: true

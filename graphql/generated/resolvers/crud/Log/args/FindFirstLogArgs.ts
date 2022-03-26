@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { LogOrderByWithRelationInput } from "../../../inputs/LogOrderByWithRelationInput";
+import { LogOrderByInput } from "../../../inputs/LogOrderByInput";
 import { LogWhereInput } from "../../../inputs/LogWhereInput";
 import { LogWhereUniqueInput } from "../../../inputs/LogWhereUniqueInput";
 import { LogScalarFieldEnum } from "../../../../enums/LogScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstLogArgs {
   })
   where?: LogWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [LogOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [LogOrderByInput], {
     nullable: true
   })
-  orderBy?: LogOrderByWithRelationInput[] | undefined;
+  orderBy?: LogOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => LogWhereUniqueInput, {
     nullable: true

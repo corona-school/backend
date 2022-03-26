@@ -2,10 +2,10 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { MentorCreatedivisionInput } from "../inputs/MentorCreatedivisionInput";
-import { MentorCreateexpertiseInput } from "../inputs/MentorCreateexpertiseInput";
+import { MentorCreateManydivisionInput } from "../inputs/MentorCreateManydivisionInput";
+import { MentorCreateManyexpertiseInput } from "../inputs/MentorCreateManyexpertiseInput";
 
-@TypeGraphQL.InputType("MentorCreateManyInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MentorCreateManyInput {
@@ -79,16 +79,6 @@ export class MentorCreateManyInput {
   })
   wix_creation_date!: Date;
 
-  @TypeGraphQL.Field(_type => MentorCreatedivisionInput, {
-    nullable: true
-  })
-  division?: MentorCreatedivisionInput | undefined;
-
-  @TypeGraphQL.Field(_type => MentorCreateexpertiseInput, {
-    nullable: true
-  })
-  expertise?: MentorCreateexpertiseInput | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -113,4 +103,14 @@ export class MentorCreateManyInput {
     nullable: true
   })
   imageUrl?: string | undefined;
+
+  @TypeGraphQL.Field(_type => MentorCreateManydivisionInput, {
+    nullable: true
+  })
+  division?: MentorCreateManydivisionInput | undefined;
+
+  @TypeGraphQL.Field(_type => MentorCreateManyexpertiseInput, {
+    nullable: true
+  })
+  expertise?: MentorCreateManyexpertiseInput | undefined;
 }

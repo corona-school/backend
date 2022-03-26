@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 
-@TypeGraphQL.InputType("Enumpupil_registrationsource_enumFieldUpdateOperationsInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enumpupil_registrationsource_enumFieldUpdateOperationsInput {

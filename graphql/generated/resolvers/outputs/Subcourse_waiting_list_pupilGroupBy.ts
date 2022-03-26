@@ -8,7 +8,7 @@ import { Subcourse_waiting_list_pupilMaxAggregate } from "../outputs/Subcourse_w
 import { Subcourse_waiting_list_pupilMinAggregate } from "../outputs/Subcourse_waiting_list_pupilMinAggregate";
 import { Subcourse_waiting_list_pupilSumAggregate } from "../outputs/Subcourse_waiting_list_pupilSumAggregate";
 
-@TypeGraphQL.ObjectType("Subcourse_waiting_list_pupilGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilGroupBy {

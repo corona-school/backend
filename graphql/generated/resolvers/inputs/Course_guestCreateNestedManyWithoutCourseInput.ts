@@ -7,7 +7,7 @@ import { Course_guestCreateOrConnectWithoutCourseInput } from "../inputs/Course_
 import { Course_guestCreateWithoutCourseInput } from "../inputs/Course_guestCreateWithoutCourseInput";
 import { Course_guestWhereUniqueInput } from "../inputs/Course_guestWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_guestCreateNestedManyWithoutCourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_guestCreateNestedManyWithoutCourseInput {

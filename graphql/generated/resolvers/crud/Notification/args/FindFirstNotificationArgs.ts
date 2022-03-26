@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { NotificationOrderByWithRelationInput } from "../../../inputs/NotificationOrderByWithRelationInput";
+import { NotificationOrderByInput } from "../../../inputs/NotificationOrderByInput";
 import { NotificationWhereInput } from "../../../inputs/NotificationWhereInput";
 import { NotificationWhereUniqueInput } from "../../../inputs/NotificationWhereUniqueInput";
 import { NotificationScalarFieldEnum } from "../../../../enums/NotificationScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstNotificationArgs {
   })
   where?: NotificationWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [NotificationOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [NotificationOrderByInput], {
     nullable: true
   })
-  orderBy?: NotificationOrderByWithRelationInput[] | undefined;
+  orderBy?: NotificationOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => NotificationWhereUniqueInput, {
     nullable: true
@@ -35,5 +35,5 @@ export class FindFirstNotificationArgs {
   @TypeGraphQL.Field(_type => [NotificationScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval" | "sender"> | undefined;
+  distinct?: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval"> | undefined;
 }

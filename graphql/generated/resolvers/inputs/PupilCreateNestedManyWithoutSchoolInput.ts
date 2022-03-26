@@ -7,7 +7,7 @@ import { PupilCreateOrConnectWithoutSchoolInput } from "../inputs/PupilCreateOrC
 import { PupilCreateWithoutSchoolInput } from "../inputs/PupilCreateWithoutSchoolInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilCreateNestedManyWithoutSchoolInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateNestedManyWithoutSchoolInput {

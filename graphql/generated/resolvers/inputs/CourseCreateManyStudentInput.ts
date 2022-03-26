@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { course_category_enum } from "../../enums/course_category_enum";
 import { course_coursestate_enum } from "../../enums/course_coursestate_enum";
 
-@TypeGraphQL.InputType("CourseCreateManyStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class CourseCreateManyStudentInput {

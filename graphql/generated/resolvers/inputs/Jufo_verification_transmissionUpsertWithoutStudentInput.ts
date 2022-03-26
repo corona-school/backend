@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Jufo_verification_transmissionCreateWithoutStudentInput } from "../inputs/Jufo_verification_transmissionCreateWithoutStudentInput";
 import { Jufo_verification_transmissionUpdateWithoutStudentInput } from "../inputs/Jufo_verification_transmissionUpdateWithoutStudentInput";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionUpsertWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionUpsertWithoutStudentInput {

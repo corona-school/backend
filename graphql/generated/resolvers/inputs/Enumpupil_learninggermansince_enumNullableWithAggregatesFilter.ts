@@ -7,7 +7,7 @@ import { NestedEnumpupil_learninggermansince_enumNullableWithAggregatesFilter } 
 import { NestedIntNullableFilter } from "../inputs/NestedIntNullableFilter";
 import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 
-@TypeGraphQL.InputType("Enumpupil_learninggermansince_enumNullableWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enumpupil_learninggermansince_enumNullableWithAggregatesFilter {

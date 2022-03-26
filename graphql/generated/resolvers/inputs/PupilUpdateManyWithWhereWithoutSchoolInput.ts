@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilScalarWhereInput } from "../inputs/PupilScalarWhereInput";
 import { PupilUpdateManyMutationInput } from "../inputs/PupilUpdateManyMutationInput";
 
-@TypeGraphQL.InputType("PupilUpdateManyWithWhereWithoutSchoolInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpdateManyWithWhereWithoutSchoolInput {

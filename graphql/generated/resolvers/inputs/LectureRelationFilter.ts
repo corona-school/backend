@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { LectureWhereInput } from "../inputs/LectureWhereInput";
 
-@TypeGraphQL.InputType("LectureRelationFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureRelationFilter {

@@ -11,7 +11,7 @@ import { LectureUpdateWithWhereUniqueWithoutSubcourseInput } from "../inputs/Lec
 import { LectureUpsertWithWhereUniqueWithoutSubcourseInput } from "../inputs/LectureUpsertWithWhereUniqueWithoutSubcourseInput";
 import { LectureWhereUniqueInput } from "../inputs/LectureWhereUniqueInput";
 
-@TypeGraphQL.InputType("LectureUpdateManyWithoutSubcourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureUpdateManyWithoutSubcourseInput {
@@ -38,6 +38,11 @@ export class LectureUpdateManyWithoutSubcourseInput {
   @TypeGraphQL.Field(_type => [LectureWhereUniqueInput], {
     nullable: true
   })
+  connect?: LectureWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [LectureWhereUniqueInput], {
+    nullable: true
+  })
   set?: LectureWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [LectureWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class LectureUpdateManyWithoutSubcourseInput {
     nullable: true
   })
   delete?: LectureWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [LectureWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: LectureWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [LectureUpdateWithWhereUniqueWithoutSubcourseInput], {
     nullable: true

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Bbb_meetingOrderByWithRelationInput } from "../../../inputs/Bbb_meetingOrderByWithRelationInput";
+import { Bbb_meetingOrderByInput } from "../../../inputs/Bbb_meetingOrderByInput";
 import { Bbb_meetingWhereInput } from "../../../inputs/Bbb_meetingWhereInput";
 import { Bbb_meetingWhereUniqueInput } from "../../../inputs/Bbb_meetingWhereUniqueInput";
 import { Bbb_meetingScalarFieldEnum } from "../../../../enums/Bbb_meetingScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstBbb_meetingArgs {
   })
   where?: Bbb_meetingWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [Bbb_meetingOrderByInput], {
     nullable: true
   })
-  orderBy?: Bbb_meetingOrderByWithRelationInput[] | undefined;
+  orderBy?: Bbb_meetingOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Bbb_meetingWhereUniqueInput, {
     nullable: true

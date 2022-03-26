@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateNestedOneWithoutProject_matchInput } from "../inputs/PupilCreateNestedOneWithoutProject_matchInput";
 import { StudentCreateNestedOneWithoutProject_matchInput } from "../inputs/StudentCreateNestedOneWithoutProject_matchInput";
 
-@TypeGraphQL.InputType("Project_matchCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_matchCreateInput {

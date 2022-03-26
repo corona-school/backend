@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateWithoutMatchInput } from "../inputs/PupilCreateWithoutMatchInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilCreateOrConnectWithoutMatchInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateOrConnectWithoutMatchInput {

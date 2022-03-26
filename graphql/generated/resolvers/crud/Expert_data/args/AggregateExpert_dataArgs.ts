@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Expert_dataOrderByWithRelationInput } from "../../../inputs/Expert_dataOrderByWithRelationInput";
+import { Expert_dataOrderByInput } from "../../../inputs/Expert_dataOrderByInput";
 import { Expert_dataWhereInput } from "../../../inputs/Expert_dataWhereInput";
 import { Expert_dataWhereUniqueInput } from "../../../inputs/Expert_dataWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateExpert_dataArgs {
   })
   where?: Expert_dataWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Expert_dataOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [Expert_dataOrderByInput], {
     nullable: true
   })
-  orderBy?: Expert_dataOrderByWithRelationInput[] | undefined;
+  orderBy?: Expert_dataOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Expert_dataWhereUniqueInput, {
     nullable: true

@@ -5,9 +5,8 @@ import { DecimalJSScalar } from "../scalars";
 import { Expert_data_expertise_tags_expertise_tag } from "../models/Expert_data_expertise_tags_expertise_tag";
 import { Student } from "../models/Student";
 import { expert_data_allowed_enum } from "../enums/expert_data_allowed_enum";
-import { Expert_dataCount } from "../resolvers/outputs/Expert_dataCount";
 
-@TypeGraphQL.ObjectType("Expert_data", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Expert_data {
@@ -54,9 +53,4 @@ export class Expert_data {
   student?: Student | null;
 
   expert_data_expertise_tags_expertise_tag?: Expert_data_expertise_tags_expertise_tag[];
-
-  @TypeGraphQL.Field(_type => Expert_dataCount, {
-    nullable: true
-  })
-  _count?: Expert_dataCount | null;
 }

@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutProject_matchInput } from "../inputs/PupilCr
 import { PupilCreateWithoutProject_matchInput } from "../inputs/PupilCreateWithoutProject_matchInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilCreateNestedOneWithoutProject_matchInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutProject_matchInput {

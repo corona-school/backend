@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Project_field_with_grade_restrictionOrderByWithAggregationInput } from "../../../inputs/Project_field_with_grade_restrictionOrderByWithAggregationInput";
+import { Project_field_with_grade_restrictionOrderByInput } from "../../../inputs/Project_field_with_grade_restrictionOrderByInput";
 import { Project_field_with_grade_restrictionScalarWhereWithAggregatesInput } from "../../../inputs/Project_field_with_grade_restrictionScalarWhereWithAggregatesInput";
 import { Project_field_with_grade_restrictionWhereInput } from "../../../inputs/Project_field_with_grade_restrictionWhereInput";
 import { Project_field_with_grade_restrictionScalarFieldEnum } from "../../../../enums/Project_field_with_grade_restrictionScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByProject_field_with_grade_restrictionArgs {
   })
   where?: Project_field_with_grade_restrictionWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionOrderByInput], {
     nullable: true
   })
-  orderBy?: Project_field_with_grade_restrictionOrderByWithAggregationInput[] | undefined;
+  orderBy?: Project_field_with_grade_restrictionOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionScalarFieldEnum], {
     nullable: false

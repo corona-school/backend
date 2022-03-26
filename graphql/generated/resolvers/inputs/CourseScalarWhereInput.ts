@@ -11,7 +11,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType("CourseScalarWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class CourseScalarWhereInput {

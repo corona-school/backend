@@ -6,7 +6,7 @@ import { PupilCreateNestedManyWithoutSchoolInput } from "../inputs/PupilCreateNe
 import { school_schooltype_enum } from "../../enums/school_schooltype_enum";
 import { school_state_enum } from "../../enums/school_state_enum";
 
-@TypeGraphQL.InputType("SchoolCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SchoolCreateInput {

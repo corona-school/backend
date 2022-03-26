@@ -9,7 +9,7 @@ import { PupilUpdateOneWithoutProject_matchInput } from "../inputs/PupilUpdateOn
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutProject_matchInput } from "../inputs/StudentUpdateOneWithoutProject_matchInput";
 
-@TypeGraphQL.InputType("Project_matchUpdateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_matchUpdateInput {

@@ -6,7 +6,7 @@ import { NestedEnumschool_state_enumNullableFilter } from "../inputs/NestedEnums
 import { NestedIntNullableFilter } from "../inputs/NestedIntNullableFilter";
 import { school_state_enum } from "../../enums/school_state_enum";
 
-@TypeGraphQL.InputType("NestedEnumschool_state_enumNullableWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class NestedEnumschool_state_enumNullableWithAggregatesFilter {

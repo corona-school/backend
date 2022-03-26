@@ -6,7 +6,7 @@ import { Jufo_verification_transmissionCreateOrConnectWithoutStudentInput } from
 import { Jufo_verification_transmissionCreateWithoutStudentInput } from "../inputs/Jufo_verification_transmissionCreateWithoutStudentInput";
 import { Jufo_verification_transmissionWhereUniqueInput } from "../inputs/Jufo_verification_transmissionWhereUniqueInput";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionCreateNestedOneWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionCreateNestedOneWithoutStudentInput {

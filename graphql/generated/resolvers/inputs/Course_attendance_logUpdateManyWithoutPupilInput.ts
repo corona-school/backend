@@ -11,7 +11,7 @@ import { Course_attendance_logUpdateWithWhereUniqueWithoutPupilInput } from "../
 import { Course_attendance_logUpsertWithWhereUniqueWithoutPupilInput } from "../inputs/Course_attendance_logUpsertWithWhereUniqueWithoutPupilInput";
 import { Course_attendance_logWhereUniqueInput } from "../inputs/Course_attendance_logWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_attendance_logUpdateManyWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_attendance_logUpdateManyWithoutPupilInput {
@@ -38,6 +38,11 @@ export class Course_attendance_logUpdateManyWithoutPupilInput {
   @TypeGraphQL.Field(_type => [Course_attendance_logWhereUniqueInput], {
     nullable: true
   })
+  connect?: Course_attendance_logWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Course_attendance_logWhereUniqueInput], {
+    nullable: true
+  })
   set?: Course_attendance_logWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_attendance_logWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class Course_attendance_logUpdateManyWithoutPupilInput {
     nullable: true
   })
   delete?: Course_attendance_logWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Course_attendance_logWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: Course_attendance_logWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_attendance_logUpdateWithWhereUniqueWithoutPupilInput], {
     nullable: true

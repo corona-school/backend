@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { MatchOrderByWithAggregationInput } from "../../../inputs/MatchOrderByWithAggregationInput";
+import { MatchOrderByInput } from "../../../inputs/MatchOrderByInput";
 import { MatchScalarWhereWithAggregatesInput } from "../../../inputs/MatchScalarWhereWithAggregatesInput";
 import { MatchWhereInput } from "../../../inputs/MatchWhereInput";
 import { MatchScalarFieldEnum } from "../../../../enums/MatchScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByMatchArgs {
   })
   where?: MatchWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [MatchOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [MatchOrderByInput], {
     nullable: true
   })
-  orderBy?: MatchOrderByWithAggregationInput[] | undefined;
+  orderBy?: MatchOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [MatchScalarFieldEnum], {
     nullable: false

@@ -7,7 +7,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutProject_coaching_screeningInput } from "../inputs/StudentUpdateOneWithoutProject_coaching_screeningInput";
 
-@TypeGraphQL.InputType("Project_coaching_screeningUpdateWithoutScreenerInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_coaching_screeningUpdateWithoutScreenerInput {

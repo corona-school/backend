@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Subcourse_waiting_list_pupilOrderByWithAggregationInput } from "../../../inputs/Subcourse_waiting_list_pupilOrderByWithAggregationInput";
+import { Subcourse_waiting_list_pupilOrderByInput } from "../../../inputs/Subcourse_waiting_list_pupilOrderByInput";
 import { Subcourse_waiting_list_pupilScalarWhereWithAggregatesInput } from "../../../inputs/Subcourse_waiting_list_pupilScalarWhereWithAggregatesInput";
 import { Subcourse_waiting_list_pupilWhereInput } from "../../../inputs/Subcourse_waiting_list_pupilWhereInput";
 import { Subcourse_waiting_list_pupilScalarFieldEnum } from "../../../../enums/Subcourse_waiting_list_pupilScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupBySubcourse_waiting_list_pupilArgs {
   })
   where?: Subcourse_waiting_list_pupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilOrderByInput], {
     nullable: true
   })
-  orderBy?: Subcourse_waiting_list_pupilOrderByWithAggregationInput[] | undefined;
+  orderBy?: Subcourse_waiting_list_pupilOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_waiting_list_pupilScalarFieldEnum], {
     nullable: false

@@ -15,7 +15,7 @@ import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStri
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdatelanguagesInput } from "../inputs/StudentUpdatelanguagesInput";
 
-@TypeGraphQL.InputType("StudentUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentUpdateManyMutationInput {
@@ -199,11 +199,6 @@ export class StudentUpdateManyMutationInput {
   })
   supportsInDaZ?: NullableBoolFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => StudentUpdatelanguagesInput, {
-    nullable: true
-  })
-  languages?: StudentUpdatelanguagesInput | undefined;
-
   @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -233,4 +228,9 @@ export class StudentUpdateManyMutationInput {
     nullable: true
   })
   registrationSource?: Enumstudent_registrationsource_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => StudentUpdatelanguagesInput, {
+    nullable: true
+  })
+  languages?: StudentUpdatelanguagesInput | undefined;
 }

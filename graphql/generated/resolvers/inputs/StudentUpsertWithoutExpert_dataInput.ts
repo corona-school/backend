@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { StudentCreateWithoutExpert_dataInput } from "../inputs/StudentCreateWithoutExpert_dataInput";
 import { StudentUpdateWithoutExpert_dataInput } from "../inputs/StudentUpdateWithoutExpert_dataInput";
 
-@TypeGraphQL.InputType("StudentUpsertWithoutExpert_dataInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentUpsertWithoutExpert_dataInput {

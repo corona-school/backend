@@ -3,9 +3,8 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Course_tags_course_tag } from "../models/Course_tags_course_tag";
-import { Course_tagCount } from "../resolvers/outputs/Course_tagCount";
 
-@TypeGraphQL.ObjectType("Course_tag", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Course_tag {
@@ -30,9 +29,4 @@ export class Course_tag {
   category!: string;
 
   course_tags_course_tag?: Course_tags_course_tag[];
-
-  @TypeGraphQL.Field(_type => Course_tagCount, {
-    nullable: true
-  })
-  _count?: Course_tagCount | null;
 }

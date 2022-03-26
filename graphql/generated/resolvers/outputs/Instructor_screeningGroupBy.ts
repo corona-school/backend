@@ -8,7 +8,7 @@ import { Instructor_screeningMaxAggregate } from "../outputs/Instructor_screenin
 import { Instructor_screeningMinAggregate } from "../outputs/Instructor_screeningMinAggregate";
 import { Instructor_screeningSumAggregate } from "../outputs/Instructor_screeningSumAggregate";
 
-@TypeGraphQL.ObjectType("Instructor_screeningGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Instructor_screeningGroupBy {

@@ -5,9 +5,8 @@ import { DecimalJSScalar } from "../scalars";
 import { Pupil } from "../models/Pupil";
 import { school_schooltype_enum } from "../enums/school_schooltype_enum";
 import { school_state_enum } from "../enums/school_state_enum";
-import { SchoolCount } from "../resolvers/outputs/SchoolCount";
 
-@TypeGraphQL.ObjectType("School", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class School {
@@ -57,9 +56,4 @@ export class School {
   activeCooperation!: boolean;
 
   pupil?: Pupil[];
-
-  @TypeGraphQL.Field(_type => SchoolCount, {
-    nullable: true
-  })
-  _count?: SchoolCount | null;
 }

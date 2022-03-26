@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { CourseCreateNestedOneWithoutCourse_tags_course_tagInput } from "../inputs/CourseCreateNestedOneWithoutCourse_tags_course_tagInput";
 
-@TypeGraphQL.InputType("Course_tags_course_tagCreateWithoutCourse_tagInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_tags_course_tagCreateWithoutCourse_tagInput {

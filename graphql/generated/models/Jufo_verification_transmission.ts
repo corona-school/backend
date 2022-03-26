@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../scalars";
 import { Student } from "../models/Student";
 
-@TypeGraphQL.ObjectType("Jufo_verification_transmission", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Jufo_verification_transmission {

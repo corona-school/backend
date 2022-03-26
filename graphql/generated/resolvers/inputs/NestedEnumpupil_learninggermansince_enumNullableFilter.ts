@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 
-@TypeGraphQL.InputType("NestedEnumpupil_learninggermansince_enumNullableFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class NestedEnumpupil_learninggermansince_enumNullableFilter {

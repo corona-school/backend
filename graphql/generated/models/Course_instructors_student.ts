@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { Course } from "../models/Course";
 import { Student } from "../models/Student";
 
-@TypeGraphQL.ObjectType("Course_instructors_student", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Course_instructors_student {

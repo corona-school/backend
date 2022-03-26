@@ -7,7 +7,7 @@ import { LectureCreateOrConnectWithoutStudentInput } from "../inputs/LectureCrea
 import { LectureCreateWithoutStudentInput } from "../inputs/LectureCreateWithoutStudentInput";
 import { LectureWhereUniqueInput } from "../inputs/LectureWhereUniqueInput";
 
-@TypeGraphQL.InputType("LectureCreateNestedManyWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureCreateNestedManyWithoutStudentInput {

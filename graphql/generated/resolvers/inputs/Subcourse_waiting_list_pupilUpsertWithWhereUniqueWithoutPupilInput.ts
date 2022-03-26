@@ -6,7 +6,7 @@ import { Subcourse_waiting_list_pupilCreateWithoutPupilInput } from "../inputs/S
 import { Subcourse_waiting_list_pupilUpdateWithoutPupilInput } from "../inputs/Subcourse_waiting_list_pupilUpdateWithoutPupilInput";
 import { Subcourse_waiting_list_pupilWhereUniqueInput } from "../inputs/Subcourse_waiting_list_pupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("Subcourse_waiting_list_pupilUpsertWithWhereUniqueWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilUpsertWithWhereUniqueWithoutPupilInput {

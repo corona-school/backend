@@ -8,7 +8,7 @@ import { Course_tagMaxAggregate } from "../outputs/Course_tagMaxAggregate";
 import { Course_tagMinAggregate } from "../outputs/Course_tagMinAggregate";
 import { Course_tagSumAggregate } from "../outputs/Course_tagSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateCourse_tag", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateCourse_tag {

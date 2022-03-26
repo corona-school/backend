@@ -8,7 +8,7 @@ import { ScreenerUpdateWithoutProject_coaching_screeningInput } from "../inputs/
 import { ScreenerUpsertWithoutProject_coaching_screeningInput } from "../inputs/ScreenerUpsertWithoutProject_coaching_screeningInput";
 import { ScreenerWhereUniqueInput } from "../inputs/ScreenerWhereUniqueInput";
 
-@TypeGraphQL.InputType("ScreenerUpdateOneWithoutProject_coaching_screeningInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class ScreenerUpdateOneWithoutProject_coaching_screeningInput {
@@ -27,6 +27,11 @@ export class ScreenerUpdateOneWithoutProject_coaching_screeningInput {
   })
   upsert?: ScreenerUpsertWithoutProject_coaching_screeningInput | undefined;
 
+  @TypeGraphQL.Field(_type => ScreenerWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: ScreenerWhereUniqueInput | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -36,11 +41,6 @@ export class ScreenerUpdateOneWithoutProject_coaching_screeningInput {
     nullable: true
   })
   delete?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => ScreenerWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: ScreenerWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreenerUpdateWithoutProject_coaching_screeningInput, {
     nullable: true

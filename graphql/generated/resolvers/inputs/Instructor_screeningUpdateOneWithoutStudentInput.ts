@@ -8,7 +8,7 @@ import { Instructor_screeningUpdateWithoutStudentInput } from "../inputs/Instruc
 import { Instructor_screeningUpsertWithoutStudentInput } from "../inputs/Instructor_screeningUpsertWithoutStudentInput";
 import { Instructor_screeningWhereUniqueInput } from "../inputs/Instructor_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType("Instructor_screeningUpdateOneWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Instructor_screeningUpdateOneWithoutStudentInput {
@@ -27,6 +27,11 @@ export class Instructor_screeningUpdateOneWithoutStudentInput {
   })
   upsert?: Instructor_screeningUpsertWithoutStudentInput | undefined;
 
+  @TypeGraphQL.Field(_type => Instructor_screeningWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: Instructor_screeningWhereUniqueInput | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -36,11 +41,6 @@ export class Instructor_screeningUpdateOneWithoutStudentInput {
     nullable: true
   })
   delete?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Instructor_screeningWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: Instructor_screeningWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => Instructor_screeningUpdateWithoutStudentInput, {
     nullable: true

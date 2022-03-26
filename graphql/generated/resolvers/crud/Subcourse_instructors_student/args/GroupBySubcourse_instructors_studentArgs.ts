@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Subcourse_instructors_studentOrderByWithAggregationInput } from "../../../inputs/Subcourse_instructors_studentOrderByWithAggregationInput";
+import { Subcourse_instructors_studentOrderByInput } from "../../../inputs/Subcourse_instructors_studentOrderByInput";
 import { Subcourse_instructors_studentScalarWhereWithAggregatesInput } from "../../../inputs/Subcourse_instructors_studentScalarWhereWithAggregatesInput";
 import { Subcourse_instructors_studentWhereInput } from "../../../inputs/Subcourse_instructors_studentWhereInput";
 import { Subcourse_instructors_studentScalarFieldEnum } from "../../../../enums/Subcourse_instructors_studentScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupBySubcourse_instructors_studentArgs {
   })
   where?: Subcourse_instructors_studentWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentOrderByInput], {
     nullable: true
   })
-  orderBy?: Subcourse_instructors_studentOrderByWithAggregationInput[] | undefined;
+  orderBy?: Subcourse_instructors_studentOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_instructors_studentScalarFieldEnum], {
     nullable: false

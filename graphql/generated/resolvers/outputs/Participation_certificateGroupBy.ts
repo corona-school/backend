@@ -8,7 +8,7 @@ import { Participation_certificateMaxAggregate } from "../outputs/Participation_
 import { Participation_certificateMinAggregate } from "../outputs/Participation_certificateMinAggregate";
 import { Participation_certificateSumAggregate } from "../outputs/Participation_certificateSumAggregate";
 
-@TypeGraphQL.ObjectType("Participation_certificateGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Participation_certificateGroupBy {

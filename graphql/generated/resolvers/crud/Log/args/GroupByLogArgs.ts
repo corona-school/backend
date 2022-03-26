@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { LogOrderByWithAggregationInput } from "../../../inputs/LogOrderByWithAggregationInput";
+import { LogOrderByInput } from "../../../inputs/LogOrderByInput";
 import { LogScalarWhereWithAggregatesInput } from "../../../inputs/LogScalarWhereWithAggregatesInput";
 import { LogWhereInput } from "../../../inputs/LogWhereInput";
 import { LogScalarFieldEnum } from "../../../../enums/LogScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByLogArgs {
   })
   where?: LogWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [LogOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [LogOrderByInput], {
     nullable: true
   })
-  orderBy?: LogOrderByWithAggregationInput[] | undefined;
+  orderBy?: LogOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [LogScalarFieldEnum], {
     nullable: false

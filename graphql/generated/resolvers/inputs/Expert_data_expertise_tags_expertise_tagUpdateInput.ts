@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Expert_dataUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expert_dataUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput";
 import { Expertise_tagUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expertise_tagUpdateOneRequiredWithoutExpert_data_expertise_tags_expertise_tagInput";
 
-@TypeGraphQL.InputType("Expert_data_expertise_tags_expertise_tagUpdateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagUpdateInput {

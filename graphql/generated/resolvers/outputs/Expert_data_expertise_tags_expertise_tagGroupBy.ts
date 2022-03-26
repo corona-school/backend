@@ -8,7 +8,7 @@ import { Expert_data_expertise_tags_expertise_tagMaxAggregate } from "../outputs
 import { Expert_data_expertise_tags_expertise_tagMinAggregate } from "../outputs/Expert_data_expertise_tags_expertise_tagMinAggregate";
 import { Expert_data_expertise_tags_expertise_tagSumAggregate } from "../outputs/Expert_data_expertise_tags_expertise_tagSumAggregate";
 
-@TypeGraphQL.ObjectType("Expert_data_expertise_tags_expertise_tagGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagGroupBy {

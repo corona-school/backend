@@ -6,7 +6,7 @@ import { Pupil } from "../models/Pupil";
 import { Student } from "../models/Student";
 import { match_source_enum } from "../enums/match_source_enum";
 
-@TypeGraphQL.ObjectType("Match", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Match {

@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { ScreenerCreateNestedOneWithoutScreeningsInput } from "../inputs/ScreenerCreateNestedOneWithoutScreeningsInput";
 
-@TypeGraphQL.InputType("ScreeningCreateWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class ScreeningCreateWithoutStudentInput {

@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Expert_dataCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput } from "../inputs/Expert_dataCreateNestedOneWithoutExpert_data_expertise_tags_expertise_tagInput";
 
-@TypeGraphQL.InputType("Expert_data_expertise_tags_expertise_tagCreateWithoutExpertise_tagInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagCreateWithoutExpertise_tagInput {

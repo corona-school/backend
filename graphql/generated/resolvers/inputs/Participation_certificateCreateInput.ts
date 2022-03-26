@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilCreateNestedOneWithoutParticipation_certificateInput } from "../inputs/PupilCreateNestedOneWithoutParticipation_certificateInput";
 import { StudentCreateNestedOneWithoutParticipation_certificateInput } from "../inputs/StudentCreateNestedOneWithoutParticipation_certificateInput";
 
-@TypeGraphQL.InputType("Participation_certificateCreateInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Participation_certificateCreateInput {

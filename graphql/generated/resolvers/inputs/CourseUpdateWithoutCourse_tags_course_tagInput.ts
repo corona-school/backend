@@ -14,7 +14,7 @@ import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOpe
 import { StudentUpdateOneWithoutCourseInput } from "../inputs/StudentUpdateOneWithoutCourseInput";
 import { SubcourseUpdateManyWithoutCourseInput } from "../inputs/SubcourseUpdateManyWithoutCourseInput";
 
-@TypeGraphQL.InputType("CourseUpdateWithoutCourse_tags_course_tagInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class CourseUpdateWithoutCourse_tags_course_tagInput {

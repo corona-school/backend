@@ -6,7 +6,7 @@ import { NestedBoolNullableFilter } from "../inputs/NestedBoolNullableFilter";
 import { NestedBoolNullableWithAggregatesFilter } from "../inputs/NestedBoolNullableWithAggregatesFilter";
 import { NestedIntNullableFilter } from "../inputs/NestedIntNullableFilter";
 
-@TypeGraphQL.InputType("BoolNullableWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class BoolNullableWithAggregatesFilter {

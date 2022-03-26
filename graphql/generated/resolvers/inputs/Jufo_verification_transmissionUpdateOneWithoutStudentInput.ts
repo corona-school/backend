@@ -8,7 +8,7 @@ import { Jufo_verification_transmissionUpdateWithoutStudentInput } from "../inpu
 import { Jufo_verification_transmissionUpsertWithoutStudentInput } from "../inputs/Jufo_verification_transmissionUpsertWithoutStudentInput";
 import { Jufo_verification_transmissionWhereUniqueInput } from "../inputs/Jufo_verification_transmissionWhereUniqueInput";
 
-@TypeGraphQL.InputType("Jufo_verification_transmissionUpdateOneWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Jufo_verification_transmissionUpdateOneWithoutStudentInput {
@@ -27,6 +27,11 @@ export class Jufo_verification_transmissionUpdateOneWithoutStudentInput {
   })
   upsert?: Jufo_verification_transmissionUpsertWithoutStudentInput | undefined;
 
+  @TypeGraphQL.Field(_type => Jufo_verification_transmissionWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: Jufo_verification_transmissionWhereUniqueInput | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -36,11 +41,6 @@ export class Jufo_verification_transmissionUpdateOneWithoutStudentInput {
     nullable: true
   })
   delete?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Jufo_verification_transmissionWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: Jufo_verification_transmissionWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => Jufo_verification_transmissionUpdateWithoutStudentInput, {
     nullable: true

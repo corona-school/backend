@@ -15,7 +15,7 @@ import { PupilUpdatelanguagesInput } from "../inputs/PupilUpdatelanguagesInput";
 import { PupilUpdateprojectFieldsInput } from "../inputs/PupilUpdateprojectFieldsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("PupilUpdateManyMutationInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpdateManyMutationInput {
@@ -134,11 +134,6 @@ export class PupilUpdateManyMutationInput {
   })
   isProjectCoachee?: BoolFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => PupilUpdateprojectFieldsInput, {
-    nullable: true
-  })
-  projectFields?: PupilUpdateprojectFieldsInput | undefined;
-
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -153,11 +148,6 @@ export class PupilUpdateManyMutationInput {
     nullable: true
   })
   projectMemberCount?: IntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PupilUpdatelanguagesInput, {
-    nullable: true
-  })
-  languages?: PupilUpdatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => NullableEnumpupil_learninggermansince_enumFieldUpdateOperationsInput, {
     nullable: true
@@ -188,4 +178,14 @@ export class PupilUpdateManyMutationInput {
     nullable: true
   })
   coduToken?: NullableStringFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PupilUpdateprojectFieldsInput, {
+    nullable: true
+  })
+  projectFields?: PupilUpdateprojectFieldsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PupilUpdatelanguagesInput, {
+    nullable: true
+  })
+  languages?: PupilUpdatelanguagesInput | undefined;
 }

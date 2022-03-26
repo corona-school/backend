@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Remission_requestOrderByWithAggregationInput } from "../../../inputs/Remission_requestOrderByWithAggregationInput";
+import { Remission_requestOrderByInput } from "../../../inputs/Remission_requestOrderByInput";
 import { Remission_requestScalarWhereWithAggregatesInput } from "../../../inputs/Remission_requestScalarWhereWithAggregatesInput";
 import { Remission_requestWhereInput } from "../../../inputs/Remission_requestWhereInput";
 import { Remission_requestScalarFieldEnum } from "../../../../enums/Remission_requestScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByRemission_requestArgs {
   })
   where?: Remission_requestWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Remission_requestOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Remission_requestOrderByInput], {
     nullable: true
   })
-  orderBy?: Remission_requestOrderByWithAggregationInput[] | undefined;
+  orderBy?: Remission_requestOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Remission_requestScalarFieldEnum], {
     nullable: false

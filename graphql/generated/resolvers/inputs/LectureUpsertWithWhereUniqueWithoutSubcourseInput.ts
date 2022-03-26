@@ -6,7 +6,7 @@ import { LectureCreateWithoutSubcourseInput } from "../inputs/LectureCreateWitho
 import { LectureUpdateWithoutSubcourseInput } from "../inputs/LectureUpdateWithoutSubcourseInput";
 import { LectureWhereUniqueInput } from "../inputs/LectureWhereUniqueInput";
 
-@TypeGraphQL.InputType("LectureUpsertWithWhereUniqueWithoutSubcourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class LectureUpsertWithWhereUniqueWithoutSubcourseInput {

@@ -9,7 +9,7 @@ import { Expert_dataMinAggregate } from "../outputs/Expert_dataMinAggregate";
 import { Expert_dataSumAggregate } from "../outputs/Expert_dataSumAggregate";
 import { expert_data_allowed_enum } from "../../enums/expert_data_allowed_enum";
 
-@TypeGraphQL.ObjectType("Expert_dataGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Expert_dataGroupBy {

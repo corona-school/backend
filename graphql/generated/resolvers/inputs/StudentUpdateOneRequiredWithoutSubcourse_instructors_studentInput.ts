@@ -8,7 +8,7 @@ import { StudentUpdateWithoutSubcourse_instructors_studentInput } from "../input
 import { StudentUpsertWithoutSubcourse_instructors_studentInput } from "../inputs/StudentUpsertWithoutSubcourse_instructors_studentInput";
 import { StudentWhereUniqueInput } from "../inputs/StudentWhereUniqueInput";
 
-@TypeGraphQL.InputType("StudentUpdateOneRequiredWithoutSubcourse_instructors_studentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class StudentUpdateOneRequiredWithoutSubcourse_instructors_studentInput {

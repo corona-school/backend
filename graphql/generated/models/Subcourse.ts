@@ -8,9 +8,8 @@ import { Lecture } from "../models/Lecture";
 import { Subcourse_instructors_student } from "../models/Subcourse_instructors_student";
 import { Subcourse_participants_pupil } from "../models/Subcourse_participants_pupil";
 import { Subcourse_waiting_list_pupil } from "../models/Subcourse_waiting_list_pupil";
-import { SubcourseCount } from "../resolvers/outputs/SubcourseCount";
 
-@TypeGraphQL.ObjectType("Subcourse", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Subcourse {
@@ -75,9 +74,4 @@ export class Subcourse {
   subcourse_participants_pupil?: Subcourse_participants_pupil[];
 
   subcourse_waiting_list_pupil?: Subcourse_waiting_list_pupil[];
-
-  @TypeGraphQL.Field(_type => SubcourseCount, {
-    nullable: true
-  })
-  _count?: SubcourseCount | null;
 }

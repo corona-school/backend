@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Expert_data_expertise_tags_expertise_tagWhereInput } from "../inputs/Expert_data_expertise_tags_expertise_tagWhereInput";
 
-@TypeGraphQL.InputType("Expert_data_expertise_tags_expertise_tagListRelationFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagListRelationFilter {

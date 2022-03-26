@@ -11,7 +11,7 @@ import { SubcourseUpdateWithWhereUniqueWithoutCourseInput } from "../inputs/Subc
 import { SubcourseUpsertWithWhereUniqueWithoutCourseInput } from "../inputs/SubcourseUpsertWithWhereUniqueWithoutCourseInput";
 import { SubcourseWhereUniqueInput } from "../inputs/SubcourseWhereUniqueInput";
 
-@TypeGraphQL.InputType("SubcourseUpdateManyWithoutCourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class SubcourseUpdateManyWithoutCourseInput {
@@ -38,6 +38,11 @@ export class SubcourseUpdateManyWithoutCourseInput {
   @TypeGraphQL.Field(_type => [SubcourseWhereUniqueInput], {
     nullable: true
   })
+  connect?: SubcourseWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [SubcourseWhereUniqueInput], {
+    nullable: true
+  })
   set?: SubcourseWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [SubcourseWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class SubcourseUpdateManyWithoutCourseInput {
     nullable: true
   })
   delete?: SubcourseWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [SubcourseWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: SubcourseWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [SubcourseUpdateWithWhereUniqueWithoutCourseInput], {
     nullable: true

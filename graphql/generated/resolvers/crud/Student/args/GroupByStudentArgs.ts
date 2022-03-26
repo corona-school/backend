@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { StudentOrderByWithAggregationInput } from "../../../inputs/StudentOrderByWithAggregationInput";
+import { StudentOrderByInput } from "../../../inputs/StudentOrderByInput";
 import { StudentScalarWhereWithAggregatesInput } from "../../../inputs/StudentScalarWhereWithAggregatesInput";
 import { StudentWhereInput } from "../../../inputs/StudentWhereInput";
 import { StudentScalarFieldEnum } from "../../../../enums/StudentScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByStudentArgs {
   })
   where?: StudentWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [StudentOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [StudentOrderByInput], {
     nullable: true
   })
-  orderBy?: StudentOrderByWithAggregationInput[] | undefined;
+  orderBy?: StudentOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [StudentScalarFieldEnum], {
     nullable: false

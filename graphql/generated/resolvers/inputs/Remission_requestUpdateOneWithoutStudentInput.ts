@@ -8,7 +8,7 @@ import { Remission_requestUpdateWithoutStudentInput } from "../inputs/Remission_
 import { Remission_requestUpsertWithoutStudentInput } from "../inputs/Remission_requestUpsertWithoutStudentInput";
 import { Remission_requestWhereUniqueInput } from "../inputs/Remission_requestWhereUniqueInput";
 
-@TypeGraphQL.InputType("Remission_requestUpdateOneWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Remission_requestUpdateOneWithoutStudentInput {
@@ -27,6 +27,11 @@ export class Remission_requestUpdateOneWithoutStudentInput {
   })
   upsert?: Remission_requestUpsertWithoutStudentInput | undefined;
 
+  @TypeGraphQL.Field(_type => Remission_requestWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: Remission_requestWhereUniqueInput | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -36,11 +41,6 @@ export class Remission_requestUpdateOneWithoutStudentInput {
     nullable: true
   })
   delete?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => Remission_requestWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: Remission_requestWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => Remission_requestUpdateWithoutStudentInput, {
     nullable: true

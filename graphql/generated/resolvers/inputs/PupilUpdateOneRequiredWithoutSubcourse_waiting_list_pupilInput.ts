@@ -8,7 +8,7 @@ import { PupilUpdateWithoutSubcourse_waiting_list_pupilInput } from "../inputs/P
 import { PupilUpsertWithoutSubcourse_waiting_list_pupilInput } from "../inputs/PupilUpsertWithoutSubcourse_waiting_list_pupilInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput {

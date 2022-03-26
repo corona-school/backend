@@ -11,7 +11,7 @@ import { MatchUpdateWithWhereUniqueWithoutPupilInput } from "../inputs/MatchUpda
 import { MatchUpsertWithWhereUniqueWithoutPupilInput } from "../inputs/MatchUpsertWithWhereUniqueWithoutPupilInput";
 import { MatchWhereUniqueInput } from "../inputs/MatchWhereUniqueInput";
 
-@TypeGraphQL.InputType("MatchUpdateManyWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class MatchUpdateManyWithoutPupilInput {
@@ -38,6 +38,11 @@ export class MatchUpdateManyWithoutPupilInput {
   @TypeGraphQL.Field(_type => [MatchWhereUniqueInput], {
     nullable: true
   })
+  connect?: MatchWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [MatchWhereUniqueInput], {
+    nullable: true
+  })
   set?: MatchWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [MatchWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class MatchUpdateManyWithoutPupilInput {
     nullable: true
   })
   delete?: MatchWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [MatchWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: MatchWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [MatchUpdateWithWhereUniqueWithoutPupilInput], {
     nullable: true

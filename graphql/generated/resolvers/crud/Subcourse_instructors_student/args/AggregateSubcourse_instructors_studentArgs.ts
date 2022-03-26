@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Subcourse_instructors_studentOrderByWithRelationInput } from "../../../inputs/Subcourse_instructors_studentOrderByWithRelationInput";
+import { Subcourse_instructors_studentOrderByInput } from "../../../inputs/Subcourse_instructors_studentOrderByInput";
 import { Subcourse_instructors_studentWhereInput } from "../../../inputs/Subcourse_instructors_studentWhereInput";
 import { Subcourse_instructors_studentWhereUniqueInput } from "../../../inputs/Subcourse_instructors_studentWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateSubcourse_instructors_studentArgs {
   })
   where?: Subcourse_instructors_studentWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentOrderByInput], {
     nullable: true
   })
-  orderBy?: Subcourse_instructors_studentOrderByWithRelationInput[] | undefined;
+  orderBy?: Subcourse_instructors_studentOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Subcourse_instructors_studentWhereUniqueInput, {
     nullable: true

@@ -8,7 +8,7 @@ import { MatchMaxAggregate } from "../outputs/MatchMaxAggregate";
 import { MatchMinAggregate } from "../outputs/MatchMinAggregate";
 import { MatchSumAggregate } from "../outputs/MatchSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateMatch", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateMatch {

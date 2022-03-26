@@ -7,7 +7,7 @@ import { NestedEnumpupil_state_enumWithAggregatesFilter } from "../inputs/Nested
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType("Enumpupil_state_enumWithAggregatesFilter", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Enumpupil_state_enumWithAggregatesFilter {

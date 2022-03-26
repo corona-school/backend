@@ -10,7 +10,7 @@ import { ScreenerRelationFilter } from "../inputs/ScreenerRelationFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType("Instructor_screeningWhereInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Instructor_screeningWhereInput {

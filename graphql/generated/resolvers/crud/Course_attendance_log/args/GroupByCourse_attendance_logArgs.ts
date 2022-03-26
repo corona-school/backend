@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Course_attendance_logOrderByWithAggregationInput } from "../../../inputs/Course_attendance_logOrderByWithAggregationInput";
+import { Course_attendance_logOrderByInput } from "../../../inputs/Course_attendance_logOrderByInput";
 import { Course_attendance_logScalarWhereWithAggregatesInput } from "../../../inputs/Course_attendance_logScalarWhereWithAggregatesInput";
 import { Course_attendance_logWhereInput } from "../../../inputs/Course_attendance_logWhereInput";
 import { Course_attendance_logScalarFieldEnum } from "../../../../enums/Course_attendance_logScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByCourse_attendance_logArgs {
   })
   where?: Course_attendance_logWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Course_attendance_logOrderByWithAggregationInput], {
+  @TypeGraphQL.Field(_type => [Course_attendance_logOrderByInput], {
     nullable: true
   })
-  orderBy?: Course_attendance_logOrderByWithAggregationInput[] | undefined;
+  orderBy?: Course_attendance_logOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_attendance_logScalarFieldEnum], {
     nullable: false

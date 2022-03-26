@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutCourse_attendance_logInput } from "../inputs
 import { PupilCreateWithoutCourse_attendance_logInput } from "../inputs/PupilCreateWithoutCourse_attendance_logInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilCreateNestedOneWithoutCourse_attendance_logInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutCourse_attendance_logInput {

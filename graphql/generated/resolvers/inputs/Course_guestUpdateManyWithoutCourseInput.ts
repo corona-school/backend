@@ -11,7 +11,7 @@ import { Course_guestUpdateWithWhereUniqueWithoutCourseInput } from "../inputs/C
 import { Course_guestUpsertWithWhereUniqueWithoutCourseInput } from "../inputs/Course_guestUpsertWithWhereUniqueWithoutCourseInput";
 import { Course_guestWhereUniqueInput } from "../inputs/Course_guestWhereUniqueInput";
 
-@TypeGraphQL.InputType("Course_guestUpdateManyWithoutCourseInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Course_guestUpdateManyWithoutCourseInput {
@@ -38,6 +38,11 @@ export class Course_guestUpdateManyWithoutCourseInput {
   @TypeGraphQL.Field(_type => [Course_guestWhereUniqueInput], {
     nullable: true
   })
+  connect?: Course_guestWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Course_guestWhereUniqueInput], {
+    nullable: true
+  })
   set?: Course_guestWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_guestWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class Course_guestUpdateManyWithoutCourseInput {
     nullable: true
   })
   delete?: Course_guestWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Course_guestWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: Course_guestWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_guestUpdateWithWhereUniqueWithoutCourseInput], {
     nullable: true

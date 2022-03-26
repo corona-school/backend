@@ -8,7 +8,7 @@ import { Project_field_with_grade_restrictionMaxAggregate } from "../outputs/Pro
 import { Project_field_with_grade_restrictionMinAggregate } from "../outputs/Project_field_with_grade_restrictionMinAggregate";
 import { Project_field_with_grade_restrictionSumAggregate } from "../outputs/Project_field_with_grade_restrictionSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateProject_field_with_grade_restriction", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateProject_field_with_grade_restriction {

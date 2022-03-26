@@ -8,7 +8,7 @@ import { Project_matchMaxAggregate } from "../outputs/Project_matchMaxAggregate"
 import { Project_matchMinAggregate } from "../outputs/Project_matchMinAggregate";
 import { Project_matchSumAggregate } from "../outputs/Project_matchSumAggregate";
 
-@TypeGraphQL.ObjectType("Project_matchGroupBy", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class Project_matchGroupBy {

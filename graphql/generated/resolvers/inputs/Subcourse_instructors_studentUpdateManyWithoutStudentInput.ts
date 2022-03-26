@@ -11,7 +11,7 @@ import { Subcourse_instructors_studentUpdateWithWhereUniqueWithoutStudentInput }
 import { Subcourse_instructors_studentUpsertWithWhereUniqueWithoutStudentInput } from "../inputs/Subcourse_instructors_studentUpsertWithWhereUniqueWithoutStudentInput";
 import { Subcourse_instructors_studentWhereUniqueInput } from "../inputs/Subcourse_instructors_studentWhereUniqueInput";
 
-@TypeGraphQL.InputType("Subcourse_instructors_studentUpdateManyWithoutStudentInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Subcourse_instructors_studentUpdateManyWithoutStudentInput {
@@ -38,6 +38,11 @@ export class Subcourse_instructors_studentUpdateManyWithoutStudentInput {
   @TypeGraphQL.Field(_type => [Subcourse_instructors_studentWhereUniqueInput], {
     nullable: true
   })
+  connect?: Subcourse_instructors_studentWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentWhereUniqueInput], {
+    nullable: true
+  })
   set?: Subcourse_instructors_studentWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_instructors_studentWhereUniqueInput], {
@@ -49,11 +54,6 @@ export class Subcourse_instructors_studentUpdateManyWithoutStudentInput {
     nullable: true
   })
   delete?: Subcourse_instructors_studentWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Subcourse_instructors_studentWhereUniqueInput], {
-    nullable: true
-  })
-  connect?: Subcourse_instructors_studentWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Subcourse_instructors_studentUpdateWithWhereUniqueWithoutStudentInput], {
     nullable: true

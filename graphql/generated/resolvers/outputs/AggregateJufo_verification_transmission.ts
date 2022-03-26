@@ -8,7 +8,7 @@ import { Jufo_verification_transmissionMaxAggregate } from "../outputs/Jufo_veri
 import { Jufo_verification_transmissionMinAggregate } from "../outputs/Jufo_verification_transmissionMinAggregate";
 import { Jufo_verification_transmissionSumAggregate } from "../outputs/Jufo_verification_transmissionSumAggregate";
 
-@TypeGraphQL.ObjectType("AggregateJufo_verification_transmission", {
+@TypeGraphQL.ObjectType({
   isAbstract: true
 })
 export class AggregateJufo_verification_transmission {

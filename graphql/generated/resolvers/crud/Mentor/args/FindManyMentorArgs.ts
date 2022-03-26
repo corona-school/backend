@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { MentorOrderByWithRelationInput } from "../../../inputs/MentorOrderByWithRelationInput";
+import { MentorOrderByInput } from "../../../inputs/MentorOrderByInput";
 import { MentorWhereInput } from "../../../inputs/MentorWhereInput";
 import { MentorWhereUniqueInput } from "../../../inputs/MentorWhereUniqueInput";
 import { MentorScalarFieldEnum } from "../../../../enums/MentorScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindManyMentorArgs {
   })
   where?: MentorWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [MentorOrderByWithRelationInput], {
+  @TypeGraphQL.Field(_type => [MentorOrderByInput], {
     nullable: true
   })
-  orderBy?: MentorOrderByWithRelationInput[] | undefined;
+  orderBy?: MentorOrderByInput[] | undefined;
 
   @TypeGraphQL.Field(_type => MentorWhereUniqueInput, {
     nullable: true

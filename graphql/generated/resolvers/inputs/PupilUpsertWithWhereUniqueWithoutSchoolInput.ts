@@ -6,7 +6,7 @@ import { PupilCreateWithoutSchoolInput } from "../inputs/PupilCreateWithoutSchoo
 import { PupilUpdateWithoutSchoolInput } from "../inputs/PupilUpdateWithoutSchoolInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilUpsertWithWhereUniqueWithoutSchoolInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpsertWithWhereUniqueWithoutSchoolInput {

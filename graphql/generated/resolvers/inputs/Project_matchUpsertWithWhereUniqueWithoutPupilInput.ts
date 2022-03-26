@@ -6,7 +6,7 @@ import { Project_matchCreateWithoutPupilInput } from "../inputs/Project_matchCre
 import { Project_matchUpdateWithoutPupilInput } from "../inputs/Project_matchUpdateWithoutPupilInput";
 import { Project_matchWhereUniqueInput } from "../inputs/Project_matchWhereUniqueInput";
 
-@TypeGraphQL.InputType("Project_matchUpsertWithWhereUniqueWithoutPupilInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class Project_matchUpsertWithWhereUniqueWithoutPupilInput {

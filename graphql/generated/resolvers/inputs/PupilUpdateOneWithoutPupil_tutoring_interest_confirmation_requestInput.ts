@@ -8,7 +8,7 @@ import { PupilUpdateWithoutPupil_tutoring_interest_confirmation_requestInput } f
 import { PupilUpsertWithoutPupil_tutoring_interest_confirmation_requestInput } from "../inputs/PupilUpsertWithoutPupil_tutoring_interest_confirmation_requestInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType("PupilUpdateOneWithoutPupil_tutoring_interest_confirmation_requestInput", {
+@TypeGraphQL.InputType({
   isAbstract: true
 })
 export class PupilUpdateOneWithoutPupil_tutoring_interest_confirmation_requestInput {
@@ -27,6 +27,11 @@ export class PupilUpdateOneWithoutPupil_tutoring_interest_confirmation_requestIn
   })
   upsert?: PupilUpsertWithoutPupil_tutoring_interest_confirmation_requestInput | undefined;
 
+  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: PupilWhereUniqueInput | undefined;
+
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -36,11 +41,6 @@ export class PupilUpdateOneWithoutPupil_tutoring_interest_confirmation_requestIn
     nullable: true
   })
   delete?: boolean | undefined;
-
-  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: PupilWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => PupilUpdateWithoutPupil_tutoring_interest_confirmation_requestInput, {
     nullable: true
