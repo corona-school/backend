@@ -7,7 +7,6 @@ import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperation
 import { NotificationUpdatecancelledOnActionInput } from "../inputs/NotificationUpdatecancelledOnActionInput";
 import { NotificationUpdatecategoryInput } from "../inputs/NotificationUpdatecategoryInput";
 import { NotificationUpdateonActionsInput } from "../inputs/NotificationUpdateonActionsInput";
-import { NullableEnumnotification_sender_enumFieldUpdateOperationsInput } from "../inputs/NullableEnumnotification_sender_enumFieldUpdateOperationsInput";
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
@@ -59,9 +58,4 @@ export class NotificationUpdateManyMutationInput {
     nullable: true
   })
   interval?: NullableIntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableEnumnotification_sender_enumFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  sender?: NullableEnumnotification_sender_enumFieldUpdateOperationsInput | undefined;
 }

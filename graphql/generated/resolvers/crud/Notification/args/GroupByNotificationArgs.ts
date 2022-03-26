@@ -20,7 +20,7 @@ export class GroupByNotificationArgs {
   @TypeGraphQL.Field(_type => [NotificationScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval" | "sender">;
+  by!: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval">;
 
   @TypeGraphQL.Field(_type => NotificationScalarWhereWithAggregatesInput, {
     nullable: true

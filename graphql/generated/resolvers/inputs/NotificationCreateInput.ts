@@ -5,7 +5,6 @@ import { DecimalJSScalar } from "../../scalars";
 import { NotificationCreatecancelledOnActionInput } from "../inputs/NotificationCreatecancelledOnActionInput";
 import { NotificationCreatecategoryInput } from "../inputs/NotificationCreatecategoryInput";
 import { NotificationCreateonActionsInput } from "../inputs/NotificationCreateonActionsInput";
-import { notification_sender_enum } from "../../enums/notification_sender_enum";
 
 @TypeGraphQL.InputType("NotificationCreateInput", {
   isAbstract: true
@@ -55,9 +54,4 @@ export class NotificationCreateInput {
     nullable: true
   })
   interval?: number | undefined;
-
-  @TypeGraphQL.Field(_type => notification_sender_enum, {
-    nullable: true
-  })
-  sender?: "SUPPORT" | "CERTIFICATE_OF_CONDUCT" | undefined;
 }

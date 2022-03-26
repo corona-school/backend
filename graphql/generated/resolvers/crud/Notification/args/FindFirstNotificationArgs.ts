@@ -35,5 +35,5 @@ export class FindFirstNotificationArgs {
   @TypeGraphQL.Field(_type => [NotificationScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval" | "sender"> | undefined;
+  distinct?: Array<"id" | "mailjetTemplateId" | "description" | "active" | "recipient" | "onActions" | "category" | "cancelledOnAction" | "delay" | "interval"> | undefined;
 }

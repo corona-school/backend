@@ -29,6 +29,7 @@ export { Remission_request } from "./Remission_request";
 export { School } from "./School";
 export { Screener } from "./Screener";
 export { Screening } from "./Screening";
+export { Secret } from "./Secret";
 export { Student } from "./Student";
 export { Subcourse } from "./Subcourse";
 export { Subcourse_instructors_student } from "./Subcourse_instructors_student";

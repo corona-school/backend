@@ -57,9 +57,4 @@ export class NotificationCountOrderByAggregateInput {
     nullable: true
   })
   interval?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
-  sender?: "asc" | "desc" | undefined;
 }

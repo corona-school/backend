@@ -60,10 +60,5 @@ export class NotificationCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  sender!: number;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
-  })
   _all!: number;
 }

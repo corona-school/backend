@@ -44,7 +44,8 @@ const crudResolversMap = {
   Subcourse_participants_pupil: crudResolvers.Subcourse_participants_pupilCrudResolver,
   Subcourse_waiting_list_pupil: crudResolvers.Subcourse_waiting_list_pupilCrudResolver,
   Certificate_of_conduct: crudResolvers.Certificate_of_conductCrudResolver,
-  Match_pool_run: crudResolvers.Match_pool_runCrudResolver
+  Match_pool_run: crudResolvers.Match_pool_runCrudResolver,
+  Secret: crudResolvers.SecretCrudResolver
 };
 const actionResolversMap = {
   Bbb_meeting: {
@@ -550,6 +551,20 @@ const actionResolversMap = {
     upsertMatch_pool_run: actionResolvers.UpsertMatch_pool_runResolver,
     aggregateMatch_pool_run: actionResolvers.AggregateMatch_pool_runResolver,
     groupByMatch_pool_run: actionResolvers.GroupByMatch_pool_runResolver
+  },
+  Secret: {
+    secret: actionResolvers.FindUniqueSecretResolver,
+    findFirstSecret: actionResolvers.FindFirstSecretResolver,
+    secrets: actionResolvers.FindManySecretResolver,
+    createSecret: actionResolvers.CreateSecretResolver,
+    createManySecret: actionResolvers.CreateManySecretResolver,
+    deleteSecret: actionResolvers.DeleteSecretResolver,
+    updateSecret: actionResolvers.UpdateSecretResolver,
+    deleteManySecret: actionResolvers.DeleteManySecretResolver,
+    updateManySecret: actionResolvers.UpdateManySecretResolver,
+    upsertSecret: actionResolvers.UpsertSecretResolver,
+    aggregateSecret: actionResolvers.AggregateSecretResolver,
+    groupBySecret: actionResolvers.GroupBySecretResolver
   }
 };
 const crudResolversInfo = {
@@ -588,7 +603,8 @@ const crudResolversInfo = {
   Subcourse_participants_pupil: ["subcourse_participants_pupil", "findFirstSubcourse_participants_pupil", "subcourse_participants_pupils", "createSubcourse_participants_pupil", "createManySubcourse_participants_pupil", "deleteSubcourse_participants_pupil", "updateSubcourse_participants_pupil", "deleteManySubcourse_participants_pupil", "updateManySubcourse_participants_pupil", "upsertSubcourse_participants_pupil", "aggregateSubcourse_participants_pupil", "groupBySubcourse_participants_pupil"],
   Subcourse_waiting_list_pupil: ["subcourse_waiting_list_pupil", "findFirstSubcourse_waiting_list_pupil", "subcourse_waiting_list_pupils", "createSubcourse_waiting_list_pupil", "createManySubcourse_waiting_list_pupil", "deleteSubcourse_waiting_list_pupil", "updateSubcourse_waiting_list_pupil", "deleteManySubcourse_waiting_list_pupil", "updateManySubcourse_waiting_list_pupil", "upsertSubcourse_waiting_list_pupil", "aggregateSubcourse_waiting_list_pupil", "groupBySubcourse_waiting_list_pupil"],
   Certificate_of_conduct: ["certificate_of_conduct", "findFirstCertificate_of_conduct", "certificate_of_conducts", "createCertificate_of_conduct", "createManyCertificate_of_conduct", "deleteCertificate_of_conduct", "updateCertificate_of_conduct", "deleteManyCertificate_of_conduct", "updateManyCertificate_of_conduct", "upsertCertificate_of_conduct", "aggregateCertificate_of_conduct", "groupByCertificate_of_conduct"],
-  Match_pool_run: ["match_pool_run", "findFirstMatch_pool_run", "match_pool_runs", "createMatch_pool_run", "createManyMatch_pool_run", "deleteMatch_pool_run", "updateMatch_pool_run", "deleteManyMatch_pool_run", "updateManyMatch_pool_run", "upsertMatch_pool_run", "aggregateMatch_pool_run", "groupByMatch_pool_run"]
+  Match_pool_run: ["match_pool_run", "findFirstMatch_pool_run", "match_pool_runs", "createMatch_pool_run", "createManyMatch_pool_run", "deleteMatch_pool_run", "updateMatch_pool_run", "deleteManyMatch_pool_run", "updateManyMatch_pool_run", "upsertMatch_pool_run", "aggregateMatch_pool_run", "groupByMatch_pool_run"],
+  Secret: ["secret", "findFirstSecret", "secrets", "createSecret", "createManySecret", "deleteSecret", "updateSecret", "deleteManySecret", "updateManySecret", "upsertSecret", "aggregateSecret", "groupBySecret"]
 };
 const argsInfo = {
   FindUniqueBbb_meetingArgs: ["where"],
@@ -1022,7 +1038,19 @@ const argsInfo = {
   UpdateManyMatch_pool_runArgs: ["data", "where"],
   UpsertMatch_pool_runArgs: ["where", "create", "update"],
   AggregateMatch_pool_runArgs: ["where", "orderBy", "cursor", "take", "skip"],
-  GroupByMatch_pool_runArgs: ["where", "orderBy", "by", "having", "take", "skip"]
+  GroupByMatch_pool_runArgs: ["where", "orderBy", "by", "having", "take", "skip"],
+  FindUniqueSecretArgs: ["where"],
+  FindFirstSecretArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindManySecretArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  CreateSecretArgs: ["data"],
+  CreateManySecretArgs: ["data", "skipDuplicates"],
+  DeleteSecretArgs: ["where"],
+  UpdateSecretArgs: ["data", "where"],
+  DeleteManySecretArgs: ["where"],
+  UpdateManySecretArgs: ["data", "where"],
+  UpsertSecretArgs: ["where", "create", "update"],
+  AggregateSecretArgs: ["where", "orderBy", "cursor", "take", "skip"],
+  GroupBySecretArgs: ["where", "orderBy", "by", "having", "take", "skip"]
 };
 
 type ResolverModelNames = keyof typeof crudResolversMap;
@@ -1272,7 +1300,7 @@ const modelsInfo = {
   Log: ["id", "logtype", "createdAt", "user", "data"],
   Match: ["id", "uuid", "dissolved", "dissolveReason", "proposedTime", "createdAt", "updatedAt", "feedbackToPupilMail", "feedbackToStudentMail", "followUpToPupilMail", "followUpToStudentMail", "source", "studentId", "pupilId"],
   Mentor: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl"],
-  Notification: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
+  Notification: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
   Participation_certificate: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId"],
   Project_coaching_screening: ["id", "success", "comment", "knowsCoronaSchoolFrom", "createdAt", "updatedAt", "screenerId", "studentId"],
   Project_field_with_grade_restriction: ["id", "createdAt", "updatedAt", "projectField", "min", "max", "studentId"],
@@ -1289,7 +1317,8 @@ const modelsInfo = {
   Subcourse_participants_pupil: ["subcourseId", "pupilId"],
   Subcourse_waiting_list_pupil: ["subcourseId", "pupilId"],
   Certificate_of_conduct: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId"],
-  Match_pool_run: ["id", "runAt", "matchingPool", "matchesCreated", "stats"]
+  Match_pool_run: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  Secret: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"]
 };
 
 type ModelNames = keyof typeof models;
@@ -1365,7 +1394,7 @@ const outputsInfo = {
   AggregateMentor: ["_count", "_avg", "_sum", "_min", "_max"],
   MentorGroupBy: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateNotification: ["_count", "_avg", "_sum", "_min", "_max"],
-  NotificationGroupBy: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender", "_count", "_avg", "_sum", "_min", "_max"],
+  NotificationGroupBy: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateParticipation_certificate: ["_count", "_avg", "_sum", "_min", "_max"],
   Participation_certificateGroupBy: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateProject_coaching_screening: ["_count", "_avg", "_sum", "_min", "_max"],
@@ -1400,6 +1429,8 @@ const outputsInfo = {
   Certificate_of_conductGroupBy: ["id", "createdAt", "updatedAt", "dateOfInspection", "dateOfIssue", "criminalRecords", "studentId", "_count", "_avg", "_sum", "_min", "_max"],
   AggregateMatch_pool_run: ["_count", "_avg", "_sum", "_min", "_max"],
   Match_pool_runGroupBy: ["id", "runAt", "matchingPool", "matchesCreated", "stats", "_count", "_avg", "_sum", "_min", "_max"],
+  AggregateSecret: ["_count", "_avg", "_sum", "_min", "_max"],
+  SecretGroupBy: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed", "_count", "_avg", "_sum", "_min", "_max"],
   AffectedRowsOutput: ["count"],
   Bbb_meetingCountAggregate: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl", "_all"],
   Bbb_meetingAvgAggregate: ["id"],
@@ -1496,11 +1527,11 @@ const outputsInfo = {
   MentorSumAggregate: ["id"],
   MentorMinAggregate: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "subjects", "teachingExperience", "message", "description", "imageUrl"],
   MentorMaxAggregate: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "subjects", "teachingExperience", "message", "description", "imageUrl"],
-  NotificationCountAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender", "_all"],
+  NotificationCountAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "_all"],
   NotificationAvgAggregate: ["id", "mailjetTemplateId", "recipient", "delay", "interval"],
   NotificationSumAggregate: ["id", "mailjetTemplateId", "recipient", "delay", "interval"],
-  NotificationMinAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval", "sender"],
-  NotificationMaxAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval", "sender"],
+  NotificationMinAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval"],
+  NotificationMaxAggregate: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval"],
   Participation_certificateCountAggregate: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId", "_all"],
   Participation_certificateAvgAggregate: ["id", "hoursPerWeek", "hoursTotal", "studentId", "pupilId"],
   Participation_certificateSumAggregate: ["id", "hoursPerWeek", "hoursTotal", "studentId", "pupilId"],
@@ -1590,7 +1621,12 @@ const outputsInfo = {
   Match_pool_runAvgAggregate: ["id", "matchesCreated"],
   Match_pool_runSumAggregate: ["id", "matchesCreated"],
   Match_pool_runMinAggregate: ["id", "runAt", "matchingPool", "matchesCreated"],
-  Match_pool_runMaxAggregate: ["id", "runAt", "matchingPool", "matchesCreated"]
+  Match_pool_runMaxAggregate: ["id", "runAt", "matchingPool", "matchesCreated"],
+  SecretCountAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed", "_all"],
+  SecretAvgAggregate: ["id", "type"],
+  SecretSumAggregate: ["id", "type"],
+  SecretMinAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretMaxAggregate: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"]
 };
 
 type OutputTypesNames = keyof typeof outputTypes;
@@ -1721,11 +1757,11 @@ const inputsInfo = {
   MentorWhereUniqueInput: ["id", "email", "verification", "authToken", "wix_id"],
   MentorOrderByWithAggregationInput: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl", "_count", "_avg", "_max", "_min", "_sum"],
   MentorScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl"],
-  NotificationWhereInput: ["AND", "OR", "NOT", "id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
-  NotificationOrderByWithRelationInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
+  NotificationWhereInput: ["AND", "OR", "NOT", "id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
+  NotificationOrderByWithRelationInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
   NotificationWhereUniqueInput: ["id"],
-  NotificationOrderByWithAggregationInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender", "_count", "_avg", "_max", "_min", "_sum"],
-  NotificationScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
+  NotificationOrderByWithAggregationInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "_count", "_avg", "_max", "_min", "_sum"],
+  NotificationScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
   Participation_certificateWhereInput: ["AND", "OR", "NOT", "id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId", "pupil", "student"],
   Participation_certificateOrderByWithRelationInput: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId", "pupil", "student"],
   Participation_certificateWhereUniqueInput: ["id", "uuid"],
@@ -1811,6 +1847,11 @@ const inputsInfo = {
   Match_pool_runWhereUniqueInput: ["id"],
   Match_pool_runOrderByWithAggregationInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats", "_count", "_avg", "_max", "_min", "_sum"],
   Match_pool_runScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "runAt", "matchingPool", "matchesCreated", "stats"],
+  SecretWhereInput: ["AND", "OR", "NOT", "id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretOrderByWithRelationInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretWhereUniqueInput: ["id"],
+  SecretOrderByWithAggregationInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed", "_count", "_avg", "_max", "_min", "_sum"],
+  SecretScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
   Bbb_meetingCreateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingUpdateInput: ["createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
   Bbb_meetingCreateManyInput: ["id", "createdAt", "updatedAt", "meetingID", "meetingName", "attendeePW", "moderatorPW", "alternativeUrl"],
@@ -1883,10 +1924,10 @@ const inputsInfo = {
   MentorUpdateInput: ["createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl"],
   MentorCreateManyInput: ["id", "createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl"],
   MentorUpdateManyMutationInput: ["createdAt", "updatedAt", "firstname", "lastname", "active", "email", "verification", "verifiedAt", "authToken", "authTokenUsed", "authTokenSent", "wix_id", "wix_creation_date", "division", "expertise", "subjects", "teachingExperience", "message", "description", "imageUrl"],
-  NotificationCreateInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
-  NotificationUpdateInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
-  NotificationCreateManyInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
-  NotificationUpdateManyMutationInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
+  NotificationCreateInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
+  NotificationUpdateInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
+  NotificationCreateManyInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
+  NotificationUpdateManyMutationInput: ["mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
   Participation_certificateCreateInput: ["uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "pupil", "student"],
   Participation_certificateUpdateInput: ["uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "pupil", "student"],
   Participation_certificateCreateManyInput: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId"],
@@ -1955,6 +1996,10 @@ const inputsInfo = {
   Match_pool_runUpdateInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
   Match_pool_runCreateManyInput: ["id", "runAt", "matchingPool", "matchesCreated", "stats"],
   Match_pool_runUpdateManyMutationInput: ["runAt", "matchingPool", "matchesCreated", "stats"],
+  SecretCreateInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretUpdateInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretCreateManyInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretUpdateManyMutationInput: ["createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
   IntFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   DateTimeFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   StringFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "mode", "not"],
@@ -2101,13 +2146,11 @@ const inputsInfo = {
   MentorSumOrderByAggregateInput: ["id"],
   BoolNullableWithAggregatesFilter: ["equals", "not", "_count", "_min", "_max"],
   StringNullableListFilter: ["equals", "has", "hasEvery", "hasSome", "isEmpty"],
-  Enumnotification_sender_enumNullableFilter: ["equals", "in", "notIn", "not"],
-  NotificationCountOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval", "sender"],
+  NotificationCountOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "onActions", "category", "cancelledOnAction", "delay", "interval"],
   NotificationAvgOrderByAggregateInput: ["id", "mailjetTemplateId", "recipient", "delay", "interval"],
-  NotificationMaxOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval", "sender"],
-  NotificationMinOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval", "sender"],
+  NotificationMaxOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval"],
+  NotificationMinOrderByAggregateInput: ["id", "mailjetTemplateId", "description", "active", "recipient", "delay", "interval"],
   NotificationSumOrderByAggregateInput: ["id", "mailjetTemplateId", "recipient", "delay", "interval"],
-  Enumnotification_sender_enumNullableWithAggregatesFilter: ["equals", "in", "notIn", "not", "_count", "_min", "_max"],
   DecimalFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   BytesNullableFilter: ["equals", "in", "notIn", "not"],
   Participation_certificateCountOrderByAggregateInput: ["id", "uuid", "subjects", "categories", "certificateDate", "startDate", "endDate", "hoursPerWeek", "hoursTotal", "medium", "ongoingLessons", "state", "signaturePupil", "signatureParent", "signatureLocation", "signatureDate", "studentId", "pupilId"],
@@ -2261,6 +2304,11 @@ const inputsInfo = {
   Match_pool_runMaxOrderByAggregateInput: ["id", "runAt", "matchingPool", "matchesCreated"],
   Match_pool_runMinOrderByAggregateInput: ["id", "runAt", "matchingPool", "matchesCreated"],
   Match_pool_runSumOrderByAggregateInput: ["id", "matchesCreated"],
+  SecretCountOrderByAggregateInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretAvgOrderByAggregateInput: ["id", "type"],
+  SecretMaxOrderByAggregateInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretMinOrderByAggregateInput: ["id", "createdAt", "userId", "type", "secret", "expiresAt", "lastUsed"],
+  SecretSumOrderByAggregateInput: ["id", "type"],
   DateTimeFieldUpdateOperationsInput: ["set"],
   StringFieldUpdateOperationsInput: ["set"],
   NullableStringFieldUpdateOperationsInput: ["set"],
@@ -2344,7 +2392,6 @@ const inputsInfo = {
   NotificationUpdateonActionsInput: ["set", "push"],
   NotificationUpdatecategoryInput: ["set", "push"],
   NotificationUpdatecancelledOnActionInput: ["set", "push"],
-  NullableEnumnotification_sender_enumFieldUpdateOperationsInput: ["set"],
   PupilCreateNestedOneWithoutParticipation_certificateInput: ["create", "connectOrCreate", "connect"],
   StudentCreateNestedOneWithoutParticipation_certificateInput: ["create", "connectOrCreate", "connect"],
   DecimalFieldUpdateOperationsInput: ["set", "increment", "decrement", "multiply", "divide"],
@@ -2500,8 +2547,6 @@ const inputsInfo = {
   NestedEnummatch_source_enumWithAggregatesFilter: ["equals", "in", "notIn", "not", "_count", "_min", "_max"],
   NestedBoolNullableFilter: ["equals", "not"],
   NestedBoolNullableWithAggregatesFilter: ["equals", "not", "_count", "_min", "_max"],
-  NestedEnumnotification_sender_enumNullableFilter: ["equals", "in", "notIn", "not"],
-  NestedEnumnotification_sender_enumNullableWithAggregatesFilter: ["equals", "in", "notIn", "not", "_count", "_min", "_max"],
   NestedDecimalFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   NestedBytesNullableFilter: ["equals", "in", "notIn", "not"],
   NestedDecimalWithAggregatesFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not", "_count", "_avg", "_sum", "_min", "_max"],

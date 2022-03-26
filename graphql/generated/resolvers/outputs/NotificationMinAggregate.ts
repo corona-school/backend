@@ -2,7 +2,6 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { notification_sender_enum } from "../../enums/notification_sender_enum";
 
 @TypeGraphQL.ObjectType("NotificationMinAggregate", {
   isAbstract: true
@@ -42,9 +41,4 @@ export class NotificationMinAggregate {
     nullable: true
   })
   interval!: number | null;
-
-  @TypeGraphQL.Field(_type => notification_sender_enum, {
-    nullable: true
-  })
-  sender!: "SUPPORT" | "CERTIFICATE_OF_CONDUCT" | null;
 }

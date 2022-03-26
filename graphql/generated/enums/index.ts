@@ -32,6 +32,7 @@ export { Remission_requestScalarFieldEnum } from "./Remission_requestScalarField
 export { SchoolScalarFieldEnum } from "./SchoolScalarFieldEnum";
 export { ScreenerScalarFieldEnum } from "./ScreenerScalarFieldEnum";
 export { ScreeningScalarFieldEnum } from "./ScreeningScalarFieldEnum";
+export { SecretScalarFieldEnum } from "./SecretScalarFieldEnum";
 export { SortOrder } from "./SortOrder";
 export { StudentScalarFieldEnum } from "./StudentScalarFieldEnum";
 export { SubcourseScalarFieldEnum } from "./SubcourseScalarFieldEnum";
@@ -45,7 +46,6 @@ export { log_logtype_enum } from "./log_logtype_enum";
 export { match_source_enum } from "./match_source_enum";
 export { mentor_division_enum } from "./mentor_division_enum";
 export { mentor_expertise_enum } from "./mentor_expertise_enum";
-export { notification_sender_enum } from "./notification_sender_enum";
 export { project_field_with_grade_restriction_projectfield_enum } from "./project_field_with_grade_restriction_projectfield_enum";
 export { pupil_languages_enum } from "./pupil_languages_enum";
 export { pupil_learninggermansince_enum } from "./pupil_learninggermansince_enum";

@@ -3,7 +3,6 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { BoolFilter } from "../inputs/BoolFilter";
-import { Enumnotification_sender_enumNullableFilter } from "../inputs/Enumnotification_sender_enumNullableFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
@@ -77,9 +76,4 @@ export class NotificationWhereInput {
     nullable: true
   })
   interval?: IntNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Enumnotification_sender_enumNullableFilter, {
-    nullable: true
-  })
-  sender?: Enumnotification_sender_enumNullableFilter | undefined;
 }
