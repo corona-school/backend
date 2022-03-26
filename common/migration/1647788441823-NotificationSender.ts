@@ -5,7 +5,7 @@ export class NotificationSender1647788441823 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "notification_sender_enum" AS ENUM('SUPPORT', 'CERTIFICATE_OF_CONDUCT')`);
-        await queryRunner.query(`ALTER TABLE "notification" ADD "sender" "notification_sender_enum"`);  
+        await queryRunner.query(`ALTER TABLE "notification" ADD "sender" "notification_sender_enum"`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
