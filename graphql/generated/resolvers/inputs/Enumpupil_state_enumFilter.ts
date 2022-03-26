@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedEnumpupil_state_enumFilter } from "../inputs/NestedEnumpupil_state_enumFilter";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumpupil_state_enumFilter", {
   isAbstract: true
 })
 export class Enumpupil_state_enumFilter {

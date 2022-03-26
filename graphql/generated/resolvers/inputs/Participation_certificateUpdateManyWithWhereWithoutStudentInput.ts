@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Participation_certificateScalarWhereInput } from "../inputs/Participation_certificateScalarWhereInput";
 import { Participation_certificateUpdateManyMutationInput } from "../inputs/Participation_certificateUpdateManyMutationInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateUpdateManyWithWhereWithoutStudentInput", {
   isAbstract: true
 })
 export class Participation_certificateUpdateManyWithWhereWithoutStudentInput {

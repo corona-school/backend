@@ -8,7 +8,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionWhereInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionWhereInput {

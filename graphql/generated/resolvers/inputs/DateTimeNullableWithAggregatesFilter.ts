@@ -6,7 +6,7 @@ import { NestedDateTimeNullableFilter } from "../inputs/NestedDateTimeNullableFi
 import { NestedDateTimeNullableWithAggregatesFilter } from "../inputs/NestedDateTimeNullableWithAggregatesFilter";
 import { NestedIntNullableFilter } from "../inputs/NestedIntNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("DateTimeNullableWithAggregatesFilter", {
   isAbstract: true
 })
 export class DateTimeNullableWithAggregatesFilter {

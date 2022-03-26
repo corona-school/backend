@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { SchoolOrderByInput } from "../../../inputs/SchoolOrderByInput";
+import { SchoolOrderByWithAggregationInput } from "../../../inputs/SchoolOrderByWithAggregationInput";
 import { SchoolScalarWhereWithAggregatesInput } from "../../../inputs/SchoolScalarWhereWithAggregatesInput";
 import { SchoolWhereInput } from "../../../inputs/SchoolWhereInput";
 import { SchoolScalarFieldEnum } from "../../../../enums/SchoolScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupBySchoolArgs {
   })
   where?: SchoolWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [SchoolOrderByInput], {
+  @TypeGraphQL.Field(_type => [SchoolOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: SchoolOrderByInput[] | undefined;
+  orderBy?: SchoolOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [SchoolScalarFieldEnum], {
     nullable: false

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { SubcourseOrderByInput } from "../../../inputs/SubcourseOrderByInput";
+import { SubcourseOrderByWithAggregationInput } from "../../../inputs/SubcourseOrderByWithAggregationInput";
 import { SubcourseScalarWhereWithAggregatesInput } from "../../../inputs/SubcourseScalarWhereWithAggregatesInput";
 import { SubcourseWhereInput } from "../../../inputs/SubcourseWhereInput";
 import { SubcourseScalarFieldEnum } from "../../../../enums/SubcourseScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupBySubcourseArgs {
   })
   where?: SubcourseWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [SubcourseOrderByInput], {
+  @TypeGraphQL.Field(_type => [SubcourseOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: SubcourseOrderByInput[] | undefined;
+  orderBy?: SubcourseOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [SubcourseScalarFieldEnum], {
     nullable: false

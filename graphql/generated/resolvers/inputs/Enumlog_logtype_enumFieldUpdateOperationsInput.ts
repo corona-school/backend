@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { log_logtype_enum } from "../../enums/log_logtype_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumlog_logtype_enumFieldUpdateOperationsInput", {
   isAbstract: true
 })
 export class Enumlog_logtype_enumFieldUpdateOperationsInput {

@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { matchUQ_MATCHCompoundUniqueInput } from "../inputs/matchUQ_MATCHCompoundUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchWhereUniqueInput", {
   isAbstract: true
 })
 export class MatchWhereUniqueInput {

@@ -8,7 +8,7 @@ import { Expert_dataMaxAggregate } from "../outputs/Expert_dataMaxAggregate";
 import { Expert_dataMinAggregate } from "../outputs/Expert_dataMinAggregate";
 import { Expert_dataSumAggregate } from "../outputs/Expert_dataSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateExpert_data", {
   isAbstract: true
 })
 export class AggregateExpert_data {

@@ -11,7 +11,7 @@ import { Course_tags_course_tagUpdateWithWhereUniqueWithoutCourseInput } from ".
 import { Course_tags_course_tagUpsertWithWhereUniqueWithoutCourseInput } from "../inputs/Course_tags_course_tagUpsertWithWhereUniqueWithoutCourseInput";
 import { Course_tags_course_tagWhereUniqueInput } from "../inputs/Course_tags_course_tagWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_tags_course_tagUpdateManyWithoutCourseInput", {
   isAbstract: true
 })
 export class Course_tags_course_tagUpdateManyWithoutCourseInput {
@@ -38,11 +38,6 @@ export class Course_tags_course_tagUpdateManyWithoutCourseInput {
   @TypeGraphQL.Field(_type => [Course_tags_course_tagWhereUniqueInput], {
     nullable: true
   })
-  connect?: Course_tags_course_tagWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Course_tags_course_tagWhereUniqueInput], {
-    nullable: true
-  })
   set?: Course_tags_course_tagWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_tags_course_tagWhereUniqueInput], {
@@ -54,6 +49,11 @@ export class Course_tags_course_tagUpdateManyWithoutCourseInput {
     nullable: true
   })
   delete?: Course_tags_course_tagWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Course_tags_course_tagWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: Course_tags_course_tagWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_tags_course_tagUpdateWithWhereUniqueWithoutCourseInput], {
     nullable: true

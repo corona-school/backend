@@ -8,7 +8,7 @@ import { Subcourse_participants_pupilMaxAggregate } from "../outputs/Subcourse_p
 import { Subcourse_participants_pupilMinAggregate } from "../outputs/Subcourse_participants_pupilMinAggregate";
 import { Subcourse_participants_pupilSumAggregate } from "../outputs/Subcourse_participants_pupilSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateSubcourse_participants_pupil", {
   isAbstract: true
 })
 export class AggregateSubcourse_participants_pupil {

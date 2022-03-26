@@ -12,6 +12,8 @@ export { Expert_dataScalarFieldEnum } from "./Expert_dataScalarFieldEnum";
 export { Expert_data_expertise_tags_expertise_tagScalarFieldEnum } from "./Expert_data_expertise_tags_expertise_tagScalarFieldEnum";
 export { Expertise_tagScalarFieldEnum } from "./Expertise_tagScalarFieldEnum";
 export { Instructor_screeningScalarFieldEnum } from "./Instructor_screeningScalarFieldEnum";
+export { JsonNullValueFilter } from "./JsonNullValueFilter";
+export { JsonNullValueInput } from "./JsonNullValueInput";
 export { Jufo_verification_transmissionScalarFieldEnum } from "./Jufo_verification_transmissionScalarFieldEnum";
 export { LectureScalarFieldEnum } from "./LectureScalarFieldEnum";
 export { LogScalarFieldEnum } from "./LogScalarFieldEnum";

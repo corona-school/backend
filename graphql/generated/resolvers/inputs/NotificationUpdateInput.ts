@@ -10,7 +10,7 @@ import { NotificationUpdateonActionsInput } from "../inputs/NotificationUpdateon
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NotificationUpdateInput", {
   isAbstract: true
 })
 export class NotificationUpdateInput {
@@ -34,16 +34,6 @@ export class NotificationUpdateInput {
   })
   recipient?: IntFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  delay?: NullableIntFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
-    nullable: true
-  })
-  interval?: NullableIntFieldUpdateOperationsInput | undefined;
-
   @TypeGraphQL.Field(_type => NotificationUpdateonActionsInput, {
     nullable: true
   })
@@ -58,4 +48,14 @@ export class NotificationUpdateInput {
     nullable: true
   })
   cancelledOnAction?: NotificationUpdatecancelledOnActionInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  delay?: NullableIntFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableIntFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  interval?: NullableIntFieldUpdateOperationsInput | undefined;
 }

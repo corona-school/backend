@@ -7,7 +7,7 @@ import { MatchCreateOrConnectWithoutPupilInput } from "../inputs/MatchCreateOrCo
 import { MatchCreateWithoutPupilInput } from "../inputs/MatchCreateWithoutPupilInput";
 import { MatchWhereUniqueInput } from "../inputs/MatchWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchCreateNestedManyWithoutPupilInput", {
   isAbstract: true
 })
 export class MatchCreateNestedManyWithoutPupilInput {

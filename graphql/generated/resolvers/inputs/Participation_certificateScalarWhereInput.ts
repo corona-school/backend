@@ -12,7 +12,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateScalarWhereInput", {
   isAbstract: true
 })
 export class Participation_certificateScalarWhereInput {

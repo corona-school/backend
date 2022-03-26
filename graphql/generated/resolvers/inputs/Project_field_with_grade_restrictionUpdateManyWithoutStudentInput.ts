@@ -11,7 +11,7 @@ import { Project_field_with_grade_restrictionUpdateWithWhereUniqueWithoutStudent
 import { Project_field_with_grade_restrictionUpsertWithWhereUniqueWithoutStudentInput } from "../inputs/Project_field_with_grade_restrictionUpsertWithWhereUniqueWithoutStudentInput";
 import { Project_field_with_grade_restrictionWhereUniqueInput } from "../inputs/Project_field_with_grade_restrictionWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionUpdateManyWithoutStudentInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionUpdateManyWithoutStudentInput {
@@ -38,11 +38,6 @@ export class Project_field_with_grade_restrictionUpdateManyWithoutStudentInput {
   @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionWhereUniqueInput], {
     nullable: true
   })
-  connect?: Project_field_with_grade_restrictionWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionWhereUniqueInput], {
-    nullable: true
-  })
   set?: Project_field_with_grade_restrictionWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionWhereUniqueInput], {
@@ -54,6 +49,11 @@ export class Project_field_with_grade_restrictionUpdateManyWithoutStudentInput {
     nullable: true
   })
   delete?: Project_field_with_grade_restrictionWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: Project_field_with_grade_restrictionWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Project_field_with_grade_restrictionUpdateWithWhereUniqueWithoutStudentInput], {
     nullable: true

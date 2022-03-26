@@ -8,7 +8,7 @@ import { Expert_dataUpdateWithoutStudentInput } from "../inputs/Expert_dataUpdat
 import { Expert_dataUpsertWithoutStudentInput } from "../inputs/Expert_dataUpsertWithoutStudentInput";
 import { Expert_dataWhereUniqueInput } from "../inputs/Expert_dataWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataUpdateOneWithoutStudentInput", {
   isAbstract: true
 })
 export class Expert_dataUpdateOneWithoutStudentInput {
@@ -27,11 +27,6 @@ export class Expert_dataUpdateOneWithoutStudentInput {
   })
   upsert?: Expert_dataUpsertWithoutStudentInput | undefined;
 
-  @TypeGraphQL.Field(_type => Expert_dataWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: Expert_dataWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class Expert_dataUpdateOneWithoutStudentInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => Expert_dataWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: Expert_dataWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => Expert_dataUpdateWithoutStudentInput, {
     nullable: true

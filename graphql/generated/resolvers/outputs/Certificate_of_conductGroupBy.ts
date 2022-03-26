@@ -8,7 +8,7 @@ import { Certificate_of_conductMaxAggregate } from "../outputs/Certificate_of_co
 import { Certificate_of_conductMinAggregate } from "../outputs/Certificate_of_conductMinAggregate";
 import { Certificate_of_conductSumAggregate } from "../outputs/Certificate_of_conductSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Certificate_of_conductGroupBy", {
   isAbstract: true
 })
 export class Certificate_of_conductGroupBy {

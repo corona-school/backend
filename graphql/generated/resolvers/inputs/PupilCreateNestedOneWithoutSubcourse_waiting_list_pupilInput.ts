@@ -6,7 +6,7 @@ import { PupilCreateOrConnectWithoutSubcourse_waiting_list_pupilInput } from "..
 import { PupilCreateWithoutSubcourse_waiting_list_pupilInput } from "../inputs/PupilCreateWithoutSubcourse_waiting_list_pupilInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateNestedOneWithoutSubcourse_waiting_list_pupilInput", {
   isAbstract: true
 })
 export class PupilCreateNestedOneWithoutSubcourse_waiting_list_pupilInput {

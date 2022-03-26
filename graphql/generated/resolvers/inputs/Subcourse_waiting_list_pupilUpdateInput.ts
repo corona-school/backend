@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PupilUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput } from "../inputs/PupilUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput";
 import { SubcourseUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput } from "../inputs/SubcourseUpdateOneRequiredWithoutSubcourse_waiting_list_pupilInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Subcourse_waiting_list_pupilUpdateInput", {
   isAbstract: true
 })
 export class Subcourse_waiting_list_pupilUpdateInput {

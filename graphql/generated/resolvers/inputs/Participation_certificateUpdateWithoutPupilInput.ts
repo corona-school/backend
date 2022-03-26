@@ -11,7 +11,7 @@ import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStri
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutParticipation_certificateInput } from "../inputs/StudentUpdateOneWithoutParticipation_certificateInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Participation_certificateUpdateWithoutPupilInput", {
   isAbstract: true
 })
 export class Participation_certificateUpdateWithoutPupilInput {
