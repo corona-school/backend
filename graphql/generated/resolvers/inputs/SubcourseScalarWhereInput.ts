@@ -7,7 +7,7 @@ import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("SubcourseScalarWhereInput", {
   isAbstract: true
 })
 export class SubcourseScalarWhereInput {

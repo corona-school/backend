@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { pupil_projectfields_enum } from "../../enums/pupil_projectfields_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateprojectFieldsInput", {
   isAbstract: true
 })
 export class PupilCreateprojectFieldsInput {

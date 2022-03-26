@@ -6,7 +6,7 @@ import { Course_participation_certificateCreateWithoutPupilInput } from "../inpu
 import { Course_participation_certificateUpdateWithoutPupilInput } from "../inputs/Course_participation_certificateUpdateWithoutPupilInput";
 import { Course_participation_certificateWhereUniqueInput } from "../inputs/Course_participation_certificateWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateUpsertWithWhereUniqueWithoutPupilInput", {
   isAbstract: true
 })
 export class Course_participation_certificateUpsertWithWhereUniqueWithoutPupilInput {

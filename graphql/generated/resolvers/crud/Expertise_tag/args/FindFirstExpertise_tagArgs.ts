@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Expertise_tagOrderByInput } from "../../../inputs/Expertise_tagOrderByInput";
+import { Expertise_tagOrderByWithRelationInput } from "../../../inputs/Expertise_tagOrderByWithRelationInput";
 import { Expertise_tagWhereInput } from "../../../inputs/Expertise_tagWhereInput";
 import { Expertise_tagWhereUniqueInput } from "../../../inputs/Expertise_tagWhereUniqueInput";
 import { Expertise_tagScalarFieldEnum } from "../../../../enums/Expertise_tagScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstExpertise_tagArgs {
   })
   where?: Expertise_tagWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Expertise_tagOrderByInput], {
+  @TypeGraphQL.Field(_type => [Expertise_tagOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Expertise_tagOrderByInput[] | undefined;
+  orderBy?: Expertise_tagOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Expertise_tagWhereUniqueInput, {
     nullable: true

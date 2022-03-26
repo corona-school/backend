@@ -7,7 +7,7 @@ import { NestedEnumcourse_category_enumWithAggregatesFilter } from "../inputs/Ne
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { course_category_enum } from "../../enums/course_category_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumcourse_category_enumWithAggregatesFilter", {
   isAbstract: true
 })
 export class Enumcourse_category_enumWithAggregatesFilter {

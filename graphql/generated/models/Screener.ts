@@ -5,8 +5,9 @@ import { DecimalJSScalar } from "../scalars";
 import { Instructor_screening } from "../models/Instructor_screening";
 import { Project_coaching_screening } from "../models/Project_coaching_screening";
 import { Screening } from "../models/Screening";
+import { ScreenerCount } from "../resolvers/outputs/ScreenerCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Screener", {
   isAbstract: true
 })
 export class Screener {
@@ -90,4 +91,9 @@ export class Screener {
   project_coaching_screening?: Project_coaching_screening[];
 
   screenings?: Screening[];
+
+  @TypeGraphQL.Field(_type => ScreenerCount, {
+    nullable: true
+  })
+  _count?: ScreenerCount | null;
 }

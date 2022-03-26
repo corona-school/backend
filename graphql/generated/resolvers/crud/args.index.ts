@@ -29,7 +29,6 @@ export * from "./Remission_request/args";
 export * from "./School/args";
 export * from "./Screener/args";
 export * from "./Screening/args";
-export * from "./Secret/args";
 export * from "./Student/args";
 export * from "./Subcourse/args";
 export * from "./Subcourse_instructors_student/args";

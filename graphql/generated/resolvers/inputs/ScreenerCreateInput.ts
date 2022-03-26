@@ -6,7 +6,7 @@ import { Instructor_screeningCreateNestedManyWithoutScreenerInput } from "../inp
 import { Project_coaching_screeningCreateNestedManyWithoutScreenerInput } from "../inputs/Project_coaching_screeningCreateNestedManyWithoutScreenerInput";
 import { ScreeningCreateNestedManyWithoutScreenerInput } from "../inputs/ScreeningCreateNestedManyWithoutScreenerInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreenerCreateInput", {
   isAbstract: true
 })
 export class ScreenerCreateInput {

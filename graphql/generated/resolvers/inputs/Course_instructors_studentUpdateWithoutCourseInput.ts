@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { StudentUpdateOneRequiredWithoutCourse_instructors_studentInput } from "../inputs/StudentUpdateOneRequiredWithoutCourse_instructors_studentInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_instructors_studentUpdateWithoutCourseInput", {
   isAbstract: true
 })
 export class Course_instructors_studentUpdateWithoutCourseInput {

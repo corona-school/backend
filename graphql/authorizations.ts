@@ -234,7 +234,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
-            match: nobody
+            match: nobody,
+            _count: nobody
         })
     },
 
@@ -301,7 +302,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             jufo_verification_transmission: nobody,
             expert_data: nobody,
             instructor_screening: nobody,
-            remission_request: nobody
+            remission_request: nobody,
+            _count: nobody
 
         })
 
@@ -312,7 +314,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_participants_pupil: nobody,
-            subcourse_waiting_list_pupil: nobody
+            subcourse_waiting_list_pupil: nobody,
+            _count: nobody
         })
     },
     Course: {
@@ -325,7 +328,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_tags_course_tag: nobody,
             subcourse: nobody,
             student: nobody,
-            imageKey: nobody
+            imageKey: nobody,
+            _count: nobody
         })
     },
     Lecture: {
@@ -334,7 +338,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
-            instructorId: nobody
+            instructorId: nobody,
+            _count: nobody
         })
     },
     Participation_certificate: {

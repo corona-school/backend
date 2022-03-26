@@ -3,10 +3,10 @@ generator client {
   previewFeatures = ["interactiveTransactions"]
 }
 
-// generator typegraphql {
-//  provider = "typegraphql-prisma"
-//  output   = "../graphql/generated"
-// }
+ generator typegraphql {
+  provider = "typegraphql-prisma"
+  output   = "../graphql/generated"
+ }
 
 datasource db {
   provider = "postgresql"
@@ -14,7 +14,7 @@ datasource db {
 }
 
 model bbb_meeting {
-  id             Int      @id @default(autoincrement())
+  id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)
   updatedAt      DateTime @default(now()) @db.Timestamp(6)
   meetingID      String   @db.VarChar
@@ -25,7 +25,7 @@ model bbb_meeting {
 }
 
 model concrete_notification {
-  id             Int      @id @default(autoincrement())
+  id             Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
   userId         String   @db.VarChar
   notificationID Int
   contextID      String?  @db.VarChar
@@ -36,7 +36,7 @@ model concrete_notification {
 }
 
 model course {
-  id                         Int                          @id @default(autoincrement())
+  id                         Int                          @id(map: "PK_bf95180dd756fd204fb01ce4916") @default(autoincrement())
   createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
   name                       String                       @db.VarChar
@@ -49,7 +49,7 @@ model course {
   publicRanking              Int                          @default(0)
   allowContact               Boolean                      @default(false)
   correspondentId            Int?
-  student                    student?                     @relation(fields: [correspondentId], references: [id])
+  student                    student?                     @relation(fields: [correspondentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0682a6fe3bace3ed13377c1b1ca")
   course_guest               course_guest[]
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
@@ -57,57 +57,57 @@ model course {
 }
 
 model course_attendance_log {
-  id           Int      @id @default(autoincrement())
+  id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
   createdAt    DateTime @default(now()) @db.Timestamp(6)
   updatedAt    DateTime @default(now()) @db.Timestamp(6)
   attendedTime Int?
   ip           String?  @db.VarChar
   pupilId      Int?
   lectureId    Int?
-  lecture      lecture? @relation(fields: [lectureId], references: [id])
-  pupil        pupil?   @relation(fields: [pupilId], references: [id])
+  lecture      lecture? @relation(fields: [lectureId], references: [id], onDelete: Cascade, map: "FK_927959c3480126ecdceeae26609")
+  pupil        pupil?   @relation(fields: [pupilId], references: [id], onDelete: Cascade, map: "FK_acc59dc4321a888376f7fad5a3d")
 }
 
 model course_guest {
-  id        Int      @id @default(autoincrement())
+  id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
-  token     String   @unique @db.VarChar
+  token     String   @unique(map: "IDX_8fb7b15823c3ed0fea3c508ac4") @db.VarChar
   firstname String   @db.VarChar
   lastname  String   @db.VarChar
   email     String   @db.VarChar
   courseId  Int?
   inviterId Int?
-  course    course?  @relation(fields: [courseId], references: [id])
-  student   student? @relation(fields: [inviterId], references: [id])
+  course    course?  @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4392726b6462358a809db822af4")
+  student   student? @relation(fields: [inviterId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0843258a46daa7d91dc2cef917")
 }
 
 model course_instructors_student {
   courseId  Int
   studentId Int
-  course    course  @relation(fields: [courseId], references: [id])
-  student   student @relation(fields: [studentId], references: [id])
+  course    course  @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_54bce9a9a93ae130beaa70bb2fa")
+  student   student @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_66b47860afa3098729925338c18")
 
-  @@id([courseId, studentId])
-  @@index([courseId], name: "IDX_54bce9a9a93ae130beaa70bb2f")
-  @@index([studentId], name: "IDX_66b47860afa3098729925338c1")
+  @@id([courseId, studentId], map: "PK_aa54b28c5de0010f486dd0d72df")
+  @@index([courseId], map: "IDX_54bce9a9a93ae130beaa70bb2f")
+  @@index([studentId], map: "IDX_66b47860afa3098729925338c1")
 }
 
 model course_participation_certificate {
-  id          Int        @id @default(autoincrement())
+  id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
   createdAt   DateTime   @default(now()) @db.Timestamp(6)
   updatedAt   DateTime   @default(now()) @db.Timestamp(6)
   issuerId    Int?
   pupilId     Int?
   subcourseId Int?
-  student     student?   @relation(fields: [issuerId], references: [id])
-  pupil       pupil?     @relation(fields: [pupilId], references: [id])
-  subcourse   subcourse? @relation(fields: [subcourseId], references: [id])
+  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
+  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_585aa209315fc328d48af2765b4")
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_bc6a26ac82132b6e9f1d6de3e4c")
 }
 
 model course_tag {
-  id                     Int                      @id @default(autoincrement())
-  identifier             String                   @unique @db.VarChar
+  id                     Int                      @id(map: "PK_6c6a0ad4b5f67db91353e5b2ae1") @default(autoincrement())
+  identifier             String                   @unique(map: "IDX_275561ded9309f727f8e795bf1") @db.VarChar
   name                   String                   @db.VarChar
   category               String                   @db.VarChar
   course_tags_course_tag course_tags_course_tag[]
@@ -116,80 +116,80 @@ model course_tag {
 model course_tags_course_tag {
   courseId    Int
   courseTagId Int
-  course      course     @relation(fields: [courseId], references: [id])
-  course_tag  course_tag @relation(fields: [courseTagId], references: [id])
+  course      course     @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_d6261ad9de1fc5f06946095bf8c")
+  course_tag  course_tag @relation(fields: [courseTagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_af4499c3ae1153ac06782b2e5b9")
 
-  @@id([courseId, courseTagId])
-  @@index([courseTagId], name: "IDX_af4499c3ae1153ac06782b2e5b")
-  @@index([courseId], name: "IDX_d6261ad9de1fc5f06946095bf8")
+  @@id([courseId, courseTagId], map: "PK_3996cf424477234b88a0980fd39")
+  @@index([courseTagId], map: "IDX_af4499c3ae1153ac06782b2e5b")
+  @@index([courseId], map: "IDX_d6261ad9de1fc5f06946095bf8")
 }
 
 model expert_data {
-  id                                       Int                                        @id @default(autoincrement())
+  id                                       Int                                        @id(map: "PK_096e6e0f8fcc7e142b555fde91e") @default(autoincrement())
   createdAt                                DateTime                                   @default(now()) @db.Timestamp(6)
   updatedAt                                DateTime                                   @default(now()) @db.Timestamp(6)
   contactEmail                             String                                     @db.VarChar
   description                              String?                                    @db.VarChar
   active                                   Boolean                                    @default(false)
   allowed                                  expert_data_allowed_enum                   @default(pending)
-  studentId                                Int?                                       @unique
-  student                                  student?                                   @relation(fields: [studentId], references: [id])
+  studentId                                Int?                                       @unique(map: "REL_0bf0d1a1e138fd47f60e263524")
+  student                                  student?                                   @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0bf0d1a1e138fd47f60e2635247")
   expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
 }
 
 model expert_data_expertise_tags_expertise_tag {
   expertDataId   Int
   expertiseTagId Int
-  expert_data    expert_data   @relation(fields: [expertDataId], references: [id])
-  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id])
+  expert_data    expert_data   @relation(fields: [expertDataId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_73044a211048e72c2026425c81c")
+  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_8a81e80d1d580b868ed36ca1234")
 
-  @@id([expertDataId, expertiseTagId])
-  @@index([expertDataId], name: "IDX_73044a211048e72c2026425c81")
-  @@index([expertiseTagId], name: "IDX_8a81e80d1d580b868ed36ca123")
+  @@id([expertDataId, expertiseTagId], map: "PK_bc62a3cbf8ed9f07fc7e43163d4")
+  @@index([expertDataId], map: "IDX_73044a211048e72c2026425c81")
+  @@index([expertiseTagId], map: "IDX_8a81e80d1d580b868ed36ca123")
 }
 
 model expertise_tag {
-  id                                       Int                                        @id @default(autoincrement())
-  name                                     String                                     @unique @db.VarChar
+  id                                       Int                                        @id(map: "PK_4251b103cf2216af06b5c8625f8") @default(autoincrement())
+  name                                     String                                     @unique(map: "IDX_29beceeebc3a1eae3d78939713") @db.VarChar
   expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
 }
 
 model instructor_screening {
-  id                    Int       @id @default(autoincrement())
+  id                    Int       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
   comment               String?   @db.VarChar
   knowsCoronaSchoolFrom String?   @db.VarChar
   createdAt             DateTime  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique
-  screener              screener? @relation(fields: [screenerId], references: [id])
-  student               student?  @relation(fields: [studentId], references: [id])
+  studentId             Int?      @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
 }
 
 model jufo_verification_transmission {
-  id        Int      @id @default(autoincrement())
+  id        Int      @id(map: "PK_3e81acd237ad0b7e97003c835d8") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
   uuid      String   @db.VarChar
-  studentId Int?     @unique
-  student   student? @relation(fields: [studentId], references: [id])
+  studentId Int?     @unique(map: "REL_1ceddec34e7b90cdbb85ff9738")
+  student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
 model lecture {
-  id                    Int                     @id @default(autoincrement())
+  id                    Int                     @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
   createdAt             DateTime                @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                @default(now()) @db.Timestamp(6)
   start                 DateTime                @db.Timestamp(6)
   duration              Int
   instructorId          Int?
   subcourseId           Int?
-  student               student?                @relation(fields: [instructorId], references: [id])
-  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id])
+  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
+  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
   course_attendance_log course_attendance_log[]
 }
 
 model log {
-  id        Int              @id @default(autoincrement())
+  id        Int              @id(map: "PK_350604cbdf991d5930d9e618fbd") @default(autoincrement())
   logtype   log_logtype_enum @default(misc)
   createdAt DateTime         @default(now()) @db.Timestamp(6)
   user      String           @db.VarChar
@@ -197,8 +197,8 @@ model log {
 }
 
 model match {
-  id                    Int               @id @default(autoincrement())
-  uuid                  String            @unique @db.VarChar
+  id                    Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  uuid                  String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved             Boolean           @default(false)
   dissolveReason        Int?
   proposedTime          DateTime?         @db.Timestamp(6)
@@ -211,26 +211,26 @@ model match {
   source                match_source_enum @default(matchedinternal)
   studentId             Int?
   pupilId               Int?
-  pupil                 pupil?            @relation(fields: [pupilId], references: [id])
-  student               student?          @relation(fields: [studentId], references: [id])
+  pupil                 pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
+  student               student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
 
-  @@unique([studentId, pupilId], name: "UQ_MATCH")
+  @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
 
 model mentor {
-  id                 Int                     @id @default(autoincrement())
+  id                 Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
   createdAt          DateTime                @default(now()) @db.Timestamp(6)
   updatedAt          DateTime                @default(now()) @db.Timestamp(6)
   firstname          String?                 @db.VarChar
   lastname           String?                 @db.VarChar
   active             Boolean                 @default(true)
-  email              String                  @unique @db.VarChar
-  verification       String?                 @unique @db.VarChar
+  email              String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
+  verification       String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
   verifiedAt         DateTime?               @db.Timestamp(6)
-  authToken          String?                 @unique @db.VarChar
+  authToken          String?                 @unique(map: "IDX_d6c74ee02bc266daf510d3ef2a") @db.VarChar
   authTokenUsed      Boolean                 @default(false)
   authTokenSent      DateTime?               @db.Timestamp(6)
-  wix_id             String                  @unique @db.VarChar
+  wix_id             String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
   wix_creation_date  DateTime                @db.Timestamp(6)
   division           mentor_division_enum[]
   expertise          mentor_expertise_enum[]
@@ -242,9 +242,9 @@ model mentor {
 }
 
 model notification {
-  id                Int      @id @default(autoincrement())
+  id                Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
   mailjetTemplateId Int?
-  description       String   @db.VarChar
+  description       String                    @db.VarChar
   active            Boolean
   recipient         Int
   onActions         String[]
@@ -252,11 +252,12 @@ model notification {
   cancelledOnAction String[]
   delay             Int?
   interval          Int?
+  sender            notification_sender_enum?
 }
 
 model participation_certificate {
-  id                Int       @id @default(autoincrement())
-  uuid              String    @unique @db.VarChar
+  id                Int       @id(map: "PK_431b3e203adb26c29ecef120034") @default(autoincrement())
+  uuid              String    @unique(map: "IDX_5c7ebcd2f3fc7ed6022a478980") @db.VarChar
   subjects          String    @db.VarChar
   categories        String    @db.VarChar
   certificateDate   DateTime  @default(now()) @db.Timestamp(6)
@@ -273,65 +274,65 @@ model participation_certificate {
   signatureDate     DateTime? @db.Timestamp(6)
   studentId         Int?
   pupilId           Int?
-  pupil             pupil?    @relation(fields: [pupilId], references: [id])
-  student           student?  @relation(fields: [studentId], references: [id])
+  pupil             pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_01437dc10f00eace91b0f93a805")
+  student           student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_b8bb6da6b807a7b382218947647")
 }
 
 model project_coaching_screening {
-  id                    Int       @id @default(autoincrement())
+  id                    Int       @id(map: "PK_4a1d3d3d6f0fa2b36c8347e357c") @default(autoincrement())
   success               Boolean
   comment               String?   @db.VarChar
   knowsCoronaSchoolFrom String?   @db.VarChar
   createdAt             DateTime  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique
-  screener              screener? @relation(fields: [screenerId], references: [id])
-  student               student?  @relation(fields: [studentId], references: [id])
+  studentId             Int?      @unique(map: "REL_565d757e2fd9a97fc3f30f5129")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_91fa06e6e9aa04b5da93d034cae")
+  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_565d757e2fd9a97fc3f30f51297")
 }
 
 model project_field_with_grade_restriction {
-  id           Int                                                    @id @default(autoincrement())
+  id           Int                                                    @id(map: "PK_9f450f4d0e5e20c5a0a6fee6dea") @default(autoincrement())
   createdAt    DateTime                                               @default(now()) @db.Timestamp(6)
   updatedAt    DateTime                                               @default(now()) @db.Timestamp(6)
   projectField project_field_with_grade_restriction_projectfield_enum
   min          Int?
   max          Int?
   studentId    Int
-  student      student                                                @relation(fields: [studentId], references: [id])
+  student      student                                                @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8cdc7fe37faa309976893b8ad07")
 
-  @@unique([projectField, studentId], name: "UQ_PROJECT_FIELDS")
+  @@unique([projectField, studentId], name: "UQ_PROJECT_FIELDS", map: "UQ_PROJECT_FIELDS")
 }
 
 model project_match {
-  id             Int      @id @default(autoincrement())
-  uuid           String   @unique @db.VarChar
+  id             Int      @id(map: "PK_14902d121cc871092943b3857e5") @default(autoincrement())
+  uuid           String   @unique(map: "IDX_58dbaf83a377f347d9fab47fc5") @db.VarChar
   createdAt      DateTime @default(now()) @db.Timestamp(6)
   updatedAt      DateTime @default(now()) @db.Timestamp(6)
   dissolved      Boolean  @default(false)
   dissolveReason Int?
   studentId      Int?
   pupilId        Int?
-  pupil          pupil?   @relation(fields: [pupilId], references: [id])
-  student        student? @relation(fields: [studentId], references: [id])
+  pupil          pupil?   @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2f269fd77a19a301eb7c9aaa6b6")
+  student        student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ec8c8527004e4b21fa92dfde9f4")
 
-  @@unique([studentId, pupilId], name: "UQ_PJ_MATCH")
+  @@unique([studentId, pupilId], name: "UQ_PJ_MATCH", map: "UQ_PJ_MATCH")
 }
 
 model pupil {
-  id                                           Int                                           @id @default(autoincrement())
+  id                                           Int                                           @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
   createdAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
   updatedAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
   firstname                                    String?                                       @db.VarChar
   lastname                                     String?                                       @db.VarChar
   active                                       Boolean                                       @default(true)
-  email                                        String                                        @unique @db.VarChar
-  verification                                 String?                                       @unique @db.VarChar
+  email                                        String                                        @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
+  verification                                 String?                                       @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
   verifiedAt                                   DateTime?                                     @db.Timestamp(6)
-  authToken                                    String?                                       @unique @db.VarChar
+  authToken                                    String?                                       @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
   authTokenUsed                                Boolean                                       @default(false)
   authTokenSent                                DateTime?                                     @db.Timestamp(6)
-  wix_id                                       String                                        @unique @db.VarChar
+  wix_id                                       String                                        @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                      @db.Timestamp(6)
   state                                        pupil_state_enum                              @default(other)
   schooltype                                   pupil_schooltype_enum                         @default(other)
@@ -353,9 +354,9 @@ model pupil {
   lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
   teacherEmailAddress                          String?                                       @db.VarChar
   registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
-  coduToken                                    String?                                       @unique @db.VarChar
+  coduToken                                    String?                                       @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   schoolId                                     Int?
-  school                                       school?                                       @relation(fields: [schoolId], references: [id])
+  school                                       school?                                       @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
   course_attendance_log                        course_attendance_log[]
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
@@ -367,32 +368,32 @@ model pupil {
 }
 
 model pupil_tutoring_interest_confirmation_request {
-  id               Int       @id @default(autoincrement())
+  id               Int       @id(map: "PK_5f3515ba0bd182b1cc34f06ef11") @default(autoincrement())
   createdAt        DateTime  @default(now()) @db.Timestamp(6)
   updatedAt        DateTime  @default(now()) @db.Timestamp(6)
   status           String    @default("pending") @db.VarChar
-  token            String    @unique @db.VarChar
+  token            String    @unique(map: "IDX_8108668f1658b14b9db299634e") @db.VarChar
   reminderSentDate DateTime? @db.Timestamp(6)
-  pupilId          Int?      @unique
-  pupil            pupil?    @relation(fields: [pupilId], references: [id])
+  pupilId          Int?      @unique(map: "REL_5928ac6454eee0bfbdb8e538ef")
+  pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 
 model remission_request {
-  id        Int      @id @default(autoincrement())
+  id        Int      @id(map: "PK_4ea2cbe40d9d5cfe1d39a44558f") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
-  uuid      String   @unique @db.VarChar
-  studentId Int?     @unique
-  student   student? @relation(fields: [studentId], references: [id])
+  uuid      String   @unique(map: "IDX_2ede2092e5c464510c99fcfd05") @db.VarChar
+  studentId Int?     @unique(map: "REL_5b96e9df53055059ad903ebc98")
+  student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5b96e9df53055059ad903ebc98c")
 }
 
 model school {
-  id                Int                    @id @default(autoincrement())
+  id                Int                    @id(map: "PK_57836c3fe2f2c7734b20911755e") @default(autoincrement())
   createdAt         DateTime               @default(now()) @db.Timestamp(6)
   updatedAt         DateTime               @default(now()) @db.Timestamp(6)
   name              String                 @db.VarChar
-  website           String?                @unique @db.VarChar
-  emailDomain       String                 @unique @db.VarChar
+  website           String?                @unique(map: "IDX_b365d0ef66facdfeb842d45683") @db.VarChar
+  emailDomain       String                 @unique(map: "IDX_f3f92f9182a7fccc2858fd63cc") @db.VarChar
   state             school_state_enum?     @default(other)
   schooltype        school_schooltype_enum @default(other)
   activeCooperation Boolean                @default(false)
@@ -400,53 +401,53 @@ model school {
 }
 
 model screener {
-  id                         Int                          @id @default(autoincrement())
+  id                         Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
   createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
   firstname                  String?                      @db.VarChar
   lastname                   String?                      @db.VarChar
   active                     Boolean                      @default(true)
-  email                      String                       @unique @db.VarChar
-  verification               String?                      @unique @db.VarChar
+  email                      String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
+  verification               String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
   verifiedAt                 DateTime?                    @db.Timestamp(6)
-  authToken                  String?                      @unique @db.VarChar
+  authToken                  String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
   authTokenUsed              Boolean                      @default(false)
   authTokenSent              DateTime?                    @db.Timestamp(6)
   password                   String                       @db.VarChar
   verified                   Boolean?                     @default(false)
-  oldNumberID                Int?                         @unique
+  oldNumberID                Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
   instructor_screening       instructor_screening[]
   project_coaching_screening project_coaching_screening[]
   screenings                 screening[]
 }
 
 model screening {
-  id                    Int       @id @default(autoincrement())
+  id                    Int       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
   comment               String?   @db.VarChar
   knowsCoronaSchoolFrom String?   @db.VarChar
   createdAt             DateTime  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique
-  screener              screener? @relation(fields: [screenerId], references: [id])
-  student               student?  @relation(fields: [studentId], references: [id])
+  studentId             Int?      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
+  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
 }
 
 model student {
-  id                                        Int                                    @id @default(autoincrement())
+  id                                        Int                                    @id(map: "PK_3d8016e1cb58429474a3c041904") @default(autoincrement())
   createdAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   updatedAt                                 DateTime                               @default(now()) @db.Timestamp(6)
   firstname                                 String?                                @db.VarChar
   lastname                                  String?                                @db.VarChar
   active                                    Boolean                                @default(true)
-  email                                     String                                 @unique @db.VarChar
-  verification                              String?                                @unique @db.VarChar
+  email                                     String                                 @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
+  verification                              String?                                @unique(map: "IDX_34cbafcb0bcdfb2b6de9010acb") @db.VarChar
   verifiedAt                                DateTime?                              @db.Timestamp(6)
-  authToken                                 String?                                @unique @db.VarChar
+  authToken                                 String?                                @unique(map: "IDX_f4d0994b549167f69e3cec7c00") @db.VarChar
   authTokenUsed                             Boolean                                @default(false)
   authTokenSent                             DateTime?                              @db.Timestamp(6)
-  wix_id                                    String                                 @unique @db.VarChar
+  wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
   phone                                     String?                                @db.VarChar
   feedback                                  String?                                @db.VarChar
@@ -498,7 +499,7 @@ model student {
 }
 
 model subcourse {
-  id                               Int                                @id @default(autoincrement())
+  id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
   createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
   updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
   minGrade                         Int
@@ -508,7 +509,7 @@ model subcourse {
   published                        Boolean
   cancelled                        Boolean                            @default(false)
   courseId                         Int?
-  course                           course?                            @relation(fields: [courseId], references: [id])
+  course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
   lecture                          lecture[]
   subcourse_instructors_student    subcourse_instructors_student[]
@@ -519,63 +520,53 @@ model subcourse {
 model subcourse_instructors_student {
   subcourseId Int
   studentId   Int
-  student     student   @relation(fields: [studentId], references: [id])
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+  student     student   @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_b36e4eeff8040a09cc811dbb262")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_3f0c594b9393bf4ca9ed3681967")
 
-  @@id([subcourseId, studentId])
-  @@index([subcourseId], name: "IDX_3f0c594b9393bf4ca9ed368196")
-  @@index([studentId], name: "IDX_b36e4eeff8040a09cc811dbb26")
+  @@id([subcourseId, studentId], map: "PK_e41756ec54d1828c27b0a5dc055")
+  @@index([subcourseId], map: "IDX_3f0c594b9393bf4ca9ed368196")
+  @@index([studentId], map: "IDX_b36e4eeff8040a09cc811dbb26")
 }
 
 model subcourse_participants_pupil {
   subcourseId Int
   pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id])
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_47d9d98b6496554165e08ff61d9")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_cde91c063947d1302d50c906dcd")
 
-  @@id([subcourseId, pupilId])
-  @@index([pupilId], name: "IDX_47d9d98b6496554165e08ff61d")
-  @@index([subcourseId], name: "IDX_cde91c063947d1302d50c906dc")
+  @@id([subcourseId, pupilId], map: "PK_7b8738e08eab7b5bf796f0eaf1b")
+  @@index([pupilId], map: "IDX_47d9d98b6496554165e08ff61d")
+  @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
 }
 
 model subcourse_waiting_list_pupil {
   subcourseId Int
   pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id])
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id])
+  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_3bd25f377afc44f574f7ac3d09b")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_df9eb9663f8085da35f7ca55471")
 
-  @@id([subcourseId, pupilId])
-  @@index([pupilId], name: "IDX_3bd25f377afc44f574f7ac3d09")
-  @@index([subcourseId], name: "IDX_df9eb9663f8085da35f7ca5547")
+  @@id([subcourseId, pupilId], map: "PK_b35d059abbd7f4c4a1147f72ec9")
+  @@index([pupilId], map: "IDX_3bd25f377afc44f574f7ac3d09")
+  @@index([subcourseId], map: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
 model certificate_of_conduct {
-  id               Int      @id @default(autoincrement())
+  id               Int      @id(map: "PK_95058dd1916a7fb5ff77170c374") @default(autoincrement())
   createdAt        DateTime @default(now()) @db.Timestamp(6)
   updatedAt        DateTime @default(now()) @db.Timestamp(6)
   dateOfInspection DateTime @db.Timestamp(6)
   dateOfIssue      DateTime @db.Timestamp(6)
   criminalRecords  Boolean
-  studentId        Int?     @unique
-  student          student? @relation(fields: [studentId], references: [id])
+  studentId        Int?     @unique(map: "REL_11ea2a4aad67ab6428a6ca21b4")
+  student          student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_11ea2a4aad67ab6428a6ca21b41")
 }
 
 model match_pool_run {
-  id             Int      @id @default(autoincrement())
+  id             Int      @id(map: "PK_94a8e7729d108dfa44fb65c1a10") @default(autoincrement())
   runAt          DateTime @default(now()) @db.Timestamp(6)
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
-}
-
-model secret {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now()) @db.Timestamp(6)
-  userId    String    @db.VarChar
-  type      Int
-  secret    String    @db.VarChar
-  expiresAt DateTime? @db.Timestamp(6)
-  lastUsed  DateTime? @db.Timestamp(6)
 }
 
 enum course_category_enum {
@@ -830,4 +821,9 @@ enum student_state_enum {
   sh
   th
   other
+}
+
+enum notification_sender_enum {
+  SUPPORT
+  CERTIFICATE_OF_CONDUCT
 }

@@ -6,7 +6,7 @@ import { PupilCreateNestedOneWithoutMatchInput } from "../inputs/PupilCreateNest
 import { StudentCreateNestedOneWithoutMatchInput } from "../inputs/StudentCreateNestedOneWithoutMatchInput";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchCreateInput", {
   isAbstract: true
 })
 export class MatchCreateInput {

@@ -7,7 +7,7 @@ import { DateTimeWithAggregatesFilter } from "../inputs/DateTimeWithAggregatesFi
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Certificate_of_conductScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Certificate_of_conductScalarWhereWithAggregatesInput {

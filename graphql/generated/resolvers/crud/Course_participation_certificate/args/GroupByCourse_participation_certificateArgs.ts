@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Course_participation_certificateOrderByInput } from "../../../inputs/Course_participation_certificateOrderByInput";
+import { Course_participation_certificateOrderByWithAggregationInput } from "../../../inputs/Course_participation_certificateOrderByWithAggregationInput";
 import { Course_participation_certificateScalarWhereWithAggregatesInput } from "../../../inputs/Course_participation_certificateScalarWhereWithAggregatesInput";
 import { Course_participation_certificateWhereInput } from "../../../inputs/Course_participation_certificateWhereInput";
 import { Course_participation_certificateScalarFieldEnum } from "../../../../enums/Course_participation_certificateScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByCourse_participation_certificateArgs {
   })
   where?: Course_participation_certificateWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Course_participation_certificateOrderByInput], {
+  @TypeGraphQL.Field(_type => [Course_participation_certificateOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: Course_participation_certificateOrderByInput[] | undefined;
+  orderBy?: Course_participation_certificateOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_participation_certificateScalarFieldEnum], {
     nullable: false

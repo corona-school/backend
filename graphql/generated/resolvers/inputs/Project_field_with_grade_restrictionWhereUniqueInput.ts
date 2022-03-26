@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { project_field_with_grade_restrictionUQ_PROJECT_FIELDSCompoundUniqueInput } from "../inputs/project_field_with_grade_restrictionUQ_PROJECT_FIELDSCompoundUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionWhereUniqueInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionWhereUniqueInput {

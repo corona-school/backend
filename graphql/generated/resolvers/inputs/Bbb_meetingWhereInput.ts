@@ -7,7 +7,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Bbb_meetingWhereInput", {
   isAbstract: true
 })
 export class Bbb_meetingWhereInput {

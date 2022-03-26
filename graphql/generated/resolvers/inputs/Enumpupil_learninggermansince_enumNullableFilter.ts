@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedEnumpupil_learninggermansince_enumNullableFilter } from "../inputs/NestedEnumpupil_learninggermansince_enumNullableFilter";
 import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumpupil_learninggermansince_enumNullableFilter", {
   isAbstract: true
 })
 export class Enumpupil_learninggermansince_enumNullableFilter {

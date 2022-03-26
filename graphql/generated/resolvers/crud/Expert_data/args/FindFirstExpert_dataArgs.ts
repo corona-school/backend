@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Expert_dataOrderByInput } from "../../../inputs/Expert_dataOrderByInput";
+import { Expert_dataOrderByWithRelationInput } from "../../../inputs/Expert_dataOrderByWithRelationInput";
 import { Expert_dataWhereInput } from "../../../inputs/Expert_dataWhereInput";
 import { Expert_dataWhereUniqueInput } from "../../../inputs/Expert_dataWhereUniqueInput";
 import { Expert_dataScalarFieldEnum } from "../../../../enums/Expert_dataScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstExpert_dataArgs {
   })
   where?: Expert_dataWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Expert_dataOrderByInput], {
+  @TypeGraphQL.Field(_type => [Expert_dataOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Expert_dataOrderByInput[] | undefined;
+  orderBy?: Expert_dataOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Expert_dataWhereUniqueInput, {
     nullable: true

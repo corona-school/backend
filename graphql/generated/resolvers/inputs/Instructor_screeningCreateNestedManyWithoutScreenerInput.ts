@@ -7,7 +7,7 @@ import { Instructor_screeningCreateOrConnectWithoutScreenerInput } from "../inpu
 import { Instructor_screeningCreateWithoutScreenerInput } from "../inputs/Instructor_screeningCreateWithoutScreenerInput";
 import { Instructor_screeningWhereUniqueInput } from "../inputs/Instructor_screeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Instructor_screeningCreateNestedManyWithoutScreenerInput", {
   isAbstract: true
 })
 export class Instructor_screeningCreateNestedManyWithoutScreenerInput {
