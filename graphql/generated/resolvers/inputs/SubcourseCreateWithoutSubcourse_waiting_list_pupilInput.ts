@@ -8,7 +8,7 @@ import { LectureCreateNestedManyWithoutSubcourseInput } from "../inputs/LectureC
 import { Subcourse_instructors_studentCreateNestedManyWithoutSubcourseInput } from "../inputs/Subcourse_instructors_studentCreateNestedManyWithoutSubcourseInput";
 import { Subcourse_participants_pupilCreateNestedManyWithoutSubcourseInput } from "../inputs/Subcourse_participants_pupilCreateNestedManyWithoutSubcourseInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("SubcourseCreateWithoutSubcourse_waiting_list_pupilInput", {
   isAbstract: true
 })
 export class SubcourseCreateWithoutSubcourse_waiting_list_pupilInput {

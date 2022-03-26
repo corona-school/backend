@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Jufo_verification_transmissionOrderByInput } from "../../../inputs/Jufo_verification_transmissionOrderByInput";
+import { Jufo_verification_transmissionOrderByWithAggregationInput } from "../../../inputs/Jufo_verification_transmissionOrderByWithAggregationInput";
 import { Jufo_verification_transmissionScalarWhereWithAggregatesInput } from "../../../inputs/Jufo_verification_transmissionScalarWhereWithAggregatesInput";
 import { Jufo_verification_transmissionWhereInput } from "../../../inputs/Jufo_verification_transmissionWhereInput";
 import { Jufo_verification_transmissionScalarFieldEnum } from "../../../../enums/Jufo_verification_transmissionScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByJufo_verification_transmissionArgs {
   })
   where?: Jufo_verification_transmissionWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Jufo_verification_transmissionOrderByInput], {
+  @TypeGraphQL.Field(_type => [Jufo_verification_transmissionOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: Jufo_verification_transmissionOrderByInput[] | undefined;
+  orderBy?: Jufo_verification_transmissionOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Jufo_verification_transmissionScalarFieldEnum], {
     nullable: false

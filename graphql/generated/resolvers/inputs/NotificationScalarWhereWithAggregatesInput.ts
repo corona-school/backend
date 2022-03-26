@@ -8,7 +8,7 @@ import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NotificationScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class NotificationScalarWhereWithAggregatesInput {

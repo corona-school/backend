@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Match_pool_runUpdateManyMutationInput", {
   isAbstract: true
 })
 export class Match_pool_runUpdateManyMutationInput {

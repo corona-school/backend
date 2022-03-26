@@ -6,7 +6,7 @@ import { PupilCreateNestedOneWithoutCourse_participation_certificateInput } from
 import { StudentCreateNestedOneWithoutCourse_participation_certificateInput } from "../inputs/StudentCreateNestedOneWithoutCourse_participation_certificateInput";
 import { SubcourseCreateNestedOneWithoutCourse_participation_certificateInput } from "../inputs/SubcourseCreateNestedOneWithoutCourse_participation_certificateInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateCreateInput", {
   isAbstract: true
 })
 export class Course_participation_certificateCreateInput {

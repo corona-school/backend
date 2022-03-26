@@ -7,7 +7,7 @@ import { Subcourse_instructors_studentCreateOrConnectWithoutStudentInput } from 
 import { Subcourse_instructors_studentCreateWithoutStudentInput } from "../inputs/Subcourse_instructors_studentCreateWithoutStudentInput";
 import { Subcourse_instructors_studentWhereUniqueInput } from "../inputs/Subcourse_instructors_studentWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Subcourse_instructors_studentCreateNestedManyWithoutStudentInput", {
   isAbstract: true
 })
 export class Subcourse_instructors_studentCreateNestedManyWithoutStudentInput {

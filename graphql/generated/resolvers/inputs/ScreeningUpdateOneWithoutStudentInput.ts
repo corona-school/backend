@@ -8,7 +8,7 @@ import { ScreeningUpdateWithoutStudentInput } from "../inputs/ScreeningUpdateWit
 import { ScreeningUpsertWithoutStudentInput } from "../inputs/ScreeningUpsertWithoutStudentInput";
 import { ScreeningWhereUniqueInput } from "../inputs/ScreeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreeningUpdateOneWithoutStudentInput", {
   isAbstract: true
 })
 export class ScreeningUpdateOneWithoutStudentInput {
@@ -27,11 +27,6 @@ export class ScreeningUpdateOneWithoutStudentInput {
   })
   upsert?: ScreeningUpsertWithoutStudentInput | undefined;
 
-  @TypeGraphQL.Field(_type => ScreeningWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: ScreeningWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class ScreeningUpdateOneWithoutStudentInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => ScreeningWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: ScreeningWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => ScreeningUpdateWithoutStudentInput, {
     nullable: true

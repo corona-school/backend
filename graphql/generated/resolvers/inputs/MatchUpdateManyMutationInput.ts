@@ -9,7 +9,7 @@ import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDa
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchUpdateManyMutationInput", {
   isAbstract: true
 })
 export class MatchUpdateManyMutationInput {

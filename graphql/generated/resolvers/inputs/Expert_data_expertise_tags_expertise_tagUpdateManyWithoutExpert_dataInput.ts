@@ -11,7 +11,7 @@ import { Expert_data_expertise_tags_expertise_tagUpdateWithWhereUniqueWithoutExp
 import { Expert_data_expertise_tags_expertise_tagUpsertWithWhereUniqueWithoutExpert_dataInput } from "../inputs/Expert_data_expertise_tags_expertise_tagUpsertWithWhereUniqueWithoutExpert_dataInput";
 import { Expert_data_expertise_tags_expertise_tagWhereUniqueInput } from "../inputs/Expert_data_expertise_tags_expertise_tagWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_data_expertise_tags_expertise_tagUpdateManyWithoutExpert_dataInput", {
   isAbstract: true
 })
 export class Expert_data_expertise_tags_expertise_tagUpdateManyWithoutExpert_dataInput {
@@ -38,11 +38,6 @@ export class Expert_data_expertise_tags_expertise_tagUpdateManyWithoutExpert_dat
   @TypeGraphQL.Field(_type => [Expert_data_expertise_tags_expertise_tagWhereUniqueInput], {
     nullable: true
   })
-  connect?: Expert_data_expertise_tags_expertise_tagWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Expert_data_expertise_tags_expertise_tagWhereUniqueInput], {
-    nullable: true
-  })
   set?: Expert_data_expertise_tags_expertise_tagWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Expert_data_expertise_tags_expertise_tagWhereUniqueInput], {
@@ -54,6 +49,11 @@ export class Expert_data_expertise_tags_expertise_tagUpdateManyWithoutExpert_dat
     nullable: true
   })
   delete?: Expert_data_expertise_tags_expertise_tagWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Expert_data_expertise_tags_expertise_tagWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: Expert_data_expertise_tags_expertise_tagWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Expert_data_expertise_tags_expertise_tagUpdateWithWhereUniqueWithoutExpert_dataInput], {
     nullable: true

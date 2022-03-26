@@ -7,7 +7,7 @@ import { IntFieldUpdateOperationsInput } from "../inputs/IntFieldUpdateOperation
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Concrete_notificationUpdateManyMutationInput", {
   isAbstract: true
 })
 export class Concrete_notificationUpdateManyMutationInput {

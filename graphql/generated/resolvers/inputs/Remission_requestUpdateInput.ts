@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutRemission_requestInput } from "../inputs/StudentUpdateOneWithoutRemission_requestInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Remission_requestUpdateInput", {
   isAbstract: true
 })
 export class Remission_requestUpdateInput {

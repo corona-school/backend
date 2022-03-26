@@ -7,7 +7,7 @@ import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Bbb_meetingScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Bbb_meetingScalarWhereWithAggregatesInput {

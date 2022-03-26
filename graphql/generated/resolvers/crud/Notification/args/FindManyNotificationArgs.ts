@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { NotificationOrderByInput } from "../../../inputs/NotificationOrderByInput";
+import { NotificationOrderByWithRelationInput } from "../../../inputs/NotificationOrderByWithRelationInput";
 import { NotificationWhereInput } from "../../../inputs/NotificationWhereInput";
 import { NotificationWhereUniqueInput } from "../../../inputs/NotificationWhereUniqueInput";
 import { NotificationScalarFieldEnum } from "../../../../enums/NotificationScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindManyNotificationArgs {
   })
   where?: NotificationWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [NotificationOrderByInput], {
+  @TypeGraphQL.Field(_type => [NotificationOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: NotificationOrderByInput[] | undefined;
+  orderBy?: NotificationOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => NotificationWhereUniqueInput, {
     nullable: true

@@ -6,7 +6,7 @@ import { NotificationCreatecancelledOnActionInput } from "../inputs/Notification
 import { NotificationCreatecategoryInput } from "../inputs/NotificationCreatecategoryInput";
 import { NotificationCreateonActionsInput } from "../inputs/NotificationCreateonActionsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NotificationCreateInput", {
   isAbstract: true
 })
 export class NotificationCreateInput {
@@ -30,16 +30,6 @@ export class NotificationCreateInput {
   })
   recipient!: number;
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  delay?: number | undefined;
-
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
-  })
-  interval?: number | undefined;
-
   @TypeGraphQL.Field(_type => NotificationCreateonActionsInput, {
     nullable: true
   })
@@ -54,4 +44,14 @@ export class NotificationCreateInput {
     nullable: true
   })
   cancelledOnAction?: NotificationCreatecancelledOnActionInput | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  delay?: number | undefined;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: true
+  })
+  interval?: number | undefined;
 }

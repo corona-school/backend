@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedBytesNullableFilter } from "../inputs/NestedBytesNullableFilter";
 import { NestedIntNullableFilter } from "../inputs/NestedIntNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedBytesNullableWithAggregatesFilter", {
   isAbstract: true
 })
 export class NestedBytesNullableWithAggregatesFilter {
@@ -13,6 +13,16 @@ export class NestedBytesNullableWithAggregatesFilter {
     nullable: true
   })
   equals?: Buffer | undefined;
+
+  @TypeGraphQL.Field(_type => [GraphQLScalars.ByteResolver], {
+    nullable: true
+  })
+  in?: Buffer[] | undefined;
+
+  @TypeGraphQL.Field(_type => [GraphQLScalars.ByteResolver], {
+    nullable: true
+  })
+  notIn?: Buffer[] | undefined;
 
   @TypeGraphQL.Field(_type => NestedBytesNullableWithAggregatesFilter, {
     nullable: true

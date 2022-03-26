@@ -7,7 +7,7 @@ import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggreg
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Remission_requestScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Remission_requestScalarWhereWithAggregatesInput {

@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { StudentUpdateOneWithoutCourse_participation_certificateInput } from "../inputs/StudentUpdateOneWithoutCourse_participation_certificateInput";
 import { SubcourseUpdateOneWithoutCourse_participation_certificateInput } from "../inputs/SubcourseUpdateOneWithoutCourse_participation_certificateInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateUpdateWithoutPupilInput", {
   isAbstract: true
 })
 export class Course_participation_certificateUpdateWithoutPupilInput {

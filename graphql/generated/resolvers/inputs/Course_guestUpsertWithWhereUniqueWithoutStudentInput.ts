@@ -6,7 +6,7 @@ import { Course_guestCreateWithoutStudentInput } from "../inputs/Course_guestCre
 import { Course_guestUpdateWithoutStudentInput } from "../inputs/Course_guestUpdateWithoutStudentInput";
 import { Course_guestWhereUniqueInput } from "../inputs/Course_guestWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_guestUpsertWithWhereUniqueWithoutStudentInput", {
   isAbstract: true
 })
 export class Course_guestUpsertWithWhereUniqueWithoutStudentInput {

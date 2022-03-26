@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { Enumproject_field_with_grade_restriction_projectfield_enumFieldUpdateOperationsInput } from "../inputs/Enumproject_field_with_grade_restriction_projectfield_enumFieldUpdateOperationsInput";
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionUpdateManyMutationInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionUpdateManyMutationInput {

@@ -7,7 +7,7 @@ import { ScreeningCreateOrConnectWithoutScreenerInput } from "../inputs/Screenin
 import { ScreeningCreateWithoutScreenerInput } from "../inputs/ScreeningCreateWithoutScreenerInput";
 import { ScreeningWhereUniqueInput } from "../inputs/ScreeningWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("ScreeningCreateNestedManyWithoutScreenerInput", {
   isAbstract: true
 })
 export class ScreeningCreateNestedManyWithoutScreenerInput {

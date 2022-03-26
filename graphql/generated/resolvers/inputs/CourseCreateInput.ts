@@ -10,7 +10,7 @@ import { SubcourseCreateNestedManyWithoutCourseInput } from "../inputs/Subcourse
 import { course_category_enum } from "../../enums/course_category_enum";
 import { course_coursestate_enum } from "../../enums/course_coursestate_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("CourseCreateInput", {
   isAbstract: true
 })
 export class CourseCreateInput {

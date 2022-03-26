@@ -23,8 +23,9 @@ import { student_languages_enum } from "../enums/student_languages_enum";
 import { student_module_enum } from "../enums/student_module_enum";
 import { student_registrationsource_enum } from "../enums/student_registrationsource_enum";
 import { student_state_enum } from "../enums/student_state_enum";
+import { StudentCount } from "../resolvers/outputs/StudentCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Student", {
   isAbstract: true
 })
 export class Student {
@@ -281,4 +282,9 @@ export class Student {
   screening?: Screening | null;
 
   subcourse_instructors_student?: Subcourse_instructors_student[];
+
+  @TypeGraphQL.Field(_type => StudentCount, {
+    nullable: true
+  })
+  _count?: StudentCount | null;
 }

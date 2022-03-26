@@ -16,7 +16,7 @@ import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 import { SubcourseListRelationFilter } from "../inputs/SubcourseListRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("CourseWhereInput", {
   isAbstract: true
 })
 export class CourseWhereInput {

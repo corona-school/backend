@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Project_field_with_grade_restrictionScalarWhereInput } from "../inputs/Project_field_with_grade_restrictionScalarWhereInput";
 import { Project_field_with_grade_restrictionUpdateManyMutationInput } from "../inputs/Project_field_with_grade_restrictionUpdateManyMutationInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_field_with_grade_restrictionUpdateManyWithWhereWithoutStudentInput", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionUpdateManyWithWhereWithoutStudentInput {

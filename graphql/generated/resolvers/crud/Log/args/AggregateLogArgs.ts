@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { LogOrderByInput } from "../../../inputs/LogOrderByInput";
+import { LogOrderByWithRelationInput } from "../../../inputs/LogOrderByWithRelationInput";
 import { LogWhereInput } from "../../../inputs/LogWhereInput";
 import { LogWhereUniqueInput } from "../../../inputs/LogWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateLogArgs {
   })
   where?: LogWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [LogOrderByInput], {
+  @TypeGraphQL.Field(_type => [LogOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: LogOrderByInput[] | undefined;
+  orderBy?: LogOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => LogWhereUniqueInput, {
     nullable: true

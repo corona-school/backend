@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { PupilOrderByInput } from "../../../inputs/PupilOrderByInput";
+import { PupilOrderByWithRelationInput } from "../../../inputs/PupilOrderByWithRelationInput";
 import { PupilWhereInput } from "../../../inputs/PupilWhereInput";
 import { PupilWhereUniqueInput } from "../../../inputs/PupilWhereUniqueInput";
 import { PupilScalarFieldEnum } from "../../../../enums/PupilScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstPupilArgs {
   })
   where?: PupilWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [PupilOrderByInput], {
+  @TypeGraphQL.Field(_type => [PupilOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: PupilOrderByInput[] | undefined;
+  orderBy?: PupilOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
     nullable: true

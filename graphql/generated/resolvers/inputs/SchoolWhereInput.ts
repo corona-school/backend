@@ -11,7 +11,7 @@ import { PupilListRelationFilter } from "../inputs/PupilListRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("SchoolWhereInput", {
   isAbstract: true
 })
 export class SchoolWhereInput {

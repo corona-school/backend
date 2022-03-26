@@ -9,7 +9,7 @@ import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Pupil_tutoring_interest_confirmation_requestWhereInput", {
   isAbstract: true
 })
 export class Pupil_tutoring_interest_confirmation_requestWhereInput {

@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { ScreenerOrderByInput } from "../../../inputs/ScreenerOrderByInput";
+import { ScreenerOrderByWithAggregationInput } from "../../../inputs/ScreenerOrderByWithAggregationInput";
 import { ScreenerScalarWhereWithAggregatesInput } from "../../../inputs/ScreenerScalarWhereWithAggregatesInput";
 import { ScreenerWhereInput } from "../../../inputs/ScreenerWhereInput";
 import { ScreenerScalarFieldEnum } from "../../../../enums/ScreenerScalarFieldEnum";
@@ -12,10 +12,10 @@ export class GroupByScreenerArgs {
   })
   where?: ScreenerWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [ScreenerOrderByInput], {
+  @TypeGraphQL.Field(_type => [ScreenerOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: ScreenerOrderByInput[] | undefined;
+  orderBy?: ScreenerOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [ScreenerScalarFieldEnum], {
     nullable: false

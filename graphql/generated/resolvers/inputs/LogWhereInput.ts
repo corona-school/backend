@@ -7,7 +7,7 @@ import { Enumlog_logtype_enumFilter } from "../inputs/Enumlog_logtype_enumFilter
 import { IntFilter } from "../inputs/IntFilter";
 import { StringFilter } from "../inputs/StringFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("LogWhereInput", {
   isAbstract: true
 })
 export class LogWhereInput {

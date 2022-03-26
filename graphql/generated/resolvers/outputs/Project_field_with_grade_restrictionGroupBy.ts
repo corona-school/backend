@@ -9,7 +9,7 @@ import { Project_field_with_grade_restrictionMinAggregate } from "../outputs/Pro
 import { Project_field_with_grade_restrictionSumAggregate } from "../outputs/Project_field_with_grade_restrictionSumAggregate";
 import { project_field_with_grade_restriction_projectfield_enum } from "../../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Project_field_with_grade_restrictionGroupBy", {
   isAbstract: true
 })
 export class Project_field_with_grade_restrictionGroupBy {
