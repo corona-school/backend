@@ -153,6 +153,24 @@ export const pools: MatchPool[] = [
         settings: { balancingCoefficients }
     },
     {
+        name: "plus",
+        pupilsToMatch: {
+            isPupil: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: "[]"},
+            registrationSource: { equals: "plus" }
+        },
+        studentsToMatch: {
+            isStudent: true,
+            openMatchRequestCount: { gt: 0},
+            subjects: { not: "[]" },
+            screening: { success: true },
+            registrationSource: { equals: "plus" }
+        },
+        createMatch,
+        settings: { balancingCoefficients }
+    },
+    {
         name: "TEST-DO-NOT-USE",
         pupilsToMatch: {
             isPupil: true,
