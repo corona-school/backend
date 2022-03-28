@@ -65,8 +65,12 @@ export abstract class Person {
 
 export enum RegistrationSource {
     NORMAL,
+    /* The school of the pupil cooperates with Lern-Fair */
     COOPERATION,
     DREHTUER,
     OTHER,
-    CODU
+    /* 'Corona und Du' was a study conducted in Spring 2022 */ 
+    CODU,
+    /* Lern-Fair Plus participant */
+    PLUS
 }

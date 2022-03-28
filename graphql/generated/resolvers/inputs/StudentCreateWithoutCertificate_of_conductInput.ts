@@ -240,7 +240,7 @@ export class StudentCreateWithoutCertificate_of_conductInput {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => CourseCreateNestedManyWithoutStudentInput, {
     nullable: true
