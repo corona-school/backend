@@ -27,8 +27,7 @@ import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
-import { Pupil } from "graphql/generated";
-import { Student } from "common/entity/Student";
+import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
