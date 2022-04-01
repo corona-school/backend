@@ -1,18 +1,18 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from "type-graphql";
 import { Role } from "./authorizations";
-import { student as Student, pupil as Pupil } from "@prisma/client";
+import { student as Student, pupil as Pupil, screener as Screener } from "@prisma/client";
 import Keyv from "keyv";
 import { v4 as uuid } from "uuid";
 import { GraphQLContext } from "./context";
 import { assert } from "console";
 import { getPupil, getScreener, getStudent } from "./util";
-import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
 import { Me } from "./me/fields";
 import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
+import { DEFAULT_SCREENER_NUMBER_ID } from "../common/entity/Screener";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -104,6 +104,12 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
 }
 
 export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
+    if (context.user.roles.includes(Role.ADMIN)) {
+        return await prisma.screener.findUnique({
+            where: { id: DEFAULT_SCREENER_NUMBER_ID }
+        });
+    }
+
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
         throw new ForbiddenError("Expected user to be screener");
