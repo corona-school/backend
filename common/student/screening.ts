@@ -40,9 +40,9 @@ export async function addTutorScreening(screener: Screener, student: Student, sc
     });
 
     if (screening.success) {
-        await Notification.actionTaken(this, "tutor_screening_success", {});
+        await Notification.actionTaken(student, "tutor_screening_success", {});
     } else {
-        await Notification.actionTaken(this, "tutor_screening_rejection", {});
+        await Notification.actionTaken(student, "tutor_screening_rejection", {});
     }
 
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
