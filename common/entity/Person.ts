@@ -69,7 +69,7 @@ export enum RegistrationSource {
     COOPERATION,
     DREHTUER,
     OTHER,
-    /* 'Corona und Du' was a study conducted in Spring 2022 */ 
+    /* 'Corona und Du' was a study conducted in Spring 2022 */
     CODU,
     /* Lern-Fair Plus participant */
     PLUS
