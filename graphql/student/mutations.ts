@@ -75,5 +75,6 @@ export class MutateStudentResolver {
         const student = await getStudent(studentId);
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
+        return true;
     }
 }
