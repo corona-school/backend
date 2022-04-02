@@ -10,6 +10,7 @@ import { TutorJufoParticipationIndication } from "../jufo/participationIndicatio
 import { logTransaction } from "../transactionlog/log";
 import { setProjectFields } from "./update";
 import { PrerequisiteError, RedundantError } from "../util/error";
+import { toStudentSubjectDatabaseFormat } from "../util/subjectsutils";
 
 export interface RegisterStudentData {
     firstname: string;
@@ -115,13 +116,12 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
 
     const { languages, subjects, supportsInDaZ } = data;
 
-    console.log(`BecomeTutor subjects`, JSON.stringify(subjects));
 
     await prisma.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 1,
-            subjects: JSON.stringify(subjects),
+            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
             languages,
             supportsInDaZ
         },

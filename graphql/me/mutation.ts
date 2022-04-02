@@ -29,6 +29,7 @@ import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
+import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -306,7 +307,7 @@ export class MutateMeResolver {
                     lastname,
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
-                    subjects: JSON.stringify(subjects),
+                    subjects: JSON.stringify(subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
                     projectFields
                 },
                 where: { id: prevPupil.id }
@@ -338,7 +339,7 @@ export class MutateMeResolver {
                 data: {
                     firstname,
                     lastname,
-                    subjects: JSON.stringify(subjects)
+                    subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat))
                 },
                 where: { id: prevStudent.id }
             });
