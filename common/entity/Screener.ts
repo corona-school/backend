@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany, EntityManager } from "typeorm";
 import { ScreenerDTO } from "../dto/ScreenerDTO";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
+import { prisma } from "../prisma";
 
 @Entity()
 export class Screener extends Person {
@@ -78,8 +79,13 @@ export async function getDefaultScreener(manager: EntityManager) {
     return defaultScreener;
 }
 
-export function getDefaultScreenerEntry() {
-    return {
+export const defaultScreener = (async function getDefaultScreenerEntry() {
+    const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID }});
+    if (existing) {
+        return existing;
+    }
+
+    return await prisma.screener.create({ data: {
         firstname: DEFAULT_SCREENER_FIRSTNAME,
         lastname: "",
         password: "",
@@ -95,5 +101,5 @@ export function getDefaultScreenerEntry() {
         authToken: null,
         authTokenUsed: null,
         authTokenSent: null
-    };
-}
+    }});
+})();
