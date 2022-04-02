@@ -117,7 +117,7 @@ export const pools: MatchPool[] = [
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]"},
-            registrationSource: { not: "codu" },
+            registrationSource: { notIn: ["codu", "plus"] },
             OR: [
                 { registrationSource: "cooperation" },
                 { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
@@ -129,7 +129,8 @@ export const pools: MatchPool[] = [
             openMatchRequestCount: { gt: 0},
             subjects: { not: "[]" },
             screening: { success: true },
-            isCodu: false
+            isCodu: false,
+            registrationSource: { notIn: ["codu", "plus"]}
         },
         createMatch,
         settings: { balancingCoefficients }
@@ -153,7 +154,7 @@ export const pools: MatchPool[] = [
         settings: { balancingCoefficients }
     },
     {
-        name: "plus",
+        name: "lern-fair-plus",
         pupilsToMatch: {
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
