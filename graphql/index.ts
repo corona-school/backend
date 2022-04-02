@@ -20,7 +20,7 @@ import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
 import { MutateNotificationResolver } from "./notification/mutations";
 import { complexityEnhanceMap } from "./complexity";
 import { AuthenticationResolver } from "./authentication";
-import { FieldUserResolver } from "./user/fields";
+import { FieldMeResolver } from "./me/fields";
 import { MutateMatchResolver } from "./match/mutations";
 import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_confirmation/mutations";
 import { MutateParticipationCertificateResolver } from "./certificate/mutations";
@@ -40,8 +40,6 @@ import { formatError } from "./error";
 import { NotificationBulkRunResolver } from "./notification/fields";
 import { FieldsMatchPoolResolver } from "./match_pool/fields";
 import { MutateMatchPoolResolver } from "./match_pool/mutations";
-import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notification/fields";
-import { MutateConcreteNotificationsResolver } from "./concrete_notification/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -52,7 +50,7 @@ const schema = buildSchemaSync({
     resolvers: [
         /* User Authentication & Information */
         AuthenticationResolver,
-        FieldUserResolver,
+        FieldMeResolver,
         MutateMeResolver,
 
         /* Course */
@@ -88,8 +86,6 @@ const schema = buildSchemaSync({
         MutateNotificationResolver,
         NotificationBulkRunResolver,
         FindManyConcrete_notificationResolver,
-        ExtendedFieldsConcreteNotificationResolver,
-        MutateConcreteNotificationsResolver,
 
         /* TutoringInterestConfirmation */
         MutateTutoringInterestConfirmationResolver,

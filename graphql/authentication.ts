@@ -10,7 +10,7 @@ import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
-import { User } from "./user/fields";
+import { Me } from "./me/fields";
 import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
 
@@ -28,20 +28,6 @@ export interface GraphQLUser {
     studentId?: number;
     pupilId?: number;
     screenerId?: number;
-}
-
-export function getUserId(user: GraphQLUser) {
-    if (user.studentId) {
-        return `student/${user.studentId}`;
-    }
-    if (user.pupilId) {
-        return `pupil/${user.pupilId}`;
-    }
-    if (user.screenerId) {
-        return `screener/${user.screenerId}`;
-    }
-
-    throw new Error(`Unknown user type`);
 }
 
 /* As we only have one backend, and there is probably no need to scale in the near future,
@@ -252,7 +238,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
 }
 
 
-@Resolver(of => User)
+@Resolver(of => Me)
 export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)

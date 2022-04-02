@@ -1,6 +1,6 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
-import { User } from "../user/fields";
+import { Me } from "./fields";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, logInAsPupil, logInAsStudent } from "../authentication";
 import { prisma } from "../../common/prisma";
@@ -225,7 +225,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 
 
-@Resolver(of => User)
+@Resolver(of => Me)
 export class MutateMeResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
