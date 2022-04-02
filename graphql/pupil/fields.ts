@@ -10,6 +10,8 @@ import { gradeAsInt } from "../../common/util/gradestrings";
 import { Decision } from "../types/reason";
 import { canPupilRequestMatch } from "../../common/match/request";
 import { canJoinSubcourses } from "../../common/courses/participants";
+import { User } from "graphql/user/fields";
+import { GraphQLUser } from "graphql/authentication";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -109,5 +111,18 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
+    }
+
+    @FieldResolver(type => User)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    user(@Root() pupil: Required<Pupil>) {
+        const user: GraphQLUser = {
+            firstname: pupil.firstname,
+            lastname: pupil.lastname,
+            email: pupil.email,
+            pupilId: pupil.id
+        };
+
+        return user;
     }
 }

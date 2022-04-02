@@ -12,6 +12,8 @@ import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
 import { Decision } from "../types/reason";
 import { canStudentRequestMatch } from "../../common/match/request";
+import { User } from "graphql/user/fields";
+import { GraphQLUser } from "graphql/authentication";
 
 @Resolver(of => Student)
 export class ExtendFieldsStudentResolver {
@@ -55,5 +57,18 @@ export class ExtendFieldsStudentResolver {
                 studentId: student.id
             }
         });
+    }
+
+    @FieldResolver(type => User)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    user(@Root() student: Required<Student>) {
+        const user: GraphQLUser = {
+            firstname: student.firstname,
+            lastname: student.lastname,
+            email: student.email,
+            studentId: student.id
+        };
+
+        return user;
     }
 }
