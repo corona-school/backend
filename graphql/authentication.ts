@@ -12,7 +12,7 @@ import { getLogger } from "log4js";
 import { Me } from "./me/fields";
 import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
-import { DEFAULT_SCREENER_NUMBER_ID } from "../common/entity/Screener";
+import { DEFAULT_SCREENER_NUMBER_ID, getDefaultScreenerEntry } from "../common/entity/Screener";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -105,9 +105,7 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
 
 export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
     if (context.user.roles.includes(Role.ADMIN)) {
-        return await prisma.screener.findUnique({
-            where: { id: DEFAULT_SCREENER_NUMBER_ID }
-        });
+        return getDefaultScreenerEntry();
     }
 
     const { screenerId } = getSessionUser(context);

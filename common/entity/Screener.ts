@@ -69,11 +69,31 @@ export async function getDefaultScreener(manager: EntityManager) {
         defaultScreener.password = "";
         defaultScreener.verified = true;
         defaultScreener.oldNumberID = DEFAULT_SCREENER_NUMBER_ID;
-        defaultScreener.email = "kontakt@corona-school.de";
+        defaultScreener.email = "kontakt@lern-fair.de";
         defaultScreener.active = false;
 
         await manager.save(defaultScreener);
     }
 
     return defaultScreener;
+}
+
+export function getDefaultScreenerEntry() {
+    return {
+        firstname: DEFAULT_SCREENER_FIRSTNAME,
+        lastname: "",
+        password: "",
+        verified: true,
+        id: DEFAULT_SCREENER_NUMBER_ID,
+        oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
+        email: "kontakt@corona-school.de",
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        verification: null,
+        verifiedAt: new Date(),
+        authToken: null,
+        authTokenUsed: null,
+        authTokenSent: null
+    };
 }
