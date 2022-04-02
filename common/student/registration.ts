@@ -115,6 +115,8 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
 
     const { languages, subjects, supportsInDaZ } = data;
 
+    console.log(`BecomeTutor subjects`, JSON.stringify(subjects));
+
     await prisma.student.update({
         data: {
             isStudent: true,
