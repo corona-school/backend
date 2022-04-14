@@ -184,7 +184,7 @@ export class PupilCreateWithoutProject_matchInput {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

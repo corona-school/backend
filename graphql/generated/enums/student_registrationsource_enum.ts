@@ -5,7 +5,8 @@ export enum student_registrationsource_enum {
   cooperation = "cooperation",
   drehtuer = "drehtuer",
   other = "other",
-  codu = "codu"
+  codu = "codu",
+  plus = "plus"
 }
 TypeGraphQL.registerEnumType(student_registrationsource_enum, {
   name: "student_registrationsource_enum",
