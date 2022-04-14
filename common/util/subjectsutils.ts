@@ -26,48 +26,6 @@ export function toPupilSubjectDatabaseFormat(s: Subject) {
     };
 }
 
-function parseJSONObjectFormatGradeArray(parsedArray: any[]) {
-    return parsedArray.flatMap(s => {
-        if (typeof s.name !== "string") {
-            return [];
-        }
-        if ((typeof s.minGrade === "number" && typeof s.maxGrade !== "number") || (typeof s.maxGrade === "number" && typeof s.minGrade !== "number")) {
-            return [];
-        }
-        return {
-            name: s.name,
-            grade: s.minGrade ? {
-                min: s.minGrade,
-                max: s.maxGrade
-            } : undefined
-        };
-    });
-}
-
-function parseMatlabFormatGradeArray(parsedArray: any[]) {
-    return parsedArray.flatMap(s => {
-        const matches = s.match(/^([a-zA-Zäöüß]+)(([0-9]+):([0-9]+))*$/);
-        if (!matches) {
-            return [];
-        }
-        if (matches[1] && matches[2]) {
-            return {
-                name: matches[1],
-                grade: {
-                    min: +matches[3],
-                    max: +matches[4]
-                }
-            };
-        }
-        if (matches[1] && !matches[2]) {
-            return {
-                name: matches[1]
-            };
-        }
-        return [];
-    });
-}
-
 export function parseSubjectString(subjects: string): Subject[] {
     if (!subjects) {
         return [];
@@ -79,23 +37,21 @@ export function parseSubjectString(subjects: string): Subject[] {
         throw new Error(`Invalid subject format string "${subjects}". Cannot parse this!`);
     }
 
-    //check if every element is in the grade format
-    const parsedJSONObjectFormatGradeArray = parseJSONObjectFormatGradeArray(parsedArray);
-
-    //alternatively check if every element is in the matlab format
-    if (parsedJSONObjectFormatGradeArray.length === parsedArray.length) {
-        //return the parsed result
-        return parsedJSONObjectFormatGradeArray;
-    }
-
-    //try to check the matlab format
-    const parsedMatlabFormatGradeArray = parseMatlabFormatGradeArray(parsedArray);
-
-    if (parsedMatlabFormatGradeArray.length === parsedArray.length) {
-        return parsedMatlabFormatGradeArray;
-    }
-
-    return undefined;
+    return parsedArray.map(it => {
+        if (!it || !it.name) {
+            throw new Error(`Invalid subject in "${subjects}"`);
+        }
+        if (typeof it.minGrade !== typeof it.maxGrade) {
+            throw new Error(`minGrade and maxGrade must either be present or not in "${subjects}"`);
+        }
+        return {
+            name: it.name,
+            grade: it.minGrade ? {
+                min: it.minGrade,
+                max: it.maxGrade
+            } : undefined
+        };
+    });
 }
 
 export function checkCoDuSubjectRequirements(subjects: Subject[]) {
