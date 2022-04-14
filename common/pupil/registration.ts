@@ -57,6 +57,8 @@ export async function registerPupil(data: RegisterPupilData) {
         throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
     }
 
+    const verification = uuidv4();
+
     const pupil = await prisma.pupil.create({
         data: {
             email: data.email.toLowerCase(),
@@ -77,13 +79,13 @@ export async function registerPupil(data: RegisterPupilData) {
             isParticipant: true,
 
             // the authToken is used to verify the e-mail instead
-            verification: uuidv4()
+            verification
         }
     });
 
     // TODO: Create a new E-Mail for registration
     // TODO: Send auth token with this
-    await Notification.actionTaken(pupil, "pupil_registration_started", { redirectTo: data.redirectTo });
+    await Notification.actionTaken(pupil, "pupil_registration_started", { redirectTo: data.redirectTo, verification });
     await logTransaction("verificationRequets", pupil, {});
 
     return pupil;
