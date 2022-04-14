@@ -31,7 +31,7 @@ export interface BecomeProjectCoacheeData {
     projectMemberCount: number;
 }
 export interface BecomeTuteeData {
-    subjects: string[];
+    subjects: Subject[];
     gradeAsInt?: number;
     languages: Language[];
     learningGermanSince?: pupil_learninggermansince_enum;
@@ -117,7 +117,7 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     const updatedPupil = await prisma.pupil.update({
         data: {
             isPupil: true,
-            subjects: JSON.stringify(data.subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
+            subjects: JSON.stringify(data.subjects.map(toPupilSubjectDatabaseFormat)),
             grade: `${data.gradeAsInt}. Klasse`,
             languages: data.languages ? { set: data.languages } : undefined,
             learningGermanSince: data.learningGermanSince
