@@ -205,8 +205,8 @@ class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
 
 @InputType()
 class BecomeTuteeInput implements BecomeTuteeData {
-    @Field(type => [String])
-    subjects: string[];
+    @Field(type => [Subject])
+    subjects: Subject[];
 
     @Field(type => [Language])
     languages: Language[];
