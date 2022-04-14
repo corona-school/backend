@@ -186,7 +186,7 @@ export class PupilGroupBy {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus";
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

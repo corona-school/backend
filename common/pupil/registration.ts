@@ -9,6 +9,7 @@ import { Subject } from "../entity/Student";
 import { Address } from "address-rfc2821";
 import { logTransaction } from "../transactionlog/log";
 import { PrerequisiteError, RedundantError } from "../util/error";
+import { toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
 
 export interface RegisterPupilData {
     firstname: string;
@@ -116,7 +117,7 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     const updatedPupil = await prisma.pupil.update({
         data: {
             isPupil: true,
-            subjects: JSON.stringify(data.subjects),
+            subjects: JSON.stringify(data.subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
             grade: `${data.gradeAsInt}. Klasse`,
             languages: data.languages ? { set: data.languages } : undefined,
             learningGermanSince: data.learningGermanSince
