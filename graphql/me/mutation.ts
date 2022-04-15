@@ -84,8 +84,11 @@ class RegisterPupilInput implements RegisterPupilData {
     @Field(type => Boolean)
     newsletter: boolean;
 
-    @Field(type => Int)
-    schoolId: School["id"];
+    @Field(type => Int, { nullable: true })
+    schoolId?: School["id"];
+
+    @Field(type => SchoolType, { nullable: true })
+    schooltype?: SchoolType;
 
     @Field(type => State)
     state: State;

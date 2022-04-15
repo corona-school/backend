@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { School } from "../entity/School";
 import * as Notification from "../notification";
 import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
-import { pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_languages_enum as Language, pupil_learninggermansince_enum } from "@prisma/client";
+import { pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_languages_enum as Language, pupil_learninggermansince_enum, pupil_schooltype_enum as SchoolType } from "@prisma/client";
 import { Subject } from "../entity/Student";
 import { Address } from "address-rfc2821";
 import { logTransaction } from "../transactionlog/log";
@@ -16,7 +16,8 @@ export interface RegisterPupilData {
     lastname: string;
     email: string;
     newsletter: boolean;
-    schoolId: School["id"];
+    schoolId?: School["id"];
+    schooltype?: SchoolType;
     state: State;
     registrationSource: RegistrationSource;
 
@@ -48,13 +49,16 @@ export async function registerPupil(data: RegisterPupilData) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
-    if (!school) {
-        throw new Error(`Invalid School ID '${data.schoolId}'`);
-    }
-
-    if (data.registrationSource === RegistrationSource.cooperation && !school.activeCooperation) {
-        throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
+    if (data.schoolId) {
+        const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
+        if (!school) {
+            throw new Error(`Invalid School ID '${data.schoolId}'`);
+        }
+        if (data.registrationSource === RegistrationSource.cooperation && !school.activeCooperation) {
+            throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
+        }
+    } else if (data.registrationSource === RegistrationSource.cooperation) {
+        throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
     }
 
     const verification = uuidv4();
@@ -66,8 +70,8 @@ export async function registerPupil(data: RegisterPupilData) {
             lastname: data.lastname,
             newsletter: data.newsletter,
             createdAt: new Date(),
-            schooltype: school.schooltype,
-            schoolId: school.id,
+            schooltype: data.schooltype,
+            schoolId: data.schoolId,
             state: data.state,
             registrationSource: data.registrationSource,
 
