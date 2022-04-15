@@ -26,6 +26,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
             uuid,
             pupilId: pupil.id,
             studentId: student.id
+            // pupilLastMatchRequest: pupil.lastMatchRequest
+            // studentLastMatchRequest: student.lastMatchRequest
         }
     });
 

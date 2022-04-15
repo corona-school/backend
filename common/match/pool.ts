@@ -73,7 +73,8 @@ async function studentToHelper(student: Student): Promise<Helper> {
         subjects: parseSubjectString(student.subjects).map(formattedSubjectToSubjectWithGradeRestriction),
         createdAt: student.createdAt,
         excludeMatchesWith: existingMatches.map(it => ({ uuid: it.pupil.wix_id })),
-        state: student.state
+        state: student.state,
+        // lastMatchRequest: student.lastMatchRequest
     };
 }
 
@@ -89,7 +90,8 @@ async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
         excludeMatchesWith: existingMatches.map(it => ({ uuid: it.student.wix_id })),
         state: pupil.state,
         matchingPriority: pupil.matchingPriority,
-        grade: gradeAsInt(pupil.grade)
+        grade: gradeAsInt(pupil.grade),
+        // lastMatchRequest: pupil.lastMatchRequest
     };
 }
 

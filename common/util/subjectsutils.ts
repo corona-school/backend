@@ -5,6 +5,7 @@ export type Subject = {
         min: number;
         max: number;
     };
+    mandatory?: boolean;
 };
 
 export function isValidSubject(s: Subject) {
@@ -14,6 +15,10 @@ export function isValidSubject(s: Subject) {
 
 // The format how subjects are stored in the database
 export function toStudentSubjectDatabaseFormat(s: Subject) {
+    if ("mandatory" in s) {
+        throw new Error(`Only pupils may have mandatory subjects`);
+    }
+
     return {
         name: s.name,
         maxGrade: s.grade?.max,
@@ -21,8 +26,13 @@ export function toStudentSubjectDatabaseFormat(s: Subject) {
     };
 }
 export function toPupilSubjectDatabaseFormat(s: Subject) {
+    if ("minGrade" in s || "maxGrade" in s) {
+        throw new Error(`Only students may have grade restrictions for subjects`);
+    }
+
     return {
-        name: s.name
+        name: s.name,
+        mandatory: s.mandatory
     };
 }
 
@@ -49,7 +59,8 @@ export function parseSubjectString(subjects: string): Subject[] {
             grade: it.minGrade ? {
                 min: it.minGrade,
                 max: it.maxGrade
-            } : undefined
+            } : undefined,
+            mandatory: it.mandatory
         };
     });
 }
