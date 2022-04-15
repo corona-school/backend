@@ -1,4 +1,5 @@
-import { Student } from "../entity/Student";
+import { Student as TypeORMStudent } from "../entity/Student";
+import { student as PrismaStudent } from "@prisma/client";
 import { prisma } from "../prisma";
 import { randomBytes } from "crypto";
 import { getLogger } from "log4js";
@@ -16,7 +17,7 @@ const verificationPageName = "verifiedRemissionRequestPage";
 
 const dateFormatOptions = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
 
-export async function createRemissionRequest(student: Student) {
+export async function createRemissionRequest(student: TypeORMStudent | PrismaStudent) {
     const remissionRequest = await prisma.remission_request.findUnique({
         where: { studentId: student.id }
     });
@@ -58,7 +59,7 @@ async function createQRCode(uuid: string): Promise<string> {
     return QRCode.toDataURL(verificationURL);
 }
 
-export async function createRemissionRequestPDF(student: Student): Promise<Buffer> {
+export async function createRemissionRequestPDF(student: TypeORMStudent): Promise<Buffer> {
     const remissionRequest = await prisma.remission_request.findUnique({ where: {studentId: student.id}});
 
     if (remissionRequest === null) {
