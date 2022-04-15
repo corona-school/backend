@@ -29,6 +29,9 @@ import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
 import { userForStudent, userForPupil } from "../../common/user";
 import { evaluatePupilRoles } from "../roles";
+import { Pupil, Student } from "../generated";
+import { UserInputError } from "apollo-server-express";
+import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -204,8 +207,8 @@ class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
 
 @InputType()
 class BecomeTuteeInput implements BecomeTuteeData {
-    @Field(type => [String])
-    subjects: string[];
+    @Field(type => [Subject])
+    subjects: Subject[];
 
     @Field(type => [Language])
     languages: Language[];
@@ -229,17 +232,25 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 @Resolver(of => Me)
 export class MutateMeResolver {
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation(returns => Student)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit("RegisterStudent", 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg("data") data: RegisterStudentInput) {
+        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+
+        if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
+            throw new UserInputError("Lern-Fair Plus pupils may only be registered by admins");
+        }
+
         const student = await registerStudent(data);
         const log = logInContext("Me", context);
         log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
-        await loginAsUser(userForStudent(student), context);
+        if (!byAdmin) {
+            await loginAsUser(userForStudent(student), context);
+        }
 
-        return true;
+        return student;
 
         /* The student can now use the authToken passed to them via E-Mail to re authenticate the session and have their E-Mail verified
            This session now also has the STUDENT role.
@@ -247,17 +258,25 @@ export class MutateMeResolver {
            With the STUDENT Role alone they can't do much (but at least deactivate their account and change their settings) */
     }
 
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation(returns => Pupil)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit("RegisterPupil", 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg("data") data: RegisterPupilInput) {
+        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+
+        if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
+            throw new UserInputError("Lern-Fair Plus pupils may only be registered by admins");
+        }
+
         const pupil = await registerPupil(data);
         const log = logInContext("Me", context);
         log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
-        await loginAsUser(userForPupil(pupil), context);
+        if (!byAdmin) {
+            await loginAsUser(userForPupil(pupil), context);
+        }
 
-        return true;
+        return pupil;
 
         /* The pupil can now use the authToken passed to them via E-Mail to re authenticate the session.
            This will mark them as verified, and grant them the PUPIL role.
@@ -290,7 +309,7 @@ export class MutateMeResolver {
                     lastname,
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
-                    subjects: JSON.stringify(subjects),
+                    subjects: JSON.stringify(subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
                     projectFields
                 },
                 where: { id: prevPupil.id }
@@ -322,7 +341,7 @@ export class MutateMeResolver {
                 data: {
                     firstname,
                     lastname,
-                    subjects: JSON.stringify(subjects)
+                    subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat))
                 },
                 where: { id: prevStudent.id }
             });
@@ -388,9 +407,9 @@ export class MutateMeResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.STUDENT)
-    async meBecomeTutor(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTutorInput) {
-        const student = await getSessionStudent(context);
+    @Authorized(Role.STUDENT, Role.ADMIN)
+    async meBecomeTutor(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTutorInput, @Arg("studentId", { nullable: true}) studentId: number) {
+        const student = await getSessionStudent(context, studentId);
         const log = logInContext("Me", context);
 
         await becomeTutor(student, data);
@@ -403,9 +422,9 @@ export class MutateMeResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.STUDENT)
-    async meBecomeProjectCoach(@Ctx() context: GraphQLContext, data: BecomeProjectCoachInput) {
-        const student = await getSessionStudent(context);
+    @Authorized(Role.STUDENT, Role.ADMIN)
+    async meBecomeProjectCoach(@Ctx() context: GraphQLContext, data: BecomeProjectCoachInput, @Arg("studentId", { nullable: true}) studentId: number) {
+        const student = await getSessionStudent(context, studentId);
         const log = logInContext("Me", context);
 
         await becomeProjectCoach(student, data);
@@ -419,9 +438,9 @@ export class MutateMeResolver {
 
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.PUPIL)
-    async meBecomeProjectCoachee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeProjectCoacheeInput) {
-        const pupil = await getSessionPupil(context);
+    @Authorized(Role.PUPIL, Role.ADMIN)
+    async meBecomeProjectCoachee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeProjectCoacheeInput, @Arg("pupilId", { nullable: true}) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeProjectCoachee(pupil, data);
@@ -434,9 +453,9 @@ export class MutateMeResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.PUPIL)
-    async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTuteeInput) {
-        const pupil = await getSessionPupil(context);
+    @Authorized(Role.PUPIL, Role.ADMIN)
+    async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTuteeInput, @Arg("pupilId", { nullable: true}) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
         const log = logInContext("Me", context);
         const updatedPupil = await becomeTutee(pupil, data);
         await evaluatePupilRoles(updatedPupil, context);
@@ -447,9 +466,9 @@ export class MutateMeResolver {
     }
 
     @Mutation(returns => Boolean)
-    @Authorized(Role.PUPIL)
-    async meBecomeStatePupil(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeStatePupilInput) {
-        const pupil = await getSessionPupil(context);
+    @Authorized(Role.PUPIL, Role.ADMIN)
+    async meBecomeStatePupil(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeStatePupilInput, @Arg("pupilId", { nullable: true}) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeStatePupil(pupil, data);

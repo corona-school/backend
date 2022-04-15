@@ -11,5 +11,5 @@ export class Enumstudent_registrationsource_enumFieldUpdateOperationsInput {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  set?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  set?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 }

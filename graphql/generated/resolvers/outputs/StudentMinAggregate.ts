@@ -223,5 +223,5 @@ export class StudentMinAggregate {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: true
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | null;
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | null;
 }

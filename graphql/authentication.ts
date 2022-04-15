@@ -1,6 +1,6 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from "type-graphql";
 import { Role } from "./authorizations";
-import { student as Student, pupil as Pupil } from "@prisma/client";
+import { student as Student, pupil as Pupil, screener as Screener } from "@prisma/client";
 import Keyv from "keyv";
 import { v4 as uuid } from "uuid";
 import { GraphQLContext } from "./context";
@@ -16,6 +16,7 @@ import { logInContext } from "./logging";
 import { User, userForPupil, userForScreener, userForStudent } from "../common/user";
 import { loginPassword, loginToken } from "../common/secret";
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from "./roles";
+import { defaultScreener } from "../common/entity/Screener";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -99,6 +100,10 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
 }
 
 export async function getSessionScreener(context: GraphQLContext): Promise<Screener | never> {
+    if (context.user.roles.includes(Role.ADMIN)) {
+        return await defaultScreener;
+    }
+
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
         throw new ForbiddenError("Expected user to be screener");

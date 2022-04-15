@@ -339,3 +339,19 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
 
     return remindersToCreate;
 }
+
+export async function cancelNotification(notification: ConcreteNotification) {
+    if (notification.state !== ConcreteNotificationState.DELAYED) {
+        throw new Error(`Notification is not in DELAYED state, cannot be canceled`);
+    }
+
+    await prisma.concrete_notification.update({
+        where: { id: notification.id },
+        data: {
+            state: ConcreteNotificationState.ACTION_TAKEN,
+            error: "Manually cancelled"
+        }
+    });
+
+    logger.info(`ConcreteNotification(${notification.id}) was manually cancelled`);
+}
