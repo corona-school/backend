@@ -315,7 +315,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     try {
         await entityManager.save(Student, tutor);
-        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo, verification: tutor.verification });
+        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo ?? "", verification: tutor.verification });
         if (tutor.isCodu) {
             await Notification.actionTaken(tutor, "codu_student_registration", {});
         }
@@ -651,7 +651,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
     try {
         await entityManager.save(Pupil, tutee);
-        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo, verification: tutee.verification });
+        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo ?? "", verification: tutee.verification });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {
