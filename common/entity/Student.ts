@@ -98,6 +98,9 @@ export class Student extends Person {
     })
     openMatchRequestCount: number;
 
+    @Column({ nullable: true })
+    lastMatchRequest: Date;
+
     @Column({ default: false })
     isCodu: boolean;
 

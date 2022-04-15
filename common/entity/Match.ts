@@ -97,6 +97,15 @@ export class Match {
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 
+    // Students and Pupils request a match by increasing their "openMatchRequest" counter
+    // A match decreases that counter. Thus we cannot really say 'which request lead to which match'
+    // However we know when the user last increased the match count
+    @Column({ nullable: true })
+    studentLastMatchRequest: Date;
+
+    @Column({ nullable: true })
+    pupilLastMatchRequest: Date;
+
     jitsiLink(): string {
         return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
     }
