@@ -6,7 +6,6 @@ import { v4 as uuid } from "uuid";
 import { GraphQLContext } from "./context";
 import { assert } from "console";
 import { Deprecated, getPupil, getScreener, getStudent } from "./util";
-import { Screener } from "./generated";
 import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
