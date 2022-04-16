@@ -19,7 +19,9 @@ export class MutateMatchResolver {
         const pupil = await getPupil(pupilId);
         const student = await getStudent(studentId);
         const pool = pools.find(it => it.name === poolName);
-        if (!pool) throw new Error(`Unknown MatchPool(${poolName})`);
+        if (!pool) {
+            throw new Error(`Unknown MatchPool(${poolName})`);
+        }
 
         await createMatch(pupil, student, pool);
 
