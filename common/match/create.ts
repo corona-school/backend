@@ -26,7 +26,8 @@ export async function createMatch(pupil: Pupil, student: Student, pool: MatchPoo
         data: {
             uuid,
             pupilId: pupil.id,
-            studentId: student.id
+            studentId: student.id,
+            // matchPool: pool.name
         }
     });
 
