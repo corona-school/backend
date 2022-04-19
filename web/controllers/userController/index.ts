@@ -41,7 +41,7 @@ import { getDefaultScreener } from "../../../common/entity/Screener";
 import { Course, CourseState } from "../../../common/entity/Course";
 import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
 import { Subcourse } from "../../../common/entity/Subcourse";
-import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
+// import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
 import * as Notification from "../../../common/notification";
 
 const logger = getLogger();
@@ -723,13 +723,13 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         person.supportsInDaZ = req.supportsInDaz;
 
         // ++++ CODU INFORMATION ++++
-        if (req.isCodu !== undefined) {
-            if (req.isCodu && !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
-                logger.warn("Student does not fulfill subject requirements for CoDu");
-                return 400;
-            }
-            person.isCodu = req.isCodu;
-        }
+        // if (req.isCodu !== undefined) {
+        //     if (req.isCodu && !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
+        //         logger.warn("Student does not fulfill subject requirements for CoDu");
+        //         return 400;
+        //     }
+        //     person.isCodu = req.isCodu;
+        // }
 
     } else if (person instanceof Pupil) {
         type = Pupil;
