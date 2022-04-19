@@ -299,13 +299,13 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.supportsInDaZ = apiTutor.supportsInDaz;
 
     // CoDu
-    if (apiTutor.isCodu) {
-        if (!checkCoDuSubjectRequirements(tutor.getSubjectsFormatted())) {
-            logger.warn("Tutor does not fulfill subject requirements for CoDu");
-            return 400;
-        }
-    }
-    tutor.isCodu = apiTutor.isCodu;
+    // if (apiTutor.isCodu) {
+    //     if (!checkCoDuSubjectRequirements(tutor.getSubjectsFormatted())) {
+    //         logger.warn("Tutor does not fulfill subject requirements for CoDu");
+    //         return 400;
+    //     }
+    // }
+    // tutor.isCodu = apiTutor.isCodu;
 
     const result = await entityManager.findOne(Student, { email: tutor.email });
     if (result !== undefined) {

@@ -923,12 +923,12 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
 
     person.subjects = JSON.stringify(req);
 
-    if (person instanceof Student &&
-        person.isCodu &&
-        !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
-        logger.warn("Student does not fulfill subject requirements for CoDu");
-        return 400;
-    }
+    // if (person instanceof Student &&
+    //     person.isCodu &&
+    //     !checkCoDuSubjectRequirements(person.getSubjectsFormatted())) {
+    //     logger.warn("Student does not fulfill subject requirements for CoDu");
+    //     return 400;
+    // }
 
     try {
         await entityManager.save(type, person);
