@@ -64,6 +64,11 @@ export class MatchCreateWithoutStudentInput {
   })
   source?: "imported" | "matchedexternal" | "matchedinternal" | undefined;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  matchPool?: string | undefined;
+
   @TypeGraphQL.Field(_type => PupilCreateNestedOneWithoutMatchInput, {
     nullable: true
   })

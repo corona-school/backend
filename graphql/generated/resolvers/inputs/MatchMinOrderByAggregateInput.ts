@@ -71,6 +71,11 @@ export class MatchMinOrderByAggregateInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
+  matchPool?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => SortOrder, {
+    nullable: true
+  })
   studentId?: "asc" | "desc" | undefined;
 
   @TypeGraphQL.Field(_type => SortOrder, {

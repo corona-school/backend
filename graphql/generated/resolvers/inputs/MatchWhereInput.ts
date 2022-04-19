@@ -10,6 +10,7 @@ import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { PupilRelationFilter } from "../inputs/PupilRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
+import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StudentRelationFilter } from "../inputs/StudentRelationFilter";
 
 @TypeGraphQL.InputType("MatchWhereInput", {
@@ -90,6 +91,11 @@ export class MatchWhereInput {
     nullable: true
   })
   source?: Enummatch_source_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  matchPool?: StringNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true
