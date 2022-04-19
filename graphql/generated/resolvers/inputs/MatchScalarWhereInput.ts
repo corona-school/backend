@@ -9,6 +9,7 @@ import { Enummatch_source_enumFilter } from "../inputs/Enummatch_source_enumFilt
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 import { StringFilter } from "../inputs/StringFilter";
+import { StringNullableFilter } from "../inputs/StringNullableFilter";
 
 @TypeGraphQL.InputType("MatchScalarWhereInput", {
   isAbstract: true
@@ -88,6 +89,11 @@ export class MatchScalarWhereInput {
     nullable: true
   })
   source?: Enummatch_source_enumFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableFilter, {
+    nullable: true
+  })
+  matchPool?: StringNullableFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableFilter, {
     nullable: true

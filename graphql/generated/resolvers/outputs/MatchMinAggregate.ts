@@ -68,6 +68,11 @@ export class MatchMinAggregate {
   })
   source!: "imported" | "matchedexternal" | "matchedinternal" | null;
 
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  matchPool!: string | null;
+
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })

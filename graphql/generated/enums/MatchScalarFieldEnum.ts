@@ -13,6 +13,7 @@ export enum MatchScalarFieldEnum {
   followUpToPupilMail = "followUpToPupilMail",
   followUpToStudentMail = "followUpToStudentMail",
   source = "source",
+  matchPool = "matchPool",
   studentId = "studentId",
   pupilId = "pupilId"
 }

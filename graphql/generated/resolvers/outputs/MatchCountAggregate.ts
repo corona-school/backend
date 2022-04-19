@@ -70,6 +70,11 @@ export class MatchCountAggregate {
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
+  matchPool!: number;
+
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
+    nullable: false
+  })
   studentId!: number;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
