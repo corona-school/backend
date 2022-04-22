@@ -206,6 +206,7 @@ export const mailjet = {
     COURSESUPCOMINGREMINDERINSTRUCTOR: (variables: {
         participantFirstname: string;
         courseName: string;
+        courseId: number;
         firstLectureDate: string;
         firstLectureTime: string;
     }) => {
@@ -221,6 +222,7 @@ export const mailjet = {
     COURSESUPCOMINGREMINDERPARTICIPANT: (variables: {
         participantFirstname: string;
         courseName: string;
+        courseId: number;
         firstLectureDate: string;
         firstLectureTime: string;
     }) => {

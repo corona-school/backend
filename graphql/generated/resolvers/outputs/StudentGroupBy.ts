@@ -12,7 +12,7 @@ import { student_module_enum } from "../../enums/student_module_enum";
 import { student_registrationsource_enum } from "../../enums/student_registrationsource_enum";
 import { student_state_enum } from "../../enums/student_state_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("StudentGroupBy", {
   isAbstract: true
 })
 export class StudentGroupBy {
@@ -234,7 +234,7 @@ export class StudentGroupBy {
   @TypeGraphQL.Field(_type => student_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus";
 
   @TypeGraphQL.Field(_type => StudentCountAggregate, {
     nullable: true

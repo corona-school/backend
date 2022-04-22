@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedEnumlog_logtype_enumFilter } from "../inputs/NestedEnumlog_logtype_enumFilter";
 import { log_logtype_enum } from "../../enums/log_logtype_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumlog_logtype_enumFilter", {
   isAbstract: true
 })
 export class Enumlog_logtype_enumFilter {

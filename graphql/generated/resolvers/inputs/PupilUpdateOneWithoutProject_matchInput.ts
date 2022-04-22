@@ -8,7 +8,7 @@ import { PupilUpdateWithoutProject_matchInput } from "../inputs/PupilUpdateWitho
 import { PupilUpsertWithoutProject_matchInput } from "../inputs/PupilUpsertWithoutProject_matchInput";
 import { PupilWhereUniqueInput } from "../inputs/PupilWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilUpdateOneWithoutProject_matchInput", {
   isAbstract: true
 })
 export class PupilUpdateOneWithoutProject_matchInput {
@@ -27,11 +27,6 @@ export class PupilUpdateOneWithoutProject_matchInput {
   })
   upsert?: PupilUpsertWithoutProject_matchInput | undefined;
 
-  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: PupilWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class PupilUpdateOneWithoutProject_matchInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => PupilWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: PupilWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => PupilUpdateWithoutProject_matchInput, {
     nullable: true

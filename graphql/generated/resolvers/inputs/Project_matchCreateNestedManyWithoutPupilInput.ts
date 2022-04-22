@@ -7,7 +7,7 @@ import { Project_matchCreateOrConnectWithoutPupilInput } from "../inputs/Project
 import { Project_matchCreateWithoutPupilInput } from "../inputs/Project_matchCreateWithoutPupilInput";
 import { Project_matchWhereUniqueInput } from "../inputs/Project_matchWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Project_matchCreateNestedManyWithoutPupilInput", {
   isAbstract: true
 })
 export class Project_matchCreateNestedManyWithoutPupilInput {

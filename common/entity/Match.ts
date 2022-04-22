@@ -97,6 +97,9 @@ export class Match {
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 
+    @Column({ nullable: true })
+    matchPool?: string;
+
     jitsiLink(): string {
         return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
     }

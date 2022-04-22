@@ -6,7 +6,7 @@ import { PupilCreateNestedOneWithoutMatchInput } from "../inputs/PupilCreateNest
 import { StudentCreateNestedOneWithoutMatchInput } from "../inputs/StudentCreateNestedOneWithoutMatchInput";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchCreateInput", {
   isAbstract: true
 })
 export class MatchCreateInput {
@@ -64,6 +64,11 @@ export class MatchCreateInput {
     nullable: true
   })
   source?: "imported" | "matchedexternal" | "matchedinternal" | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  matchPool?: string | undefined;
 
   @TypeGraphQL.Field(_type => PupilCreateNestedOneWithoutMatchInput, {
     nullable: true

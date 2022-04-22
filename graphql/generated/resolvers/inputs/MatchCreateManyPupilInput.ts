@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { match_source_enum } from "../../enums/match_source_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchCreateManyPupilInput", {
   isAbstract: true
 })
 export class MatchCreateManyPupilInput {
@@ -67,6 +67,11 @@ export class MatchCreateManyPupilInput {
     nullable: true
   })
   source?: "imported" | "matchedexternal" | "matchedinternal" | undefined;
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  matchPool?: string | undefined;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

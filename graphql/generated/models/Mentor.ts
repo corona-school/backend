@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { mentor_division_enum } from "../enums/mentor_division_enum";
 import { mentor_expertise_enum } from "../enums/mentor_expertise_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Mentor", {
   isAbstract: true
 })
 export class Mentor {

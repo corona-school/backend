@@ -4,24 +4,24 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumpupil_registrationsource_enumFilter", {
   isAbstract: true
 })
 export class NestedEnumpupil_registrationsource_enumFilter {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  equals?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  equals?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  in?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
+  in?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus"> | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
+  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus"> | undefined;
 
   @TypeGraphQL.Field(_type => NestedEnumpupil_registrationsource_enumFilter, {
     nullable: true

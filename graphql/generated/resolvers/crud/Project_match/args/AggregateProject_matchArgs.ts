@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { Project_matchOrderByInput } from "../../../inputs/Project_matchOrderByInput";
+import { Project_matchOrderByWithRelationInput } from "../../../inputs/Project_matchOrderByWithRelationInput";
 import { Project_matchWhereInput } from "../../../inputs/Project_matchWhereInput";
 import { Project_matchWhereUniqueInput } from "../../../inputs/Project_matchWhereUniqueInput";
 
@@ -11,10 +11,10 @@ export class AggregateProject_matchArgs {
   })
   where?: Project_matchWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [Project_matchOrderByInput], {
+  @TypeGraphQL.Field(_type => [Project_matchOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: Project_matchOrderByInput[] | undefined;
+  orderBy?: Project_matchOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => Project_matchWhereUniqueInput, {
     nullable: true

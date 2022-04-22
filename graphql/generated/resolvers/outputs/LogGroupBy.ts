@@ -9,7 +9,7 @@ import { LogMinAggregate } from "../outputs/LogMinAggregate";
 import { LogSumAggregate } from "../outputs/LogSumAggregate";
 import { log_logtype_enum } from "../../enums/log_logtype_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("LogGroupBy", {
   isAbstract: true
 })
 export class LogGroupBy {

@@ -17,7 +17,7 @@ import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsou
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput", {
   isAbstract: true
 })
 export class PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput {
@@ -136,6 +136,11 @@ export class PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput
   })
   isProjectCoachee?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
+    nullable: true
+  })
+  projectFields?: PupilCreateprojectFieldsInput | undefined;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -150,6 +155,11 @@ export class PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput
     nullable: true
   })
   projectMemberCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
+    nullable: true
+  })
+  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => pupil_learninggermansince_enum, {
     nullable: true
@@ -174,22 +184,12 @@ export class PupilCreateWithoutPupil_tutoring_interest_confirmation_requestInput
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
   coduToken?: string | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
-    nullable: true
-  })
-  projectFields?: PupilCreateprojectFieldsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
-    nullable: true
-  })
-  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => SchoolCreateNestedOneWithoutPupilInput, {
     nullable: true

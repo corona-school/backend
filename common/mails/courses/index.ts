@@ -8,8 +8,7 @@ import { Pupil } from "../../entity/Pupil";
 import { DEFAULTSENDERS } from "../config";
 import { CourseGuest } from "../../entity/CourseGuest";
 import * as Notification from "../../../common/notification";
-import { Person } from '../../../common/entity/Person';
-import { getFullName } from "../../../common/user";
+import { getFullName } from "../../user";
 import * as Prisma from "@prisma/client";
 
 const logger = getLogger();
@@ -60,6 +59,7 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Student |
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
         participantFirstname: instructor.firstname,
         courseName: course.name,
+        courseId: course.id,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });
@@ -76,6 +76,7 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil |
     const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
         participantFirstname: participant.firstname,
         courseName: course.name,
+        courseId: course.id,
         firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
         firstLectureTime: moment(firstLecture).format("HH:mm")
     });

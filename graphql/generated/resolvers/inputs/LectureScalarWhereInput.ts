@@ -6,7 +6,7 @@ import { DateTimeFilter } from "../inputs/DateTimeFilter";
 import { IntFilter } from "../inputs/IntFilter";
 import { IntNullableFilter } from "../inputs/IntNullableFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("LectureScalarWhereInput", {
   isAbstract: true
 })
 export class LectureScalarWhereInput {

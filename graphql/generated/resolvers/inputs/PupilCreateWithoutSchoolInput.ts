@@ -17,7 +17,7 @@ import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsou
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateWithoutSchoolInput", {
   isAbstract: true
 })
 export class PupilCreateWithoutSchoolInput {
@@ -136,6 +136,11 @@ export class PupilCreateWithoutSchoolInput {
   })
   isProjectCoachee?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
+    nullable: true
+  })
+  projectFields?: PupilCreateprojectFieldsInput | undefined;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -150,6 +155,11 @@ export class PupilCreateWithoutSchoolInput {
     nullable: true
   })
   projectMemberCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
+    nullable: true
+  })
+  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => pupil_learninggermansince_enum, {
     nullable: true
@@ -174,22 +184,12 @@ export class PupilCreateWithoutSchoolInput {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
   coduToken?: string | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
-    nullable: true
-  })
-  projectFields?: PupilCreateprojectFieldsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
-    nullable: true
-  })
-  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => Course_attendance_logCreateNestedManyWithoutPupilInput, {
     nullable: true

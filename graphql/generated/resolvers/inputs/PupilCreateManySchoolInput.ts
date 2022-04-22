@@ -2,14 +2,14 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { PupilCreateManylanguagesInput } from "../inputs/PupilCreateManylanguagesInput";
-import { PupilCreateManyprojectFieldsInput } from "../inputs/PupilCreateManyprojectFieldsInput";
+import { PupilCreatelanguagesInput } from "../inputs/PupilCreatelanguagesInput";
+import { PupilCreateprojectFieldsInput } from "../inputs/PupilCreateprojectFieldsInput";
 import { pupil_learninggermansince_enum } from "../../enums/pupil_learninggermansince_enum";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PupilCreateManySchoolInput", {
   isAbstract: true
 })
 export class PupilCreateManySchoolInput {
@@ -133,6 +133,11 @@ export class PupilCreateManySchoolInput {
   })
   isProjectCoachee?: boolean | undefined;
 
+  @TypeGraphQL.Field(_type => PupilCreateprojectFieldsInput, {
+    nullable: true
+  })
+  projectFields?: PupilCreateprojectFieldsInput | undefined;
+
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
@@ -147,6 +152,11 @@ export class PupilCreateManySchoolInput {
     nullable: true
   })
   projectMemberCount?: number | undefined;
+
+  @TypeGraphQL.Field(_type => PupilCreatelanguagesInput, {
+    nullable: true
+  })
+  languages?: PupilCreatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => pupil_learninggermansince_enum, {
     nullable: true
@@ -171,20 +181,10 @@ export class PupilCreateManySchoolInput {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  registrationSource?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
   })
   coduToken?: string | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreateManyprojectFieldsInput, {
-    nullable: true
-  })
-  projectFields?: PupilCreateManyprojectFieldsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PupilCreateManylanguagesInput, {
-    nullable: true
-  })
-  languages?: PupilCreateManylanguagesInput | undefined;
 }

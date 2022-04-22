@@ -6,7 +6,7 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutJufo_verification_transmissionInput } from "../inputs/StudentUpdateOneWithoutJufo_verification_transmissionInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Jufo_verification_transmissionUpdateInput", {
   isAbstract: true
 })
 export class Jufo_verification_transmissionUpdateInput {

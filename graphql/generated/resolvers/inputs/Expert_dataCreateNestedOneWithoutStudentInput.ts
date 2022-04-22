@@ -6,7 +6,7 @@ import { Expert_dataCreateOrConnectWithoutStudentInput } from "../inputs/Expert_
 import { Expert_dataCreateWithoutStudentInput } from "../inputs/Expert_dataCreateWithoutStudentInput";
 import { Expert_dataWhereUniqueInput } from "../inputs/Expert_dataWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataCreateNestedOneWithoutStudentInput", {
   isAbstract: true
 })
 export class Expert_dataCreateNestedOneWithoutStudentInput {

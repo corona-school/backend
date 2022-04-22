@@ -6,24 +6,24 @@ import { NestedEnumpupil_registrationsource_enumFilter } from "../inputs/NestedE
 import { NestedIntFilter } from "../inputs/NestedIntFilter";
 import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsource_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("NestedEnumpupil_registrationsource_enumWithAggregatesFilter", {
   isAbstract: true
 })
 export class NestedEnumpupil_registrationsource_enumWithAggregatesFilter {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: true
   })
-  equals?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | undefined;
+  equals?: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus" | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  in?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
+  in?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus"> | undefined;
 
   @TypeGraphQL.Field(_type => [pupil_registrationsource_enum], {
     nullable: true
   })
-  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu"> | undefined;
+  notIn?: Array<"normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus"> | undefined;
 
   @TypeGraphQL.Field(_type => NestedEnumpupil_registrationsource_enumWithAggregatesFilter, {
     nullable: true

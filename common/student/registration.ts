@@ -10,6 +10,7 @@ import { TutorJufoParticipationIndication } from "../jufo/participationIndicatio
 import { logTransaction } from "../transactionlog/log";
 import { setProjectFields } from "./update";
 import { PrerequisiteError, RedundantError } from "../util/error";
+import { toStudentSubjectDatabaseFormat } from "../util/subjectsutils";
 
 export interface RegisterStudentData {
     firstname: string;
@@ -74,8 +75,7 @@ export async function registerStudent(data: RegisterStudentData) {
     });
 
     // TODO: Create a new E-Mail for registration
-    // TODO: Send authToken with this
-    await Notification.actionTaken(student, "student_registration_started", { redirectTo: data.redirectTo });
+    await Notification.actionTaken(student, "student_registration_started", { redirectTo: data.redirectTo ?? "", verification: student.verification });
     await logTransaction("verificationRequets", student, {});
 
     return student;
@@ -115,11 +115,12 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
 
     const { languages, subjects, supportsInDaZ } = data;
 
+
     await prisma.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 1,
-            subjects: JSON.stringify(subjects),
+            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
             languages,
             supportsInDaZ
         },

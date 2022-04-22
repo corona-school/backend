@@ -8,9 +8,10 @@ import { DateTimeWithAggregatesFilter } from "../inputs/DateTimeWithAggregatesFi
 import { Enummatch_source_enumWithAggregatesFilter } from "../inputs/Enummatch_source_enumWithAggregatesFilter";
 import { IntNullableWithAggregatesFilter } from "../inputs/IntNullableWithAggregatesFilter";
 import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
+import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class MatchScalarWhereWithAggregatesInput {
@@ -88,6 +89,11 @@ export class MatchScalarWhereWithAggregatesInput {
     nullable: true
   })
   source?: Enummatch_source_enumWithAggregatesFilter | undefined;
+
+  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
+    nullable: true
+  })
+  matchPool?: StringNullableWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => IntNullableWithAggregatesFilter, {
     nullable: true

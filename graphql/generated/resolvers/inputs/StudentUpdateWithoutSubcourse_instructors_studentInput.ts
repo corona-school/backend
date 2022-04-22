@@ -31,7 +31,7 @@ import { ScreeningUpdateOneWithoutStudentInput } from "../inputs/ScreeningUpdate
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdatelanguagesInput } from "../inputs/StudentUpdatelanguagesInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("StudentUpdateWithoutSubcourse_instructors_studentInput", {
   isAbstract: true
 })
 export class StudentUpdateWithoutSubcourse_instructors_studentInput {
@@ -215,6 +215,11 @@ export class StudentUpdateWithoutSubcourse_instructors_studentInput {
   })
   supportsInDaZ?: NullableBoolFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => StudentUpdatelanguagesInput, {
+    nullable: true
+  })
+  languages?: StudentUpdatelanguagesInput | undefined;
+
   @TypeGraphQL.Field(_type => IntFieldUpdateOperationsInput, {
     nullable: true
   })
@@ -244,11 +249,6 @@ export class StudentUpdateWithoutSubcourse_instructors_studentInput {
     nullable: true
   })
   registrationSource?: Enumstudent_registrationsource_enumFieldUpdateOperationsInput | undefined;
-
-  @TypeGraphQL.Field(_type => StudentUpdatelanguagesInput, {
-    nullable: true
-  })
-  languages?: StudentUpdatelanguagesInput | undefined;
 
   @TypeGraphQL.Field(_type => Certificate_of_conductUpdateOneWithoutStudentInput, {
     nullable: true

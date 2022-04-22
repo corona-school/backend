@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { Course_tags_course_tagCreateManyCourse_tagInput } from "../inputs/Course_tags_course_tagCreateManyCourse_tagInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_tags_course_tagCreateManyCourse_tagInputEnvelope", {
   isAbstract: true
 })
 export class Course_tags_course_tagCreateManyCourse_tagInputEnvelope {

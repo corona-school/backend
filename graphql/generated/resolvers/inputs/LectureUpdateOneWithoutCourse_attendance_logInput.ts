@@ -8,7 +8,7 @@ import { LectureUpdateWithoutCourse_attendance_logInput } from "../inputs/Lectur
 import { LectureUpsertWithoutCourse_attendance_logInput } from "../inputs/LectureUpsertWithoutCourse_attendance_logInput";
 import { LectureWhereUniqueInput } from "../inputs/LectureWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("LectureUpdateOneWithoutCourse_attendance_logInput", {
   isAbstract: true
 })
 export class LectureUpdateOneWithoutCourse_attendance_logInput {
@@ -27,11 +27,6 @@ export class LectureUpdateOneWithoutCourse_attendance_logInput {
   })
   upsert?: LectureUpsertWithoutCourse_attendance_logInput | undefined;
 
-  @TypeGraphQL.Field(_type => LectureWhereUniqueInput, {
-    nullable: true
-  })
-  connect?: LectureWhereUniqueInput | undefined;
-
   @TypeGraphQL.Field(_type => Boolean, {
     nullable: true
   })
@@ -41,6 +36,11 @@ export class LectureUpdateOneWithoutCourse_attendance_logInput {
     nullable: true
   })
   delete?: boolean | undefined;
+
+  @TypeGraphQL.Field(_type => LectureWhereUniqueInput, {
+    nullable: true
+  })
+  connect?: LectureWhereUniqueInput | undefined;
 
   @TypeGraphQL.Field(_type => LectureUpdateWithoutCourse_attendance_logInput, {
     nullable: true

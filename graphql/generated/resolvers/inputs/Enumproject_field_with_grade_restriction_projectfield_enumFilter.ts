@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedEnumproject_field_with_grade_restriction_projectfield_enumFilter } from "../inputs/NestedEnumproject_field_with_grade_restriction_projectfield_enumFilter";
 import { project_field_with_grade_restriction_projectfield_enum } from "../../enums/project_field_with_grade_restriction_projectfield_enum";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Enumproject_field_with_grade_restriction_projectfield_enumFilter", {
   isAbstract: true
 })
 export class Enumproject_field_with_grade_restriction_projectfield_enumFilter {

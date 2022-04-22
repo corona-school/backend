@@ -7,10 +7,11 @@ import * as Notification from "../notification";
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from "./util";
 import { getLogger } from "log4js";
 import { PrerequisiteError } from "../util/error";
+import type { MatchPool } from "./pool";
 
 const logger = getLogger("Match");
 
-export async function createMatch(pupil: Pupil, student: Student) {
+export async function createMatch(pupil: Pupil, student: Student, pool: MatchPool) {
     const uuid = generateUUID();
 
     if (pupil.openMatchRequestCount < 1) {
@@ -25,7 +26,8 @@ export async function createMatch(pupil: Pupil, student: Student) {
         data: {
             uuid,
             pupilId: pupil.id,
-            studentId: student.id
+            studentId: student.id,
+            matchPool: pool.name
         }
     });
 
@@ -66,16 +68,18 @@ export async function createMatch(pupil: Pupil, student: Student) {
     const matchDate = "" + (+match.createdAt);
 
     await sendTemplateMail(tutorMail, student.email);
-    await Notification.actionTaken(student, "tutor_matching_success", {
-        uniqueId: "" + match.id,
-        pupil,
-        pupilGrade: getPupilGradeAsString(pupil),
-        subjects,
-        callURL,
-        firstMatch: tutorFirstMatch,
-        matchHash,
-        matchDate
-    });
+    if (pool.name !== "lern-fair-plus") {
+        await Notification.actionTaken(student, "tutor_matching_success", {
+            uniqueId: "" + match.id,
+            pupil,
+            pupilGrade: getPupilGradeAsString(pupil),
+            subjects,
+            callURL,
+            firstMatch: tutorFirstMatch,
+            matchHash,
+            matchDate
+        });
+    }
 
     const tuteeMail = mailjetTemplates.TUTEENEWMATCH({
         pupilFirstname: pupil.firstname,
@@ -86,15 +90,17 @@ export async function createMatch(pupil: Pupil, student: Student) {
     });
 
     await sendTemplateMail(tuteeMail, pupil.email);
-    await Notification.actionTaken(pupil, "tutee_matching_success", {
-        uniqueId: "" + match.id,
-        student,
-        subjects,
-        callURL,
-        firstMatch: tuteeFirstMatch,
-        matchHash,
-        matchDate
-    });
+    if (pool.name !== "lern-fair-plus") {
+        await Notification.actionTaken(pupil, "tutee_matching_success", {
+            uniqueId: "" + match.id,
+            student,
+            subjects,
+            callURL,
+            firstMatch: tuteeFirstMatch,
+            matchHash,
+            matchDate
+        });
+    }
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
 }

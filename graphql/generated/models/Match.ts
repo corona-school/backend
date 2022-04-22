@@ -6,7 +6,7 @@ import { Pupil } from "../models/Pupil";
 import { Student } from "../models/Student";
 import { match_source_enum } from "../enums/match_source_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Match", {
   isAbstract: true
 })
 export class Match {
@@ -69,6 +69,11 @@ export class Match {
     nullable: false
   })
   source!: "imported" | "matchedexternal" | "matchedinternal";
+
+  @TypeGraphQL.Field(_type => String, {
+    nullable: true
+  })
+  matchPool?: string | null;
 
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true

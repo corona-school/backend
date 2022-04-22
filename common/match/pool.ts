@@ -18,7 +18,7 @@ export interface MatchPool {
     studentsToMatch: Prisma.studentWhereInput;
     pupilsToMatch: Prisma.pupilWhereInput;
     settings: Settings;
-    createMatch(pupil: Pupil, student: Student): Promise<void | never>;
+    createMatch(pupil: Pupil, student: Student, pool: MatchPool): Promise<void | never>;
     // if present, the matching is run automatically on a daily basis if the criteria are matched
     automatic?: {
         minStudents: number;
@@ -117,7 +117,7 @@ export const pools: MatchPool[] = [
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]"},
-            registrationSource: { not: "codu" },
+            registrationSource: { notIn: ["codu", "plus"] },
             OR: [
                 { registrationSource: "cooperation" },
                 { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
@@ -129,7 +129,8 @@ export const pools: MatchPool[] = [
             openMatchRequestCount: { gt: 0},
             subjects: { not: "[]" },
             screening: { success: true },
-            isCodu: false
+            isCodu: false,
+            registrationSource: { notIn: ["codu", "plus"]}
         },
         createMatch,
         settings: { balancingCoefficients }
@@ -153,6 +154,24 @@ export const pools: MatchPool[] = [
         settings: { balancingCoefficients }
     },
     {
+        name: "lern-fair-plus",
+        pupilsToMatch: {
+            isPupil: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: "[]"},
+            registrationSource: { equals: "plus" }
+        },
+        studentsToMatch: {
+            isStudent: true,
+            openMatchRequestCount: { gt: 0},
+            subjects: { not: "[]" },
+            screening: { success: true },
+            registrationSource: { equals: "plus" }
+        },
+        createMatch,
+        settings: { balancingCoefficients }
+    },
+    {
         name: "TEST-DO-NOT-USE",
         pupilsToMatch: {
             isPupil: true,
@@ -166,7 +185,7 @@ export const pools: MatchPool[] = [
             if (!isDev) {
                 throw new Error(`The Test Pool may not be run in production!`);
             }
-            return createMatch(pupil, student);
+            return createMatch(pupil, student, this);
         },
         settings: { balancingCoefficients }
     }
@@ -214,7 +233,7 @@ export async function runMatching(poolName: string, apply: boolean) {
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            await pool.createMatch(match.pupil, match.student);
+            await pool.createMatch(match.pupil, match.student, pool);
         }
 
         timing.commit = Date.now() - startCommit;

@@ -11,7 +11,7 @@ import { Course_participation_certificateUpdateWithWhereUniqueWithoutSubcourseIn
 import { Course_participation_certificateUpsertWithWhereUniqueWithoutSubcourseInput } from "../inputs/Course_participation_certificateUpsertWithWhereUniqueWithoutSubcourseInput";
 import { Course_participation_certificateWhereUniqueInput } from "../inputs/Course_participation_certificateWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_participation_certificateUpdateManyWithoutSubcourseInput", {
   isAbstract: true
 })
 export class Course_participation_certificateUpdateManyWithoutSubcourseInput {
@@ -38,11 +38,6 @@ export class Course_participation_certificateUpdateManyWithoutSubcourseInput {
   @TypeGraphQL.Field(_type => [Course_participation_certificateWhereUniqueInput], {
     nullable: true
   })
-  connect?: Course_participation_certificateWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [Course_participation_certificateWhereUniqueInput], {
-    nullable: true
-  })
   set?: Course_participation_certificateWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_participation_certificateWhereUniqueInput], {
@@ -54,6 +49,11 @@ export class Course_participation_certificateUpdateManyWithoutSubcourseInput {
     nullable: true
   })
   delete?: Course_participation_certificateWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [Course_participation_certificateWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: Course_participation_certificateWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [Course_participation_certificateUpdateWithWhereUniqueWithoutSubcourseInput], {
     nullable: true

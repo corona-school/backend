@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { Course_tags_course_tagUpdateManyWithoutCourse_tagInput } from "../inputs/Course_tags_course_tagUpdateManyWithoutCourse_tagInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Course_tagUpdateInput", {
   isAbstract: true
 })
 export class Course_tagUpdateInput {

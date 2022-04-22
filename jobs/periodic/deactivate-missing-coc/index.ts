@@ -20,12 +20,17 @@ async function deactivateMissingCoc() {
                 gt: new Date("2022-01-01")
             },
             active: true,
-            OR: [{screening: {
-                success: true,
-                createdAt: {
-                    lt: eightWeeksAgoDate
+            OR: [{
+                // edge case: Support disabled the tutoring after the user was screened
+                isStudent: true,
+                screening: {
+                    success: true,
+                    createdAt: {
+                        lt: eightWeeksAgoDate
+                    }
                 }
-            }}, {
+            }, {
+                isProjectCoach: true,
                 // eslint-disable-next-line camelcase
                 project_coaching_screening: {
                     success: true,

@@ -14,7 +14,7 @@ import { pupil_registrationsource_enum } from "../../enums/pupil_registrationsou
 import { pupil_schooltype_enum } from "../../enums/pupil_schooltype_enum";
 import { pupil_state_enum } from "../../enums/pupil_state_enum";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("PupilGroupBy", {
   isAbstract: true
 })
 export class PupilGroupBy {
@@ -186,7 +186,7 @@ export class PupilGroupBy {
   @TypeGraphQL.Field(_type => pupil_registrationsource_enum, {
     nullable: false
   })
-  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu";
+  registrationSource!: "normal" | "cooperation" | "drehtuer" | "other" | "codu" | "plus";
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

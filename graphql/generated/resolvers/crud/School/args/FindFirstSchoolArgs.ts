@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { SchoolOrderByInput } from "../../../inputs/SchoolOrderByInput";
+import { SchoolOrderByWithRelationInput } from "../../../inputs/SchoolOrderByWithRelationInput";
 import { SchoolWhereInput } from "../../../inputs/SchoolWhereInput";
 import { SchoolWhereUniqueInput } from "../../../inputs/SchoolWhereUniqueInput";
 import { SchoolScalarFieldEnum } from "../../../../enums/SchoolScalarFieldEnum";
@@ -12,10 +12,10 @@ export class FindFirstSchoolArgs {
   })
   where?: SchoolWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [SchoolOrderByInput], {
+  @TypeGraphQL.Field(_type => [SchoolOrderByWithRelationInput], {
     nullable: true
   })
-  orderBy?: SchoolOrderByInput[] | undefined;
+  orderBy?: SchoolOrderByWithRelationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => SchoolWhereUniqueInput, {
     nullable: true

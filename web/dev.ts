@@ -54,7 +54,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP1");
     p.wix_id = "00000000-0000-0001-0001-1b4c4c526364";
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.subjects = JSON.stringify([{ name: "Deutsch" }, { name: "Mathematik" }, { name: "Englisch" }]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
     p.languages = [Language.bg, Language.it];
@@ -71,7 +71,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP2");
     p.wix_id = "00000000-0000-0001-0002-1b4c4c526364";
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify(["Spanisch", "Deutsch"]);
+    p.subjects = JSON.stringify([{ name: "Spanisch" }, { name: "Deutsch" }]);
     p.grade = "6. Klasse";
     p.openMatchRequestCount = 0;
     pupils.push(p);
@@ -88,7 +88,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP3");
     p.wix_id = "00000000-0000-0001-0002-1b4c4c526365";
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify(["Spanisch", "Deutsch"]);
+    p.subjects = JSON.stringify([{ name: "Spanisch" }, { name: "Deutsch" }]);
     p.grade = "6. Klasse";
     p.openMatchRequestCount = 0;
     pupils.push(p);
@@ -126,7 +126,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP5");
     p.wix_id = "00000000-0000-0001-0003-1b4c4c526368";
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify(["Deutsch", "Geschichte"]);
+    p.subjects = JSON.stringify([{ name: "Deutsch" }, { name: "Geschichte" }]);
     p.grade = "13. Klasse";
     p.openMatchRequestCount = 1;
     pupils.push(p);
@@ -144,7 +144,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP6");
     p.wix_id = "00000000-0000-0001-0003-1b4c4c526369";
     p.wix_creation_date = new Date(new Date().getTime() - 70000000);
-    p.subjects = JSON.stringify(["Englisch", "Latein"]);
+    p.subjects = JSON.stringify([{ name: "Englisch" }, { name: "Latein" }]);
     p.grade = "10. Klasse";
     p.openMatchRequestCount = 1;
     pupils.push(p);
@@ -162,7 +162,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP7");
     p.wix_id = "00000000-0000-0001-0003-1b4c4c526370";
     p.wix_creation_date = new Date(new Date().getTime() - 80000000);
-    p.subjects = JSON.stringify(["Musik", "Latein"]);
+    p.subjects = JSON.stringify([{ name: "Musik" }, { name: "Latein" }]);
     p.grade = "7. Klasse";
     p.openMatchRequestCount = 1;
     pupils.push(p);
@@ -178,7 +178,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP8");
     p.wix_id = "00000000-0000-0001-0001-1b4c4c526371";
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.subjects = JSON.stringify([{ name: "Deutsch" }, { name: "Mathematik" }, { name: "Englisch" }]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
     p.languages = [Language.bg, Language.it];
@@ -196,7 +196,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP9");
     p.wix_id = "00000000-0000-0001-0001-1b4c4c526372";
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.subjects = JSON.stringify([{ name: "Deutsch" }, { name: "Mathematik" }, { name: "Englisch" }]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
     p.languages = [Language.bg, Language.it];
@@ -214,7 +214,7 @@ export async function setupDevDB() {
     p.authToken = sha512("authtokenP10");
     p.wix_id = "00000000-0000-0001-0001-1b4c4c526373";
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify(["Deutsch", "Mathematik", "Englisch"]);
+    p.subjects = JSON.stringify([{ name: "Deutsch" }, { name: "Mathematik" }, { name: "Englisch" }]);
     p.grade = "3. Klasse";
     p.openMatchRequestCount = 0;
     p.languages = [Language.bg, Language.it];
@@ -263,7 +263,7 @@ export async function setupDevDB() {
     s2.authToken = sha512("authtokenS2");
     s2.wix_id = "00000000-0000-0002-0002-1b4c4c526364";
     s2.wix_creation_date = new Date(new Date().getTime() - 22000000);
-    s2.subjects = JSON.stringify(["Deutsch3:5", "Mathematik4:6"]);
+    s2.subjects = JSON.stringify([{ name: "Deutsch", minGrade: 3, maxGrade: 5 }, { name: "Mathematik", minGrade: 4, maxGrade: 6 }]);
     s2.openMatchRequestCount = 2;
     students.push(s2);
 

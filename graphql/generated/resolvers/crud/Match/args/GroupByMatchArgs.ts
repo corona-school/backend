@@ -1,6 +1,6 @@
 import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
-import { MatchOrderByInput } from "../../../inputs/MatchOrderByInput";
+import { MatchOrderByWithAggregationInput } from "../../../inputs/MatchOrderByWithAggregationInput";
 import { MatchScalarWhereWithAggregatesInput } from "../../../inputs/MatchScalarWhereWithAggregatesInput";
 import { MatchWhereInput } from "../../../inputs/MatchWhereInput";
 import { MatchScalarFieldEnum } from "../../../../enums/MatchScalarFieldEnum";
@@ -12,15 +12,15 @@ export class GroupByMatchArgs {
   })
   where?: MatchWhereInput | undefined;
 
-  @TypeGraphQL.Field(_type => [MatchOrderByInput], {
+  @TypeGraphQL.Field(_type => [MatchOrderByWithAggregationInput], {
     nullable: true
   })
-  orderBy?: MatchOrderByInput[] | undefined;
+  orderBy?: MatchOrderByWithAggregationInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [MatchScalarFieldEnum], {
     nullable: false
   })
-  by!: Array<"id" | "uuid" | "dissolved" | "dissolveReason" | "proposedTime" | "createdAt" | "updatedAt" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail" | "source" | "studentId" | "pupilId">;
+  by!: Array<"id" | "uuid" | "dissolved" | "dissolveReason" | "proposedTime" | "createdAt" | "updatedAt" | "feedbackToPupilMail" | "feedbackToStudentMail" | "followUpToPupilMail" | "followUpToStudentMail" | "source" | "matchPool" | "studentId" | "pupilId">;
 
   @TypeGraphQL.Field(_type => MatchScalarWhereWithAggregatesInput, {
     nullable: true

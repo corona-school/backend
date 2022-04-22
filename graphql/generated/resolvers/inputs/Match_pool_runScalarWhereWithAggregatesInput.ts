@@ -7,7 +7,7 @@ import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { JsonWithAggregatesFilter } from "../inputs/JsonWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Match_pool_runScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Match_pool_runScalarWhereWithAggregatesInput {

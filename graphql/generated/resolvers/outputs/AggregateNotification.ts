@@ -8,7 +8,7 @@ import { NotificationMaxAggregate } from "../outputs/NotificationMaxAggregate";
 import { NotificationMinAggregate } from "../outputs/NotificationMinAggregate";
 import { NotificationSumAggregate } from "../outputs/NotificationSumAggregate";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("AggregateNotification", {
   isAbstract: true
 })
 export class AggregateNotification {

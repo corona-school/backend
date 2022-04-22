@@ -7,10 +7,11 @@ import { DateTimeFieldUpdateOperationsInput } from "../inputs/DateTimeFieldUpdat
 import { Enummatch_source_enumFieldUpdateOperationsInput } from "../inputs/Enummatch_source_enumFieldUpdateOperationsInput";
 import { NullableDateTimeFieldUpdateOperationsInput } from "../inputs/NullableDateTimeFieldUpdateOperationsInput";
 import { NullableIntFieldUpdateOperationsInput } from "../inputs/NullableIntFieldUpdateOperationsInput";
+import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { StudentUpdateOneWithoutMatchInput } from "../inputs/StudentUpdateOneWithoutMatchInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("MatchUpdateWithoutPupilInput", {
   isAbstract: true
 })
 export class MatchUpdateWithoutPupilInput {
@@ -68,6 +69,11 @@ export class MatchUpdateWithoutPupilInput {
     nullable: true
   })
   source?: Enummatch_source_enumFieldUpdateOperationsInput | undefined;
+
+  @TypeGraphQL.Field(_type => NullableStringFieldUpdateOperationsInput, {
+    nullable: true
+  })
+  matchPool?: NullableStringFieldUpdateOperationsInput | undefined;
 
   @TypeGraphQL.Field(_type => StudentUpdateOneWithoutMatchInput, {
     nullable: true

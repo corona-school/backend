@@ -10,7 +10,7 @@ import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("Expert_dataScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class Expert_dataScalarWhereWithAggregatesInput {
