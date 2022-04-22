@@ -8,17 +8,22 @@ import { createMatch } from "../../common/match/create";
 import { GraphQLContext } from "../context";
 import { isSessionPupil, getSessionPupil, getSessionStudent } from "../authentication";
 import { createPupilMatchRequest, createStudentMatchRequest } from "../../common/match/request";
+import { pools } from "../../common/match/pool";
 
 @Resolver(of => GraphQLModel.Match)
 export class MutateMatchResolver {
 
     @Mutation(returns => Boolean)
     @Authorized(Role.ADMIN)
-    async matchAdd(@Arg("pupilId") pupilId: number, @Arg("studentId") studentId: number): Promise<boolean> {
+    async matchAdd(@Arg("pupilId") pupilId: number, @Arg("studentId") studentId: number, @Arg("poolName") poolName: string): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         const student = await getStudent(studentId);
+        const pool = pools.find(it => it.name === poolName);
+        if (!pool) {
+            throw new Error(`Unknown MatchPool(${poolName})`);
+        }
 
-        await createMatch(pupil, student);
+        await createMatch(pupil, student, pool);
 
         return true;
     }

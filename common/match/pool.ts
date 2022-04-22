@@ -18,7 +18,7 @@ export interface MatchPool {
     studentsToMatch: Prisma.studentWhereInput;
     pupilsToMatch: Prisma.pupilWhereInput;
     settings: Settings;
-    createMatch(pupil: Pupil, student: Student): Promise<void | never>;
+    createMatch(pupil: Pupil, student: Student, pool: MatchPool): Promise<void | never>;
     // if present, the matching is run automatically on a daily basis if the criteria are matched
     automatic?: {
         minStudents: number;
@@ -185,7 +185,7 @@ export const pools: MatchPool[] = [
             if (!isDev) {
                 throw new Error(`The Test Pool may not be run in production!`);
             }
-            return createMatch(pupil, student);
+            return createMatch(pupil, student, this);
         },
         settings: { balancingCoefficients }
     }
@@ -233,7 +233,7 @@ export async function runMatching(poolName: string, apply: boolean) {
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            await pool.createMatch(match.pupil, match.student);
+            await pool.createMatch(match.pupil, match.student, pool);
         }
 
         timing.commit = Date.now() - startCommit;

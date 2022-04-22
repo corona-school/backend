@@ -209,6 +209,7 @@ model match {
   followUpToPupilMail   Boolean           @default(false)
   followUpToStudentMail Boolean           @default(false)
   source                match_source_enum @default(matchedinternal)
+  matchPool             String?           @db.VarChar
   studentId             Int?
   pupilId               Int?
   pupil                 pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
