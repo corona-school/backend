@@ -7,6 +7,7 @@ import { course_category_enum } from "@prisma/client";
 import { getLogger } from "log4js";
 import { getSessionStudent } from "../authentication";
 import { GraphQLContext } from "../context";
+import { getCourse, getStudent } from "../util";
 
 class PublicCourseCreateInput {
   @TypeGraphQL.Field(_type => String, {
@@ -46,10 +47,6 @@ class PublicCourseCreateInput {
 }
 
 class PublicCourseEditInput {
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-      nullable: true
-  })
-  id!: number | undefined;
   @TypeGraphQL.Field(_type => String, {
       nullable: false
   })
@@ -93,6 +90,7 @@ class PublicCourseEditInput {
 
 const logger = getLogger("MutateCourseResolver");
 
+
 @Resolver((of) => GraphQLModel.Course)
 export class MutateCourseResolver {
     @Mutation((returns) => GraphQLModel.Course)
@@ -106,12 +104,41 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async courseEdit(@Ctx() context: GraphQLContext, @Arg("course") course: PublicCourseEditInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseEdit(@Ctx() context: GraphQLContext, @Arg("courseId")courseId: number, @Arg("course") data: PublicCourseEditInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, "Course", course);
         const student = await getSessionStudent(context, studentId);
-        const result = await prisma.course.update({ data: {...course }, where: {id: course.id}});
+        const result = await prisma.course.update({ data, where: {id: courseId}});
         logger.info(`Course (${result.id}) updated by Student (${student.id})`);
         return true;
     }
 
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async courseAddInstructor(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
+        await getCourse(courseId);
+        await getStudent(studentId);
+        await prisma.course_instructors_student.create({data: { courseId, studentId}});
+        logger.info(`Student (${studentId}) was added as an instructor to course ${courseId}`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async courseDeleteInstructor(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
+        await getCourse(courseId);
+        await getStudent(studentId);
+        await prisma.course_instructors_student.delete({where: { courseId_studentId: {courseId, studentId}}});
+        logger.info(`Student (${studentId}) was deleted from course ${courseId}`);
+        return true;
+    }
 }
+
+
+
+
+
+
+
+
