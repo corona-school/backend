@@ -1,5 +1,5 @@
 import { prisma } from "../../common/prisma";
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from "type-graphql";
+import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType } from "type-graphql";
 import * as GraphQLModel from "../generated/models";
 import { AuthorizedDeferred, hasAccess, Role } from "../authorizations";
 import * as TypeGraphQL from "type-graphql";
@@ -9,6 +9,7 @@ import { getSessionStudent } from "../authentication";
 import { GraphQLContext } from "../context";
 import { getCourse, getStudent } from "../util";
 
+@InputType()
 class PublicCourseCreateInput {
   @TypeGraphQL.Field(_type => String, {
       nullable: false
@@ -46,6 +47,7 @@ class PublicCourseCreateInput {
     // tags?: Course_tags_course_tagCreateNestedManyWithoutCourseInput | undefined;
 }
 
+@InputType()
 class PublicCourseEditInput {
   @TypeGraphQL.Field(_type => String, {
       nullable: false
