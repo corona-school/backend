@@ -4,6 +4,7 @@ import { Role } from "../authorizations";
 import * as Notification from "../../common/notification/notification";
 import { NotificationCreateInput, NotificationUpdateInput } from "../generated";
 import { runBulkAction } from "../../common/notification/bulk";
+import { notification_sender_enum } from "@prisma/client";
 
 @InputType()
 class NotificationInput { // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
@@ -27,6 +28,8 @@ class NotificationInput { // Notification Model as Input type, see https://githu
   delay: number | null;
   @Field(_type => Int, { nullable: true })
   interval: number | null;
+  @Field(_type => notification_sender_enum, { nullable: true })
+  sender: notification_sender_enum | null;
 }
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {
