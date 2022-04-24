@@ -37,13 +37,19 @@ class PublicCourseCreateInput {
 }
 
 class PublicCourseEditInput {
-  @TypeGraphQL.Field(_type => String)
+  @TypeGraphQL.Field(_type => String, {
+      nullable: true
+  })
   name?: string;
 
-  @TypeGraphQL.Field(_type => String)
+  @TypeGraphQL.Field(_type => String, {
+      nullable: true
+  })
   outline?: string;
 
-  @TypeGraphQL.Field(_type => String)
+  @TypeGraphQL.Field(_type => String, {
+      nullable: true
+  })
   description?: string;
 
   // @TypeGraphQL.Field(_type => Course_instructors_studentUpdateManyWithoutCourseInput, {
@@ -56,10 +62,14 @@ class PublicCourseEditInput {
   // })
   // image?: string | undefined;
 
-  @TypeGraphQL.Field(_type => course_category_enum)
+  @TypeGraphQL.Field(_type => course_category_enum, {
+      nullable: true
+  })
   category?: "revision" | "club" | "coaching";
 
-  @TypeGraphQL.Field(_type => Boolean)
+  @TypeGraphQL.Field(_type => Boolean, {
+      nullable: true
+  })
   allowContact?: boolean | undefined;
 
     // @TypeGraphQL.Field(_type => Course_tags_course_tagCreateNestedManyWithoutCourseInput, {
