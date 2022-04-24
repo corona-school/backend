@@ -10,19 +10,13 @@ import { GraphQLContext } from "../context";
 import { getCourse, getStudent } from "../util";
 
 class PublicCourseCreateInput {
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   name!: string;
 
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   outline!: string;
 
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   description!: string;
 
   // @TypeGraphQL.Field(_type => String, {
@@ -30,14 +24,10 @@ class PublicCourseCreateInput {
   // })
   // image?: string | undefined;
 
-  @TypeGraphQL.Field(_type => course_category_enum, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => course_category_enum)
   category!: "revision" | "club" | "coaching";
 
-  @TypeGraphQL.Field(_type => Boolean, {
-      nullable: true
-  })
+  @TypeGraphQL.Field(_type => Boolean)
   allowContact?: boolean | undefined;
 
     // @TypeGraphQL.Field(_type => Course_tags_course_tagCreateNestedManyWithoutCourseInput, {
@@ -47,19 +37,13 @@ class PublicCourseCreateInput {
 }
 
 class PublicCourseEditInput {
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   name?: string;
 
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   outline?: string;
 
-  @TypeGraphQL.Field(_type => String, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => String)
   description?: string;
 
   // @TypeGraphQL.Field(_type => Course_instructors_studentUpdateManyWithoutCourseInput, {
@@ -72,14 +56,10 @@ class PublicCourseEditInput {
   // })
   // image?: string | undefined;
 
-  @TypeGraphQL.Field(_type => course_category_enum, {
-      nullable: false
-  })
+  @TypeGraphQL.Field(_type => course_category_enum)
   category?: "revision" | "club" | "coaching";
 
-  @TypeGraphQL.Field(_type => Boolean, {
-      nullable: true
-  })
+  @TypeGraphQL.Field(_type => Boolean)
   allowContact?: boolean | undefined;
 
     // @TypeGraphQL.Field(_type => Course_tags_course_tagCreateNestedManyWithoutCourseInput, {
@@ -103,15 +83,15 @@ export class MutateCourseResolver {
         return result;
     }
 
-    @Mutation((returns) => Boolean)
+    @Mutation((returns) => GraphQLModel.Course)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async courseEdit(@Ctx() context: GraphQLContext, @Arg("courseId")courseId: number, @Arg("course") data: PublicCourseEditInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
+    async courseEdit(@Ctx() context: GraphQLContext, @Arg("courseId")courseId: number, @Arg("course") data: PublicCourseEditInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, "Course", course);
         const student = await getSessionStudent(context, studentId);
         const result = await prisma.course.update({ data, where: {id: courseId}});
         logger.info(`Course (${result.id}) updated by Student (${student.id})`);
-        return true;
+        return result;
     }
 
     @Mutation((returns) => Boolean)
@@ -134,11 +114,3 @@ export class MutateCourseResolver {
         return true;
     }
 }
-
-
-
-
-
-
-
-
