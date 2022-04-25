@@ -28,7 +28,7 @@ class PublicCourseCreateInput {
   category!: "revision" | "club" | "coaching";
 
   @TypeGraphQL.Field(_type => Boolean)
-  allowContact?: boolean | undefined;
+  allowContact?: boolean;
 
     // @TypeGraphQL.Field(_type => Course_tags_course_tagCreateNestedManyWithoutCourseInput, {
     //   nullable: true
