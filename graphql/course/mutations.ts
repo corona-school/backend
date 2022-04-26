@@ -108,7 +108,7 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async courseAddInstructor(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
+    async courseAddInstructor(@Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
         await getCourse(courseId);
         await getStudent(studentId);
         await prisma.course_instructors_student.create({data: { courseId, studentId}});
@@ -118,11 +118,20 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async courseDeleteInstructor(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
+    async courseDeleteInstructor(@Arg("courseId") courseId: number, @Arg("studentId") studentId: number): Promise<boolean> {
         await getCourse(courseId);
         await getStudent(studentId);
         await prisma.course_instructors_student.delete({where: { courseId_studentId: {courseId, studentId}}});
         logger.info(`Student (${studentId}) was deleted from course ${courseId}`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async courseAllow(@Arg("courseId") courseId: number, @Arg("screeningComment", { nullable: true }) screeningComment?: string | null): Promise<boolean> {
+        await getCourse(courseId);
+        await prisma.course.update({data: {screeningComment, courseState: "allowed"}, where: {id: courseId}});
+        logger.info(`Admin allowed (approved) course ${courseId} with screening comment: ${screeningComment}`);
         return true;
     }
 }
