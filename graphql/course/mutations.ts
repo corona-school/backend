@@ -97,12 +97,11 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => GraphQLModel.Course)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async courseEdit(@Ctx() context: GraphQLContext, @Arg("courseId")courseId: number, @Arg("course") data: PublicCourseEditInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<GraphQLModel.Course> {
+    async courseEdit(@Ctx() context: GraphQLContext, @Arg("courseId")courseId: number, @Arg("course") data: PublicCourseEditInput): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, "Course", course);
-        const student = await getSessionStudent(context, studentId);
         const result = await prisma.course.update({ data, where: {id: courseId}});
-        logger.info(`Course (${result.id}) updated by Student (${student.id})`);
+        logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
         return result;
     }
 
@@ -123,6 +122,15 @@ export class MutateCourseResolver {
         await getStudent(studentId);
         await prisma.course_instructors_student.delete({where: { courseId_studentId: {courseId, studentId}}});
         logger.info(`Student (${studentId}) was deleted from course ${courseId}`);
+        return true;
+    }
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseSubmit(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number): Promise<boolean> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, "Course", course);
+        await prisma.course.update({ data: { courseState: "submitted"}, where: { id: courseId}});
+        logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
         return true;
     }
 
