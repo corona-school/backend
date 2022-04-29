@@ -41,7 +41,7 @@ class PublicCourseEditInput {
   // image?: string | undefined;
   @TypeGraphQL.Field(_type => course_category_enum, { nullable: true })
   category?: "revision" | "club" | "coaching";
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => Boolean, { nullable: true })
   allowContact?: boolean | undefined;
 }
 
