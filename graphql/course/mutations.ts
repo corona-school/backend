@@ -29,17 +29,17 @@ class PublicCourseCreateInput {
 
 @InputType()
 class PublicCourseEditInput {
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => String, { nullable: true })
   name?: string;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => String, { nullable: true })
   outline?: string;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => String, { nullable: true })
   description?: string;
   // @TypeGraphQL.Field(_type => String, {
   //   nullable: true
   // })
   // image?: string | undefined;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => course_category_enum, { nullable: true })
   category?: "revision" | "club" | "coaching";
   @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
   allowContact?: boolean | undefined;
@@ -55,7 +55,7 @@ class PublicSubcourseCreateInput {
   maxParticipants!: number;
   @TypeGraphQL.Field(_type => Boolean)
   joinAfterStart!: boolean;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
+  @TypeGraphQL.Field(_type => [PublicLectureInput], { nullable: true })
   lecture?: PublicLectureInput[];
 }
 
