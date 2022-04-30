@@ -7,6 +7,7 @@
   },
   "main": "index.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "start": "echo Please be more specific what to start for now...",
     "build": "tsc",
     "build:clean": "(rm -rf ./built/ 2> /dev/null || find ./built/ -mindepth 1 -delete) && npm run build",

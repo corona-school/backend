@@ -9,7 +9,9 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
-    student_module_enum as TeacherModule
+    student_module_enum as TeacherModule,
+    notification_sender_enum as NotificationSender,
+    course_category_enum as CourseCategory
 } from "@prisma/client";
 
 registerEnumType(SchoolType, {
@@ -52,4 +54,12 @@ registerEnumType(TutorJufoParticipationIndication, {
 
 registerEnumType(LearningGermanSince, {
     name: "LearningGermanySince"
+});
+
+registerEnumType(NotificationSender, {
+    name: "NotificationSender"
+});
+
+registerEnumType(CourseCategory, {
+    name: "CourseCategory"
 });

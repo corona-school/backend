@@ -86,8 +86,11 @@ class RegisterPupilInput implements RegisterPupilData {
     @Field(type => Boolean)
     newsletter: boolean;
 
-    @Field(type => Int)
-    schoolId: School["id"];
+    @Field(type => Int, { nullable: true })
+    schoolId?: School["id"];
+
+    @Field(type => SchoolType, { nullable: true })
+    schooltype?: SchoolType;
 
     @Field(type => State)
     state: State;
@@ -455,12 +458,16 @@ export class MutateMeResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.PUPIL, Role.ADMIN)
     async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTuteeInput, @Arg("pupilId", { nullable: true}) pupilId: number) {
+        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+
         const pupil = await getSessionPupil(context, pupilId);
         const log = logInContext("Me", context);
         const updatedPupil = await becomeTutee(pupil, data);
-        await evaluatePupilRoles(updatedPupil, context);
+        if (!byAdmin) {
+            await evaluatePupilRoles(updatedPupil, context);
+        }
 
-        log.info(`Pupil(${pupil.id}) upgraded their account to a TUTEE`);
+        log.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
 
         return true;
     }
