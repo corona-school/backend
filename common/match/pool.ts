@@ -29,14 +29,14 @@ export interface MatchPool<Toggle extends string = string> {
 
 const getViableUsers = (toggles: string[]) => {
     const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
-        active: true,
+        active: true
     };
 
     if (!toggles.includes("allow-unverified")) {
         viableUsers.verification = null; // require verification to be unset
     }
 
-    /* On production we want to avoid that our testusers test-prod-...@lern-fair.de
+    /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
     are accidentally matched to real users */
     if (!isDev) {
         viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" }};
