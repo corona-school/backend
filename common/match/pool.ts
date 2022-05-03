@@ -204,7 +204,7 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
         throw new Error(`Unknown toggles ${invalidToggles} for pool '${pool.name}'`);
     }
 
-    logger.info(`MatchingPool(${pool.name}) started matching (apply: ${apply})`);
+    logger.info(`MatchingPool(${pool.name}) started matching (apply: ${apply}, toggles: ${toggles})`);
 
     const timing = { preparation: 0, matching: 0, commit: 0 };
 
@@ -233,6 +233,8 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
     timing.matching = Date.now() - startMatching;
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
+    const stats = { ...result.stats, toggles };
+
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
@@ -245,13 +247,13 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
         await prisma.match_pool_run.create({ data: {
             matchingPool: pool.name,
             matchesCreated: matches.length,
-            stats: (result.stats as any)
+            stats
         }});
     }
 
     return {
         timing,
-        stats: result.stats,
+        stats,
         matches
     };
 }
