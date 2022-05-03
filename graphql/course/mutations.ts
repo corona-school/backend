@@ -7,7 +7,8 @@ import { course_category_enum } from "@prisma/client";
 import { getLogger } from "log4js";
 import { getSessionStudent } from "../authentication";
 import { GraphQLContext } from "../context";
-import { getCourse, getStudent } from "../util";
+import { getCourse, getStudent, getSubcourse } from "../util";
+import { ForbiddenError } from "apollo-server-express";
 
 @InputType()
 class PublicCourseCreateInput {
@@ -134,16 +135,43 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => GraphQLModel.Subcourse)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseCreate(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("subcourse") subcourse: PublicSubcourseCreateInput /*, @Arg("studenId", { nullable: true }) studentId?: number */): Promise<GraphQLModel.Subcourse> {
+    async subcourseCreate(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("subcourse") subcourse: PublicSubcourseCreateInput, @Arg("studentId", { nullable: true }) studentId?: number): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
         await hasAccess(context, "Course", course);
         if (course.courseState !== "allowed") {
             throw new Error(`Course (${courseId}) not allowed (approved) yet`);
         }
-        // const student = await getSessionStudent(context, studentId);
+        const student = await getSessionStudent(context, studentId);
         const result = await prisma.subcourse.create({ data: { ...subcourse, courseId, published: false}});
-        // await prisma.subcourse_instructors_student.create({data: { subcourseId: result.id, studentId: student.id}});
+        await prisma.subcourse_instructors_student.create({data: { subcourseId: result.id, studentId: student.id}});
         logger.info(`Subcourse ${result.id} was created on course ${courseId}`);
         return result;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcoursePublish(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number): Promise<Boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, "Subcourse", subcourse);
+
+        const lectures = await prisma.lecture.findMany({where: {subcourseId}});
+        if (lectures.length == 0) {
+            throw new Error(`Subcourse (${subcourseId}) must have at least one lecture to be published`);
+        } else {
+            let pastLectures:number[];
+            let currentDate = new Date();
+            lectures.forEach(lecture => {
+                // checks if a lecture's start date is in the past
+                if (lecture.start.getDate() < currentDate.getDate() || (lecture.start.getDate() == currentDate.getDate() && lecture.start.getTime() < currentDate.getTime())) {
+                    pastLectures.push(lecture.id);
+                }
+            });
+            if (pastLectures.length != 0) {
+                throw new Error(`Lectures (${pastLectures.toString()}) of subcourse (${subcourseId}) must happen in the future.`);
+            }
+        }
+        await prisma.subcourse.update({data: { published: true }, where: { id: subcourseId}});
+        logger.info(`Subcourse (${subcourseId}) was published`);
+        return true;
     }
 }
