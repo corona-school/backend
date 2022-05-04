@@ -157,18 +157,11 @@ export class MutateCourseResolver {
         const lectures = await prisma.lecture.findMany({where: {subcourseId}});
         if (lectures.length == 0) {
             throw new Error(`Subcourse (${subcourseId}) must have at least one lecture to be published`);
-        } else {
-            let pastLectures:number[];
-            let currentDate = new Date();
-            lectures.forEach(lecture => {
-                // checks if a lecture's start date is in the past
-                if (lecture.start.getDate() < currentDate.getDate() || (lecture.start.getDate() == currentDate.getDate() && lecture.start.getTime() < currentDate.getTime())) {
-                    pastLectures.push(lecture.id);
-                }
-            });
-            if (pastLectures.length != 0) {
-                throw new Error(`Lectures (${pastLectures.toString()}) of subcourse (${subcourseId}) must happen in the future.`);
-            }
+        }
+        let currentDate = new Date();
+        const pastLectures = lectures.filter(lecture => +lecture.start < +currentDate);
+        if (pastLectures.length != 0) {
+            throw new Error(`Lectures (${pastLectures.toString()}) of subcourse (${subcourseId}) must happen in the future.`);
         }
         await prisma.subcourse.update({data: { published: true }, where: { id: subcourseId}});
         logger.info(`Subcourse (${subcourseId}) was published`);
