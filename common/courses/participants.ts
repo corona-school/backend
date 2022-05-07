@@ -20,7 +20,7 @@ const pupilLock = new Set<Pupil["id"]>();
 
 const BUSY_WAIT_TIME = 100;
 const BUSY_SPIN = 10;
-const PUPIL_MAX_SUBCOURSES = 5;
+const PUPIL_MAX_SUBCOURSES = 10;
 
 const logger = getLogger("Course");
 
@@ -241,6 +241,10 @@ export async function fillSubcourse(subcourse: Subcourse) {
     });
 
     for (const { pupil } of toJoin) {
-        await joinSubcourse(subcourse, pupil);
+        try {
+            await joinSubcourse(subcourse, pupil);
+        } catch (error) {
+            logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
+        }
     }
 }
