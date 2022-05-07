@@ -37,25 +37,25 @@ export class FieldsMatchPoolResolver {
 
     @FieldResolver(returns => [Student])
     @Authorized(Role.ADMIN)
-    async studentsToMatch(@Root() matchPool: MatchPoolType, @Arg("toggles", { nullable: true }) toggles?: string[], @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
+    async studentsToMatch(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[], @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
         return await getStudents(matchPool, toggles ?? [], take, skip);
     }
 
     @FieldResolver(returns => [Pupil])
     @Authorized(Role.ADMIN)
-    async pupilsToMatch(@Root() matchPool: MatchPoolType, @Arg("toggles", { nullable: true }) toggles?: string[], @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
+    async pupilsToMatch(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[], @Arg("skip", { nullable: true }) skip?: number, @Arg("take", { nullable: true }) take?: number) {
         return await getPupils(matchPool, toggles ?? [], take, skip);
     }
 
     @FieldResolver(returns => Int)
     @Authorized(Role.ADMIN)
-    async studentsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", { nullable: true }) toggles?: string[]) {
+    async studentsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getStudentCount(matchPool, toggles ?? []);
     }
 
     @FieldResolver(returns => Int)
     @Authorized(Role.ADMIN)
-    async pupilsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", { nullable: true }) toggles?: string[]) {
+    async pupilsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getPupilCount(matchPool, toggles ?? []);
     }
 
