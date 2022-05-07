@@ -74,5 +74,7 @@ export class MutateTutoringInterestConfirmationResolver {
             previousStatus: InterestConfirmationStatus.PENDING,
             newStatus: status
         });
+
+        return true;
     }
 }
