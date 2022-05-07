@@ -223,3 +223,24 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
         course
     });
 }
+
+export async function fillSubcourse(subcourse: Subcourse) {
+    const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
+    const seatsLeft = subcourse.maxParticipants - participantCount;
+    if (seatsLeft <= 0) {
+        throw new Error(`Subcourse(${subcourse.id}) is full`);
+    }
+
+    logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
+
+    // Unfortunately as the waiting list has no 'created at' field, we can't sort here
+    const toJoin = await prisma.subcourse_waiting_list_pupil.findMany({
+        where: { subcourseId: subcourse.id },
+        take: seatsLeft,
+        select: { pupil: true }
+    });
+
+    for (const { pupil } of toJoin) {
+        await joinSubcourse(subcourse, pupil);
+    }
+}

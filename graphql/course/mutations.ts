@@ -9,6 +9,7 @@ import { getSessionStudent } from "../authentication";
 import { GraphQLContext } from "../context";
 import { getCourse, getStudent, getSubcourse } from "../util";
 import { ForbiddenError } from "apollo-server-express";
+import { fillSubcourse } from "../../common/courses/participants";
 
 @InputType()
 class PublicCourseCreateInput {
@@ -165,6 +166,16 @@ export class MutateCourseResolver {
         }
         await prisma.subcourse.update({data: { published: true }, where: { id: subcourseId}});
         logger.info(`Subcourse (${subcourseId}) was published`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseFill(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number) {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, "Subcourse", subcourse);
+
+        await fillSubcourse(subcourse);
         return true;
     }
 }
