@@ -8,3 +8,4 @@ export const getMatch = (matchId: number) => prisma.match.findUnique({ where: { 
 export const getStudent = (studentId: number) => prisma.student.findUnique({ where: { id: studentId }, rejectOnNotFound: true });
 export const getScreener = (screenerId: number) => prisma.screener.findUnique({ where: { id: screenerId }, rejectOnNotFound: true });
 export const getCourse = (courseId: number) => prisma.course.findUnique({ where: { id: courseId }, rejectOnNotFound: true });
+export const getLecture = (lectureId: number) => prisma.lecture.findUnique({ where: { id: lectureId }, rejectOnNotFound: true });

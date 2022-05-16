@@ -5,7 +5,7 @@ import * as TypeGraphQL from "type-graphql";
 import { AuthorizedDeferred, hasAccess, Role } from "../authorizations";
 import { GraphQLContext } from "../context";
 import { fillSubcourse } from "../../common/courses/participants";
-import { getCourse, getStudent, getSubcourse } from "../util";
+import { getCourse, getStudent, getSubcourse, getLecture } from "../util";
 import { getSessionStudent } from "../authentication";
 import { getLogger } from "log4js";
 
@@ -107,5 +107,17 @@ export class MutateSubcourseResolver {
         const result = await prisma.lecture.create({ data: { ...lecture, subcourseId }});
         // TODO send emails
         return result;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async lectureDelete(@Ctx() context: GraphQLContext, @Arg("lectureId") lectureId: number): Promise<Boolean> {
+        const lecture = await getLecture(lectureId);
+        // TODO Maybe access for instructors of lecture
+        const subcourse = await getSubcourse(lecture.subcourseId);
+        await hasAccess(context, "Subcourse", subcourse);
+
+        await prisma.lecture.delete({ where: { id: lecture.id }});
+        return true;
     }
 }
