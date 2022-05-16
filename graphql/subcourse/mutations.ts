@@ -74,7 +74,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseFill(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number) {
+    async subcourseFill(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, "Subcourse", subcourse);
 
@@ -84,11 +84,28 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseCancel(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number) {
+    async subcourseCancel(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, "Subcourse", subcourse);
         await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id }});
         // TODO send emails
         return true;
+    }
+
+    @Mutation((returns) => GraphQLModel.Lecture)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async lectureCreate(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number, @Arg("lecture") lecture: PublicLectureInput/*, @Arg("studentId", { nullable: true }) studentId?: number*/): Promise<GraphQLModel.Lecture> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, "Subcourse", subcourse);
+
+        let currentDate = new Date();
+        if (+lecture.start < +currentDate) {
+            throw new Error(`Inputed lecture of subcourse (${subcourseId}) must happen in the future.`);
+        }
+        // TODO add student to lecture_instructors. Need to create lecture instructor table
+        // const student = await getSessionStudent(context, studentId);
+        const result = await prisma.lecture.create({ data: { ...lecture, subcourseId }});
+        // TODO send emails
+        return result;
     }
 }
