@@ -6,6 +6,15 @@ import {
     UpdateDateColumn
 } from "typeorm";
 
+
+export enum SecretType {
+    PASSWORD = "PASSWORD",
+    TOKEN = "TOKEN",
+    // Token sent via Email
+    // If a user proves they know the token, they implicitly validate their email address
+    EMAIL_TOKEN = "EMAIL_TOKEN"
+}
+
 // Secret in the sense of https://en.wikipedia.org/wiki/Shared_secret
 //  used to prove the user's identity
 @Entity()
@@ -19,7 +28,7 @@ export class Secret {
     @Column()
     userId: string;
 
-    @Column()
+    @Column({ enum: SecretType })
     type: SecretType;
 
     @Column()
@@ -30,10 +39,4 @@ export class Secret {
 
     @Column({ nullable: true })
     lastUsed?: Date;
-}
-
-export enum SecretType {
-    PASSWORD = "PASSWORD",
-    TOKEN = "TOKEN",
-    EMAIL_TOKEN = "EMAIL_TOKEN"
 }
