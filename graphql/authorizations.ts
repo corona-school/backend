@@ -177,7 +177,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Pupil_tutoring_interest_confirmation_request: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
-    Secret: { _all: nobody }
+    // Secret: { _all: nobody }
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
