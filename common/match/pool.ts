@@ -127,7 +127,7 @@ export const pools: MatchPool[] = [
                 isPupil: true,
                 openMatchRequestCount: { gt: 0 },
                 subjects: { not: "[]"},
-                registrationSource: { notIn: ["codu", "plus"] }
+                registrationSource: { notIn: ["plus"] }
             };
 
             if (!toggles.includes("skip-interest-confirmation")) {
@@ -144,7 +144,7 @@ export const pools: MatchPool[] = [
             subjects: { not: "[]" },
             screening: { success: true },
             isCodu: false,
-            registrationSource: { notIn: ["codu", "plus"]}
+            registrationSource: { notIn: ["plus"]}
         }),
         createMatch,
         settings: { balancingCoefficients }
