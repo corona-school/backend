@@ -143,7 +143,6 @@ export const pools: MatchPool[] = [
             openMatchRequestCount: { gt: 0},
             subjects: { not: "[]" },
             screening: { success: true },
-            isCodu: false,
             registrationSource: { notIn: ["plus"]}
         }),
         createMatch,
