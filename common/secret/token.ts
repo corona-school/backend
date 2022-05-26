@@ -17,6 +17,7 @@ export async function revokeToken(user: User, id: number) {
     logger.info(`User(${user.userID}) revoked token Secret(${id})`);
 }
 
+// The token returned by this function MAY NEVER be persisted and may only be sent to the user
 export async function createToken(user: User): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
@@ -37,6 +38,13 @@ export async function createToken(user: User): Promise<string> {
 }
 
 export async function requestToken(user: User) {
+    const token = await createSecretEmailToken(user);
+    const person = await getUserTypeORM(user.userID);
+    await Notification.actionTaken(person, "user-authenticate", { token });
+}
+
+// The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
+export async function createSecretEmailToken(user: User) {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -50,10 +58,9 @@ export async function requestToken(user: User) {
         }
     });
 
-    const person = await getUserTypeORM(user.userID);
-    await Notification.actionTaken(person, "user-authenticate", { token });
+    logger.info(`Created a new email token Secret(${result.id}) for User(${user.userID})`);
 
-    logger.info(`User(${user.userID}) requested token Secret(${result.id}) via E-Mail`);
+    return token;
 }
 
 export async function loginToken(token: string): Promise<User | never> {
