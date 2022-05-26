@@ -2,6 +2,7 @@ import { User } from "../user";
 import { secret as Secret } from "@prisma/client";
 import { prisma } from "../prisma";
 import { getLogger } from "log4js";
+import { SecretType } from "../entity/Secret";
 
 export * from "./password";
 export * from "./token";
@@ -32,4 +33,16 @@ export async function cleanupSecrets() {
     });
 
     logger.info(`Cleaned up ${result.count} expired secrets`);
+
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const unusedResult = await prisma.secret.deleteMany({
+        where: {
+            lastUsed: { lte: threeMonthsAgo },
+            type: { in: [SecretType.TOKEN, SecretType.EMAIL_TOKEN]}
+        }
+    });
+
+    logger.info(`Cleaned up ${unusedResult.count} tokens that haven't been used for three months`);
 }

@@ -9,9 +9,12 @@ import {
 
 export enum SecretType {
     PASSWORD = "PASSWORD",
+    // Tokens issued directly to the user
+    // These are long living as we assume the user keeps them secret
     TOKEN = "TOKEN",
     // Token sent via Email
     // If a user proves they know the token, they implicitly validate their email address
+    // Also this token can only be used once, as Emails have a large surface of being exposed
     EMAIL_TOKEN = "EMAIL_TOKEN"
 }
 
