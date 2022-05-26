@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, BulkAction } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserId, getUser, getFullName } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName } from '../user';
 import { getLogger } from 'log4js';
 import { assert } from 'console';
 import { bulkActions } from './bulk';
@@ -33,7 +33,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 */
 export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
     if (!user.active) {
-        logger.debug(`No action '${actionId}' taken for User(${getUserId(user)}) as the account is deactivated`);
+        logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;
     }
 
@@ -63,7 +63,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                         in: relevantNotifications.toCancel.map(it => it.id)
                     },
                     state: ConcreteNotificationState.DELAYED,
-                    userId: getUserId(user),
+                    userId: getUserIdTypeORM(user),
                     // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
                     // If it is not specified, it'll apply to all reminders
                     ...(notificationContext.uniqueId ? {
@@ -93,7 +93,7 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                         notificationID: it.id,
                         state: ConcreteNotificationState.DELAYED,
                         sentAt: new Date(Date.now() + (it.delay /* in hours */ * HOURS_TO_MS)),
-                        userId: getUserId(user),
+                        userId: getUserIdTypeORM(user),
                         contextID: notificationContext.uniqueId,
                         context: notificationContext
                     }))
@@ -130,7 +130,7 @@ export async function checkReminders() {
             }
 
             const notification = await getNotification(reminder.notificationID);
-            const user = await getUser(reminder.userId);
+            const user = await getUserTypeORM(reminder.userId);
 
             if (!user.active) {
                 throw new Error(`Reminder was found although account is deactivated`);
@@ -153,7 +153,7 @@ export async function checkReminders() {
                         notificationID: notification.id,
                         state: ConcreteNotificationState.DELAYED,
                         sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
-                        userId: getUserId(user),
+                        userId: getUserIdTypeORM(user),
                         contextID: reminder.contextID,
                         context: reminder.context
                     }
@@ -188,7 +188,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
                 notificationID: notification.id,
-                userId: getUserId(user),
+                userId: getUserIdTypeORM(user),
                 contextID: context.uniqueId
             }
         });
@@ -204,7 +204,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
             // the unique id is automatically created by the database
             notificationID: notification.id,
             state: ConcreteNotificationState.PENDING,
-            userId: getUserId(user),
+            userId: getUserIdTypeORM(user),
             sentAt: new Date(),
             contextID: context.uniqueId,
             context
@@ -278,7 +278,7 @@ export async function cancelRemindersFor(user: Person) {
         },
         where: {
             state: ConcreteNotificationState.DELAYED,
-            userId: getUserId(user)
+            userId: getUserIdTypeORM(user)
         }
     });
 }
@@ -299,7 +299,7 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
     const reminders = relevantNotifications.toSend.filter(it => it.delay);
     const remindersToCreate: Omit<ConcreteNotification, "id" | "error">[] = [];
 
-    const userId = getUserId(user);
+    const userId = getUserIdTypeORM(user);
 
     for (const reminder of reminders) {
         if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
