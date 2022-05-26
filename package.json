@@ -29,7 +29,8 @@
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
-    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi"
+    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
+    "integration-tests": "node ./built/integration-tests/index.js"
   },
   "dependencies": {
     "@prisma/client": "3.11.0",
@@ -57,6 +58,7 @@
     "googleapis": "^59.0.0",
     "graphql": "15.7.2",
     "graphql-fields": "^2.0.3",
+    "graphql-request": "^4.2.0",
     "graphql-scalars": "^1.10.0",
     "helmet": "^3.22.0",
     "hpp": "^0.2.3",
