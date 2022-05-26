@@ -9,10 +9,10 @@ const logger = getLogger("Password");
 export async function createPassword(user: User, password: string) {
     const saltedHash = await hashPassword(password);
 
-    // await prisma.secret.deleteMany({ where: { userId: user.userID, type: SecretType.PASSWORD }});
+    await prisma.secret.deleteMany({ where: { userId: user.userID, type: SecretType.PASSWORD }});
     logger.info(`User(${user.userID}) removed previous passwords to set new one`);
 
-    /* onst created = await prisma.secret.create({ data: {
+    const created = await prisma.secret.create({ data: {
         type: SecretType.PASSWORD,
         userId: user.userID,
         secret: saltedHash,
@@ -20,13 +20,13 @@ export async function createPassword(user: User, password: string) {
         lastUsed: new Date()
     }});
 
-    logger.info(`User(${user.userID}) created password Secret(${created.id})`);*/
+    logger.info(`User(${user.userID}) created password Secret(${created.id})`);
 }
 
 export async function loginPassword(email: string, password: string): Promise<User | never> {
     const user = await getUserByEmail(email);
 
-    /* const secrets = await prisma.secret.findMany({
+    const secrets = await prisma.secret.findMany({
         where: {
             type: SecretType.PASSWORD,
             userId: user.userID,
@@ -48,6 +48,6 @@ export async function loginPassword(email: string, password: string): Promise<Us
     }
 
     logger.info(`User(${user.userID}) failed to log in with password, ${secrets.length} were checked`);
-*/
+
     throw new Error(`No matching password`);
 }

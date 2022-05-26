@@ -28,7 +28,7 @@ export class Secret {
     @Column()
     userId: string;
 
-    @Column({ enum: SecretType })
+    @Column({ type: "enum", enum: SecretType })
     type: SecretType;
 
     @Column()
