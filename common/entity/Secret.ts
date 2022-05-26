@@ -33,7 +33,7 @@ export class Secret {
 }
 
 export enum SecretType {
-    PASSWORD,
-    TOKEN,
-    EMAIL_TOKEN
+    PASSWORD = "PASSWORD",
+    TOKEN = "TOKEN",
+    EMAIL_TOKEN = "EMAIL_TOKEN"
 }
