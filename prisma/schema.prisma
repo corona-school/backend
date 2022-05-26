@@ -4,8 +4,8 @@ generator client {
 }
 
 generator typegraphql {
- provider = "typegraphql-prisma"
- output   = "../graphql/generated"
+  provider = "typegraphql-prisma"
+  output   = "../graphql/generated"
 }
 
 datasource db {
@@ -570,6 +570,16 @@ model match_pool_run {
   stats          Json     @db.Json
 }
 
+model secret {
+  id        Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
+  createdAt DateTime         @default(now()) @db.Timestamp(6)
+  userId    String           @db.VarChar
+  type      secret_type_enum
+  secret    String           @db.VarChar
+  expiresAt DateTime?        @db.Timestamp(6)
+  lastUsed  DateTime?        @db.Timestamp(6)
+}
+
 enum course_category_enum {
   revision
   club
@@ -829,4 +839,10 @@ enum student_state_enum {
 enum notification_sender_enum {
   SUPPORT
   CERTIFICATE_OF_CONDUCT
+}
+
+enum secret_type_enum {
+  PASSWORD
+  TOKEN
+  EMAIL_TOKEN
 }

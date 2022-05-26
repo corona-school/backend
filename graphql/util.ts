@@ -1,3 +1,4 @@
+import { Directive } from "type-graphql";
 import { prisma } from "../common/prisma";
 
 
@@ -8,3 +9,7 @@ export const getMatch = (matchId: number) => prisma.match.findUnique({ where: { 
 export const getStudent = (studentId: number) => prisma.student.findUnique({ where: { id: studentId }, rejectOnNotFound: true });
 export const getScreener = (screenerId: number) => prisma.screener.findUnique({ where: { id: screenerId }, rejectOnNotFound: true });
 export const getCourse = (courseId: number) => prisma.course.findUnique({ where: { id: courseId }, rejectOnNotFound: true });
+
+export function Deprecated(reason: string) {
+    return Directive(`@deprecated(reason: "${reason}")`);
+}

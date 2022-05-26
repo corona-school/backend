@@ -1,9 +1,10 @@
-import { Student, Pupil, Screener } from "../generated";
+import { Student, Pupil, Screener, Secret } from "../generated";
 import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from "type-graphql";
 import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser } from "../authentication";
 import { GraphQLContext } from "../context";
 import { Role } from "../authorizations";
 import { prisma } from "../../common/prisma";
+import { getSecrets } from "../../common/secret";
 @ObjectType()
 export class Me {
     @Field({ nullable: true })
@@ -78,5 +79,11 @@ export class FieldMeResolver {
         }
 
         return await prisma.screener.findUnique({ where: { id: user.screenerId }});
+    }
+
+    @FieldResolver(returns => [Secret])
+    @Authorized(Role.USER)
+    async secrets(@Ctx() context: GraphQLContext) {
+        return await getSecrets(getSessionUser(context));
     }
 }

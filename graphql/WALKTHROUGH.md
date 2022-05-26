@@ -11,11 +11,28 @@ The session is generated at the client, which should pass in a long and random s
 ### 2a. Logging in
 
 To log in as a user inside a session, various mutations are supported. 
-The most common one is the `loginLegacy` mutation which takes the well-known "authToken":
+The most common one is the `loginLegacy` mutation which takes the well-known "authToken", or `loginToken` which takes one of the new tokens:
 
 ```gql
-mutate {
+mutation {
     loginLegacy(authToken: "authtokenP1")
+    loginToken(token: "...")
+}
+```
+
+Alternatively one can also log in via password:
+
+```gql
+mutation {
+   loginPassword(email: "..." password: "...")
+}
+```
+
+In case one forgot their password or all tokens were invalidated, one can also retrieve a new login token:
+
+```gql
+mutation {
+  requestToken(email: "...")
 }
 ```
 
@@ -54,6 +71,37 @@ The pupil or student account itself are however pretty much useless,
 Depending on the requested role the user might need to take further steps, 
  such as participating in a screening session. This can be checked by querying `me { pupil { canRequestMatch { allowed reason }}}` or other resolvers starting with `can`. 
 If the user fulfills all preconditions, another Role is granted to them and further mutations can be called.
+
+### 2c. Managing credentials
+
+To create a long running session on the device, a token with long validity is needed. This can be issued with (once logged in via other means):
+
+```gql
+mutation { tokenCreate }
+```
+
+This token can then also be used with `loginToken` to create a short lived server session. 
+A password can be set up with:
+
+```gql
+mutation { passwordCreate(password: "secret") }
+```
+
+To revoke tokens the `tokenRevoke` mutation can be used, and all secrets of the user can be queried with:
+
+```gql
+query {
+	me { 
+  	secrets { 
+    	id
+      type
+      createdAt
+      expiresAt
+      lastUsed  
+    }
+  }
+}
+```
 
 ### 3. Retrieving the User's data
 
