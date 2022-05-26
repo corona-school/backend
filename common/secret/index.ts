@@ -45,4 +45,14 @@ export async function cleanupSecrets() {
     });
 
     logger.info(`Cleaned up ${unusedResult.count} tokens that haven't been used for three months`);
+
+    const neverUsed = await prisma.secret.deleteMany({
+        where: {
+            createdAt: { lte: threeMonthsAgo },
+            lastUsed: null,
+            type: { in: [SecretType.TOKEN, SecretType.EMAIL_TOKEN]}
+        }
+    });
+
+    logger.info(`Cleaned up ${neverUsed.count} tokens that have never been used since three months`);
 }
