@@ -32,7 +32,7 @@ export class MutateSecretResolver {
 
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit("Request E-Mail Tokens", 50 /* requests per */ , 5 * 60 * 60 * 1000 /* 5 hours */)
+    @RateLimit("Request E-Mail Tokens", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async tokenRequest(email: string) {
         const user = await getUserByEmail(email);
         await requestToken(user);
