@@ -8,6 +8,7 @@ import { fillSubcourse } from "../../common/courses/participants";
 import { getCourse, getStudent, getSubcourse, getLecture } from "../util";
 import { getSessionStudent } from "../authentication";
 import { getLogger } from "log4js";
+import { sendSubcourseCancelNotifications } from "../../common/mails/courses";
 
 const logger = getLogger("MutateCourseResolver");
 
@@ -88,7 +89,8 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, "Subcourse", subcourse);
         await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id }});
-        // TODO send emails
+        const course = await prisma.course.findUnique({ where: { id: subcourse.courseId} });
+        sendSubcourseCancelNotifications(course, subcourse);
         return true;
     }
 
@@ -102,10 +104,11 @@ export class MutateSubcourseResolver {
         if (+lecture.start < +currentDate) {
             throw new Error(`Inputed lecture of subcourse (${subcourseId}) must happen in the future.`);
         }
-        // TODO add student to lecture_instructors. Need to create lecture instructor table
-        // const student = await getSessionStudent(context, studentId);
+        let isSubcourseInstructor = await prisma.subcourse_instructors_student.count({where: { subcourseId, studentId: lecture.instructorId }}) > 0;
+        if (!isSubcourseInstructor) {
+            throw new Error(`Inputed instructor (id: ${lecture.instructorId}) is not a subcourse instructor`);
+        }
         const result = await prisma.lecture.create({ data: { ...lecture, subcourseId }});
-        // TODO send emails
         return result;
     }
 
@@ -113,7 +116,6 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async lectureDelete(@Ctx() context: GraphQLContext, @Arg("lectureId") lectureId: number): Promise<Boolean> {
         const lecture = await getLecture(lectureId);
-        // TODO Maybe access for instructors of lecture
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, "Subcourse", subcourse);
 
