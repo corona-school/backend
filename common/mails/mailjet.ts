@@ -84,7 +84,7 @@ async function sendMailTemplate(
         Base64Content: string
     }[]
 ) {
-    const message: mailjetAPI.Email.SendParamsMessage = {
+    const message: any = {
         From: {
             Email: senderAddress
         },
@@ -97,7 +97,10 @@ async function sendMailTemplate(
         TemplateLanguage: true,
         Variables: variables,
         Subject: subject,
-        Attachments: attachements
+        Attachments: attachements,
+        TemplateErrorReporting: {
+            Email: "backend@lern-fair.de"
+        }
     };
 
     if (replyToAddress) {
