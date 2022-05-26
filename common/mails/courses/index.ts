@@ -73,14 +73,6 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Student |
 }
 
 export async function sendCourseUpcomingReminderParticipant(participant: Pupil | Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
-        participantFirstname: participant.firstname,
-        courseName: course.name,
-        courseId: course.id,
-        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
-        firstLectureTime: moment(firstLecture).format("HH:mm")
-    });
-    await sendTemplateMail(mail, participant.email);
     await Notification.actionTaken(participant, "participant_subcourse_reminder", {
         subcourse,
         course,
