@@ -39,7 +39,7 @@ export async function loginPassword(email: string, password: string): Promise<Us
     for (const secret of secrets) {
         const isValid = await verifyPassword(password, secret.secret);
         if (isValid) {
-            // await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id }});
+            await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id }});
 
             logger.info(`User(${user.userID}) successfully logged in with password Secret(${secret.id})`);
 
