@@ -40,7 +40,6 @@ import { NotificationBulkRunResolver } from "./notification/fields";
 import { FieldsMatchPoolResolver } from "./match_pool/fields";
 import { MutateMatchPoolResolver } from "./match_pool/mutations";
 import { MutateCourseResolver } from "./course/mutations";
-import { MutateSubcourseResolver } from "./subcourse/mutations";
 import { MutateConcreteNotificationsResolver } from "./concrete_notification/mutations";
 import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notification/fields";
 import { MutateSubcourseResolver } from "./subcourse/mutations";
@@ -63,7 +62,6 @@ const schema = buildSchemaSync({
 
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
-        MutateSubcourseResolver,
 
         FindManyLectureResolver,
         MutateCourseResolver,
