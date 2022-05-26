@@ -9,10 +9,10 @@ import { getLogger } from "log4js";
 const logger = getLogger("Token");
 
 export async function revokeToken(user: User, id: number) {
-    const result = await prisma.secret.deleteMany({ where: { id, userId: user.userID }});
+    /* const result = await prisma.secret.deleteMany({ where: { id, userId: user.userID }});
     if (result.count !== 1) {
         throw new Error(`Failed to revoke token, does not exist`);
-    }
+    } */
 
     logger.info(`User(${user.userID}) revoked token Secret(${id})`);
 }
@@ -21,7 +21,7 @@ export async function createToken(user: User): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
 
-    const result = await prisma.secret.create({
+    /* const result = await prisma.secret.create({
         data: {
             type: SecretType.TOKEN,
             userId: user.userID,
@@ -31,7 +31,7 @@ export async function createToken(user: User): Promise<string> {
         }
     });
 
-    logger.info(`User(${user.userID}) created token Secret(${result.id})`);
+    logger.info(`User(${user.userID}) created token Secret(${result.id})`);*/
 
     return token;
 }
@@ -40,7 +40,7 @@ export async function requestToken(user: User) {
     const token = uuid();
     const hash = hashToken(token);
 
-    const result = await prisma.secret.create({
+    /* const result = await prisma.secret.create({
         data: {
             type: SecretType.EMAIL_TOKEN,
             userId: user.userID,
@@ -53,11 +53,11 @@ export async function requestToken(user: User) {
     const person = await getUserTypeORM(user.userID);
     await Notification.actionTaken(person, "user-authenticate", { token });
 
-    logger.info(`User(${user.userID}) requested token Secret(${result.id}) via E-Mail`);
+    logger.info(`User(${user.userID}) requested token Secret(${result.id}) via E-Mail`);*/
 }
 
 export async function loginToken(token: string): Promise<User | never> {
-    const secret = await prisma.secret.findFirst({
+    /* const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
             type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN ]},
@@ -82,5 +82,6 @@ export async function loginToken(token: string): Promise<User | never> {
         logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);
     }
 
-    return await user;
+    return await user; */
+    throw new Error("test");
 }
