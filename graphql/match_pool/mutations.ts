@@ -80,7 +80,7 @@ class MatchPoolRunResult {
 export class MutateMatchPoolResolver {
     @Mutation(returns => MatchPoolRunResult)
     @Authorized(Role.ADMIN)
-    async matchPoolRun(@Arg("name") name: string, @Arg("apply") apply: boolean) {
-        return await runMatching(name, apply);
+    async matchPoolRun(@Arg("name") name: string, @Arg("apply") apply: boolean, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
+        return await runMatching(name, apply, toggles ?? []);
     }
 }

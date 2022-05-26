@@ -20,7 +20,7 @@ const pupilLock = new Set<Pupil["id"]>();
 
 const BUSY_WAIT_TIME = 100;
 const BUSY_SPIN = 10;
-const PUPIL_MAX_SUBCOURSES = 5;
+const PUPIL_MAX_SUBCOURSES = 10;
 
 const logger = getLogger("Course");
 
@@ -222,4 +222,29 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     await Notification.actionTaken(pupil, "participant_subcourse_leave", {
         course
     });
+}
+
+export async function fillSubcourse(subcourse: Subcourse) {
+    const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
+    const seatsLeft = subcourse.maxParticipants - participantCount;
+    if (seatsLeft <= 0) {
+        throw new Error(`Subcourse(${subcourse.id}) is full`);
+    }
+
+    logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
+
+    // Unfortunately as the waiting list has no 'created at' field, we can't sort here
+    const toJoin = await prisma.subcourse_waiting_list_pupil.findMany({
+        where: { subcourseId: subcourse.id },
+        take: seatsLeft,
+        select: { pupil: true }
+    });
+
+    for (const { pupil } of toJoin) {
+        try {
+            await joinSubcourse(subcourse, pupil);
+        } catch (error) {
+            logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
+        }
+    }
 }

@@ -43,6 +43,7 @@ import { MutateSecretResolver } from "./secret/mutation";
 import { MutateCourseResolver } from "./course/mutations";
 import { MutateConcreteNotificationsResolver } from "./concrete_notification/mutations";
 import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notification/fields";
+import { MutateSubcourseResolver } from "./subcourse/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -62,6 +63,7 @@ const schema = buildSchemaSync({
 
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
+        MutateSubcourseResolver,
 
         FindManyLectureResolver,
         MutateCourseResolver,

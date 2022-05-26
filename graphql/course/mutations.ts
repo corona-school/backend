@@ -7,7 +7,7 @@ import { course_category_enum } from "@prisma/client";
 import { getLogger } from "log4js";
 import { getSessionStudent } from "../authentication";
 import { GraphQLContext } from "../context";
-import { getCourse, getStudent } from "../util";
+import { getCourse, getStudent, getSubcourse } from "../util";
 
 @InputType()
 class PublicCourseCreateInput {
@@ -43,30 +43,6 @@ class PublicCourseEditInput {
   category?: "revision" | "club" | "coaching";
   @TypeGraphQL.Field(_type => Boolean, { nullable: true })
   allowContact?: boolean | undefined;
-}
-
-@InputType()
-class PublicSubcourseCreateInput {
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int)
-  minGrade!: number;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int)
-  maxGrade!: number;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int)
-  maxParticipants!: number;
-  @TypeGraphQL.Field(_type => Boolean)
-  joinAfterStart!: boolean;
-  @TypeGraphQL.Field(_type => [PublicLectureInput], { nullable: true })
-  lecture?: PublicLectureInput[];
-}
-
-@InputType()
-class PublicLectureInput {
-  @TypeGraphQL.Field(_type => Date)
-  start!: Date;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int)
-  duration!: number;
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, { nullable: true })
-  instructorId?: number | null;
 }
 
 const logger = getLogger("MutateCourseResolver");
@@ -132,18 +108,4 @@ export class MutateCourseResolver {
         return true;
     }
 
-    @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseCreate(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("subcourse") subcourse: PublicSubcourseCreateInput /*, @Arg("studenId", { nullable: true }) studentId?: number */): Promise<GraphQLModel.Subcourse> {
-        const course = await getCourse(courseId);
-        await hasAccess(context, "Course", course);
-        if (course.courseState !== "allowed") {
-            throw new Error(`Course (${courseId}) not allowed (approved) yet`);
-        }
-        // const student = await getSessionStudent(context, studentId);
-        const result = await prisma.subcourse.create({ data: { ...subcourse, courseId, published: false}});
-        // await prisma.subcourse_instructors_student.create({data: { subcourseId: result.id, studentId: student.id}});
-        logger.info(`Subcourse ${result.id} was created on course ${courseId}`);
-        return result;
-    }
 }
