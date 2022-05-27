@@ -7,19 +7,19 @@ const ADMIN_TOKEN = "ADMIN_TOKEN";
 
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
-        console.log(`Request:`, query);
+        console.log(`\nRequest:`, query.trim());
         const response = await client.request(query);
         console.log(`Response:`, response);
         return response;
     }
 
     async function requestShallFail(query: string): Promise<never> {
-        console.log(`Request (should fail):`, query);
+        console.log(`\nRequest (should fail):`, query.trim());
         try {
             await client.request(query);
             console.log(`But it succeeded?`);
         } catch (error) {
-            console.log(`Successfully failed with ${error.message}`);
+            console.log(`Successfully failed with ${error.message.split(":")[0]}`);
             return;
         }
 
@@ -59,12 +59,15 @@ export function test<T>(name: string, runner: () => Promise<T>): Promise<T> {
 }
 
 export async function finalizeTests() {
+    const startAll = Date.now();
     let failureCount = 0;
     for (const test of tests) {
         console.log(`\n\n*-------------- Test ${test.name} --------------*`);
         try {
+            const start = Date.now();
             const result = await test.runner();
-            console.log(`SUCCESS`);
+            const duration = Date.now() - start;
+            console.log(`SUCCESS in ${duration}ms`);
             test.resolve(result);
         } catch (error) {
             console.log(error);
@@ -76,8 +79,10 @@ export async function finalizeTests() {
 
     console.log(`\n\n*-------------- Summary --------------*`);
 
+    const durationAll = Date.now() - startAll;
+
     if (failureCount === 0) {
-        console.log(`ALL TESTS SUCCEEDED`);
+        console.log(`ALL TESTS SUCCEEDED in ${durationAll}ms`);
         return;
     }
 

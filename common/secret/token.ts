@@ -28,7 +28,7 @@ export async function createToken(user: User): Promise<string> {
             userId: user.userID,
             secret: hash,
             expiresAt: null,
-            lastUsed: new Date()
+            lastUsed: null
         }
     });
 
