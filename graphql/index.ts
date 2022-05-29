@@ -63,10 +63,10 @@ const schema = buildSchemaSync({
 
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
-        MutateSubcourseResolver,
 
         FindManyLectureResolver,
         MutateCourseResolver,
+        MutateSubcourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
