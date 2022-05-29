@@ -1,13 +1,13 @@
-import { prisma } from "../../common/prisma";
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType } from "type-graphql";
-import * as GraphQLModel from "../generated/models";
-import { AuthorizedDeferred, hasAccess, Role } from "../authorizations";
-import * as TypeGraphQL from "type-graphql";
 import { course_category_enum } from "@prisma/client";
 import { getLogger } from "log4js";
+import * as TypeGraphQL from "type-graphql";
+import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from "type-graphql";
+import { prisma } from "../../common/prisma";
 import { getSessionStudent } from "../authentication";
+import { AuthorizedDeferred, hasAccess, Role } from "../authorizations";
 import { GraphQLContext } from "../context";
-import { getCourse, getStudent, getSubcourse } from "../util";
+import * as GraphQLModel from "../generated/models";
+import { getCourse, getStudent } from "../util";
 
 @InputType()
 class PublicCourseCreateInput {
