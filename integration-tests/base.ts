@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { GraphQLClient } from "graphql-request";
 
 const APP = "corona-school-backend-dev";
-const URL = `https://${APP}.herokuapp.com/apollo`;
+const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
 const ADMIN_TOKEN = "ADMIN_TOKEN";
 
 function wrapClient(client: GraphQLClient) {
