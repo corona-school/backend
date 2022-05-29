@@ -1,16 +1,23 @@
 import { randomBytes } from "crypto";
 import { GraphQLClient } from "graphql-request";
 
+/* -------------- Configuration ------------------- */
+
 const APP = "corona-school-backend-dev";
 const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
 const ADMIN_TOKEN = "ADMIN_TOKEN";
 
 const silent = process.env.INTEGRATION_SILENT === "true";
 
+/* -------------- Utils --------------------------- */
+
 const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
 const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
 const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
 
+/* -------------- GraphQL Client Wrapper ------------------ */
+
+// This wrapper provides assertions and logging around a GraphQLClient of the graphql-request package
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
         const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? "(unnamed)";
@@ -47,6 +54,16 @@ function wrapClient(client: GraphQLClient) {
 
     return { request, requestShallFail };
 }
+
+/* ----------------- Clients --------------------
+  There are different clients for running GraphQL requests:
+   - defaultClient performs unauthenticated requests
+   - adminClient performs requests with the Role ADMIN (using Basic auth)
+   - createUserClient can be used to create a session with a Bearer token
+     Using a mutation { login...() } one can then associate a user with the session
+     (see auth.ts for examples)
+*/
+
 export const defaultClient = wrapClient(new GraphQLClient(URL));
 
 export const adminClient = wrapClient(new GraphQLClient(URL, {
@@ -63,8 +80,20 @@ export function createUserClient() {
     }));
 }
 
+/* -------------- Test Runner ------------------- */
 const tests: { name: string, runner: () => Promise<any>, resolve: (value: any) => void, reject: (error: Error) => void }[] = [];
 
+/* test(...) has the following guarantees:
+   - Runners are executed in order of definition
+   - Runners are always run sequentially (at least for now)
+   - throwing any error results in FAILURE state
+
+   To use something from within a test (e.g. a user client) in another test, it can be returned:
+   const exposureTest = test("exposure", { ... return { exposed }; });
+   Then other tests can use it with
+   const { exposed } = await exposureTest;
+   To avoid deadlocks, tests exposing something should be defined first (c.f. index.ts)
+*/
 export function test<T>(name: string, runner: () => Promise<T>): Promise<T> {
     let resolve, reject;
     const promise = new Promise((res, rej) => {
@@ -77,6 +106,7 @@ export function test<T>(name: string, runner: () => Promise<T>): Promise<T> {
     return promise as Promise<T>;
 }
 
+// This one actually runs all tests that were defined
 export async function finalizeTests() {
     const startAll = Date.now();
     let failureCount = 0;
@@ -106,6 +136,7 @@ export async function finalizeTests() {
     }
 
     console.error(red(`  ${failureCount} tests FAILED`));
-    process.exit(1);
+
+    process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }
 
