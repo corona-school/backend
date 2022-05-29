@@ -8,7 +8,7 @@ export const pupilOne = test("Register Pupil", async () => {
     const userRandom = randomBytes(5).toString("base64");
 
     await client.request(`
-        mutation {
+        mutation RegisterPupil {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
@@ -23,7 +23,7 @@ export const pupilOne = test("Register Pupil", async () => {
     `);
 
     await client.request(`
-        mutation {
+        mutation BecomeTutee {
             meBecomeTutee(data: {
                 subjects: [{ name: "Deutsch" }]
                 languages: [Deutsch]
