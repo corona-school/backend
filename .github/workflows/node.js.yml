@@ -62,6 +62,8 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm run web:nopdf
+        env:
+          DATABASE_URL: "postgres://coronaschool:cornanervt@localhost:5432/coronaschool-test"
       - run: npm run integration-tests
         env:
           INTEGRATION_TARGET: "https://localhost"
