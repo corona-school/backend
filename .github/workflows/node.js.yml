@@ -67,7 +67,7 @@ jobs:
       - run: sleep 5
       - run: npm run integration-tests
         env:
-          INTEGRATION_TARGET: "https://localhost:5000"
+          INTEGRATION_TARGET: "http://localhost:5000/apollo"
 
   lint:
     runs-on: ubuntu-20.04
