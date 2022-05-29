@@ -40,7 +40,6 @@ export const pupilOne = test("Register Pupil", async () => {
                 lastname
                 email
                 pupil { id }
-                authtoken
             }
         }
     `);
