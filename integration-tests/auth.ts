@@ -1,0 +1,64 @@
+import { test } from "./base";
+import { pupilOne } from "./user";
+import * as assert from "assert";
+
+test("Token Login", async () => {
+    const { client } = await pupilOne;
+
+    // Create a new Token
+
+    const { tokenCreate: token } = await client.request(`
+        mutation { tokenCreate }
+    `);
+
+    const secretsUnused = await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
+    // assert.equal(secretsUnused.me.secrets[0].lastUsed, null);
+
+    // Token can be used to log in
+
+    await client.request(`mutation { logout }`);
+
+    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+
+    await client.request(`mutation { loginToken(token: "${token}")}`);
+
+    const secretsUsed = await client.request(`query { me { secrets { id type createdAt lastUsed }}}`);
+    assert.notEqual(secretsUsed.me.secrets[0].lastUsed, null);
+
+    // Token can be revoked
+
+    await client.request(`mutation { tokenRevoke(id: ${secretsUsed.me.secrets[0].id})}`);
+
+    const { tokenCreate: token2 } = await client.request(`
+        mutation { tokenCreate }
+    `);
+
+    await client.request(`mutation { logout }`);
+
+    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+
+    await client.requestShallFail(`mutation { loginToken(token: "${token}")}`);
+
+    await client.request(`mutation { loginToken(token: "${token2}")}`);
+
+    const secretsSwapped = await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
+    assert.equal(secretsSwapped.me.secrets.length, 1);
+});
+
+test("Password Login", async () => {
+    const { client, pupil: { email } } = await pupilOne;
+
+    await client.request(`mutation { passwordCreate(password: "test123")}`);
+
+    await client.request(`mutation { logout }`);
+
+    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+
+    await client.requestShallFail(`mutation { loginPassword(email: "test+wrong@lern-fair.de", password: "test123")}`);
+
+    await client.requestShallFail(`mutation { loginPassword(email: "${email}", password: "test")}`);
+
+    await client.request(`mutation { loginPassword(email: "${email}", password: "test123")}`);
+
+    await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
+});
