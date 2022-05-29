@@ -2,7 +2,7 @@ import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
 import { Me } from "./fields";
 import { GraphQLContext } from "../context";
-import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, logInAsPupil, logInAsStudent } from "../authentication";
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { setProjectFields } from "../../common/student/update";
@@ -27,6 +27,8 @@ import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
+import { userForStudent, userForPupil } from "../../common/user";
+import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
@@ -248,7 +250,7 @@ export class MutateMeResolver {
         log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
         if (!byAdmin) {
-            await logInAsStudent(student, context);
+            await loginAsUser(userForStudent(student), context);
         }
 
         return student;
@@ -274,7 +276,7 @@ export class MutateMeResolver {
         log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
         if (!byAdmin) {
-            await logInAsPupil(pupil, context);
+            await loginAsUser(userForPupil(pupil), context);
         }
 
         return pupil;
@@ -363,7 +365,7 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await deactivatePupil(pupil);
-            await logInAsPupil(updatedPupil, context);
+            await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
@@ -382,7 +384,7 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await activatePupil(pupil);
-            await logInAsPupil(updatedPupil, context);
+            await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) reactivated their account`);
 
             return true;
@@ -445,8 +447,7 @@ export class MutateMeResolver {
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeProjectCoachee(pupil, data);
-
-        await logInAsPupil(updatedPupil, context);
+        await evaluatePupilRoles(updatedPupil, context);
         // The user should now have the PROJECT_COACHEE role
 
         log.info(`Pupil(${pupil.id}) upgraded their account to a PROJECT_COACHEE`);
@@ -463,7 +464,7 @@ export class MutateMeResolver {
         const log = logInContext("Me", context);
         const updatedPupil = await becomeTutee(pupil, data);
         if (!byAdmin) {
-            await logInAsPupil(updatedPupil, context);
+            await evaluatePupilRoles(updatedPupil, context);
         }
 
         log.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
@@ -478,7 +479,7 @@ export class MutateMeResolver {
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeStatePupil(pupil, data);
-        await logInAsPupil(updatedPupil, context);
+        await evaluatePupilRoles(updatedPupil, context);
 
         log.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
 
