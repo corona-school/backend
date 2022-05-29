@@ -5,21 +5,40 @@ const APP = "corona-school-backend-dev";
 const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
 const ADMIN_TOKEN = "ADMIN_TOKEN";
 
+const silent = process.env.INTEGRATION_SILENT === "true";
+
+const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
+const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
+const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
+
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
-        console.log(`\nRequest:`, query.trim());
+        const name = query.match(/(mutation|query) [A-Za-z]/) ?? "(unnamed)";
+        console.log(blue(`+ ${name}`));
+        if (!silent) {
+            console.log(`   request:`, query.trim());
+        }
         const response = await client.request(query);
-        console.log(`Response:`, response);
+        if (!silent) {
+            console.log(`   response:`, response);
+        }
         return response;
     }
 
     async function requestShallFail(query: string): Promise<never> {
-        console.log(`\nRequest (should fail):`, query.trim());
+        const name = query.match(/(mutation|query) [A-Za-z]+/) ?? "(unnamed)";
+        console.log(blue(`+ ${name}`));
+
+        if (!silent) {
+            console.log(`  request (should fail):`, query.trim());
+        }
+
         try {
             await client.request(query);
-            console.log(`But it succeeded?`);
         } catch (error) {
-            console.log(`Successfully failed with ${error.message.split(":")[0]}`);
+            if (!silent) {
+                console.log(`  successfully failed with ${error.message.split(":")[0]}`);
+            }
             return;
         }
 
@@ -62,31 +81,31 @@ export async function finalizeTests() {
     const startAll = Date.now();
     let failureCount = 0;
     for (const test of tests) {
-        console.log(`\n\n*-------------- Test ${test.name} --------------*`);
+        console.log(`test ${test.name}:`);
         try {
             const start = Date.now();
             const result = await test.runner();
             const duration = Date.now() - start;
-            console.log(`SUCCESS in ${duration}ms`);
+            console.log(green(`= SUCCESS in ${duration}ms\n`));
             test.resolve(result);
         } catch (error) {
-            console.log(error);
-            console.log(`FAILURE`);
+            console.log('\n\n', error, '\n\n');
+            console.log(red(`= FAILURE\n`));
             failureCount += 1;
             test.reject(new Error(`Dependency ${test.name} failed`));
         }
     }
 
-    console.log(`\n\n*-------------- Summary --------------*`);
+    console.log(`\n\nsummary:`);
 
     const durationAll = Date.now() - startAll;
 
     if (failureCount === 0) {
-        console.log(`ALL TESTS SUCCEEDED in ${durationAll}ms`);
+        console.log(green(`  all tests SUCCEEDED in ${durationAll}ms`));
         return;
     }
 
-    console.error(`${failureCount} TESTS FAILED`);
+    console.error(red(`  ${failureCount} tests FAILED`));
     process.exit(1);
 }
 
