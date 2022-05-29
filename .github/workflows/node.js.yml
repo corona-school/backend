@@ -64,10 +64,12 @@ jobs:
       - run: npm run web:nopdf &
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
+          env: DEV
       - run: sleep 5
       - run: npm run integration-tests
         env:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
+          INTEGRATION_SILENT: "true"
 
   lint:
     runs-on: ubuntu-20.04
