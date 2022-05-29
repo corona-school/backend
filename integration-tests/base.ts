@@ -13,7 +13,7 @@ const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
 
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
-        const name = query.match(/(mutation|query) [A-Za-z]+/) ?? "(unnamed)";
+        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? "(unnamed)";
         console.log(blue(`+ ${name}`));
         if (!silent) {
             console.log(`   request:`, query.trim());
@@ -26,7 +26,7 @@ function wrapClient(client: GraphQLClient) {
     }
 
     async function requestShallFail(query: string): Promise<never> {
-        const name = query.match(/(mutation|query) [A-Za-z]+/) ?? "(unnamed)";
+        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? "(unnamed)";
         console.log(blue(`+ ${name}`));
 
         if (!silent) {

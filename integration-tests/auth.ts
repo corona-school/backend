@@ -7,9 +7,7 @@ test("Token Login", async () => {
 
     // Create a new Token
 
-    const { tokenCreate: token } = await client.request(`
-        mutation CreateToken { tokenCreate }
-    `);
+    const { tokenCreate: token } = await client.request(`mutation CreateToken { tokenCreate }`);
 
     const secretsUnused = await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
     assert.equal(secretsUnused.me.secrets[0].lastUsed, null);
@@ -29,9 +27,7 @@ test("Token Login", async () => {
 
     await client.request(`mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets[0].id})}`);
 
-    const { tokenCreate: token2 } = await client.request(`
-        mutation CreateTokenTwo { tokenCreate }
-    `);
+    const { tokenCreate: token2 } = await client.request(`mutation CreateTokenTwo { tokenCreate }`);
 
     await client.request(`mutation Logout { logout }`);
 
