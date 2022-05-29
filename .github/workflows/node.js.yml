@@ -64,7 +64,7 @@ jobs:
       - run: npm run web:nopdf &
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
-          env: DEV
+          ENV: dev
       - run: sleep 5
       - run: npm run integration-tests
         env:
