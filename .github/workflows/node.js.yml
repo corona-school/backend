@@ -35,6 +35,42 @@ jobs:
       - run: npm run build --if-present
       - run: npm run test
 
+  integration:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: coronaschool
+          POSTGRES_PASSWORD: coronanervt
+          POSTGRES_DB: coronaschool-test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm run web:nopdf &
+        env:
+          DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
+          ENV: dev
+      - run: sleep 5
+      - run: npm run integration-tests
+        env:
+          INTEGRATION_TARGET: "http://localhost:5000/apollo"
+          INTEGRATION_SILENT: "true"
+
   lint:
     runs-on: ubuntu-20.04
 

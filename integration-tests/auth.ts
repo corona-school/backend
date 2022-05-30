@@ -7,58 +7,54 @@ test("Token Login", async () => {
 
     // Create a new Token
 
-    const { tokenCreate: token } = await client.request(`
-        mutation { tokenCreate }
-    `);
+    const { tokenCreate: token } = await client.request(`mutation CreateToken { tokenCreate }`);
 
-    const secretsUnused = await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
-    // assert.equal(secretsUnused.me.secrets[0].lastUsed, null);
+    const secretsUnused = await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
+    assert.equal(secretsUnused.me.secrets[0].lastUsed, null);
 
     // Token can be used to log in
 
-    await client.request(`mutation { logout }`);
+    await client.request(`mutation Logout { logout }`);
 
-    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+    await client.requestShallFail(`query RetrieveSecretsFails { me { secrets { type createdAt lastUsed }}}`);
 
-    await client.request(`mutation { loginToken(token: "${token}")}`);
+    await client.request(`mutation LoginWithToken { loginToken(token: "${token}")}`);
 
-    const secretsUsed = await client.request(`query { me { secrets { id type createdAt lastUsed }}}`);
+    const secretsUsed = await client.request(`query RetrieveSecrets { me { secrets { id type createdAt lastUsed }}}`);
     assert.notEqual(secretsUsed.me.secrets[0].lastUsed, null);
 
     // Token can be revoked
 
-    await client.request(`mutation { tokenRevoke(id: ${secretsUsed.me.secrets[0].id})}`);
+    await client.request(`mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets[0].id})}`);
 
-    const { tokenCreate: token2 } = await client.request(`
-        mutation { tokenCreate }
-    `);
+    const { tokenCreate: token2 } = await client.request(`mutation CreateTokenTwo { tokenCreate }`);
 
-    await client.request(`mutation { logout }`);
+    await client.request(`mutation Logout { logout }`);
 
-    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+    await client.requestShallFail(`query RetrieveSecretsFails { me { secrets { type createdAt lastUsed }}}`);
 
-    await client.requestShallFail(`mutation { loginToken(token: "${token}")}`);
+    await client.requestShallFail(`mutation LoginWithRevokedFails { loginToken(token: "${token}")}`);
 
-    await client.request(`mutation { loginToken(token: "${token2}")}`);
+    await client.request(`mutation LoginWithTwo { loginToken(token: "${token2}")}`);
 
-    const secretsSwapped = await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
+    const secretsSwapped = await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
     assert.equal(secretsSwapped.me.secrets.length, 1);
 });
 
 test("Password Login", async () => {
     const { client, pupil: { email } } = await pupilOne;
 
-    await client.request(`mutation { passwordCreate(password: "test123")}`);
+    await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
 
-    await client.request(`mutation { logout }`);
+    await client.request(`mutation Logout { logout }`);
 
-    await client.requestShallFail(`query { me { secrets { type createdAt lastUsed }}}`);
+    await client.requestShallFail(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
 
-    await client.requestShallFail(`mutation { loginPassword(email: "test+wrong@lern-fair.de", password: "test123")}`);
+    await client.requestShallFail(`mutation InvalidEmailFails { loginPassword(email: "test+wrong@lern-fair.de", password: "test123")}`);
 
-    await client.requestShallFail(`mutation { loginPassword(email: "${email}", password: "test")}`);
+    await client.requestShallFail(`mutation InvalidPasswordFails { loginPassword(email: "${email}", password: "test")}`);
 
-    await client.request(`mutation { loginPassword(email: "${email}", password: "test123")}`);
+    await client.request(`mutation LoginSucceeds { loginPassword(email: "${email}", password: "test123")}`);
 
-    await client.request(`query { me { secrets { type createdAt lastUsed }}}`);
+    await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
 });
