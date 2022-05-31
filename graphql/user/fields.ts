@@ -12,12 +12,12 @@ export class UserType implements User {
     @Field()
     userID: string;
 
-    @Field({ nullable: true })
-    firstname?: string;
-    @Field({ nullable: true })
-    lastname?: string;
-    @Field({ nullable: true })
-    email?: string;
+    @Field()
+    firstname: string;
+    @Field()
+    lastname: string;
+    @Field()
+    email: string;
 
     @Field({ nullable: true })
     pupil?: Pupil;

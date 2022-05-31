@@ -30,7 +30,8 @@ import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
-import { UserType } from "graphql/user/fields";
+import { UserType } from "../user/fields";
+
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
