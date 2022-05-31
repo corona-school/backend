@@ -19,7 +19,7 @@ import { userForStudent } from "../../common/user";
 export class ExtendFieldsStudentResolver {
     @FieldResolver(type => UserType)
     @Authorized(Role.ADMIN, Role.OWNER)
-    user(@Root() student: Student) {
+    user(@Root() student: Required<Student>) {
         return userForStudent(student);
     }
 

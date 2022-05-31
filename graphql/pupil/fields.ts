@@ -16,7 +16,7 @@ import { UserType } from "../user/fields";
 export class ExtendFieldsPupilResolver {
     @FieldResolver(type => UserType)
     @Authorized(Role.ADMIN, Role.OWNER)
-    user(@Root() pupil: Pupil) {
+    user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
     }
 
