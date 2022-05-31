@@ -23,7 +23,6 @@ import { RateLimit } from "../rate-limit";
 import { becomeInstructor, BecomeInstructorData, becomeProjectCoach, BecomeProjectCoachData, becomeTutor, BecomeTutorData, ProjectFieldWithGradeData, registerStudent, RegisterStudentData } from "../../common/student/registration";
 import { becomeProjectCoachee, BecomeProjectCoacheeData, becomeStatePupil, BecomeStatePupilData, becomeTutee, BecomeTuteeData, registerPupil, RegisterPupilData } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
-import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
@@ -485,12 +484,4 @@ export class MutateMeResolver {
 
         return true;
     }
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async isEmailAvailable(@Arg("email") email: string) {
-        return await isEmailAvailable(email);
-    }
-
 }
