@@ -2,7 +2,7 @@ import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_c
 import { Authorized, Field, FieldResolver, Int, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
-import { getUserIdTypeORM } from "../../common/user";
+import { getUserIdTypeORM, userForPupil } from "../../common/user";
 import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
@@ -10,9 +10,16 @@ import { gradeAsInt } from "../../common/util/gradestrings";
 import { Decision } from "../types/reason";
 import { canPupilRequestMatch } from "../../common/match/request";
 import { canJoinSubcourses } from "../../common/courses/participants";
+import { UserType } from "../user/fields";
 
 @Resolver(of => Pupil)
 export class ExtendFieldsPupilResolver {
+    @FieldResolver(type => UserType)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    user(@Root() pupil: Pupil) {
+        return userForPupil(pupil);
+    }
+
     @FieldResolver(type => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
