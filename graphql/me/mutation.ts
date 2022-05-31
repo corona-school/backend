@@ -1,6 +1,5 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
-import { Me } from "./fields";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
@@ -31,6 +30,7 @@ import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
+import { UserType } from "graphql/user/fields";
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -232,7 +232,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 
 
-@Resolver(of => Me)
+@Resolver(of => UserType)
 export class MutateMeResolver {
     @Mutation(returns => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
