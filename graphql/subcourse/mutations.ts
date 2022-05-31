@@ -99,15 +99,15 @@ export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseEdit(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number, @Arg("subcourse") data: PublicSubcourseEditInput): Promise<GraphQLModel.Subcourse> {
-      const subcourse = await getSubcourse(subcourseId);
-      await hasAccess(context, "Subcourse", subcourse);
-      const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
-      if (data.maxParticipants < participantCount) {
-        throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
-      }
-      const result = await prisma.subcourse.update({ data: { ...data }, where: { id: subcourseId } });
-      await fillSubcourse(result);
-      return result;
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, "Subcourse", subcourse);
+        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id }});
+        if (data.maxParticipants < participantCount) {
+            throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+        }
+        const result = await prisma.subcourse.update({ data: { ...data }, where: { id: subcourseId } });
+        await fillSubcourse(result);
+        return result;
     }
 
     @Mutation((returns) => Boolean)
