@@ -638,6 +638,13 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             return 404;
         }
 
+        if (inPast && authenticatedPupil) {
+            const participant = course.subcourses.some(subcourse => subcourse.participants.some(it => it.id === pupil.id));
+            if (!participant) {
+                return 404;
+            }
+        }
+
 
         if (authorizedStudent || authenticatedPupil) {
             // transactionlog, that user accessed course
