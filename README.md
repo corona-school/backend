@@ -2,6 +2,7 @@
 
 - [GraphQL Guidelines](graphql/README.md)
 - [The Notification System](common/notification/README.md)
+- [Writing Integration Tests](integration-tests/WRITING_TESTS.md)
 - [How-to migrate db with TypeORM](common/migration/HOW-TO-MIGRATE-README.md)
 - [Administration stuff / business logic](common/administration/README.md)
 
