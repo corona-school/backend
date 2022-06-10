@@ -299,13 +299,13 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
     tutor.supportsInDaZ = apiTutor.supportsInDaz;
 
     // CoDu
-    if (apiTutor.isCodu) {
-        if (!checkCoDuSubjectRequirements(tutor.getSubjectsFormatted())) {
-            logger.warn("Tutor does not fulfill subject requirements for CoDu");
-            return 400;
-        }
-    }
-    tutor.isCodu = apiTutor.isCodu;
+    // if (apiTutor.isCodu) {
+    //     if (!checkCoDuSubjectRequirements(tutor.getSubjectsFormatted())) {
+    //         logger.warn("Tutor does not fulfill subject requirements for CoDu");
+    //         return 400;
+    //     }
+    // }
+    // tutor.isCodu = apiTutor.isCodu;
 
     const result = await entityManager.findOne(Student, { email: tutor.email });
     if (result !== undefined) {
@@ -315,8 +315,7 @@ async function registerTutor(apiTutor: ApiAddTutor): Promise<number> {
 
     try {
         await entityManager.save(Student, tutor);
-        await sendVerificationMail(tutor, apiTutor.redirectTo);
-        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo });
+        await Notification.actionTaken(tutor, "student_registration_started", { redirectTo: apiTutor.redirectTo ?? "", verification: tutor.verification });
         if (tutor.isCodu) {
             await Notification.actionTaken(tutor, "codu_student_registration", {});
         }
@@ -652,8 +651,7 @@ async function registerTutee(apiTutee: ApiAddTutee): Promise<number> {
 
     try {
         await entityManager.save(Pupil, tutee);
-        await sendVerificationMail(tutee, apiTutee.redirectTo);
-        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo });
+        await Notification.actionTaken(tutee, "pupil_registration_started", { redirectTo: apiTutee.redirectTo ?? "", verification: tutee.verification });
         await transactionLog.log(new VerificationRequestEvent(tutee));
         return 204;
     } catch (e) {

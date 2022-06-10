@@ -2,7 +2,7 @@ import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_c
 import { Authorized, Field, FieldResolver, Int, Resolver, Root } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
-import { getUserId } from "../../common/user";
+import { getUserIdTypeORM } from "../../common/user";
 import { LimitEstimated } from "../complexity";
 import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
@@ -47,7 +47,7 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
     async concreteNotifications(@Root() pupil: Required<Pupil>) {
-        return await prisma.concrete_notification.findMany({ where: { userId: getUserId(pupil) } });
+        return await prisma.concrete_notification.findMany({ where: { userId: getUserIdTypeORM(pupil) } });
     }
 
     @FieldResolver(type => [Log])
@@ -61,7 +61,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver(type => [Subject])
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }

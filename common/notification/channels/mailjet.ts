@@ -4,18 +4,27 @@ import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
 import { Person } from "../../entity/Person";
 import { assert } from "console";
+import { NotificationSender } from "../../entity/Notification";
 import {AttachmentGroup} from "../../attachments";
 
 const logger = getLogger();
 
+const senderEmails: { [sender in NotificationSender]: string } = {
+    [NotificationSender.SUPPORT]: "support@lern-fair.de",
+    [NotificationSender.CERTIFICATE_OF_CONDUCT]: "fz@lern-fair.de"
+};
+
 export const mailjetChannel: Channel = {
     type: 'mailjet',
     async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
-        assert(notification.mailjetTemplateId !== undefined, "A Notification deliviered via Mailjet must have a 'mailjetTemplateId'");
+        assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
+
+        const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
+        assert(senderEmail !== undefined, "Unknown sender emails");
 
         const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
-                Email: undefined
+                Email: senderEmail
             },
             To: [
                 {

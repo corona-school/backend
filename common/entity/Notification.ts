@@ -7,7 +7,12 @@ export enum NotificationRecipient {
     USER,
     TEACHER,
     PARENT
-  }
+}
+
+export enum NotificationSender {
+    SUPPORT = "SUPPORT",
+    CERTIFICATE_OF_CONDUCT = "CERTIFICATE_OF_CONDUCT"
+}
 
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
 // Yet we have to store some meta information for a Notification, which we do in this model:
@@ -44,4 +49,9 @@ export class Notification {
     delay?: number; /* in hours */
     @Column({ type: "int", nullable: true })
     interval?: number; /* in hours */
+
+    // Some emails are supposed to be sent out by email addresses other than support@lern-fair.de,
+    //  as users can directly respond to the team responsible
+    @Column({ nullable: true, type: "enum", enum: NotificationSender })
+    sender?: NotificationSender;
 }

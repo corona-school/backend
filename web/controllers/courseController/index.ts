@@ -636,6 +636,20 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
             return 403;
         }
 
+        const inPast = course.subcourses.every(subcourse => subcourse.lectures.every(lecture => +lecture.start + lecture.duration * 60000 < Date.now()));
+
+        if (inPast && !(authorizedStudent || authenticatedPupil)) {
+            return 404;
+        }
+
+        if (inPast && authenticatedPupil) {
+            const participant = course.subcourses.some(subcourse => subcourse.participants.some(it => it.id === pupil.id));
+            if (!participant) {
+                return 404;
+            }
+        }
+
+
         if (authorizedStudent || authenticatedPupil) {
             // transactionlog, that user accessed course
             const transactionLog = getTransactionLog();

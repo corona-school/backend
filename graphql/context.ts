@@ -37,12 +37,20 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn("Missing ADMIN_AUTH_TOKEN, Admin API access is disabled");
 }
 
+const UNAUTHENTICATED_USER = {
+    email: "-",
+    firstname: "",
+    lastname: "",
+    userID: "-/-",
+    roles: [Role.UNAUTHENTICATED]
+};
 
 export default async function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    let user: GraphQLUser= { roles: [Role.UNAUTHENTICATED] };
+    let user: GraphQLUser = UNAUTHENTICATED_USER;
+
     let sessionToken: string | undefined = undefined;
 
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
@@ -51,7 +59,14 @@ export default async function injectContext({ req }) {
             throw new AuthenticationError("Invalid Admin Password");
         }
 
-        user = { firstname: "Ed", lastname: "Min", email: "test@lern-fair.de", roles: [Role.ADMIN, Role.UNAUTHENTICATED] };
+        user = {
+            userID: "admin/",
+            firstname: "Ed",
+            lastname: "Min",
+            email: "test@lern-fair.de",
+            roles: [Role.ADMIN, Role.UNAUTHENTICATED]
+        };
+
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (req.headers["authorization"] && req.headers["authorization"].startsWith("Bearer ")) {
         sessionToken = req.headers["authorization"].slice("Bearer ".length);

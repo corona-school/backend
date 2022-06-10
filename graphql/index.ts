@@ -31,13 +31,19 @@ import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ExtendedFieldsSchoolResolver } from "./school/fields";
-import { MutateStudentResolver } from "./student/mutation";
+import { MutateStudentResolver } from "./student/mutations";
 import { MutateCertificateOfConductResolver } from "./certificate_of_conduct/mutations";
 import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
-import { ExtendedFieldsStudentResolver } from "./student/field";
 import { isDev } from "../common/util/environment";
 import { formatError } from "./error";
 import { NotificationBulkRunResolver } from "./notification/fields";
+import { FieldsMatchPoolResolver } from "./match_pool/fields";
+import { MutateMatchPoolResolver } from "./match_pool/mutations";
+import { MutateSecretResolver } from "./secret/mutation";
+import { MutateCourseResolver } from "./course/mutations";
+import { MutateConcreteNotificationsResolver } from "./concrete_notification/mutations";
+import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notification/fields";
+import { MutateSubcourseResolver } from "./subcourse/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -59,6 +65,8 @@ const schema = buildSchemaSync({
         ExtendedFieldsSubcourseResolver,
 
         FindManyLectureResolver,
+        MutateCourseResolver,
+        MutateSubcourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
@@ -84,6 +92,8 @@ const schema = buildSchemaSync({
         MutateNotificationResolver,
         NotificationBulkRunResolver,
         FindManyConcrete_notificationResolver,
+        ExtendedFieldsConcreteNotificationResolver,
+        MutateConcreteNotificationsResolver,
 
         /* TutoringInterestConfirmation */
         MutateTutoringInterestConfirmationResolver,
@@ -98,7 +108,14 @@ const schema = buildSchemaSync({
 
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
-        ExtendedFieldsCertificateOfConductResolver
+        ExtendedFieldsCertificateOfConductResolver,
+
+        /* MatchPool */
+        FieldsMatchPoolResolver,
+        MutateMatchPoolResolver,
+
+        /* Secret */
+        MutateSecretResolver
     ],
     authChecker
 });

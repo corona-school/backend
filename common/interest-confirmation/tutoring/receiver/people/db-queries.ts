@@ -8,7 +8,7 @@ import { InterestConfirmationStatus } from "../../../../entity/PupilTutoringInte
 // ⎺⎺⎺⎺⎺⎺⎺⎺
 function allMatchablePupilsThatRequireInterestConfirmationQuery(manager: EntityManager) {
     //only pupils not registered through partner schools require interest confirmation
-    return matchableTuteesQuery(manager).andWhere("p.registrationSource != (:rs)", { rs: RegistrationSource.COOPERATION});
+    return matchableTuteesQuery(manager).andWhere("p.registrationSource != (:coop) AND p.registrationSource != (:plus)", { coop: RegistrationSource.COOPERATION, plus: RegistrationSource.PLUS });
 }
 function allMatchablePupilsWithoutInterestConfirmationRequestQuery(manager: EntityManager) {
     //join pupil p2 a second time, to have a relationship from PupilTutoringInterestConfirmationRequest to Pupil which is not undefined

@@ -2,6 +2,8 @@ import { Entity, Column, OneToMany, EntityManager } from "typeorm";
 import { ScreenerDTO } from "../dto/ScreenerDTO";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
+import { prisma } from "../prisma";
+import { init } from "../util/basic";
 
 @Entity()
 export class Screener extends Person {
@@ -69,7 +71,7 @@ export async function getDefaultScreener(manager: EntityManager) {
         defaultScreener.password = "";
         defaultScreener.verified = true;
         defaultScreener.oldNumberID = DEFAULT_SCREENER_NUMBER_ID;
-        defaultScreener.email = "kontakt@corona-school.de";
+        defaultScreener.email = "kontakt@lern-fair.de";
         defaultScreener.active = false;
 
         await manager.save(defaultScreener);
@@ -77,3 +79,28 @@ export async function getDefaultScreener(manager: EntityManager) {
 
     return defaultScreener;
 }
+
+export const defaultScreener = init(async function getDefaultScreenerEntry() {
+    const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID }});
+    if (existing) {
+        return existing;
+    }
+
+    return await prisma.screener.create({ data: {
+        firstname: DEFAULT_SCREENER_FIRSTNAME,
+        lastname: "",
+        password: "",
+        verified: true,
+        id: DEFAULT_SCREENER_NUMBER_ID,
+        oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
+        email: "kontakt@corona-school.de",
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        verification: null,
+        verifiedAt: new Date(),
+        authToken: null,
+        authTokenUsed: null,
+        authTokenSent: null
+    }});
+});
