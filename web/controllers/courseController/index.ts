@@ -59,9 +59,6 @@ import InstructorIssuedCertificateEvent from '../../../common/transactionlog/typ
 import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
 import * as Notification from "../../../common/notification";
-import { createAttachment } from "../../../common/attachments";
-import { v4 as uuid } from "uuid";
-import { friendlyFileSize } from "../../../common/util/basic";
 
 
 
@@ -2968,16 +2965,19 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         return 400;
     }
 
+    const instructors = course.instructors;
     try {
         let attachmentGroup = await Notification.createAttachments(files, pupil);
-
-        await Notification.actionTaken(pupil, "instructor_course_participant_message", {
-            participant: pupil,
-            course: dropCourseRelations(course),
-            subcourse: dropSubcourseRelations(subcourse),
-            subject: mailSubject,
-            body: mailBody
-        }, attachmentGroup);
+        await Promise.all(instructors.map(async (instructor) => {
+            await Notification.actionTaken(instructor, "instructor_course_participant_message", {
+                participant: pupil,
+                instructor: instructor,
+                course: dropCourseRelations(course),
+                subcourse: dropSubcourseRelations(subcourse),
+                subject: mailSubject,
+                body: mailBody
+            }, attachmentGroup);
+        }))
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);
