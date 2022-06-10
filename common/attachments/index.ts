@@ -3,7 +3,7 @@ import {Pupil} from "../entity/Pupil";
 import { prisma } from '../prisma';
 import { v4 as uuid } from "uuid";
 import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
-import {getUserId} from "../user";
+import {getUserIdTypeORM} from "../user";
 import {friendlyFileSize} from "../util/basic";
 
 export interface AttachmentGroup {
@@ -25,7 +25,7 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
     await prisma.attachment.create({
         data: {
             id: attachmentId,
-            uploaderID: getUserId(uploader),
+            uploaderID: getUserIdTypeORM(uploader),
             filename: file.originalname,
             size: file.size,
             attachmentGroupId,
@@ -33,7 +33,7 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
         }
     });
 
-    await putFile(file.buffer, `${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET);
+    await putFile(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false);
 
     return attachmentId;
 }
@@ -57,7 +57,7 @@ export async function getAttachmentURL(attachmentId: string, key: string, attach
         });
         attachmentGroupId = dbAttachment.attachmentGroupId;
     }
-    return await generatePresignedURL(`${attachmentGroupId}/${attachmentId}/${key}`, ATTACHMENT_BUCKET);
+    return await generatePresignedURL(`attachments/${attachmentGroupId}/${attachmentId}/${key}`, ATTACHMENT_BUCKET);
 }
 
 

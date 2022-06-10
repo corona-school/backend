@@ -3456,7 +3456,7 @@ async function setCourseImage(student: Student, courseID: number, imageFile?: Ex
             const key = courseImageKey(courseID, fileExtension);
 
             // TODO: resize images to provide different resolutions
-            await putFile(imageFile.buffer, key, DEFAULT_BUCKET);
+            await putFile(imageFile.buffer, key, DEFAULT_BUCKET, true);
 
             course.imageKey = key;
         } else if (course.imageKey) { //otherwise, there's nothing to delete

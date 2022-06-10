@@ -11,7 +11,7 @@ export async function putFile(f: Buffer, key: string, bucket: string, isPublic: 
         Key: key,
         Bucket: bucket,
         Body: f,
-        ACL: isPublic && 'public-read'
+        ACL: isPublic ? 'public-read' : undefined
     });
 
     const result = await request.promise();

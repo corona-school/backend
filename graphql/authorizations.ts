@@ -148,6 +148,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_instructors_student: allAdmin,
     Course_tag: allAdmin,
     Course_tags_course_tag: allAdmin,
+    Attachment: allAdmin,
     Expert_data: allAdmin,
     Expert_data_expertise_tags_expertise_tag: allAdmin,
     Expertise_tag: allAdmin,

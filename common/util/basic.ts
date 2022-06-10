@@ -70,11 +70,7 @@ export const assertExists = <Type>(optional: Type | null | undefined): Type | ne
 };
 
 export {
-    intersection,
-    randomIntFromInterval,
-    splitAtIndex,
-    friendlyFileSize,
-    isCommandArg
+    friendlyFileSize
 };
 
 // Calls 'initializer' once the returned promise is first 'await'ed, then resolves the promise with the result
