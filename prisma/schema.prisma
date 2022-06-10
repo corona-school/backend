@@ -13,6 +13,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model attachment {
+  id                String   @id @db.Uuid
+  uploaderID        String   @db.VarChar
+  filename          String   @db.VarChar
+  size              Int
+  attachmentGroupId String   @db.VarChar
+  date              DateTime @db.Timestamp(6)
+}
+
 model bbb_meeting {
   id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)
@@ -31,6 +40,7 @@ model concrete_notification {
   contextID      String?  @db.VarChar
   context        Json     @db.Json
   sentAt         DateTime @db.Timestamp(6)
+  attachmentGroupId String?  @db.VarChar
   state          Int
   error          String?  @db.VarChar
 }
