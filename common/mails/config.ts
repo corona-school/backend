@@ -12,8 +12,8 @@ const mailjetSmtp = {
 };
 
 const DEFAULTSENDERS = {
-    noreply: '"Lern-Fair Team" <noreply@lern-fair.de>',
-    support: '"Lern-Fair Team" <support@lern-fair.de>'
+    noreply: '"Lern-Fair Team" <test+noreply@lern-fair.de>',
+    support: '"Lern-Fair Team" <test+support@lern-fair.de>'
 };
 
 export { mailjetSmtp, DEFAULTSENDERS };
