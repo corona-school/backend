@@ -10,8 +10,8 @@ const logger = getLogger();
 const mailAuth = btoa(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`);
 
 const senderEmails: { [sender in NotificationSender]: string } = {
-    [NotificationSender.SUPPORT]: "test+support@lern-fair.de",
-    [NotificationSender.CERTIFICATE_OF_CONDUCT]: "test+fz@lern-fair.de"
+    [NotificationSender.SUPPORT]: "support@lern-fair.de",
+    [NotificationSender.CERTIFICATE_OF_CONDUCT]: "fz@lern-fair.de"
 };
 
 export const mailjetChannel: Channel = {
