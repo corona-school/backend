@@ -2852,12 +2852,17 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 
         await Promise.all(addressees.map(async (participant) => {
             await Notification.actionTaken(participant, "participant_course_message", {
-                instructor: student,
-                course: dropCourseRelations(course),
+                // instructor: student,
+                // course: dropCourseRelations(course),
+                // subcourse: dropSubcourseRelations(subcourse),
+                subject: "Nachricht zu deinem Kurs",
+                //body: mailBody,
                 courseName: course.name,
-                subcourse: dropSubcourseRelations(subcourse),
-                subject: mailSubject,
-                body: mailBody
+                participantFirstName: participant.firstname,
+                instructorFirstName: student.firstname,
+                messageTitle: mailSubject,
+                messageBody: mailBody,
+                instructorMail: student.email,
             }, attachmentGroup);
         }));
     } catch (e) {

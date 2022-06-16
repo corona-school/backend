@@ -83,19 +83,6 @@ export async function sendCourseUpcomingReminderParticipant(participant: Pupil |
     });
 }
 
-export async function sendInstructorGroupMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
-    const mail = mailjetTemplates.COURSEINSTRUCTORGROUPMAIL({
-        participantFirstName: participant.firstname,
-        instructorFirstName: instructor.firstname,
-        courseName: course.name,
-        messageTitle: messageTitle,
-        messageBody: messageBody,
-        instructorMail: instructor.email
-    });
-
-    await sendTemplateMail(mail, participant.email, instructor.email);
-}
-
 export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
     const firstLecture = subcourse.firstLecture();
 
