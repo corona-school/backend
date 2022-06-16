@@ -2854,6 +2854,7 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
             await Notification.actionTaken(participant, "participant_course_message", {
                 instructor: student,
                 course: dropCourseRelations(course),
+                courseName: course.name,
                 subcourse: dropSubcourseRelations(subcourse),
                 subject: mailSubject,
                 body: mailBody
@@ -2973,6 +2974,7 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
                 participant: pupil,
                 instructor: instructor,
                 course: dropCourseRelations(course),
+                courseName: course.name,
                 subcourse: dropSubcourseRelations(subcourse),
                 subject: mailSubject,
                 body: mailBody
