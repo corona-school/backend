@@ -10,7 +10,6 @@ import {
 } from "typeorm";
 import {Student} from "./Student";
 import {ExpertiseTag} from "./ExpertiseTag";
-import {Col} from "sequelize/types/lib/utils";
 import {ExpertAllowedIndication} from "../jufo/expertAllowedIndication";
 
 @Entity()
