@@ -3,7 +3,7 @@ import { getLogger } from "log4js";
 import * as mailjet from "./mailjetTypes";
 
 const logger = getLogger();
-const auth = btoa(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`);
+const auth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString("base64");
 
 async function sendMessage(message: mailjet.SendParamsMessage, sandbox: boolean = false) {
     //determine whether we have sandbox mode or not...
