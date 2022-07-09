@@ -1,6 +1,5 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
-import { Me } from "./fields";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
@@ -23,7 +22,6 @@ import { RateLimit } from "../rate-limit";
 import { becomeInstructor, BecomeInstructorData, becomeProjectCoach, BecomeProjectCoachData, becomeTutor, BecomeTutorData, ProjectFieldWithGradeData, registerStudent, RegisterStudentData } from "../../common/student/registration";
 import { becomeProjectCoachee, BecomeProjectCoacheeData, becomeStatePupil, BecomeStatePupilData, becomeTutee, BecomeTuteeData, registerPupil, RegisterPupilData } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
-import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
@@ -32,6 +30,8 @@ import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
+import { UserType } from "../user/fields";
+
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -233,7 +233,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 
 
-@Resolver(of => Me)
+@Resolver(of => UserType)
 export class MutateMeResolver {
     @Mutation(returns => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
@@ -485,12 +485,4 @@ export class MutateMeResolver {
 
         return true;
     }
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async isEmailAvailable(@Arg("email") email: string) {
-        return await isEmailAvailable(email);
-    }
-
 }
