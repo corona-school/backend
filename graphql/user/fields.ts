@@ -29,12 +29,6 @@ export class UserType implements User {
 
 @Resolver(of => UserType)
 export class UserFieldsResolver {
-    @Query(returns => UserType)
-    @Authorized(Role.USER)
-    async me(@Ctx() context: GraphQLContext): Promise<GraphQLUser> {
-        return getSessionUser(context);
-    }
-
     @FieldResolver(returns => String)
     @Authorized(Role.USER, Role.ADMIN)
     firstname(@Root() user: User): string {
