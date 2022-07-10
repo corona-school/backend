@@ -362,7 +362,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
 
         // Current Subject Demand in the last finished month
         const lastMonth = matchesByMonth.slice(-2)[0];
-        const subjectDemand = Object.entries(lastMonth.subjects).map(([subject, { fulfilled, offered, requested }]) => ({ subject, demand: requested / offered }));
+        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({ subject, demand: requested / offered }));
 
         const result: MatchPoolStatistics = {
             matchesByMonth,
