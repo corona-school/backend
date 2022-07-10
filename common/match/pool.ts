@@ -8,6 +8,7 @@ import { assertExists } from "../util/basic";
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from "../entity/Student";
 import { getLogger } from "log4js";
 import { isDev } from "../util/environment";
+import { InterestConfirmationStatus } from "../entity/PupilTutoringInterestConfirmationRequest";
 
 const logger = getLogger("MatchingPool");
 
@@ -26,6 +27,8 @@ export interface MatchPool<Toggle extends string = string> {
         minPupils: number;
     }
 }
+
+/* ---------------- UTILS ------------------------------------- */
 
 const getViableUsers = (toggles: string[]) => {
     const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
@@ -111,6 +114,9 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
     };
 }
 
+
+/* ---------------------- POOLS ----------------------------------- */
+
 const balancingCoefficients = {
     subjectMatching: 0.65,
     state: 0.05,
@@ -187,6 +193,8 @@ export const pools: MatchPool[] = [
         settings: { balancingCoefficients }
     }
 ];
+
+/* ---------------------- MATCHING RUNS ----------------------------- */
 
 export async function getPoolRuns(pool: MatchPool) {
     return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name }});
@@ -281,4 +289,120 @@ export async function runAutomaticMatching() {
     }
 
     logger.info(`Finished automatic matching`);
+}
+
+/* ----------------------- STATISTICS & PREDICTION ----------------------- */
+
+
+const average = <T>(values: T[], mapper: (it: T) => number) => values.map(mapper).reduce((a, b) => a + b, 0) / Math.max(1, values.length);
+
+export interface MatchPoolStatistics {
+    matchesByMonth: {
+        month: number;
+        year: number;
+        matches: number;
+        subjects: {
+            [subject: string]: { offered: number, requested: number, fulfilled: number };
+        }
+    }[],
+    averageMatchesPerMonth: number;
+    predictedPupilMatchTime: number /* in days */;
+    subjectDemand: { subject: string; demand: number /* >1 -> too many offers, <1 -> to few offers */ }[];
+}
+
+const statisticsCache: { [pool: string]: { at: number, result: Promise<MatchPoolStatistics> } } = {};
+
+export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics> {
+    const existingStat = statisticsCache[pool.name];
+
+    // Cache statistics for one hour
+    if (existingStat && existingStat.at > Date.now() - 1000 * 60 * 60) {
+        return existingStat.result;
+    }
+
+    const result = (async function () {
+
+
+        const runs = await getPoolRuns(pool);
+
+        // Aggregate Runs by Month, as Runs happen irregularly this averages out slightly
+        const monthToStatistics = new Map<string, MatchPoolStatistics["matchesByMonth"][number]>();
+
+        for (const { runAt, matchesCreated, stats } of runs) {
+            const { subjectStats } = stats as any;
+
+            const runAtDate = new Date(runAt);
+            const month = runAtDate.getMonth() + 1;
+            const year = runAtDate.getFullYear();
+
+            const key = `${month}/${year}`;
+            let entry = monthToStatistics.get(key);
+            if (!entry) {
+                entry = { subjects: {}, matches: 0, month, year };
+                monthToStatistics.set(key, entry);
+            }
+
+            entry.matches += matchesCreated;
+            for (const { name, stats: { offered, requested, fulfilledRequests }} of subjectStats) {
+                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
+                subjectStats.fulfilled += fulfilledRequests;
+                subjectStats.offered += offered;
+                subjectStats.requested += requested;
+            }
+        }
+
+        const matchesByMonth = [...monthToStatistics.values()];
+        matchesByMonth.sort((a, b) => a.year - b.year || a.month - b.month);
+
+        // Average Matches in the last three months
+        const averageMatchesPerMonth = average(matchesByMonth.slice(-3), it => it.matches);
+
+        // Predict Pupil Match Time
+        const predictedPupilMatchTime = await predictPupilMatchTime(pool, averageMatchesPerMonth);
+
+        // Current Subject Demand in the last finished month
+        const lastMonth = matchesByMonth.slice(-2)[0];
+        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({ subject, demand: requested / offered }));
+
+        const result: MatchPoolStatistics = {
+            matchesByMonth,
+            averageMatchesPerMonth,
+            predictedPupilMatchTime,
+            subjectDemand
+        };
+
+        return result;
+    })();
+
+    statisticsCache[pool.name] = { at: Date.now(), result };
+    return result;
+}
+
+// Averaging over all interest confirmations does not really factor in trends
+//  though looking at the last month alone would also be inaccurate as
+//  confirmations are delayed, thus pending confirmations would be overestimated
+export async function getInterestConfirmationRate() {
+    const totalInterestConfirmations = await prisma.pupil_tutoring_interest_confirmation_request.count({ });
+    const confirmedInterestConfirmations = await prisma.pupil_tutoring_interest_confirmation_request.count({
+        where: { status: InterestConfirmationStatus.CONFIRMED }
+    });
+
+    return confirmedInterestConfirmations / totalInterestConfirmations;
+}
+
+// Predicted Pupil Match Time in Days
+// As we do not collect the actual wait time, this is only a very rough estimation
+export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMonth: number): Promise<number> {
+    // Number of Pupils waiting for a Match
+    // This is slightly inaccurate, as pupils could theoretically have multiple match requests
+    // Though at the moment it is limited to one per pupil
+    let backlog = await getPupilCount(pool, ["skip-interest-confirmation"]);
+
+    // If the Pool uses interest confirmations, we lose about a third of pupils
+    // This needs to be factored in, as it reduces the actual waiting time
+    if (pool.toggles.includes("skip-interest-confirmation")) {
+        backlog *= await getInterestConfirmationRate();
+    }
+
+    return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
 }
