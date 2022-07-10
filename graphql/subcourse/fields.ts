@@ -100,5 +100,29 @@ export class ExtendedFieldsSubcourseResolver {
             where: { subcourseId: subcourse.id }
         });
     }
+
+    @FieldResolver(returns => [Pupil])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(100)
+    async pupilsWaiting(@Root() subcourse: Subcourse) {
+        return await prisma.pupil.findMany({
+            where: {
+                subcourse_waiting_list_pupil: {
+                    some: {
+                        subcourseId: subcourse.id
+                    }
+                }
+            }
+        });
+    }
+
+    @FieldResolver(returns => Number)
+    @Authorized(Role.UNAUTHENTICATED)
+    @PublicCache()
+    async pupilsWaitingCount(@Root() subcourse: Subcourse) {
+        return await prisma.subcourse_waiting_list_pupil.count({
+            where: { subcourseId: subcourse.id }
+        });
+    }
 }
 

@@ -3,6 +3,7 @@ import { ScreenerDTO } from "../dto/ScreenerDTO";
 import { Screening } from "./Screening";
 import { Person } from "./Person";
 import { prisma } from "../prisma";
+import { init } from "../util/basic";
 
 @Entity()
 export class Screener extends Person {
@@ -79,7 +80,7 @@ export async function getDefaultScreener(manager: EntityManager) {
     return defaultScreener;
 }
 
-export const defaultScreener = (async function getDefaultScreenerEntry() {
+export const defaultScreener = init(async function getDefaultScreenerEntry() {
     const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID }});
     if (existing) {
         return existing;
@@ -102,4 +103,4 @@ export const defaultScreener = (async function getDefaultScreenerEntry() {
         authTokenUsed: null,
         authTokenSent: null
     }});
-})();
+});

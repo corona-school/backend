@@ -1,4 +1,5 @@
 import { log as Log, log_logtype_enum as LogType, pupil as Pupil, student as Student, course_attendance_log as CourseAttendanceLog, bbb_meeting as BBBMeeting } from "@prisma/client";
+import { InterestConfirmationStatus } from "../../common/entity/PupilTutoringInterestConfirmationRequest";
 import { getLogger } from "log4js";
 import { MentoringCategory } from "../mentoring/categories";
 import { prisma } from "../prisma";
@@ -35,7 +36,7 @@ type LogData<Type extends LogType> = {
     instructorIssuedCertificate: { subcourseID: number, pupilID: number },
     pupilInterestConfirmationRequestSent: never,
     pupilInterestConfirmationRequestReminderSent: never,
-    pupilInterestConfirmationRequestStatusChange: never
+    pupilInterestConfirmationRequestStatusChange: { changeDate: number, newStatus: InterestConfirmationStatus, previousStatus: InterestConfirmationStatus }
 }[Type];
 
 const logger = getLogger();

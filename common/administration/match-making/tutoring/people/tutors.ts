@@ -24,7 +24,7 @@ export function tutorsToMatchQuery(manager: EntityManager): SelectQueryBuilder<S
                 AND s.subjects <> '[]' \
                 AND split_part(s.email, '@', 2) NOT IN (:...emailDomainExclusions) \
                 AND (screening.success IS TRUE AND s.isStudent) \
-                AND s.isCodu IS FALSE", { emailDomainExclusions: InvalidEmailDomains});
+                AND s.registrationSource <> '5'", { emailDomainExclusions: InvalidEmailDomains});
 }
 
 export async function getNumberOfTutorsToMatch(manager: EntityManager) {

@@ -3,10 +3,10 @@ generator client {
   previewFeatures = ["interactiveTransactions"]
 }
 
-// generator typegraphql {
-//  provider = "typegraphql-prisma"
-//  output   = "../graphql/generated"
-// }
+generator typegraphql {
+  provider = "typegraphql-prisma"
+  output   = "../graphql/generated"
+}
 
 datasource db {
   provider = "postgresql"
@@ -209,6 +209,7 @@ model match {
   followUpToPupilMail   Boolean           @default(false)
   followUpToStudentMail Boolean           @default(false)
   source                match_source_enum @default(matchedinternal)
+  matchPool             String?           @db.VarChar
   studentId             Int?
   pupilId               Int?
   pupil                 pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
@@ -242,9 +243,9 @@ model mentor {
 }
 
 model notification {
-  id                Int      @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  id                Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
   mailjetTemplateId Int?
-  description       String   @db.VarChar
+  description       String                    @db.VarChar
   active            Boolean
   recipient         Int
   onActions         String[]
@@ -252,6 +253,7 @@ model notification {
   cancelledOnAction String[]
   delay             Int?
   interval          Int?
+  sender            notification_sender_enum?
 }
 
 model participation_certificate {
@@ -568,6 +570,16 @@ model match_pool_run {
   stats          Json     @db.Json
 }
 
+model secret {
+  id        Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
+  createdAt DateTime         @default(now()) @db.Timestamp(6)
+  userId    String           @db.VarChar
+  type      secret_type_enum
+  secret    String           @db.VarChar
+  expiresAt DateTime?        @db.Timestamp(6)
+  lastUsed  DateTime?        @db.Timestamp(6)
+}
+
 enum course_category_enum {
   revision
   club
@@ -822,4 +834,15 @@ enum student_state_enum {
   sh
   th
   other
+}
+
+enum notification_sender_enum {
+  SUPPORT
+  CERTIFICATE_OF_CONDUCT
+}
+
+enum secret_type_enum {
+  PASSWORD
+  TOKEN
+  EMAIL_TOKEN
 }

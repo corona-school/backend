@@ -21,7 +21,8 @@ export function matchableTuteesQuery(manager: EntityManager): SelectQueryBuilder
                 AND p.openMatchRequestCount > 0 \
                 AND p.subjects <> '[]' \
                 AND split_part(p.email, '@', 2) NOT IN (:...emailDomainExclusions) \
-                AND p.registrationSource <> '4'", { emailDomainExclusions: InvalidEmailDomains});
+                AND p.registrationSource <> '4' \
+                AND p.registrationSource <> '5'", { emailDomainExclusions: InvalidEmailDomains});
 }
 
 /// The second parameter indicates whether the tutees to match should include only those with confirmed interest (via an interest-confirmation request or via partner schools) or any matchable tutee

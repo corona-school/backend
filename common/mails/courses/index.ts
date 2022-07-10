@@ -1,5 +1,6 @@
-import { Course } from "../../entity/Course";
 import { Subcourse } from "../../entity/Subcourse";
+import { Course } from "../../entity/Course";
+import { prisma } from "../../prisma";
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from "../index";
 import moment from "moment-timezone";
 import { getLogger } from "log4js";
@@ -13,39 +14,40 @@ import * as Prisma from "@prisma/client";
 
 const logger = getLogger();
 
-const dropCourseRelations = (course: Course) =>
+const dropCourseRelations = (course: Course | Prisma.course) =>
     ({ ...course, instructors: undefined, guests: undefined, correspondent: undefined, subcourses: undefined });
 
-const dropSubcourseRelations = (subcourse: Subcourse) =>
+const dropSubcourseRelations = (subcourse: Subcourse | Prisma.subcourse) =>
     ({ ...subcourse, instructors: undefined, participants: undefined, waitingList: undefined, course: undefined });
 
 
-export async function sendSubcourseCancelNotifications(course: Course, subcourse: Subcourse) {
-
-    if (subcourse.lectures.length == 0) {
+export async function sendSubcourseCancelNotifications(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id} });
+    if (lectures.length == 0) {
         logger.info("No lectures found: no cancellation mails sent for subcourse " + subcourse.id + " of course " + course.name);
         return;
     }
 
     // Find first lecture, subcourse lectures are eagerly loaded
-    let firstLecture = subcourse.lectures[0].start;
-    for (let i = 1; i < subcourse.lectures.length; i++) {
-        if (subcourse.lectures[i].start < firstLecture) {
-            firstLecture = subcourse.lectures[i].start;
+    let firstLecture = lectures[0].start;
+    for (let i = 1; i < lectures.length; i++) {
+        if (lectures[i].start < firstLecture) {
+            firstLecture = lectures[i].start;
         }
     }
 
+    let participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, select: { pupil: true } });
     // Send mail or this lecture to each participant
-    logger.info("Sending cancellation mails for subcourse " + subcourse.id + " of course " + course.name + " to " + subcourse.participants.length + " participants");
-    for (let participant of subcourse.participants) {
+    logger.info("Sending cancellation mails for subcourse " + subcourse.id + " of course " + course.name + " to " + participants.length + " participants");
+    for (let participant of participants) {
         const mail = mailjetTemplates.COURSESCANCELLED({
-            participantFirstname: participant.firstname,
+            participantFirstname: participant.pupil.firstname,
             courseName: course.name,
             firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
             firstLectureTime: moment(firstLecture).format("HH:mm")
         });
-        await sendTemplateMail(mail, participant.email);
-        await Notification.actionTaken(participant, "participant_course_cancelled", {
+        await sendTemplateMail(mail, participant.pupil.email);
+        await Notification.actionTaken(participant.pupil, "participant_course_cancelled", {
             uniqueId: `${subcourse.id}`,
             course: dropCourseRelations(course),
             subcourse: dropSubcourseRelations(subcourse),
@@ -73,14 +75,6 @@ export async function sendCourseUpcomingReminderInstructor(instructor: Student |
 }
 
 export async function sendCourseUpcomingReminderParticipant(participant: Pupil | Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERPARTICIPANT({
-        participantFirstname: participant.firstname,
-        courseName: course.name,
-        courseId: course.id,
-        firstLectureDate: moment(firstLecture).format("DD.MM.YYYY"),
-        firstLectureTime: moment(firstLecture).format("HH:mm")
-    });
-    await sendTemplateMail(mail, participant.email);
     await Notification.actionTaken(participant, "participant_subcourse_reminder", {
         subcourse,
         course,

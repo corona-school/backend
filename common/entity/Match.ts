@@ -106,6 +106,9 @@ export class Match {
     @Column({ nullable: true })
     pupilLastMatchRequest: Date;
 
+    @Column({ nullable: true })
+    matchPool?: string;
+
     jitsiLink(): string {
         return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
     }

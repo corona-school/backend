@@ -13,12 +13,13 @@ const logger = getLogger("MatchingPool");
 
 /* A MatchPool is a Set of students and a Set of pupils,
     which can then be matched to a Set of matches */
-export interface MatchPool {
+export interface MatchPool<Toggle extends string = string> {
     name: string;
-    studentsToMatch: Prisma.studentWhereInput;
-    pupilsToMatch: Prisma.pupilWhereInput;
+    studentsToMatch: (toggles: Toggle[]) => Prisma.studentWhereInput;
+    pupilsToMatch: (toggles: Toggle[]) => Prisma.pupilWhereInput;
     settings: Settings;
-    createMatch(pupil: Pupil, student: Student): Promise<void | never>;
+    createMatch(pupil: Pupil, student: Student, pool: MatchPool): Promise<void | never>;
+    toggles: Toggle[]
     // if present, the matching is run automatically on a daily basis if the criteria are matched
     automatic?: {
         minStudents: number;
@@ -26,40 +27,47 @@ export interface MatchPool {
     }
 }
 
-const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
-    active: true,
-    verification: null
+const getViableUsers = (toggles: string[]) => {
+    const viableUsers: Prisma.studentWhereInput & Prisma.pupilWhereInput = {
+        active: true
+    };
+
+    if (!toggles.includes("allow-unverified")) {
+        viableUsers.verification = null; // require verification to be unset
+    }
+
+    /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
+    are accidentally matched to real users */
+    if (!isDev) {
+        viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" }};
+    }
+
+    return viableUsers;
 };
 
-/* On production we want to avoid that our testusers test-prod-...@lern-fair.de
-   are accidentally matched to real users */
-if (!isDev) {
-    viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" }};
-}
-
-export async function getStudents(pool: MatchPool, take?: number, skip?: number) {
+export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.student.findMany({
-        where: { ...viableUsers, ...pool.studentsToMatch },
+        where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
         take, skip
     });
 }
 
-export async function getPupils(pool: MatchPool, take?: number, skip?: number) {
+export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.pupil.findMany({
-        where: { ...viableUsers, ...pool.pupilsToMatch },
+        where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
         take, skip
     });
 }
 
-export async function getStudentCount(pool: MatchPool) {
+export async function getStudentCount(pool: MatchPool, toggles: string[]) {
     return await prisma.student.count({
-        where: { ...viableUsers, ...pool.studentsToMatch }
+        where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) }
     });
 }
 
-export async function getPupilCount(pool: MatchPool) {
+export async function getPupilCount(pool: MatchPool, toggles: string[]) {
     return await prisma.pupil.count({
-        where: { ...viableUsers, ...pool.pupilsToMatch }
+        where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) }
     });
 }
 
@@ -115,79 +123,68 @@ const balancingCoefficients = {
 export const pools: MatchPool[] = [
     {
         name: "lern-fair-now",
-        pupilsToMatch: {
-            isPupil: true,
-            openMatchRequestCount: { gt: 0 },
-            subjects: { not: "[]"},
-            registrationSource: { notIn: ["codu", "plus"] },
-            OR: [
-                { registrationSource: "cooperation" },
-                { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
-            ]
+        toggles: ["skip-interest-confirmation"],
+        pupilsToMatch: (toggles) => {
+            const query: Prisma.pupilWhereInput = {
+                isPupil: true,
+                openMatchRequestCount: { gt: 0 },
+                subjects: { not: "[]"},
+                registrationSource: { notIn: ["plus"] }
+            };
 
+            if (!toggles.includes("skip-interest-confirmation")) {
+                query.OR = [
+                    { registrationSource: "cooperation" },
+                    { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
+                ];
+            }
+            return query;
         },
-        studentsToMatch: {
+        studentsToMatch: (toggles) => ({
             isStudent: true,
             openMatchRequestCount: { gt: 0},
             subjects: { not: "[]" },
             screening: { success: true },
-            isCodu: false,
-            registrationSource: { notIn: ["codu", "plus"]}
-        },
-        createMatch,
-        settings: { balancingCoefficients }
-    },
-    {
-        name: "codu",
-        pupilsToMatch: {
-            isPupil: true,
-            openMatchRequestCount: { gt: 0 },
-            subjects: { not: "[]"},
-            registrationSource: { equals: "codu" }
-        },
-        studentsToMatch: {
-            isStudent: true,
-            openMatchRequestCount: { gt: 0},
-            subjects: { not: "[]" },
-            screening: { success: true },
-            isCodu: true
-        },
+            registrationSource: { notIn: ["plus"]}
+        }),
         createMatch,
         settings: { balancingCoefficients }
     },
     {
         name: "lern-fair-plus",
-        pupilsToMatch: {
+        toggles: ["allow-unverified"],
+        pupilsToMatch: (toggles) => ({
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]"},
             registrationSource: { equals: "plus" }
-        },
-        studentsToMatch: {
+        }),
+        studentsToMatch: (toggles) => ({
             isStudent: true,
             openMatchRequestCount: { gt: 0},
             subjects: { not: "[]" },
             screening: { success: true },
             registrationSource: { equals: "plus" }
-        },
+        }),
         createMatch,
         settings: { balancingCoefficients }
     },
     {
         name: "TEST-DO-NOT-USE",
-        pupilsToMatch: {
+        toggles: ["allow-unverified"],
+        pupilsToMatch: (toggles) => ({
             isPupil: true,
             openMatchRequestCount: { gt: 0 }
-        },
-        studentsToMatch: {
+        }),
+        studentsToMatch: (toggles) => ({
             isStudent: true,
             openMatchRequestCount: { gt: 0 }
-        },
+        }),
         createMatch(pupil, student) {
             if (!isDev) {
                 throw new Error(`The Test Pool may not be run in production!`);
             }
-            return createMatch(pupil, student);
+            return createMatch(pupil, student, this);
         },
         settings: { balancingCoefficients }
     }
@@ -197,19 +194,24 @@ export async function getPoolRuns(pool: MatchPool) {
     return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name }});
 }
 
-export async function runMatching(poolName: string, apply: boolean) {
+export async function runMatching(poolName: string, apply: boolean, toggles: string[]) {
     const pool = pools.find(it => it.name === poolName);
     if (!pool) {
         throw new Error(`Unknown Pool '${poolName}'`);
     }
 
-    logger.info(`MatchingPool(${pool.name}) started matching (apply: ${apply})`);
+    const invalidToggles = toggles.filter(it => !pool.toggles.includes(it));
+    if (invalidToggles.length > 0) {
+        throw new Error(`Unknown toggles ${invalidToggles} for pool '${pool.name}'`);
+    }
+
+    logger.info(`MatchingPool(${pool.name}) started matching (apply: ${apply}, toggles: ${toggles})`);
 
     const timing = { preparation: 0, matching: 0, commit: 0 };
 
     const startPreparation = Date.now();
-    const pupils = await getPupils(pool);
-    const students = await getStudents(pool);
+    const pupils = await getPupils(pool, toggles);
+    const students = await getStudents(pool, toggles);
 
     // The matching algorithm works on it's own entities, but we need to map them back to pupils and students when receiving the result
     const pupilsMap = new Map(pupils.map(it => [it.wix_id, it]));
@@ -232,10 +234,12 @@ export async function runMatching(poolName: string, apply: boolean) {
     timing.matching = Date.now() - startMatching;
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
+    const stats = { ...result.stats, toggles };
+
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            await pool.createMatch(match.pupil, match.student);
+            await pool.createMatch(match.pupil, match.student, pool);
         }
 
         timing.commit = Date.now() - startCommit;
@@ -244,13 +248,13 @@ export async function runMatching(poolName: string, apply: boolean) {
         await prisma.match_pool_run.create({ data: {
             matchingPool: pool.name,
             matchesCreated: matches.length,
-            stats: (result.stats as any)
+            stats
         }});
     }
 
     return {
         timing,
-        stats: result.stats,
+        stats,
         matches
     };
 }
@@ -263,19 +267,19 @@ export async function runAutomaticMatching() {
             continue;
         }
 
-        const pupilCount = await getPupilCount(pool);
+        const pupilCount = await getPupilCount(pool, []);
         if (pupilCount < pool.automatic.minPupils) {
             logger.info(`MatchinPool(${pool.name}) is not matched as only ${pupilCount} pupils are waiting, ${pool.automatic.minPupils} are required`);
             continue;
         }
 
-        const studentCount = await getStudentCount(pool);
+        const studentCount = await getStudentCount(pool, []);
         if (studentCount < pool.automatic.minStudents) {
             logger.info(`MatchinPool(${pool.name}) is not matched as only ${studentCount} students are waiting, ${pool.automatic.minStudents} are required`);
             continue;
         }
 
-        await runMatching(pool.name, true);
+        await runMatching(pool.name, true, []);
     }
 
     logger.info(`Finished automatic matching`);

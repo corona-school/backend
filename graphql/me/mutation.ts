@@ -1,8 +1,7 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
-import { Me } from "./fields";
 import { GraphQLContext } from "../context";
-import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, logInAsPupil, logInAsStudent } from "../authentication";
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
 import { activatePupil, deactivatePupil } from "../../common/pupil/activation";
 import { setProjectFields } from "../../common/student/update";
@@ -23,13 +22,16 @@ import { RateLimit } from "../rate-limit";
 import { becomeInstructor, BecomeInstructorData, becomeProjectCoach, BecomeProjectCoachData, becomeTutor, BecomeTutorData, ProjectFieldWithGradeData, registerStudent, RegisterStudentData } from "../../common/student/registration";
 import { becomeProjectCoachee, BecomeProjectCoacheeData, becomeStatePupil, BecomeStatePupilData, becomeTutee, BecomeTuteeData, registerPupil, RegisterPupilData } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
-import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
+import { userForStudent, userForPupil } from "../../common/user";
+import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
+import { UserType } from "../user/fields";
+
 @InputType()
 class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
@@ -84,8 +86,11 @@ class RegisterPupilInput implements RegisterPupilData {
     @Field(type => Boolean)
     newsletter: boolean;
 
-    @Field(type => Int)
-    schoolId: School["id"];
+    @Field(type => Int, { nullable: true })
+    schoolId?: School["id"];
+
+    @Field(type => SchoolType, { nullable: true })
+    schooltype?: SchoolType;
 
     @Field(type => State)
     state: State;
@@ -228,7 +233,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 
 
-@Resolver(of => Me)
+@Resolver(of => UserType)
 export class MutateMeResolver {
     @Mutation(returns => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
@@ -245,7 +250,7 @@ export class MutateMeResolver {
         log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
         if (!byAdmin) {
-            await logInAsStudent(student, context);
+            await loginAsUser(userForStudent(student), context);
         }
 
         return student;
@@ -271,7 +276,7 @@ export class MutateMeResolver {
         log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
         if (!byAdmin) {
-            await logInAsPupil(pupil, context);
+            await loginAsUser(userForPupil(pupil), context);
         }
 
         return pupil;
@@ -360,7 +365,7 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await deactivatePupil(pupil);
-            await logInAsPupil(updatedPupil, context);
+            await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
@@ -379,7 +384,7 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await activatePupil(pupil);
-            await logInAsPupil(updatedPupil, context);
+            await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) reactivated their account`);
 
             return true;
@@ -442,8 +447,7 @@ export class MutateMeResolver {
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeProjectCoachee(pupil, data);
-
-        await logInAsPupil(updatedPupil, context);
+        await evaluatePupilRoles(updatedPupil, context);
         // The user should now have the PROJECT_COACHEE role
 
         log.info(`Pupil(${pupil.id}) upgraded their account to a PROJECT_COACHEE`);
@@ -454,12 +458,16 @@ export class MutateMeResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.PUPIL, Role.ADMIN)
     async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg("data") data: BecomeTuteeInput, @Arg("pupilId", { nullable: true}) pupilId: number) {
+        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+
         const pupil = await getSessionPupil(context, pupilId);
         const log = logInContext("Me", context);
         const updatedPupil = await becomeTutee(pupil, data);
-        await logInAsPupil(updatedPupil, context);
+        if (!byAdmin) {
+            await evaluatePupilRoles(updatedPupil, context);
+        }
 
-        log.info(`Pupil(${pupil.id}) upgraded their account to a TUTEE`);
+        log.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
 
         return true;
     }
@@ -471,18 +479,10 @@ export class MutateMeResolver {
         const log = logInContext("Me", context);
 
         const updatedPupil = await becomeStatePupil(pupil, data);
-        await logInAsPupil(updatedPupil, context);
+        await evaluatePupilRoles(updatedPupil, context);
 
         log.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
 
         return true;
     }
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async isEmailAvailable(@Arg("email") email: string) {
-        return await isEmailAvailable(email);
-    }
-
 }

@@ -9,7 +9,6 @@ import * as tokenController from "./controllers/tokenController";
 import * as matchController from "./controllers/matchController";
 import * as projectMatchController from "./controllers/projectMatchController";
 import * as screeningController from "./controllers/screeningController";
-import * as matchingController from "./controllers/matchingController";
 import * as certificateController from "./controllers/certificateController";
 import * as courseController from "./controllers/courseController";
 import * as registrationController from "./controllers/registrationController";
@@ -324,13 +323,6 @@ createConnection().then(setupPDFGenerationEnvironment)
                 "/instructors",
                 screeningController.getInstructors
             );
-
-            const matchingApiRouter = express.Router();
-            matchingApiRouter.post(
-                "/match",
-                matchingController.matchPeopleMiddleware
-            );
-            screenerApiRouter.use("/matching", matchingApiRouter);
 
             app.use("/api/screening", screenerApiRouter);
         }

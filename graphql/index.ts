@@ -39,8 +39,13 @@ import { formatError } from "./error";
 import { NotificationBulkRunResolver } from "./notification/fields";
 import { FieldsMatchPoolResolver } from "./match_pool/fields";
 import { MutateMatchPoolResolver } from "./match_pool/mutations";
+import { MutateSecretResolver } from "./secret/mutation";
+import { MutateCourseResolver } from "./course/mutations";
 import { MutateConcreteNotificationsResolver } from "./concrete_notification/mutations";
 import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notification/fields";
+import { MutateSubcourseResolver } from "./subcourse/mutations";
+import { UserFieldsResolver } from "./user/fields";
+import { MutateUserResolver } from "./user/mutations";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -51,6 +56,8 @@ const schema = buildSchemaSync({
     resolvers: [
         /* User Authentication & Information */
         AuthenticationResolver,
+        UserFieldsResolver,
+        MutateUserResolver,
         FieldMeResolver,
         MutateMeResolver,
 
@@ -62,6 +69,8 @@ const schema = buildSchemaSync({
         ExtendedFieldsSubcourseResolver,
 
         FindManyLectureResolver,
+        MutateCourseResolver,
+        MutateSubcourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
@@ -107,7 +116,10 @@ const schema = buildSchemaSync({
 
         /* MatchPool */
         FieldsMatchPoolResolver,
-        MutateMatchPoolResolver
+        MutateMatchPoolResolver,
+
+        /* Secret */
+        MutateSecretResolver
     ],
     authChecker
 });
