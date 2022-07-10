@@ -294,7 +294,7 @@ export async function runAutomaticMatching() {
 /* ----------------------- STATISTICS & PREDICTION ----------------------- */
 
 
-const average = <T>(values: T[], mapper: (it: T) => number) => values.map(mapper).reduce((a, b) => a + b, 0) / values.length;
+const average = <T>(values: T[], mapper: (it: T) => number) => values.map(mapper).reduce((a, b) => a + b, 0) / Math.max(1, values.length);
 
 export interface MatchPoolStatistics {
     matchesByMonth: {
