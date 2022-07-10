@@ -27,8 +27,8 @@ export async function createMatch(pupil: Pupil, student: Student, pool: MatchPoo
             uuid,
             pupilId: pupil.id,
             studentId: student.id,
-            // pupilFirstMatchRequest: pupil.firstMatchRequest
-            // studentFirstMatchRequest: student.firstMatchRequest
+            pupilFirstMatchRequest: pupil.firstMatchRequest,
+            studentFirstMatchRequest: student.firstMatchRequest,
             matchPool: pool.name
         }
     });

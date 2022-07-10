@@ -55,10 +55,15 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
         where: { id: pupil.id },
         data: {
             openMatchRequestCount: { increment: 1 }
-            // firstMatchRequest: new Date()
         }
     });
 
+    if (result.openMatchRequestCount === 1) {
+        await prisma.pupil.update({
+            where: { id: pupil.id },
+            data: { firstMatchRequest: new Date() }
+        });
+    }
     logger.info(`Created match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
 
@@ -71,7 +76,6 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         where: { id: pupil.id },
         data: {
             openMatchRequestCount: { decrement: 1 }
-            // firstMatchRequest: new Date()
         }
     });
 
@@ -105,6 +109,13 @@ export async function createStudentMatchRequest(student: Student, adminOverride 
         where: { id: student.id },
         data: { openMatchRequestCount: { increment: 1 } }
     });
+
+    if (result.openMatchRequestCount === 1) {
+        await prisma.student.update({
+            where: { id: student.id },
+            data: { firstMatchRequest: new Date() }
+        });
+    }
 
     logger.info(`Created match request for Student(${student.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
