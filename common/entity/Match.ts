@@ -99,12 +99,14 @@ export class Match {
 
     // Students and Pupils request a match by increasing their "openMatchRequest" counter
     // A match decreases that counter. Thus we cannot really say 'which request lead to which match'
-    // However we know when the user last increased the match count
+    // However we know when the user first increased the counter from 0 to 1, thus making their viable for matching
+    // Thus for users having only one open match request (the majority), this prediction is accurate
+    // For users with more than one open match request, this overestimates the request time
     @Column({ nullable: true })
-    studentLastMatchRequest: Date;
+    studentFirstMatchRequest: Date;
 
     @Column({ nullable: true })
-    pupilLastMatchRequest: Date;
+    pupilFirstMatchRequest: Date;
 
     @Column({ nullable: true })
     matchPool?: string;

@@ -55,7 +55,7 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
         where: { id: pupil.id },
         data: {
             openMatchRequestCount: { increment: 1 }
-            // lastMatchRequest: new Date()
+            // firstMatchRequest: new Date()
         }
     });
 
@@ -71,7 +71,7 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         where: { id: pupil.id },
         data: {
             openMatchRequestCount: { decrement: 1 }
-            // lastMatchRequest: new Date()
+            // firstMatchRequest: new Date()
         }
     });
 

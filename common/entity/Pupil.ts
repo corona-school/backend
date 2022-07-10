@@ -85,7 +85,7 @@ export class Pupil extends Person {
     openMatchRequestCount: number;
 
     @Column({ nullable: true })
-    lastMatchRequest: Date;
+    firstMatchRequest: Date;
 
     /*
      * Participant data
