@@ -404,5 +404,5 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
         backlog *= await getInterestConfirmationRate();
     }
 
-    return Math.round((backlog / averageMatchesPerMonth) * 30);
+    return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
 }
