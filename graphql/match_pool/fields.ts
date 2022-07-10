@@ -1,7 +1,8 @@
 import { Student, Pupil, Screener, Match_pool_run as MatchPoolRun } from "../generated";
 import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from "type-graphql";
-import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, getPoolRuns } from "../../common/match/pool";
+import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, getPoolRuns, getPoolStatistics } from "../../common/match/pool";
 import { Role } from "../authorizations";
+import { JSONResolver } from "graphql-scalars";
 
 @ObjectType()
 class MatchPoolAutomatic {
@@ -21,16 +22,17 @@ class MatchPool {
     toggles: string[];
 }
 
+
 @Resolver(of => MatchPool)
 export class FieldsMatchPoolResolver {
     @Query(returns => [MatchPool])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     match_pools() {
         return pools;
     }
 
     @Query(returns => MatchPool)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     match_pool(@Arg("name") name: string) {
         return pools.find(it => it.name === name);
     }
@@ -48,13 +50,13 @@ export class FieldsMatchPoolResolver {
     }
 
     @FieldResolver(returns => Int)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async studentsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getStudentCount(matchPool, toggles ?? []);
     }
 
     @FieldResolver(returns => Int)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async pupilsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getPupilCount(matchPool, toggles ?? []);
     }
@@ -63,5 +65,11 @@ export class FieldsMatchPoolResolver {
     @Authorized(Role.ADMIN)
     async runs(@Root() matchPool: MatchPoolType) {
         return await getPoolRuns(matchPool);
+    }
+
+    @FieldResolver(returns => JSONResolver)
+    @Authorized(Role.UNAUTHENTICATED)
+    async statistics(@Root() matchPool: MatchPoolType) {
+        return await getPoolStatistics(matchPool);
     }
 }

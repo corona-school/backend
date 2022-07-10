@@ -282,3 +282,68 @@ export async function runAutomaticMatching() {
 
     logger.info(`Finished automatic matching`);
 }
+
+export interface MatchPoolStatistics {
+    calculatedAt: number /* timestamp (ms) */;
+    matchesByMonth: {
+        month: number;
+        year: number;
+        matches: number;
+        subjects: {
+            [subject: string]: { offered: number, requested: number, fulfilled: number };
+        }
+    }[]
+}
+
+const statisticsCache: { [pool: string]: Promise<MatchPoolStatistics> } = {};
+
+export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics> {
+    const runner = (async function () {
+        const existingStat = await statisticsCache[pool.name];
+
+        // Cache statistics for one hour
+        if (existingStat && existingStat.calculatedAt > Date.now() - 1000 * 60 * 60) {
+            return existingStat;
+        }
+
+        const runs = await getPoolRuns(pool);
+
+        const monthToStatistics = new Map<string, MatchPoolStatistics["matchesByMonth"][number]>();
+
+        for (const { runAt, matchesCreated, stats } of runs) {
+            const { subjectStats } = stats as any;
+
+            const runAtDate = new Date(runAt);
+            const month = runAtDate.getMonth() + 1;
+            const year = runAtDate.getFullYear();
+
+            const key = `${month}/${year}`;
+            let entry = monthToStatistics.get(key);
+            if (!entry) {
+                entry = { subjects: {}, matches: 0, month, year };
+                monthToStatistics.set(key, entry);
+            }
+
+            entry.matches += matchesCreated;
+            for (const { name, stats: { offered, requested, fulfilledRequests }} of subjectStats) {
+                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
+                subjectStats.fulfilled += fulfilledRequests;
+                subjectStats.offered += offered;
+                subjectStats.requested += requested;
+            }
+        }
+
+        const matchesByMonth = [...monthToStatistics.values()];
+        matchesByMonth.sort((a, b) => a.year - b.year || a.month - b.month);
+
+        const result = {
+            calculatedAt: Date.now(),
+            matchesByMonth
+        };
+
+        return result;
+    })();
+
+    statisticsCache[pool.name] = runner;
+    return runner;
+}
