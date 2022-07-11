@@ -114,9 +114,47 @@ export class StatisticsResolver {
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`
             ,
-            offeredCoursePlaces: [], // TODO: Date of a subcourse?
-            attendedCoursePlaces: [],
-            pupilsParticipatingInCourses: []
+            offeredCoursePlaces: await prisma.$queryRaw
+            `SELECT "year", "month", SUM("subcourse"."maxParticipants") FROM (
+                SELECT DISTINCT ON("start")
+                    "subcourseId", "start",
+                    date_part('year', "start"::date) AS "year",
+                    date_part('month', "start"::date) AS "month"
+                    FROM "lecture"
+                    ORDER BY "start"
+                ) "first_lecture"
+                INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
+                GROUP BY "year", "month";`,
+            attendedCoursePlaces: await prisma.$queryRaw
+            `SELECT "year", "month", SUM("participants") AS "value" FROM (
+                SELECT "year", "month", "subcourse"."id" AS "subcourseId", COUNT(*) AS "participants" FROM (
+                  SELECT DISTINCT ON("start")
+                      "subcourseId", "start",
+                      date_part('year', "start"::date) AS "year",
+                      date_part('month', "start"::date) AS "month"
+                      FROM "lecture"
+                      ORDER BY "start"
+                  ) "first_lecture"
+                  INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
+                  INNER JOIN "subcourse_participants_pupil" ON "subcourse_participants_pupil"."subcourseId" = "subcourse"."id"
+                  GROUP BY "year", "month", "subcourse"."id"
+                ) "subcourse_participants"
+                GROUP BY "year", "month";`,
+            pupilsParticipatingInCourses: await prisma.$queryRaw
+            `SELECT "year", "month", COUNT(DISTINCT "pupilId") AS "value" FROM (
+                SELECT "year", "month", "subcourse_participants_pupil"."pupilId" FROM (
+                  SELECT DISTINCT ON("start")
+                      "subcourseId", "start",
+                      date_part('year', "start"::date) AS "year",
+                      date_part('month', "start"::date) AS "month"
+                      FROM "lecture"
+                      ORDER BY "start"
+                  ) "first_lecture"
+                  INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
+                  INNER JOIN "subcourse_participants_pupil" ON "subcourse_participants_pupil"."subcourseId" = "subcourse"."id"
+                  GROUP BY "year", "month", "subcourse_participants_pupil"."pupilId"
+                ) "subcourse_participants"
+                GROUP BY "year", "month";`
         };
     }
 }
