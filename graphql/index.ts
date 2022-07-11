@@ -46,6 +46,7 @@ import { ExtendedFieldsConcreteNotificationResolver } from "./concrete_notificat
 import { MutateSubcourseResolver } from "./subcourse/mutations";
 import { UserFieldsResolver } from "./user/fields";
 import { MutateUserResolver } from "./user/mutations";
+import { StatisticsResolver } from "./statistics/fields";
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -119,7 +120,10 @@ const schema = buildSchemaSync({
         MutateMatchPoolResolver,
 
         /* Secret */
-        MutateSecretResolver
+        MutateSecretResolver,
+
+        /* Statistics */
+        StatisticsResolver
     ],
     authChecker
 });
