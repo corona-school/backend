@@ -7,7 +7,7 @@ import { assert } from "console";
 import { NotificationSender } from "../../entity/Notification";
 
 const logger = getLogger();
-const mailAuth = btoa(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`);
+const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString("base64");
 
 const senderEmails: { [sender in NotificationSender]: string } = {
     [NotificationSender.SUPPORT]: "support@lern-fair.de",
