@@ -2852,17 +2852,13 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 
         await Promise.all(addressees.map(async (participant) => {
             await Notification.actionTaken(participant, "participant_course_message", {
-                // instructor: student,
-                // course: dropCourseRelations(course),
-                // subcourse: dropSubcourseRelations(subcourse),
                 subject: "Nachricht zu deinem Kurs",
-                //body: mailBody,
                 courseName: course.name,
                 participantFirstName: participant.firstname,
                 instructorFirstName: student.firstname,
                 messageTitle: mailSubject,
                 messageBody: mailBody,
-                instructorMail: student.email,
+                instructorMail: student.email
             }, attachmentGroup);
         }));
     } catch (e) {
@@ -2984,7 +2980,7 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
                 subject: mailSubject,
                 body: mailBody
             }, attachmentGroup);
-        }))
+        }));
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);
