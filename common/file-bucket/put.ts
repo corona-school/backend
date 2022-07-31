@@ -1,5 +1,6 @@
 import { getLogger } from "log4js";
 import { DEFAULT_BUCKET, s3 } from "./s3";
+import {PutObjectCommand} from "@aws-sdk/client-s3";
 
 const logger = getLogger();
 
@@ -7,14 +8,14 @@ const logger = getLogger();
 /// Stores the given buffer in the default bucket associated with the given key
 /// NOTE: May throw in case the upload failed
 export async function putFile(f: Buffer, key: string) {
-    const request = s3.putObject({
+    const command = new PutObjectCommand({
         Key: key,
         Bucket: DEFAULT_BUCKET,
         Body: f,
-        ACL: 'public-read'
+        ACL: "public-read"
     });
 
-    const result = await request.promise();
+    const result = await s3.send(command);
 
     logger.info(`Put file with key '${key}' into default bucket. Result: ${JSON.stringify(result)}`);
 }

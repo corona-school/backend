@@ -28,7 +28,7 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
             })
         );
 
-        logger.info("E-Mail (type " + templateMail.type + ") was sent to " + recipient, JSON.stringify(result.body));
+        logger.info("E-Mail (type " + templateMail.type + ") was sent to " + recipient, JSON.stringify(result));
         return result;
     } catch (e) {
         logger.warn("Unable to send mail (type " + templateMail.type + ") to " + recipient + ": Status code " + e.statusCode);
@@ -53,8 +53,8 @@ async function getHardBounceEmailAddresses() : Promise<string[]> {
 
     try {
         const result = await mailjet.getHardBounces();
-        logger.info(`Received ${result.body.Count} hard bounces`);
-        return result.body.Data.map(message => message['ContactAlt']);
+        logger.info(`Received ${result.Count} hard bounces`);
+        return result.Data.map(message => message['ContactAlt']);
     } catch (e) {
         logger.warn("Unable to get HardBounces. Status code: " + e.statusCode);
         throw e;

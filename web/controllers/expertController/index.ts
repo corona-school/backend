@@ -4,7 +4,7 @@ import {getLogger} from "log4js";
 import {Pupil} from "../../../common/entity/Pupil";
 import {ApiContactExpert, ApiGetExpert, ApiGetExpertiseTag, ApiPutExpert} from "./format";
 import {getTransactionLog} from "../../../common/transactionlog";
-import {getManager} from "typeorm";
+import {getManager, In} from "typeorm";
 import {ExpertData} from "../../../common/entity/ExpertData";
 import mailjet from "../../../common/mails/mailjet";
 import {DEFAULTSENDERS} from "../../../common/mails/config";
@@ -265,7 +265,7 @@ async function putExpert(wixId: string, student: Student, info: ApiPutExpert): P
 async function GetExpertiseTagEntities(tagNames: string[]): Promise<ExpertiseTag[]> {
     const entityManager = getManager();
 
-    const tags: ExpertiseTag[] = await entityManager.find(ExpertiseTag, { where: tagNames.map(t => ({ name: t }))});
+    const tags: ExpertiseTag[] = await entityManager.find(ExpertiseTag, { where: { name: In(tagNames)}});
 
     for (let i = 0; i < tagNames.length; i++) {
         if (!tags.map(t => (t.name)).includes(tagNames[i])) {

@@ -1,5 +1,5 @@
 import { Channel, Context, Notification } from "../types";
-import * as mailjetAPI from "node-mailjet";
+import * as mailjet from "../../mails/mailjetTypes";
 import { mailjetSmtp } from "../../mails/config";
 import { getLogger } from "log4js";
 import { Person } from "../../entity/Person";
@@ -7,6 +7,7 @@ import { assert } from "console";
 import { NotificationSender } from "../../entity/Notification";
 
 const logger = getLogger();
+const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString("base64");
 
 const senderEmails: { [sender in NotificationSender]: string } = {
     [NotificationSender.SUPPORT]: "support@lern-fair.de",
@@ -60,9 +61,8 @@ export const mailjetChannel: Channel = {
             throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
         }
 
-        const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
 
-        let requestOptions: mailjetAPI.Email.SendParams = {
+        let requestOptions: mailjet.SendParams = {
             SandboxMode: sandboxMode,
             Messages: [
                 message
@@ -71,7 +71,15 @@ export const mailjetChannel: Channel = {
 
         logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
 
-        const { body } = await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+        const body = await fetch("https://api.mailjet.com/v3.1/send", {
+            body: JSON.stringify(requestOptions),
+            headers: {
+                Authorization: `Basic ${mailAuth}`,
+                "Content-Type": "application/json"
+            },
+            method: "POST"
+        }).then(res => res.json());
+
 
         if (!body.Messages || body.Messages.length !== 1) {
             throw new Error(`Mailjet API responded with invalid body`);
