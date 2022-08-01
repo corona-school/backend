@@ -1,4 +1,5 @@
-import {S3Client} from "@aws-sdk/client-s3";
+import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner"
 
 import { assert } from "console";
 
@@ -24,5 +25,6 @@ export function accessURLForKey(key: string) {
 }
 
 export async function generatePresignedURL(key: string, bucket: string) {
-    return s3.getSignedUrl("getObject", {Bucket: bucket, Key: key, Expires: 3600});
+    const cmd = new GetObjectCommand({Bucket: bucket, Key: key});
+    return getSignedUrl(s3, cmd, { expiresIn: 3600 });
 }
