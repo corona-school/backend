@@ -85,6 +85,7 @@ async function studentToHelper(student: Student): Promise<Helper> {
         createdAt: student.createdAt,
         excludeMatchesWith: existingMatches.map(it => ({ uuid: it.pupil.wix_id })),
         state: student.state
+        // firstMatchRequest: student.firstMatchRequest
     };
 }
 
@@ -101,6 +102,7 @@ async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
         state: pupil.state,
         matchingPriority: pupil.matchingPriority,
         grade: gradeAsInt(pupil.grade)
+        // firstMatchRequest: pupil.firstMatchRequest
     };
 }
 
