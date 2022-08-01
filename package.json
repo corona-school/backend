@@ -39,7 +39,7 @@
     "apollo-server-plugin-response-cache": "3.4.0",
     "async-mutex": "^0.2.2",
     "basic-auth": "^2.0.1",
-    "bcrypt": "^4.0.1",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "class-validator": "^0.13.1",
     "corona-school-matching": "1.2.0",
