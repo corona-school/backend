@@ -14,7 +14,7 @@ export async function putFile(f: Buffer, key: string, bucket: string, isPublic: 
         Body: f,
         ACL: isPublic ? 'public-read' : undefined,
         ContentDisposition: "inline",
-        ContentType: mimetype,
+        ContentType: mimetype
     });
 
     const result = await s3.send(command);
