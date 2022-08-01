@@ -19,4 +19,7 @@ export class Subject { // GraphQL Type for common/entity/Student -> Subject
 
     @Field(type => Range, { nullable: true })
     grade: Range;
+
+    @Field(type => Boolean, { nullable: true })
+    mandatory: boolean;
 }
