@@ -33,7 +33,7 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
         }
     });
 
-    await putFile(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false);
+    await putFile(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false, file.mimetype);
 
     return attachmentId;
 }
