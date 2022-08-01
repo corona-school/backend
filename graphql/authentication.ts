@@ -9,13 +9,13 @@ import { Deprecated, getPupil, getScreener, getStudent } from "./util";
 import { prisma } from "../common/prisma";
 import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
 import { getLogger } from "log4js";
-import { Me } from "./me/fields";
 import { AuthenticationError, ForbiddenError } from "./error";
 import { logInContext } from "./logging";
 import { User, userForPupil, userForScreener, userForStudent } from "../common/user";
 import { loginPassword, loginToken } from "../common/secret";
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from "./roles";
 import { defaultScreener } from "../common/entity/Screener";
+import { UserType } from "./user/fields";
 
 const logger = getLogger("GraphQL Authentication");
 
@@ -145,7 +145,7 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
 
 
 
-@Resolver(of => Me)
+@Resolver(of => UserType)
 export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation(returns => Boolean)

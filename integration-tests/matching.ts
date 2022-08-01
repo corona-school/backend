@@ -1,4 +1,4 @@
-import { adminClient, test } from "./base";
+import { adminClient, defaultClient, test } from "./base";
 import { pupilOne } from "./user";
 
 test("Pupil Request Match", async () => {
@@ -12,4 +12,20 @@ test("Pupil Request Match", async () => {
     `);
 
     // TODO
+});
+
+test("Anyone Request Matching Statistics", async () => {
+    await defaultClient.request(`
+        query {
+            match_pool(name: "lern-fair-now") {
+                statistics {
+                    matchesByMonth
+                    averageMatchesPerMonth
+                    predictedPupilMatchTime
+                    subjectDemand { subject demand }
+                }
+                studentsToMatchCount
+            }
+        }
+    `);
 });

@@ -25,7 +25,7 @@ export function randomIntFromInterval(min: number, max: number) {
  *
  * @return Formatted string.
  */
-function friendlyFileSize(bytes, si = false, dp = 1) {
+export function friendlyFileSize(bytes, si = false, dp = 1) {
     let size = bytes;
     const thresh = si ? 1000 : 1024;
 
@@ -62,15 +62,12 @@ export function isCommandArg(arg: string, short?: string): boolean {
             a.replace("-", "") === short.replace("-", ""));
 }
 
+
 export const assertExists = <Type>(optional: Type | null | undefined): Type | never => {
     if (optional === null || optional === undefined) {
         throw new Error(`Unexpected null or undefined`);
     }
     return optional;
-};
-
-export {
-    friendlyFileSize
 };
 
 // Calls 'initializer' once the returned promise is first 'await'ed, then resolves the promise with the result
@@ -80,4 +77,9 @@ export function init<T>(initializer: () => PromiseLike<T>): PromiseLike<T> {
             return initializer().then(resolve, reject);
         }
     };
+}
+
+export function isEmail(email: string): boolean {
+    return /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/
+        .test(email);
 }

@@ -1,4 +1,5 @@
-import aws from "aws-sdk";
+import {S3Client} from "@aws-sdk/client-s3";
+
 import { assert } from "console";
 
 export const AWS_BUCKET_ENDPOINT = process.env.AWS_BUCKET_ENDPOINT;
@@ -9,11 +10,10 @@ export const ATTACHMENT_BUCKET = process.env.AWS_ATTACHMENT_BUCKET;
 export const ACCESS_DOMAIN_NAME = DEFAULT_BUCKET && AWS_BUCKET_ENDPOINT ? `${DEFAULT_BUCKET}.${AWS_BUCKET_ENDPOINT}` : undefined;
 
 /// The default s3 endpoint
-const s3Endpoint = AWS_BUCKET_ENDPOINT ? new aws.Endpoint(AWS_BUCKET_ENDPOINT) : undefined;
+const s3Endpoint = AWS_BUCKET_ENDPOINT ? AWS_BUCKET_ENDPOINT : undefined;
 
 /// Returns the default s3 instance
-export const s3 = new aws.S3({
-    signatureVersion: 'v4',
+export const s3 = new S3Client({
     ...(s3Endpoint && {endpoint: s3Endpoint})
 });
 

@@ -52,13 +52,13 @@ import ParticipantJoinedWaitingListEvent from '../../../common/transactionlog/ty
 import AccessedCourseEvent from '../../../common/transactionlog/types/AccessedCourseEvent';
 import { prisma } from '../../../common/prisma';
 import { CourseCache } from './course-cache';
-import isEmail from "validator/lib/isEmail";
 import { CourseGuest, generateNewCourseGuestToken } from '../../../common/entity/CourseGuest';
 import { getCourseCertificate } from '../../../common/courses/certificates';
 import InstructorIssuedCertificateEvent from '../../../common/transactionlog/types/InstructorIssuedCertificateEvent';
 import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
 import * as Notification from "../../../common/notification";
+import {isEmail} from "../../../common/util/basic";
 
 
 

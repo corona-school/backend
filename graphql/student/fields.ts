@@ -12,9 +12,16 @@ import { Subject } from "../types/subject";
 import { parseSubjectString } from "../../common/util/subjectsutils";
 import { Decision } from "../types/reason";
 import { canStudentRequestMatch } from "../../common/match/request";
+import { UserType } from "../user/fields";
+import { userForStudent } from "../../common/user";
 
 @Resolver(of => Student)
 export class ExtendFieldsStudentResolver {
+    @FieldResolver(type => UserType)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    user(@Root() student: Required<Student>) {
+        return userForStudent(student);
+    }
 
     @FieldResolver(type => [ParticipationCertificate])
     @Authorized(Role.ADMIN, Role.OWNER)
