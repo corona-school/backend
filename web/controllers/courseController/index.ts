@@ -2852,7 +2852,6 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
 
         await Promise.all(addressees.map(async (participant) => {
             await Notification.actionTaken(participant, "participant_course_message", {
-                subject: "Nachricht zu deinem Kurs",
                 courseName: course.name,
                 participantFirstName: participant.firstname,
                 instructorFirstName: student.firstname,
@@ -2972,13 +2971,12 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
         let attachmentGroup = await Notification.createAttachments(files, pupil);
         await Promise.all(instructors.map(async (instructor) => {
             await Notification.actionTaken(instructor, "instructor_course_participant_message", {
-                participant: pupil,
-                instructor: instructor,
-                course: dropCourseRelations(course),
+                instructorFirstName: instructor.firstname,
+                participantFirstName: pupil.firstname,
                 courseName: course.name,
-                subcourse: dropSubcourseRelations(subcourse),
-                subject: mailSubject,
-                body: mailBody
+                messageTitle: mailSubject,
+                messageBody: mailBody,
+                participantMail: pupil.email,
             }, attachmentGroup);
         }));
     } catch (e) {
