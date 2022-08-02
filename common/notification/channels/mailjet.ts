@@ -71,7 +71,7 @@ export const mailjetChannel: Channel = {
         };
 
         logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
-        logger.debug(`Variables: ${{...context, attachmentGroup: attachments ? attachments.attachmentListHTML : ""}}`);
+        logger.debug(`Variables: ${JSON.stringify({...context, attachmentGroup: attachments ? attachments.attachmentListHTML : ""})}`);
 
         const body = await fetch("https://api.mailjet.com/v3.1/send", {
             body: JSON.stringify(requestOptions),
