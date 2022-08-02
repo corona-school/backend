@@ -128,7 +128,8 @@ export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
 
 
     try {
-        const data = fetch(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`).then(res => res.text());
+        const dataRaw = await fetch(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        const data = await dataRaw.text();
         const jsonResponse = await parser.parseStringPromise(data);
 
 
@@ -298,7 +299,8 @@ export async function getRunningBBBMeetingAttendees(meetingID: string): Promise<
     const queryParams = encodeURI(`meetingID=${meetingID}`);
 
     try {
-        const data = fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`).then(res => res.text());
+        const dataRaw = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        const data = await dataRaw.text();
         const jsonResponse = await parser.parseStringPromise(data);
         return mapJSONtoAttendees(jsonResponse);
     } catch (error) {
