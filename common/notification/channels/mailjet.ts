@@ -80,7 +80,7 @@ export const mailjetChannel: Channel = {
                 "Content-Type": "application/json"
             },
             method: "POST"
-        }).then(res => res.json());
+        }).then(res => res.json()).catch(ex => logger.error("Couldn't send email", ex));
 
 
         if (!body.Messages || body.Messages.length !== 1) {
