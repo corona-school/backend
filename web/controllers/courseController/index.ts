@@ -2976,7 +2976,7 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
                 courseName: course.name,
                 messageTitle: mailSubject,
                 messageBody: mailBody,
-                participantMail: pupil.email,
+                participantMail: pupil.email
             }, attachmentGroup);
         }));
     } catch (e) {
