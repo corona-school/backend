@@ -1,11 +1,14 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, BulkAction } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserIdTypeORM, getUserTypeORM, getFullName } from '../user';
 import { getLogger } from 'log4js';
+import {Student} from "../entity/Student";
+import {v4 as uuid} from "uuid";
+import {AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML} from "../attachments";
+import {Pupil} from "../entity/Pupil";
 import { assert } from 'console';
-import { bulkActions } from './bulk';
 
 const logger = getLogger("Notification");
 
@@ -31,7 +34,8 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext) {
+
+export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;
@@ -82,8 +86,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
 
             // Trigger notifications that are supposed to be directly sent on this action
             for (const directSend of directSends) {
-                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext);
-                await deliverNotification(concreteNotification, directSend, user, notificationContext);
+                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
+                await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
             }
 
             // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
@@ -95,7 +99,8 @@ export async function actionTaken(user: Person, actionId: string, notificationCo
                         sentAt: new Date(Date.now() + (it.delay /* in hours */ * HOURS_TO_MS)),
                         userId: getUserIdTypeORM(user),
                         contextID: notificationContext.uniqueId,
-                        context: notificationContext
+                        context: notificationContext,
+                        attachmentGroupId: attachments?.attachmentGroupId
                     }))
                 });
 
@@ -129,6 +134,11 @@ export async function checkReminders() {
                 throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
             }
 
+            let attachmentGroup = null;
+            if (reminder.attachmentGroupId !== null) {
+                attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
+            }
+
             const notification = await getNotification(reminder.notificationID);
             const user = await getUserTypeORM(reminder.userId);
 
@@ -136,7 +146,8 @@ export async function checkReminders() {
                 throw new Error(`Reminder was found although account is deactivated`);
             }
 
-            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext);
+
+            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext, attachmentGroup);
 
             // For recurring reminders, we simply create another DELAYED concrete notification
             // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
@@ -155,7 +166,8 @@ export async function checkReminders() {
                         sentAt: new Date(Date.now() + (notification.interval /* in hours */ * HOURS_TO_MS)),
                         userId: getUserIdTypeORM(user),
                         contextID: reminder.contextID,
-                        context: reminder.context
+                        context: reminder.context,
+                        attachmentGroupId: reminder.attachmentGroupId
                     }
                 });
 
@@ -183,7 +195,7 @@ export async function checkReminders() {
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
-async function createConcreteNotification(notification: Notification, user: Person, context: NotificationContext): Promise<ConcreteNotification> {
+async function createConcreteNotification(notification: Notification, user: Person, context: NotificationContext, attachments?: AttachmentGroup): Promise<ConcreteNotification> {
     if (context.uniqueId) {
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
@@ -207,7 +219,8 @@ async function createConcreteNotification(notification: Notification, user: Pers
             userId: getUserIdTypeORM(user),
             sentAt: new Date(),
             contextID: context.uniqueId,
-            context
+            context,
+            attachmentGroupId: attachments?.attachmentGroupId
         }
     });
 
@@ -216,7 +229,7 @@ async function createConcreteNotification(notification: Notification, user: Pers
     return concreteNotification;
 }
 
-async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext): Promise<void> {
+async function deliverNotification(concreteNotification: ConcreteNotification, notification: Notification, user: Person, notificationContext: NotificationContext, attachments?: AttachmentGroup): Promise<void> {
     logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
 
     const context: Context = {
@@ -233,7 +246,7 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification, user, context, concreteNotification.id);
+        await channel.send(notification, user, context, concreteNotification.id, attachments);
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
@@ -268,6 +281,30 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
     }
 }
 
+/**
+ * Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
+ * These objects include HTML for the attachment list which gets inserted into messages.
+ * @param files     Multer files to be uploaded.
+ * @param uploader  User that intends to upload the files.
+ * @return          Object with attachmentListHTML, attachmentGroupId, and attachmentIds
+ */
+export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
+
+    if (files.length > 0) {
+        let attachmentGroupId = uuid().toString();
+
+        let attachments = await Promise.all(files.map(async f => {
+            let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
+            return {attachmentId, filename: f.originalname, size: f.size};
+        }));
+
+        const attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
+
+        return {attachmentListHTML, attachmentGroupId, attachmentIds: attachments.map(att => att.attachmentId)};
+    }
+    return null;
+}
+
 const DEACTIVATION_MARKER = "ACCOUNT_DEACTIVATION";
 
 export async function cancelRemindersFor(user: Person) {
@@ -286,7 +323,7 @@ export async function cancelRemindersFor(user: Person) {
 
 /* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
    as if the user took that action at actionDate */
-export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean) {
+export async function actionTakenAt(actionDate: Date, user: Person, actionId: string, notificationContext: NotificationContext, apply: boolean, attachments?: AttachmentGroup) {
     assert(user.active, "Cannot trigger action taken at for inactive users");
 
     const notifications = await getNotifications();
@@ -324,7 +361,8 @@ export async function actionTakenAt(actionDate: Date, user: Person, actionId: st
             sentAt: new Date(sendAt),
             userId,
             contextID: notificationContext.uniqueId,
-            context: notificationContext
+            context: notificationContext,
+            attachmentGroupId: attachments?.attachmentGroupId
         });
 
     }

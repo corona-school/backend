@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getLogger } from 'log4js';
-import { getManager } from 'typeorm';
+import {getManager, In} from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
 import {
@@ -28,7 +28,7 @@ import { CourseTag } from '../../../common/entity/CourseTag';
 import { Subcourse } from '../../../common/entity/Subcourse';
 import { Lecture } from '../../../common/entity/Lecture';
 import { getPupilByWixID, Pupil } from '../../../common/entity/Pupil';
-import { sendSubcourseCancelNotifications, sendInstructorGroupMail, sendParticipantToInstructorMail, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
+import { sendSubcourseCancelNotifications, sendParticipantRegistrationConfirmationMail, sendGuestInvitationMail, sendParticipantCourseCertificate } from '../../../common/mails/courses';
 import {
     createBBBMeeting,
     isBBBMeetingRunning,
@@ -41,7 +41,7 @@ import moment from 'moment-timezone';
 import { putFile } from '../../../common/file-bucket';
 import { deleteFile } from '../../../common/file-bucket/delete';
 import { courseImageKey } from './course-images';
-import { accessURLForKey } from '../../../common/file-bucket/s3';
+import {accessURLForKey, DEFAULT_BUCKET} from '../../../common/file-bucket/s3';
 import mime from 'mime-types';
 import { v4 as uuidv4 } from "uuid";
 import { uniqueNamesGenerator, adjectives as NAME_GENERATOR_ADJECTIVES, names as NAME_GENERATOR_NAMES } from 'unique-names-generator';
@@ -59,6 +59,8 @@ import { addCleanupAction } from '../../../common/util/cleanup';
 import { getFullName } from '../../../common/user';
 import * as Notification from "../../../common/notification";
 import {isEmail} from "../../../common/util/basic";
+
+
 
 const dropCourseRelations = (course: Course) =>
     ({ ...course, instructors: undefined, guests: undefined, correspondent: undefined, subcourses: undefined });
@@ -493,7 +495,6 @@ async function getAPICourses(student: Student | undefined,
                                             uuid: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.wix_id,
                                             firstname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.firstname,
                                             lastname: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.lastname,
-                                            email: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.email,
                                             grade: parseInt(courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.grade),
                                             schooltype: courses[i].subcourse[k].subcourse_participants_pupil[l].pupil.schooltype
                                         });
@@ -754,7 +755,6 @@ async function getCourse(student: Student | undefined, pupil: Pupil | undefined,
                         uuid: course.subcourses[i].participants[j].wix_id,
                         firstname: course.subcourses[i].participants[j].firstname,
                         lastname: course.subcourses[i].participants[j].lastname,
-                        email: course.subcourses[i].participants[j].email,
                         grade: parseInt(course.subcourses[i].participants[j].grade),
                         schooltype: course.subcourses[i].participants[j].schooltype
                     });
@@ -2773,7 +2773,7 @@ export async function groupMailHandler(req: Request, res: Response) {
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+            status = await groupMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, JSON.parse(req.body.addressees), req.files as Express.Multer.File[]);
         } else {
             logger.warn("Missing or invalid parameters for groupMailHandler");
             status = 400;
@@ -2786,7 +2786,7 @@ export async function groupMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function groupMail(student: Student, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, rawAddressees: string[], files: Express.Multer.File[]) {
     if (!student.isInstructor || await student.instructorScreeningStatus() != ScreeningStatus.Accepted) {
         logger.warn("Group mail requested by student who is no instructor or not instructor-screened");
         return 403;
@@ -2819,22 +2819,53 @@ async function groupMail(student: Student, courseId: number, subcourseId: number
         return 403;
     }
 
-    try {
-        for (let participant of subcourse.participants) {
-            await sendInstructorGroupMail(participant, student, course, mailSubject, mailBody);
-            await Notification.actionTaken(participant, "participant_course_message", {
-                instructor: student,
-                course: dropCourseRelations(course),
-                subcourse: dropSubcourseRelations(subcourse),
-                subject: mailSubject,
-                body: mailBody
-            });
+    const lastLecture = subcourse.lectures.reduce((a, b) => a.start.getMilliseconds() > b.start.getMilliseconds() ? a : b);
+
+    if (lastLecture) {
+        const lectureEnd = moment(lastLecture.start)
+            .add(lastLecture.duration, 'minutes');
+        if (moment().isAfter(lectureEnd.add(14, 'days'))) {
+            logger.warn("Tried to send group mail after 14 days passed since the course has ended");
+            return 400;
         }
+    } else {
+        logger.warn("Can't determine the end date of the course");
+        return 400;
+    }
+
+
+
+    const addressees = await entityManager.getRepository(Pupil).find({wix_id: In(rawAddressees)});
+
+    if (addressees.length !== rawAddressees.length) {
+        let invalids = rawAddressees.map(r => {
+            if (!addressees.some(a => a.wix_id === r)) {
+                return `- ${r}`;
+            }
+        });
+        logger.warn(`Not all provided addressees are valid: ${invalids.join("\n")}`);
+        return 400;
+    }
+
+    try {
+        let attachmentGroup = await Notification.createAttachments(files, student);
+
+        await Promise.all(addressees.map(async (participant) => {
+            await Notification.actionTaken(participant, "participant_course_message", {
+                courseName: course.name,
+                participantFirstName: participant.firstname,
+                instructorFirstName: student.firstname,
+                messageTitle: mailSubject,
+                messageBody: mailBody,
+                instructorMail: student.email
+            }, attachmentGroup);
+        }));
     } catch (e) {
         logger.warn("Unable to send group mail");
         logger.debug(e);
-        return 400;
+        return 500;
     }
+
 
     return 204;
 }
@@ -2875,7 +2906,7 @@ export async function instructorMailHandler(req: Request, res: Response) {
             && req.params.subid != undefined
             && typeof req.body.subject == "string"
             && typeof req.body.body == "string") {
-            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body);
+            status = await instructorMail(res.locals.user, Number.parseInt(req.params.id, 10), Number.parseInt(req.params.subid, 10), req.body.subject, req.body.body, req.files as Express.Multer.File[]);
         } else {
             logger.warn("Missing or invalid parameters for instructorMailHandler");
             status = 400;
@@ -2888,7 +2919,7 @@ export async function instructorMailHandler(req: Request, res: Response) {
     res.status(status).end();
 }
 
-async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string) {
+async function instructorMail(pupil: Pupil, courseId: number, subcourseId: number, mailSubject: string, mailBody: string, files: Express.Multer.File[]) {
     if (!pupil.isParticipant || !pupil.active) {
         logger.warn("Instructor mail requested by pupil who is no participant or no longer active");
         return 403;
@@ -2919,16 +2950,35 @@ async function instructorMail(pupil: Pupil, courseId: number, subcourseId: numbe
     }
 
 
+    const lectures = subcourse.lectures.sort(
+        (a, b) => a.start.getMilliseconds() - b.start.getMilliseconds()
+    );
+    const lastLecture = lectures[lectures.length - 1];
+    if (lastLecture != null) {
+        const lectureEnd = moment(lastLecture.start)
+            .add(lastLecture.duration, 'minutes');
+        if (moment().isAfter(lectureEnd.add(14, 'days'))) {
+            logger.warn("Tried to send instructor mail after 14 days passed since the course has ended");
+            return 400;
+        }
+    } else {
+        logger.warn("Can't determine the end date of the course");
+        return 400;
+    }
+
+    const instructors = course.instructors;
     try {
-        // send mail to correspondnet
-        await sendParticipantToInstructorMail(pupil, course.correspondent, course, mailSubject, mailBody);
-        await Notification.actionTaken(pupil, "instructor_course_participant_message", {
-            participant: pupil,
-            course: dropCourseRelations(course),
-            subcourse: dropSubcourseRelations(subcourse),
-            subject: mailSubject,
-            body: mailBody
-        });
+        let attachmentGroup = await Notification.createAttachments(files, pupil);
+        await Promise.all(instructors.map(async (instructor) => {
+            await Notification.actionTaken(instructor, "instructor_course_participant_message", {
+                instructorFirstName: instructor.firstname,
+                participantFirstName: pupil.firstname,
+                courseName: course.name,
+                messageTitle: mailSubject,
+                messageBody: mailBody,
+                participantMail: pupil.email
+            }, attachmentGroup);
+        }));
     } catch (e) {
         logger.warn("Unable to send instructor mail");
         logger.debug(e);
@@ -3407,12 +3457,12 @@ async function setCourseImage(student: Student, courseID: number, imageFile?: Ex
             const key = courseImageKey(courseID, fileExtension);
 
             // TODO: resize images to provide different resolutions
-            await putFile(imageFile.buffer, key);
+            await putFile(imageFile.buffer, key, DEFAULT_BUCKET, true, imageFile.mimetype);
 
             course.imageKey = key;
         } else if (course.imageKey) { //otherwise, there's nothing to delete
             //delete image if no image is given
-            await deleteFile(course.imageKey);
+            await deleteFile(course.imageKey, DEFAULT_BUCKET);
 
             course.imageKey = null;
         }

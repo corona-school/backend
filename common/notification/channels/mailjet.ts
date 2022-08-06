@@ -5,6 +5,7 @@ import { getLogger } from "log4js";
 import { Person } from "../../entity/Person";
 import { assert } from "console";
 import { NotificationSender } from "../../entity/Notification";
+import {AttachmentGroup} from "../../attachments";
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString("base64");
@@ -16,7 +17,7 @@ const senderEmails: { [sender in NotificationSender]: string } = {
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    async send(notification: Notification, to: Person, context: Context, concreteID: number) {
+    async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
         const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
@@ -33,7 +34,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID: notification.mailjetTemplateId,
             TemplateLanguage: true,
-            Variables: context,
+            Variables: {...context, attachmentGroup: attachments ? attachments.attachmentListHTML : ""},
             Attachments: context.attachments,
             CustomID: `${concreteID}`,
             TemplateErrorReporting: {
@@ -70,6 +71,7 @@ export const mailjetChannel: Channel = {
         };
 
         logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
+        logger.debug(`Variables: ${JSON.stringify({...context, attachmentGroup: attachments ? attachments.attachmentListHTML : ""})}`);
 
         const body = await fetch("https://api.mailjet.com/v3.1/send", {
             body: JSON.stringify(requestOptions),
