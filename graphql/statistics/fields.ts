@@ -37,7 +37,7 @@ export class StatisticsResolver {
     async tutorRegistrations(@Root() statistics: Statistics) {
         const result = await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "student"
@@ -53,7 +53,7 @@ export class StatisticsResolver {
     async tutorRegistrationsByState(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-            COUNT(*) AS value,
+            COUNT(*)::INT AS value,
             date_part('year', "createdAt"::date) AS year,
             date_part('month', "createdAt"::date) AS month,
             "state" AS group
@@ -68,7 +68,7 @@ export class StatisticsResolver {
     async tuteeRegistrations(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                COUNT(*) AS value,
+                COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month
             FROM "pupil"
@@ -82,7 +82,7 @@ export class StatisticsResolver {
     async tuteeRegistrationsByState(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                COUNT(*) AS value,
+                COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month,
                 "state" as group
@@ -97,7 +97,7 @@ export class StatisticsResolver {
     async tuteeRegistrationsBySchooltype(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-            COUNT(*) AS value,
+            COUNT(*)::INT AS value,
             date_part('year', "createdAt"::date) AS year,
             date_part('month', "createdAt"::date) AS month,
             "schooltype" as group
@@ -112,7 +112,7 @@ export class StatisticsResolver {
     async tuteeRegistrationsByGrade(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                COUNT(*) AS value,
+                COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month,
                 "grade" as group
@@ -127,7 +127,7 @@ export class StatisticsResolver {
     async tutorScreenings(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "screening"
@@ -141,7 +141,7 @@ export class StatisticsResolver {
     async nowMatches(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "match"
@@ -155,11 +155,11 @@ export class StatisticsResolver {
     async nowFirstMatches(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "match"
-                 WHERE "pupilId" IN ( SELECT "pupilId" FROM "match" GROUP BY "pupilId" HAVING COUNT(*) = 1 ) AND
+                 WHERE "pupilId" IN ( SELECT "pupilId" FROM "match" GROUP BY "pupilId" HAVING COUNT(*)::INT = 1 ) AND
                    "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
@@ -170,7 +170,7 @@ export class StatisticsResolver {
     async nowDissolvedMatchesBeforeThreeMonths(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "updatedAt"::date) AS year,
                     date_part('month', "updatedAt"::date) AS month
                  FROM "match"
@@ -185,7 +185,7 @@ export class StatisticsResolver {
     async nowDissolvedMatchesAfterThreeMonths(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "updatedAt"::date) AS year,
                     date_part('month', "updatedAt"::date) AS month
                  FROM "match"
@@ -200,7 +200,7 @@ export class StatisticsResolver {
     async offeredLectures(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT
-                    COUNT(*) AS value,
+                    COUNT(*)::INT AS value,
                     date_part('year', "start"::date) AS year,
                     date_part('month', "start"::date) AS month
                  FROM "lecture"
@@ -232,7 +232,7 @@ export class StatisticsResolver {
     async attendedCoursePlaces(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
         `SELECT "year", "month", SUM("participants") AS "value" FROM (
-                SELECT "year", "month", "subcourse"."id" AS "subcourseId", COUNT(*) AS "participants" FROM (
+                SELECT "year", "month", "subcourse"."id" AS "subcourseId", COUNT(*)::INT AS "participants" FROM (
                     SELECT DISTINCT ON("subcourseId")
                         "subcourseId", "start",
                         date_part('year', "start"::date) AS "year",
