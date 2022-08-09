@@ -35,7 +35,7 @@ export class StatisticsResolver {
     @FieldResolver(returns => [ByMonth])
     @Authorized(Role.ADMIN)
     async tutorRegistrations(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
+        const result = await prisma.$queryRaw
         `SELECT
                     COUNT(*) AS value,
                     date_part('year', "createdAt"::date) AS year,
@@ -44,6 +44,8 @@ export class StatisticsResolver {
                  WHERE "isStudent" = TRUE AND "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
+        console.log(result);
+        return result;
     }
 
     @FieldResolver(returns => [ByMonth])
