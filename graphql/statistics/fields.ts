@@ -41,7 +41,7 @@ export class StatisticsResolver {
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "student"
-                 WHERE "isStudent" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                 WHERE "isStudent" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -56,7 +56,7 @@ export class StatisticsResolver {
             date_part('month', "createdAt"::date) AS month,
             "state" AS group
         FROM "student"
-        WHERE "isStudent" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+        WHERE "isStudent" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
         GROUP BY "year", "month", "state"
         ORDER BY "year" ASC, "month" ASC, "state" ASC;`;
     }
@@ -70,7 +70,7 @@ export class StatisticsResolver {
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month
             FROM "pupil"
-            WHERE "isPupil" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+            WHERE "isPupil" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
             GROUP BY "year", "month"
             ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -85,7 +85,7 @@ export class StatisticsResolver {
                 date_part('month', "createdAt"::date) AS month,
                 "state" as group
             FROM "pupil"
-            WHERE "isPupil" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+            WHERE "isPupil" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
             GROUP BY "year", "month", "state"
             ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -100,7 +100,7 @@ export class StatisticsResolver {
             date_part('month', "createdAt"::date) AS month,
             "schooltype" as group
         FROM "pupil"
-        WHERE "isPupil" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+        WHERE "isPupil" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
         GROUP BY "year", "month", "schooltype"
         ORDER BY "year" ASC, "month" ASC, "schooltype" ASC;`;
     }
@@ -115,7 +115,7 @@ export class StatisticsResolver {
                 date_part('month', "createdAt"::date) AS month,
                 "grade" as group
             FROM "pupil"
-                WHERE "isPupil" = TRUE AND "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                WHERE "isPupil" = TRUE AND "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                 GROUP BY "year", "month", "grade"
                 ORDER BY "year" ASC, "month" ASC, "grade" ASC;`;
     }
@@ -129,7 +129,7 @@ export class StatisticsResolver {
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "screening"
-                 WHERE "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                 WHERE "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -143,7 +143,7 @@ export class StatisticsResolver {
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
                  FROM "match"
-                 WHERE "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                 WHERE "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                 GROUP BY "year", "month"
                 ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -158,7 +158,7 @@ export class StatisticsResolver {
                     date_part('month', "createdAt"::date) AS month
                  FROM "match"
                  WHERE "pupilId" IN ( SELECT "pupilId" FROM "match" GROUP BY "pupilId" HAVING COUNT(*) = 1 ) AND
-                   "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                   "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -173,7 +173,7 @@ export class StatisticsResolver {
                     date_part('month', "updatedAt"::date) AS month
                  FROM "match"
                  WHERE dissolved = TRUE AND date_part('day', "updatedAt"::timestamp - "createdAt"::timestamp) <= 90 AND
-                   "updatedAt" > '${statistics.from}' AND "updatedAt" < '${statistics.to}'
+                   "updatedAt" > ${statistics.from} AND "updatedAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -188,7 +188,7 @@ export class StatisticsResolver {
                     date_part('month', "updatedAt"::date) AS month
                  FROM "match"
                  WHERE dissolved = TRUE AND date_part('day', "updatedAt"::timestamp - "createdAt"::timestamp) > 90 AND
-                   "updatedAt" > '${statistics.from}' AND "updatedAt" < '${statistics.to}'
+                   "updatedAt" > ${statistics.from} AND "updatedAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -202,7 +202,7 @@ export class StatisticsResolver {
                     date_part('year', "start"::date) AS year,
                     date_part('month', "start"::date) AS month
                  FROM "lecture"
-                 WHERE "createdAt" > '${statistics.from}' AND "createdAt" < '${statistics.to}'
+                 WHERE "createdAt" > ${statistics.from} AND "createdAt" < ${statistics.to}
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -217,7 +217,7 @@ export class StatisticsResolver {
                     date_part('year', "start"::date) AS "year",
                     date_part('month', "start"::date) AS "month"
                     FROM "lecture"
-                    WHERE "start" > '${statistics.from}' AND "start" < '${statistics.to}'
+                    WHERE "start" > ${statistics.from} AND "start" < ${statistics.to}
                     ORDER BY "subcourseId", "start"
                 ) "first_lecture"
                 INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
@@ -236,7 +236,7 @@ export class StatisticsResolver {
                         date_part('year', "start"::date) AS "year",
                         date_part('month', "start"::date) AS "month"
                         FROM "lecture"
-                        WHERE "start" > '${statistics.from}' AND "start" < '${statistics.to}'
+                        WHERE "start" > ${statistics.from} AND "start" < ${statistics.to}
                         ORDER BY "subcourseId", "start"
                     ) "first_lecture"
                     INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
@@ -258,7 +258,7 @@ export class StatisticsResolver {
                       date_part('year', "start"::date) AS "year",
                       date_part('month', "start"::date) AS "month"
                       FROM "lecture"
-                      WHERE "start" > '${statistics.from}' AND "start" < '${statistics.to}'
+                      WHERE "start" > ${statistics.from} AND "start" < ${statistics.to}
                       ORDER BY "subcourseId", "start"
                   ) "first_lecture"
                   INNER JOIN "subcourse" ON "subcourse"."id" = "subcourseId"
