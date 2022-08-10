@@ -160,11 +160,12 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Project_field_with_grade_restriction: allAdmin,
     Remission_request: allAdmin,
     School: {
-        createSchool: adminOrOwner,
-        deleteSchool: adminOrOwner,
-        updateSchool: adminOrOwner,
-        // Don't release bulk actions without adding authorizations here!
-
+        createOneSchool: adminOrOwner,
+        deleteOneSchool: adminOrOwner,
+        updateOneSchool: adminOrOwner,
+        createManySchool: adminOrOwner,
+        deleteManySchool: adminOrOwner,
+        updateManySchool: adminOrOwner,
         // School data is public knowledge and can be queried by everyone
         schools: everyone
     },
