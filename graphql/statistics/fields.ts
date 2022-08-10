@@ -213,7 +213,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async offeredCoursePlaces(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
-        `SELECT "year", "month", SUM("subcourse"."maxParticipants") FROM (
+        `SELECT "year", "month", SUM("subcourse"."maxParticipants")::INT FROM (
                 SELECT DISTINCT ON("subcourseId")
                     "subcourseId", "start",
                     date_part('year', "start"::date) AS "year",
@@ -231,7 +231,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async attendedCoursePlaces(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
-        `SELECT "year", "month", SUM("participants") AS "value" FROM (
+        `SELECT "year", "month", SUM("participants")::INT AS "value" FROM (
                 SELECT "year", "month", "subcourse"."id" AS "subcourseId", COUNT(*)::INT AS "participants" FROM (
                     SELECT DISTINCT ON("subcourseId")
                         "subcourseId", "start",
@@ -253,7 +253,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async pupilsParticipatingInCourses(@Root() statistics: Statistics) {
         return await prisma.$queryRaw
-        `SELECT "year", "month", COUNT(DISTINCT "pupilId") AS "value" FROM (
+        `SELECT "year", "month", COUNT(DISTINCT "pupilId")::INT AS "value" FROM (
                 SELECT "year", "month", "subcourse_participants_pupil"."pupilId" FROM (
                   SELECT DISTINCT ON("subcourseId")
                       "subcourseId", "start",
