@@ -53,7 +53,7 @@ test("Pupil Settings", async () => {
     await client.request(`
         mutation {
             meUpdate(update: { 
-                student: { 
+                pupil: { 
                     subjects: { name: "Deutch" }
                 }
             })
@@ -64,7 +64,7 @@ test("Pupil Settings", async () => {
     await client.request(`
         mutation {
             meUpdate(update: { 
-                student: { 
+                pupil: { 
                     subjects: { name: "Deutch", mandatory: true }
                 }
             })
@@ -75,7 +75,7 @@ test("Pupil Settings", async () => {
     await client.requestShallFail(`
         mutation {
             meUpdate(update: { 
-                student: { 
+                pupil: { 
                     subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
                 }
             })
