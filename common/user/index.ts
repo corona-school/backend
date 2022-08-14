@@ -147,3 +147,20 @@ export function getFullName({ firstname, lastname }: { firstname?: string, lastn
 
     return `${firstname} ${lastname}`;
 }
+
+export async function getStudent(user: User): Promise<Student | never> {
+    if (!user.studentId) {
+        throw new Error(`Expected User(${user.userID}) to be student`);
+    }
+
+    return await prisma.student.findOne({ where: { id: user.studentId }});
+}
+
+
+export async function getPupil(user: User): Promise<Pupil | never> {
+    if (!user.pupilId) {
+        throw new Error(`Expected User(${user.userID}) to be pupil`);
+    }
+
+    return await prisma.pupil.findOne({ where: { id: user.pupilId }});
+}

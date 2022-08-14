@@ -54,4 +54,9 @@ export class Notification {
     //  as users can directly respond to the team responsible
     @Column({ nullable: true, type: "enum", enum: NotificationSender })
     sender?: NotificationSender;
+
+    // A hook is a piece of code that is run when before the notification is sent out
+    // This allows for user specific scheduling of code, which happens when the user is informed about it
+    @Column({ nullable: true })
+    hookID?: string;
 }

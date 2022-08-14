@@ -36,7 +36,7 @@ import { MutateCertificateOfConductResolver } from "./certificate_of_conduct/mut
 import { ExtendedFieldsCertificateOfConductResolver } from "./certificate_of_conduct/fields";
 import { isDev } from "../common/util/environment";
 import { formatError } from "./error";
-import { NotificationBulkRunResolver } from "./notification/fields";
+import { NotificationBulkRunResolver, NotificationExtendedFieldsResolver } from "./notification/fields";
 import { FieldsMatchPoolResolver } from "./match_pool/fields";
 import { MutateMatchPoolResolver } from "./match_pool/mutations";
 import { MutateSecretResolver } from "./secret/mutation";
@@ -96,6 +96,7 @@ const schema = buildSchemaSync({
         FindManyNotificationResolver,
         MutateNotificationResolver,
         NotificationBulkRunResolver,
+        NotificationExtendedFieldsResolver,
         FindManyConcrete_notificationResolver,
         ExtendedFieldsConcreteNotificationResolver,
         MutateConcreteNotificationsResolver,

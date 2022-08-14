@@ -6,6 +6,11 @@ import {getTransactionLog} from "../transactionlog";
 import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
 import * as Notification from "../notification";
 
+Notification.registerStudentHook(
+    "deactivate-student",
+    "Account gets deactivated, matches are dissolved, courses are cancelled",
+    deactivateStudent
+);
 
 export async function deactivateStudent(student: Student) {
     if (!student.active) {

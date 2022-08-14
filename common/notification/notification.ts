@@ -6,6 +6,7 @@ import { Notification, NotificationID } from "./types";
 import { NotificationRecipient } from "../entity/Notification";
 import { Prisma } from "@prisma/client";
 import { getLogger } from "log4js";
+import { hookExists } from "./hook";
 
 type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
@@ -88,6 +89,10 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
 
 
 export async function update(id: NotificationID, values: Partial<Omit<Notification, "active">>) {
+    if (values.hookID && !hookExists(values.hookID)) {
+            throw new Error(`Invalid HookID`);
+    }
+
     const matched = await prisma.notification.update({
         data: values,
         where: { id }
@@ -103,6 +108,10 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
 }
 
 export async function create(notification: Prisma.notificationCreateInput) {
+    if (notification.hookID && !hookExists(notification.hookID)) {
+        throw new Error(`Invalid HookID`);
+    }
+
     if (notification.recipient !== NotificationRecipient.USER) {
         throw new Error("For now, the recipient of a notification must be USER");
     }

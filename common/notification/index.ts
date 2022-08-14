@@ -9,6 +9,7 @@ import {v4 as uuid} from "uuid";
 import {AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML} from "../attachments";
 import {Pupil} from "../entity/Pupil";
 import { assert } from 'console';
+import { triggerHook } from './hook';
 
 const logger = getLogger("Notification");
 
@@ -244,6 +245,10 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
+        if (notification.hookID) {
+            await triggerHook(notification.hookID);
+        }
+
         // TODO: Check if user silenced this notification
 
         await channel.send(notification, user, context, concreteNotification.id, attachments);
@@ -393,3 +398,5 @@ export async function cancelNotification(notification: ConcreteNotification) {
 
     logger.info(`ConcreteNotification(${notification.id}) was manually cancelled`);
 }
+
+export * from "./hook";
