@@ -110,8 +110,8 @@ class PupilUpdateInput {
     @Field(type => Int, { nullable: true })
     gradeAsInt?: number;
 
-    @Field(type => [String], { nullable: true })
-    subjects?: string[];
+    @Field(type => [Subject], { nullable: true })
+    subjects?: Subject[];
 
     @Field(type => [ProjectField], { nullable: true })
     projectFields: ProjectField[];
@@ -312,7 +312,7 @@ export class MutateMeResolver {
                     lastname,
                     // TODO: Store numbers as numbers maybe ...
                     grade: `${gradeAsInt}. Klasse`,
-                    subjects: JSON.stringify(subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
+                    subjects: JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)),
                     projectFields
                 },
                 where: { id: prevPupil.id }
