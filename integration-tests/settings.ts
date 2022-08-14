@@ -54,7 +54,7 @@ test("Pupil Settings", async () => {
         mutation SetSubject {
             meUpdate(update: { 
                 pupil: { 
-                    subjects: { name: "Deutch" }
+                    subjects: [{ name: "Deutsch" }]
                 }
             })
         }
@@ -65,7 +65,7 @@ test("Pupil Settings", async () => {
         mutation SetSubjectMandatory {
             meUpdate(update: { 
                 pupil: { 
-                    subjects: { name: "Deutch", mandatory: true }
+                    subjects: [{ name: "Deutsch", mandatory: true }]
                 }
             })
         }
@@ -76,7 +76,7 @@ test("Pupil Settings", async () => {
         mutation SetSubjectGrades {
             meUpdate(update: { 
                 pupil: { 
-                    subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
+                    subjects: [{ name: "Deutsch", grade: { min: 1, max: 2 } }]
                 }
             })
         }
