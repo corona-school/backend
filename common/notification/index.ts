@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM } from '../user';
 import { getLogger } from 'log4js';
 import {Student} from "../entity/Student";
 import {v4 as uuid} from "uuid";
@@ -246,7 +246,8 @@ async function deliverNotification(concreteNotification: ConcreteNotification, n
         }
 
         if (notification.hookID) {
-            await triggerHook(notification.hookID);
+            const newUser = getUserForTypeORM(user);
+            await triggerHook(notification.hookID, newUser);
         }
 
         // TODO: Check if user silenced this notification
@@ -397,6 +398,23 @@ export async function cancelNotification(notification: ConcreteNotification) {
     });
 
     logger.info(`ConcreteNotification(${notification.id}) was manually cancelled`);
+}
+
+export async function rescheduleNotification(notification: ConcreteNotification, sendAt: Date) {
+    if (+sendAt < Date.now()) {
+        throw new Error(`Notification must be scheduled in the future`);
+    }
+
+    if (notification.state !== ConcreteNotificationState.PENDING) {
+        throw new Error(`Notification must be in pending state to be rescheduled`);
+    }
+
+    await prisma.concrete_notification.update({
+        data: { sentAt: sendAt },
+        where: { id: notification.id }
+    });
+
+    logger.info(`ConcreteNotification(${notification.id}) was manually rescheduled to ${sendAt.toISOString()}`);
 }
 
 export * from "./hook";
