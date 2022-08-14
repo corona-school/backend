@@ -26,7 +26,7 @@ export function toStudentSubjectDatabaseFormat(s: Subject) {
     };
 }
 export function toPupilSubjectDatabaseFormat(s: Subject) {
-    if ("minGrade" in s || "maxGrade" in s) {
+    if ("grade" in s) {
         throw new Error(`Only students may have grade restrictions for subjects`);
     }
 
