@@ -70,11 +70,13 @@ export const studentOne = test("Register Student", async () => {
     `);
 
     await client.request(`
-        meBecomeTutor(data: { 
-            subjects: [{ name: "Deutsch", grade: { min: 1, max: 10 }}]
-        languages: [Deutsch]
-        supportsInDaZ: false
-        })
+        mutation BecomeTutor {
+            meBecomeTutor(data: { 
+                subjects: [{ name: "Deutsch", grade: { min: 1, max: 10 }}]
+                languages: [Deutsch]
+                supportsInDaZ: false
+            })
+        }
     `);
 
     const { me: student } = await client.request(`
