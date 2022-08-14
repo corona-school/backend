@@ -7,7 +7,7 @@ test("Student Settings", async () => {
 
     // Student cannot set pupil settings
     await client.requestShallFail(
-        `mutation { 
+        `mutation SetPupilSettings { 
             meUpdate(update: { 
               pupil: { gradeAsInt: 1 }
           })
@@ -16,7 +16,7 @@ test("Student Settings", async () => {
 
     // Student can set subjects
     await client.request(`
-        mutation {
+        mutation SetSubjects {
             meUpdate(update: { 
                 student: { 
                     subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
@@ -27,7 +27,7 @@ test("Student Settings", async () => {
 
     // Student cannot set mandatory subjects
     await client.requestShallFail(`
-        mutation {
+        mutation SetMandatorySubject {
             meUpdate(update: { 
                 student: { 
                     subjects: { name: "Deutch", grade: { min: 1, max: 2 }, mandatory: true }
@@ -42,7 +42,7 @@ test("Pupil Settings", async () => {
 
     // Pupil cannot set student settings
     await client.requestShallFail(
-        `mutation { 
+        `mutation SetStudentSettings { 
             meUpdate(update: { 
               student: { subjects: [] }
           })
@@ -51,7 +51,7 @@ test("Pupil Settings", async () => {
 
     // Pupil can set subjects
     await client.request(`
-        mutation {
+        mutation SetSubject {
             meUpdate(update: { 
                 pupil: { 
                     subjects: { name: "Deutch" }
@@ -62,7 +62,7 @@ test("Pupil Settings", async () => {
 
     // Pupil can set mandatory subjects
     await client.request(`
-        mutation {
+        mutation SetSubjectMandatory {
             meUpdate(update: { 
                 pupil: { 
                     subjects: { name: "Deutch", mandatory: true }
@@ -73,7 +73,7 @@ test("Pupil Settings", async () => {
 
     // Pupil cannot set subject grades
     await client.requestShallFail(`
-        mutation {
+        mutation SetSubjectGrades {
             meUpdate(update: { 
                 pupil: { 
                     subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
