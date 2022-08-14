@@ -34,7 +34,7 @@ test("Student Settings", async () => {
                 }
             })
         }
-    `)
+    `);
 });
 
 test("Pupil Settings", async () => {
@@ -80,5 +80,5 @@ test("Pupil Settings", async () => {
                 }
             })
         }
-    `)
+    `);
 });
