@@ -14,5 +14,6 @@ import "./user";
 /* Feature Tests - These are independent and can be disabled */
 import "./matching";
 import "./auth";
+import "./settings";
 
 finalizeTests();
