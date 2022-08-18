@@ -9,6 +9,7 @@ import { DEFAULT_TUTORING_GRADERESTRICTIONS } from "../entity/Student";
 import { getLogger } from "log4js";
 import { isDev } from "../util/environment";
 import { InterestConfirmationStatus } from "../entity/PupilTutoringInterestConfirmationRequest";
+import { requestInterestConfirmation, sendInterestConfirmationReminders } from "./interest";
 
 const logger = getLogger("MatchingPool");
 
@@ -20,12 +21,18 @@ export interface MatchPool<Toggle extends string = string> {
     pupilsToMatch: (toggles: Toggle[]) => Prisma.pupilWhereInput;
     settings: Settings;
     createMatch(pupil: Pupil, student: Student, pool: MatchPool): Promise<void | never>;
-    toggles: Toggle[]
+    toggles: Toggle[];
+    // There are a few well known toggles:
+    //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
+    //  "confirmation-pending" -> only return pupils that have not yet confirmed their interest
+    //  "confirmation-unknown" -> pupils who have not been asked for their interest
+
     // if present, the matching is run automatically on a daily basis if the criteria are matched
     automatic?: {
         minStudents: number;
         minPupils: number;
-    }
+    },
+    confirmInterest?: boolean;
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -42,7 +49,7 @@ const getViableUsers = (toggles: string[]) => {
     /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
     are accidentally matched to real users */
     if (!isDev) {
-        viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" }};
+        viableUsers.email = { not: { startsWith: "test", endsWith: "@lern-fair.de" } };
     }
 
     return viableUsers;
@@ -51,6 +58,7 @@ const getViableUsers = (toggles: string[]) => {
 export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.student.findMany({
         where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
+        orderBy: { createdAt: "asc" },
         take, skip
     });
 }
@@ -58,6 +66,7 @@ export async function getStudents(pool: MatchPool, toggles: string[], take?: num
 export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.pupil.findMany({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
+        orderBy: { createdAt: "asc" },
         take, skip
     });
 }
@@ -68,14 +77,28 @@ export async function getStudentCount(pool: MatchPool, toggles: string[]) {
     });
 }
 
+export async function getStudentOfferCount(pool: MatchPool, toggles: string[]) {
+    return (await prisma.student.aggregate({
+        _sum: { openMatchRequestCount: true },
+        where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) }
+    }))._sum.openMatchRequestCount;
+}
+
 export async function getPupilCount(pool: MatchPool, toggles: string[]) {
     return await prisma.pupil.count({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) }
     });
 }
 
+export async function getPupilDemandCount(pool: MatchPool, toggles: string[]) {
+    return (await prisma.pupil.aggregate({
+        _sum: { openMatchRequestCount: true },
+        where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) }
+    }))._sum.openMatchRequestCount;
+}
+
 async function studentToHelper(student: Student): Promise<Helper> {
-    const existingMatches = await prisma.match.findMany({ select: { pupil: { select: { wix_id: true } } }, where: { studentId: student.id }});
+    const existingMatches = await prisma.match.findMany({ select: { pupil: { select: { wix_id: true } } }, where: { studentId: student.id } });
 
     return {
         id: student.id,
@@ -90,7 +113,7 @@ async function studentToHelper(student: Student): Promise<Helper> {
 }
 
 async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
-    const existingMatches = await prisma.match.findMany({ select: { student: { select: { wix_id: true } } }, where: { pupilId: pupil.id }});
+    const existingMatches = await prisma.match.findMany({ select: { student: { select: { wix_id: true } } }, where: { pupilId: pupil.id } });
 
     return {
         id: pupil.id,
@@ -129,19 +152,20 @@ const balancingCoefficients = {
 export const pools: MatchPool[] = [
     {
         name: "lern-fair-now",
-        toggles: ["skip-interest-confirmation", "confirmation-pending"],
+        confirmInterest: true,
+        toggles: ["skip-interest-confirmation", "confirmation-pending", "confirmation-unknown"],
         pupilsToMatch: (toggles) => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
                 openMatchRequestCount: { gt: 0 },
-                subjects: { not: "[]"},
+                subjects: { not: "[]" },
                 registrationSource: { notIn: ["plus"] }
             };
 
-            if (!toggles.includes("skip-interest-confirmation") && !toggles.includes("confirmation-pending")) {
+            if (!toggles.includes("skip-interest-confirmation") && !toggles.includes("confirmation-pending") && !toggles.includes("confirmation-unknown")) {
                 query.OR = [
                     { registrationSource: "cooperation" },
-                    { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
+                    { pupil_tutoring_interest_confirmation_request: { status: "confirmed" } }
                 ];
             }
 
@@ -149,21 +173,22 @@ export const pools: MatchPool[] = [
                 const twoWeeksAgo = new Date();
                 twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-                query.OR = [
-                    // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-                    { pupil_tutoring_interest_confirmation_request: { status: "pending", createdAt: { gt: twoWeeksAgo }}},
-                    // Or the confirmation request will be sent out in the future
-                    { pupil_tutoring_interest_confirmation_request: null }
-                ];
+                // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
+                query.pupil_tutoring_interest_confirmation_request = { status: "pending", createdAt: { gt: twoWeeksAgo } };
             }
+
+            if (toggles.includes("confirmation-unknown")) {
+                query.pupil_tutoring_interest_confirmation_request = null;
+            }
+
             return query;
         },
         studentsToMatch: (toggles) => ({
             isStudent: true,
-            openMatchRequestCount: { gt: 0},
+            openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]" },
             screening: { success: true },
-            registrationSource: { notIn: ["plus"]}
+            registrationSource: { notIn: ["plus"] }
         }),
         createMatch,
         settings: { balancingCoefficients }
@@ -174,12 +199,12 @@ export const pools: MatchPool[] = [
         pupilsToMatch: (toggles) => ({
             isPupil: true,
             openMatchRequestCount: { gt: 0 },
-            subjects: { not: "[]"},
+            subjects: { not: "[]" },
             registrationSource: { equals: "plus" }
         }),
         studentsToMatch: (toggles) => ({
             isStudent: true,
-            openMatchRequestCount: { gt: 0},
+            openMatchRequestCount: { gt: 0 },
             subjects: { not: "[]" },
             screening: { success: true },
             registrationSource: { equals: "plus" }
@@ -211,7 +236,7 @@ export const pools: MatchPool[] = [
 /* ---------------------- MATCHING RUNS ----------------------------- */
 
 export async function getPoolRuns(pool: MatchPool) {
-    return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name }});
+    return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name } });
 }
 
 export async function runMatching(poolName: string, apply: boolean, toggles: string[]) {
@@ -265,11 +290,13 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
 
-        await prisma.match_pool_run.create({ data: {
-            matchingPool: pool.name,
-            matchesCreated: matches.length,
-            stats
-        }});
+        await prisma.match_pool_run.create({
+            data: {
+                matchingPool: pool.name,
+                matchesCreated: matches.length,
+                stats
+            }
+        });
     }
 
     return {
@@ -357,7 +384,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             }
 
             entry.matches += matchesCreated;
-            for (const { name, stats: { offered, requested, fulfilledRequests }} of subjectStats) {
+            for (const { name, stats: { offered, requested, fulfilledRequests } } of subjectStats) {
                 const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
                 subjectStats.fulfilled += fulfilledRequests;
                 subjectStats.offered += offered;
@@ -396,7 +423,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
 //  though looking at the last month alone would also be inaccurate as
 //  confirmations are delayed, thus pending confirmations would be overestimated
 export async function getInterestConfirmationRate() {
-    const totalInterestConfirmations = await prisma.pupil_tutoring_interest_confirmation_request.count({ });
+    const totalInterestConfirmations = await prisma.pupil_tutoring_interest_confirmation_request.count({});
     const confirmedInterestConfirmations = await prisma.pupil_tutoring_interest_confirmation_request.count({
         where: { status: InterestConfirmationStatus.CONFIRMED }
     });
@@ -417,8 +444,66 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
     if (pool.toggles.includes("skip-interest-confirmation")) {
-        backlog += (await getPupilCount(pool, ["confirmation-pending"])) * (await getInterestConfirmationRate());
+        backlog += ((await getPupilCount(pool, ["confirmation-pending"])) + (await getPupilCount(pool, ["confirmation-unknown"]))) * (await getInterestConfirmationRate());
     }
 
     return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
+}
+
+/* ------------------------------ Confirmation Requests ------------- */
+
+export async function confirmationRequestsToSend(pool: MatchPool) {
+    const offers = await getStudentOfferCount(pool, []);
+    const requests = await getPupilDemandCount(pool, []);
+    const openOffers = Math.max(0, offers - requests);
+
+    const comfirmationsPending = await getPupilDemandCount(pool, ["confirmation-pending"]);
+    const requestsToSend = Math.max(0, openOffers - comfirmationsPending);
+
+    return requestsToSend;
+}
+
+async function offeredSubjects(pool: MatchPool): Promise<string[]> {
+    const subjects = new Set<string>();
+    const students = await getStudents(pool, [], 100);
+    for (const student of students) {
+        for (const subject of JSON.parse(student.subjects))
+            subjects.add(subject.name);
+    }
+
+    return [...subjects];
+}
+
+
+export async function sendConfirmationRequests(pool: MatchPool) {
+    let toSend = await confirmationRequestsToSend(pool);
+    if (toSend <= 0) return;
+
+    const offered = await offeredSubjects(pool);
+
+    const pupilsToRequest = await getPupils(pool, ["confirmation-unknown"], toSend * 5);
+    for (const pupil of pupilsToRequest) {
+        // Skip pupils who only want subjects that are not offered at the moment
+        const subjects = JSON.parse(pupil.subjects).map(it => it.name);
+        if (!subjects.some(it => offered.includes(it))) {
+            continue;
+        }
+
+        await requestInterestConfirmation(pupil);
+
+        toSend -= 1;
+        if (toSend <= 0) {
+            break;
+        }
+    }
+}
+
+export async function runInterestConfirmations() {
+    for (const pool of pools) {
+        if (pool.confirmInterest) {
+            await sendConfirmationRequests(pool);
+        }
+    }
+
+    await sendInterestConfirmationReminders();
 }

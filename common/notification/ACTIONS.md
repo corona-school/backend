@@ -575,7 +575,7 @@ Send mail to tutor to notify after matching
 }
 ```
 
-### tutee_matching_confirm_interest
+### tutee_matching_confirm_interest / tutee_matching_confirm_interest_reminder
 
 *description* 
 

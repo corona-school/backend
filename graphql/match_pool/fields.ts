@@ -91,4 +91,10 @@ export class FieldsMatchPoolResolver {
     async statistics(@Root() matchPool: MatchPoolType) {
         return await getPoolStatistics(matchPool);
     }
+
+    @FieldResolver(returns => Int)
+    @Authorized(Role.ADMIN)
+    async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
+        return await confirmationRequestsToSend(matchPool);
+    }
 }
