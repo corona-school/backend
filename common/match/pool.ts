@@ -154,7 +154,7 @@ export const pools: MatchPool[] = [
                     { pupil_tutoring_interest_confirmation_request: { status: "pending", createdAt: { gt: twoWeeksAgo }}},
                     // Or the confirmation request will be sent out in the future
                     { pupil_tutoring_interest_confirmation_request: null }
-                ]
+                ];
             }
             return query;
         },
