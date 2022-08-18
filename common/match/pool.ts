@@ -129,7 +129,7 @@ const balancingCoefficients = {
 export const pools: MatchPool[] = [
     {
         name: "lern-fair-now",
-        toggles: ["skip-interest-confirmation"],
+        toggles: ["skip-interest-confirmation", "include-confirmation-pending"],
         pupilsToMatch: (toggles) => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
@@ -138,11 +138,26 @@ export const pools: MatchPool[] = [
                 registrationSource: { notIn: ["plus"] }
             };
 
-            if (!toggles.includes("skip-interest-confirmation")) {
+            if (!toggles.includes("skip-interest-confirmation") && !toggles.includes("include-confirmation-pending")) {
                 query.OR = [
                     { registrationSource: "cooperation" },
                     { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }}
                 ];
+            }
+
+            if (toggles.includes("include-confirmation-pending")) {
+                const twoWeeksAgo = new Date();
+                twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+                query.OR = [
+                    // Also include those that already confirmed interest:
+                    { registrationSource: "cooperation" },
+                    { pupil_tutoring_interest_confirmation_request: { status: "confirmed" }},
+                    // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
+                    { pupil_tutoring_interest_confirmation_request: { status: "pending", createdAt: { gt: twoWeeksAgo }}},
+                    // Or the confirmation request will be sent out in the future
+                    { pupil_tutoring_interest_confirmation_request: null }
+                ]
             }
             return query;
         },
@@ -398,7 +413,7 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // Number of Pupils waiting for a Match
     // This is slightly inaccurate, as pupils could theoretically have multiple match requests
     // Though at the moment it is limited to one per pupil
-    let backlog = await getPupilCount(pool, ["skip-interest-confirmation"]);
+    let backlog = await getPupilCount(pool, ["include-confirmation-pending"]);
 
     // If the Pool uses interest confirmations, we lose about a third of pupils
     // This needs to be factored in, as it reduces the actual waiting time
