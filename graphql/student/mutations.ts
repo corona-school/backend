@@ -16,7 +16,7 @@ import { setProjectFields } from "../../common/student/update";
 import { PrerequisiteError } from "../../common/util/error";
 import { toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { logInContext } from "../logging";
-import { RegistrationSource } from "common/entity/Person";
+import { RegistrationSource } from "../../common/entity/Person";
 
 @InputType("Instructor_screeningCreateInput", {
     isAbstract: true
@@ -85,7 +85,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         data: {
             firstname,
             lastname,
-            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
+            subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource
         },
         where: { id: student.id }
