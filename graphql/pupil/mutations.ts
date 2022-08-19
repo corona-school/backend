@@ -16,9 +16,10 @@ import { prisma } from "../../common/prisma";
 import { PrerequisiteError } from "../../common/util/error";
 import { toPupilSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { logInContext } from "../logging";
+import { RegistrationSource } from "../../common/entity/Person";
 
 @InputType()
-class PupilUpdateInput {
+export class PupilUpdateInput {
     @Field(type => String, { nullable: true })
     firstname?: string;
 
@@ -33,14 +34,21 @@ class PupilUpdateInput {
 
     @Field(type => [ProjectField], { nullable: true })
     projectFields: ProjectField[];
+
+    @Field(type => RegistrationSource, { nullable: true })
+    registrationSource?: RegistrationSource;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext("Pupil", context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname } = update;
+    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
+    }
+
+    if (registrationSource != undefined && !isElevated(context)) {
+        throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
     await prisma.pupil.update({
@@ -50,7 +58,8 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             // TODO: Store numbers as numbers maybe ...
             grade: `${gradeAsInt}. Klasse`,
             subjects: JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)),
-            projectFields
+            projectFields,
+            registrationSource
         },
         where: { id: pupil.id }
     });

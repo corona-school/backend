@@ -16,6 +16,7 @@ import { setProjectFields } from "../../common/student/update";
 import { PrerequisiteError } from "../../common/util/error";
 import { toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { logInContext } from "../logging";
+import { RegistrationSource } from "common/entity/Person";
 
 @InputType("Instructor_screeningCreateInput", {
     isAbstract: true
@@ -59,14 +60,21 @@ export class StudentUpdateInput {
 
     @Field(type => [ProjectFieldWithGradeInput], { nullable: true })
     projectFields: ProjectFieldWithGradeInput[];
+
+    @Field(type => RegistrationSource, { nullable: true })
+    registrationSource?: RegistrationSource;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext("Student", context);
-    const { firstname, lastname, projectFields, subjects } = update;
+    const { firstname, lastname, projectFields, subjects, registrationSource } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
+    }
+
+    if (registrationSource != undefined && !isElevated(context)) {
+        throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
     if (projectFields) {
@@ -77,7 +85,8 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         data: {
             firstname,
             lastname,
-            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat))
+            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
+            registrationSource
         },
         where: { id: student.id }
     });

@@ -32,7 +32,7 @@ import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { UserType } from "../user/fields";
 import { StudentUpdateInput, updateStudent } from "../student/mutations";
-import { updatePupil } from "graphql/pupil/mutations";
+import { PupilUpdateInput, updatePupil } from "../pupil/mutations";
 
 
 
