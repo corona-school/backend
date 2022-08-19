@@ -31,7 +31,7 @@ import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { UserType } from "../user/fields";
-import { StudentUpdateInput, updateStudent } from "../student/mutations";
+import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from "../student/mutations";
 import { PupilUpdateInput, updatePupil } from "../pupil/mutations";
 
 
@@ -275,7 +275,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            await updatePupil(prevPupil, { firstname, lastname, ...pupil });
+            await updatePupil(context, prevPupil, { firstname, lastname, ...pupil });
             return true;
         }
 

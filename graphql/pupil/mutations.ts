@@ -11,12 +11,11 @@ import { GraphQLContext } from "../context";
 import { getSessionPupil, isElevated } from "../authentication";
 import { Subject } from "../types/subject";
 import { ProjectField } from "../../common/jufo/projectFields";
-import { pupil as Pupil } from "@prisma/client";
+import { pupil as Pupil, pupil_registrationsource_enum as RegistrationSource } from "@prisma/client";
 import { prisma } from "../../common/prisma";
 import { PrerequisiteError } from "../../common/util/error";
 import { toPupilSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { logInContext } from "../logging";
-import { RegistrationSource } from "../../common/entity/Person";
 
 @InputType()
 export class PupilUpdateInput {

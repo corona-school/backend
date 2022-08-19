@@ -11,12 +11,11 @@ import { addInstructorScreening, addTutorScreening } from "../../common/student/
 import { ProjectField } from "../../common/jufo/projectFields";
 import { ProjectFieldWithGradeData } from "../../common/student/registration";
 import { Subject } from "../types/subject";
-import { student as Student } from "@prisma/client";
+import { student as Student, pupil_registrationsource_enum as RegistrationSource } from "@prisma/client";
 import { setProjectFields } from "../../common/student/update";
 import { PrerequisiteError } from "../../common/util/error";
 import { toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
 import { logInContext } from "../logging";
-import { RegistrationSource } from "../../common/entity/Person";
 
 @InputType("Instructor_screeningCreateInput", {
     isAbstract: true
@@ -39,7 +38,7 @@ export class ScreeningInput {
 }
 
 @InputType()
-class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
+export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field(type => ProjectField)
     projectField: ProjectField;
     @Field(type => Int, { nullable: true })
