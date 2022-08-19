@@ -10,8 +10,7 @@ import { createPupilMatchRequest, deletePupilMatchRequest } from "../../common/m
 import { GraphQLContext } from "../context";
 import { getSessionPupil, isElevated } from "../authentication";
 import { Subject } from "../types/subject";
-import { ProjectField } from "../../common/jufo/projectFields";
-import { pupil as Pupil, pupil_registrationsource_enum as RegistrationSource } from "@prisma/client";
+import { pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField } from "@prisma/client";
 import { prisma } from "../../common/prisma";
 import { PrerequisiteError } from "../../common/util/error";
 import { toPupilSubjectDatabaseFormat } from "../../common/util/subjectsutils";
