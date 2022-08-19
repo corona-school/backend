@@ -54,7 +54,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             firstname,
             lastname,
             // TODO: Store numbers as numbers maybe ...
-            grade: `${gradeAsInt}. Klasse`,
+            grade: gradeAsInt ? `${gradeAsInt}. Klasse` : undefined,
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
             projectFields,
             registrationSource
