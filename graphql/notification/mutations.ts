@@ -30,6 +30,8 @@ class NotificationInput { // Notification Model as Input type, see https://githu
   interval: number | null;
   @Field(_type => notification_sender_enum, { nullable: true })
   sender: notification_sender_enum | null;
+  @Field(_type => String, { nullable: true })
+  hookID: string | null;
 }
 @Resolver(of => GraphQLModel.Notification)
 export class MutateNotificationResolver {

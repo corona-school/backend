@@ -4,7 +4,7 @@
     Cancelling or rescheduling the action thus also cancels or reschedules the corresponding hook */
 
 import { student as Student, pupil as Pupil } from "@prisma/client";
-import { getStudent, User } from "../user";
+import { getPupil, getStudent, User } from "../user";
 
 type NotificationHook = { fn: (user: User) => Promise<void>, description: string };
 
@@ -24,8 +24,9 @@ export async function triggerHook(hookID: string, user: User) {
 }
 
 export function registerHook(hookID: string, description: string, fn: (user: User) => Promise<void>) {
-    if (hookExists(hookID))
+    if (hookExists(hookID)) {
         throw new Error(`Hook may only be registered once`);
+    }
 
     hooks[hookID] = { description, fn };
 }
@@ -34,4 +35,4 @@ export const registerStudentHook = (hookID: string, description: string, hook: (
     registerHook(hookID, description, user => getStudent(user).then(hook));
 
 export const registerPupilHook = (hookID: string, description: string, hook: (pupil: Pupil) => Promise<void>) =>
-    registerHook(hookID, description, user => getStudent(user).then(hook));
+    registerHook(hookID, description, user => getPupil(user).then(hook));
