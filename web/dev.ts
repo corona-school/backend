@@ -1392,23 +1392,25 @@ async function importNotificationsFromProd() {
     }
 
     const prodNotifications = await (await fetch(PROD_URL, {
-        body: `
-        query {
-            notifications {
-              id
-            mailjetTemplateId
-            description
-            active
-            recipient
-            onActions
-            category
-            cancelledOnAction
-            delay
-            interval
-            sender
-          }
-        }
-        `,
+        body: JSON.stringify({
+            query: `
+                query {
+                    notifications {
+                        id
+                        mailjetTemplateId
+                        description
+                        active
+                        recipient
+                        onActions
+                        category
+                        cancelledOnAction
+                        delay
+                        interval
+                        sender
+                    }
+                }`,
+            variables: {}
+        }),
         method: "POST",
         headers: {
             'Content-Type': 'application/json'
