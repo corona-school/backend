@@ -175,7 +175,17 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Concrete_notification: allAdmin,
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
-    Notification: allAdmin,
+    Notification: {
+        notification: everyone,
+        notifications: everyone,
+        createManyNotification: nobody,
+        deleteManyNotification: nobody,
+        deleteOneNotification: nobody,
+        createOneNotification: nobody,
+        updateManyNotification: nobody,
+        updateOneNotification: nobody,
+        upsertOneNotification: nobody
+    },
     Pupil_tutoring_interest_confirmation_request: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
