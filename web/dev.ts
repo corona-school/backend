@@ -34,6 +34,7 @@ import { PupilTutoringInterestConfirmationRequest } from "../common/entity/Pupil
 import { CourseGuest } from "../common/entity/CourseGuest";
 import { RemissionRequest } from "../common/entity/RemissionRequest";
 import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
+import { getNotifications, importNotifications } from "../common/notification/notification";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -1373,9 +1374,44 @@ export async function setupDevDB() {
 
     await entityManager.save(remissionRequest);
     console.log("Inserted remission request");
+
+    await importNotificationsFromProd();
 }
 
 function sha512(input: string): string {
     const hash = createHash("sha512");
     return hash.update(input).digest("hex");
+}
+
+const PROD_URL = "https://api.lern-fair.de/apollo";
+
+async function importNotificationsFromProd() {
+    const existingNotifications = await getNotifications();
+    if (existingNotifications.size) {
+        throw new Error(`Cannot import from Prod as notifications exist`);
+    }
+
+    const prodNotifications = await (await fetch(PROD_URL, {
+        body: `
+        query {
+            notifications {
+              id
+            mailjetTemplateId
+            description
+            active
+            recipient
+            onActions
+            category
+            cancelledOnAction
+            delay
+            interval
+            sender
+          }
+        }
+        `,
+        method: "post"
+    })).json();
+
+    await importNotifications(prodNotifications.data.notifications, false, true);
+    console.log(`Imported notifications from PROD`, prodNotifications.data.notifications);
 }
