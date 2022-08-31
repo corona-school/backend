@@ -1409,7 +1409,10 @@ async function importNotificationsFromProd() {
           }
         }
         `,
-        method: "post"
+        method: "post",
+        headers: {
+            'Content-Type': 'application/json'
+        }
     })).json();
 
     await importNotifications(prodNotifications.data.notifications, false, true);
