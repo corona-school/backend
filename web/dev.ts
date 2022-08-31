@@ -1383,7 +1383,7 @@ function sha512(input: string): string {
     return hash.update(input).digest("hex");
 }
 
-const PROD_URL = "https://api.lern-fair.de/apollo";
+const PROD_URL = "https://api.corona-school.de/apollo";
 
 async function importNotificationsFromProd() {
     const existingNotifications = await getNotifications();
