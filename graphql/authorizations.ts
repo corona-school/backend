@@ -274,6 +274,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             openProjectMatchRequestCount: adminOrOwner,
             certificate_of_conduct: adminOrOwner,
             isCodu: adminOrOwner,
+            registrationSource: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -290,7 +291,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lastSentJufoAlumniScreeningInvitationDate: nobody,
             lastSentScreeningInvitationDate: nobody,
             lastUpdatedSettingsViaBlocker: nobody,
-            registrationSource: nobody,
             sentInstructorScreeningReminderCount: nobody,
             sentJufoAlumniScreeningReminderCount: nobody,
             sentScreeningReminderCount: nobody,
