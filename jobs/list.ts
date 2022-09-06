@@ -13,6 +13,7 @@ import interestConfirmationRequestReminders from "./periodic/interest-confirmati
 import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { cleanupSecrets } from "../common/secret";
+import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
@@ -37,5 +38,6 @@ export const allJobs: CSCronJob[] = [
     // every hour during day
     { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
-    { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets }
+    { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets },
+    { cronTime: "00 00 02 * * *", jobFunction: redactInactiveAccounts }
 ];
