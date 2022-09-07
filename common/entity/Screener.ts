@@ -1,9 +1,9 @@
-import { Entity, Column, OneToMany, EntityManager } from "typeorm";
-import { ScreenerDTO } from "../dto/ScreenerDTO";
-import { Screening } from "./Screening";
-import { Person } from "./Person";
-import { prisma } from "../prisma";
-import { init } from "../util/basic";
+import { Entity, Column, OneToMany, EntityManager } from 'typeorm';
+import { ScreenerDTO } from '../dto/ScreenerDTO';
+import { Screening } from './Screening';
+import { Person } from './Person';
+import { prisma } from '../prisma';
+import { init } from '../util/basic';
 
 @Entity()
 export class Screener extends Person {
@@ -12,18 +12,18 @@ export class Screener extends Person {
 
     @Column({
         default: false,
-        nullable: true
+        nullable: true,
     })
     verified: boolean;
 
     @Column({
         nullable: true,
-        unique: true
+        unique: true,
     })
     oldNumberID: number; //the number that screener had in the old database
 
     @OneToMany((type) => Screening, (screening) => screening.screener, {
-        nullable: true
+        nullable: true,
     })
     screenings: Promise<Screening[]>;
 
@@ -58,7 +58,7 @@ export function getScreenersWithFirstname(manager: EntityManager, firstname: str
     return manager.find(Screener, { firstname: firstname });
 }
 
-const DEFAULT_SCREENER_FIRSTNAME = "DEFAULT_SCREENER";
+const DEFAULT_SCREENER_FIRSTNAME = 'DEFAULT_SCREENER';
 export const DEFAULT_SCREENER_NUMBER_ID = -1;
 
 export async function getDefaultScreener(manager: EntityManager) {
@@ -67,11 +67,11 @@ export async function getDefaultScreener(manager: EntityManager) {
     if (!defaultScreener) {
         defaultScreener = new Screener();
         defaultScreener.firstname = DEFAULT_SCREENER_FIRSTNAME;
-        defaultScreener.lastname = "";
-        defaultScreener.password = "";
+        defaultScreener.lastname = '';
+        defaultScreener.password = '';
         defaultScreener.verified = true;
         defaultScreener.oldNumberID = DEFAULT_SCREENER_NUMBER_ID;
-        defaultScreener.email = "kontakt@lern-fair.de";
+        defaultScreener.email = 'kontakt@lern-fair.de';
         defaultScreener.active = false;
 
         await manager.save(defaultScreener);
@@ -81,26 +81,28 @@ export async function getDefaultScreener(manager: EntityManager) {
 }
 
 export const defaultScreener = init(async function getDefaultScreenerEntry() {
-    const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID }});
+    const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID } });
     if (existing) {
         return existing;
     }
 
-    return await prisma.screener.create({ data: {
-        firstname: DEFAULT_SCREENER_FIRSTNAME,
-        lastname: "",
-        password: "",
-        verified: true,
-        id: DEFAULT_SCREENER_NUMBER_ID,
-        oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
-        email: "kontakt@corona-school.de",
-        active: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        verification: null,
-        verifiedAt: new Date(),
-        authToken: null,
-        authTokenUsed: null,
-        authTokenSent: null
-    }});
+    return await prisma.screener.create({
+        data: {
+            firstname: DEFAULT_SCREENER_FIRSTNAME,
+            lastname: '',
+            password: '',
+            verified: true,
+            id: DEFAULT_SCREENER_NUMBER_ID,
+            oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
+            email: 'kontakt@corona-school.de',
+            active: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            verification: null,
+            verifiedAt: new Date(),
+            authToken: null,
+            authTokenUsed: null,
+            authTokenSent: null,
+        },
+    });
 });

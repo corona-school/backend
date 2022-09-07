@@ -1,6 +1,6 @@
-import { Student } from "../entity/Student";
-import { screeningInfoFrom } from "../util/screening";
-import { StudentEditableInfoDTO } from "./StudentEditableInfoDTO";
+import { Student } from '../entity/Student';
+import { screeningInfoFrom } from '../util/screening';
+import { StudentEditableInfoDTO } from './StudentEditableInfoDTO';
 
 export class StudentInfoDTO extends StudentEditableInfoDTO {
     firstName: string;
@@ -29,7 +29,7 @@ export class StudentInfoDTO extends StudentEditableInfoDTO {
         if (student.module && student.moduleHours) {
             s.official = {
                 module: student.module,
-                hours: student.moduleHours
+                hours: student.moduleHours,
             };
         }
 
@@ -51,7 +51,7 @@ export class StudentInfoDTO extends StudentEditableInfoDTO {
         s.screenings = {
             tutor: screeningInfoFrom(tutorScreening),
             instructor: screeningInfoFrom(instructorScreening),
-            projectCoach: screeningInfoFrom(projectCoachingScreening)
+            projectCoach: screeningInfoFrom(projectCoachingScreening),
         };
 
         return s;

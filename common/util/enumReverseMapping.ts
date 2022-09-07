@@ -1,13 +1,13 @@
-import { State } from "../entity/State";
-import { SchoolType } from "../entity/SchoolType";
-import { MentoringCategory } from "../mentoring/categories";
-import { ProjectField } from "../jufo/projectFields";
-import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from "../jufo/participationIndication";
-import { TeacherModule } from "../entity/Student";
-import { RegistrationSource } from "../entity/Person";
-import { Language } from "../daz/language";
-import { LearningGermanSince } from "../daz/learningGermanSince";
-import { InterestConfirmationStatus } from "../entity/PupilTutoringInterestConfirmationRequest";
+import { State } from '../entity/State';
+import { SchoolType } from '../entity/SchoolType';
+import { MentoringCategory } from '../mentoring/categories';
+import { ProjectField } from '../jufo/projectFields';
+import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from '../jufo/participationIndication';
+import { TeacherModule } from '../entity/Student';
+import { RegistrationSource } from '../entity/Person';
+import { Language } from '../daz/language';
+import { LearningGermanSince } from '../daz/learningGermanSince';
+import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 
 const EnumReverseMappings = {
     State: caseInsensitive(reverseMappingForStringEnum(State)),
@@ -20,17 +20,17 @@ const EnumReverseMappings = {
     RegistrationSource: caseInsensitive(reverseMappingForNumericEnumNames(RegistrationSource)),
     Language: reverseMappingForStringEnum(Language),
     LearningGermanSince: reverseMappingForStringEnum(LearningGermanSince),
-    PupilTutoringInterestConfirmationStatus: reverseMappingForStringEnum(InterestConfirmationStatus)
+    PupilTutoringInterestConfirmationStatus: reverseMappingForStringEnum(InterestConfirmationStatus),
 };
 
-function reverseMappingForStringEnum<E>(e: E): ((s: string) => E[keyof E]) {
+function reverseMappingForStringEnum<E>(e: E): (s: string) => E[keyof E] {
     //this would be equivalent to check whether `Object.values(ENUM)` contains `s` and then return s
     return (s: string) => {
-        return Object.entries(e).find(([, value]) => typeof value === "string" && value === s)?.[1];
+        return Object.entries(e).find(([, value]) => typeof value === 'string' && value === s)?.[1];
     };
 }
 
-function reverseMappingForNumericEnumNames<E>(e: E): ((s: string) => E[keyof E]) {
+function reverseMappingForNumericEnumNames<E>(e: E): (s: string) => E[keyof E] {
     return (s: string) => {
         return e[s];
     };
@@ -42,7 +42,4 @@ function caseInsensitive<E>(reverseMappingFunction: (s: string) => E) {
     };
 }
 
-export {
-    EnumReverseMappings,
-    reverseMappingForStringEnum
-};
+export { EnumReverseMappings, reverseMappingForStringEnum };

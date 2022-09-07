@@ -1,57 +1,60 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture } from "./generated";
-import { Authorized, createMethodDecorator } from "type-graphql";
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture } from './generated';
+import { Authorized, createMethodDecorator } from 'type-graphql';
 
-import { AuthChecker } from "type-graphql";
-import { GraphQLContext } from "./context";
-import assert from "assert";
-import { getLogger } from "log4js";
-import { isOwnedBy, ResolverModel, ResolverModelNames } from "./ownership";
-import { ForbiddenError } from "./error";
+import { AuthChecker } from 'type-graphql';
+import { GraphQLContext } from './context';
+import assert from 'assert';
+import { getLogger } from 'log4js';
+import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
+import { ForbiddenError } from './error';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
 export enum Role {
     /* Elevated Access via Retool */
-    ADMIN = "ADMIN",
+    ADMIN = 'ADMIN',
     /* Shortcut role for everyone with an account */
-    USER = "USER",
+    USER = 'USER',
     /* Elevated Access via Screener Admin Interface */
-    SCREENER = "SCREENER",
+    SCREENER = 'SCREENER',
     /* Access via User Interface, not yet E-Mail verified */
-    PUPIL = "PUPIL",
-    STUDENT = "STUDENT",
+    PUPIL = 'PUPIL',
+    STUDENT = 'STUDENT',
     /* Accessible to everyone */
-    UNAUTHENTICATED = "UNAUTHENTICATED",
+    UNAUTHENTICATED = 'UNAUTHENTICATED',
     /* User owns the entity as defined in graphql/ownership */
-    OWNER = "OWNER",
+    OWNER = 'OWNER',
     /* No one should have access */
-    NOBODY = "NOBODY",
+    NOBODY = 'NOBODY',
 
     /* User is a student, requested to be a tutor and was successfully screened (E-Mail also verified) */
-    TUTOR = "TUTOR",
+    TUTOR = 'TUTOR',
     /* User is a student, requested to be a course instructor and was successfully "instructor screened" (E-Mail also verified) */
-    INSTRUCTOR = "INSTRUCTOR",
+    INSTRUCTOR = 'INSTRUCTOR',
     /* User is a student, requested to be a project coach and was successfully screened (E-Mail also verified) */
-    PROJECT_COACH = "PROJECT_COACH",
+    PROJECT_COACH = 'PROJECT_COACH',
 
     /* User is a pupil and requested to receive one-on-one tutoring */
-    TUTEE = "TUTEE",
+    TUTEE = 'TUTEE',
     /* User is a pupil and requested to participate in courses */
-    PARTICIPANT = "PARTICIPANT",
+    PARTICIPANT = 'PARTICIPANT',
     /* User is a pupil and requested to participate in project coaching */
-    PROJECT_COACHEE = "PROJECT_COACHEE",
+    PROJECT_COACHEE = 'PROJECT_COACHEE',
     /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
-    STATE_PUPIL = "STATE_PUPIL"
+    STATE_PUPIL = 'STATE_PUPIL',
 }
 
-const authLogger = getLogger("GraphQL Authentication");
+const authLogger = getLogger('GraphQL Authentication');
 
 /* The auth checker performs the authorization check for the @Authorized() annotation before the resolver runs
     It checks whether the user session created in graphql/context has all the roles required */
 export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, root }, requiredRoles) => {
-    assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
-    assert(requiredRoles.every(role => role in Role), "Roles must be of enum Role");
-    assert(context.user?.roles, "Roles must have been initialized in context");
+    assert(requiredRoles.length, 'Roles must be passed to AUTHORIZED');
+    assert(
+        requiredRoles.every((role) => role in Role),
+        'Roles must be of enum Role'
+    );
+    assert(context.user?.roles, 'Roles must have been initialized in context');
 
     return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
 };
@@ -71,7 +74,7 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     anything of value
 */
 export function AuthorizedDeferred(...requiredRoles: Role[]) {
-    assert(requiredRoles.length, "Roles must be passed to AUTHORIZED");
+    assert(requiredRoles.length, 'Roles must be passed to AUTHORIZED');
 
     return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
         context.deferredRequiredRoles = requiredRoles;
@@ -80,15 +83,15 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
 }
 
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
-    assert(context.deferredRequiredRoles, "hasAccess may only be used in @AuthorizedDeferred methods");
+    assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
     const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
     if (!success) {
-        throw new ForbiddenError("Not Authorized");
+        throw new ForbiddenError('Not Authorized');
     }
 }
 
 async function accessCheck(context: GraphQLContext, requiredRoles: Role[], modelName: ResolverModelNames | undefined, root: any) {
-    if (requiredRoles.some(requiredRole => context.user.roles.includes(requiredRole as Role))) {
+    if (requiredRoles.some((requiredRole) => context.user.roles.includes(requiredRole as Role))) {
         return true;
     }
 
@@ -96,8 +99,8 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
        we have to compare the user to the root value of this resolver
        and use the ownership check */
     if (requiredRoles.includes(Role.OWNER)) {
-        assert(modelName, "Type must be resolved to determine ownership");
-        assert(root, "root value must be bound to determine ownership");
+        assert(modelName, 'Type must be resolved to determine ownership');
+        assert(root, 'root value must be bound to determine ownership');
 
         const ownershipCheck = isOwnedBy[modelName];
         assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
@@ -122,7 +125,9 @@ const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
-const withPublicFields = <Entity = "never", PublicFields extends keyof Entity = never> (otherFields: { [key in Exclude<keyof Entity, PublicFields>]: PropertyDecorator[] }) => otherFields;
+const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
+    [key in Exclude<keyof Entity, PublicFields>]: PropertyDecorator[];
+}) => otherFields;
 
 /* Although we do not expose all Prisma entities, we make sure authorization is present for all queries and mutations
    We use query and mutation authorizations as our main authorization strategy,
@@ -167,7 +172,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         deleteManySchool: adminOrOwner,
         updateManySchool: adminOrOwner,
         // School data is public knowledge and can be queried by everyone
-        schools: everyone
+        schools: everyone,
     },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
@@ -184,12 +189,12 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         createOneNotification: nobody,
         updateManyNotification: nobody,
         updateOneNotification: nobody,
-        upsertOneNotification: nobody
+        upsertOneNotification: nobody,
     },
     Pupil_tutoring_interest_confirmation_request: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
-    Secret: { _all: nobody }
+    Secret: { _all: nobody },
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -203,7 +208,20 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
 export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     // ATTENTION: Pupil entities can be seen by other users, e.g. through the Match -> pupil edge
     Pupil: {
-        fields: withPublicFields<Pupil, "id" | "firstname" | "lastname" | "active" | "grade" | "isJufoParticipant" | "isParticipant" | "isProjectCoachee" | "isPupil" | "languages" | "projectFields">({
+        fields: withPublicFields<
+            Pupil,
+            | 'id'
+            | 'firstname'
+            | 'lastname'
+            | 'active'
+            | 'grade'
+            | 'isJufoParticipant'
+            | 'isParticipant'
+            | 'isProjectCoachee'
+            | 'isPupil'
+            | 'languages'
+            | 'projectFields'
+        >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
             authTokenUsed: adminOrOwner,
@@ -248,13 +266,16 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
             match: nobody,
-            _count: nobody
-        })
+            _count: nobody,
+        }),
     },
 
     // ATTENTION: Student entities can be seen by other users, e.g. through the Match -> student edge
     Student: {
-        fields: withPublicFields<Student, "id" | "firstname" | "lastname" | "active" | "isStudent" | "isInstructor" | "isProjectCoach" | "isUniversityStudent" | "languages">({
+        fields: withPublicFields<
+            Student,
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages'
+        >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
             authTokenUsed: adminOrOwner,
@@ -317,23 +338,37 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             expert_data: nobody,
             instructor_screening: nobody,
             remission_request: nobody,
-            _count: nobody
-
-        })
-
+            _count: nobody,
+        }),
     },
     Subcourse: {
-        fields: withPublicFields<Subcourse, "id" | "published" | "cancelled" | "course" | "courseId" | "createdAt" | "updatedAt" | "joinAfterStart" | "minGrade" | "maxGrade" | "maxParticipants">({
+        fields: withPublicFields<
+            Subcourse,
+            | 'id'
+            | 'published'
+            | 'cancelled'
+            | 'course'
+            | 'courseId'
+            | 'createdAt'
+            | 'updatedAt'
+            | 'joinAfterStart'
+            | 'minGrade'
+            | 'maxGrade'
+            | 'maxParticipants'
+        >({
             course_participation_certificate: nobody,
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
-            _count: nobody
-        })
+            _count: nobody,
+        }),
     },
     Course: {
-        fields: withPublicFields<Course, "id" | "name" | "outline" | "category" | "allowContact" | "courseState" | "publicRanking" | "description" | "createdAt" | "updatedAt">({
+        fields: withPublicFields<
+            Course,
+            'id' | 'name' | 'outline' | 'category' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
+        >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
 
@@ -343,24 +378,24 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             imageKey: nobody,
-            _count: nobody
-        })
+            _count: nobody,
+        }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, "id" | "start" | "duration" | "createdAt" | "updatedAt">({
+        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt'>({
             course_attendance_log: nobody,
             subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
             instructorId: nobody,
-            _count: nobody
-        })
+            _count: nobody,
+        }),
     },
     Participation_certificate: {
         fields: {
             // these are Buffers and are not supposed to be retrieved directly by anyone (only rendered into a PDF)
             signatureParent: nobody,
-            signaturePupil: nobody
-        }
-    }
+            signaturePupil: nobody,
+        },
+    },
 };

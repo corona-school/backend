@@ -53,7 +53,12 @@ class PublicLectureInput {
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseCreate(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('subcourse') subcourse: PublicSubcourseCreateInput, @Arg('studentId', { nullable: true }) studentId?: number): Promise<GraphQLModel.Subcourse> {
+    async subcourseCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('courseId') courseId: number,
+        @Arg('subcourse') subcourse: PublicSubcourseCreateInput,
+        @Arg('studentId', { nullable: true }) studentId?: number
+    ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         if (course.courseState !== 'allowed') {
@@ -98,7 +103,11 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => GraphQLModel.Subcourse)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseEdit(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('subcourse') data: PublicSubcourseEditInput): Promise<GraphQLModel.Subcourse> {
+    async subcourseEdit(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('subcourse') data: PublicSubcourseEditInput
+    ): Promise<GraphQLModel.Subcourse> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
@@ -124,7 +133,11 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => GraphQLModel.Lecture)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async lectureCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('lecture') lecture: PublicLectureInput): Promise<GraphQLModel.Lecture> {
+    async lectureCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('lecture') lecture: PublicLectureInput
+    ): Promise<GraphQLModel.Lecture> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 

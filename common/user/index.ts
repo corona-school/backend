@@ -1,14 +1,14 @@
 /* Long term we want to move away from the disjunct Pupil / Student relationship,
     towards a common User Entity. This module contains some steps towards that entity */
 
-import { Pupil as TypeORMPupil } from "../entity/Pupil";
-import { Student as TypeORMStudent } from "../entity/Student";
-import { getManager } from "typeorm";
+import { Pupil as TypeORMPupil } from '../entity/Pupil';
+import { Student as TypeORMStudent } from '../entity/Student';
+import { getManager } from 'typeorm';
 
-import { pupil as Pupil, student as Student, screener as Screener } from "@prisma/client";
-import { prisma } from "../prisma";
+import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
+import { prisma } from '../prisma';
 
-type Person = { id: number, isPupil?: boolean, isStudent?: boolean };
+type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
    Unfortunately we do not have a way to detect the database table a Prisma query returned from
@@ -16,13 +16,12 @@ type Person = { id: number, isPupil?: boolean, isStudent?: boolean };
    NOTE: isPupil can be false for Pupils and isStudent can be false for Students.
    The existence of the boolean is however tied to the respective entities */
 export function isStudent(person: Person): boolean {
-    return (typeof person.isStudent === "boolean");
+    return typeof person.isStudent === 'boolean';
 }
 
 export function isPupil(person: Person): boolean {
-    return (typeof person.isPupil === "boolean");
+    return typeof person.isPupil === 'boolean';
 }
-
 
 export function getUserIdTypeORM(person: Person) {
     if (isStudent(person)) {
@@ -37,14 +36,14 @@ export function getUserIdTypeORM(person: Person) {
 }
 
 export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | never> {
-    const [type, id] = userID.split("/");
+    const [type, id] = userID.split('/');
     const manager = getManager();
-    if (type === "student") {
-        return await manager.findOneOrFail(TypeORMStudent, { where: { id }});
+    if (type === 'student') {
+        return await manager.findOneOrFail(TypeORMStudent, { where: { id } });
     }
 
-    if (type === "pupil") {
-        return await manager.findOneOrFail(TypeORMPupil, { where: { id }});
+    if (type === 'pupil') {
+        return await manager.findOneOrFail(TypeORMPupil, { where: { id } });
     }
 
     throw new Error(`Unknown User(${userID})`);
@@ -66,20 +65,20 @@ export type User = {
 const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export async function getUser(userID: string): Promise<User> {
-    const [type, _id] = userID.split("/");
+    const [type, _id] = userID.split('/');
     const id = parseInt(_id, 10);
 
-    if (type === "student") {
+    if (type === 'student') {
         const student = await prisma.student.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
         return userForStudent(student);
     }
 
-    if (type === "pupil") {
+    if (type === 'pupil') {
         const pupil = await prisma.pupil.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
         return userForPupil(pupil);
     }
 
-    if (type === "screener") {
+    if (type === 'screener') {
         const screener = await prisma.screener.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
         return userForScreener(screener);
     }
@@ -106,37 +105,37 @@ export async function getUserByEmail(email: string): Promise<User> {
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pick<Pupil, "id" | "firstname" | "lastname" | "email">) {
+export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `pupil/${pupil.id}`,
         firstname: pupil.firstname,
         lastname: pupil.lastname,
         email: pupil.email,
-        pupilId: pupil.id
+        pupilId: pupil.id,
     };
 }
 
-export function userForStudent(student: Pick<Student, "id" | "firstname" | "lastname" | "email">) {
+export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `student/${student.id}`,
         firstname: student.firstname,
         lastname: student.lastname,
         email: student.email,
-        studentId: student.id
+        studentId: student.id,
     };
 }
 
-export function userForScreener(screener: Pick<Screener, "id" | "firstname" | "lastname" | "email">) {
+export function userForScreener(screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `screener/${screener.id}`,
         firstname: screener.firstname,
         lastname: screener.lastname,
         email: screener.email,
-        screenerId: screener.id
+        screenerId: screener.id,
     };
 }
 
-export function getFullName({ firstname, lastname }: { firstname?: string, lastname?: string }): string {
+export function getFullName({ firstname, lastname }: { firstname?: string; lastname?: string }): string {
     if (!firstname) {
         return lastname;
     }

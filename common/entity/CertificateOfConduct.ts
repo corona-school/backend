@@ -1,46 +1,36 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-import {Student} from "./Student";
-import {Screener} from "./Screener";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Student } from './Student';
+import { Screener } from './Screener';
 
 @Entity()
 export class CertificateOfConduct {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     dateOfInspection: Date;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     dateOfIssue: Date;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
-    criminalRecords:Boolean;
+    criminalRecords: Boolean;
 
     @OneToOne((type) => Student, (student) => student.certificateOfConduct, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     student: Student;
-
 }

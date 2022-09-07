@@ -1,9 +1,9 @@
-import { getLogger } from "log4js";
-import { createMethodDecorator } from "type-graphql";
-import { Role } from "./authorizations";
-import { GraphQLContext } from "./context";
+import { getLogger } from 'log4js';
+import { createMethodDecorator } from 'type-graphql';
+import { Role } from './authorizations';
+import { GraphQLContext } from './context';
 
-const log = getLogger("GraphQL Rate Limiting");
+const log = getLogger('GraphQL Rate Limiting');
 
 export function RateLimit(name: string, max: number, interval: number /* in ms */) {
     const countPerIP = new Map<string, number>();
@@ -16,8 +16,7 @@ export function RateLimit(name: string, max: number, interval: number /* in ms *
     return createMethodDecorator<GraphQLContext>(({ args, root, info, context }, next) => {
         // Trusted users are generally power-users and perform a lot of API requests,
         //  for those we do not enforce rate limits (as we trust them)
-        if ((context as GraphQLContext).user?.roles.includes(Role.ADMIN) ||
-            (context as GraphQLContext).user?.roles.includes(Role.SCREENER)) {
+        if ((context as GraphQLContext).user?.roles.includes(Role.ADMIN) || (context as GraphQLContext).user?.roles.includes(Role.SCREENER)) {
             return next();
         }
 

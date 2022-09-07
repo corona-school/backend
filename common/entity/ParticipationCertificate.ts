@@ -1,6 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Student } from "./Student";
-import { Pupil } from "./Pupil";
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Student } from './Student';
+import { Pupil } from './Pupil';
 
 @Entity()
 export class ParticipationCertificate {
@@ -18,30 +18,30 @@ export class ParticipationCertificate {
     categories: string;
 
     @Column({
-        default: () => "now()",
-        nullable: false
+        default: () => 'now()',
+        nullable: false,
     })
     certificateDate: Date;
 
     @Column({
-        default: () => "now()",
-        nullable: false
+        default: () => 'now()',
+        nullable: false,
     })
     startDate: Date;
 
     @Column({
-        default: () => "now()",
-        nullable: false
+        default: () => 'now()',
+        nullable: false,
     })
     endDate: Date;
 
     @Column({
-        type: "decimal"
+        type: 'decimal',
     })
     hoursPerWeek: number;
 
     @Column({
-        type: "decimal"
+        type: 'decimal',
     })
     hoursTotal: number;
 
@@ -59,13 +59,13 @@ export class ParticipationCertificate {
     @Column({ default: false })
     ongoingLessons: boolean;
 
-    @Column({ default: "manual" })
-    state: "manual" | "awaiting-approval" | "approved";
+    @Column({ default: 'manual' })
+    state: 'manual' | 'awaiting-approval' | 'approved';
 
-    @Column({ nullable: true, type: "bytea", select: false })
+    @Column({ nullable: true, type: 'bytea', select: false })
     signaturePupil?: Buffer;
 
-    @Column({ nullable: true, type: "bytea", select: false })
+    @Column({ nullable: true, type: 'bytea', select: false })
     signatureParent?: Buffer;
 
     @Column({ nullable: true, select: false })
