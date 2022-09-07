@@ -1,5 +1,5 @@
 import { Subcourse, Pupil, Concrete_notification, Log, Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation, Participation_certificate as ParticipationCertificate, Match } from "../generated";
-import { Authorized, Field, FieldResolver, Int, Resolver, Root } from "type-graphql";
+import { Authorized, Field, FieldResolver, Int, Resolver, Root, Arg } from "type-graphql";
 import { prisma } from "../../common/prisma";
 import { Role } from "../authorizations";
 import { getUserIdTypeORM } from "../../common/user";
@@ -110,4 +110,18 @@ export class ExtendFieldsPupilResolver {
     async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
     }
+
+    @FieldResolver(returns => [Boolean])
+    @Authorized(Role.ADMIN)
+    async isParticipant(@Root() pupil: Required<Pupil>, @Arg("subcourseId") subcourseId: number) {
+        return await prisma.subcourse_participants_pupil.count({ where: { pupilId: pupil.id, subcourseId }}) > 0 ? true : false;
+
+    }
+
+    @FieldResolver(returns => [Boolean])
+    @Authorized(Role.ADMIN)
+    async isOnWaitingList(@Root() pupil: Required<Pupil>, @Arg("subcourseId") subcourseId: number) {
+        return await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId }}) > 0 ? true : false;
+    }
+
 }
