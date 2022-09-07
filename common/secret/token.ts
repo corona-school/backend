@@ -28,7 +28,7 @@ export async function createToken(user: User): Promise<string> {
             userId: user.userID,
             secret: hash,
             expiresAt: null,
-            lastUsed: new Date()
+            lastUsed: null
         }
     });
 
@@ -37,10 +37,28 @@ export async function createToken(user: User): Promise<string> {
     return token;
 }
 
-export async function requestToken(user: User) {
+// Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
+// Also a redirectTo URL is provided which is passed through to the frontend
+export async function requestToken(user: User, action: "user-authenticate" | "user-password-reset" | string, redirectTo?: string) {
     const token = await createSecretEmailToken(user);
     const person = await getUserTypeORM(user.userID);
-    await Notification.actionTaken(person, "user-authenticate", { token });
+
+    if (!["user-authenticate", "user-password-reset"].includes(action)) {
+        throw new Error(`Unsupported Action for Token Request`);
+    }
+
+    if (redirectTo) {
+        // Ensures that the user is not redirected to a potential third party
+        const { host } = new URL(redirectTo);
+        if (!host.endsWith("lern-fair.de")) {
+            throw new Error(`Invalid redirectTo host '${host}'`);
+        }
+
+        // Base64 encode, as the redirectTo might be placed as a query parameter in an URL
+        redirectTo = Buffer.from(redirectTo, "utf-8").toString("base64");
+    }
+
+    await Notification.actionTaken(person, action, { token, redirectTo: redirectTo ?? "" });
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email

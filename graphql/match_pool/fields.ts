@@ -1,7 +1,8 @@
 import { Student, Pupil, Screener, Match_pool_run as MatchPoolRun } from "../generated";
 import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from "type-graphql";
-import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, getPoolRuns } from "../../common/match/pool";
+import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, getPoolRuns, getPoolStatistics, MatchPoolStatistics } from "../../common/match/pool";
 import { Role } from "../authorizations";
+import { JSONResolver } from "graphql-scalars";
 
 @ObjectType()
 class MatchPoolAutomatic {
@@ -21,16 +22,36 @@ class MatchPool {
     toggles: string[];
 }
 
+@ObjectType()
+class SubjectDemand {
+    @Field()
+    subject: string;
+    @Field()
+    demand: number;
+}
+
+@ObjectType()
+class StatisticType implements MatchPoolStatistics {
+    @Field(type => JSONResolver)
+    matchesByMonth: any;
+    @Field()
+    averageMatchesPerMonth: number;
+    @Field()
+    predictedPupilMatchTime: number;
+    @Field(type => [SubjectDemand])
+    subjectDemand: SubjectDemand[];
+
+}
 @Resolver(of => MatchPool)
 export class FieldsMatchPoolResolver {
     @Query(returns => [MatchPool])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     match_pools() {
         return pools;
     }
 
     @Query(returns => MatchPool)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     match_pool(@Arg("name") name: string) {
         return pools.find(it => it.name === name);
     }
@@ -48,13 +69,13 @@ export class FieldsMatchPoolResolver {
     }
 
     @FieldResolver(returns => Int)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async studentsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getStudentCount(matchPool, toggles ?? []);
     }
 
     @FieldResolver(returns => Int)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async pupilsToMatchCount(@Root() matchPool: MatchPoolType, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
         return await getPupilCount(matchPool, toggles ?? []);
     }
@@ -63,5 +84,11 @@ export class FieldsMatchPoolResolver {
     @Authorized(Role.ADMIN)
     async runs(@Root() matchPool: MatchPoolType) {
         return await getPoolRuns(matchPool);
+    }
+
+    @FieldResolver(returns => StatisticType)
+    @Authorized(Role.UNAUTHENTICATED)
+    async statistics(@Root() matchPool: MatchPoolType) {
+        return await getPoolStatistics(matchPool);
     }
 }

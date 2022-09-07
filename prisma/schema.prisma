@@ -13,6 +13,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model attachment {
+  id                String   @id @db.Uuid
+  uploaderID        String   @db.VarChar
+  filename          String   @db.VarChar
+  size              Int
+  attachmentGroupId String   @db.VarChar
+  date              DateTime @db.Timestamp(6)
+}
+
 model bbb_meeting {
   id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)
@@ -31,6 +40,7 @@ model concrete_notification {
   contextID      String?  @db.VarChar
   context        Json     @db.Json
   sentAt         DateTime @db.Timestamp(6)
+  attachmentGroupId String?  @db.VarChar
   state          Int
   error          String?  @db.VarChar
 }
@@ -197,23 +207,25 @@ model log {
 }
 
 model match {
-  id                    Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
-  uuid                  String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
-  dissolved             Boolean           @default(false)
-  dissolveReason        Int?
-  proposedTime          DateTime?         @db.Timestamp(6)
-  createdAt             DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime          @default(now()) @db.Timestamp(6)
-  feedbackToPupilMail   Boolean           @default(false)
-  feedbackToStudentMail Boolean           @default(false)
-  followUpToPupilMail   Boolean           @default(false)
-  followUpToStudentMail Boolean           @default(false)
-  source                match_source_enum @default(matchedinternal)
-  matchPool             String?           @db.VarChar
-  studentId             Int?
-  pupilId               Int?
-  pupil                 pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
-  student               student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
+  id                       Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  uuid                     String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
+  dissolved                Boolean           @default(false)
+  dissolveReason           Int?
+  proposedTime             DateTime?         @db.Timestamp(6)
+  createdAt                DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt                DateTime          @default(now()) @db.Timestamp(6)
+  feedbackToPupilMail      Boolean           @default(false)
+  feedbackToStudentMail    Boolean           @default(false)
+  followUpToPupilMail      Boolean           @default(false)
+  followUpToStudentMail    Boolean           @default(false)
+  source                   match_source_enum @default(matchedinternal)
+  studentFirstMatchRequest DateTime?         @db.Timestamp(6)
+  pupilFirstMatchRequest   DateTime?         @db.Timestamp(6)
+  matchPool                String?           @db.VarChar
+  studentId                Int?
+  pupilId                  Int?
+  pupil                    pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
+  student                  student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
 
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
@@ -343,6 +355,7 @@ model pupil {
   isPupil                                      Boolean                                       @default(false)
   subjects                                     String?                                       @db.VarChar
   openMatchRequestCount                        Int                                           @default(1)
+  firstMatchRequest                            DateTime?                                     @db.Timestamp(6)
   isParticipant                                Boolean                                       @default(true)
   isProjectCoachee                             Boolean                                       @default(false)
   projectFields                                pupil_projectfields_enum[]
@@ -456,6 +469,7 @@ model student {
   isStudent                                 Boolean                                @default(false)
   subjects                                  String?                                @db.VarChar
   openMatchRequestCount                     Int                                    @default(1)
+  firstMatchRequest                         DateTime?                              @db.Timestamp(6)
   isCodu                                    Boolean                                @default(false)
   isInstructor                              Boolean                                @default(false)
   msg                                       String?                                @db.VarChar

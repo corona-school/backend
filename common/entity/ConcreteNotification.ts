@@ -1,4 +1,4 @@
-import {Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import {Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
@@ -28,6 +28,9 @@ export class ConcreteNotification {
     // notifications in the future
     @Column({ type: "json" })
     context: any;
+
+    @Column({ nullable: true })
+    attachmentGroupId: string;
 
     // sentAt a.k.a. "sendAt" conveys the following meaning depending on the state:
     // DELAYED - the time at which the notification is supposed to be sent

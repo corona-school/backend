@@ -1,6 +1,5 @@
 import {hashToken} from "./hashing";
 import {getLogger} from 'log4js';
-import axios from "axios";
 import {Parser} from "xml2js";
 import {Pupil} from "../entity/Pupil";
 import {CourseAttendanceLog} from "../entity/CourseAttendanceLog";
@@ -70,7 +69,7 @@ export async function startBBBMeeting(meeting: BBBMeeting) {
     };
     const queryParams = new URLSearchParams(params).toString(); //use URLSearchParams to have correct encoding which also encodes "'" correctly as required by application/x-www-form-urlencoded format (which BBB seems to use and require)
 
-    const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`, {
+    const response = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`, {
         headers: {
             //explicitly use application/xml such that the server will respond with xml always (for some reaseon the BBB server supports json responses only if the request failed, but not if the request was successful)
             accept: "application/xml"
@@ -81,10 +80,12 @@ export async function startBBBMeeting(meeting: BBBMeeting) {
         throw new Error("Status code: " + response.status);
     }
 
+    const data = await response.text();
+
     //in case of a successful *BBB* response, it always contains a returncode, which must be SUCCESS
     const parsedResponseData = await (new Parser({
         explicitArray: false //do not put all child nodes into an array automatically...
-    })).parseStringPromise(response.data);
+    })).parseStringPromise(data);
 
     if (parsedResponseData.response?.returncode !== "SUCCESS") {
         logger.error(`An error occurred during creation of the BBB meeting (meetingID: ${meeting.meetingID}). Error: ${parsedResponseData.response.message}`);
@@ -111,8 +112,9 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
 export async function isBBBMeetingRunning(id: string): Promise<boolean> {
     const callName = 'isMeetingRunning';
     const queryParams = encodeURI(`meetingID=${id}`);
-    return axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
-        .then(response => parser.parseStringPromise(response.data))
+    return fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
+        .then(res => res.text())
+        .then(data => parser.parseStringPromise(data))
         .then(jsonResponse => jsonResponse && jsonResponse.response && jsonResponse.response.running &&
             jsonResponse.response.running.length > 0 && jsonResponse.response.running[0] === "true")
         .catch(error => {
@@ -126,8 +128,9 @@ export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
 
 
     try {
-        const response = await axios.get(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
-        const jsonResponse = await parser.parseStringPromise(response.data);
+        const dataRaw = await fetch(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        const data = await dataRaw.text();
+        const jsonResponse = await parser.parseStringPromise(data);
 
 
         return mapJSONtoApiBBBMeetings(jsonResponse);
@@ -296,8 +299,9 @@ export async function getRunningBBBMeetingAttendees(meetingID: string): Promise<
     const queryParams = encodeURI(`meetingID=${meetingID}`);
 
     try {
-        const response = await axios.get(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
-        const jsonResponse = await parser.parseStringPromise(response.data);
+        const dataRaw = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        const data = await dataRaw.text();
+        const jsonResponse = await parser.parseStringPromise(data);
         return mapJSONtoAttendees(jsonResponse);
     } catch (error) {
         logger.debug(error);

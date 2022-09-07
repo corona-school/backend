@@ -97,6 +97,17 @@ export class Match {
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 
+    // Students and Pupils request a match by increasing their "openMatchRequest" counter
+    // A match decreases that counter. Thus we cannot really say 'which request lead to which match'
+    // However we know when the user first increased the counter from 0 to 1, thus making their viable for matching
+    // Thus for users having only one open match request (the majority), this prediction is accurate
+    // For users with more than one open match request, this overestimates the request time
+    @Column({ nullable: true })
+    studentFirstMatchRequest: Date;
+
+    @Column({ nullable: true })
+    pupilFirstMatchRequest: Date;
+
     @Column({ nullable: true })
     matchPool?: string;
 

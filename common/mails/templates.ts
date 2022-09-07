@@ -351,23 +351,6 @@ export const mailjet = {
             variables: variables
         };
     },
-    COURSEINSTRUCTORGROUPMAIL: (variables: {
-        participantFirstName: string;
-        instructorFirstName: string;
-        courseName: string;
-        messageTitle: string;
-        messageBody: string;
-        instructorMail: string;
-    }) => {
-        return <TemplateMail>{
-            type: "courseinstructorgroupmail",
-            id: 1518580,
-            sender: DEFAULTSENDERS.support,
-            title: "Nachricht zu deinem Kurs",
-            disabled: false,
-            variables: variables
-        };
-    },
     PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: {
         personFirstname: string;
         confirmationURL: string;

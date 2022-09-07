@@ -1,6 +1,5 @@
 import { Role } from "../authorizations";
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from "type-graphql";
-import { Me } from "./fields";
 import { GraphQLContext } from "../context";
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from "../authentication";
 import { prisma } from "../../common/prisma";
@@ -23,7 +22,6 @@ import { RateLimit } from "../rate-limit";
 import { becomeInstructor, BecomeInstructorData, becomeProjectCoach, BecomeProjectCoachData, becomeTutor, BecomeTutorData, ProjectFieldWithGradeData, registerStudent, RegisterStudentData } from "../../common/student/registration";
 import { becomeProjectCoachee, BecomeProjectCoacheeData, becomeStatePupil, BecomeStatePupilData, becomeTutee, BecomeTuteeData, registerPupil, RegisterPupilData } from "../../common/pupil/registration";
 import { logInContext } from "../logging";
-import { isEmailAvailable } from "../../common/user/email";
 import "../types/enums";
 import { Subject } from "../types/subject";
 import { PrerequisiteError } from "../../common/util/error";
@@ -32,15 +30,11 @@ import { evaluatePupilRoles } from "../roles";
 import { Pupil, Student } from "../generated";
 import { UserInputError } from "apollo-server-express";
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
-@InputType()
-class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
-    @Field(type => ProjectField)
-    projectField: ProjectField;
-    @Field(type => Int, { nullable: true })
-    min: number;
-    @Field(type => Int, { nullable: true })
-    max: number;
-}
+import { UserType } from "../user/fields";
+import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from "../student/mutations";
+import { PupilUpdateInput, updatePupil } from "../pupil/mutations";
+
+
 
 @InputType()
 class RegisterStudentInput implements RegisterStudentData {
@@ -105,26 +99,7 @@ class RegisterPupilInput implements RegisterPupilData {
 
 }
 
-@InputType()
-class PupilUpdateInput {
-    @Field(type => Int, { nullable: true })
-    gradeAsInt?: number;
 
-    @Field(type => [String], { nullable: true })
-    subjects?: string[];
-
-    @Field(type => [ProjectField], { nullable: true })
-    projectFields: ProjectField[];
-}
-
-@InputType()
-class StudentUpdateInput {
-    @Field(type => [Subject], { nullable: true })
-    subjects?: Subject[];
-
-    @Field(type => [ProjectFieldWithGradeInput], { nullable: true })
-    projectFields: ProjectFieldWithGradeInput[];
-}
 
 
 @InputType()
@@ -233,7 +208,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
 
 
 
-@Resolver(of => Me)
+@Resolver(of => UserType)
 export class MutateMeResolver {
     @Mutation(returns => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
@@ -300,26 +275,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            const { subjects, gradeAsInt, projectFields } = pupil;
-
-            if (projectFields && !prevPupil.isProjectCoachee) {
-                throw new PrerequisiteError(`Only project coachees can set the project fields`);
-            }
-
-            await prisma.pupil.update({
-                data: {
-                    firstname,
-                    lastname,
-                    // TODO: Store numbers as numbers maybe ...
-                    grade: `${gradeAsInt}. Klasse`,
-                    subjects: JSON.stringify(subjects.map(name => toPupilSubjectDatabaseFormat({ name }))),
-                    projectFields
-                },
-                where: { id: prevPupil.id }
-            });
-
-            log.info(`Pupil(${prevPupil.id}) updated their account with ${JSON.stringify(update)}`);
-
+            await updatePupil(context, prevPupil, { firstname, lastname, ...pupil });
             return true;
         }
 
@@ -330,26 +286,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            const { projectFields, subjects } = student;
-
-            if (projectFields && !prevStudent.isProjectCoach) {
-                throw new PrerequisiteError(`Only project coaches can set the project fields`);
-            }
-
-            if (projectFields) {
-                await setProjectFields(prevStudent, projectFields);
-            }
-
-            await prisma.student.update({
-                data: {
-                    firstname,
-                    lastname,
-                    subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat))
-                },
-                where: { id: prevStudent.id }
-            });
-
-            log.info(`Student(${prevStudent.id}) updated their account with ${JSON.stringify(update)}`);
+            await updateStudent(context, prevStudent, { firstname, lastname, ...student });
             return true;
         }
 
@@ -485,12 +422,4 @@ export class MutateMeResolver {
 
         return true;
     }
-
-    @Mutation(returns => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit("Email Availability", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async isEmailAvailable(@Arg("email") email: string) {
-        return await isEmailAvailable(email);
-    }
-
 }

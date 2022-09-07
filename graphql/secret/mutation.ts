@@ -33,9 +33,9 @@ export class MutateSecretResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     @RateLimit("Request E-Mail Tokens", 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async tokenRequest(email: string) {
+    async tokenRequest(@Arg("email") email: string, @Arg("action", { nullable: true }) action: string = "user-authenticate", @Arg("redirectTo", { nullable: true }) redirectTo?: string) {
         const user = await getUserByEmail(email);
-        await requestToken(user);
+        await requestToken(user, action, redirectTo);
         return true;
     }
 }

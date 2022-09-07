@@ -148,6 +148,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_instructors_student: allAdmin,
     Course_tag: allAdmin,
     Course_tags_course_tag: allAdmin,
+    Attachment: allAdmin,
     Expert_data: allAdmin,
     Expert_data_expertise_tags_expertise_tag: allAdmin,
     Expertise_tag: allAdmin,
@@ -159,11 +160,12 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Project_field_with_grade_restriction: allAdmin,
     Remission_request: allAdmin,
     School: {
-        createSchool: adminOrOwner,
-        deleteSchool: adminOrOwner,
-        updateSchool: adminOrOwner,
-        // Don't release bulk actions without adding authorizations here!
-
+        createOneSchool: adminOrOwner,
+        deleteOneSchool: adminOrOwner,
+        updateOneSchool: adminOrOwner,
+        createManySchool: adminOrOwner,
+        deleteManySchool: adminOrOwner,
+        updateManySchool: adminOrOwner,
         // School data is public knowledge and can be queried by everyone
         schools: everyone
     },
@@ -173,7 +175,17 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Concrete_notification: allAdmin,
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
-    Notification: allAdmin,
+    Notification: {
+        notification: everyone,
+        notifications: everyone,
+        createManyNotification: nobody,
+        deleteManyNotification: nobody,
+        deleteOneNotification: nobody,
+        createOneNotification: nobody,
+        updateManyNotification: nobody,
+        updateOneNotification: nobody,
+        upsertOneNotification: nobody
+    },
     Pupil_tutoring_interest_confirmation_request: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
@@ -202,6 +214,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,
+            firstMatchRequest: adminOrOwner,
             openProjectMatchRequestCount: adminOrOwner,
             matchingPriority: adminOrOwner,
             learningGermanSince: adminOrOwner,
@@ -252,6 +265,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             verifiedAt: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,
+            firstMatchRequest: adminOrOwner,
             state: adminOrOwner,
             university: adminOrOwner,
             module: adminOrOwner,
@@ -260,6 +274,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             openProjectMatchRequestCount: adminOrOwner,
             certificate_of_conduct: adminOrOwner,
             isCodu: adminOrOwner,
+            registrationSource: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -276,7 +291,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lastSentJufoAlumniScreeningInvitationDate: nobody,
             lastSentScreeningInvitationDate: nobody,
             lastUpdatedSettingsViaBlocker: nobody,
-            registrationSource: nobody,
             sentInstructorScreeningReminderCount: nobody,
             sentJufoAlumniScreeningReminderCount: nobody,
             sentScreeningReminderCount: nobody,
