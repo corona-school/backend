@@ -111,17 +111,10 @@ export class ExtendFieldsPupilResolver {
         return canJoinSubcourses(pupil);
     }
 
-    @FieldResolver(returns => [Boolean])
-    @Authorized(Role.ADMIN)
-    async isParticipant(@Root() pupil: Required<Pupil>, @Arg("subcourseId") subcourseId: number) {
-        return await prisma.subcourse_participants_pupil.count({ where: { pupilId: pupil.id, subcourseId }}) > 0 ? true : false;
-
-    }
-
-    @FieldResolver(returns => [Boolean])
+    @FieldResolver(returns => Boolean)
     @Authorized(Role.ADMIN)
     async isOnWaitingList(@Root() pupil: Required<Pupil>, @Arg("subcourseId") subcourseId: number) {
-        return await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId }}) > 0 ? true : false;
+        return await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId }}) > 0;
     }
 
 }
