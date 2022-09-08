@@ -1,9 +1,8 @@
-import { getLogger } from "log4js";
-import { s3 } from "./s3";
-import {PutObjectCommand} from "@aws-sdk/client-s3";
+import { getLogger } from 'log4js';
+import { s3 } from './s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 
 const logger = getLogger();
-
 
 /// Stores the given buffer in the specified bucket associated with the given key
 /// NOTE: May throw in case the upload failed
@@ -13,8 +12,8 @@ export async function putFile(f: Buffer, key: string, bucket: string, isPublic: 
         Bucket: bucket,
         Body: f,
         ACL: isPublic ? 'public-read' : undefined,
-        ContentDisposition: "inline",
-        ContentType: mimetype
+        ContentDisposition: 'inline',
+        ContentType: mimetype,
     });
 
     const result = await s3.send(command);

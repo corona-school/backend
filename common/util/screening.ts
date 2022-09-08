@@ -1,6 +1,6 @@
-import { InstructorScreening } from "../entity/InstructorScreening";
-import { ProjectCoachingScreening } from "../entity/ProjectCoachingScreening";
-import { Screening } from "../entity/Screening";
+import { InstructorScreening } from '../entity/InstructorScreening';
+import { ProjectCoachingScreening } from '../entity/ProjectCoachingScreening';
+import { Screening } from '../entity/Screening';
 
 export type AnyScreening = Screening | InstructorScreening | ProjectCoachingScreening;
 
@@ -18,11 +18,13 @@ export function screeningInfoFrom(screening: AnyScreening): ScreeningInfo | unde
     return {
         verified: screening.success,
         comment: screening.comment,
-        knowsCoronaSchoolFrom: screening.knowsCoronaSchoolFrom
+        knowsCoronaSchoolFrom: screening.knowsCoronaSchoolFrom,
     };
 }
 
 export function hasRequiredScreeningInfo(s: ScreeningInfo) {
-    return typeof s.verified === "boolean"
-            && ((s.comment ? typeof s.comment === "string" : true) || (s.knowsCoronaSchoolFrom ? typeof s.knowsCoronaSchoolFrom === "string" : true));
+    return (
+        typeof s.verified === 'boolean' &&
+        ((s.comment ? typeof s.comment === 'string' : true) || (s.knowsCoronaSchoolFrom ? typeof s.knowsCoronaSchoolFrom === 'string' : true))
+    );
 }

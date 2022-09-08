@@ -1,11 +1,11 @@
-import type { PrismaClient } from "@prisma/client";
-import { Role } from "./authorizations";
-import { prisma } from "../common/prisma";
-import { getLogger } from "log4js";
-import basicAuth from "basic-auth";
-import * as crypto from "crypto";
-import { getUserForSession, GraphQLUser, toPublicToken } from "./authentication";
-import { AuthenticationError } from "apollo-server-errors";
+import type { PrismaClient } from '@prisma/client';
+import { Role } from './authorizations';
+import { prisma } from '../common/prisma';
+import { getLogger } from 'log4js';
+import basicAuth from 'basic-auth';
+import * as crypto from 'crypto';
+import { getUserForSession, GraphQLUser, toPublicToken } from './authentication';
+import { AuthenticationError } from 'apollo-server-errors';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -31,18 +31,18 @@ export interface GraphQLContext {
     ip: string;
 }
 
-const authLogger = getLogger("GraphQL Authentication");
+const authLogger = getLogger('GraphQL Authentication');
 
 if (!process.env.ADMIN_AUTH_TOKEN) {
-    authLogger.warn("Missing ADMIN_AUTH_TOKEN, Admin API access is disabled");
+    authLogger.warn('Missing ADMIN_AUTH_TOKEN, Admin API access is disabled');
 }
 
 const UNAUTHENTICATED_USER = {
-    email: "-",
-    firstname: "",
-    lastname: "",
-    userID: "-/-",
-    roles: [Role.UNAUTHENTICATED]
+    email: '-',
+    firstname: '',
+    lastname: '',
+    userID: '-/-',
+    roles: [Role.UNAUTHENTICATED],
 };
 
 export default async function injectContext({ req }) {
@@ -53,30 +53,29 @@ export default async function injectContext({ req }) {
 
     let sessionToken: string | undefined = undefined;
 
-    if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === "admin") {
+    if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === 'admin') {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
             authLogger.warn(`Admin failed to authenticate from ${ip}`);
-            throw new AuthenticationError("Invalid Admin Password");
+            throw new AuthenticationError('Invalid Admin Password');
         }
 
         user = {
-            userID: "admin/",
-            firstname: "Ed",
-            lastname: "Min",
-            email: "test@lern-fair.de",
-            roles: [Role.ADMIN, Role.UNAUTHENTICATED]
+            userID: 'admin/',
+            firstname: 'Ed',
+            lastname: 'Min',
+            email: 'test@lern-fair.de',
+            roles: [Role.ADMIN, Role.UNAUTHENTICATED],
         };
 
         authLogger.info(`Admin authenticated from ${ip}`);
-    } else if (req.headers["authorization"] && req.headers["authorization"].startsWith("Bearer ")) {
-        sessionToken = req.headers["authorization"].slice("Bearer ".length);
+    } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
+        sessionToken = req.headers['authorization'].slice('Bearer '.length);
 
         if (sessionToken.length < 20) {
-            throw new AuthenticationError("Session Tokens must have at least 20 characters");
+            throw new AuthenticationError('Session Tokens must have at least 20 characters');
         }
 
         const sessionUser = await getUserForSession(sessionToken);
-
 
         if (!sessionUser) {
             authLogger.info(`Unauthenticated Session(${toPublicToken(sessionToken)}) started from ${ip}`);
@@ -86,7 +85,6 @@ export default async function injectContext({ req }) {
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
-
 
     const context: GraphQLContext = { user, prisma, sessionToken, ip };
     return context;

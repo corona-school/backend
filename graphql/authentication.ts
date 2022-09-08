@@ -1,23 +1,23 @@
-import { Arg, Authorized, Ctx, Mutation, Resolver } from "type-graphql";
-import { Role } from "./authorizations";
-import { student as Student, pupil as Pupil, screener as Screener } from "@prisma/client";
-import Keyv from "keyv";
-import { v4 as uuid } from "uuid";
-import { GraphQLContext } from "./context";
-import { assert } from "console";
-import { Deprecated, getPupil, getScreener, getStudent } from "./util";
-import { prisma } from "../common/prisma";
-import { hashPassword, hashToken, verifyPassword } from "../common/util/hashing";
-import { getLogger } from "log4js";
-import { AuthenticationError, ForbiddenError } from "./error";
-import { logInContext } from "./logging";
-import { User, userForPupil, userForScreener, userForStudent } from "../common/user";
-import { loginPassword, loginToken } from "../common/secret";
-import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from "./roles";
-import { defaultScreener } from "../common/entity/Screener";
-import { UserType } from "./user/fields";
+import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Role } from './authorizations';
+import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
+import Keyv from 'keyv';
+import { v4 as uuid } from 'uuid';
+import { GraphQLContext } from './context';
+import { assert } from 'console';
+import { Deprecated, getPupil, getScreener, getStudent } from './util';
+import { prisma } from '../common/prisma';
+import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing';
+import { getLogger } from 'log4js';
+import { AuthenticationError, ForbiddenError } from './error';
+import { logInContext } from './logging';
+import { User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import { loginPassword, loginToken } from '../common/secret';
+import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
+import { defaultScreener } from '../common/entity/Screener';
+import { UserType } from './user/fields';
 
-const logger = getLogger("GraphQL Authentication");
+const logger = getLogger('GraphQL Authentication');
 
 // This interface is close to what might be a user entity in the future
 // As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
@@ -28,7 +28,7 @@ export interface GraphQLUser extends User {
 /* As we only have one backend, and there is probably no need to scale in the near future,
    a small in memory cache is sufficient. If multitenancy is needed, keyv supports other backing stores such as Redis.
    This has the advantage over JWTs that the session can stay persistent even during registration / login and we can trace users even better */
-const SESSION_DURATION = 1000 * 60 * 60 * 24 /* one day */;
+const SESSION_DURATION = 1000 * 60 * 60 * 24; /* one day */
 const userSessions = new Keyv<GraphQLUser>({ ttl: SESSION_DURATION });
 
 /* We generate session tokens clientside as we can then use the same session token for all GraphQL requests without changing HTTP headers.
@@ -45,7 +45,7 @@ export async function getUserForSession(sessionToken: string) {
 
 export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
     if (!context.user) {
-        throw new AuthenticationError("Unauthenticated! Please log in");
+        throw new AuthenticationError('Unauthenticated! Please log in');
     }
 
     return context.user;
@@ -76,12 +76,10 @@ export async function getSessionStudent(context: GraphQLContext, studentIdOverri
     const { studentId } = getSessionUser(context);
 
     if (!studentId) {
-        throw new ForbiddenError("Expected user to be student or if elevated, a studentId must be passed in");
+        throw new ForbiddenError('Expected user to be student or if elevated, a studentId must be passed in');
     }
     return await getStudent(studentId);
 }
-
-
 
 export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?: number): Promise<Pupil | never> {
     const { pupilId } = getSessionUser(context);
@@ -92,7 +90,7 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
     }
 
     if (!pupilId) {
-        throw new ForbiddenError("Expected user to be student or if elevated, a studentId must be passed in");
+        throw new ForbiddenError('Expected user to be student or if elevated, a studentId must be passed in');
     }
 
     return await getPupil(pupilId);
@@ -105,7 +103,7 @@ export async function getSessionScreener(context: GraphQLContext): Promise<Scree
 
     const { screenerId } = getSessionUser(context);
     if (!screenerId) {
-        throw new ForbiddenError("Expected user to be screener");
+        throw new ForbiddenError('Expected user to be screener');
     }
     return await getScreener(screenerId);
 }
@@ -114,8 +112,9 @@ function ensureSession(context: GraphQLContext) {
     if (!context.sessionToken) {
         throw new AuthenticationError(
             `No session token is present\n\n` +
-            `If you are using the GraphQL UI, paste the following into the HTTP Headers field\n` +
-            `{ "authorization": "Bearer ${suggestToken()}" }`);
+                `If you are using the GraphQL UI, paste the following into the HTTP Headers field\n` +
+                `{ "authorization": "Bearer ${suggestToken()}" }`
+        );
     }
 }
 
@@ -140,17 +139,14 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
 
     userSessions.set(context.sessionToken, context.user);
     logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
-
 }
 
-
-
-@Resolver(of => UserType)
+@Resolver((of) => UserType)
 export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
-    @Mutation(returns => Boolean)
-    @Deprecated("use loginPassword or loginToken instead")
-    async loginLegacy(@Ctx() context: GraphQLContext, @Arg("authToken") authToken: string) {
+    @Mutation((returns) => Boolean)
+    @Deprecated('use loginPassword or loginToken instead')
+    async loginLegacy(@Ctx() context: GraphQLContext, @Arg('authToken') authToken: string) {
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
 
@@ -158,8 +154,8 @@ export class AuthenticationResolver {
             where: {
                 // This drops support for unhashed tokens as present in the REST authentication
                 authToken: hashToken(authToken),
-                active: true
-            }
+                active: true,
+            },
         });
 
         if (pupil) {
@@ -172,9 +168,9 @@ export class AuthenticationResolver {
                 await prisma.pupil.update({
                     data: {
                         verification: null,
-                        verifiedAt: new Date()
+                        verifiedAt: new Date(),
                     },
-                    where: { id: pupil.id }
+                    where: { id: pupil.id },
                 });
             }
 
@@ -186,8 +182,8 @@ export class AuthenticationResolver {
         const student = await prisma.student.findFirst({
             where: {
                 authToken: hashToken(authToken),
-                active: true
-            }
+                active: true,
+            },
         });
 
         if (student) {
@@ -200,9 +196,9 @@ export class AuthenticationResolver {
                 await prisma.student.update({
                     data: {
                         verification: null,
-                        verifiedAt: new Date()
+                        verifiedAt: new Date(),
                     },
-                    where: { id: student.id }
+                    where: { id: student.id },
                 });
             }
 
@@ -212,28 +208,28 @@ export class AuthenticationResolver {
         }
 
         logger.warn(`Invalid authToken`);
-        throw new AuthenticationError("Invalid authToken");
+        throw new AuthenticationError('Invalid authToken');
     }
 
     @Authorized(Role.UNAUTHENTICATED)
-    @Mutation(returns => Boolean)
-    @Deprecated("Use loginPassword instead")
-    async loginPasswordLegacy(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
+    @Mutation((returns) => Boolean)
+    @Deprecated('Use loginPassword instead')
+    async loginPasswordLegacy(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
 
         const screener = await prisma.screener.findFirst({
             where: {
                 email,
-                active: true
-            }
+                active: true,
+            },
         });
 
-        const passwordValid = screener && await verifyPassword(password, screener.password);
+        const passwordValid = screener && (await verifyPassword(password, screener.password));
 
         if (!screener || !passwordValid) {
             logger.warn(`Invalid email (${email}) or password`);
-            throw new AuthenticationError("Invalid email or password");
+            throw new AuthenticationError('Invalid email or password');
         }
 
         await loginAsUser(userForScreener(screener), context);
@@ -242,48 +238,45 @@ export class AuthenticationResolver {
     }
 
     @Authorized(Role.UNAUTHENTICATED)
-    @Mutation(returns => Boolean)
-    async loginPassword(@Ctx() context: GraphQLContext, @Arg("email") email: string, @Arg("password") password: string) {
+    @Mutation((returns) => Boolean)
+    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
             return true;
         } catch (error) {
-            throw new AuthenticationError("Invalid E-Mail or Password");
+            throw new AuthenticationError('Invalid E-Mail or Password');
         }
     }
 
     @Authorized(Role.UNAUTHENTICATED)
-    @Mutation(returns => Boolean)
-    async loginToken(@Ctx() context: GraphQLContext, @Arg("token") token: string) {
+    @Mutation((returns) => Boolean)
+    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string) {
         try {
             const user = await loginToken(token);
             await loginAsUser(user, context);
             return true;
         } catch (error) {
-            throw new AuthenticationError("Invalid Token");
+            throw new AuthenticationError('Invalid Token');
         }
     }
 
-
     @Authorized(Role.USER)
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
 
-
         if (!context.user) {
-            throw new ForbiddenError("User already logged out");
+            throw new ForbiddenError('User already logged out');
         }
 
         const deleted = userSessions.delete(context.sessionToken);
-        assert(deleted, "User session is successfully deleted");
+        assert(deleted, 'User session is successfully deleted');
 
         context.user = undefined;
         logger.info(`Successfully logged out`);
 
         return true;
     }
-
 }

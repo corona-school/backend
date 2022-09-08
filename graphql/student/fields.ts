@@ -1,66 +1,61 @@
-import {
-    Student,
-    Participation_certificate as ParticipationCertificate,
-    Match,
-    Certificate_of_conduct
-} from "../generated";
-import { Authorized, FieldResolver, Resolver, Root } from "type-graphql";
-import { prisma } from "../../common/prisma";
-import { Role } from "../authorizations";
-import { LimitEstimated } from "../complexity";
-import { Subject } from "../types/subject";
-import { parseSubjectString } from "../../common/util/subjectsutils";
-import { Decision } from "../types/reason";
-import { canStudentRequestMatch } from "../../common/match/request";
-import { UserType } from "../user/fields";
-import { userForStudent } from "../../common/user";
+import { Student, Participation_certificate as ParticipationCertificate, Match, Certificate_of_conduct } from '../generated';
+import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
+import { prisma } from '../../common/prisma';
+import { Role } from '../authorizations';
+import { LimitEstimated } from '../complexity';
+import { Subject } from '../types/subject';
+import { parseSubjectString } from '../../common/util/subjectsutils';
+import { Decision } from '../types/reason';
+import { canStudentRequestMatch } from '../../common/match/request';
+import { UserType } from '../user/fields';
+import { userForStudent } from '../../common/user';
 
-@Resolver(of => Student)
+@Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
-    @FieldResolver(type => UserType)
+    @FieldResolver((type) => UserType)
     @Authorized(Role.ADMIN, Role.OWNER)
     user(@Root() student: Required<Student>) {
         return userForStudent(student);
     }
 
-    @FieldResolver(type => [ParticipationCertificate])
+    @FieldResolver((type) => [ParticipationCertificate])
     @Authorized(Role.ADMIN, Role.OWNER)
     async participationCertificates(@Root() student: Required<Student>) {
         return await prisma.participation_certificate.findMany({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
 
-    @FieldResolver(type => [Match])
+    @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     async matches(@Root() student: Required<Student>) {
         return await prisma.match.findMany({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
 
-    @FieldResolver(type => [Subject])
+    @FieldResolver((type) => [Subject])
     @Authorized(Role.ADMIN, Role.USER)
     async subjectsFormatted(@Root() pupil: Required<Student>) {
         return parseSubjectString(pupil.subjects);
     }
 
-    @FieldResolver(type => Decision)
+    @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
     async canRequestMatch(@Root() student: Required<Student>) {
         return await canStudentRequestMatch(student);
     }
 
     // eslint-disable-next-line camelcase
-    @FieldResolver(type => Certificate_of_conduct, {nullable: true})
+    @FieldResolver((type) => Certificate_of_conduct, { nullable: true })
     @Authorized(Role.ADMIN)
     @LimitEstimated(1)
     async certificateOfConduct(@Root() student: Student) {
         return await prisma.certificate_of_conduct.findUnique({
             where: {
-                studentId: student.id
-            }
+                studentId: student.id,
+            },
         });
     }
 }

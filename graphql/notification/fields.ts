@@ -1,6 +1,6 @@
-import { Role } from "../authorizations";
-import { ObjectType, Field, Resolver, Query, Authorized } from "type-graphql";
-import { bulkRuns } from "../../common/notification/bulk";
+import { Role } from '../authorizations';
+import { ObjectType, Field, Resolver, Query, Authorized } from 'type-graphql';
+import { bulkRuns } from '../../common/notification/bulk';
 
 @ObjectType()
 class BulkRunNotificationCount {
@@ -19,26 +19,26 @@ class BulkRun {
     progress: number;
     @Field()
     apply: boolean;
-    @Field(type => [BulkRunNotificationCount])
+    @Field((type) => [BulkRunNotificationCount])
     notificationCount: BulkRunNotificationCount[];
-    @Field(type => [String])
+    @Field((type) => [String])
     errors: string[];
-    @Field(type => String, { nullable: true })
+    @Field((type) => String, { nullable: true })
     currentUser?: string;
     @Field()
     startedAt: string;
-    @Field(type => String, { nullable: true })
+    @Field((type) => String, { nullable: true })
     finishedAt?: string;
 }
 
-@Resolver(of => BulkRun)
+@Resolver((of) => BulkRun)
 export class NotificationBulkRunResolver {
-    @Query(returns => [BulkRun])
+    @Query((returns) => [BulkRun])
     @Authorized(Role.ADMIN)
     notificationBulkRuns() {
-        return bulkRuns.map(it => ({
+        return bulkRuns.map((it) => ({
             ...it,
-            notificationCount: Object.entries(it.notificationCount).map(([notificationID, count]) => ({ notificationID: +notificationID, count }))
+            notificationCount: Object.entries(it.notificationCount).map(([notificationID, count]) => ({ notificationID: +notificationID, count })),
         }));
     }
 }

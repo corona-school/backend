@@ -1,9 +1,9 @@
-import { pupil as Pupil, student as Student } from "@prisma/client";
-import { User } from "../common/user";
-import { prisma } from "../common/prisma";
-import { Role } from "./authorizations";
-import { GraphQLContext } from "./context";
-import { logInContext } from "./logging";
+import { pupil as Pupil, student as Student } from '@prisma/client';
+import { User } from '../common/user';
+import { prisma } from '../common/prisma';
+import { Role } from './authorizations';
+import { GraphQLContext } from './context';
+import { logInContext } from './logging';
 
 export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
     const logger = logInContext(`GraphQL Authentication`, context);
@@ -62,7 +62,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
 
     if (student.isStudent || student.isProjectCoach) {
         // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
-        const wasScreened = await prisma.screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             context.user.roles.push(Role.TUTOR);
@@ -70,7 +70,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
     }
 
     if (student.isProjectCoach) {
-        const wasCoachScreened = await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        const wasCoachScreened = (await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasCoachScreened) {
             logger.info(`Student(${student.id}) was screened and has PROJECT_COACH role`);
             context.user.roles.push(Role.PROJECT_COACH);
@@ -79,7 +79,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
 
     if (student.isInstructor) {
         // the user wants to be a course instructor, let's check if they were screened and are authorized to do so
-        const wasInstructorScreened = await prisma.instructor_screening.count({ where: { studentId: student.id, success: true }}) > 0;
+        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasInstructorScreened) {
             logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
             context.user.roles.push(Role.INSTRUCTOR);

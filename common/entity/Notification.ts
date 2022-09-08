@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
@@ -6,12 +6,12 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 export enum NotificationRecipient {
     USER,
     TEACHER,
-    PARENT
+    PARENT,
 }
 
 export enum NotificationSender {
-    SUPPORT = "SUPPORT",
-    CERTIFICATE_OF_CONDUCT = "CERTIFICATE_OF_CONDUCT"
+    SUPPORT = 'SUPPORT',
+    CERTIFICATE_OF_CONDUCT = 'CERTIFICATE_OF_CONDUCT',
 }
 
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
@@ -22,7 +22,7 @@ export class Notification {
     id: number;
 
     // Template IDs per Channel
-    @Column({ type: "int", nullable: true })
+    @Column({ type: 'int', nullable: true })
     mailjetTemplateId?: number;
 
     @Column()
@@ -36,22 +36,22 @@ export class Notification {
     @Column()
     recipient: NotificationRecipient;
     // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
-    @Column("text", { array: true })
+    @Column('text', { array: true })
     onActions: string[];
-    @Column("text", { array: true })
+    @Column('text', { array: true })
     category: string[];
 
     // Reminders additionally have these attributes set:
     // If the user takes one of these actions, the reminder gets cancelled
-    @Column("text", { array: true })
+    @Column('text', { array: true })
     cancelledOnAction: string[];
-    @Column({ type: "int", nullable: true })
+    @Column({ type: 'int', nullable: true })
     delay?: number; /* in hours */
-    @Column({ type: "int", nullable: true })
+    @Column({ type: 'int', nullable: true })
     interval?: number; /* in hours */
 
     // Some emails are supposed to be sent out by email addresses other than support@lern-fair.de,
     //  as users can directly respond to the team responsible
-    @Column({ nullable: true, type: "enum", enum: NotificationSender })
+    @Column({ nullable: true, type: 'enum', enum: NotificationSender })
     sender?: NotificationSender;
 }

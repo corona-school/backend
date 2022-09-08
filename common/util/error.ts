@@ -6,13 +6,14 @@ export class ClientError extends Error {
     }
 }
 
-const createClientError = (type: string) => class extends ClientError {
-    constructor(publicMessage: string) {
-        super(type, publicMessage);
-    }
-};
+const createClientError = (type: string) =>
+    class extends ClientError {
+        constructor(publicMessage: string) {
+            super(type, publicMessage);
+        }
+    };
 
-export const RedundantError = createClientError("REDUNDANT");
-export const TooLateError = createClientError("TOO_LATE");
-export const CapacityReachedError = createClientError("CAPACITY_REACHED");
-export const PrerequisiteError = createClientError("PREREQUISITE");
+export const RedundantError = createClientError('REDUNDANT');
+export const TooLateError = createClientError('TOO_LATE');
+export const CapacityReachedError = createClientError('CAPACITY_REACHED');
+export const PrerequisiteError = createClientError('PREREQUISITE');
