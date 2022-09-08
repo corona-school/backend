@@ -130,7 +130,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(returns => Boolean)
     @Authorized(Role.ADMIN)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg("pupilId", {nullable: true}) pupilId: number) {
-        const pupil = await getSessionPupil(context, pupilId)
+        const pupil = await getSessionPupil(context, pupilId);
         return await prisma.subcourse_participants_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
 
     }
