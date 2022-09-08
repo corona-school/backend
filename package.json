@@ -97,7 +97,7 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^3.3.0",
     "@typescript-eslint/parser": "^3.3.0",
-    "apidoc": "^0.22.1",
+    "apidoc": "^0.53.0",
     "eslint": "^7.2.0",
     "eslint-plugin-lernfair-lint": "./linter/",
     "prettier": "^2.7.1",
