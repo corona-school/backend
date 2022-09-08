@@ -11,4 +11,10 @@ export class FieldMeResolver {
     async me(@Ctx() context: GraphQLContext): Promise<GraphQLUser> {
         return getSessionUser(context);
     }
+
+    @Query((returns) => [String])
+    @Authorized(Role.USER)
+    myRoles(@Ctx() context: GraphQLContext): string[] {
+        return context.user?.roles ?? [];
+    }
 }
