@@ -1,17 +1,17 @@
-import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Student } from "./Student";
-import { Pupil } from "./Pupil";
-import { Subcourse } from "./Subcourse";
+import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Student } from './Student';
+import { Pupil } from './Pupil';
+import { Subcourse } from './Subcourse';
 
 @Entity()
 export class CourseParticipationCertificate {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @ManyToOne((type) => Student)

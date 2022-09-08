@@ -1,6 +1,5 @@
-import { Directive } from "type-graphql";
-import { prisma } from "../common/prisma";
-
+import { Directive } from 'type-graphql';
+import { prisma } from '../common/prisma';
 
 /* Helpers to get Entities by their primary key */
 export const getPupil = (pupilId: number) => prisma.pupil.findUnique({ where: { id: pupilId }, rejectOnNotFound: true });

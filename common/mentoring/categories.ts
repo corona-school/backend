@@ -1,46 +1,46 @@
 export enum MentoringCategory {
-    LANGUAGE = "language",
-    SUBJECTS = "subjects",
-    DIDACTIC = "didactic",
-    TECH = "tech",
-    SELFORGA = "selforga",
-    OTHER = "other"
+    LANGUAGE = 'language',
+    SUBJECTS = 'subjects',
+    DIDACTIC = 'didactic',
+    TECH = 'tech',
+    SELFORGA = 'selforga',
+    OTHER = 'other',
 }
 
 export function getFriendlyName(category: MentoringCategory) {
     switch (category) {
         case MentoringCategory.LANGUAGE:
-            return "Sprachschwierigkeiten und Kommunikation";
+            return 'Sprachschwierigkeiten und Kommunikation';
         case MentoringCategory.SUBJECTS:
-            return "Inhaltliche Kompetenzen in bestimmten Unterrichtsfächern";
+            return 'Inhaltliche Kompetenzen in bestimmten Unterrichtsfächern';
         case MentoringCategory.DIDACTIC:
-            return "Pädagogische und didaktische Hilfestellungen";
+            return 'Pädagogische und didaktische Hilfestellungen';
         case MentoringCategory.TECH:
-            return "Technische Unterstützung";
+            return 'Technische Unterstützung';
         case MentoringCategory.SELFORGA:
-            return "Organisatorisches und Selbststrukturierung";
+            return 'Organisatorisches und Selbststrukturierung';
         case MentoringCategory.OTHER:
-            return "Sonstiges";
+            return 'Sonstiges';
     }
 }
 
 export function contactEmailAddress(category: MentoringCategory) {
-    if (process.env.ENV === "dev") {
+    if (process.env.ENV === 'dev') {
         return `test+${category}@lern-fair.de`;
     }
 
     switch (category) {
         case MentoringCategory.LANGUAGE:
-            return "sprachliches@lern-fair.de";
+            return 'sprachliches@lern-fair.de';
         case MentoringCategory.SUBJECTS:
-            return "inhaltliches@lern-fair.de";
+            return 'inhaltliches@lern-fair.de';
         case MentoringCategory.DIDACTIC:
-            return "paedagogisches@lern-fair.de";
+            return 'paedagogisches@lern-fair.de';
         case MentoringCategory.TECH:
-            return "technisches@lern-fair.de";
+            return 'technisches@lern-fair.de';
         case MentoringCategory.SELFORGA:
-            return "selbststrukturierung@lern-fair.de";
+            return 'selbststrukturierung@lern-fair.de';
         case MentoringCategory.OTHER:
-            return "mentoring@lern-fair.de";
+            return 'mentoring@lern-fair.de';
     }
 }

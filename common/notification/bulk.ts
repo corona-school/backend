@@ -1,9 +1,9 @@
-import { match as Match } from "@prisma/client";
-import { prisma } from "../prisma";
-import { actionTakenAt } from "./index";
-import { NotificationContext, BulkAction } from "./types";
-import { getMatchHash } from "../match/util";
-import { getUserIdTypeORM } from "../user";
+import { match as Match } from '@prisma/client';
+import { prisma } from '../prisma';
+import { actionTakenAt } from './index';
+import { NotificationContext, BulkAction } from './types';
+import { getMatchHash } from '../match/util';
+import { getUserIdTypeORM } from '../user';
 
 interface BulkRun {
     name: string;
@@ -20,17 +20,15 @@ interface BulkRun {
 export const bulkActions: BulkAction<any>[] = [];
 export const bulkRuns: BulkRun[] = [];
 
-
-
 export async function runBulkAction(name: string, apply: boolean) {
-    const bulkAction = bulkActions.find(it => it.name === name);
+    const bulkAction = bulkActions.find((it) => it.name === name);
     if (!bulkAction) {
         throw new Error(`Bulk Action ${bulkAction} not found`);
     }
 
     const entities = await bulkAction.getData();
 
-    const bulkRun: BulkRun = { name, count: entities.length, progress: 0, apply, notificationCount: {}, errors: [], startedAt: (new Date()).toISOString() };
+    const bulkRun: BulkRun = { name, count: entities.length, progress: 0, apply, notificationCount: {}, errors: [], startedAt: new Date().toISOString() };
     bulkRuns.push(bulkRun);
 
     (async function fireAndForget() {
@@ -62,10 +60,9 @@ export async function runBulkAction(name: string, apply: boolean) {
             bulkRun.progress += 1;
         }
 
-        bulkRun.finishedAt = (new Date().toISOString());
+        bulkRun.finishedAt = new Date().toISOString();
     })();
 }
-
 
 function addBulkAction<Entity>(action: BulkAction<Entity>) {
     bulkActions.push(action);

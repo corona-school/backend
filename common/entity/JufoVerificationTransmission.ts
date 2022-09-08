@@ -1,24 +1,17 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    OneToOne,
-    PrimaryGeneratedColumn
-} from "typeorm";
-import { Student } from "./Student";
-import { v4 as uuidv4 } from "uuid";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Student } from './Student';
+import { v4 as uuidv4 } from 'uuid';
 
 @Entity()
 export class JufoVerificationTransmission {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     uuid: string;
 

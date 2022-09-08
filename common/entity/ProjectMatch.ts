@@ -1,22 +1,11 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    EntityManager,
-    Index,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn
-} from "typeorm";
-import { Student } from "./Student";
-import { Pupil } from "./Pupil";
-import { v4 as generateUUID } from "uuid";
-import { ProjectField } from "../jufo/projectFields";
+import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Student } from './Student';
+import { Pupil } from './Pupil';
+import { v4 as generateUUID } from 'uuid';
+import { ProjectField } from '../jufo/projectFields';
 
 @Entity()
-@Unique("UQ_PJ_MATCH", ["student", "pupil"])
+@Unique('UQ_PJ_MATCH', ['student', 'pupil'])
 export class ProjectMatch {
     @PrimaryGeneratedColumn()
     id: number;
@@ -25,32 +14,32 @@ export class ProjectMatch {
     @Column()
     uuid: string;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @ManyToOne((type) => Student, (student) => student.projectMatches, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     student: Student;
 
     @ManyToOne((type) => Pupil, (pupil) => pupil.projectMatches, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     pupil: Pupil;
 
     @Column({
-        default: false
+        default: false,
     })
     dissolved: boolean;
 
     @Column({
         default: null,
-        nullable: true
+        nullable: true,
     })
     dissolveReason: number;
 
@@ -71,11 +60,11 @@ export class ProjectMatch {
 
 export async function getProjectMatchByID(id: number, manager: EntityManager): Promise<ProjectMatch> {
     return manager.findOne(ProjectMatch, {
-        id: id
+        id: id,
     });
 }
 
 ///Takes the given project matches instances and re-queries them from the database, returning new instances for all of them.
 export async function reloadProjectMatchesInstances(projectMatches: ProjectMatch[], manager: EntityManager): Promise<ProjectMatch[]> {
-    return await Promise.all(projectMatches.map(async m => await getProjectMatchByID(m.id, manager)));
+    return await Promise.all(projectMatches.map(async (m) => await getProjectMatchByID(m.id, manager)));
 }
