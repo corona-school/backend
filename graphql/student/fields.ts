@@ -47,6 +47,19 @@ export class ExtendFieldsStudentResolver {
         return await canStudentRequestMatch(student);
     }
 
+    @FieldResolver((type) => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canCreateCourse(@Root() student: Required<Student>): Promise<Decision> {
+        if (!student.isInstructor) {
+            return { allowed: false, reason: "not-instructor" };
+        }
+
+        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
+        if (!wasInstructorScreened) {
+            return { allowed: false, reason: "not-screened" };
+        }
+    }
+
     // eslint-disable-next-line camelcase
     @FieldResolver((type) => CertificateOfConduct, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
