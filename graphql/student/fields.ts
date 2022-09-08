@@ -58,6 +58,8 @@ export class ExtendFieldsStudentResolver {
         if (!wasInstructorScreened) {
             return { allowed: false, reason: "not-screened" };
         }
+
+        return { allowed: true };
     }
 
     // eslint-disable-next-line camelcase
