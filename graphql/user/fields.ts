@@ -30,25 +30,25 @@ export class UserType implements User {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     email(@Root() user: User): string {
         return user.email;
     }
 
     @FieldResolver((returns) => Pupil)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async pupil(@Root() user: User): Promise<Pupil> {
         if (!user.pupilId) {
             return null;
@@ -58,7 +58,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Student)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async student(@Root() user: User): Promise<Student> {
         if (!user.studentId) {
             return null;
@@ -68,7 +68,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Screener)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async screener(@Root() user: User): Promise<Screener> {
         if (!user.screenerId) {
             return null;
@@ -78,7 +78,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => [Secret])
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async secrets(@Root() user: User) {
         return await getSecrets(user);
     }

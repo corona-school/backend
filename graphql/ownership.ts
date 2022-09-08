@@ -8,9 +8,10 @@ export type ResolverModelNames = keyof typeof models;
 export type ResolverModel<Name extends ResolverModelNames> = typeof models[Name]['prototype'];
 
 /* If a user owns an entity, he has the Role.OWNER on that entity */
-export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, entity: ResolverModel<Name>) => boolean | Promise<boolean> } = {
+export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, entity: ResolverModel<Name>) => boolean | Promise<boolean> } & { [name: string]: (user: GraphQLUser, entity: any) => boolean | Promise<boolean> } = {
     Pupil: (user, pupil) => user.pupilId === pupil.id,
     Student: (user, student) => user.studentId === student.id,
+    User: (sessionUser, user: GraphQLUser) => sessionUser.studentId === user.studentId && sessionUser.pupilId === user.pupilId && sessionUser.screenerId === user.screenerId,
     Course: async (user, course) => {
         if (!user.studentId) {
             return false;
