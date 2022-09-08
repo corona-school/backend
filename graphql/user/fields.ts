@@ -1,6 +1,6 @@
 import { Student, Pupil, Screener, Secret } from '../generated';
 import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from 'type-graphql';
-import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -81,5 +81,13 @@ export class UserFieldsResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async secrets(@Root() user: User) {
         return await getSecrets(user);
+    }
+
+    @FieldResolver((returns) => [String])
+    @Authorized(Role.ADMIN)
+    async roles(@Root() user: User) {
+        const fakeContext: GraphQLContext = { ip: "?", prisma, sessionToken: "fake" };
+        await loginAsUser(user, fakeContext);
+        return fakeContext.user.roles;
     }
 }
