@@ -7,31 +7,32 @@ import { runBulkAction } from '../../common/notification/bulk';
 import { notification_sender_enum } from '@prisma/client';
 
 @InputType()
-class NotificationInput { // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
-  @Field(_type => Int, { nullable: false })
-  id!: number;
-  @Field(_type => Int, { nullable: false })
-  mailjetTemplateId: number;
-  @Field(_type => String, { nullable: false })
-  description!: string;
-  @Field(_type => Boolean, { nullable: false })
-  active!: boolean;
-  @Field(_type => Int, { nullable: false })
-  recipient!: number;
-  @Field(_type => [String], { nullable: false })
-  onActions!: string[];
-  @Field(_type => [String], { nullable: false })
-  category!: string[];
-  @Field(_type => [String], { nullable: false })
-  cancelledOnAction!: string[];
-  @Field(_type => Int, { nullable: true })
-  delay: number | null;
-  @Field(_type => Int, { nullable: true })
-  interval: number | null;
-  @Field(_type => notification_sender_enum, { nullable: true })
-  sender: notification_sender_enum | null;
-  @Field(_type => String, { nullable: true })
-  hookID: string | null;
+class NotificationInput {
+    // Notification Model as Input type, see https://github.com/MichalLytek/type-graphql/issues/62
+    @Field((_type) => Int, { nullable: false })
+    id!: number;
+    @Field((_type) => Int, { nullable: false })
+    mailjetTemplateId: number;
+    @Field((_type) => String, { nullable: false })
+    description!: string;
+    @Field((_type) => Boolean, { nullable: false })
+    active!: boolean;
+    @Field((_type) => Int, { nullable: false })
+    recipient!: number;
+    @Field((_type) => [String], { nullable: false })
+    onActions!: string[];
+    @Field((_type) => [String], { nullable: false })
+    category!: string[];
+    @Field((_type) => [String], { nullable: false })
+    cancelledOnAction!: string[];
+    @Field((_type) => Int, { nullable: true })
+    delay: number | null;
+    @Field((_type) => Int, { nullable: true })
+    interval: number | null;
+    @Field((_type) => notification_sender_enum, { nullable: true })
+    sender: notification_sender_enum | null;
+    @Field((_type) => String, { nullable: true })
+    hookID: string | null;
 }
 @Resolver((of) => GraphQLModel.Notification)
 export class MutateNotificationResolver {

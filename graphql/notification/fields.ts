@@ -1,8 +1,8 @@
-import { Role } from "../authorizations";
-import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root } from "type-graphql";
-import { bulkRuns } from "../../common/notification/bulk";
-import { Notification } from "../generated";
-import { getHookDescription } from "../../common/notification";
+import { Role } from '../authorizations';
+import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root } from 'type-graphql';
+import { bulkRuns } from '../../common/notification/bulk';
+import { Notification } from '../generated';
+import { getHookDescription } from '../../common/notification';
 
 @ObjectType()
 class BulkRunNotificationCount {
@@ -45,9 +45,9 @@ export class NotificationBulkRunResolver {
     }
 }
 
-@Resolver(of => Notification)
+@Resolver((of) => Notification)
 export class NotificationExtendedFieldsResolver {
-    @FieldResolver(returns => String, { nullable: true })
+    @FieldResolver((returns) => String, { nullable: true })
     @Authorized(Role.UNAUTHENTICATED)
     hookDescription(@Root() notification: Notification) {
         return getHookDescription(notification.hookID);

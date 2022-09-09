@@ -163,14 +163,13 @@ export async function getStudent(user: User): Promise<Student | never> {
         throw new Error(`Expected User(${user.userID}) to be student`);
     }
 
-    return await prisma.student.findUnique({ where: { id: user.studentId }});
+    return await prisma.student.findUnique({ where: { id: user.studentId } });
 }
-
 
 export async function getPupil(user: User): Promise<Pupil | never> {
     if (!user.pupilId) {
         throw new Error(`Expected User(${user.userID}) to be pupil`);
     }
 
-    return await prisma.pupil.findUnique({ where: { id: user.pupilId }});
+    return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 }

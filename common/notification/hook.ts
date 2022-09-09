@@ -3,10 +3,10 @@
     then also the corresponding change in the DB happened.
     Cancelling or rescheduling the action thus also cancels or reschedules the corresponding hook */
 
-import { student as Student, pupil as Pupil } from "@prisma/client";
-import { getPupil, getStudent, User } from "../user";
+import { student as Student, pupil as Pupil } from '@prisma/client';
+import { getPupil, getStudent, User } from '../user';
 
-type NotificationHook = { fn: (user: User) => Promise<void>, description: string };
+type NotificationHook = { fn: (user: User) => Promise<void>; description: string };
 
 const hooks: { [hookID: string]: NotificationHook } = {};
 
@@ -32,7 +32,7 @@ export function registerHook(hookID: string, description: string, fn: (user: Use
 }
 
 export const registerStudentHook = (hookID: string, description: string, hook: (student: Student) => Promise<void>) =>
-    registerHook(hookID, description, user => getStudent(user).then(hook));
+    registerHook(hookID, description, (user) => getStudent(user).then(hook));
 
 export const registerPupilHook = (hookID: string, description: string, hook: (pupil: Pupil) => Promise<void>) =>
-    registerHook(hookID, description, user => getPupil(user).then(hook));
+    registerHook(hookID, description, (user) => getPupil(user).then(hook));

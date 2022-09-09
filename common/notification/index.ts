@@ -436,10 +436,10 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
     await prisma.concrete_notification.update({
         data: { sentAt: sendAt },
-        where: { id: notification.id }
+        where: { id: notification.id },
     });
 
     logger.info(`ConcreteNotification(${notification.id}) was manually rescheduled to ${sendAt.toISOString()}`);
 }
 
-export * from "./hook";
+export * from './hook';

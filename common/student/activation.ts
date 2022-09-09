@@ -1,15 +1,15 @@
 /* eslint-disable camelcase */
-import {course_coursestate_enum, student as Student} from "@prisma/client";
-import {prisma} from "../prisma";
-import {dissolveMatch, dissolveProjectMatch} from "../match/dissolve";
-import {getTransactionLog} from "../transactionlog";
-import DeActivateEvent from "../transactionlog/types/DeActivateEvent";
-import * as Notification from "../notification";
+import { course_coursestate_enum, student as Student } from '@prisma/client';
+import { prisma } from '../prisma';
+import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
+import { getTransactionLog } from '../transactionlog';
+import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
+import * as Notification from '../notification';
 
 Notification.registerStudentHook(
-    "deactivate-student",
-    "Account gets deactivated, matches are dissolved, courses are cancelled",
-    student => deactivateStudent(student, true) // the hook does not send out a notification again, the user already knows that their account was deactivated
+    'deactivate-student',
+    'Account gets deactivated, matches are dissolved, courses are cancelled',
+    (student) => deactivateStudent(student, true) // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 
 export async function deactivateStudent(student: Student, silent: boolean = false) {

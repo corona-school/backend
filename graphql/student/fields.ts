@@ -1,4 +1,11 @@
-import { Student, Participation_certificate as ParticipationCertificate, Match, Certificate_of_conduct as CertificateOfConduct, Screening, Instructor_screening as InstructorScreening } from '../generated';
+import {
+    Student,
+    Participation_certificate as ParticipationCertificate,
+    Match,
+    Certificate_of_conduct as CertificateOfConduct,
+    Screening,
+    Instructor_screening as InstructorScreening,
+} from '../generated';
 import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
@@ -51,12 +58,12 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canCreateCourse(@Root() student: Required<Student>): Promise<Decision> {
         if (!student.isInstructor) {
-            return { allowed: false, reason: "not-instructor" };
+            return { allowed: false, reason: 'not-instructor' };
         }
 
         const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (!wasInstructorScreened) {
-            return { allowed: false, reason: "not-screened" };
+            return { allowed: false, reason: 'not-screened' };
         }
 
         return { allowed: true };
@@ -78,7 +85,7 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async tutorScreenings(@Root() student: Student) {
         return await prisma.screening.findMany({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
 
@@ -86,9 +93,7 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async instructorScreenings(@Root() student: Student) {
         return await prisma.instructor_screening.findMany({
-            where: { studentId: student.id }
+            where: { studentId: student.id },
         });
     }
-
-
 }

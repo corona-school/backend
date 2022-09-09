@@ -1,12 +1,12 @@
 /* Notifications are managed in external systems as well as the backend's database.
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
-import { prisma } from "../prisma";
-import { Notification, NotificationID } from "./types";
-import { NotificationRecipient } from "../entity/Notification";
-import { Prisma } from "@prisma/client";
-import { getLogger } from "log4js";
-import { hookExists } from "./hook";
+import { prisma } from '../prisma';
+import { Notification, NotificationID } from './types';
+import { NotificationRecipient } from '../entity/Notification';
+import { Prisma } from '@prisma/client';
+import { getLogger } from 'log4js';
+import { hookExists } from './hook';
 
 type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
@@ -85,10 +85,9 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
     invalidateCache();
 }
 
-
-export async function update(id: NotificationID, values: Partial<Omit<Notification, "active">>) {
+export async function update(id: NotificationID, values: Partial<Omit<Notification, 'active'>>) {
     if (values.hookID && !hookExists(values.hookID)) {
-            throw new Error(`Invalid HookID`);
+        throw new Error(`Invalid HookID`);
     }
 
     const matched = await prisma.notification.update({
