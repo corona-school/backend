@@ -1,9 +1,9 @@
-import { ApolloError } from "apollo-server-errors";
-import { ClientError } from "../common/util/error";
+import { ApolloError } from 'apollo-server-errors';
+import { ClientError } from '../common/util/error';
 
-export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from "apollo-server-errors";
+export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from 'apollo-server-errors';
 
-export const isUnexpectedError = (error: ApolloError) => error.name === "INTERNAL_SERVER_ERROR" && !(error.originalError instanceof ClientError);
+export const isUnexpectedError = (error: ApolloError) => error.name === 'INTERNAL_SERVER_ERROR' && !(error.originalError instanceof ClientError);
 
 export function formatError(error: ApolloError) {
     /* Expected errors are intended to be shared with users */

@@ -1,5 +1,5 @@
-import {Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn} from "typeorm";
-import {ExpertData} from "./ExpertData";
+import { Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ExpertData } from './ExpertData';
 
 @Entity()
 export class ExpertiseTag {
@@ -7,11 +7,11 @@ export class ExpertiseTag {
     id: number;
 
     @Index({
-        unique: true
+        unique: true,
     })
     @Column()
     name: string;
 
-    @ManyToMany((type) => ExpertData, expertData => expertData.expertiseTags)
+    @ManyToMany((type) => ExpertData, (expertData) => expertData.expertiseTags)
     expertData: ExpertData[];
 }

@@ -8,22 +8,22 @@ import { Prisma } from "@prisma/client";
 import { getLogger } from "log4js";
 import { hookExists } from "./hook";
 
-type NotificationsPerAction = Map<String, { toSend: Notification[], toCancel: Notification[] }>;
+type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
 
-const logger = getLogger("Notification Management");
+const logger = getLogger('Notification Management');
 
 export function invalidateCache() {
-    logger.debug("Invalidated Notification cache");
+    logger.debug('Invalidated Notification cache');
     _notificationsPerAction = undefined;
 }
 
 export function getNotifications(): Promise<NotificationsPerAction> {
     if (_notificationsPerAction === undefined) {
-        _notificationsPerAction = (async function() {
+        _notificationsPerAction = (async function () {
             const result = new Map();
 
-            const notifications = await prisma.notification.findMany({ where: { active: true }});
+            const notifications = await prisma.notification.findMany({ where: { active: true } });
 
             for (const notification of notifications) {
                 for (const sendAction of notification.onActions) {
@@ -53,7 +53,7 @@ export function getNotifications(): Promise<NotificationsPerAction> {
 }
 
 export async function getNotification(id: NotificationID, allowDeactivated = false): Promise<Notification | never> {
-    const notification = await prisma.notification.findUnique({ where: { id }});
+    const notification = await prisma.notification.findUnique({ where: { id } });
 
     if (!allowDeactivated && !notification.active) {
         throw new Error(`Notification(${id}) was deactivated`);
@@ -69,7 +69,7 @@ export async function getNotification(id: NotificationID, allowDeactivated = fal
 export async function activate(id: NotificationID, active: boolean): Promise<void | never> {
     const matched = await prisma.notification.update({
         data: { active },
-        where: { id }
+        where: { id },
     });
 
     if (!matched) {
@@ -82,8 +82,6 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
         logger.info(`Notification(${id}) deactivated`);
     }
 
-
-
     invalidateCache();
 }
 
@@ -95,7 +93,7 @@ export async function update(id: NotificationID, values: Partial<Omit<Notificati
 
     const matched = await prisma.notification.update({
         data: values,
-        where: { id }
+        where: { id },
     });
 
     if (!matched) {
@@ -113,15 +111,15 @@ export async function create(notification: Prisma.notificationCreateInput) {
     }
 
     if (notification.recipient !== NotificationRecipient.USER) {
-        throw new Error("For now, the recipient of a notification must be USER");
+        throw new Error('For now, the recipient of a notification must be USER');
     }
 
     if (notification.active !== false) {
-        throw new Error("Notifications must be created in inactive state");
+        throw new Error('Notifications must be created in inactive state');
     }
 
     if (!notification.mailjetTemplateId) {
-        throw new Error("As long as Mailjet is our main channel, it is required to set the mailjetTemplateId");
+        throw new Error('As long as Mailjet is our main channel, it is required to set the mailjetTemplateId');
     }
 
     // To keep DEV and PROD parity, notifications are inserted with their id (see "importNotifications")
@@ -130,8 +128,8 @@ export async function create(notification: Prisma.notificationCreateInput) {
     const result = await prisma.notification.create({
         data: {
             ...notification,
-            id: await prisma.notification.count() + 1
-        }
+            id: (await prisma.notification.count()) + 1,
+        },
     });
 
     logger.info(`Notification(${result.id}) created\n`);
@@ -146,41 +144,45 @@ export async function create(notification: Prisma.notificationCreateInput) {
 export async function importNotifications(notifications: Notification[], overwrite = false, apply = false): Promise<string | never> {
     notifications.sort((a, b) => a.id - b.id);
 
-    if (process.env.ENV !== "dev" && overwrite) {
-        throw new Error("Cannot overwrite productive configuration");
+    if (process.env.ENV !== 'dev' && overwrite) {
+        throw new Error('Cannot overwrite productive configuration');
     }
 
-    let log = `Import Log ${new Date().toLocaleString("en-US")}\n`;
+    let log = `Import Log ${new Date().toLocaleString('en-US')}\n`;
 
     try {
         await prisma.$transaction(async (prisma) => {
             if (overwrite) {
-                const removed = await prisma.notification.deleteMany({ });
+                const removed = await prisma.notification.deleteMany({});
                 log += `Through Overwrite ${removed.count} existing Notifications were removed\n`;
             }
             const untouched = await prisma.notification.count({
-                where: { id: { notIn: notifications.map(it => it.id) } }
+                where: { id: { notIn: notifications.map((it) => it.id) } },
             });
 
             log += `${untouched} existing notifications will not be modified\n`;
 
             for (const notification of notifications) {
-                const templateExists = await prisma.notification.findFirst({ where: {
-                    mailjetTemplateId: notification.mailjetTemplateId,
-                    NOT: { id: notification.id }
-                }});
+                const templateExists = await prisma.notification.findFirst({
+                    where: {
+                        mailjetTemplateId: notification.mailjetTemplateId,
+                        NOT: { id: notification.id },
+                    },
+                });
 
                 if (templateExists) {
-                    throw new Error(`Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`);
+                    throw new Error(
+                        `Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`
+                    );
                 }
 
-                const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id }});
+                const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id } });
 
                 if (notificationExists) {
                     const { id, ...update } = notification;
                     await prisma.notification.update({
                         data: update,
-                        where: { id: id }
+                        where: { id: id },
                     });
 
                     log += `Updated Notification(${notification.id})\n`;
@@ -193,7 +195,7 @@ export async function importNotifications(notifications: Notification[], overwri
                     }
                 } else {
                     const result = await prisma.notification.create({
-                        data: notification
+                        data: notification,
                     });
 
                     log += `Created Notification(${notification.id})\n`;
@@ -211,7 +213,6 @@ export async function importNotifications(notifications: Notification[], overwri
         });
         // Only once the import succeeded and the transaction is commited, the cache is flushed:
         invalidateCache();
-
     } catch (error) {
         if (error instanceof TestRollbackError) {
             log += `Rolled back test changes\nRerun with 'apply: true' to actually apply\n`;
@@ -230,18 +231,18 @@ export async function importNotifications(notifications: Notification[], overwri
 }
 
 function diff(prev: any, curr: any, depth = 0) {
-    let result = "";
+    let result = '';
     const keys = new Set([...Object.keys(prev), ...Object.keys(curr)]);
     for (const key of keys) {
-        if (curr[key] === prev[key] || Array.isArray(curr[key]) && Array.isArray(prev[key]) && curr[key].every((v, i) => v === prev[key][i])) {
+        if (curr[key] === prev[key] || (Array.isArray(curr[key]) && Array.isArray(prev[key]) && curr[key].every((v, i) => v === prev[key][i]))) {
             continue;
         }
 
         if (key in prev) {
-            result += " ".repeat(depth * 2) + `- ${key}: ${prev[key]}\n`;
+            result += ' '.repeat(depth * 2) + `- ${key}: ${prev[key]}\n`;
         }
         if (key in curr) {
-            result += " ".repeat(depth * 2) + `+ ${key}: ${curr[key]}\n`;
+            result += ' '.repeat(depth * 2) + `+ ${key}: ${curr[key]}\n`;
         }
     }
 

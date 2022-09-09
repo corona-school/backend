@@ -1,25 +1,25 @@
-import { Student as TypeORMStudent } from "../entity/Student";
-import { student as PrismaStudent } from "@prisma/client";
-import { prisma } from "../prisma";
-import { randomBytes } from "crypto";
-import { getLogger } from "log4js";
-import EJS from "ejs";
-import { existsSync, readFileSync } from "fs";
-import { generatePDFFromHTMLString } from "html-pppdf";
-import path from "path";
-import QRCode from "qrcode";
+import { Student as TypeORMStudent } from '../entity/Student';
+import { student as PrismaStudent } from '@prisma/client';
+import { prisma } from '../prisma';
+import { randomBytes } from 'crypto';
+import { getLogger } from 'log4js';
+import EJS from 'ejs';
+import { existsSync, readFileSync } from 'fs';
+import { generatePDFFromHTMLString } from 'html-pppdf';
+import path from 'path';
+import QRCode from 'qrcode';
 
 const logger = getLogger();
 
-const assetPath = "./assets";
-const remissionRequestTemplateName = "remissionRequestTemplate";
-const verificationPageName = "verifiedRemissionRequestPage";
+const assetPath = './assets';
+const remissionRequestTemplateName = 'remissionRequestTemplate';
+const verificationPageName = 'verifiedRemissionRequestPage';
 
-const dateFormatOptions = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
+const dateFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const;
 
 export async function createRemissionRequest(student: TypeORMStudent | PrismaStudent) {
     const remissionRequest = await prisma.remission_request.findUnique({
-        where: { studentId: student.id }
+        where: { studentId: student.id },
     });
 
     if (!remissionRequest) {
@@ -28,9 +28,8 @@ export async function createRemissionRequest(student: TypeORMStudent | PrismaStu
                 await prisma.remission_request.create({
                     data: {
                         studentId: student.id,
-                        uuid: randomBytes(5).toString("hex")
-                            .toUpperCase()
-                    }
+                        uuid: randomBytes(5).toString('hex').toUpperCase(),
+                    },
                 });
                 logger.info(`Created remisson request for student ${student.wix_id}`);
                 break;
@@ -47,7 +46,7 @@ function loadTemplate(name: string): EJS.ClientFunction {
     const templatePath = `${assetPath}/${name}.html`;
 
     if (existsSync(templatePath)) {
-        const result = readFileSync(templatePath, "utf8");
+        const result = readFileSync(templatePath, 'utf8');
         return EJS.compile(result);
     } else {
         throw new Error(`Cannot find template "${name}"`);
@@ -60,7 +59,7 @@ async function createQRCode(uuid: string): Promise<string> {
 }
 
 export async function createRemissionRequestPDF(student: TypeORMStudent): Promise<Buffer> {
-    const remissionRequest = await prisma.remission_request.findUnique({ where: {studentId: student.id}});
+    const remissionRequest = await prisma.remission_request.findUnique({ where: { studentId: student.id } });
 
     if (remissionRequest === null) {
         return undefined;
@@ -68,7 +67,7 @@ export async function createRemissionRequestPDF(student: TypeORMStudent): Promis
 
     const template = loadTemplate(remissionRequestTemplateName);
 
-    let name = student.firstname + " " + student.lastname;
+    let name = student.firstname + ' ' + student.lastname;
 
     if (process.env.ENV == 'dev') {
         name = `[TEST] ${name}`;
@@ -77,19 +76,17 @@ export async function createRemissionRequestPDF(student: TypeORMStudent): Promis
     const result = template({
         NAMESTUDENT: name,
         DATUMHEUTE: remissionRequest.createdAt.toLocaleDateString('de-DE', dateFormatOptions),
-        QR_CODE: await createQRCode(remissionRequest.uuid)
+        QR_CODE: await createQRCode(remissionRequest.uuid),
     });
 
-    const ASSETS = __dirname + "/../../../assets";
+    const ASSETS = __dirname + '/../../../assets';
     return await generatePDFFromHTMLString(result, {
-        includePaths: [
-            path.resolve(ASSETS)
-        ]
+        includePaths: [path.resolve(ASSETS)],
     });
 }
 
 export async function createRemissionRequestVerificationPage(remissionRequestUUID: string): Promise<string> {
-    const remissionRequest = await prisma.remission_request.findUnique({ where: { uuid: remissionRequestUUID }, include: { student: true }});
+    const remissionRequest = await prisma.remission_request.findUnique({ where: { uuid: remissionRequestUUID }, include: { student: true } });
 
     if (remissionRequest === null) {
         logger.info(`Could not find remission request with UUID ${remissionRequestUUID}`);
@@ -106,6 +103,6 @@ export async function createRemissionRequestVerificationPage(remissionRequestUUI
 
     return template({
         NAMESTUDENT: name,
-        DATUM: remissionRequest.createdAt.toLocaleDateString('de-DE')
+        DATUM: remissionRequest.createdAt.toLocaleDateString('de-DE'),
     });
 }

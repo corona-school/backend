@@ -1,21 +1,14 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export enum SecretType {
-    PASSWORD = "PASSWORD",
+    PASSWORD = 'PASSWORD',
     // Tokens issued directly to the user
     // These are long living as we assume the user keeps them secret
-    TOKEN = "TOKEN",
+    TOKEN = 'TOKEN',
     // Token sent via Email
     // If a user proves they know the token, they implicitly validate their email address
     // Also this token can only be used once, as Emails have a large surface of being exposed
-    EMAIL_TOKEN = "EMAIL_TOKEN"
+    EMAIL_TOKEN = 'EMAIL_TOKEN',
 }
 
 // Secret in the sense of https://en.wikipedia.org/wiki/Shared_secret
@@ -31,7 +24,7 @@ export class Secret {
     @Column()
     userId: string;
 
-    @Column({ type: "enum", enum: SecretType })
+    @Column({ type: 'enum', enum: SecretType })
     type: SecretType;
 
     @Column()

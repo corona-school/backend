@@ -1,10 +1,9 @@
-import { Subject, TeacherModule } from "../entity/Student";
-import { TutorJufoParticipationIndication } from "../jufo/participationIndication";
-import { isValidProjectFieldWithGradeInfo, ProjectFieldWithGradeInfoType } from "../jufo/projectFieldWithGradeInfoType";
-import { EnumReverseMappings } from "../util/enumReverseMapping";
-import { hasRequiredScreeningInfo, ScreeningInfo } from "../util/screening";
-import { isValidSubject } from "../util/subjectsutils";
-
+import { Subject, TeacherModule } from '../entity/Student';
+import { TutorJufoParticipationIndication } from '../jufo/participationIndication';
+import { isValidProjectFieldWithGradeInfo, ProjectFieldWithGradeInfoType } from '../jufo/projectFieldWithGradeInfoType';
+import { EnumReverseMappings } from '../util/enumReverseMapping';
+import { hasRequiredScreeningInfo, ScreeningInfo } from '../util/screening';
+import { isValidSubject } from '../util/subjectsutils';
 
 /**
  * @apiDefine StudentEditableInfo
@@ -61,32 +60,37 @@ export class StudentEditableInfoDTO {
     isCodu?: boolean;
 
     isValid(): boolean {
-        const validEmail = typeof this.email === "string";
+        const validEmail = typeof this.email === 'string';
 
-        const validRoles = typeof this.isTutor === "boolean"
-                            && typeof this.isInstructor === "boolean"
-                            && typeof this.isProjectCoach === "boolean";
+        const validRoles = typeof this.isTutor === 'boolean' && typeof this.isInstructor === 'boolean' && typeof this.isProjectCoach === 'boolean';
 
-        const validScreenings = [this.screenings.tutor ?? [], this.screenings.instructor ?? [], this.screenings.projectCoach ?? []].flat().every(hasRequiredScreeningInfo);
+        const validScreenings = [this.screenings.tutor ?? [], this.screenings.instructor ?? [], this.screenings.projectCoach ?? []]
+            .flat()
+            .every(hasRequiredScreeningInfo);
 
         const validProjectFields = this.projectFields.every(isValidProjectFieldWithGradeInfo);
 
         const validSubjects = this.subjects.every(isValidSubject);
 
-        const isValidOfficial = this.official ? typeof this.official.hours === "number" && typeof this.official.module === "string" && EnumReverseMappings.TeacherModule(this.official.module) : true;
+        const isValidOfficial = this.official
+            ? typeof this.official.hours === 'number' && typeof this.official.module === 'string' && EnumReverseMappings.TeacherModule(this.official.module)
+            : true;
 
-        const validRemainingFields = (this.feedback ? typeof this.feedback === "string" : true)
-                                        && (this.phone ? typeof this.phone === "string" : true)
-                                        && typeof this.newsletter === "boolean"
-                                        && (this.msg ? typeof this.msg === "string" : true)
-                                        && (this.university ? typeof this.university === "string" : true)
-                                        && (this.isUniversityStudent ? typeof this.isUniversityStudent === "boolean" : true)
-                                        && (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === "boolean" : true)
-                                        && (this.wasJufoParticipant ? (typeof this.wasJufoParticipant === "string" && EnumReverseMappings.TutorJufoParticipationIndication(this.wasJufoParticipant)) : true)
-                                        && (this.hasJufoCertificate ? typeof this.hasJufoCertificate === "boolean" : true)
-                                        && (this.jufoPastParticipationInfo ? typeof this.jufoPastParticipationInfo === "string" : true);
+        const validRemainingFields =
+            (this.feedback ? typeof this.feedback === 'string' : true) &&
+            (this.phone ? typeof this.phone === 'string' : true) &&
+            typeof this.newsletter === 'boolean' &&
+            (this.msg ? typeof this.msg === 'string' : true) &&
+            (this.university ? typeof this.university === 'string' : true) &&
+            (this.isUniversityStudent ? typeof this.isUniversityStudent === 'boolean' : true) &&
+            (this.jufoPastParticipationConfirmed ? typeof this.jufoPastParticipationConfirmed === 'boolean' : true) &&
+            (this.wasJufoParticipant
+                ? typeof this.wasJufoParticipant === 'string' && EnumReverseMappings.TutorJufoParticipationIndication(this.wasJufoParticipant)
+                : true) &&
+            (this.hasJufoCertificate ? typeof this.hasJufoCertificate === 'boolean' : true) &&
+            (this.jufoPastParticipationInfo ? typeof this.jufoPastParticipationInfo === 'string' : true);
 
-        const checkState = this.state ? typeof this.state === "string" && !!EnumReverseMappings.State(this.state) : true;
+        const checkState = this.state ? typeof this.state === 'string' && !!EnumReverseMappings.State(this.state) : true;
 
         return validEmail && validRoles && validScreenings && validProjectFields && validSubjects && isValidOfficial && validRemainingFields && checkState;
     }

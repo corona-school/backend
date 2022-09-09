@@ -1,10 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, Unique } from "typeorm";
-import { ProjectField } from "../jufo/projectFields";
-import { Student } from "./Student";
-
+import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, Unique } from 'typeorm';
+import { ProjectField } from '../jufo/projectFields';
+import { Student } from './Student';
 
 @Entity()
-@Unique("UQ_PROJECT_FIELDS", ["projectField", "student"])
+@Unique('UQ_PROJECT_FIELDS', ['projectField', 'student'])
 export class ProjectFieldWithGradeRestriction {
     /*
      * General metadata
@@ -12,19 +11,19 @@ export class ProjectFieldWithGradeRestriction {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     /*
      * Project Field data
      */
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: ProjectField,
-        nullable: false
+        nullable: false,
     })
     projectField: ProjectField;
 
@@ -33,25 +32,23 @@ export class ProjectFieldWithGradeRestriction {
      */
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     min: number;
 
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     max: number;
-
 
     /*
      *  Relationships
      */
-    @ManyToOne(type => Student, student => student.projectFields, {
-        nullable: false
+    @ManyToOne((type) => Student, (student) => student.projectFields, {
+        nullable: false,
     })
     student: Promise<Student>;
-
 
     /*
      *  Constructor

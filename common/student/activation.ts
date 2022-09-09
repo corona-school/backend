@@ -14,7 +14,7 @@ Notification.registerStudentHook(
 
 export async function deactivateStudent(student: Student, silent: boolean = false) {
     if (!student.active) {
-        throw new Error("Student was already deactivated");
+        throw new Error('Student was already deactivated');
     }
 
     if (!silent) {
@@ -29,8 +29,8 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     let matches = await prisma.match.findMany({
         where: {
             studentId: student.id,
-            dissolved: false
-        }
+            dissolved: false,
+        },
     });
 
     for (const match of matches) {
@@ -40,8 +40,8 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     let projectMatches = await prisma.project_match.findMany({
         where: {
             studentId: student.id,
-            dissolved: false
-        }
+            dissolved: false,
+        },
     });
 
     for (const match of projectMatches) {
@@ -53,45 +53,45 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         where: {
             course_instructors_student: {
                 some: {
-                    studentId: student.id
-                }
-            }
+                    studentId: student.id,
+                },
+            },
         },
         include: {
-            course_instructors_student: true
-        }
+            course_instructors_student: true,
+        },
     });
 
-    for (let i=0; i<courses.length; i++) {
+    for (let i = 0; i < courses.length; i++) {
         if (courses[i].course_instructors_student.length > 1) {
             await prisma.course.update({
                 where: {
-                    id: courses[i].id
+                    id: courses[i].id,
                 },
                 data: {
                     course_instructors_student: {
                         deleteMany: {
-                            studentId: student.id
-                        }
-                    }
-                }
+                            studentId: student.id,
+                        },
+                    },
+                },
             });
         } else {
             await prisma.course.update({
                 where: {
-                    id: courses[i].id
+                    id: courses[i].id,
                 },
                 data: {
                     subcourse: {
                         updateMany: {
                             where: {},
                             data: {
-                                cancelled: true
-                            }
-                        }
+                                cancelled: true,
+                            },
+                        },
                     },
-                    courseState: course_coursestate_enum.cancelled
-                }
+                    courseState: course_coursestate_enum.cancelled,
+                },
             });
             // TODO Notify participants
         }
@@ -99,7 +99,7 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
 
     await prisma.student.update({
         data: { active: false },
-        where: { id: student.id }
+        where: { id: student.id },
     });
 
     await getTransactionLog().log(new DeActivateEvent(student, false));

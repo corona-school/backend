@@ -1,7 +1,7 @@
-import { createMethodDecorator } from "type-graphql";
-import { ResolversEnhanceMap } from "./generated";
-import { GraphQLResolveInfo } from "graphql";
-import { ValidationError } from "apollo-server-errors";
+import { createMethodDecorator } from 'type-graphql';
+import { ResolversEnhanceMap } from './generated';
+import { GraphQLResolveInfo } from 'graphql';
+import { ValidationError } from 'apollo-server-errors';
 
 /* We expose the whole Prisma query functionality to GraphQL users.
    As such they can write queries that fetch thousands of entries
@@ -15,11 +15,10 @@ import { ValidationError } from "apollo-server-errors";
 
    This is not bulletproof, so some queries might still be heavy, though this should prevent most unintended uses */
 
-
 type LimitedQueryContext = {
     limits?: {
         [path: string]: number;
-    }
+    };
 };
 
 const ACCUMULATED_LIMIT = 1000;
@@ -36,15 +35,15 @@ function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQuery
        If the query retrieves 100 pupils, and 10 subcourses for each pupil, by multiplying we get the maximum number of pupils 100 * 10. On that we enforce the limit
        NOTE: Keys of different paths could collide in a query, however we hope that nobody writes such query :)
     */
-    let accumulatedLimit = (info.path?.prev?.prev && context.limits[ info.path.prev.prev.key ]) ?? 1;
+    let accumulatedLimit = (info.path?.prev?.prev && context.limits[info.path.prev.prev.key]) ?? 1;
     accumulatedLimit *= cardinality;
 
-    context.limits[ info.path.key ] = accumulatedLimit;
+    context.limits[info.path.key] = accumulatedLimit;
 
     if (accumulatedLimit > ACCUMULATED_LIMIT) {
         const limitInfo = Object.entries(context.limits)
             .map(([key, limit]) => `${key}:${limit}`)
-            .join(", ");
+            .join(', ');
 
         throw new ValidationError(`Overcomplex Query: The nested query might return more than 1000 entries (${limitInfo})`);
     }
@@ -53,10 +52,9 @@ function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQuery
 export function LimitedQuery(limit = 100) {
     return createMethodDecorator<LimitedQueryContext>(({ args, root, info, context }, next) => {
         // mutations are always fine, we only worry about queries
-        if (info.operation.operation === "mutation") {
+        if (info.operation.operation === 'mutation') {
             return next();
         }
-
 
         const numberLimited = !!args.take;
         const numberLimitedLow = args.take <= limit;
@@ -74,7 +72,6 @@ export function LimitedQuery(limit = 100) {
         enforceAccumulatedLimit(info, context, cardinality);
 
         return next();
-
     });
 }
 
@@ -87,7 +84,6 @@ export function LimitEstimated(cardinality: number) {
     });
 }
 
-
 export const complexityEnhanceMap: ResolversEnhanceMap = {
     Bbb_meeting: { bbb_meetings: [LimitedQuery()] },
     Concrete_notification: { concrete_notifications: [LimitedQuery()] },
@@ -95,5 +91,5 @@ export const complexityEnhanceMap: ResolversEnhanceMap = {
     Log: { logs: [LimitedQuery()] },
     Pupil: { pupils: [LimitedQuery()] },
     Match: { matches: [LimitedQuery()] },
-    Project_match: { project_matches: [LimitedQuery()] }
+    Project_match: { project_matches: [LimitedQuery()] },
 };

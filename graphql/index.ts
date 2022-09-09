@@ -1,32 +1,36 @@
+import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap, FindManyStudentResolver } from './generated';
+import { buildSchemaSync } from 'type-graphql';
 import {
-    FindManyCourseResolver,
-    applyResolversEnhanceMap,
-    applyModelsEnhanceMap,
-    FindManyStudentResolver
-} from "./generated";
-import { buildSchemaSync } from "type-graphql";
-import { FindManyMatchResolver, FindManyPupilResolver, FindManyProject_matchResolver, FindManySubcourseResolver, FindManyLectureResolver, FindManyConcrete_notificationResolver, FindManyNotificationResolver, FindManySchoolResolver } from "./generated/resolvers/crud";
-import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from "./authorizations";
-import { MutatePupilResolver } from "./pupil/mutations";
-import injectContext from "./context";
-import { ApolloServer } from "apollo-server-express";
-import { GraphQLLogger } from "./logging";
-import { PluginDefinition } from "apollo-server-core";
-import { ExtendFieldsPupilResolver } from "./pupil/fields";
-import { ExtendedFieldsSubcourseResolver } from "./subcourse/fields";
-import { ExtendedFieldsCourseResolver } from "./course/fields";
-import { ExtendedFieldsMatchResolver } from "./match/fields";
-import { ExtendedFieldsProjectMatchResolver } from "./project_match/fields";
-import { MutateNotificationResolver } from "./notification/mutations";
-import { complexityEnhanceMap } from "./complexity";
-import { AuthenticationResolver } from "./authentication";
-import { FieldMeResolver } from "./me/fields";
-import { MutateMatchResolver } from "./match/mutations";
-import { MutateTutoringInterestConfirmationResolver } from "./tutoring_interest_confirmation/mutations";
-import { MutateParticipationCertificateResolver } from "./certificate/mutations";
-import { ExtendedFieldsParticipationCertificateResolver } from "./certificate/fields";
-import { ExtendFieldsStudentResolver } from "./student/fields";
-import { MutateMeResolver } from "./me/mutation";
+    FindManyMatchResolver,
+    FindManyPupilResolver,
+    FindManyProject_matchResolver,
+    FindManySubcourseResolver,
+    FindManyLectureResolver,
+    FindManyConcrete_notificationResolver,
+    FindManyNotificationResolver,
+    FindManySchoolResolver,
+} from './generated/resolvers/crud';
+import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
+import { MutatePupilResolver } from './pupil/mutations';
+import injectContext from './context';
+import { ApolloServer } from 'apollo-server-express';
+import { GraphQLLogger } from './logging';
+import { PluginDefinition } from 'apollo-server-core';
+import { ExtendFieldsPupilResolver } from './pupil/fields';
+import { ExtendedFieldsSubcourseResolver } from './subcourse/fields';
+import { ExtendedFieldsCourseResolver } from './course/fields';
+import { ExtendedFieldsMatchResolver } from './match/fields';
+import { ExtendedFieldsProjectMatchResolver } from './project_match/fields';
+import { MutateNotificationResolver } from './notification/mutations';
+import { complexityEnhanceMap } from './complexity';
+import { AuthenticationResolver } from './authentication';
+import { FieldMeResolver } from './me/fields';
+import { MutateMatchResolver } from './match/mutations';
+import { MutateTutoringInterestConfirmationResolver } from './tutoring_interest_confirmation/mutations';
+import { MutateParticipationCertificateResolver } from './certificate/mutations';
+import { ExtendedFieldsParticipationCertificateResolver } from './certificate/fields';
+import { ExtendFieldsStudentResolver } from './student/fields';
+import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from "./cache";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
@@ -124,17 +128,12 @@ const schema = buildSchemaSync({
         MutateSecretResolver,
 
         /* Statistics */
-        StatisticsResolver
+        StatisticsResolver,
     ],
-    authChecker
+    authChecker,
 });
 
-const plugins: PluginDefinition[] = [
-    responseCachePlugin() as any,
-    GraphQLLogger as any,
-    ApolloServerPluginLandingPageGraphQLPlayground()
-];
-
+const plugins: PluginDefinition[] = [responseCachePlugin() as any, GraphQLLogger as any, ApolloServerPluginLandingPageGraphQLPlayground()];
 
 export const apolloServer = new ApolloServer({
     schema,
@@ -143,5 +142,5 @@ export const apolloServer = new ApolloServer({
     // As this repository is open source anyways, there is no sense in keeping our graph private ("security by obscurity" doesn't work anyways)
     introspection: true,
     debug: isDev,
-    formatError
+    formatError,
 });

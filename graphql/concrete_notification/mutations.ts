@@ -5,7 +5,7 @@ import { Role } from "../authorizations";
 import { ConcreteNotificationState } from "../../common/entity/ConcreteNotification";
 import { cancelNotification, rescheduleNotification } from "../../common/notification";
 
-@Resolver(of => ConcreteNotification)
+@Resolver((of) => ConcreteNotification)
 export class MutateConcreteNotificationsResolver {
     @Mutation(returns => Boolean)
     @Authorized(Role.ADMIN)
@@ -17,8 +17,7 @@ export class MutateConcreteNotificationsResolver {
             throw new Error(`ConcreteNotification(${id}) not found`);
         }
 
-        await cancelNotification(notification);
-        return true;
+        rescheduleNotification(notification, sendAt);
     }
 
     @Mutation(returns => Boolean)

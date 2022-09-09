@@ -28,7 +28,8 @@
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
-    "integration-tests": "node ./built/integration-tests/index.js"
+    "integration-tests": "node ./built/integration-tests/index.js",
+    "prettier": "prettier --write './(common|graphql)/!(generated|migration)/?**.ts'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.118.0",
@@ -99,6 +100,7 @@
     "apidoc": "^0.22.1",
     "eslint": "^7.2.0",
     "eslint-plugin-lernfair-lint": "./linter/",
+    "prettier": "^2.7.1",
     "prisma": "4.1.0",
     "ts-node": "^8.10.1",
     "typegraphql-prisma": "0.21.2",

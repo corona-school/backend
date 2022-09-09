@@ -1,27 +1,27 @@
-import { Column, CreateDateColumn, EntityManager, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, EntityManager, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class Person {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     firstname: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     lastname: string;
 
     @Column({
-        default: true
+        default: true,
     })
     active: boolean;
 
@@ -32,33 +32,33 @@ export abstract class Person {
     @Index({ unique: true })
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     verification: string;
 
     @Column({
-        type: "timestamp",
+        type: 'timestamp',
         default: null,
-        nullable: true
+        nullable: true,
     })
     verifiedAt: Date;
 
     @Index({ unique: true })
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     authToken: string;
 
     @Column({
         nullable: false,
-        default: false
+        default: false,
     })
     authTokenUsed: boolean;
 
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     authTokenSent: Date;
 }
@@ -72,5 +72,5 @@ export enum RegistrationSource {
     /* 'Corona und Du' was a study conducted in Spring 2022 */
     CODU,
     /* Lern-Fair Plus participant */
-    PLUS
+    PLUS,
 }

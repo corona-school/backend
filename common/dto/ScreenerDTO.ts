@@ -1,4 +1,4 @@
-import { Screener } from "../entity/Screener";
+import { Screener } from '../entity/Screener';
 
 export class ScreenerDTO {
     firstname: string;

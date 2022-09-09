@@ -1,6 +1,6 @@
-import { Role } from "../authorizations";
-import { Arg, Authorized, Field, FieldResolver, ObjectType, Query, Resolver, Root } from "type-graphql";
-import { prisma } from "../../common/prisma";
+import { Role } from '../authorizations';
+import { Arg, Authorized, Field, FieldResolver, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { prisma } from '../../common/prisma';
 
 @ObjectType()
 class ByMonth {
@@ -15,7 +15,6 @@ class ByMonth {
     group?: string;
 }
 
-
 @ObjectType()
 class Statistics {
     @Field({ nullable: true })
@@ -24,19 +23,18 @@ class Statistics {
     to: string; // ISO Date String
 }
 
-@Resolver(of => Statistics)
+@Resolver((of) => Statistics)
 export class StatisticsResolver {
-    @Query(returns => Statistics)
+    @Query((returns) => Statistics)
     @Authorized(Role.ADMIN)
-    statistics(@Arg("from", { nullable: true }) from: string = '1970-01-01', @Arg("to", { nullable: true }) to: string = '3000-01-01'): Statistics {
+    statistics(@Arg('from', { nullable: true }) from: string = '1970-01-01', @Arg('to', { nullable: true }) to: string = '3000-01-01'): Statistics {
         return { from, to };
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tutorRegistrations(@Root() statistics: Statistics) {
-        const result = await prisma.$queryRaw
-        `SELECT
+        const result = await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
@@ -48,11 +46,10 @@ export class StatisticsResolver {
         return result;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tutorRegistrationsByState(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
             COUNT(*)::INT AS value,
             date_part('year', "createdAt"::date) AS year,
             date_part('month', "createdAt"::date) AS month,
@@ -63,11 +60,10 @@ export class StatisticsResolver {
         ORDER BY "year" ASC, "month" ASC, "state" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tuteeRegistrations(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month
@@ -77,11 +73,10 @@ export class StatisticsResolver {
             ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tuteeRegistrationsByState(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month,
@@ -92,11 +87,10 @@ export class StatisticsResolver {
             ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tuteeRegistrationsBySchooltype(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
             COUNT(*)::INT AS value,
             date_part('year', "createdAt"::date) AS year,
             date_part('month', "createdAt"::date) AS month,
@@ -107,11 +101,10 @@ export class StatisticsResolver {
         ORDER BY "year" ASC, "month" ASC, "schooltype" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tuteeRegistrationsByGrade(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
                 date_part('year', "createdAt"::date) AS year,
                 date_part('month', "createdAt"::date) AS month,
@@ -122,11 +115,10 @@ export class StatisticsResolver {
                 ORDER BY "year" ASC, "month" ASC, "grade" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async tutorScreenings(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
@@ -136,11 +128,10 @@ export class StatisticsResolver {
                  ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async nowMatches(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
@@ -150,11 +141,10 @@ export class StatisticsResolver {
                 ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async nowFirstMatches(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
@@ -165,11 +155,10 @@ export class StatisticsResolver {
                  ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async nowDissolvedMatchesBeforeThreeMonths(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "updatedAt"::date) AS year,
                     date_part('month', "updatedAt"::date) AS month
@@ -180,11 +169,10 @@ export class StatisticsResolver {
                  ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async nowDissolvedMatchesAfterThreeMonths(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "updatedAt"::date) AS year,
                     date_part('month', "updatedAt"::date) AS month
@@ -195,11 +183,10 @@ export class StatisticsResolver {
                  ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async offeredLectures(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT
+        return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "start"::date) AS year,
                     date_part('month', "start"::date) AS month
@@ -209,11 +196,10 @@ export class StatisticsResolver {
                  ORDER BY "year" ASC, "month" ASC;`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async offeredCoursePlaces(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT "year", "month", SUM("subcourse"."maxParticipants")::INT FROM (
+        return await prisma.$queryRaw`SELECT "year", "month", SUM("subcourse"."maxParticipants")::INT FROM (
                 SELECT DISTINCT ON("subcourseId")
                     "subcourseId", "start",
                     date_part('year', "start"::date) AS "year",
@@ -227,11 +213,10 @@ export class StatisticsResolver {
                 ORDER BY "year", "month";`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async attendedCoursePlaces(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT "year", "month", SUM("participants")::INT AS "value" FROM (
+        return await prisma.$queryRaw`SELECT "year", "month", SUM("participants")::INT AS "value" FROM (
                 SELECT "year", "month", "subcourse"."id" AS "subcourseId", COUNT(*)::INT AS "participants" FROM (
                     SELECT DISTINCT ON("subcourseId")
                         "subcourseId", "start",
@@ -249,11 +234,10 @@ export class StatisticsResolver {
                 ORDER BY "year", "month";`;
     }
 
-    @FieldResolver(returns => [ByMonth])
+    @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async pupilsParticipatingInCourses(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw
-        `SELECT "year", "month", COUNT(DISTINCT "pupilId")::INT AS "value" FROM (
+        return await prisma.$queryRaw`SELECT "year", "month", COUNT(DISTINCT "pupilId")::INT AS "value" FROM (
                 SELECT "year", "month", "subcourse_participants_pupil"."pupilId" FROM (
                   SELECT DISTINCT ON("subcourseId")
                       "subcourseId", "start",

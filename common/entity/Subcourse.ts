@@ -1,56 +1,57 @@
 import {
     Column,
     CreateDateColumn,
-    Entity, getManager,
+    Entity,
+    getManager,
     JoinColumn,
     JoinTable,
     ManyToMany,
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-import { Student } from "./Student";
+    UpdateDateColumn,
+} from 'typeorm';
+import { Student } from './Student';
 import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
-import moment from "moment";
+import moment from 'moment';
 
 @Entity()
 export class Subcourse {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
-    @ManyToMany(type => Student, student => student.subcourses, {
-        eager: true
+    @ManyToMany((type) => Student, (student) => student.subcourses, {
+        eager: true,
     })
     @JoinTable()
     instructors: Student[];
 
-    @ManyToMany(type => Pupil, pupil => pupil.subcourses, {
-        eager: true
+    @ManyToMany((type) => Pupil, (pupil) => pupil.subcourses, {
+        eager: true,
     })
     @JoinTable()
     participants: Pupil[];
 
-    @ManyToMany(type => Pupil, pupil => pupil.queuedSubcourses, {
-        eager: true
+    @ManyToMany((type) => Pupil, (pupil) => pupil.queuedSubcourses, {
+        eager: true,
     })
     @JoinTable()
     waitingList: Pupil[];
 
-    @OneToMany(type => Lecture, lecture => lecture.subcourse, {
-        eager: true
+    @OneToMany((type) => Lecture, (lecture) => lecture.subcourse, {
+        eager: true,
     })
     lectures: Lecture[];
 
-    @ManyToOne(type => Course, course => course.subcourses)
+    @ManyToOne((type) => Course, (course) => course.subcourses)
     @JoinColumn()
     course: Course;
 
@@ -64,7 +65,7 @@ export class Subcourse {
     maxParticipants: number;
 
     @Column({
-        default: false
+        default: false,
     })
     joinAfterStart: boolean;
 
@@ -72,15 +73,15 @@ export class Subcourse {
     published: boolean;
 
     @Column({
-        default: false
+        default: false,
     })
     cancelled: boolean;
 
-    async addLecture(newLecture: {start: Date, duration: number, instructor: { id: number } }) {
-        const instructor = this.instructors.find(it => it.id === newLecture.instructor.id);
+    async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
+        const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
 
         if (!instructor) {
-            throw new Error("Student is not instructor of this subcourse.");
+            throw new Error('Student is not instructor of this subcourse.');
         }
 
         const lecture = new Lecture();
@@ -104,7 +105,7 @@ export class Subcourse {
     }
 
     isPupilOnWaitingList(pupil: Pupil): boolean {
-        return this.waitingList?.some(p => p.id === pupil.id);
+        return this.waitingList?.some((p) => p.id === pupil.id);
     }
 
     addPupilToWaitingList(pupil: Pupil) {
@@ -114,7 +115,7 @@ export class Subcourse {
         this.waitingList.push(pupil);
     }
     removePupilFromWaitingList(pupil: Pupil) {
-        this.waitingList = this.waitingList?.filter(p => p.id !== pupil.id);
+        this.waitingList = this.waitingList?.filter((p) => p.id !== pupil.id);
     }
 
     isActiveSubcourse(): boolean {
@@ -123,7 +124,7 @@ export class Subcourse {
             return false; //then active by default
         }
 
-        return moment().isBefore(moment(lastLecture.start).add(lastLecture.duration, "minutes"));
+        return moment().isBefore(moment(lastLecture.start).add(lastLecture.duration, 'minutes'));
     }
 
     ///Returns the total duration in minutes
