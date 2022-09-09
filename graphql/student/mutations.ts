@@ -134,6 +134,7 @@ export class MutateStudentResolver {
         const student = await getStudent(studentId);
         const screener = await getSessionScreener(context);
         await addInstructorScreening(screener, student, screening);
+        return true;
     }
 
     @Mutation((returns) => Boolean)
