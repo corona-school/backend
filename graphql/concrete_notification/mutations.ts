@@ -9,7 +9,7 @@ import { cancelNotification, rescheduleNotification } from '../../common/notific
 export class MutateConcreteNotificationsResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async concreteNotificationCancel(@Arg('id') id: number, @Arg('sendAt') sendAt: Date) {
+    async concreteNotificationCancel(@Arg('id') id: number) {
         const notification = await prisma.concrete_notification.findUnique({
             where: { id },
         });
@@ -17,7 +17,8 @@ export class MutateConcreteNotificationsResolver {
             throw new Error(`ConcreteNotification(${id}) not found`);
         }
 
-        rescheduleNotification(notification, sendAt);
+        await cancelNotification(notification);
+        return true;
     }
 
     @Mutation((returns) => Boolean)
