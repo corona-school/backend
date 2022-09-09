@@ -85,7 +85,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [InstructorScreening])
     @Authorized(Role.ADMIN, Role.OWNER)
     async instructorScreenings(@Root() student: Student) {
-        return await prisma.screening.findMany({
+        return await prisma.instructor_screening.findMany({
             where: { studentId: student.id }
         });
     }
