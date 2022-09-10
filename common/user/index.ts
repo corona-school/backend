@@ -49,6 +49,17 @@ export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | T
     throw new Error(`Unknown User(${userID})`);
 }
 
+export function getUserForTypeORM(user: Person) {
+    if (isPupil(user)) {
+        return userForPupil(user as TypeORMPupil);
+    }
+
+    if (isStudent(user)) {
+        return userForStudent(user as TypeORMStudent);
+    }
+
+    throw new Error(`Unsupported user in getUserForTypeORM conversion`);
+}
 /* As Prisma values do not inherit an entity class but are plain objects,
    we need a wrapper around the different entities */
 export type User = {
@@ -145,4 +156,20 @@ export function getFullName({ firstname, lastname }: { firstname?: string; lastn
     }
 
     return `${firstname} ${lastname}`;
+}
+
+export async function getStudent(user: User): Promise<Student | never> {
+    if (!user.studentId) {
+        throw new Error(`Expected User(${user.userID}) to be student`);
+    }
+
+    return await prisma.student.findUnique({ where: { id: user.studentId } });
+}
+
+export async function getPupil(user: User): Promise<Pupil | never> {
+    if (!user.pupilId) {
+        throw new Error(`Expected User(${user.userID}) to be pupil`);
+    }
+
+    return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 }
