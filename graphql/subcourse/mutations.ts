@@ -138,7 +138,7 @@ export class MutateSubcourseResolver {
     async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number, @Arg("meetingURL") meetingURL: string) {
         const url = new URL(meetingURL);
         if (url.protocol !== "https") {
-            throw new Error(`Meetings must be done via HTTPS`);
+            throw new Error(`Meetings must be done via HTTPS not ${url.protocol}`);
         }
 
         const subcourse = await getSubcourse(subcourseId);
