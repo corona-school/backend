@@ -135,9 +135,9 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number, @Arg("meetingURL") meetingURL: string) {
+    async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('meetingURL') meetingURL: string) {
         const url = new URL(meetingURL);
-        if (url.protocol !== "https:") {
+        if (url.protocol !== 'https:') {
             throw new Error(`Meetings must be done via HTTPS not ${url.protocol}`);
         }
 
@@ -147,7 +147,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         const existingMeeting = await prisma.bbb_meeting.findFirst({
-            where: { meetingID: "" + subcourse.id }
+            where: { meetingID: '' + subcourse.id },
         });
 
         if (existingMeeting) {
@@ -156,10 +156,10 @@ export class MutateSubcourseResolver {
 
         await prisma.bbb_meeting.create({
             data: {
-                meetingID: "" + subcourse.id,
+                meetingID: '' + subcourse.id,
                 meetingName: course.name,
-                alternativeUrl: meetingURL
-            }
+                alternativeUrl: meetingURL,
+            },
         });
 
         logger.info(`User(${context.user?.userID}) added alternative url for Subcourse(${subcourse.id}): '${meetingURL}'`);
@@ -168,12 +168,12 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => String)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER) // TODO: Allow participants to call this
-    async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number) {
+    async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const subcourse = await getSubcourse(subcourseId);
-        await hasAccess(context, "Subcourse", subcourse);
+        await hasAccess(context, 'Subcourse', subcourse);
 
         let url: string;
-        const meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: "" + subcourse.id }});
+        const meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
         if (!meeting) {
             throw new Error(`No meeting exists yet`); // TODO: Create meeting on demand
         }
@@ -181,7 +181,7 @@ export class MutateSubcourseResolver {
         if (meeting.alternativeUrl) {
             url = meeting.alternativeUrl;
         } else {
-            url = getMeetingUrl("" + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
+            url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
         }
 
         logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);

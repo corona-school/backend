@@ -128,7 +128,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async meeting(@Root() subcourse: Subcourse) {
         return await prisma.bbb_meeting.findFirst({
-            where: { meetingID: "" + subcourse.id }
+            where: { meetingID: '' + subcourse.id },
         });
     }
 }
