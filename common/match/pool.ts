@@ -485,13 +485,14 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     return [...subjects];
 }
 
-export async function sendConfirmationRequests(pool: MatchPool) {
+export async function getPupilsToRequestInterest(pool: MatchPool): Promise<Pupil[]> {
     let toSend = await confirmationRequestsToSend(pool);
     if (toSend <= 0) {
-        return;
+        return [];
     }
 
     const offered = await offeredSubjects(pool);
+    const result: Pupil[] = [];
 
     const pupilsToRequest = await getPupils(pool, ['confirmation-unknown'], toSend * 5);
     for (const pupil of pupilsToRequest) {
@@ -501,12 +502,21 @@ export async function sendConfirmationRequests(pool: MatchPool) {
             continue;
         }
 
-        await requestInterestConfirmation(pupil);
+        result.push(pupil);
 
         toSend -= 1;
         if (toSend <= 0) {
             break;
         }
+    }
+
+    return result;
+}
+
+export async function sendConfirmationRequests(pool: MatchPool) {
+    const pupils = await getPupilsToRequestInterest(pool);
+    for (const pupil of pupils) {
+        await requestInterestConfirmation(pupil);
     }
 }
 
