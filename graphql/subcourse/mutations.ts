@@ -137,7 +137,7 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg("subcourseId") subcourseId: number, @Arg("meetingURL") meetingURL: string) {
         const url = new URL(meetingURL);
-        if (url.protocol !== "https") {
+        if (url.protocol !== "https:") {
             throw new Error(`Meetings must be done via HTTPS not ${url.protocol}`);
         }
 
