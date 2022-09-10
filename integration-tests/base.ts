@@ -5,7 +5,7 @@ import { GraphQLClient } from "graphql-request";
 
 const APP = "corona-school-backend-dev";
 const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+const ADMIN_TOKEN = process.env.ADMIN_AUTH_TOKEN;
 
 const silent = process.env.INTEGRATION_SILENT === "true";
 
