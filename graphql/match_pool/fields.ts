@@ -10,6 +10,7 @@ import {
     getPoolRuns,
     getPoolStatistics,
     MatchPoolStatistics,
+    confirmationRequestsToSend,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';

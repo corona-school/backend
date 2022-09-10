@@ -9,7 +9,7 @@ import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { getLogger } from 'log4js';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
-import { requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 
 const logger = getLogger('MatchingPool');
 
@@ -515,4 +515,5 @@ export async function runInterestConfirmations() {
     }
 
     await sendInterestConfirmationReminders();
+    await cleanupUnconfirmed();
 }
