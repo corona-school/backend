@@ -1,4 +1,4 @@
-import { Course, Lecture, Subcourse, Pupil } from '../generated';
+import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from '../generated';
 import { Arg, Authorized, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../common/prisma';
@@ -121,6 +121,14 @@ export class ExtendedFieldsSubcourseResolver {
     async pupilsWaitingCount(@Root() subcourse: Subcourse) {
         return await prisma.subcourse_waiting_list_pupil.count({
             where: { subcourseId: subcourse.id },
+        });
+    }
+
+    @FieldResolver((returns) => BBBMeeting, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async meeting(@Root() subcourse: Subcourse) {
+        return await prisma.bbb_meeting.findFirst({
+            where: { meetingID: "" + subcourse.id }
         });
     }
 }
