@@ -5,7 +5,7 @@ import * as assert from "assert";
 test("Admin set subcourse meetingURL and join", async () => {
     await adminClient.request(`
         mutation SetURL {
-            subcourseSetMeetingURL(subcourseId: 1, meetingURL: 'https://example.com')
+            subcourseSetMeetingURL(subcourseId: 1, meetingURL: "https://example.com")
         }
     `);
 
