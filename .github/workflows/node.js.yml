@@ -22,7 +22,6 @@ jobs:
           POSTGRES_USER: coronaschool
           POSTGRES_PASSWORD: coronanervt
           POSTGRES_DB: coronaschool-test
-          ADMIN_AUTH_TOKEN: admintoken
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -38,6 +37,7 @@ jobs:
       - run: npm run web:nopdf &
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
+          ADMIN_AUTH_TOKEN: admintoken
           ENV: dev
       - run: sleep 5
       - run: npm run integration-tests
