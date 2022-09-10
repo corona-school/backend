@@ -66,9 +66,12 @@ function wrapClient(client: GraphQLClient) {
 
 export const defaultClient = wrapClient(new GraphQLClient(URL));
 
+const adminAuthorization = `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`;
+console.log("admin authorization", ADMIN_TOKEN, adminAuthorization);
+
 export const adminClient = wrapClient(new GraphQLClient(URL, {
     headers: {
-        authorization: `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`
+        authorization: adminAuthorization,
     }
 }));
 
