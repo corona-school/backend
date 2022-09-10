@@ -474,7 +474,9 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     const subjects = new Set<string>();
     const students = await getStudents(pool, [], 100);
     for (const student of students) {
-        for (const subject of JSON.parse(student.subjects)) subjects.add(subject.name);
+        for (const subject of JSON.parse(student.subjects)) {
+            subjects.add(subject.name);
+        }
     }
 
     return [...subjects];
@@ -482,7 +484,9 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
 
 export async function sendConfirmationRequests(pool: MatchPool) {
     let toSend = await confirmationRequestsToSend(pool);
-    if (toSend <= 0) return;
+    if (toSend <= 0) {
+        return;
+    }
 
     const offered = await offeredSubjects(pool);
 

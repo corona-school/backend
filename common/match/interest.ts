@@ -18,7 +18,7 @@ export async function requestInterestConfirmation(pupil: Pupil) {
         },
     });
 
-    await Notification.actionTaken(confirmationRequest.pupil, 'tutee_matching_confirm_interest', {
+    await Notification.actionTaken(pupil, 'tutee_matching_confirm_interest', {
         uniqueId: `${confirmationRequest.id}`,
         confirmationURL: getConfirmationURL(confirmationRequest, true),
         refusalURL: getConfirmationURL(confirmationRequest, false),
@@ -36,7 +36,7 @@ export async function sendInterestConfirmationReminders() {
 
     const toRemind = await prisma.pupil_tutoring_interest_confirmation_request.findMany({
         where: { status: InterestConfirmationStatus.PENDING, createdAt: { lte: remindAt }, reminderSentDate: null },
-        select: { pupil: true },
+        include: { pupil: true },
     });
 
     for (const confirmationRequest of toRemind) {
