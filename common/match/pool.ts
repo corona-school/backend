@@ -9,7 +9,7 @@ import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { getLogger } from 'log4js';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
-import { cleanupUnconfirmed, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 
 const logger = getLogger('MatchingPool');
 
@@ -286,6 +286,9 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
+            if (pool.confirmInterest && match.pupil.openMatchRequestCount <= 1) {
+                await removeInterest(match.pupil);
+            }
             await pool.createMatch(match.pupil, match.student, pool);
         }
 

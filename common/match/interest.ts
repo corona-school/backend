@@ -82,3 +82,10 @@ export async function cleanupUnconfirmed() {
         log.info(`Removed interest confirmation from Pupil(${reminder.pupilId}) and removed their match request`);
     }
 }
+
+export async function removeInterest(pupil: Pupil) {
+    await prisma.pupil_tutoring_interest_confirmation_request.deleteMany({
+        where: { pupilId: pupil.id }
+    });
+    log.info(`Removed interest confirmation from Pupil(${pupil.id})`);
+}
