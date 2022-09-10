@@ -15,5 +15,5 @@ test("Admin set subcourse meetingURL and join", async () => {
         }
     `);
 
-    assert.strictEqual(meetingURL, "https://example.com");
+    assert.strictEqual(meetingURL.subcourseJoinMeeting, "https://example.com");
 });
