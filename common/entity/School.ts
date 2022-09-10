@@ -1,8 +1,7 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { State } from './State';
-import { Pupil } from "./Pupil";
-import { SchoolType } from "./SchoolType";
-
+import { Pupil } from './Pupil';
+import { SchoolType } from './SchoolType';
 
 @Entity()
 export class School {
@@ -12,33 +11,33 @@ export class School {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     /*
      * School data
      */
     @Column({
-        nullable: false
+        nullable: false,
     })
     name: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     @Index({
-        unique: true
+        unique: true,
     })
     website: string;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     @Index({
-        unique: true
+        unique: true,
     })
     emailDomain: string;
 
@@ -46,28 +45,28 @@ export class School {
         type: 'enum',
         enum: State,
         nullable: true,
-        default: State.OTHER
+        default: State.OTHER,
     })
     state: State;
 
     @Column({
         type: 'enum',
         enum: SchoolType,
-        default: SchoolType.SONSTIGES
+        default: SchoolType.SONSTIGES,
     })
     schooltype: SchoolType;
 
     @Column({
         default: false,
-        nullable: false
+        nullable: false,
     })
     activeCooperation: boolean;
 
     /*
      *  Relationships
      */
-    @OneToMany(type => Pupil, pupil => pupil.school, {
-        nullable: false
+    @OneToMany((type) => Pupil, (pupil) => pupil.school, {
+        nullable: false,
     })
     pupils: Promise<Pupil[]>;
 }

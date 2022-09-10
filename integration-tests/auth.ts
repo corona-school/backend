@@ -58,3 +58,20 @@ test("Password Login", async () => {
 
     await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
 });
+
+test("Token Request", async () => {
+    const { client, pupil: { email } } = await pupilOne;
+
+    // With invalid email shall fail
+    await client.requestShallFail(`mutation RequestTokenInvalidEmail { tokenRequest(email: "test+wrong@lern-fair.de") }`);
+
+    await client.request(`mutation RequestToken { tokenRequest(email: "${email}")}`);
+
+    await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset")}`);
+    await client.requestShallFail(`mutation RequestTokenInvalidAction { tokenRequest(email: "${email}", action: "what-the-heck")}`);
+
+    await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`);
+    await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
+
+    // NOTE: We cannot further test integration here, as we cannot access the emails that might have been sent to the user
+});

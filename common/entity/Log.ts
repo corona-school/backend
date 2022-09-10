@@ -1,10 +1,5 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn
-} from "typeorm";
-import LogType from "../transactionlog/types/LogType";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import LogType from '../transactionlog/types/LogType';
 
 @Entity()
 export default class Log {
@@ -12,13 +7,13 @@ export default class Log {
     id: number;
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: LogType,
-        default: LogType.MISC
+        default: LogType.MISC,
     })
     logtype: LogType;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
     @Column()

@@ -1,3 +1,3 @@
-export * from "./put";
-export * from "./delete";
-export * from "./s3";
+export * from './put';
+export * from './delete';
+export * from './s3';
