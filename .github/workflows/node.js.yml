@@ -22,6 +22,7 @@ jobs:
           POSTGRES_USER: coronaschool
           POSTGRES_PASSWORD: coronanervt
           POSTGRES_DB: coronaschool-test
+          ADMIN_AUTH_TOKEN: admintoken
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -43,6 +44,7 @@ jobs:
         env:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
           INTEGRATION_SILENT: "true"
+          ADMIN_AUTH_TOKEN: admintoken
 
   lint:
     runs-on: ubuntu-20.04
