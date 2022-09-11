@@ -29,7 +29,8 @@
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
     "integration-tests": "node ./built/integration-tests/index.js",
-    "prettier": "prettier --write './(common|graphql)/!(generated|migration)/?**.ts'"
+    "prettier": "prettier --write './(common|graphql)/!(generated|migration)/?**.ts'",
+    "prettier-on": "prettier --write"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.118.0",
@@ -67,7 +68,7 @@
     "log4js": "^6.4.0",
     "mime-types": "^2.1.28",
     "moment": "^2.29.2",
-    "moment-timezone": "^0.5.31",
+    "moment-timezone": "^0.5.35",
     "multer": "^1.4.2",
     "node-mailjet": "^3.3.1",
     "pg": "^8.7.3",

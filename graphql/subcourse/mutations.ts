@@ -1,3 +1,4 @@
+import { getMeetingUrl } from '../../common/util/bbb';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
@@ -10,6 +11,7 @@ import { GraphQLContext } from '../context';
 import { ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getSubcourse } from '../util';
+import { logInContext } from '../logging';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -129,6 +131,66 @@ export class MutateSubcourseResolver {
         sendSubcourseCancelNotifications(course, subcourse);
         logger.info(`Subcourse (${subcourse.id}) was cancelled`);
         return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('meetingURL') meetingURL: string) {
+        const url = new URL(meetingURL);
+        if (url.protocol !== 'https:') {
+            throw new Error(`Meetings must be done via HTTPS not ${url.protocol}`);
+        }
+
+        const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const existingMeeting = await prisma.bbb_meeting.findFirst({
+            where: { meetingID: '' + subcourse.id },
+        });
+
+        if (existingMeeting) {
+            await prisma.bbb_meeting.update({
+                data: { alternativeUrl: meetingURL },
+                where: { id: existingMeeting.id }
+            });
+            logger.info(`User(${context.user?.userID}) updated alternative url for Subcourse(${subcourse.id}): '${meetingURL}'`);
+            return true;
+        }
+
+        await prisma.bbb_meeting.create({
+            data: {
+                meetingID: '' + subcourse.id,
+                meetingName: course.name,
+                alternativeUrl: meetingURL,
+            },
+        });
+
+        logger.info(`User(${context.user?.userID}) added alternative url for Subcourse(${subcourse.id}): '${meetingURL}'`);
+        return true;
+    }
+
+    @Mutation((returns) => String)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER) // TODO: Allow participants to call this
+    async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        let url: string;
+        const meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        if (!meeting) {
+            throw new Error(`No meeting exists yet`); // TODO: Create meeting on demand
+        }
+
+        if (meeting.alternativeUrl) {
+            url = meeting.alternativeUrl;
+        } else {
+            url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
+        }
+
+        logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
+        return url;
     }
 
     @Mutation((returns) => GraphQLModel.Lecture)
