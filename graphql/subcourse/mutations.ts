@@ -151,7 +151,12 @@ export class MutateSubcourseResolver {
         });
 
         if (existingMeeting) {
-            throw new Error(`BBBMeeting(${existingMeeting.id}) already exists for Subcourse(${subcourse.id})`);
+            await prisma.bbb_meeting.update({
+                data: { alternativeUrl: meetingURL },
+                where: { id: existingMeeting.id }
+            });
+            logger.info(`User(${context.user?.userID}) updated alternative url for Subcourse(${subcourse.id}): '${meetingURL}'`);
+            return true;
         }
 
         await prisma.bbb_meeting.create({
