@@ -8,6 +8,7 @@ import { CourseState } from "../../common/entity/Course";
 import { PublicCache } from "../cache";
 import { getSessionPupil } from "../authentication";
 import { GraphQLContext } from "../context";
+import { BBBMeeting } from "../../common/entity/BBBMeeting";
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -140,8 +141,6 @@ export class ExtendedFieldsSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         return await prisma.subcourse_waiting_list_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
     }
-
-}
 
     @FieldResolver((returns) => BBBMeeting, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
