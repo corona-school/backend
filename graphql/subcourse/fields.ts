@@ -1,4 +1,4 @@
-import { Course, Lecture, Subcourse, Pupil } from "../generated";
+import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from "../generated";
 import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../common/prisma";
@@ -8,7 +8,6 @@ import { CourseState } from "../../common/entity/Course";
 import { PublicCache } from "../cache";
 import { getSessionPupil } from "../authentication";
 import { GraphQLContext } from "../context";
-import { BBBMeeting } from "../../common/entity/BBBMeeting";
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
