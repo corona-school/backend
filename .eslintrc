@@ -11,16 +11,8 @@
     "rules": {
         "block-scoped-var": "error",
         "camelcase": ["warn", {"allow": ["wix_id", "wix_creation_date"]}],
-        "comma-dangle": "error",
-        "indent": ["error", 4, {
-            "SwitchCase": 1,
-            "ArrayExpression": "first",
-            "CallExpression": {"arguments": "first"},
-            "FunctionDeclaration": {"parameters": "first"},
-            "FunctionExpression": {"parameters": "first"},
-            "ImportDeclaration": "first",
-            "ObjectExpression": "first"
-        }],
+        "comma-dangle": "off",
+        "indent": "off",
         "keyword-spacing": ["error", {
             "after": true
         }],
@@ -39,14 +31,14 @@
         "no-multi-spaces": "error",
         "no-trailing-spaces": "error",
         "@typescript-eslint/semi": ["error", "always"],
-        "space-in-parens": ["error", "never"],
+        "space-in-parens": "off",
         "curly": ["error", "all"],
         "comma-spacing": ["error", { "before": false, "after": true }],
         "space-before-blocks": ["error", "always"],
         "block-spacing": ["error", "always"],
         "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
         "max-statements-per-line": ["error", {"max": 1}],
-        "newline-per-chained-call": "error",
+        "newline-per-chained-call": "off",
         "lernfair-lint/graphql-authorized": "error",
         "lernfair-lint/graphql-deferred-auth": "error",
         "lernfair-lint/graphql-cache": "error",

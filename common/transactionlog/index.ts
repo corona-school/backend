@@ -1,6 +1,6 @@
-import { getConnection, Repository } from "typeorm";
-import Log from "../entity/Log";
-import LogEvent from "./types/LogEvent";
+import { getConnection, Repository } from 'typeorm';
+import Log from '../entity/Log';
+import LogEvent from './types/LogEvent';
 
 class TransactionLog {
     private logs: Repository<Log>;

@@ -1,22 +1,30 @@
-import { prisma } from "../prisma";
-import { isEmailAvailable } from "../user/email";
-import { v4 as uuidv4 } from "uuid";
-import { School } from "../entity/School";
-import * as Notification from "../notification";
-import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
-import { pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_languages_enum as Language, pupil_learninggermansince_enum, pupil_schooltype_enum as SchoolType } from "@prisma/client";
-import { Subject } from "../entity/Student";
-import { Address } from "address-rfc2821";
-import { logTransaction } from "../transactionlog/log";
-import { PrerequisiteError, RedundantError } from "../util/error";
-import { toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
+import { prisma } from '../prisma';
+import { isEmailAvailable } from '../user/email';
+import { v4 as uuidv4 } from 'uuid';
+import { School } from '../entity/School';
+import * as Notification from '../notification';
+import { TuteeJufoParticipationIndication } from '../jufo/participationIndication';
+import {
+    pupil_projectfields_enum as ProjectField,
+    pupil_state_enum as State,
+    pupil as Pupil,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_languages_enum as Language,
+    pupil_learninggermansince_enum,
+    pupil_schooltype_enum as SchoolType,
+} from '@prisma/client';
+import { Subject } from '../entity/Student';
+import { Address } from 'address-rfc2821';
+import { logTransaction } from '../transactionlog/log';
+import { PrerequisiteError, RedundantError } from '../util/error';
+import { toPupilSubjectDatabaseFormat } from '../util/subjectsutils';
 
 export interface RegisterPupilData {
     firstname: string;
     lastname: string;
     email: string;
     newsletter: boolean;
-    schoolId?: School["id"];
+    schoolId?: School['id'];
     schooltype?: SchoolType;
     state: State;
     registrationSource: RegistrationSource;
@@ -42,7 +50,6 @@ export interface BecomeStatePupilData {
     teacherEmail: string;
     gradeAsInt?: number;
 }
-
 
 export async function registerPupil(data: RegisterPupilData) {
     if (!(await isEmailAvailable(data.email))) {
@@ -76,21 +83,21 @@ export async function registerPupil(data: RegisterPupilData) {
             registrationSource: data.registrationSource,
 
             // Compatibility with legacy foreign keys
-            wix_id: "Z-" + uuidv4(),
+            wix_id: 'Z-' + uuidv4(),
             wix_creation_date: new Date(),
 
             // Every pupil can participate in courses
             isParticipant: true,
 
             // the authToken is used to verify the e-mail instead
-            verification
-        }
+            verification,
+        },
     });
 
     // TODO: Create a new E-Mail for registration
     // TODO: Send auth token with this
-    await Notification.actionTaken(pupil, "pupil_registration_started", { redirectTo: data.redirectTo ?? "", verification });
-    await logTransaction("verificationRequets", pupil, {});
+    await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+    await logTransaction('verificationRequets', pupil, {});
 
     return pupil;
 }
@@ -107,9 +114,9 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
             isProjectCoachee: true,
             isJufoParticipant,
             projectFields,
-            projectMemberCount
+            projectMemberCount,
         },
-        where: { id: pupil.id }
+        where: { id: pupil.id },
     });
 
     return updatedPupil;
@@ -126,9 +133,9 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
             subjects: JSON.stringify(data.subjects.map(toPupilSubjectDatabaseFormat)),
             grade: `${data.gradeAsInt}. Klasse`,
             languages: data.languages ? { set: data.languages } : undefined,
-            learningGermanSince: data.learningGermanSince
+            learningGermanSince: data.learningGermanSince,
         },
-        where: { id: pupil.id }
+        where: { id: pupil.id },
     });
 
     return updatedPupil;
@@ -153,9 +160,9 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
     const updatedPupil = await prisma.pupil.update({
         data: {
             teacherEmailAddress: data.teacherEmail,
-            grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse`: undefined
+            grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse` : undefined,
         },
-        where: { id: pupil.id }
+        where: { id: pupil.id },
     });
 
     return updatedPupil;

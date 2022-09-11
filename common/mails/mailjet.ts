@@ -1,36 +1,40 @@
-import { mailjetSmtp } from "./config";
-import * as mailjetAPI from "node-mailjet";
-import { getLogger } from "log4js";
+import { mailjetSmtp } from './config';
+import { getLogger } from 'log4js';
+import * as mailjet from './mailjetTypes';
 
 const logger = getLogger();
+const auth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
 
-async function sendMessage(message: mailjetAPI.Email.SendParamsMessage, sandbox: boolean = false) {
+async function sendMessage(message: mailjet.SendParamsMessage, sandbox: boolean = false) {
     //determine whether we have sandbox mode or not...
     let sandboxMode = sandbox;
 
-    if (process.env.MAILJET_LIVE === "TEST") {
+    if (process.env.MAILJET_LIVE === 'TEST') {
         message.Subject = `[TEST] ${message.Subject}`;
-        logger.warn("Mailjet API sending in TEST/DEV MODE!");
-    } else if (process.env.MAILJET_LIVE != "1") {
+        logger.warn('Mailjet API sending in TEST/DEV MODE!');
+    } else if (process.env.MAILJET_LIVE != '1') {
         //if mailjet is not set to live (via envs), always switch to sandbox, no matter what the sandbox-Parameter is set to
-        logger.warn("Mailjet API not sending: MAILJET_LIVE not set");
+        logger.warn('Mailjet API not sending: MAILJET_LIVE not set');
         sandboxMode = true;
     }
 
-    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
-
     //send actual email
-    let requestOptions: mailjetAPI.Email.SendParams = {
+    let requestOptions: mailjet.SendParams = {
         SandboxMode: sandboxMode,
-        Messages: [
-            message
-        ]
+        Messages: [message],
     };
 
     //log what is sent to mailjet, so we can better debug some problems with mails
     logger.info(`Sending send-request to Mailjet: ${JSON.stringify(requestOptions)}`);
 
-    return await mailjet.post("send", { version: "v3.1" }).request(requestOptions);
+    return await fetch('https://api.mailjet.com/v3.1/send', {
+        body: JSON.stringify(requestOptions),
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/json',
+        },
+        method: 'POST',
+    }).then((res) => res.json());
 }
 
 async function sendMailPure(
@@ -45,25 +49,25 @@ async function sendMailPure(
     sandbox: boolean = false
 ) {
     // construct mailjet API message
-    const message: mailjetAPI.Email.SendParamsMessage = {
-        From: {
+    const message: mailjet.SendParamsMessage = {
+        From: {
             Email: senderAddress,
-            Name: senderName
+            Name: senderName,
         },
         To: [
             {
                 Email: receiverAddress,
-                Name: receiverName
-            }
+                Name: receiverName,
+            },
         ],
         Subject: subject,
-        TextPart: text
+        TextPart: text,
     };
 
     if (replyToAddress) {
         message.ReplyTo = {
             Email: replyToAddress,
-            Name: replyToName
+            Name: replyToName,
         };
     }
 
@@ -79,19 +83,19 @@ async function sendMailTemplate(
     sandbox: boolean = false,
     replyToAddress?: string,
     attachements?: {
-        ContentType: string,
-        Filename: string,
-        Base64Content: string
+        ContentType: string;
+        Filename: string;
+        Base64Content: string;
     }[]
 ) {
     const message: any = {
         From: {
-            Email: senderAddress
+            Email: senderAddress,
         },
         To: [
             {
-                Email: receiverAddress
-            }
+                Email: receiverAddress,
+            },
         ],
         TemplateID: templateID,
         TemplateLanguage: true,
@@ -99,35 +103,37 @@ async function sendMailTemplate(
         Subject: subject,
         Attachments: attachements,
         TemplateErrorReporting: {
-            Email: "backend@lern-fair.de"
-        }
+            Email: 'backend@lern-fair.de',
+        },
     };
 
     if (replyToAddress) {
         message.ReplyTo = {
-            Email: replyToAddress
+            Email: replyToAddress,
         };
     }
 
     return await sendMessage(message, sandbox);
 }
 
-async function getHardBounces() : Promise<mailjetAPI.Email.GetResponse> {
-    const mailjet = mailjetAPI.connect(mailjetSmtp.auth.user, mailjetSmtp.auth.pass);
-
-    return await mailjet
-        .get("message", {version: "v3"})
-        .request({'MessageStatus': 10, 'ShowContactAlt': true });
+async function getHardBounces(): Promise<mailjet.GetResponse> {
+    return await fetch('https://api.mailjet.com/v3/REST/message', {
+        body: JSON.stringify({ MessageStatus: 10, ShowContactAlt: true }),
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/json',
+        },
+    }).then((res) => res.json());
 }
 
 const ErrorCodes = {
     RATE_LIMIT: 429,
-    NOT_AUTHORIZED: 401
+    NOT_AUTHORIZED: 401,
 };
 
 export default {
     sendTemplate: sendMailTemplate,
     sendPure: sendMailPure,
     ErrorCodes: ErrorCodes,
-    getHardBounces: getHardBounces
+    getHardBounces: getHardBounces,
 };

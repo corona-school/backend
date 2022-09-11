@@ -1,7 +1,7 @@
-import { Student, Pupil, Screener } from "../generated";
-import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int, Mutation, Arg } from "type-graphql";
-import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, runMatching } from "../../common/match/pool";
-import { Role } from "../authorizations";
+import { Student, Pupil, Screener } from '../generated';
+import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int, Mutation, Arg } from 'type-graphql';
+import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, runMatching } from '../../common/match/pool';
+import { Role } from '../authorizations';
 
 @ObjectType()
 class TemporaryMatch {
@@ -25,7 +25,7 @@ class MatchingSubjectStats {
 class MatchingSubjectNameStats {
     @Field()
     name: string;
-    @Field(type => MatchingSubjectStats)
+    @Field((type) => MatchingSubjectStats)
     stats: MatchingSubjectStats;
 }
 @ObjectType()
@@ -52,9 +52,8 @@ class MatchingStats {
     numberOfOfferedSubjects?: number;
     @Field({ nullable: true })
     numberOfMatchingEdgesWithMatchingState?: number;
-    @Field(type => [MatchingSubjectNameStats])
+    @Field((type) => [MatchingSubjectNameStats])
     subjectStats: MatchingSubjectNameStats[];
-
 }
 
 @ObjectType()
@@ -68,19 +67,19 @@ class MatchingTiming {
 }
 @ObjectType()
 class MatchPoolRunResult {
-    @Field(type => [TemporaryMatch])
+    @Field((type) => [TemporaryMatch])
     matches: TemporaryMatch[];
-    @Field(type => MatchingStats)
+    @Field((type) => MatchingStats)
     stats: MatchingStats;
-    @Field(type => MatchingTiming)
+    @Field((type) => MatchingTiming)
     timing: MatchingTiming;
 }
 
-@Resolver(of => MatchPoolRunResult)
+@Resolver((of) => MatchPoolRunResult)
 export class MutateMatchPoolResolver {
-    @Mutation(returns => MatchPoolRunResult)
+    @Mutation((returns) => MatchPoolRunResult)
     @Authorized(Role.ADMIN)
-    async matchPoolRun(@Arg("name") name: string, @Arg("apply") apply: boolean, @Arg("toggles", _type => [String], { nullable: true }) toggles?: string[]) {
+    async matchPoolRun(@Arg('name') name: string, @Arg('apply') apply: boolean, @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[]) {
         return await runMatching(name, apply, toggles ?? []);
     }
 }

@@ -1,4 +1,4 @@
-import {Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
@@ -26,8 +26,11 @@ export class ConcreteNotification {
 
     // For DELAYED and PENDING notifications we also store the context, to be able to resend
     // notifications in the future
-    @Column({ type: "json" })
+    @Column({ type: 'json' })
     context: any;
+
+    @Column({ nullable: true })
+    attachmentGroupId: string;
 
     // sentAt a.k.a. "sendAt" conveys the following meaning depending on the state:
     // DELAYED - the time at which the notification is supposed to be sent
@@ -35,7 +38,7 @@ export class ConcreteNotification {
     // SENT    - the time at which the notification was actually sent
     // ERROR   - the time at which the error was reported back from the channel
     // ACTION_TAKEN - the time at which the action was taken by the user
-    @Column({ type: "timestamp" })
+    @Column({ type: 'timestamp' })
     sentAt: Date;
 
     @Column()

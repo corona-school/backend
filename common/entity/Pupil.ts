@@ -1,20 +1,20 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from "typeorm";
-import { Match } from "./Match";
-import { Person, RegistrationSource } from "./Person";
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
+import { Match } from './Match';
+import { Person, RegistrationSource } from './Person';
 import { Subcourse } from './Subcourse';
 import { State } from './State';
 import { School } from './School';
-import {CourseAttendanceLog} from "./CourseAttendanceLog";
-import { SchoolType } from "./SchoolType";
-import { ProjectField } from "../jufo/projectFields";
-import { TuteeJufoParticipationIndication } from "../jufo/participationIndication";
-import { ProjectMatch } from "./ProjectMatch";
-import { gradeAsInt } from "../util/gradestrings";
-import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from "./Student";
-import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from "../util/subjectsutils";
-import { LearningGermanSince } from "../daz/learningGermanSince";
-import { Language } from "../daz/language";
-import { PupilTutoringInterestConfirmationRequest } from "./PupilTutoringInterestConfirmationRequest";
+import { CourseAttendanceLog } from './CourseAttendanceLog';
+import { SchoolType } from './SchoolType';
+import { ProjectField } from '../jufo/projectFields';
+import { TuteeJufoParticipationIndication } from '../jufo/participationIndication';
+import { ProjectMatch } from './ProjectMatch';
+import { gradeAsInt } from '../util/gradestrings';
+import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from './Student';
+import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from '../util/subjectsutils';
+import { LearningGermanSince } from '../daz/learningGermanSince';
+import { Language } from '../daz/language';
+import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
 
 @Entity()
 export class Pupil extends Person {
@@ -23,7 +23,7 @@ export class Pupil extends Person {
      */
     @Column()
     @Index({
-        unique: true
+        unique: true,
     })
     wix_id: string;
 
@@ -36,29 +36,29 @@ export class Pupil extends Person {
     @Column({
         type: 'enum',
         enum: State,
-        default: State.OTHER
+        default: State.OTHER,
     })
     state: State;
 
     @Column({
         type: 'enum',
         enum: SchoolType,
-        default: SchoolType.SONSTIGES
+        default: SchoolType.SONSTIGES,
     })
     schooltype: SchoolType;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     msg: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     grade: string;
 
     @Column({
-        default: false
+        default: false,
     })
     newsletter: boolean;
 
@@ -66,39 +66,42 @@ export class Pupil extends Person {
      * Pupil data
      */
     @Column({
-        default: false
+        default: false,
     })
     isPupil: boolean;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     subjects: string;
 
-    @OneToMany(type => Match, match => match.pupil, { nullable: true })
+    @OneToMany((type) => Match, (match) => match.pupil, { nullable: true })
     matches: Promise<Match[]>;
 
     @Column({
         nullable: false,
-        default: 1
+        default: 1,
     })
     openMatchRequestCount: number;
+
+    @Column({ nullable: true })
+    firstMatchRequest: Date;
 
     /*
      * Participant data
      */
     @Column({
-        default: true
+        default: true,
     })
     isParticipant: boolean;
 
-    @ManyToMany(type => Subcourse, subcourse => subcourse.participants)
+    @ManyToMany((type) => Subcourse, (subcourse) => subcourse.participants)
     subcourses: Subcourse[];
 
-    @ManyToMany(type => Subcourse, subcourse => subcourse.waitingList)
+    @ManyToMany((type) => Subcourse, (subcourse) => subcourse.waitingList)
     queuedSubcourses: Subcourse[];
 
-    @OneToMany(type => CourseAttendanceLog, courseAttendanceLog => courseAttendanceLog.pupil)
+    @OneToMany((type) => CourseAttendanceLog, (courseAttendanceLog) => courseAttendanceLog.pupil)
     courseAttendanceLog: CourseAttendanceLog[];
 
     /*
@@ -106,55 +109,55 @@ export class Pupil extends Person {
      */
     @Column({
         default: false,
-        nullable: false
+        nullable: false,
     })
     isProjectCoachee: boolean;
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: ProjectField,
         default: [],
         nullable: false,
-        array: true
+        array: true,
     })
     projectFields: ProjectField[];
 
     @Column({
         default: TuteeJufoParticipationIndication.UNSURE,
-        nullable: false
+        nullable: false,
     })
     isJufoParticipant: TuteeJufoParticipationIndication;
 
     @Column({
         nullable: false,
-        default: 1
+        default: 1,
     })
     openProjectMatchRequestCount: number;
 
     @Column({
         nullable: false,
-        default: 1
+        default: 1,
     })
     projectMemberCount: number;
 
-    @OneToMany(type => ProjectMatch, match => match.pupil, { nullable: true })
+    @OneToMany((type) => ProjectMatch, (match) => match.pupil, { nullable: true })
     projectMatches: Promise<ProjectMatch[]>;
 
     /*
      * DaZ data
      */
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: Language,
         default: [],
-        array: true
+        array: true,
     })
     languages: Language[];
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: LearningGermanSince,
-        nullable: true
+        nullable: true,
     })
     learningGermanSince: LearningGermanSince;
 
@@ -163,7 +166,7 @@ export class Pupil extends Person {
      */
     @Column({
         nullable: false,
-        default: 0 //everyone is default 0, i.e no priority
+        default: 0, //everyone is default 0, i.e no priority
     })
     matchingPriority: number;
 
@@ -171,40 +174,40 @@ export class Pupil extends Person {
     // The frontend should set this value. It may be null, if it was never used by the frontend
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     lastUpdatedSettingsViaBlocker: Date;
 
     @ManyToOne((type) => School, (school) => school.pupils, {
         eager: true,
-        nullable: true
+        nullable: true,
     })
     @JoinColumn()
     school: School;
 
     @Column({
         nullable: true,
-        default: null
+        default: null,
     })
     teacherEmailAddress: string;
 
     @Column({
         type: 'enum',
         enum: RegistrationSource,
-        default: RegistrationSource.NORMAL
+        default: RegistrationSource.NORMAL,
     })
     registrationSource: RegistrationSource;
 
     @OneToOne((type) => PupilTutoringInterestConfirmationRequest, (pticr) => pticr.pupil, {
         nullable: true,
-        cascade: true
+        cascade: true,
     })
     tutoringInterestConfirmationRequest?: PupilTutoringInterestConfirmationRequest;
 
     @Column({
         nullable: true,
         default: null,
-        unique: true
+        unique: true,
     })
     coduToken: string;
 
@@ -226,7 +229,14 @@ export class Pupil extends Person {
         const fieldsCoach = await coach.getProjectFields();
         const pupilGrade = this.assumedProjectCoachingMatchingGrade();
 
-        return this.projectFields.filter(f => fieldsCoach.some(fc => fc.name === f && (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade && pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)));
+        return this.projectFields.filter((f) =>
+            fieldsCoach.some(
+                (fc) =>
+                    fc.name === f &&
+                    (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade &&
+                    pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)
+            )
+        );
     }
 
     getSubjectsFormatted(): Subject[] {
@@ -246,7 +256,14 @@ export class Pupil extends Person {
 
         const tuteeGrade = this.gradeAsNumber();
 
-        return tuteeSubjects.filter(tuteeS => tutorSubjects.some(tutorS => tuteeS.name === tutorS.name && (tutorS.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade && tuteeGrade <= (tutorS.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)));
+        return tuteeSubjects.filter((tuteeS) =>
+            tutorSubjects.some(
+                (tutorS) =>
+                    tuteeS.name === tutorS.name &&
+                    (tutorS.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade &&
+                    tuteeGrade <= (tutorS.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)
+            )
+        );
     }
 }
 
@@ -262,9 +279,6 @@ export async function activeMatchesOfPupil(p: Pupil, manager: EntityManager) {
     return (await p.matches).filter((m) => m.dissolved === false);
 }
 
-export async function activeMatchCountOfPupil(
-    p: Pupil,
-    manager: EntityManager
-) {
+export async function activeMatchCountOfPupil(p: Pupil, manager: EntityManager) {
     return (await activeMatchesOfPupil(p, manager)).length;
 }

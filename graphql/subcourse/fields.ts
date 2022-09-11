@@ -9,77 +9,76 @@ import { PublicCache } from "../cache";
 import { getSessionPupil } from "../authentication";
 import { GraphQLContext } from "../context";
 
-@Resolver(of => Subcourse)
+@Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
-
-    @Query(returns => [Subcourse])
+    @Query((returns) => [Subcourse])
     @Authorized(Role.UNAUTHENTICATED)
     @LimitedQuery()
     @PublicCache()
     async subcoursesPublic(
-        @Arg("take", { nullable: true }) take?: number,
-        @Arg("skip", { nullable: true }) skip?: number,
-        @Arg("search", { nullable: true }) search?: string,
-        @Arg("onlyJoinable", { nullable: true }) onlyJoinable?: boolean
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('search', { nullable: true }) search?: string,
+        @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean
     ) {
-
-        const filters: Prisma.subcourseWhereInput[] = [{
-            published: { equals: true },
-            cancelled: { equals: false },
-            course: {
-                is: {
-                    courseState: { equals: CourseState.ALLOWED }
-                }
-            }
-        }];
+        const filters: Prisma.subcourseWhereInput[] = [
+            {
+                published: { equals: true },
+                cancelled: { equals: false },
+                course: {
+                    is: {
+                        courseState: { equals: CourseState.ALLOWED },
+                    },
+                },
+            },
+        ];
 
         if (search) {
             filters.push({
-                course: { is: { OR: [
-                    { outline: { contains: search, mode: "insensitive" }},
-                    { name: { contains: search, mode: "insensitive" }}
-                ] }}
+                course: { is: { OR: [{ outline: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }] } },
             });
         }
 
         if (onlyJoinable) {
-            filters.push({ OR: [
-                { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() }}} },
-                { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() }}} }
-            ] });
+            filters.push({
+                OR: [
+                    { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
+                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
+                ],
+            });
         }
 
         return await prisma.subcourse.findMany({
             where: { AND: filters },
             take,
             skip,
-            orderBy: { updatedAt: "desc" }
+            orderBy: { updatedAt: 'desc' },
         });
     }
 
-    @FieldResolver(returns => Course)
+    @FieldResolver((returns) => Course)
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(1)
     @PublicCache()
     async course(@Root() subcourse: Subcourse) {
         return await prisma.course.findUnique({
-            where: { id: subcourse.courseId }
+            where: { id: subcourse.courseId },
         });
     }
 
-    @FieldResolver(returns => [Lecture])
+    @FieldResolver((returns) => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(10)
     @PublicCache()
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
-                subcourseId: subcourse.id
-            }
+                subcourseId: subcourse.id,
+            },
         });
     }
 
-    @FieldResolver(returns => [Pupil])
+    @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
     async participants(@Root() subcourse: Subcourse) {
@@ -87,23 +86,23 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourse_participants_pupil: {
                     some: {
-                        subcourseId: subcourse.id
-                    }
-                }
-            }
+                        subcourseId: subcourse.id,
+                    },
+                },
+            },
         });
     }
 
-    @FieldResolver(returns => Number)
+    @FieldResolver((returns) => Number)
     @Authorized(Role.UNAUTHENTICATED)
     @PublicCache()
     async participantsCount(@Root() subcourse: Subcourse) {
         return await prisma.subcourse_participants_pupil.count({
-            where: { subcourseId: subcourse.id }
+            where: { subcourseId: subcourse.id },
         });
     }
 
-    @FieldResolver(returns => [Pupil])
+    @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
     async pupilsWaiting(@Root() subcourse: Subcourse) {
@@ -111,19 +110,19 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourse_waiting_list_pupil: {
                     some: {
-                        subcourseId: subcourse.id
-                    }
-                }
-            }
+                        subcourseId: subcourse.id,
+                    },
+                },
+            },
         });
     }
 
-    @FieldResolver(returns => Number)
+    @FieldResolver((returns) => Number)
     @Authorized(Role.UNAUTHENTICATED)
     @PublicCache()
     async pupilsWaitingCount(@Root() subcourse: Subcourse) {
         return await prisma.subcourse_waiting_list_pupil.count({
-            where: { subcourseId: subcourse.id }
+            where: { subcourseId: subcourse.id },
         });
     }
 
@@ -144,3 +143,11 @@ export class ExtendedFieldsSubcourseResolver {
 
 }
 
+    @FieldResolver((returns) => BBBMeeting, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async meeting(@Root() subcourse: Subcourse) {
+        return await prisma.bbb_meeting.findFirst({
+            where: { meetingID: '' + subcourse.id },
+        });
+    }
+}

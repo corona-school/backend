@@ -1,16 +1,7 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-import { ScreeningInfo } from "../util/screening";
-import { Screener } from "./Screener";
-import { Student } from "./Student";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { ScreeningInfo } from '../util/screening';
+import { Screener } from './Screener';
+import { Student } from './Student';
 
 @Entity()
 export class Screening {
@@ -21,29 +12,29 @@ export class Screening {
     success: boolean; //verified or not verified
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     comment: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     knowsCoronaSchoolFrom: string;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @ManyToOne((type) => Screener, (screener) => screener.screenings, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     screener: Screener;
 
     @OneToOne((type) => Student, (student) => student.screening, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     student: Student;

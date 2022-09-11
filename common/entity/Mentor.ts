@@ -1,28 +1,27 @@
-import {Person} from "./Person";
-import {Column, Entity, Index} from "typeorm";
+import { Person } from './Person';
+import { Column, Entity, Index } from 'typeorm';
 
 export enum Division {
-    FACEBOOK = "facebook",
-    EMAIL = "email",
-    EVENTS = "events",
-    VIDEO = "video",
-    SUPERVISION = "supervision"
+    FACEBOOK = 'facebook',
+    EMAIL = 'email',
+    EVENTS = 'events',
+    VIDEO = 'video',
+    SUPERVISION = 'supervision',
 }
 
 export enum Expertise {
-    LANGUAGE = "language difficulties and communication",
-    SPECIALIZED = "specialized expertise in subjects",
-    EDUCATIONAL = "educational and didactic expertise",
-    TECHSUPPORT = "technical support",
-    SELFORGANIZATION = "self-organization"
+    LANGUAGE = 'language difficulties and communication',
+    SPECIALIZED = 'specialized expertise in subjects',
+    EDUCATIONAL = 'educational and didactic expertise',
+    TECHSUPPORT = 'technical support',
+    SELFORGANIZATION = 'self-organization',
 }
 
 @Entity()
 export class Mentor extends Person {
-
     @Column()
     @Index({
-        unique: true
+        unique: true,
     })
     wix_id: string;
 
@@ -30,47 +29,47 @@ export class Mentor extends Person {
     wix_creation_date: Date;
 
     @Column({
-        name: "division",
-        type: "enum",
+        name: 'division',
+        type: 'enum',
         enum: Division,
         array: true,
-        nullable: false
+        nullable: false,
     })
     division: Division[];
 
     @Column({
-        name: "expertise",
-        type: "enum",
+        name: 'expertise',
+        type: 'enum',
         enum: Expertise,
         array: true,
-        nullable: false
+        nullable: false,
     })
     expertise: Expertise[];
 
     // subjects: refer to normal subject list (if division is supervision OR expertise is "specialized expertise in subjects")
     @Column({
-        nullable: true
+        nullable: true,
     })
     subjects: string;
 
     // teachingExperience: boolean (if division is supervision OR expertise is "specialized expertise in subjects")
     @Column({
-        nullable: true
+        nullable: true,
     })
     teachingExperience: boolean;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     message: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     description: string;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     imageUrl: string;
 }

@@ -1,19 +1,19 @@
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from "type-graphql";
-import { Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation } from "../generated";
-import { InterestConfirmationStatus } from "../../common/entity/PupilTutoringInterestConfirmationRequest";
-import { Role } from "../authorizations";
-import { getPupil } from "../util";
-import { prisma } from "../../common/prisma";
-import { logTransaction } from "../../common/transactionlog/log";
-import { RedundantError } from "../../common/util/error";
-import { UserInputError } from "../error";
-import { generateToken } from "../../jobs/periodic/fetch/utils/verification";
+import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
+import { Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation } from '../generated';
+import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
+import { Role } from '../authorizations';
+import { getPupil } from '../util';
+import { prisma } from '../../common/prisma';
+import { logTransaction } from '../../common/transactionlog/log';
+import { RedundantError } from '../../common/util/error';
+import { UserInputError } from '../error';
+import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
 
 async function changeStatus(token: string, status: InterestConfirmationStatus) {
     const confirmation = await prisma.pupil_tutoring_interest_confirmation_request.findUnique({
         where: {
-            token
-        }
+            token,
+        },
     });
 
     if (!confirmation) {
@@ -26,38 +26,38 @@ async function changeStatus(token: string, status: InterestConfirmationStatus) {
 
     await prisma.pupil_tutoring_interest_confirmation_request.update({
         data: { status },
-        where: { token }
+        where: { token },
     });
 
     const pupil = await getPupil(confirmation.pupilId);
-    logTransaction("pupilInterestConfirmationRequestStatusChange", pupil, {
+    logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
         changeDate: Date.now(),
         previousStatus: InterestConfirmationStatus.PENDING,
-        newStatus: status
+        newStatus: status,
     });
 }
-@Resolver(of => TutoringInterestConfirmation)
+@Resolver((of) => TutoringInterestConfirmation)
 export class MutateTutoringInterestConfirmationResolver {
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    async tutoringInterestConfirm(@Arg("token") token: string) {
+    async tutoringInterestConfirm(@Arg('token') token: string) {
         await changeStatus(token, InterestConfirmationStatus.CONFIRMED);
         return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    async tutoringInterestRefuse(@Arg("token") token: string) {
+    async tutoringInterestRefuse(@Arg('token') token: string) {
         await changeStatus(token, InterestConfirmationStatus.REFUSED);
         return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async tutoringInterestCreate(@Arg("pupilId") pupilId: number, @Arg("status") status: InterestConfirmationStatus) {
+    async tutoringInterestCreate(@Arg('pupilId') pupilId: number, @Arg('status') status: InterestConfirmationStatus) {
         const pupil = await getPupil(pupilId);
         const existing = await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
-            where: { pupilId }
+            where: { pupilId },
         });
 
         if (existing) {
@@ -66,13 +66,13 @@ export class MutateTutoringInterestConfirmationResolver {
         }
 
         await prisma.pupil_tutoring_interest_confirmation_request.create({
-            data: { token: generateToken(), pupilId, status }
+            data: { token: generateToken(), pupilId, status },
         });
 
-        logTransaction("pupilInterestConfirmationRequestStatusChange", pupil, {
+        logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
             changeDate: Date.now(),
             previousStatus: InterestConfirmationStatus.PENDING,
-            newStatus: status
+            newStatus: status,
         });
 
         return true;
