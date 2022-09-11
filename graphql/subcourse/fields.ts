@@ -128,11 +128,19 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver(returns => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.PUPIL)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg("pupilId", {nullable: true}) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await prisma.subcourse_participants_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
 
     }
+
+    @FieldResolver(returns => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async isOnWaitingList(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg("pupilId", {nullable: true}) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
+        return await prisma.subcourse_waiting_list_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
+    }
+
 }
 
