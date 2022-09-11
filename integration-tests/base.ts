@@ -5,7 +5,7 @@ import { GraphQLClient } from "graphql-request";
 
 const APP = "corona-school-backend-dev";
 const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
-const ADMIN_TOKEN = "ADMIN_TOKEN";
+const ADMIN_TOKEN = process.env.ADMIN_AUTH_TOKEN;
 
 const silent = process.env.INTEGRATION_SILENT === "true";
 
@@ -66,9 +66,12 @@ function wrapClient(client: GraphQLClient) {
 
 export const defaultClient = wrapClient(new GraphQLClient(URL));
 
+const adminAuthorization = `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`;
+console.log("admin authorization", ADMIN_TOKEN, adminAuthorization);
+
 export const adminClient = wrapClient(new GraphQLClient(URL, {
     headers: {
-        authorization: `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`
+        authorization: adminAuthorization,
     }
 }));
 

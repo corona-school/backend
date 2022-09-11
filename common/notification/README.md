@@ -13,6 +13,9 @@ Each notification can be sent over multiple **channels**, however currently ther
 
 For each notification and reminder sent out to a user, a **concrete notification** gets stored in the database. Reminders are initially in the "delayed" state, and in "action_taken" state if they we're cancelled. They're in "pending" state if the backend is currently processing them, and they're "sent" if the Channel successfully sent them out (not necessarily delivered them successfully). If an error occured, the backend does not crash but stored the error in the concrete notification and changes the state to "error". Concrete Notifications also store the context (as reminders need to access the context at a later point in time).
 
+Optionally a notification can trigger a **notification hook** when it is sent out. This makes sense for notifications which inform the user about changes to their account (e.g. that it is deactivated). The hook is a function in the backend which is then executed.
+Thus by cancelling the notification or rescheduling it, one can influence whether and when the hook is run. 
+
 ## How do I create a new Notification / Reminder?
 
 1. Create a new Mailjet Template (or SMS Template or ...)

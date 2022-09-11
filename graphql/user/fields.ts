@@ -1,6 +1,6 @@
 import { Student, Pupil, Screener, Secret } from '../generated';
 import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from 'type-graphql';
-import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -30,25 +30,25 @@ export class UserType implements User {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     email(@Root() user: User): string {
         return user.email;
     }
 
     @FieldResolver((returns) => Pupil)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async pupil(@Root() user: User): Promise<Pupil> {
         if (!user.pupilId) {
             return null;
@@ -58,7 +58,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Student)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async student(@Root() user: User): Promise<Student> {
         if (!user.studentId) {
             return null;
@@ -68,7 +68,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Screener)
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async screener(@Root() user: User): Promise<Screener> {
         if (!user.screenerId) {
             return null;
@@ -78,8 +78,16 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => [Secret])
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN)
     async secrets(@Root() user: User) {
         return await getSecrets(user);
+    }
+
+    @FieldResolver((returns) => [String])
+    @Authorized(Role.ADMIN)
+    async roles(@Root() user: User) {
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
+        await loginAsUser(user, fakeContext);
+        return fakeContext.user.roles;
     }
 }

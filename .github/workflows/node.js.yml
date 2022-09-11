@@ -37,12 +37,14 @@ jobs:
       - run: npm run web:nopdf &
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
+          ADMIN_AUTH_TOKEN: admintoken
           ENV: dev
       - run: sleep 5
       - run: npm run integration-tests
         env:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
           INTEGRATION_SILENT: "true"
+          ADMIN_AUTH_TOKEN: admintoken
 
   lint:
     runs-on: ubuntu-20.04

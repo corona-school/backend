@@ -266,6 +266,7 @@ model notification {
   delay             Int?
   interval          Int?
   sender            notification_sender_enum?
+  hookID            String?                   @db.VarChar
 }
 
 model participation_certificate {
