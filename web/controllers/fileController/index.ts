@@ -1,5 +1,5 @@
-import * as Express from "express";
-import * as multer from "multer";
+import { Router } from "express";
+import multer from "multer";
 import { File, FileID, getFile, addFile } from "../../../graphql/files";
 
 const fileUpload = multer({
@@ -9,17 +9,13 @@ const fileUpload = multer({
     storage: multer.memoryStorage(),
 });
 
-const fileRouter = Express.Router();
+export const fileRouter = Router();
 
 fileRouter.post("/upload", fileUpload.single("file"), (req, res) => {
-    const file = req.body["file"];
+    const file: Express.Multer.File = req.body["file"];
 
     if (!file) {
         return res.status(400).send("Missing file");
-    }
-
-    if (file.encoding !== "utf-8") {
-        return res.status(400).send("Invalid file encoding. Expected UTF-8");
     }
 
     const fileID = addFile(file);
@@ -35,8 +31,10 @@ fileRouter.get("/download/:fileID", (req, res) => {
 
     try {
         const file = getFile(fileID);
-        res.sendFile(file);
-    } catch(error) {
+        res.attachment(file.originalname);
+        res.type(file.mimetype);
+        res.send(file.buffer);
+    } catch (error) {
         return res.status(404).send("File not Found");
     }
 

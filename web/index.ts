@@ -32,6 +32,7 @@ import * as notificationController from "./controllers/notificationController";
 import {getAttachmentUrlEndpoint} from "./controllers/attachmentController";
 import { isDev } from "../common/util/environment";
 import {isCommandArg} from "../common/util/basic";
+import { fileRouter } from "./controllers/fileController";
 
 // Logger setup
 try {
@@ -115,6 +116,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         configureApolloServer();
         configurePupilInterestConfirmationAPI();
         configureNotificationAPI();
+        configureFileAPI();
         const server = await deployServer();
         configureGracefulShutdown(server);
 
@@ -396,6 +398,10 @@ createConnection().then(setupPDFGenerationEnvironment)
             router.post("/check-reminders", notificationController.checkReminders);
 
             app.use("/api/notification", authCheckFactory(), router);
+        }
+
+        function configureFileAPI() {
+            app.use("/api/files", fileRouter);
         }
 
         async function configureApolloServer() {

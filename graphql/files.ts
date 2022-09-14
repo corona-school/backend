@@ -1,12 +1,12 @@
-/* ------------- File Handling in GraphQL ------------- 
+/* ------------- File Handling in GraphQL -------------
  As GraphQL is inherently a bad choice for transporting files,
   file up and downloading happens via regular HTTP endpoints.
-  
+
  When a user uploads a file via POSTing to /api/file/upload,
- the file is stored temporarily in memory for 5 minutes. 
+ the file is stored temporarily in memory for 5 minutes.
  The endpoint returns a FileID, which can then be passed to a GraphQL Mutation,
   which can then use that to retrieve the file (or multiple) from the store.
- 
+
  @Mutation(...)
  addSomeFile(@Arg("fileID") fileID: string) {
     const file = getFile(fileID);
@@ -20,14 +20,14 @@
  @Mutation(returns => String)
  getSomeFile() {
     const file = getSomeFile();
-    return getURL(addFile(file));
+    return getFileURL(addFile(file));
  }
 
- The advantage is that users can retry upload and download (which depending on network stability and bandwith 
+ The advantage is that users can retry upload and download (which depending on network stability and bandwith
     could take some time), also this provides a relatively generic API that can be used in different scenarios.
  As a downside, validations of files and users happens quite late (unauthenticated users can upload any file of any type),
   thus one can potentially overload the server with files. To guard against OOM, the server rejects file uploads very early,
-  ensuring availability of the overall system while sacrificing availability of file handling. 
+  ensuring availability of the overall system while sacrificing availability of file handling.
 */
 
 
@@ -40,7 +40,7 @@ const FILE_STORAGE_MAX_SIZE = 20; // Prevent file storage from growing infinitel
 const log = getLogger("GraphQL Files");
 
 export interface File {
-    originalname: string; //	Name of the file on the user's computer	
+    originalname: string; //	Name of the file on the user's computer
     mimetype: string;
     buffer: Buffer; // of UTF-8 encoded data
 }
@@ -64,7 +64,7 @@ export function addFile(file: File): FileID {
 
     log.info(`Added file '${fileID}' to file store with name ${file.originalname}, type ${file.mimetype} and size ${file.buffer.length}`);
 
-    return fileID; 
+    return fileID;
 }
 
 export function getFile(fileID: FileID): File {
@@ -78,6 +78,6 @@ export function getFile(fileID: FileID): File {
 
 export const getFiles = (fileIDs: FileID[]) => fileIDs.map(getFile);
 
-export function getURL(fileID: FileID): string {
+export function getFileURL(fileID: FileID): string {
     return `https://api.corona-school.de/api/download/${fileID}`;
 }
