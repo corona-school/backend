@@ -3,7 +3,7 @@
   file up and downloading happens via regular HTTP endpoints.
 
  When a user uploads a file via POSTing to /api/file/upload,
- the file is stored temporarily in memory for 5 minutes.
+ the file is stored temporarily in memory for 10 minutes.
  The endpoint returns a FileID, which can then be passed to a GraphQL Mutation,
   which can then use that to retrieve the file (or multiple) from the store.
 

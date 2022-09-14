@@ -12,13 +12,11 @@ const fileUpload = multer({
 export const fileRouter = Router();
 
 fileRouter.post("/upload", fileUpload.single("file"), (req, res) => {
-    const file: Express.Multer.File = req.body["file"];
-
-    if (!file) {
+    if (!req.file) {
         return res.status(400).send("Missing file");
     }
 
-    const fileID = addFile(file);
+    const fileID = addFile(req.file);
 
     return res.status(200).send(fileID);
 });
