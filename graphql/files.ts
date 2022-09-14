@@ -79,5 +79,5 @@ export function getFile(fileID: FileID): File {
 export const getFiles = (fileIDs: FileID[]) => fileIDs.map(getFile);
 
 export function getFileURL(fileID: FileID): string {
-    return `https://api.corona-school.de/api/download/${fileID}`;
+    return `/api/files/download/${fileID}`;
 }
