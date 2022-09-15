@@ -53,6 +53,9 @@ export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     lastname?: string;
 
+    @Field((type) => String, { nullable: true })
+    email?: string;
+
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
 
@@ -65,14 +68,18 @@ export class StudentUpdateInput {
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, projectFields, subjects, registrationSource } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
     }
 
-    if (registrationSource != undefined && !isElevated(context)) {
+    if (registrationSource !== undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
+    }
+
+    if (email !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
     if (projectFields) {
@@ -83,6 +90,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         data: {
             firstname,
             lastname,
+            email,
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource,
         },

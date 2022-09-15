@@ -24,6 +24,9 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     lastname?: string;
 
+    @Field((type) => String, { nullable: true })
+    email?: string;
+
     @Field((type) => Int, { nullable: true })
     gradeAsInt?: number;
 
@@ -39,20 +42,25 @@ export class PupilUpdateInput {
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext('Pupil', context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource } = update;
+    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
     }
 
-    if (registrationSource != undefined && !isElevated(context)) {
+    if (registrationSource !== undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
+    }
+
+    if (email !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
     await prisma.pupil.update({
         data: {
             firstname,
             lastname,
+            email,
             // TODO: Store numbers as numbers maybe ...
             grade: gradeAsInt ? `${gradeAsInt}. Klasse` : undefined,
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
