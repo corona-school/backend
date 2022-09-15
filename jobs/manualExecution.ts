@@ -10,6 +10,7 @@ import tutoringMatchMaking from "./periodic/tutoring-match-making";
 import initialInterestConfirmationRequests from "./periodic/interest-confirmation-requests";
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
+import dropOldNotificationContexts from "./periodic/drop-old-notification-contexts";
 import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { setup as setupLogging } from "./utils/logging";
@@ -71,7 +72,11 @@ const executeJob = async (job) => {
             break;
         }
         case 'redactInactiveAccounts': {
-            redactInactiveAccounts(jobConnection.manager);
+            redactInactiveAccounts();
+            break;
+        }
+        case 'dropOldNotificationContexts': {
+            dropOldNotificationContexts();
             break;
         }
         default: {

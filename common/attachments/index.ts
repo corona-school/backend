@@ -2,9 +2,10 @@ import {Student} from "../entity/Student";
 import {Pupil} from "../entity/Pupil";
 import { prisma } from '../prisma';
 import { v4 as uuid } from "uuid";
-import {putFile, ATTACHMENT_BUCKET, generatePresignedURL} from "../file-bucket";
+import {putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile} from "../file-bucket";
 import {getUserIdTypeORM} from "../user";
 import {friendlyFileSize} from "../util/basic";
+import {Attachment} from "../entity/Attachment";
 
 export interface AttachmentGroup {
     attachmentGroupId: string;
@@ -94,4 +95,17 @@ export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: s
     const attachmentListHTML = await getAttachmentListHTML(attachmentList, attachmentGroupId);
 
     return { attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map(a => a.id) };
+}
+
+/**
+ * Takes a given attachment and removes the corresponding file from the S3 bucket
+ * @param attachment
+ */
+export async function deleteAttachment(attachment: Attachment) {
+    await deleteFile(`attachments/${attachment.attachmentGroupId}/${attachment.id}/${attachment.filename}`, ATTACHMENT_BUCKET);
+    await prisma.attachment.delete({
+        where: {
+            id: attachment.id
+        }
+    });
 }

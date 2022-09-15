@@ -1,13 +1,13 @@
 import {getLogger} from "log4js";
-import {EntityManager} from "typeorm";
 import {prisma} from "../../../common/prisma";
 import moment from "moment";
+import {deleteAttachment} from "../../../common/attachments";
 
 const logger = getLogger();
 
 const GRACE_PERIOD = 30; // in days
 
-export default async function execute(manager: EntityManager) {
+export default async function execute() {
     logger.info("Inactive account redaction job will be executed...");
 
     const pupilsToBeRedacted = await prisma.pupil.findMany({
@@ -107,6 +107,58 @@ export default async function execute(manager: EntityManager) {
         logger.debug(`Redacted mentor with ID ${mentor.id}.`);
         redactedMentorsCount++;
     }
+
+    // drop context of concrete notifications
+    await prisma.concrete_notification.updateMany({
+        where:
+            {userId: {
+                in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
+                     ...studentsToBeRedacted.map(s => `student/${s.id}`),
+                     ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)]
+            }},
+        data: {
+            context: {}
+        }
+    });
+
+    // remove signature from certificates where pupil is to be redacted
+    await prisma.participation_certificate.updateMany({
+        where: {
+            pupilId: {
+                in: pupilsToBeRedacted.map(p => p.id)
+            }
+        },
+        data: {
+            signaturePupil: null,
+            signatureParent: null
+        }
+    });
+
+    // remove attachments' files from S3 bucket if associated user is to be redacted
+    const attachmentsToBeDeleted = await prisma.attachment.findMany({
+        where: {
+            uploaderID: {
+                in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
+                     ...studentsToBeRedacted.map(s => `student/${s.id}`),
+                     ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)]
+            }
+        }
+    });
+
+    for (let attachment of attachmentsToBeDeleted) {
+        await deleteAttachment(attachment);
+    }
+
+    // remove transaction logs where wix id corresponds to user who is to be redacted
+    await prisma.log.deleteMany({
+        where: {
+            user: {
+                in: [...pupilsToBeRedacted.map(p => p.wix_id),
+                     ...studentsToBeRedacted.map(s => s.wix_id),
+                     ...mentorsToBeRedacted.map(m => m.wix_id)]
+            }
+        }
+    });
 
     logger.info(`Redacted ${redactedPupilsCount} pupils, ${redactedStudentsCount} students, and ${redactedMentorsCount} mentors.`);
 }
