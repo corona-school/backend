@@ -153,7 +153,7 @@ export class MutateSubcourseResolver {
         if (existingMeeting) {
             await prisma.bbb_meeting.update({
                 data: { alternativeUrl: meetingURL },
-                where: { id: existingMeeting.id }
+                where: { id: existingMeeting.id },
             });
             logger.info(`User(${context.user?.userID}) updated alternative url for Subcourse(${subcourse.id}): '${meetingURL}'`);
             return true;

@@ -83,10 +83,18 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitEstimated(100)
     async participants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
         if (!isElevated(context)) {
-            var select = { firstname: true, lastname: true, grade: true };
+            return await prisma.pupil.findMany({
+                select: { firstname: true, lastname: true, grade: true },
+                where: {
+                    subcourse_participants_pupil: {
+                        some: {
+                            subcourseId: subcourse.id,
+                        },
+                    },
+                },
+            });
         }
         return await prisma.pupil.findMany({
-            select,
             where: {
                 subcourse_participants_pupil: {
                     some: {
