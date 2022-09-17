@@ -10,6 +10,8 @@ import {
     getPoolRuns,
     getPoolStatistics,
     MatchPoolStatistics,
+    confirmationRequestsToSend,
+    getPupilsToRequestInterest,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -109,5 +111,21 @@ export class FieldsMatchPoolResolver {
     @Authorized(Role.UNAUTHENTICATED)
     async statistics(@Root() matchPool: MatchPoolType) {
         return await getPoolStatistics(matchPool);
+    }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN)
+    async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
+        return await confirmationRequestsToSend(matchPool);
+    }
+
+    @FieldResolver((returns) => [Pupil])
+    @Authorized(Role.ADMIN)
+    async pupilsToRequestInterest(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.confirmInterest) {
+            return [];
+        }
+
+        await getPupilsToRequestInterest(matchPool);
     }
 }

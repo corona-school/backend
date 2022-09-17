@@ -9,6 +9,7 @@ import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { getLogger } from 'log4js';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
+import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 
 const logger = getLogger('MatchingPool');
 
@@ -21,11 +22,17 @@ export interface MatchPool<Toggle extends string = string> {
     settings: Settings;
     createMatch(pupil: Pupil, student: Student, pool: MatchPool): Promise<void | never>;
     toggles: Toggle[];
+    // There are a few well known toggles:
+    //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
+    //  "confirmation-pending" -> only return pupils that have not yet confirmed their interest
+    //  "confirmation-unknown" -> pupils who have not been asked for their interest
+
     // if present, the matching is run automatically on a daily basis if the criteria are matched
     automatic?: {
         minStudents: number;
         minPupils: number;
     };
+    confirmInterest?: boolean;
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -51,6 +58,7 @@ const getViableUsers = (toggles: string[]) => {
 export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.student.findMany({
         where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
+        orderBy: { createdAt: 'asc' },
         take,
         skip,
     });
@@ -59,6 +67,7 @@ export async function getStudents(pool: MatchPool, toggles: string[], take?: num
 export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.pupil.findMany({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
+        orderBy: { createdAt: 'asc' },
         take,
         skip,
     });
@@ -70,10 +79,28 @@ export async function getStudentCount(pool: MatchPool, toggles: string[]) {
     });
 }
 
+export async function getStudentOfferCount(pool: MatchPool, toggles: string[]) {
+    return (
+        await prisma.student.aggregate({
+            _sum: { openMatchRequestCount: true },
+            where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
+        })
+    )._sum.openMatchRequestCount;
+}
+
 export async function getPupilCount(pool: MatchPool, toggles: string[]) {
     return await prisma.pupil.count({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
     });
+}
+
+export async function getPupilDemandCount(pool: MatchPool, toggles: string[]) {
+    return (
+        await prisma.pupil.aggregate({
+            _sum: { openMatchRequestCount: true },
+            where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
+        })
+    )._sum.openMatchRequestCount;
 }
 
 async function studentToHelper(student: Student): Promise<Helper> {
@@ -130,7 +157,8 @@ const balancingCoefficients = {
 export const pools: MatchPool[] = [
     {
         name: 'lern-fair-now',
-        toggles: ['skip-interest-confirmation', 'confirmation-pending'],
+        confirmInterest: true,
+        toggles: ['skip-interest-confirmation', 'confirmation-pending', 'confirmation-unknown'],
         pupilsToMatch: (toggles) => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
@@ -139,7 +167,7 @@ export const pools: MatchPool[] = [
                 registrationSource: { notIn: ['plus'] },
             };
 
-            if (!toggles.includes('skip-interest-confirmation') && !toggles.includes('confirmation-pending')) {
+            if (!toggles.includes('skip-interest-confirmation') && !toggles.includes('confirmation-pending') && !toggles.includes('confirmation-unknown')) {
                 query.OR = [{ registrationSource: 'cooperation' }, { pupil_tutoring_interest_confirmation_request: { status: 'confirmed' } }];
             }
 
@@ -147,13 +175,14 @@ export const pools: MatchPool[] = [
                 const twoWeeksAgo = new Date();
                 twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-                query.OR = [
-                    // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-                    { pupil_tutoring_interest_confirmation_request: { status: 'pending', createdAt: { gt: twoWeeksAgo } } },
-                    // Or the confirmation request will be sent out in the future
-                    { pupil_tutoring_interest_confirmation_request: null },
-                ];
+                // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
+                query.pupil_tutoring_interest_confirmation_request = { status: 'pending', createdAt: { gt: twoWeeksAgo } };
             }
+
+            if (toggles.includes('confirmation-unknown')) {
+                query.pupil_tutoring_interest_confirmation_request = null;
+            }
+
             return query;
         },
         studentsToMatch: (toggles) => ({
@@ -257,6 +286,9 @@ export async function runMatching(poolName: string, apply: boolean, toggles: str
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
+            if (pool.confirmInterest && match.pupil.openMatchRequestCount <= 1) {
+                await removeInterest(match.pupil);
+            }
             await pool.createMatch(match.pupil, match.student, pool);
         }
 
@@ -420,8 +452,81 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
     if (pool.toggles.includes('skip-interest-confirmation')) {
-        backlog += (await getPupilCount(pool, ['confirmation-pending'])) * (await getInterestConfirmationRate());
+        backlog +=
+            ((await getPupilCount(pool, ['confirmation-pending'])) + (await getPupilCount(pool, ['confirmation-unknown']))) *
+            (await getInterestConfirmationRate());
     }
 
     return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
+}
+
+/* ------------------------------ Confirmation Requests ------------- */
+
+export async function confirmationRequestsToSend(pool: MatchPool) {
+    const offers = await getStudentOfferCount(pool, []);
+    const requests = await getPupilDemandCount(pool, []);
+    const openOffers = Math.max(0, offers - requests);
+
+    const comfirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
+    const requestsToSend = Math.max(0, openOffers - comfirmationsPending);
+
+    return requestsToSend;
+}
+
+async function offeredSubjects(pool: MatchPool): Promise<string[]> {
+    const subjects = new Set<string>();
+    const students = await getStudents(pool, [], 100);
+    for (const student of students) {
+        for (const subject of JSON.parse(student.subjects)) {
+            subjects.add(subject.name);
+        }
+    }
+
+    return [...subjects];
+}
+
+export async function getPupilsToRequestInterest(pool: MatchPool): Promise<Pupil[]> {
+    let toSend = await confirmationRequestsToSend(pool);
+    if (toSend <= 0) {
+        return [];
+    }
+
+    const offered = await offeredSubjects(pool);
+    const result: Pupil[] = [];
+
+    const pupilsToRequest = await getPupils(pool, ['confirmation-unknown'], toSend * 5);
+    for (const pupil of pupilsToRequest) {
+        // Skip pupils who only want subjects that are not offered at the moment
+        const subjects = JSON.parse(pupil.subjects).map((it) => it.name);
+        if (!subjects.some((it) => offered.includes(it))) {
+            continue;
+        }
+
+        result.push(pupil);
+
+        toSend -= 1;
+        if (toSend <= 0) {
+            break;
+        }
+    }
+
+    return result;
+}
+
+export async function sendConfirmationRequests(pool: MatchPool) {
+    const pupils = await getPupilsToRequestInterest(pool);
+    for (const pupil of pupils) {
+        await requestInterestConfirmation(pupil);
+    }
+}
+
+export async function runInterestConfirmations() {
+    for (const pool of pools) {
+        if (pool.confirmInterest) {
+            await sendConfirmationRequests(pool);
+        }
+    }
+
+    await sendInterestConfirmationReminders();
+    await cleanupUnconfirmed();
 }
