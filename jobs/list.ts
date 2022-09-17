@@ -11,7 +11,6 @@ import tutoringMatchMaking from "./periodic/tutoring-match-making";
 import initialInterestConfirmationRequests from "./periodic/interest-confirmation-requests";
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import * as Notification from "../common/notification";
-import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { cleanupSecrets } from "../common/secret";
 import { runInterestConfirmations } from "../common/match/pool";
 
@@ -35,7 +34,6 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo},
-    { cronTime: "00 30 00 * * 0", jobFunction: deactivateMissingCoc},
     // every hour during day
     { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
