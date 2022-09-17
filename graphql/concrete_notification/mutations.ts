@@ -31,6 +31,7 @@ export class MutateConcreteNotificationsResolver {
             throw new Error(`ConcreteNotification(${id}) not found`);
         }
 
-        rescheduleNotification(notification, sendAt);
+        await rescheduleNotification(notification, sendAt);
+        return true;
     }
 }
