@@ -10,7 +10,6 @@ import tutoringMatchMaking from "./periodic/tutoring-match-making";
 import initialInterestConfirmationRequests from "./periodic/interest-confirmation-requests";
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import * as Notification from "../common/notification";
-import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { setup as setupLogging } from "./utils/logging";
 import { Mutex } from "async-mutex";
 
@@ -65,10 +64,7 @@ const executeJob = async (job) => {
             Notification.checkReminders();
             break;
         }
-        case 'deactivateMissingCoc': {
-            deactivateMissingCoc();
-            break;
-        }
+
         default: {
             throw new Error(`Did not find job ${job}`);
         }
