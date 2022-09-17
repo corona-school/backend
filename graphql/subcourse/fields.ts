@@ -6,7 +6,7 @@ import { Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { CourseState } from '../../common/entity/Course';
 import { PublicCache } from '../cache';
-import { getSessionPupil, getSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated } from '../authentication';
 import { GraphQLContext } from '../context';
 
 @Resolver((of) => Subcourse)
@@ -79,10 +79,14 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => [Pupil])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
     @LimitEstimated(100)
-    async participants(@Root() subcourse: Subcourse) {
+    async participants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
+        if (!isElevated(context)) {
+            var select = { firstname: true, lastname: true, grade: true };
+        }
         return await prisma.pupil.findMany({
+            select,
             where: {
                 subcourse_participants_pupil: {
                     some: {
