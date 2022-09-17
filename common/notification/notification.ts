@@ -162,7 +162,7 @@ export async function importNotifications(notifications: Notification[], overwri
             log += `${untouched} existing notifications will not be modified\n`;
 
             for (const notification of notifications) {
-                const templateExists = await prisma.notification.findFirst({
+                /* const templateExists = await prisma.notification.findFirst({
                     where: {
                         mailjetTemplateId: notification.mailjetTemplateId,
                         NOT: { id: notification.id },
@@ -173,7 +173,7 @@ export async function importNotifications(notifications: Notification[], overwri
                     throw new Error(
                         `Notification(${notification.id}) collides with Notification(${templateExists.id}) as both target the same template ${notification.mailjetTemplateId}`
                     );
-                }
+                } */
 
                 const notificationExists = await prisma.notification.findFirst({ where: { id: notification.id } });
 
