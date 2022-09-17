@@ -14,6 +14,7 @@ import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionStudent } from '../authentication';
 import { IsIn } from 'class-validator';
 import { ValidationError } from '../error';
+import { addFile, getFileURL } from '../files';
 
 @InputType()
 class CertificateCreationInput implements ICertificateCreationParams {
@@ -78,6 +79,7 @@ export class MutateParticipationCertificateResolver {
 
         const student = await getSessionStudent(context);
         const pdf = await getCertificatePDF(uuid, student, language as Language);
-        return pdf.toString('utf-8');
+        const file = addFile({ buffer: pdf, mimetype: "application/pdf", originalname: "Zertifikat.pdf" });
+        return getFileURL(file);
     }
 }
