@@ -430,8 +430,8 @@ export async function rescheduleNotification(notification: ConcreteNotification,
         throw new Error(`Notification must be scheduled in the future`);
     }
 
-    if (notification.state !== ConcreteNotificationState.PENDING) {
-        throw new Error(`Notification must be in pending state to be rescheduled`);
+    if (notification.state !== ConcreteNotificationState.DELAYED) {
+        throw new Error(`Notification must be in delayed state to be rescheduled`);
     }
 
     await prisma.concrete_notification.update({
