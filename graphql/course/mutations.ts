@@ -45,6 +45,16 @@ class PublicCourseEditInput {
     allowContact?: boolean | undefined;
 }
 
+@InputType()
+class CourseTagCreateInput {
+    @TypeGraphQL.Field()
+    name: string;
+    @TypeGraphQL.Field()
+    identifier: string;
+    @TypeGraphQL.Field()
+    category: string;
+}
+
 const logger = getLogger('MutateCourseResolver');
 
 @Resolver((of) => GraphQLModel.Course)
@@ -113,5 +123,19 @@ export class MutateCourseResolver {
         await prisma.course.update({ data: { screeningComment, courseState: 'allowed' }, where: { id: courseId } });
         logger.info(`Admin allowed (approved) course ${courseId} with screening comment: ${screeningComment}`);
         return true;
+    }
+
+    @Mutation(returns => GraphQLModel.Course_tag)
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async courseTagCreate(@Ctx() context: GraphQLContext, @Arg("data") data: CourseTagCreateInput) {
+        const { category, identifier, name } = data;
+
+        const tag = await prisma.course_tag.create({
+            data: { category, identifier, name }
+        });
+
+        logger.info(`User(${context.user!.userID}) created CourseTag(${tag.id})`, data);
+
+        return tag;
     }
 }
