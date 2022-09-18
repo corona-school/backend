@@ -81,3 +81,8 @@ export const getFiles = (fileIDs: FileID[]) => fileIDs.map(getFile);
 export function getFileURL(fileID: FileID): string {
     return `/api/files/download/${fileID}`;
 }
+
+export function clearFilestore() {
+    fileStore.clear();
+    log.info(`Cleared file store`);
+}
