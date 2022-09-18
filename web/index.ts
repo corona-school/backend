@@ -135,9 +135,13 @@ createConnection().then(setupPDFGenerationEnvironment)
                 origins = [
                     "http://localhost:3000",
                     ...allowedSubdomains.map(d => `http://${d}.localhost:3000`),
+                    // Web User App (OLD)
                     "https://web-user-app-live.herokuapp.com",
                     "https://web-user-app-dev.herokuapp.com",
                     /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/,
+                    // User App (NEW)
+                    "https://user-app-dev.herokuapp.com",
+                    /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
                     ...allowedSubdomains.map(d => `https://${d}.dev.corona-school.de`)
                 ];
             } else {
