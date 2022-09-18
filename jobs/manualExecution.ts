@@ -11,18 +11,9 @@ import initialInterestConfirmationRequests from "./periodic/interest-confirmatio
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
-import { setup as setupLogging } from "./utils/logging";
-import { Mutex } from "async-mutex";
 
-const job = process.argv[2];
-
-setupLogging();
-
-const executeJob = async (job) => {
-    const activeConnectionMutex = new Mutex();
-    const release = await activeConnectionMutex.acquire();
+export const executeJob = async (job) => {
     const jobConnection = await createConnection();
-    release();
 
     switch (job) {
         case 'initialInterestConfirmationRequests': {
@@ -74,5 +65,3 @@ const executeJob = async (job) => {
         }
     }
 };
-
-executeJob(job);

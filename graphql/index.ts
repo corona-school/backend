@@ -51,6 +51,7 @@ import { MutateSubcourseResolver } from './subcourse/mutations';
 import { UserFieldsResolver } from './user/fields';
 import { MutateUserResolver } from './user/mutations';
 import { StatisticsResolver } from './statistics/fields';
+import { AdminMutationsResolver } from './admin';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -129,6 +130,8 @@ const schema = buildSchemaSync({
 
         /* Statistics */
         StatisticsResolver,
+
+        AdminMutationsResolver
     ],
     authChecker,
 });
