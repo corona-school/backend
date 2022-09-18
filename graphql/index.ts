@@ -52,6 +52,8 @@ import { UserFieldsResolver } from './user/fields';
 import { MutateUserResolver } from './user/mutations';
 import { StatisticsResolver } from './statistics/fields';
 import { AdminMutationsResolver } from './admin';
+import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
+import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -130,6 +132,12 @@ const schema = buildSchemaSync({
 
         /* Statistics */
         StatisticsResolver,
+
+        /* Tutor Screenings */
+        ExtendedFieldsTutorScreeningResolver,
+
+        /* Instructor Screenings */
+        ExtendedFieldsInstructorScreeningResolver,
 
         AdminMutationsResolver
     ],
