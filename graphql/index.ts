@@ -9,6 +9,7 @@ import {
     FindManyConcrete_notificationResolver,
     FindManyNotificationResolver,
     FindManySchoolResolver,
+    FindManyScreenerResolver,
 } from './generated/resolvers/crud';
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
 import { MutatePupilResolver } from './pupil/mutations';
@@ -54,6 +55,7 @@ import { StatisticsResolver } from './statistics/fields';
 import { AdminMutationsResolver } from './admin';
 import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
+import { MutateScreenerResolver } from './screener/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -138,6 +140,10 @@ const schema = buildSchemaSync({
 
         /* Instructor Screenings */
         ExtendedFieldsInstructorScreeningResolver,
+
+        /* Screeners */
+        FindManyScreenerResolver,
+        MutateScreenerResolver,
 
         AdminMutationsResolver
     ],
