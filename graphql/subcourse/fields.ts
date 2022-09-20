@@ -1,5 +1,5 @@
 import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from '../generated';
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
@@ -8,6 +8,18 @@ import { CourseState } from '../../common/entity/Course';
 import { PublicCache } from '../cache';
 import { getSessionPupil, getSessionStudent, isElevated } from '../authentication';
 import { GraphQLContext } from '../context';
+
+@ObjectType()
+class Participant {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    lastname: string;
+    @Field((_type) => String)
+    grade: string;
+}
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -78,22 +90,25 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver((returns) => [Pupil])
-    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
+    @FieldResolver((returns) => [Participant])
+    @Authorized(Role.OWNER)
     @LimitEstimated(100)
-    async participants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
-        if (!isElevated(context)) {
-            return await prisma.pupil.findMany({
-                select: { firstname: true, lastname: true, grade: true },
-                where: {
-                    subcourse_participants_pupil: {
-                        some: {
-                            subcourseId: subcourse.id,
-                        },
+    async participants(@Root() subcourse: Subcourse) {
+        return await prisma.pupil.findMany({
+            where: {
+                subcourse_participants_pupil: {
+                    some: {
+                        subcourseId: subcourse.id,
                     },
                 },
-            });
-        }
+            },
+        });
+    }
+
+    @FieldResolver((returns) => [Pupil])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(100)
+    async participantsAsPupil(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
