@@ -1,13 +1,25 @@
-import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from "../generated";
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
-import { Prisma } from "@prisma/client";
-import { prisma } from "../../common/prisma";
-import { Role } from "../authorizations";
-import { LimitedQuery, LimitEstimated } from "../complexity";
-import { CourseState } from "../../common/entity/Course";
-import { PublicCache } from "../cache";
-import { getSessionPupil } from "../authentication";
-import { GraphQLContext } from "../context";
+import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from '../generated';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { prisma } from '../../common/prisma';
+import { Role } from '../authorizations';
+import { LimitedQuery, LimitEstimated } from '../complexity';
+import { CourseState } from '../../common/entity/Course';
+import { PublicCache } from '../cache';
+import { getSessionPupil, getSessionStudent, isElevated } from '../authentication';
+import { GraphQLContext } from '../context';
+
+@ObjectType()
+class Participant {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    lastname: string;
+    @Field((_type) => String)
+    grade: string;
+}
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -78,10 +90,25 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver((returns) => [Participant])
+    @Authorized(Role.OWNER)
+    @LimitEstimated(100)
+    async participants(@Root() subcourse: Subcourse) {
+        return await prisma.pupil.findMany({
+            where: {
+                subcourse_participants_pupil: {
+                    some: {
+                        subcourseId: subcourse.id,
+                    },
+                },
+            },
+        });
+    }
+
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
-    async participants(@Root() subcourse: Subcourse) {
+    async participantsAsPupil(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
@@ -126,19 +153,25 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(returns => Boolean)
+    @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg("pupilId", {nullable: true}) pupilId: number) {
+    async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
-        return await prisma.subcourse_participants_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
-
+        return (await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
     }
 
-    @FieldResolver(returns => Boolean)
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT)
+    async isInstructor(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('studentId', { nullable: true }) studentId: number) {
+        const student = await getSessionStudent(context, studentId);
+        return (await prisma.subcourse_instructors_student.count({ where: { subcourseId: subcourse.id, studentId: student.id } })) > 0;
+    }
+
+    @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async isOnWaitingList(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg("pupilId", {nullable: true}) pupilId: number) {
+    async isOnWaitingList(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
-        return await prisma.subcourse_waiting_list_pupil.count({where: {subcourseId: subcourse.id, pupilId: pupil.id}}) > 0;
+        return (await prisma.subcourse_waiting_list_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
     }
 
     @FieldResolver((returns) => BBBMeeting, { nullable: true })

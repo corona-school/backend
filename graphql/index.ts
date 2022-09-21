@@ -30,6 +30,7 @@ import { MutateTutoringInterestConfirmationResolver } from './tutoring_interest_
 import { MutateParticipationCertificateResolver } from './certificate/mutations';
 import { ExtendedFieldsParticipationCertificateResolver } from './certificate/fields';
 import { ExtendFieldsStudentResolver } from './student/fields';
+import { ExtendedFieldsLectureResolver } from './lecture/fields';
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
@@ -73,6 +74,7 @@ const schema = buildSchemaSync({
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
 
+        ExtendedFieldsLectureResolver,
         FindManyLectureResolver,
         MutateCourseResolver,
         MutateSubcourseResolver,
