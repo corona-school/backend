@@ -2,6 +2,7 @@ import {getLogger} from "log4js";
 import {prisma} from "../../../common/prisma";
 import moment from "moment";
 import {deleteAttachment} from "../../../common/attachments";
+import {ConcreteNotificationState} from "../../../common/notification/types";
 
 const logger = getLogger();
 
@@ -111,13 +112,23 @@ export default async function execute() {
     // drop context of concrete notifications
     await prisma.concrete_notification.updateMany({
         where:
-            {userId: {
-                in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
-                     ...studentsToBeRedacted.map(s => `student/${s.id}`),
-                     ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)]
-            }},
+            {
+                userId: {
+                    in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
+                         ...studentsToBeRedacted.map(s => `student/${s.id}`),
+                         ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)]
+                },
+                state: {
+                    in: [
+                        ConcreteNotificationState.ACTION_TAKEN,
+                        ConcreteNotificationState.SENT,
+                        ConcreteNotificationState.ERROR
+                    ]
+                }
+            },
         data: {
-            context: {}
+            context: {},
+            state: ConcreteNotificationState.ARCHIVED
         }
     });
 
