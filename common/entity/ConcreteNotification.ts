@@ -55,4 +55,5 @@ export enum ConcreteNotificationState {
     SENT, // we're pretty sure the notification arrived (no bounce, no API error)
     ERROR, // the notification bounced
     ACTION_TAKEN, // the user took an action which cancelled the pending reminder
+    ARCHIVED // the notification was redacted
 }
