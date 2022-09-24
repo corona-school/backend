@@ -1,5 +1,6 @@
 import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
+import { getFile } from '../files';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
@@ -9,6 +10,8 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent } from '../util';
+import { courseImageKey } from '../../web/controllers/courseController/course-images';
+import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -104,6 +107,30 @@ export class MutateCourseResolver {
         });
 
         logger.info(`User(${context.user!.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseSetImage(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("fileId") fileId: string) {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const file = getFile(fileId);
+
+        if (file.mimetype !== "image/jpg") {
+            throw new UserInputError(`File must be image/jpg`);
+        }
+
+        const imageKey = courseImageKey(course.id, file.mimetype);
+        await putFile(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
+
+        await prisma.course.update({
+            data: { imageKey },
+            where: { id: course.id }
+        });
+
+        logger.info(`User(${context.user!.userID}) uploaded a new course image for Course(${course.id})`);
         return true;
     }
 
