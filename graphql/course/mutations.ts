@@ -138,4 +138,23 @@ export class MutateCourseResolver {
 
         return tag;
     }
+
+    @Mutation(returns => GraphQLModel.Course_tag)
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async courseTagDelete(@Ctx() context: GraphQLContext, @Arg("courseTagId") courseTagId: number) {
+        const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId }});
+        if (!tag) {
+            throw new Error(`Unknown CourseTag(${courseTagId})`);
+        }
+
+        await prisma.course_tags_course_tag.deleteMany({
+            where: { courseTagId: courseTagId }
+        });
+
+        await prisma.course_tag.delete({
+            where: { id: courseTagId }
+        });
+
+        logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
+    }
 }
