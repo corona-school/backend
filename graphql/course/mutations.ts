@@ -50,8 +50,6 @@ class CourseTagCreateInput {
     @TypeGraphQL.Field()
     name: string;
     @TypeGraphQL.Field()
-    identifier: string;
-    @TypeGraphQL.Field()
     category: string;
 }
 
@@ -128,10 +126,14 @@ export class MutateCourseResolver {
     @Mutation(returns => GraphQLModel.Course_tag)
     @Authorized(Role.ADMIN, Role.SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg("data") data: CourseTagCreateInput) {
-        const { category, identifier, name } = data;
+        const { category, name } = data;
+
+        if (await prisma.course_tag.count({ where: { category, name }}) > 0) {
+            throw new Error(`CourseTag with category ${category} and ${name} already exists!`);
+        }
 
         const tag = await prisma.course_tag.create({
-            data: { category, identifier, name }
+            data: { category, identifier: `${category}/${name}`, name }
         });
 
         logger.info(`User(${context.user!.userID}) created CourseTag(${tag.id})`, data);
