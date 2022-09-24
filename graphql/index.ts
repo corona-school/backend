@@ -10,6 +10,7 @@ import {
     FindManyNotificationResolver,
     FindManySchoolResolver,
     FindManyScreenerResolver,
+    FindManyCourse_tagResolver,
 } from './generated/resolvers/crud';
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
 import { MutatePupilResolver } from './pupil/mutations';
@@ -75,14 +76,15 @@ const schema = buildSchemaSync({
         /* Course */
         FindManyCourseResolver,
         ExtendedFieldsCourseResolver,
+        FindManyCourse_tagResolver,
 
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
+        MutateSubcourseResolver,
 
         ExtendedFieldsLectureResolver,
         FindManyLectureResolver,
         MutateCourseResolver,
-        MutateSubcourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
