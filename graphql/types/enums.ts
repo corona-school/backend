@@ -13,6 +13,7 @@ import {
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
 } from '@prisma/client';
+import { MentoringCategory } from '../../common/mentoring/categories';
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
@@ -62,4 +63,8 @@ registerEnumType(NotificationSender, {
 
 registerEnumType(CourseCategory, {
     name: 'CourseCategory',
+});
+
+registerEnumType(MentoringCategory, {
+    name: "MentorCategory"
 });
