@@ -3,7 +3,7 @@ import { Mentor } from "../generated";
 import { Arg, Authorized, Ctx, Field, InputType, Mutation, Resolver } from "type-graphql";
 import { Role } from "../authorizations";
 import { contactEmailAddress, MentoringCategory } from "../../common/mentoring/categories";
-import { getSessionStudent, getSessionUser } from "../authentication";
+import { getSessionStudent } from "../authentication";
 import { DEFAULTSENDERS } from "../../common/mails/config";
 import mailjet from "../../common/mails/mailjet";
 import { logTransaction } from "../../common/transactionlog/log";
@@ -12,14 +12,14 @@ import { GraphQLContext } from "../context";
 @InputType()
 class MentorContactInput {
     @Field()
-    @Length(/* min */ 100, /* max */ 10_000)
+    @Length(/* min */ 1, /* max */ 10_000)
     message: string;
 
     @Field()
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
 
-    @Field()
+    @Field(type => MentoringCategory)
     category: MentoringCategory;
 }
 
