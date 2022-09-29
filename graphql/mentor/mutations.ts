@@ -50,5 +50,7 @@ export class MutateMentorResolver {
             subject: data.subject,
             text: data.message
         });
+
+        return true;
     }
 }
