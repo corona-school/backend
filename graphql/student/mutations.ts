@@ -1,6 +1,6 @@
 import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
-import { getStudent } from '../util';
+import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
 import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
 import { isElevated, getSessionStudent, getSessionScreener } from '../authentication';
@@ -10,7 +10,7 @@ import { prisma } from '../../common/prisma';
 import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
 import { ProjectFieldWithGradeData } from '../../common/student/registration';
 import { Subject } from '../types/subject';
-import { student as Student, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField } from '@prisma/client';
+import { student as Student, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField, student_state_enum as State } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
@@ -64,21 +64,24 @@ export class StudentUpdateInput {
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
+
+    @Field((type) => State, { nullable: true })
+    state?: State;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
     }
 
-    if (registrationSource !== undefined && !isElevated(context)) {
+    if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
-    if (email !== undefined && !isElevated(context)) {
+    if (email != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
@@ -88,11 +91,12 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
 
     await prisma.student.update({
         data: {
-            firstname,
-            lastname,
-            email,
+            firstname: ensureNoNull(firstname),
+            lastname: ensureNoNull(lastname),
+            email: ensureNoNull(email),
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
-            registrationSource,
+            registrationSource: ensureNoNull(registrationSource),
+            state: ensureNoNull(state)
         },
         where: { id: student.id },
     });

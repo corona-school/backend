@@ -9,6 +9,7 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
+    student_state_enum as StudentState,
     student_module_enum as TeacherModule,
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
@@ -31,6 +32,11 @@ registerEnumType(ProjectField, {
 
 registerEnumType(State, {
     name: 'State',
+    description: 'A state in the federal republic of germany',
+});
+
+registerEnumType(StudentState, {
+    name: 'StudentState',
     description: 'A state in the federal republic of germany',
 });
 

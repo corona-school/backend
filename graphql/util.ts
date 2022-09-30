@@ -13,3 +13,15 @@ export const getLecture = (lectureId: number) => prisma.lecture.findUnique({ whe
 export function Deprecated(reason: string) {
     return Directive(`@deprecated(reason: "${reason}")`);
 }
+
+
+/* GraphQL only has 'null values' whereas Prisma has dedicated semantics:
+   - null means 'set to NULL' 
+   - undefined means 'do not change'
+   Thus in a lot of cases we want to make sure that undefined is passed to Prisma
+   (and never null) */
+   export function ensureNoNull<T>(value: T | null | undefined): T | undefined {
+    if (value === null)
+        return undefined;
+    return value;
+}
