@@ -16,12 +16,13 @@ export function Deprecated(reason: string) {
 
 
 /* GraphQL only has 'null values' whereas Prisma has dedicated semantics:
-   - null means 'set to NULL' 
+   - null means 'set to NULL'
    - undefined means 'do not change'
    Thus in a lot of cases we want to make sure that undefined is passed to Prisma
    (and never null) */
    export function ensureNoNull<T>(value: T | null | undefined): T | undefined {
-    if (value === null)
+    if (value === null) {
         return undefined;
+    }
     return value;
 }
