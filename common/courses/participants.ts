@@ -12,6 +12,7 @@ import { hasStarted } from './states';
 import { logTransaction } from '../transactionlog/log';
 import { TooLateError, RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
 import { Decision } from '../util/decision';
+import { gradeAsInt } from '../util/gradestrings';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -107,7 +108,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     }
 }
 
-type CourseDecision = 'not-participant';
+type CourseDecision = 'not-participant' | 'no-lectures' | 'subcourse-full' | 'inappropriate-grade' | 'already-started';
 
 export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     if (!pupil.isParticipant) {
@@ -117,9 +118,39 @@ export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     return { allowed: true };
 }
 
+export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<Decision<CourseDecision>> {
+    if (!canJoinSubcourses(pupil).allowed) {
+        return canJoinSubcourses(pupil);
+    }
+
+    const firstLecture = await prisma.lecture.findMany({
+        where: { subcourseId: subcourse.id },
+        orderBy: { start: 'asc' },
+        take: 1,
+    });
+    if (firstLecture.length !== 1) {
+        return { allowed: false, reason: 'no-lectures' };
+    }
+    if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
+        return { allowed: false, reason: 'already-started' };
+    }
+
+    const pupilGrade = gradeAsInt(pupil.grade);
+    if (subcourse.minGrade && subcourse.maxGrade && subcourse.minGrade < pupilGrade && pupilGrade < subcourse.maxGrade) {
+        return { allowed: false, reason: 'inappropriate-grade' };
+    }
+
+    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+    if (subcourse.maxParticipants < participants) {
+        return { allowed: false, reason: 'subcourse-full' };
+    }
+    return { allowed: true };
+}
+
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
-    if (!pupil.isParticipant) {
-        throw new PrerequisiteError(`Only pupils with PARTICIPANT role can join course`);
+    const canJoin = await canJoinSubcourse(subcourse, pupil);
+    if (!canJoin.allowed) {
+        throw new PrerequisiteError(canJoin.reason);
     }
 
     await acquireLock(subcourse, pupil, async () => {
@@ -128,20 +159,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
 
         if (participantCount > subcourse.maxParticipants) {
             throw new CapacityReachedError(`Subcourse is full`);
-        }
-
-        const firstLecture = await prisma.lecture.findMany({
-            where: { subcourseId: subcourse.id },
-            orderBy: { start: 'asc' },
-            take: 1,
-        });
-
-        if (firstLecture.length !== 1) {
-            throw new Error('Subcourse has no lectures');
-        }
-
-        if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
-            throw new TooLateError('Subcourse already started');
         }
 
         const pupilSubCourseCount = await prisma.subcourse_participants_pupil.count({
@@ -178,6 +195,11 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
         await logTransaction('participantJoinedCourse', pupil, { subcourseID: subcourse.id });
 
+        const firstLecture = await prisma.lecture.findMany({
+            where: { subcourseId: subcourse.id },
+            orderBy: { start: 'asc' },
+            take: 1,
+        });
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
             const courseStart = moment(firstLecture[0].start);
