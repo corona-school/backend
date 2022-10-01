@@ -1,9 +1,8 @@
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { getPupil, getSubcourse } from '../util';
-import { joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
+import { Role } from '../authorizations';
+import { getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
@@ -108,52 +107,6 @@ export class MutatePupilResolver {
         await Notification.actionTaken(pupil, 'user_authenticate', {
             secretToken,
         });
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async pupilJoinSubcourse(@Ctx() context: GraphQLContext, @Arg('pupilId') pupilId: number, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        await hasAccess(context, 'Pupil', pupil);
-
-        const subcourse = await getSubcourse(subcourseId);
-
-        await joinSubcourse(subcourse, pupil);
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilJoinSubcourseWaitinglist(@Arg('pupilId') pupilId: number, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        const subcourse = await getSubcourse(subcourseId);
-
-        await joinSubcourseWaitinglist(subcourse, pupil);
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilLeaveSubcourseWaitinglist(@Arg('pupilId') pupilId: number, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        const subcourse = await getSubcourse(subcourseId);
-
-        await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilLeaveSubcourse(@Arg('pupilId') pupilId: number, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        const subcourse = await getSubcourse(subcourseId);
-
-        await leaveSubcourse(subcourse, pupil);
-
         return true;
     }
 

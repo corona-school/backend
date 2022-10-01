@@ -1,17 +1,16 @@
 import { getMeetingUrl } from '../../common/util/bbb';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
-import { Arg, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
-import { fillSubcourse } from '../../common/courses/participants';
+import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
+import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getSubcourse } from '../util';
-import { logInContext } from '../logging';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -230,6 +229,58 @@ export class MutateSubcourseResolver {
         }
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async pupilJoinSubcourse(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: true }) pupilId?: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourse(subcourse, pupil);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async pupilLeaveSubcourse(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: true }) pupilId?: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await leaveSubcourse(subcourse, pupil);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async pupilJoinSubcourseWaitinglist(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: true }) pupilId?: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourseWaitinglist(subcourse, pupil);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async pupilLeaveSubcourseWaitinglist(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: true }) pupilId?: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
         return true;
     }
 }
