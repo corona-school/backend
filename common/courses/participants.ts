@@ -108,7 +108,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     }
 }
 
-type CourseDecision = 'not-participant' | 'no-lectures' | 'subcourse-full' | 'inappropriate-grade' | 'already-started';
+type CourseDecision = 'not-participant' | 'no-lectures' | 'subcourse-full' | 'grade-to-low' | 'grade-to-high' |'already-started';
 
 export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     if (!pupil.isParticipant) {
@@ -136,12 +136,15 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
-    if (subcourse.minGrade && subcourse.maxGrade && subcourse.minGrade < pupilGrade && pupilGrade < subcourse.maxGrade) {
-        return { allowed: false, reason: 'inappropriate-grade' };
+    if (subcourse.minGrade && subcourse.minGrade < pupilGrade ) {
+        return { allowed: false, reason: 'grade-to-low' };
+    }
+    if (subcourse.maxGrade && pupilGrade < subcourse.maxGrade){
+        return { allowed: false, reason: 'grade-to-high' };
     }
 
     const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-    if (subcourse.maxParticipants < participants) {
+    if (subcourse.maxParticipants <= participants) {
         return { allowed: false, reason: 'subcourse-full' };
     }
     return { allowed: true };

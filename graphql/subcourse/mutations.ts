@@ -234,7 +234,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async pupilJoinSubcourse(
+    async subcourseJoin(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
@@ -247,7 +247,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async pupilLeaveSubcourse(
+    async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
@@ -260,7 +260,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async pupilJoinSubcourseWaitinglist(
+    async subcourseJoinWaitinglist(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
@@ -273,7 +273,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async pupilLeaveSubcourseWaitinglist(
+    async subcourseLeaveWaitinglist(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
