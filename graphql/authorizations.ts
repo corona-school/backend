@@ -151,7 +151,16 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Bbb_meeting: allAdmin,
     Course_attendance_log: allAdmin,
     Course_instructors_student: allAdmin,
-    Course_tag: allAdmin,
+    Course_tag: {
+        course_tags: everyone,
+        createOneCourse_tag: nobody,
+        createManyCourse_tag: nobody,
+        deleteManyCourse_tag: nobody,
+        deleteOneCourse_tag: nobody,
+        updateOneCourse_tag: nobody,
+        updateManyCourse_tag: nobody,
+        upsertOneCourse_tag: nobody
+    },
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
     Expert_data: allAdmin,
