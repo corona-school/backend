@@ -9,10 +9,12 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
+    student_state_enum as StudentState,
     student_module_enum as TeacherModule,
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
 } from '@prisma/client';
+import { MentoringCategory } from '../../common/mentoring/categories';
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
@@ -30,6 +32,11 @@ registerEnumType(ProjectField, {
 
 registerEnumType(State, {
     name: 'State',
+    description: 'A state in the federal republic of germany',
+});
+
+registerEnumType(StudentState, {
+    name: 'StudentState',
     description: 'A state in the federal republic of germany',
 });
 
@@ -62,4 +69,8 @@ registerEnumType(NotificationSender, {
 
 registerEnumType(CourseCategory, {
     name: 'CourseCategory',
+});
+
+registerEnumType(MentoringCategory, {
+    name: 'MentorCategory',
 });
