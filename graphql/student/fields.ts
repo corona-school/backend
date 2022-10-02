@@ -5,6 +5,8 @@ import {
     Certificate_of_conduct as CertificateOfConduct,
     Screening,
     Instructor_screening as InstructorScreening,
+    Subcourse,
+    Course,
 } from '../generated';
 import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -95,5 +97,19 @@ export class ExtendFieldsStudentResolver {
         return await prisma.instructor_screening.findMany({
             where: { studentId: student.id },
         });
+    }
+
+    @FieldResolver((type) => [Subcourse])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(10)
+    async subcoursesInstructing(@Root() student: Student) {
+        return await prisma.subcourse.findMany({ where: { subcourse_instructors_student: { some: { studentId: student.id } } } });
+    }
+
+    @FieldResolver((type) => [Course])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(10)
+    async coursesInstructing(@Root() student: Student) {
+        return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
     }
 }

@@ -72,5 +72,5 @@ registerEnumType(CourseCategory, {
 });
 
 registerEnumType(MentoringCategory, {
-    name: "MentorCategory"
+    name: 'MentorCategory',
 });
