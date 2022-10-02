@@ -141,7 +141,7 @@ const schema = buildSchemaSync({
         StatisticsResolver,
 
         /* Mentor */
-        MutateMentorResolver
+        MutateMentorResolver,
 
         /* Tutor Screenings */
         ExtendedFieldsTutorScreeningResolver,
