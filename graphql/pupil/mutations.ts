@@ -2,16 +2,20 @@ import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field, Int }
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { ensureNoNull, getPupil, getSubcourse } from '../util';
-import { Role } from '../authorizations';
-import { getPupil } from '../util';
+import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
 import { getSessionPupil, isElevated } from '../authentication';
 import { Subject } from '../types/subject';
-import { pupil as Pupil, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField, pupil_state_enum as State, pupil_schooltype_enum as SchoolType } from '@prisma/client';
+import {
+    pupil as Pupil,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_projectfields_enum as ProjectField,
+    pupil_state_enum as State,
+    pupil_schooltype_enum as SchoolType,
+} from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
@@ -74,7 +78,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             projectFields: ensureNoNull(projectFields),
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
-            schooltype: ensureNoNull(schooltype)
+            schooltype: ensureNoNull(schooltype),
         },
         where: { id: pupil.id },
     });

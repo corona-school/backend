@@ -10,7 +10,12 @@ import { prisma } from '../../common/prisma';
 import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
 import { ProjectFieldWithGradeData } from '../../common/student/registration';
 import { Subject } from '../types/subject';
-import { student as Student, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField, student_state_enum as State } from '@prisma/client';
+import {
+    student as Student,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_projectfields_enum as ProjectField,
+    student_state_enum as State,
+} from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
@@ -96,7 +101,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             email: ensureNoNull(email),
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state)
+            state: ensureNoNull(state),
         },
         where: { id: student.id },
     });
