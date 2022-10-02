@@ -5,8 +5,11 @@ import { GraphQLContext } from './context';
 
 const log = getLogger('GraphQL Rate Limiting');
 
+const rateLimiters: { [name: string]: Map<string, number> } = {};
+
 export function RateLimit(name: string, max: number, interval: number /* in ms */) {
     const countPerIP = new Map<string, number>();
+    rateLimiters[name] = countPerIP;
 
     setInterval(() => {
         countPerIP.clear();
@@ -37,4 +40,24 @@ export function RateLimit(name: string, max: number, interval: number /* in ms *
         log.debug(`${context.ip} requested ${name} for the ${count}th time`);
         return next();
     });
+}
+
+export function rateLimitSummary() {
+    let summary = "";
+    for (const [rateLimit, countPerIP] of Object.entries(rateLimiters)) {
+        summary += `${rateLimit}:\n`;
+        for (const [ip, count] of countPerIP.entries()) {
+            summary += `\t${ip}\t\t${count}\n`;
+        }
+    }
+
+    return summary;
+}
+
+export function resetRateLimits() {
+    for (const countPerIP of Object.values(rateLimiters)) {
+        countPerIP.clear();
+    }
+
+    log.info(`Reset all Rate Limiters`);
 }

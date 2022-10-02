@@ -1,4 +1,4 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture } from './generated';
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 
 import { AuthChecker } from 'type-graphql';
@@ -398,4 +398,11 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             signaturePupil: nobody,
         },
     },
+    Course_tag: {
+        fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
+            identifier: nobody,
+            _count: nobody,
+            course_tags_course_tag: nobody
+        }),
+    }
 };

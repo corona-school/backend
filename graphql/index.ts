@@ -9,6 +9,8 @@ import {
     FindManyConcrete_notificationResolver,
     FindManyNotificationResolver,
     FindManySchoolResolver,
+    FindManyScreenerResolver,
+    FindManyCourse_tagResolver,
 } from './generated/resolvers/crud';
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
 import { MutatePupilResolver } from './pupil/mutations';
@@ -53,6 +55,10 @@ import { UserFieldsResolver } from './user/fields';
 import { MutateUserResolver } from './user/mutations';
 import { StatisticsResolver } from './statistics/fields';
 import { MutateMentorResolver } from './mentor/mutations';
+import { AdminMutationsResolver } from './admin';
+import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
+import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
+import { MutateScreenerResolver } from './screener/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -71,14 +77,15 @@ const schema = buildSchemaSync({
         /* Course */
         FindManyCourseResolver,
         ExtendedFieldsCourseResolver,
+        FindManyCourse_tagResolver,
 
         FindManySubcourseResolver,
         ExtendedFieldsSubcourseResolver,
+        MutateSubcourseResolver,
 
         ExtendedFieldsLectureResolver,
         FindManyLectureResolver,
         MutateCourseResolver,
-        MutateSubcourseResolver,
 
         /* Pupil */
         FindManyPupilResolver,
@@ -134,7 +141,19 @@ const schema = buildSchemaSync({
         StatisticsResolver,
 
         /* Mentor */
-        MutateMentorResolver
+        MutateMentorResolver,
+
+        /* Tutor Screenings */
+        ExtendedFieldsTutorScreeningResolver,
+
+        /* Instructor Screenings */
+        ExtendedFieldsInstructorScreeningResolver,
+
+        /* Screeners */
+        FindManyScreenerResolver,
+        MutateScreenerResolver,
+
+        AdminMutationsResolver
     ],
     authChecker,
 });

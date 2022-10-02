@@ -126,6 +126,6 @@ export class FieldsMatchPoolResolver {
             return [];
         }
 
-        await getPupilsToRequestInterest(matchPool);
+        return await getPupilsToRequestInterest(matchPool);
     }
 }

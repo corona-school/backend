@@ -1,4 +1,6 @@
 import { course_category_enum } from '@prisma/client';
+import { UserInputError } from 'apollo-server-express';
+import { getFile } from '../files';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
@@ -8,6 +10,8 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent } from '../util';
+import { courseImageKey } from '../../web/controllers/courseController/course-images';
+import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -17,10 +21,6 @@ class PublicCourseCreateInput {
     outline!: string;
     @TypeGraphQL.Field((_type) => String)
     description!: string;
-    // @TypeGraphQL.Field(_type => String, {
-    //   nullable: true
-    // })
-    // image?: string | undefined;
     @TypeGraphQL.Field((_type) => course_category_enum)
     category!: 'revision' | 'club' | 'coaching';
     @TypeGraphQL.Field((_type) => Boolean)
@@ -35,14 +35,18 @@ class PublicCourseEditInput {
     outline?: string;
     @TypeGraphQL.Field((_type) => String, { nullable: true })
     description?: string;
-    // @TypeGraphQL.Field(_type => String, {
-    //   nullable: true
-    // })
-    // image?: string | undefined;
     @TypeGraphQL.Field((_type) => course_category_enum, { nullable: true })
     category?: 'revision' | 'club' | 'coaching';
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
+}
+
+@InputType()
+class CourseTagCreateInput {
+    @TypeGraphQL.Field()
+    name: string;
+    @TypeGraphQL.Field()
+    category: string;
 }
 
 const logger = getLogger('MutateCourseResolver');
@@ -75,6 +79,59 @@ export class MutateCourseResolver {
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
         return result;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseSetTags(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("courseTagIds", _type => [Number]) courseTagIds: number[]) {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const invalidTags = await prisma.course_tag.count({
+            where: {
+                id: { in: courseTagIds },
+                category: { not: course.category }
+            }
+        });
+
+        if (invalidTags) {
+            throw new UserInputError(`Category of tags mismatches the category of the course`);
+        }
+
+        await prisma.course_tags_course_tag.deleteMany({
+            where: { courseId: course.id }
+        });
+
+        await prisma.course_tags_course_tag.createMany({
+            data: courseTagIds.map(it => ({ courseId: course.id, courseTagId: it }))
+        });
+
+        logger.info(`User(${context.user!.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseSetImage(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("fileId") fileId: string) {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const file = getFile(fileId);
+
+        if (file.mimetype !== "image/jpg") {
+            throw new UserInputError(`File must be image/jpg`);
+        }
+
+        const imageKey = courseImageKey(course.id, file.mimetype);
+        await putFile(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
+
+        await prisma.course.update({
+            data: { imageKey },
+            where: { id: course.id }
+        });
+
+        logger.info(`User(${context.user!.userID}) uploaded a new course image for Course(${course.id})`);
+        return true;
     }
 
     @Mutation((returns) => Boolean)
@@ -113,5 +170,42 @@ export class MutateCourseResolver {
         await prisma.course.update({ data: { screeningComment, courseState: 'allowed' }, where: { id: courseId } });
         logger.info(`Admin allowed (approved) course ${courseId} with screening comment: ${screeningComment}`);
         return true;
+    }
+
+    @Mutation(returns => GraphQLModel.Course_tag)
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async courseTagCreate(@Ctx() context: GraphQLContext, @Arg("data") data: CourseTagCreateInput) {
+        const { category, name } = data;
+
+        if (await prisma.course_tag.count({ where: { category, name }}) > 0) {
+            throw new UserInputError(`CourseTag with category ${category} and ${name} already exists!`);
+        }
+
+        const tag = await prisma.course_tag.create({
+            data: { category, identifier: `${category}/${name}`, name }
+        });
+
+        logger.info(`User(${context.user!.userID}) created CourseTag(${tag.id})`, data);
+
+        return tag;
+    }
+
+    @Mutation(returns => GraphQLModel.Course_tag)
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async courseTagDelete(@Ctx() context: GraphQLContext, @Arg("courseTagId") courseTagId: number) {
+        const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId }});
+        if (!tag) {
+            throw new UserInputError(`Unknown CourseTag(${courseTagId})`);
+        }
+
+        await prisma.course_tags_course_tag.deleteMany({
+            where: { courseTagId: courseTagId }
+        });
+
+        await prisma.course_tag.delete({
+            where: { id: courseTagId }
+        });
+
+        logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
     }
 }
