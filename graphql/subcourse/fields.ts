@@ -8,6 +8,8 @@ import { CourseState } from '../../common/entity/Course';
 import { PublicCache } from '../cache';
 import { getSessionPupil, getSessionStudent, isElevated } from '../authentication';
 import { GraphQLContext } from '../context';
+import { Decision } from '../types/reason';
+import { canJoinSubcourse } from '../../common/courses/participants';
 
 @ObjectType()
 class Participant {
@@ -180,5 +182,12 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.bbb_meeting.findFirst({
             where: { meetingID: '' + subcourse.id },
         });
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async canJoin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
+        return await canJoinSubcourse(subcourse, pupil);
     }
 }
