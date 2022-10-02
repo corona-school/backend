@@ -9,7 +9,7 @@ import { getLogger } from 'log4js';
 const REMIND_AFTER = 7; /* days */
 const REMOVE_AFTER = 14; /* days */
 
-const log = getLogger("InterestConfirmation");
+const log = getLogger('InterestConfirmation');
 
 export async function requestInterestConfirmation(pupil: Pupil) {
     const token = await uuid();
@@ -66,17 +66,17 @@ export async function cleanupUnconfirmed() {
     remindedAt.setDate(remindedAt.getDate() - REMOVE_AFTER);
 
     const toCleanup = await prisma.pupil_tutoring_interest_confirmation_request.findMany({
-        where: { status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt }}
+        where: { status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt } },
     });
 
     for (const reminder of toCleanup) {
         await prisma.pupil.update({
             data: { openMatchRequestCount: 0 },
-            where: { id: reminder.pupilId }
+            where: { id: reminder.pupilId },
         });
 
         await prisma.pupil_tutoring_interest_confirmation_request.delete({
-            where: { id: reminder.id }
+            where: { id: reminder.id },
         });
 
         log.info(`Removed interest confirmation from Pupil(${reminder.pupilId}) and removed their match request`);
@@ -85,7 +85,7 @@ export async function cleanupUnconfirmed() {
 
 export async function removeInterest(pupil: Pupil) {
     await prisma.pupil_tutoring_interest_confirmation_request.deleteMany({
-        where: { pupilId: pupil.id }
+        where: { pupilId: pupil.id },
     });
     log.info(`Removed interest confirmation from Pupil(${pupil.id})`);
 }
