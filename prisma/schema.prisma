@@ -54,6 +54,8 @@ model course {
   description                String                       @db.VarChar
   imageKey                   String?                      @db.VarChar
   category                   course_category_enum
+  subject                    String?                      @db.VarChar
+  schooltype                 course_schooltype_enum[]     @default([other])
   courseState                course_coursestate_enum      @default(created)
   screeningComment           String?                      @db.VarChar
   publicRanking              Int                          @default(0)
@@ -860,4 +862,15 @@ enum secret_type_enum {
   PASSWORD
   TOKEN
   EMAIL_TOKEN
+}
+
+enum course_schooltype_enum {
+  grundschule
+  gesamtschule
+  hauptschule
+  realschule
+  gymnasium
+  f_rderschule @map("förderschule")
+  berufsschule
+  other
 }

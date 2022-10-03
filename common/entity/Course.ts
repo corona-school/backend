@@ -6,6 +6,7 @@ import { ApiCourseUpdate } from '../dto/ApiCourseUpdate';
 import { createCourseTag } from '../util/createCourseTag';
 import { accessURLForKey } from '../file-bucket/s3';
 import { CourseGuest } from './CourseGuest';
+import {SchoolType} from "./SchoolType";
 
 export enum CourseState {
     CREATED = 'created',
@@ -58,6 +59,18 @@ export class Course {
         nullable: false,
     })
     category: CourseCategory;
+
+
+    @Column({nullable: true})
+    subject: string;
+
+    @Column({
+        type: 'enum',
+        enum: SchoolType,
+        array: true,
+        default: [SchoolType.SONSTIGES],
+    })
+    schooltype: SchoolType[];
 
     @ManyToMany((type) => CourseTag, (tag) => tag.courses, {
         eager: true,
