@@ -56,7 +56,7 @@ export async function registerPupil(data: RegisterPupilData) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    if (data.schoolId) {
+    if (data.schoolId != undefined) {
         const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
         if (!school) {
             throw new Error(`Invalid School ID '${data.schoolId}'`);
