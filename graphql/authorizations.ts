@@ -376,7 +376,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Course: {
         fields: withPublicFields<
             Course,
-            'id' | 'name' | 'outline' | 'category' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
+            'id' | 'name' | 'outline' | 'category' | 'subject' | 'schooltype' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
@@ -387,7 +387,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             imageKey: nobody,
-            _count: nobody,
+            _count: nobody
         }),
     },
     Lecture: {
