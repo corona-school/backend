@@ -12,7 +12,9 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent } from '../util';
 import { courseImageKey } from '../../web/controllers/courseController/course-images';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
+
 import {course_schooltype_enum, course_subject_enum} from "../generated";
+
 
 @InputType()
 class PublicCourseCreateInput {
@@ -28,6 +30,7 @@ class PublicCourseCreateInput {
     allowContact?: boolean;
     @TypeGraphQL.Field((_type) => course_subject_enum)
     subject?: course_subject_enum;
+
     @TypeGraphQL.Field((_type) => course_schooltype_enum)
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }

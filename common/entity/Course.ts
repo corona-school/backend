@@ -9,6 +9,7 @@ import { CourseGuest } from './CourseGuest';
 import {SchoolType} from "./SchoolType";
 import {Subject} from "./Subject";
 
+
 export enum CourseState {
     CREATED = 'created',
     SUBMITTED = 'submitted',
@@ -62,8 +63,10 @@ export class Course {
     category: CourseCategory;
 
 
+
     @Column({nullable: true, type: 'enum', enum: Subject})
     subject: Subject;
+
 
     @Column({
         type: 'enum',
