@@ -54,7 +54,7 @@ model course {
   description                String                       @db.VarChar
   imageKey                   String?                      @db.VarChar
   category                   course_category_enum
-  subject                    String?                      @db.VarChar
+  subject                    course_subject_enum?
   schooltype                 course_schooltype_enum[]     @default([other])
   courseState                course_coursestate_enum      @default(created)
   screeningComment           String?                      @db.VarChar
@@ -873,4 +873,31 @@ enum course_schooltype_enum {
   f_rderschule @map("förderschule")
   berufsschule
   other
+}
+
+enum course_subject_enum {
+  Mathematik
+  Deutsch
+  Englisch
+  Biologie
+  Chemie
+  Physik
+  Informatik
+  Sachkunde
+  Geschichte
+  Erdkunde
+  Wirtschaft
+  Politik
+  Philosophie
+  Kunst
+  Musik
+  P_dagogik                @map("Pädagogik")
+  Franz_sisch              @map("Französisch")
+  Latein
+  Altgriechisch
+  Spanisch
+  Italienisch
+  Russisch
+  Niederl_ndisch           @map("Niederländisch")
+  Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
 }
