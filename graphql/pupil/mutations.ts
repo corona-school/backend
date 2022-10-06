@@ -7,7 +7,7 @@ import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, isElevated } from '../authentication';
+import {getSessionPupil, isElevated, updateSessionUser} from '../authentication';
 import { Subject } from '../types/subject';
 import {
     pupil as Pupil,
@@ -20,6 +20,7 @@ import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
+import {userForPupil} from "../../common/user";
 
 @InputType()
 export class PupilUpdateInput {
@@ -67,7 +68,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
-    await prisma.pupil.update({
+    const res = await prisma.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -82,6 +83,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         },
         where: { id: pupil.id },
     });
+    await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
 }
