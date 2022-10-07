@@ -11,7 +11,7 @@ import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing'
 import { getLogger } from 'log4js';
 import { AuthenticationError, ForbiddenError } from './error';
 import { logInContext } from './logging';
-import { User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import {User, userForPupil, userForScreener, userForStudent} from '../common/user';
 import { loginPassword, loginToken } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
@@ -41,6 +41,10 @@ export const toPublicToken = (token: string) => token.slice(0, -5);
 
 export async function getUserForSession(sessionToken: string) {
     return userSessions.get(sessionToken);
+}
+
+export async function updateSessionUser(context: GraphQLContext, user: User) {
+    await loginAsUser(user, context);
 }
 
 export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
