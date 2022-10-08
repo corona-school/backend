@@ -37,7 +37,7 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn('Missing ADMIN_AUTH_TOKEN, Admin API access is disabled');
 }
 
-const UNAUTHENTICATED_USER = {
+export const UNAUTHENTICATED_USER = {
     email: '-',
     firstname: '',
     lastname: '',

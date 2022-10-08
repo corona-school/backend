@@ -2,11 +2,11 @@ import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Cours
 import { Authorized, createMethodDecorator } from 'type-graphql';
 
 import { AuthChecker } from 'type-graphql';
-import { GraphQLContext } from './context';
+import { GraphQLContext, UNAUTHENTICATED_USER } from './context';
 import assert from 'assert';
 import { getLogger } from 'log4js';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
-import { ForbiddenError } from './error';
+import { AuthenticationError, ForbiddenError } from './error';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -56,7 +56,9 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     );
     assert(context.user?.roles, 'Roles must have been initialized in context');
 
-    return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
+    assert(await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root));
+
+    return true; // or an error was thrown before
 };
 
 /* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during
@@ -84,10 +86,7 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
 
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
-    const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
-    if (!success) {
-        throw new ForbiddenError('Not Authorized');
-    }
+    assert(await accessCheck(context, context.deferredRequiredRoles, modelName, value));
 }
 
 async function accessCheck(context: GraphQLContext, requiredRoles: Role[], modelName: ResolverModelNames | undefined, root: any) {
@@ -113,7 +112,11 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         }
     }
 
-    return false;
+    if (context.user === UNAUTHENTICATED_USER) {
+        throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);
+    }
+
+    throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
 }
 
 /* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
