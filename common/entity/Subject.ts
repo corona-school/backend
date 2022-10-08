@@ -15,7 +15,7 @@ export enum Subject {
     KUNST = 'Kunst',
     MUSIK = 'Musik',
     PAEDAGOGIK = 'Pädagogik',
-    FRANZOESISCH ='Französisch',
+    FRANZOESISCH = 'Französisch',
     LATEIN = 'Latein',
     ALTGRIECHISCH = 'Altgriechisch',
     SPANISCH = 'Spanisch',
@@ -23,5 +23,4 @@ export enum Subject {
     RUSSISCH = 'Russisch',
     NIEDERLAENDISCH = 'Niederländisch',
     DEUTSCH_ALS_ZWEITSPRACHE = 'Deutsch als Zweitsprache',
-
 }

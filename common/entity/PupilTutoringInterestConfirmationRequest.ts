@@ -26,6 +26,11 @@ export class PupilTutoringInterestConfirmationRequest {
     })
     status: InterestConfirmationStatus;
 
+    // The Interest Confirmation is outdated or was already used to create match
+    // A new interest confirmation needs to be requested, this is only kept for statistics
+    @Column({ nullable: false, default: false })
+    invalidated: boolean;
+
     @Index({ unique: true })
     @Column({
         nullable: false,
