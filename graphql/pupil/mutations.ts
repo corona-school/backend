@@ -7,7 +7,7 @@ import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import {getSessionPupil, isElevated, updateSessionUser} from '../authentication';
+import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     pupil as Pupil,
@@ -20,7 +20,7 @@ import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
-import {userForPupil} from "../../common/user";
+import { userForPupil } from '../../common/user';
 
 @InputType()
 export class PupilUpdateInput {

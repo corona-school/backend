@@ -13,8 +13,7 @@ import { getCourse, getStudent } from '../util';
 import { courseImageKey } from '../../web/controllers/courseController/course-images';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
-import {course_schooltype_enum, course_subject_enum} from "../generated";
-
+import { course_schooltype_enum, course_subject_enum } from '../generated';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -91,15 +90,15 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async courseSetTags(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("courseTagIds", _type => [Number]) courseTagIds: number[]) {
+    async courseSetTags(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('courseTagIds', (_type) => [Number]) courseTagIds: number[]) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
         const invalidTags = await prisma.course_tag.count({
             where: {
                 id: { in: courseTagIds },
-                category: { not: course.category }
-            }
+                category: { not: course.category },
+            },
         });
 
         if (invalidTags) {
@@ -107,11 +106,11 @@ export class MutateCourseResolver {
         }
 
         await prisma.course_tags_course_tag.deleteMany({
-            where: { courseId: course.id }
+            where: { courseId: course.id },
         });
 
         await prisma.course_tags_course_tag.createMany({
-            data: courseTagIds.map(it => ({ courseId: course.id, courseTagId: it }))
+            data: courseTagIds.map((it) => ({ courseId: course.id, courseTagId: it })),
         });
 
         logger.info(`User(${context.user!.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
@@ -120,13 +119,13 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async courseSetImage(@Ctx() context: GraphQLContext, @Arg("courseId") courseId: number, @Arg("fileId") fileId: string) {
+    async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
         const file = getFile(fileId);
 
-        if (file.mimetype !== "image/jpeg") {
+        if (file.mimetype !== 'image/jpeg') {
             throw new UserInputError(`File must be image/jpeg, was '${file.mimetype}' instead`);
         }
 
@@ -135,7 +134,7 @@ export class MutateCourseResolver {
 
         await prisma.course.update({
             data: { imageKey },
-            where: { id: course.id }
+            where: { id: course.id },
         });
 
         logger.info(`User(${context.user!.userID}) uploaded a new course image for Course(${course.id})`);
@@ -180,17 +179,17 @@ export class MutateCourseResolver {
         return true;
     }
 
-    @Mutation(returns => GraphQLModel.Course_tag)
+    @Mutation((returns) => GraphQLModel.Course_tag)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async courseTagCreate(@Ctx() context: GraphQLContext, @Arg("data") data: CourseTagCreateInput) {
+    async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
 
-        if (await prisma.course_tag.count({ where: { category, name }}) > 0) {
+        if ((await prisma.course_tag.count({ where: { category, name } })) > 0) {
             throw new UserInputError(`CourseTag with category ${category} and ${name} already exists!`);
         }
 
         const tag = await prisma.course_tag.create({
-            data: { category, identifier: `${category}/${name}`, name }
+            data: { category, identifier: `${category}/${name}`, name },
         });
 
         logger.info(`User(${context.user!.userID}) created CourseTag(${tag.id})`, data);
@@ -198,20 +197,20 @@ export class MutateCourseResolver {
         return tag;
     }
 
-    @Mutation(returns => GraphQLModel.Course_tag)
+    @Mutation((returns) => GraphQLModel.Course_tag)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async courseTagDelete(@Ctx() context: GraphQLContext, @Arg("courseTagId") courseTagId: number) {
-        const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId }});
+    async courseTagDelete(@Ctx() context: GraphQLContext, @Arg('courseTagId') courseTagId: number) {
+        const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId } });
         if (!tag) {
             throw new UserInputError(`Unknown CourseTag(${courseTagId})`);
         }
 
         await prisma.course_tags_course_tag.deleteMany({
-            where: { courseTagId: courseTagId }
+            where: { courseTagId: courseTagId },
         });
 
         await prisma.course_tag.delete({
-            where: { id: courseTagId }
+            where: { id: courseTagId },
         });
 
         logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
