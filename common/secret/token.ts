@@ -18,7 +18,7 @@ export async function revokeToken(user: User, id: number) {
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
-export async function createToken(user: User): Promise<string> {
+export async function createToken(user: User, expiresAt: Date | null = null, description: string | null = null): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -27,8 +27,9 @@ export async function createToken(user: User): Promise<string> {
             type: SecretType.TOKEN,
             userId: user.userID,
             secret: hash,
-            expiresAt: null,
+            expiresAt,
             lastUsed: null,
+            // description,
         },
     });
 

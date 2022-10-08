@@ -4,15 +4,30 @@ import { createPassword, createToken, requestToken, revokeToken } from '../../co
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { Role } from '../authorizations';
-import { getUserByEmail } from '../../common/user';
+import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
+import { getLogger } from 'log4js';
+
+const logger = getLogger("MutateSecretResolver");
 
 @Resolver((of) => Secret)
 export class MutateSecretResolver {
     @Mutation((returns) => String)
     @Authorized(Role.USER)
-    async tokenCreate(@Ctx() context: GraphQLContext) {
-        return await createToken(getSessionUser(context));
+    async tokenCreate(@Ctx() context: GraphQLContext, @Arg("description", { nullable: true }) description: string | null) {
+        return await createToken(getSessionUser(context), /* expiresAt */ null, description);
+    }
+
+    @Mutation((returns) => String)
+    @Authorized(Role.ADMIN)
+    async tokenCreateAdmin(@Arg("userId") userId: string) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const user = await getUser(userId);
+        const token = await createToken(user, /* expiresAt */ tomorrow, "Support One-Day Access");
+        logger.info(`Admin created a one-day login token for User(${userId})`);
+        return token;
     }
 
     @Mutation((returns) => Boolean)
