@@ -6,9 +6,8 @@ import { ApiCourseUpdate } from '../dto/ApiCourseUpdate';
 import { createCourseTag } from '../util/createCourseTag';
 import { accessURLForKey } from '../file-bucket/s3';
 import { CourseGuest } from './CourseGuest';
-import {SchoolType} from "./SchoolType";
-import {Subject} from "./Subject";
-
+import { SchoolType } from './SchoolType';
+import { Subject } from './Subject';
 
 export enum CourseState {
     CREATED = 'created',
@@ -62,11 +61,8 @@ export class Course {
     })
     category: CourseCategory;
 
-
-
-    @Column({nullable: true, type: 'enum', enum: Subject})
+    @Column({ nullable: true, type: 'enum', enum: Subject })
     subject: Subject;
-
 
     @Column({
         type: 'enum',

@@ -101,6 +101,7 @@
     "apidoc": "^0.22.1",
     "eslint": "^7.2.0",
     "eslint-plugin-lernfair-lint": "./linter/",
+    "pre-commit": "^1.2.2",
     "prettier": "^2.7.1",
     "prisma": "4.3.0",
     "ts-node": "^8.10.1",
@@ -116,5 +117,6 @@
     "heroku",
     "express"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "pre-commit": [ "prettier" ]
 }
