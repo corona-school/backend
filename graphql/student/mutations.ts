@@ -3,7 +3,7 @@ import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
 import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import {isElevated, getSessionStudent, getSessionScreener, updateSessionUser} from '../authentication';
+import { isElevated, getSessionStudent, getSessionScreener, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -20,7 +20,7 @@ import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
-import {userForStudent} from "../../common/user";
+import { userForStudent } from '../../common/user';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,

@@ -66,10 +66,7 @@ export async function cleanupUnconfirmed() {
     remindedAt.setDate(remindedAt.getDate() - REMOVE_AFTER);
 
     const toCleanup = await prisma.pupil_tutoring_interest_confirmation_request.findMany({
-        where: { OR: [
-            { status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt }},
-            { status: InterestConfirmationStatus.REFUSED }
-        ]}
+        where: { OR: [{ status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt } }, { status: InterestConfirmationStatus.REFUSED }] },
     });
 
     for (const reminder of toCleanup) {
