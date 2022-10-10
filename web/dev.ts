@@ -35,6 +35,7 @@ import { CourseGuest } from "../common/entity/CourseGuest";
 import { RemissionRequest } from "../common/entity/RemissionRequest";
 import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
 import { getNotifications, importNotifications } from "../common/notification/notification";
+import { Subject } from "../common/entity/Subject";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -742,6 +743,7 @@ export async function setupDevDB() {
     course3.tags = [preparation, science];
     course3.subcourses = [];
     course3.courseState = CourseState.DENIED;
+    course3.subject = Subject.MATHEMATIK;
 
     courses.push(course3);
 
@@ -755,6 +757,7 @@ export async function setupDevDB() {
     course4.tags = [preparation, science];
     course4.subcourses = [];
     course4.courseState = CourseState.CANCELLED;
+    course3.subject = Subject.MUSIK;
 
     courses.push(course4);
 
@@ -769,6 +772,7 @@ export async function setupDevDB() {
     course5.tags = [music];
     course5.subcourses = [];
     course5.courseState = CourseState.ALLOWED;
+    course5.subject = Subject.MUSIK;
 
     courses.push(course5);
 
@@ -811,6 +815,7 @@ export async function setupDevDB() {
     course8.tags = [science, creativity, play];
     course8.subcourses = [];
     course8.courseState = CourseState.ALLOWED;
+    course8.subject = Subject.LATEIN;
 
     let guest1 = new CourseGuest("test+dev+g1@lern-fair.de", "Tim1", "Marx1", course8, s1, "guestToken1");
     let guest2 = new CourseGuest("test+dev+g2@lern-fair.de", "Tim2", "Marx2", course8, s1, "guestToken2");
