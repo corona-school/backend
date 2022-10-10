@@ -6,7 +6,7 @@ import { Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { CourseState } from '../../common/entity/Course';
 import { PublicCache } from '../cache';
-import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent, isSessionPupil, isSessionStudent } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Decision } from '../types/reason';
 import { canJoinSubcourse } from '../../common/courses/participants';
@@ -22,6 +22,16 @@ class Participant {
     @Field((_type) => String)
     grade: string;
 }
+
+const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
+    published: { equals: true },
+    cancelled: { equals: false },
+    course: {
+        is: {
+            courseState: { equals: CourseState.ALLOWED },
+        },
+    },
+};
 
 const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
     published: { equals: true },
