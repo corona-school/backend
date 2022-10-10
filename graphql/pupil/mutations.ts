@@ -89,10 +89,8 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         where: { id: pupil.id },
     });
 
-    if (!isElevated(context)) {
-        // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-        await updateSessionUser(context, userForPupil(res));
-    }
+    // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
+    await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
 }

@@ -44,7 +44,10 @@ export async function getUserForSession(sessionToken: string) {
 }
 
 export async function updateSessionUser(context: GraphQLContext, user: User) {
-    await loginAsUser(user, context);
+    // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
+    if (context.user.userID === user.userID) {
+        await loginAsUser(user, context);
+    }
 }
 
 export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
