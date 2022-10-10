@@ -6,7 +6,7 @@ import { Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { CourseState } from '../../common/entity/Course';
 import { PublicCache } from '../cache';
-import { getSessionPupil, getSessionStudent, isElevated } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Decision } from '../types/reason';
 import { canJoinSubcourse } from '../../common/courses/participants';
@@ -23,6 +23,16 @@ class Participant {
     grade: string;
 }
 
+const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
+    published: { equals: true },
+    cancelled: { equals: false },
+    course: {
+        is: {
+            courseState: { equals: CourseState.ALLOWED },
+        },
+    },
+};
+
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
     @Query((returns) => [Subcourse])
@@ -35,17 +45,8 @@ export class ExtendedFieldsSubcourseResolver {
         @Arg('search', { nullable: true }) search?: string,
         @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean
     ) {
-        const filters: Prisma.subcourseWhereInput[] = [
-            {
-                published: { equals: true },
-                cancelled: { equals: false },
-                course: {
-                    is: {
-                        courseState: { equals: CourseState.ALLOWED },
-                    },
-                },
-            },
-        ];
+        // All filters need to match
+        const filters = [ IS_PUBLIC_SUBCOURSE ];
 
         if (search) {
             filters.push({
@@ -67,6 +68,52 @@ export class ExtendedFieldsSubcourseResolver {
             take,
             skip,
             orderBy: { updatedAt: 'desc' },
+        });
+    }
+
+    @Query((returns) => Subcourse, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    async subcourse(@Ctx() context: GraphQLContext, @Arg("subcourseId", (type) => Int) subcourseId: number) {
+        if (isElevated(context)) {
+            // Admins and Screeners can see every subcourse:
+            return await prisma.subcourse.findFirst({ where: { id: subcourseId }});
+        }
+
+        // Only one of the filters needs to match to grant the user access:
+        const accessGrantFilters = [ IS_PUBLIC_SUBCOURSE ];
+
+        if (isSessionPupil(context)) {
+            // A pupil has access to unpublished subcourses if they are a participant ...
+            accessGrantFilters.push({
+                subcourse_participants_pupil: {
+                    some: { pupilId: context.user!.pupilId! }
+                }
+            });
+
+            // ... or on the waiting list
+            accessGrantFilters.push({
+                subcourse_participants_pupil: {
+                    some: { pupilId: context.user!.pupilId! }
+                }
+            });
+        }
+
+        if (isSessionStudent(context)) {
+            // Students have access to all subcourses they own
+            accessGrantFilters.push({
+                subcourse_instructors_student: {
+                    some: { studentId: context.user!.studentId }
+                }
+            });
+        }
+
+        // Returns null if the subcourse does not exist,
+        //  or if the user does not have access
+        return await prisma.subcourse.findFirst({
+            where: {
+                id: subcourseId,
+                OR: accessGrantFilters
+            }
         });
     }
 
