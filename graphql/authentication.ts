@@ -247,6 +247,8 @@ export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+        ensureSession(context);
+
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
