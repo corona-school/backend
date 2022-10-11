@@ -37,6 +37,22 @@ export async function createToken(user: User): Promise<string> {
     return token;
 }
 
+// NOTE: Only use for testing purposes
+export async function _createFixedToken(user: User, token: string): Promise<void> {
+    const hash = hashToken(token);
+
+    const result = await prisma.secret.create({
+        data: {
+            type: SecretType.TOKEN,
+            userId: user.userID,
+            secret: hash,
+            expiresAt: null,
+            lastUsed: null,
+        },
+    });
+    logger.info(`User(${user.userID}) created token Secret(${result.id})`);
+}
+
 // Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
 // Also a redirectTo URL is provided which is passed through to the frontend
 export async function requestToken(user: User, action: 'user-authenticate' | 'user-password-reset' | string, redirectTo?: string) {

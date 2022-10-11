@@ -36,6 +36,8 @@ import { RemissionRequest } from "../common/entity/RemissionRequest";
 import {CertificateOfConduct} from "../common/entity/CertificateOfConduct";
 import { getNotifications, importNotifications } from "../common/notification/notification";
 import { Subject } from "../common/entity/Subject";
+import { _createFixedToken, createPassword } from "../common/secret";
+import { userForStudent, userForPupil } from "../common/user";
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -227,6 +229,8 @@ export async function setupDevDB() {
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
         console.log("Inserted Dev Pupil " + i);
+        await _createFixedToken(userForPupil(pupils[i]), `authtokenP${i + 1}`);
+        await createPassword(userForPupil(pupils[i]), `test`);
     }
     const students: Student[] = [];
 
@@ -376,6 +380,8 @@ export async function setupDevDB() {
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
         console.log("Inserted Dev Student " + i);
+        await _createFixedToken(userForStudent(students[i]), `authtokenS${i + 1}`);
+        await createPassword(userForStudent(students[i]), `test`);
     }
 
     const matches: Match[] = [];
