@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
 import { generateStatusChangeURLFromToken } from '../interest-confirmation/tutoring/notify/urls';
 import { Pupil } from './Pupil';
@@ -43,7 +43,7 @@ export class PupilTutoringInterestConfirmationRequest {
     })
     reminderSentDate?: Date;
 
-    @OneToOne((type) => Pupil, (pupil) => pupil.tutoringInterestConfirmationRequest, {
+    @ManyToOne((type) => Pupil, (pupil) => pupil.tutoringInterestConfirmationRequest, {
         eager: false,
     })
     @JoinColumn()
