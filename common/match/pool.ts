@@ -170,7 +170,7 @@ export const pools: MatchPool[] = [
             if (!toggles.includes('skip-interest-confirmation') && !toggles.includes('confirmation-pending') && !toggles.includes('confirmation-unknown')) {
                 query.OR = [
                     { registrationSource: 'cooperation' },
-                    { pupil_tutoring_interest_confirmation_request: { status: 'confirmed', invalidated: false } },
+                    { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
                 ];
             }
 
@@ -179,11 +179,13 @@ export const pools: MatchPool[] = [
                 twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
                 // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-                query.pupil_tutoring_interest_confirmation_request = { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false };
+                query.pupil_tutoring_interest_confirmation_request = { some: { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false } };
             }
 
             if (toggles.includes('confirmation-unknown')) {
-                query.pupil_tutoring_interest_confirmation_request = null;
+                query.pupil_tutoring_interest_confirmation_request = {
+                    none: { invalidated: false },
+                };
             }
 
             return query;
