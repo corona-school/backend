@@ -18,8 +18,8 @@ import { runInterestConfirmations } from "../common/match/pool";
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
     // every morning, quite early (but only on Monday and Thursday)
-    { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
-    // { cronTime: "00 55 07 * * 1,4", jobFunction: runInterestConfirmations },
+    // { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
+    { cronTime: "00 55 07 * * 1,4", jobFunction: runInterestConfirmations },
     // every morning
     { cronTime: "00 00 09 * * *", jobFunction: screeningReminderJob},
     { cronTime: "00 34 08 * * *", jobFunction: projectMatchMaking},

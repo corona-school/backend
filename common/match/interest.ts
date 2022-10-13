@@ -41,7 +41,7 @@ export async function sendInterestConfirmationReminders() {
     remindAt.setDate(remindAt.getDate() - REMIND_AFTER);
 
     const toRemind = await prisma.pupil_tutoring_interest_confirmation_request.findMany({
-        where: { status: InterestConfirmationStatus.PENDING, createdAt: { lte: remindAt }, reminderSentDate: null },
+        where: { status: InterestConfirmationStatus.PENDING, createdAt: { lte: remindAt }, reminderSentDate: null, invalidated: false },
         include: { pupil: true },
     });
 
@@ -66,7 +66,10 @@ export async function cleanupUnconfirmed() {
     remindedAt.setDate(remindedAt.getDate() - REMOVE_AFTER);
 
     const toCleanup = await prisma.pupil_tutoring_interest_confirmation_request.findMany({
-        where: { OR: [{ status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt } }, { status: InterestConfirmationStatus.REFUSED }] },
+        where: {
+            OR: [{ status: InterestConfirmationStatus.PENDING, reminderSentDate: { lte: remindedAt } }, { status: InterestConfirmationStatus.REFUSED }],
+            invalidated: false,
+        },
     });
 
     for (const reminder of toCleanup) {
@@ -75,17 +78,19 @@ export async function cleanupUnconfirmed() {
             where: { id: reminder.pupilId },
         });
 
-        await prisma.pupil_tutoring_interest_confirmation_request.delete({
+        await prisma.pupil_tutoring_interest_confirmation_request.update({
+            data: { invalidated: true },
             where: { id: reminder.id },
         });
 
-        log.info(`Removed interest confirmation from Pupil(${reminder.pupilId}) and removed their match request`);
+        log.info(`Invalidated interest confirmation from Pupil(${reminder.pupilId}) and removed their match request`);
     }
 }
 
 export async function removeInterest(pupil: Pupil) {
-    await prisma.pupil_tutoring_interest_confirmation_request.deleteMany({
+    await prisma.pupil_tutoring_interest_confirmation_request.updateMany({
+        data: { invalidated: true },
         where: { pupilId: pupil.id },
     });
-    log.info(`Removed interest confirmation from Pupil(${pupil.id})`);
+    log.info(`Invalidated interest confirmation from Pupil(${pupil.id})`);
 }

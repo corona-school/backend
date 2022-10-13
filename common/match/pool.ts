@@ -168,7 +168,10 @@ export const pools: MatchPool[] = [
             };
 
             if (!toggles.includes('skip-interest-confirmation') && !toggles.includes('confirmation-pending') && !toggles.includes('confirmation-unknown')) {
-                query.OR = [{ registrationSource: 'cooperation' }, { pupil_tutoring_interest_confirmation_request: { status: 'confirmed' } }];
+                query.OR = [
+                    { registrationSource: 'cooperation' },
+                    { pupil_tutoring_interest_confirmation_request: { status: 'confirmed', invalidated: false } },
+                ];
             }
 
             if (toggles.includes('confirmation-pending')) {
@@ -176,7 +179,7 @@ export const pools: MatchPool[] = [
                 twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
                 // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-                query.pupil_tutoring_interest_confirmation_request = { status: 'pending', createdAt: { gt: twoWeeksAgo } };
+                query.pupil_tutoring_interest_confirmation_request = { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false };
             }
 
             if (toggles.includes('confirmation-unknown')) {
@@ -523,7 +526,8 @@ export async function sendConfirmationRequests(pool: MatchPool) {
 export async function runInterestConfirmations() {
     for (const pool of pools) {
         if (pool.confirmInterest) {
-            await sendConfirmationRequests(pool);
+            // TODO: Enable after confirming the heuristic is good
+            // await sendConfirmationRequests(pool);
         }
     }
 
