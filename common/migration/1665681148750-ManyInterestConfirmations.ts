@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class ManyInterestConfirmations1665681148750 implements MigrationInterface {
-    name = 'ManyInterestConfirmations1665681148750'
+    name = 'ManyInterestConfirmations1665681148750';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "pupil_tutoring_interest_confirmation_request" DROP CONSTRAINT "FK_5928ac6454eee0bfbdb8e538ef8"`);
