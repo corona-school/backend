@@ -23,7 +23,7 @@ export const mailjetChannel: Channel = {
         const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
         assert(senderEmail !== undefined, "Unknown sender emails");
 
-        const message: any = { // unfortunately the Typescript types do not match the documentation https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
+        const message: any = { // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
                 Email: senderEmail
             },
@@ -39,7 +39,10 @@ export const mailjetChannel: Channel = {
             CustomID: `${concreteID}`,
             TemplateErrorReporting: {
                 Email: "backend@lern-fair.de"
-            }
+            },
+            // c.f. https://dev.mailjet.com/email/guides/send-campaigns-with-sendapi/
+            // This groups statistics in the Mailjet UI
+            CustomCampaign: context.campaign ?? `Backend Notification ${notification.id}`
         };
 
         if (context.replyToAddress) {

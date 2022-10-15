@@ -41,6 +41,9 @@ export interface NotificationContext {
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress?: Email;
     attachments?: Attachment[];
+    // The notification is sent out as part of a certain campaign,
+    // This will be used by Mailjet to show statistics for all notifications with the same campaign
+    campaign?: string;
     // As it is not quite useful to maintain the variable shape in the backend as a missmatch with the Mailjet template won't be detected anyways,
     // further props can be set at will
     [key: string]: any;
