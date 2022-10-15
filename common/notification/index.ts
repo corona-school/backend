@@ -462,7 +462,8 @@ export async function bulkCreateNotifications(
     notification: Notification,
     users: User[],
     context: NotificationContext,
-    state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED
+    state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED,
+    startAt: Date
 ) {
     if (context.uniqueId) {
         throw new Error(`Cannot set uniqueId for bulk notifications`);
@@ -473,12 +474,12 @@ export async function bulkCreateNotifications(
     }
 
     const { count: createdNotififications } = await prisma.concrete_notification.createMany({
-        data: users.map((user) => ({
+        data: users.map((user, index) => ({
             // the unique id is automatically created by the database
             notificationID: notification.id,
             state,
             userId: user.userID,
-            sentAt: new Date(),
+            sentAt: new Date(+startAt + 1000 * 60 * 60 * 24 * Math.floor(index / 500)),
             contextID: context.uniqueId,
             context,
         })),

@@ -52,7 +52,8 @@ export class MutateConcreteNotificationsResolver {
         @Arg('notificationId', (type) => Int) notificationId: number,
         @Arg('userIds', (_type) => [String]) userIds: string[],
         @Arg('context') context: string,
-        @Arg('skip_draft') skipDraft: boolean = false
+        @Arg('skipDraft') skipDraft: boolean = false,
+        @Arg('startAt') startAt: Date
     ) {
         const notification = await getNotification(notificationId);
         const users = await getUsers(userIds);
@@ -60,7 +61,13 @@ export class MutateConcreteNotificationsResolver {
         const parsedContext = JSON.parse(context);
         validateContext(notification, parsedContext);
 
-        await bulkCreateNotifications(notification, users, parsedContext, skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED);
+        await bulkCreateNotifications(
+            notification,
+            users,
+            parsedContext,
+            skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED,
+            startAt
+        );
 
         return true;
     }
