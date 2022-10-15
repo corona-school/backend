@@ -1,3 +1,4 @@
+import { getUser } from '../common/user';
 import { Directive } from 'type-graphql';
 import { prisma } from '../common/prisma';
 
@@ -9,6 +10,8 @@ export const getStudent = (studentId: number) => prisma.student.findUnique({ whe
 export const getScreener = (screenerId: number) => prisma.screener.findUnique({ where: { id: screenerId }, rejectOnNotFound: true });
 export const getCourse = (courseId: number) => prisma.course.findUnique({ where: { id: courseId }, rejectOnNotFound: true });
 export const getLecture = (lectureId: number) => prisma.lecture.findUnique({ where: { id: lectureId }, rejectOnNotFound: true });
+
+export const getUsers = (userIds: string[]) => Promise.all(userIds.map(userId => getUser(userId)));
 
 export function Deprecated(reason: string) {
     return Directive(`@deprecated(reason: "${reason}")`);

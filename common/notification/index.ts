@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM, User } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -440,6 +440,69 @@ export async function rescheduleNotification(notification: ConcreteNotification,
     });
 
     logger.info(`ConcreteNotification(${notification.id}) was manually rescheduled to ${sendAt.toISOString()}`);
+}
+
+export function validateContext(notification: Notification, context: NotificationContext) {
+    if (!notification.sample_context) {
+        throw new Error(`Cannot validate Notification(${notification.id}) without sample_context`);
+    }
+
+    const expectedKeys = Object.keys(notification.sample_context);
+    const actualKeys = Object.keys(context);
+    const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+
+    if (missing.length) {
+        throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+}
+
+// Bulk Concrete Notifications can be created in drafted state
+// Then one can validate and check that all notifications were created correctly before sending them out
+export async function bulkCreateNotifications(
+    notification: Notification,
+    users: User[],
+    context: NotificationContext,
+    state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED
+) {
+    if (context.uniqueId) {
+        throw new Error(`Cannot set uniqueId for bulk notifications`);
+    }
+
+    if (users.length > 10 && state !== ConcreteNotificationState.DRAFTED) {
+        throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
+    }
+
+    const { count: createdNotififications } = await prisma.concrete_notification.createMany({
+        data: users.map((user) => ({
+            // the unique id is automatically created by the database
+            notificationID: notification.id,
+            state,
+            userId: user.userID,
+            sentAt: new Date(),
+            contextID: context.uniqueId,
+            context,
+        })),
+    });
+
+    logger.info(`Created ${createdNotififications} notifications for Notification(${notification.id}) in ${ConcreteNotificationState[state]} state`);
+}
+
+export async function publishDrafted(notification: Notification) {
+    const { count: publishedCount } = await prisma.concrete_notification.updateMany({
+        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id },
+        data: { state: ConcreteNotificationState.DELAYED },
+    });
+
+    logger.info(`Published ${publishedCount} notifications for Notification(${notification.id})`);
+}
+
+export async function cancelDrafted(notification: Notification) {
+    const { count: publishedCount } = await prisma.concrete_notification.updateMany({
+        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id },
+        data: { state: ConcreteNotificationState.ACTION_TAKEN, error: 'Draft cancelled' },
+    });
+
+    logger.info(`Cancelled ${publishedCount} drafted notifications for Notification(${notification.id})`);
 }
 
 export * from './hook';
