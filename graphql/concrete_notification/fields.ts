@@ -33,9 +33,15 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @Query((returns) => [Campaign])
     @Authorized(Role.ADMIN)
     async concreteNotificationCampaign() {
+        const campaignMails = await prisma.notification.findMany({
+            select: { id: true },
+            where: { category: { has: 'campaign' } },
+        });
+
         const aggregated = await prisma.concrete_notification.groupBy({
             _count: true,
             by: ['notificationID', 'context', 'state'],
+            where: { notificationID: { in: campaignMails.map((it) => it.id) } },
         });
 
         const byCampaign: { [key: string]: Campaign } = {};
