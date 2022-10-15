@@ -22,6 +22,7 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
+import { MaxLength } from 'class-validator';
 
 @InputType()
 export class PupilUpdateInput {
@@ -54,11 +55,15 @@ export class PupilUpdateInput {
 
     @Field((type) => [Language], { nullable: true })
     languages?: Language[];
+
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    aboutMe?: string;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext('Pupil', context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype, languages } = update;
+    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype, languages, aboutMe } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
@@ -85,6 +90,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             state: ensureNoNull(state),
             schooltype: ensureNoNull(schooltype),
             languages: ensureNoNull(languages),
+            aboutMe: ensureNoNull(aboutMe),
         },
         where: { id: pupil.id },
     });
