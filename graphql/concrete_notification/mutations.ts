@@ -50,7 +50,7 @@ export class MutateConcreteNotificationsResolver {
     @Authorized(Role.ADMIN)
     async concreteNotificationBulkCreate(
         @Arg('notificationId', (type) => Int) notificationId: number,
-        @Arg('userIds') userIds: string[],
+        @Arg('userIds', (_type) => [String]) userIds: string[],
         @Arg('context') context: string,
         @Arg('skip_draft') skipDraft: boolean = false
     ) {
