@@ -465,10 +465,6 @@ export async function bulkCreateNotifications(
     state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED,
     startAt: Date
 ) {
-    if (context.uniqueId) {
-        throw new Error(`Cannot set uniqueId for bulk notifications`);
-    }
-
     if (users.length > 10 && state !== ConcreteNotificationState.DRAFTED) {
         throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
     }

@@ -40,15 +40,20 @@ export class ExtendedFieldsConcreteNotificationResolver {
 
         const aggregated = await prisma.concrete_notification.groupBy({
             _count: true,
-            by: ['notificationID', 'context', 'state'],
+            by: ['notificationID', 'contextID', 'state'],
             where: { notificationID: { in: campaignMails.map((it) => it.id) } },
         });
 
         const byCampaign: { [key: string]: Campaign } = {};
 
-        for (const { _count, context, notificationID, state } of aggregated) {
-            const key = JSON.stringify([notificationID, context]);
+        for (const { _count, contextID, notificationID, state } of aggregated) {
+            const key = notificationID + '/' + contextID;
             if (!byCampaign[key]) {
+                const context = await prisma.concrete_notification.findFirst({
+                    select: { context: true },
+                    where: { notificationID, contextID },
+                });
+
                 byCampaign[key] = {
                     context,
                     notificationID,
