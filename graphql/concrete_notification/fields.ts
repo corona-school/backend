@@ -3,7 +3,7 @@ import { Authorized, Field, FieldResolver, Int, ObjectType, Query, Resolver, Roo
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
-import { ConcreteNotificationState } from 'common/entity/ConcreteNotification';
+import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 
 @ObjectType()
 class Campaign {
