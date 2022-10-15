@@ -7,8 +7,12 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 
 @ObjectType()
 class Campaign {
+    // 'Primary Key':
     @Field((type) => Int)
     notificationID: number;
+    @Field((type) => String)
+    contextID: string;
+
     @Field((type) => JSONResolver)
     context: {};
 
@@ -57,6 +61,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
                 byCampaign[key] = {
                     context,
                     notificationID,
+                    contextID,
                     drafted: 0,
                     error: 0,
                     scheduled: 0,

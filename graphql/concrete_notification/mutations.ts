@@ -76,7 +76,7 @@ export class MutateConcreteNotificationsResolver {
     @Authorized(Role.ADMIN)
     async concreteNotificationPublishDraft(@Arg('notificationId', (type) => Int) notificationId: number, @Arg('contextID') contextID: string) {
         const notification = await getNotification(notificationId);
-        await publishDrafted(notification);
+        await publishDrafted(notification, contextID);
         return true;
     }
 
@@ -84,7 +84,7 @@ export class MutateConcreteNotificationsResolver {
     @Authorized(Role.ADMIN)
     async concreteNotificationCancelDraft(@Arg('notificationId', (type) => Int) notificationId: number, @Arg('contextID') contextID: string) {
         const notification = await getNotification(notificationId);
-        await cancelDrafted(notification);
+        await cancelDrafted(notification, contextID);
         return true;
     }
 }
