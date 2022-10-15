@@ -5,6 +5,7 @@ import * as Notification from '../../common/notification/notification';
 import { NotificationCreateInput, NotificationUpdateInput } from '../generated';
 import { runBulkAction } from '../../common/notification/bulk';
 import { notification_sender_enum } from '@prisma/client';
+import { JSONResolver } from 'graphql-scalars';
 
 @InputType()
 class NotificationInput {
@@ -33,6 +34,8 @@ class NotificationInput {
     sender: notification_sender_enum | null;
     @Field((_type) => String, { nullable: true })
     hookID: string | null;
+    @Field((_type) => JSONResolver)
+    sample_context: any;
 }
 @Resolver((of) => GraphQLModel.Notification)
 export class MutateNotificationResolver {
