@@ -15,7 +15,7 @@ import {
     pupil_state_enum as State,
     student_module_enum as TeacherModule,
 } from '@prisma/client';
-import { MaxLength } from 'class-validator';
+import { MaxLength, ValidateNested } from 'class-validator';
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from '../../common/jufo/participationIndication';
 import { School } from '../../common/entity/School';
 import { RateLimit } from '../rate-limit';
@@ -125,9 +125,11 @@ class MeUpdateInput {
     lastname?: string;
 
     @Field((type) => PupilUpdateInput, { nullable: true })
+    @ValidateNested()
     pupil?: PupilUpdateInput;
 
     @Field((type) => StudentUpdateInput, { nullable: true })
+    @ValidateNested()
     student?: StudentUpdateInput;
 }
 
