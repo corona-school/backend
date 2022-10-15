@@ -269,6 +269,7 @@ model notification {
   interval          Int?
   sender            notification_sender_enum?
   hookID            String?                   @db.VarChar
+  sample_context    Json?                     @db.Json
 }
 
 model participation_certificate {
@@ -336,44 +337,44 @@ model project_match {
 }
 
 model pupil {
-  id                                           Int                                           @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
-  createdAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
-  updatedAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
-  firstname                                    String?                                       @db.VarChar
-  lastname                                     String?                                       @db.VarChar
-  active                                       Boolean                                       @default(true)
-  email                                        String                                        @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
-  verification                                 String?                                       @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
-  verifiedAt                                   DateTime?                                     @db.Timestamp(6)
-  authToken                                    String?                                       @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
-  authTokenUsed                                Boolean                                       @default(false)
-  authTokenSent                                DateTime?                                     @db.Timestamp(6)
-  wix_id                                       String                                        @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
-  wix_creation_date                            DateTime                                      @db.Timestamp(6)
-  state                                        pupil_state_enum                              @default(other)
-  schooltype                                   pupil_schooltype_enum                         @default(other)
-  msg                                          String?                                       @db.VarChar
-  grade                                        String?                                       @db.VarChar
-  newsletter                                   Boolean                                       @default(false)
-  isPupil                                      Boolean                                       @default(false)
-  subjects                                     String?                                       @db.VarChar
-  openMatchRequestCount                        Int                                           @default(1)
-  firstMatchRequest                            DateTime?                                     @db.Timestamp(6)
-  isParticipant                                Boolean                                       @default(true)
-  isProjectCoachee                             Boolean                                       @default(false)
-  projectFields                                pupil_projectfields_enum[]                    @default([])
-  isJufoParticipant                            String                                        @default("unsure") @db.VarChar
-  openProjectMatchRequestCount                 Int                                           @default(1)
-  projectMemberCount                           Int                                           @default(1)
-  languages                                    pupil_languages_enum[]                        @default([])
+  id                                           Int                                            @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
+  createdAt                                    DateTime                                       @default(now()) @db.Timestamp(6)
+  updatedAt                                    DateTime                                       @default(now()) @db.Timestamp(6)
+  firstname                                    String?                                        @db.VarChar
+  lastname                                     String?                                        @db.VarChar
+  active                                       Boolean                                        @default(true)
+  email                                        String                                         @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
+  verification                                 String?                                        @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
+  verifiedAt                                   DateTime?                                      @db.Timestamp(6)
+  authToken                                    String?                                        @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
+  authTokenUsed                                Boolean                                        @default(false)
+  authTokenSent                                DateTime?                                      @db.Timestamp(6)
+  wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
+  wix_creation_date                            DateTime                                       @db.Timestamp(6)
+  state                                        pupil_state_enum                               @default(other)
+  schooltype                                   pupil_schooltype_enum                          @default(other)
+  msg                                          String?                                        @db.VarChar
+  grade                                        String?                                        @db.VarChar
+  newsletter                                   Boolean                                        @default(false)
+  isPupil                                      Boolean                                        @default(false)
+  subjects                                     String?                                        @db.VarChar
+  openMatchRequestCount                        Int                                            @default(1)
+  firstMatchRequest                            DateTime?                                      @db.Timestamp(6)
+  isParticipant                                Boolean                                        @default(true)
+  isProjectCoachee                             Boolean                                        @default(false)
+  projectFields                                pupil_projectfields_enum[]                     @default([])
+  isJufoParticipant                            String                                         @default("unsure") @db.VarChar
+  openProjectMatchRequestCount                 Int                                            @default(1)
+  projectMemberCount                           Int                                            @default(1)
+  languages                                    pupil_languages_enum[]                         @default([])
   learningGermanSince                          pupil_learninggermansince_enum?
-  matchingPriority                             Int                                           @default(0)
-  lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
-  teacherEmailAddress                          String?                                       @db.VarChar
-  registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
-  coduToken                                    String?                                       @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
+  matchingPriority                             Int                                            @default(0)
+  lastUpdatedSettingsViaBlocker                DateTime?                                      @db.Timestamp(6)
+  teacherEmailAddress                          String?                                        @db.VarChar
+  registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
+  coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   schoolId                                     Int?
-  school                                       school?                                       @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
+  school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
   course_attendance_log                        course_attendance_log[]
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
@@ -392,7 +393,7 @@ model pupil_tutoring_interest_confirmation_request {
   invalidated      Boolean   @default(false)
   token            String    @unique(map: "IDX_8108668f1658b14b9db299634e") @db.VarChar
   reminderSentDate DateTime? @db.Timestamp(6)
-  pupilId          Int?      @unique(map: "REL_5928ac6454eee0bfbdb8e538ef")
+  pupilId          Int?
   pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 

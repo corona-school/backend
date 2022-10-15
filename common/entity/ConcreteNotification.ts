@@ -24,7 +24,7 @@ export class ConcreteNotification {
     @Column({ nullable: true })
     contextID?: string;
 
-    // For DELAYED and PENDING notifications we also store the context, to be able to resend
+    // For DRAFT, DELAYED and PENDING notifications we also store the context, to be able to resend
     // notifications in the future
     @Column({ type: 'json' })
     context: any;
@@ -50,9 +50,11 @@ export class ConcreteNotification {
 }
 
 export enum ConcreteNotificationState {
-    DELAYED, // the action was called but there is a delay set (it's a Reminder)
-    PENDING, // notification was sent, not sure if arrived
-    SENT, // we're pretty sure the notification arrived (no bounce, no API error)
-    ERROR, // the notification bounced
-    ACTION_TAKEN, // the user took an action which cancelled the pending reminder
+    DELAYED = 0, // the action was called but there is a delay set (it's a Reminder)
+    PENDING = 1, // notification was sent, not sure if arrived
+    SENT = 2, // we're pretty sure the notification arrived (no bounce, no API error)
+    ERROR = 3, // the notification bounced
+    ACTION_TAKEN = 4, // the user took an action which cancelled the pending reminder
+    ARCHIVED = 5,
+    DRAFTED = 6,
 }
