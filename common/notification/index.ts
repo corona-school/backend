@@ -484,18 +484,18 @@ export async function bulkCreateNotifications(
     logger.info(`Created ${createdNotififications} notifications for Notification(${notification.id}) in ${ConcreteNotificationState[state]} state`);
 }
 
-export async function publishDrafted(notification: Notification) {
+export async function publishDrafted(notification: Notification, contextID: string) {
     const { count: publishedCount } = await prisma.concrete_notification.updateMany({
-        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id },
+        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id, contextID },
         data: { state: ConcreteNotificationState.DELAYED },
     });
 
     logger.info(`Published ${publishedCount} notifications for Notification(${notification.id})`);
 }
 
-export async function cancelDrafted(notification: Notification) {
+export async function cancelDrafted(notification: Notification, contextID: string) {
     const { count: publishedCount } = await prisma.concrete_notification.updateMany({
-        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id },
+        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id, contextID },
         data: { state: ConcreteNotificationState.ACTION_TAKEN, error: 'Draft cancelled' },
     });
 
