@@ -34,12 +34,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build --if-present
-      - run: (npm run web:nopdf &) | (timeout --foreground 10 cat; cat > /dev/null &)
+      - run: (npm run web:nopdf &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &)
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
           ADMIN_AUTH_TOKEN: admintoken
           ENV: dev
-      - run: sleep 5
       - run: npm run integration-tests
         env:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
