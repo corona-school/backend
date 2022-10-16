@@ -21,7 +21,7 @@ type LimitedQueryContext = {
     };
 };
 
-const ACCUMULATED_LIMIT = 1000;
+export const ACCUMULATED_LIMIT = 1000;
 
 function enforceAccumulatedLimit(info: GraphQLResolveInfo, context: LimitedQueryContext, cardinality: number) {
     if (!context.limits) {
