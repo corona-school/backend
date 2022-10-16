@@ -42,6 +42,13 @@ export class MutateNotificationResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async notificationCreate(@Arg('notification') notification: NotificationCreateInput): Promise<boolean> {
+        if (
+            notification.sample_context &&
+            (typeof notification.sample_context !== 'object' || Object.values(notification.sample_context).some((it) => typeof it !== 'string'))
+        ) {
+            throw new Error(`Sample context must be an object with string values`);
+        }
+
         await Notification.create(notification);
         return true;
     }
@@ -58,6 +65,10 @@ export class MutateNotificationResolver {
     async notificationUpdate(@Arg('notificationId') notificationId: number, @Arg('update') update: NotificationUpdateInput): Promise<boolean> {
         if ('active' in update) {
             throw new Error('Cannot change active field through update');
+        }
+
+        if (update.sample_context && (typeof update.sample_context !== 'object' || Object.values(update.sample_context).some((it) => typeof it !== 'string'))) {
+            throw new Error(`Sample context must be an object with string values`);
         }
 
         await Notification.update(notificationId, update as any);
