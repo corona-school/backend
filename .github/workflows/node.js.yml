@@ -34,7 +34,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build --if-present
-      - run: (npm run web:nopdf &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &)
+      - run: (npm run web:nopdf &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &) || exit 0
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
           ADMIN_AUTH_TOKEN: admintoken
