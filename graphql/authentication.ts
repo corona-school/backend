@@ -97,7 +97,7 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
     }
 
     if (!pupilId) {
-        throw new ForbiddenError('Expected user to be student or if elevated, a studentId must be passed in');
+        throw new ForbiddenError('Expected user to be pupil or if elevated, a pupilId must be passed in');
     }
 
     return await getPupil(pupilId);

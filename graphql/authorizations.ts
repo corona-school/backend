@@ -7,6 +7,8 @@ import assert from 'assert';
 import { getLogger } from 'log4js';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { ForbiddenError } from './error';
+import { isParticipant } from '../common/courses/participants';
+import { getPupil } from './util';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -42,6 +44,8 @@ export enum Role {
     PROJECT_COACHEE = 'PROJECT_COACHEE',
     /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
     STATE_PUPIL = 'STATE_PUPIL',
+    /* User is a pupil and participant of a specific subcourse */
+    SUBCOURSE_PARTICIPANT = "SUBCOURSE_PARTICIPANT"
 }
 
 const authLogger = getLogger('GraphQL Authentication');
@@ -111,6 +115,13 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         if (isOwner) {
             return true;
         }
+    }
+    if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
+        assert(modelName === "Subcourse", "Type must be a Subcourse to determine access to it")
+        assert(root, 'root value must be bound to determine access');
+        assert(context.user.pupilId, 'User must be a pupil')
+        const pupil = await getPupil(context.user.pupilId)
+        return await isParticipant(root, pupil);
     }
 
     return false;
