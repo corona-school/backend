@@ -63,10 +63,6 @@ export async function getNotification(id: NotificationID, allowDeactivated = fal
         throw new Error(`Notification(${id}) was deactivated`);
     }
 
-    if (!notification) {
-        throw new Error(`No notification found for id: ${id}`);
-    }
-
     return notification;
 }
 
