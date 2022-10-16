@@ -159,7 +159,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         deleteOneCourse_tag: nobody,
         updateOneCourse_tag: nobody,
         updateManyCourse_tag: nobody,
-        upsertOneCourse_tag: nobody
+        upsertOneCourse_tag: nobody,
     },
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
@@ -230,6 +230,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isPupil'
             | 'languages'
             | 'projectFields'
+            | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -283,7 +284,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages'
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -376,7 +377,18 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Course: {
         fields: withPublicFields<
             Course,
-            'id' | 'name' | 'outline' | 'category' | 'subject' | 'schooltype' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
+            | 'id'
+            | 'name'
+            | 'outline'
+            | 'category'
+            | 'subject'
+            | 'schooltype'
+            | 'allowContact'
+            | 'courseState'
+            | 'publicRanking'
+            | 'description'
+            | 'createdAt'
+            | 'updatedAt'
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
@@ -387,7 +399,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             imageKey: nobody,
-            _count: nobody
+            _count: nobody,
         }),
     },
     Lecture: {
@@ -411,7 +423,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
             identifier: nobody,
             _count: nobody,
-            course_tags_course_tag: nobody
+            course_tags_course_tag: nobody,
         }),
-    }
+    },
 };

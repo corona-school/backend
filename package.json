@@ -29,7 +29,7 @@
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
     "integration-tests": "node ./built/integration-tests/index.js",
-    "prettier": "prettier --write './(common|graphql)/!(generated|migration)/?**.ts'",
+    "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write"
   },
   "dependencies": {

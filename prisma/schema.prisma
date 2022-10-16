@@ -373,6 +373,7 @@ model pupil {
   teacherEmailAddress                          String?                                        @db.VarChar
   registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
   coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
+  aboutMe                                      String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
   course_attendance_log                        course_attendance_log[]
@@ -499,6 +500,7 @@ model student {
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  aboutMe                                   String                                 @default("") @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
