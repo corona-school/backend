@@ -176,12 +176,13 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => [OtherParticipant])
     @Authorized(Role.SUBCOURSE_PARTICIPANT)
     @LimitEstimated(100)
-    async otherParticipants(@Root() subcourse: Subcourse) {
+    async otherParticipants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
                         subcourseId: subcourse.id,
+                        pupilId: { not: context.user.pupilId },
                     },
                 },
             },
