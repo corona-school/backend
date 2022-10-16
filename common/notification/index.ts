@@ -502,9 +502,9 @@ export async function publishDrafted(notification: Notification, contextID: stri
     logger.info(`Published ${publishedCount} notifications for Notification(${notification.id})`);
 }
 
-export async function cancelDrafted(notification: Notification, contextID: string) {
+export async function cancelDraftedAndDelayed(notification: Notification, contextID: string) {
     const { count: publishedCount } = await prisma.concrete_notification.updateMany({
-        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id, contextID },
+        where: { state: { in: [ConcreteNotificationState.DRAFTED, ConcreteNotificationState.DELAYED], notificationID: notification.id, contextID },
         data: { state: ConcreteNotificationState.ACTION_TAKEN, error: 'Draft cancelled' },
     });
 

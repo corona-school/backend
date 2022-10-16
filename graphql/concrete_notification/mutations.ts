@@ -5,7 +5,7 @@ import { Role } from '../authorizations';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import {
     bulkCreateNotifications,
-    cancelDrafted,
+    cancelDraftedAndDelayed,
     cancelNotification,
     publishDrafted,
     rescheduleNotification,
@@ -82,7 +82,7 @@ export class MutateConcreteNotificationsResolver {
     @Authorized(Role.ADMIN)
     async concreteNotificationCancelDraft(@Arg('notificationId', (type) => Int) notificationId: number, @Arg('contextID') contextID: string) {
         const notification = await getNotification(notificationId);
-        await cancelDrafted(notification, contextID);
+        await cancelDraftedAndDelayed(notification, contextID);
         return true;
     }
 }

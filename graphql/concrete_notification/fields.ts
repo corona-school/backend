@@ -24,6 +24,8 @@ class Campaign {
     sent: number;
     @Field((type) => Int)
     error: number;
+    @Field((type) => Int)
+    canceled: number;
 }
 
 @Resolver((of) => ConcreteNotification)
@@ -66,6 +68,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
                     error: 0,
                     scheduled: 0,
                     sent: 0,
+                    canceled: 0,
                 };
             }
 
@@ -82,6 +85,10 @@ export class ExtendedFieldsConcreteNotificationResolver {
 
                 case ConcreteNotificationState.SENT:
                     byCampaign[key].sent = _count;
+                    break;
+
+                case ConcreteNotificationState.ACTION_TAKEN:
+                    byCampaign[key].canceled = _count;
                     break;
 
                 default:
