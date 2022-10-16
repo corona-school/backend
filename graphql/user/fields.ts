@@ -114,7 +114,7 @@ export class UserFieldsResolver {
         }
 
         if (studentQuery) {
-            const students = await prisma.pupil.findMany({
+            const students = await prisma.student.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
                 where: { ...studentQuery, active: true, verification: null },
             });
