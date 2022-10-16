@@ -15,6 +15,7 @@ import {
 import { getUsers } from '../util';
 import { getNotification } from '../../common/notification/notification';
 import { getUser } from '../../common/user';
+import { JSONResolver } from 'graphql-scalars';
 
 @Resolver((of) => ConcreteNotification)
 export class MutateConcreteNotificationsResolver {
@@ -51,23 +52,20 @@ export class MutateConcreteNotificationsResolver {
     async concreteNotificationBulkCreate(
         @Arg('notificationId', (type) => Int) notificationId: number,
         @Arg('userIds', (_type) => [String]) userIds: string[],
-        @Arg('context') context: string,
+        @Arg('context', (_type) => JSONResolver) context: any,
         @Arg('skipDraft') skipDraft: boolean = false,
         @Arg('startAt') startAt: Date
     ) {
         const notification = await getNotification(notificationId);
         const users = await getUsers(userIds);
 
-        const parsedContext = JSON.parse(context);
-        validateContext(notification, parsedContext);
+        if (typeof context !== 'object' || Object.values(context).some((it) => typeof it !== 'string')) {
+            throw new Error(`Context must be an object with string values`);
+        }
 
-        await bulkCreateNotifications(
-            notification,
-            users,
-            parsedContext,
-            skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED,
-            startAt
-        );
+        validateContext(notification, context);
+
+        await bulkCreateNotifications(notification, users, context, skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED, startAt);
 
         return true;
     }
