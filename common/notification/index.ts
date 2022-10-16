@@ -469,6 +469,15 @@ export async function bulkCreateNotifications(
         throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
     }
 
+    const contextIDExists =
+        (await prisma.concrete_notification.count({
+            where: { contextID: context.uniqueId },
+        })) > 0;
+
+    if (contextIDExists) {
+        throw new Error(`ContextID must be unique for bulk notifications`);
+    }
+
     const { count: createdNotififications } = await prisma.concrete_notification.createMany({
         data: users.map((user, index) => ({
             // the unique id is automatically created by the database
