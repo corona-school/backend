@@ -21,6 +21,7 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
+import { MaxLength } from 'class-validator';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -73,11 +74,15 @@ export class StudentUpdateInput {
 
     @Field((type) => State, { nullable: true })
     state?: State;
+
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    aboutMe?: string;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -103,6 +108,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
+            aboutMe: ensureNoNull(aboutMe),
         },
         where: { id: student.id },
     });

@@ -230,6 +230,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isPupil'
             | 'languages'
             | 'projectFields'
+            | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -283,7 +284,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages'
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
