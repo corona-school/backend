@@ -2,7 +2,7 @@ import { Student } from '../entity/Student';
 import { Pupil } from '../entity/Pupil';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
-import { putFile, ATTACHMENT_BUCKET, generatePresignedURL , deleteFile} from '../file-bucket';
+import { putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile} from '../file-bucket';
 import { getUserIdTypeORM } from '../user';
 import { friendlyFileSize } from '../util/basic';
 import { Attachment } from '../entity/Attachment';
