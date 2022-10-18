@@ -15,5 +15,6 @@ import "./user";
 import "./matching";
 import "./auth";
 import "./settings";
+import "./course";
 
 finalizeTests();

@@ -1,8 +1,8 @@
-import { student as Student, screener as Screener } from "@prisma/client";
-import { prisma } from "../prisma";
-import * as Notification from "../notification";
-import { getLogger } from "log4js";
-import { createRemissionRequest } from "../remission-request";
+import { student as Student, screener as Screener } from '@prisma/client';
+import { prisma } from '../prisma';
+import * as Notification from '../notification';
+import { getLogger } from 'log4js';
+import { createRemissionRequest } from '../remission-request';
 
 interface ScreeningInput {
     success: boolean;
@@ -10,25 +10,24 @@ interface ScreeningInput {
     knowsCoronaSchoolFrom?: string;
 }
 
-const logger = getLogger("Student Screening");
+const logger = getLogger('Student Screening');
 
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
     await prisma.instructor_screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
-            studentId: student.id
-        }
+            studentId: student.id,
+        },
     });
 
     if (screening.success) {
-        await Notification.actionTaken(student, "instructor_screening_success", {});
+        await Notification.actionTaken(student, 'instructor_screening_success', {});
     } else {
-        await Notification.actionTaken(student, "instructor_screening_rejection", {});
+        await Notification.actionTaken(student, 'instructor_screening_rejection', {});
     }
 
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
-
 }
 
 export async function addTutorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
@@ -36,19 +35,18 @@ export async function addTutorScreening(screener: Screener, student: Student, sc
         data: {
             ...screening,
             screenerId: screener.id,
-            studentId: student.id
-        }
+            studentId: student.id,
+        },
     });
 
     if (screening.success) {
         await ScheduleCoCReminders(student);
-        await Notification.actionTaken(student, "tutor_screening_success", {});
+        await Notification.actionTaken(student, 'tutor_screening_success', {});
     } else {
-        await Notification.actionTaken(student, "tutor_screening_rejection", {});
+        await Notification.actionTaken(student, 'tutor_screening_rejection', {});
     }
 
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
-
 }
 
 export async function ScheduleCoCReminders(student: Student) {
@@ -57,7 +55,7 @@ export async function ScheduleCoCReminders(student: Student) {
     }
 
     const remissionRequest = await prisma.remission_request.findUnique({
-        where: { studentId: student.id }
+        where: { studentId: student.id },
     });
 
     if (remissionRequest) {

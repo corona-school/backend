@@ -1,24 +1,25 @@
-import {Arg, Authorized, Mutation, Resolver} from "type-graphql";
-import * as GraphQLModel from "../generated/models";
-import {Role} from "../authorizations";
+import { Arg, Authorized, Mutation, Resolver } from 'type-graphql';
+import * as GraphQLModel from '../generated/models';
+import { Role } from '../authorizations';
 
-import {deactivateStudent} from "../../common/student/activation";
-import {getStudent} from "../util";
-import * as CertificateOfConduct from "../../common/certificate-of-conduct/certificateOfConduct";
-import {updateCertificateOfConduct} from "../../common/student";
-import {getLogger} from "log4js";
-const logger = getLogger("Certificate of Conduct");
+import { deactivateStudent } from '../../common/student/activation';
+import { getStudent } from '../util';
+import * as CertificateOfConduct from '../../common/certificate-of-conduct/certificateOfConduct';
+import { updateCertificateOfConduct } from '../../common/student';
+import { getLogger } from 'log4js';
+const logger = getLogger('Certificate of Conduct');
 
-
-@Resolver(of => GraphQLModel.Certificate_of_conduct)
+@Resolver((of) => GraphQLModel.Certificate_of_conduct)
 export class MutateCertificateOfConductResolver {
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     // eslint-disable-next-line camelcase
-    async certificateOfConductUpdate(@Arg("studentId") studentId: number,
-        @Arg("criminalRecord") criminalRecord:boolean,
-        @Arg("dateOfIssue") dateOfIssue: Date,
-        @Arg("dateOfInspection") dateOfInspection: Date) {
+    async certificateOfConductUpdate(
+        @Arg('studentId') studentId: number,
+        @Arg('criminalRecord') criminalRecord: boolean,
+        @Arg('dateOfIssue') dateOfIssue: Date,
+        @Arg('dateOfInspection') dateOfInspection: Date
+    ) {
         const student = await getStudent(studentId);
         if (criminalRecord) {
             logger.info(`Updating criminal record for student ${studentId}`);
@@ -28,15 +29,15 @@ export class MutateCertificateOfConductResolver {
         return true;
     }
 
-
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     // eslint-disable-next-line camelcase
     async certificateOfConductCreate(
-        @Arg("dateOfInspection") dateOfInspection: Date,
-        @Arg("dateOfIssue") dateOfIssue: Date,
-        @Arg("criminalRecords") criminalRecords: boolean,
-        @Arg("studentId") studentId: number) {
+        @Arg('dateOfInspection') dateOfInspection: Date,
+        @Arg('dateOfIssue') dateOfIssue: Date,
+        @Arg('criminalRecords') criminalRecords: boolean,
+        @Arg('studentId') studentId: number
+    ) {
         await CertificateOfConduct.create(dateOfInspection, dateOfIssue, criminalRecords, studentId);
         return true;
     }

@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Course } from './Course';
 
 @Entity()
@@ -7,7 +7,7 @@ export class CourseTag {
     id: number;
 
     @Index({
-        unique: true
+        unique: true,
     })
     @Column()
     identifier: string;
@@ -18,7 +18,6 @@ export class CourseTag {
     @Column()
     category: string;
 
-    @ManyToMany(type => Course, course => course.tags)
+    @ManyToMany((type) => Course, (course) => course.tags)
     courses: Course[];
-
 }

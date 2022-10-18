@@ -28,10 +28,10 @@ import { performCleanupActions } from "../common/util/cleanup";
 import "reflect-metadata"; //leave it here...
 import { apolloServer } from "../graphql";
 import rateLimit from "express-rate-limit";
-import * as notificationController from "./controllers/notificationController";
 import {getAttachmentUrlEndpoint} from "./controllers/attachmentController";
 import { isDev } from "../common/util/environment";
 import {isCommandArg} from "../common/util/basic";
+import { fileRouter } from "./controllers/fileController";
 
 // Logger setup
 try {
@@ -114,7 +114,7 @@ createConnection().then(setupPDFGenerationEnvironment)
         configureExpertAPI();
         configureApolloServer();
         configurePupilInterestConfirmationAPI();
-        configureNotificationAPI();
+        configureFileAPI();
         const server = await deployServer();
         configureGracefulShutdown(server);
 
@@ -133,9 +133,13 @@ createConnection().then(setupPDFGenerationEnvironment)
                 origins = [
                     "http://localhost:3000",
                     ...allowedSubdomains.map(d => `http://${d}.localhost:3000`),
+                    // Web User App (OLD)
                     "https://web-user-app-live.herokuapp.com",
                     "https://web-user-app-dev.herokuapp.com",
                     /^https:\/\/cs-web-user-app-(pr-[0-9]+|br-[\-a-z0-9]+).herokuapp.com$/,
+                    // User App (NEW)
+                    "https://user-app-dev.herokuapp.com",
+                    /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
                     ...allowedSubdomains.map(d => `https://${d}.dev.corona-school.de`)
                 ];
             } else {
@@ -388,14 +392,8 @@ createConnection().then(setupPDFGenerationEnvironment)
             app.use("/api/interest-confirmation", router);
         }
 
-        function configureNotificationAPI() {
-            const router = express.Router();
-
-            // DEV only:
-            router.post("/trigger-action", notificationController.triggerActionHandler);
-            router.post("/check-reminders", notificationController.checkReminders);
-
-            app.use("/api/notification", authCheckFactory(), router);
+        function configureFileAPI() {
+            app.use("/api/files", fileRouter);
         }
 
         async function configureApolloServer() {

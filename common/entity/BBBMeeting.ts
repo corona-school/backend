@@ -1,20 +1,14 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class BBBMeeting {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @Column()

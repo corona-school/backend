@@ -1,11 +1,11 @@
-import {Student} from "../entity/Student";
-import {Pupil} from "../entity/Pupil";
+import { Student } from '../entity/Student';
+import { Pupil } from '../entity/Pupil';
 import { prisma } from '../prisma';
-import { v4 as uuid } from "uuid";
-import {putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile} from "../file-bucket";
-import {getUserIdTypeORM} from "../user";
-import {friendlyFileSize} from "../util/basic";
-import {Attachment} from "../entity/Attachment";
+import { v4 as uuid } from 'uuid';
+import { putFile, ATTACHMENT_BUCKET, generatePresignedURL , deleteFile} from '../file-bucket';
+import { getUserIdTypeORM } from '../user';
+import { friendlyFileSize } from '../util/basic';
+import { Attachment } from '../entity/Attachment';
 
 export interface AttachmentGroup {
     attachmentGroupId: string;
@@ -30,8 +30,8 @@ export async function createAttachment(file: Express.Multer.File, uploader: Stud
             filename: file.originalname,
             size: file.size,
             attachmentGroupId,
-            date: new Date()
-        }
+            date: new Date(),
+        },
     });
 
     await putFile(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false, file.mimetype);
@@ -50,17 +50,16 @@ export async function getAttachmentURL(attachmentId: string, key: string, attach
     if (attachmentGroupId == null) {
         let dbAttachment = await prisma.attachment.findUnique({
             where: {
-                id: attachmentId
+                id: attachmentId,
             },
             select: {
-                attachmentGroupId: true
-            }
+                attachmentGroupId: true,
+            },
         });
         attachmentGroupId = dbAttachment.attachmentGroupId;
     }
     return await generatePresignedURL(`attachments/${attachmentGroupId}/${attachmentId}/${key}`, ATTACHMENT_BUCKET);
 }
-
 
 /**
  * Function creating the HTML which is attached to the email, consisting of a headline and a bulleted list with the attachment links, file names and file sizes.
@@ -68,11 +67,13 @@ export async function getAttachmentURL(attachmentId: string, key: string, attach
  * @param attachmentGroupId
  * @return              HTML of the list.
  */
-export async function getAttachmentListHTML(attachments: { attachmentId: string, filename: string, size: number }[], attachmentGroupId: string) {
-    let attachmentListHTML = "<h3>Anhänge</h3>";
+export async function getAttachmentListHTML(attachments: { attachmentId: string; filename: string; size: number }[], attachmentGroupId: string) {
+    let attachmentListHTML = '<h3>Anhänge</h3>';
 
-    for (let {attachmentId, filename, size} of attachments) {
-        attachmentListHTML = attachmentListHTML + `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
+    for (let { attachmentId, filename, size } of attachments) {
+        attachmentListHTML =
+            attachmentListHTML +
+            `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
     }
 
     return attachmentListHTML;
@@ -88,13 +89,13 @@ export async function getAttachmentListHTML(attachments: { attachmentId: string,
 export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: string): Promise<AttachmentGroup> {
     const attachments = await prisma.attachment.findMany({
         where: {
-            attachmentGroupId
-        }
+            attachmentGroupId,
+        },
     });
-    const attachmentList = attachments.map(a => ({attachmentId: a.id, filename: a.filename, size: a.size}));
+    const attachmentList = attachments.map((a) => ({ attachmentId: a.id, filename: a.filename, size: a.size }));
     const attachmentListHTML = await getAttachmentListHTML(attachmentList, attachmentGroupId);
 
-    return { attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map(a => a.id) };
+    return { attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map((a) => a.id) };
 }
 
 /**

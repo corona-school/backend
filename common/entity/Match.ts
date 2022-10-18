@@ -1,28 +1,17 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    EntityManager,
-    Index,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn
-} from "typeorm";
-import { Student } from "./Student";
-import { Pupil } from "./Pupil";
-import { Subject } from "../util/subjectsutils";
-import { v4 as generateUUID } from "uuid";
+import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Student } from './Student';
+import { Pupil } from './Pupil';
+import { Subject } from '../util/subjectsutils';
+import { v4 as generateUUID } from 'uuid';
 
 export enum SourceType {
-    IMPORTED = "imported",
-    MATCHEDEXTERNAL = "matchedexternal", //by mathematical algo
-    MATCHEDINTERNAL = "matchedinternal",
+    IMPORTED = 'imported',
+    MATCHEDEXTERNAL = 'matchedexternal', //by mathematical algo
+    MATCHEDINTERNAL = 'matchedinternal',
 }
 
 @Entity()
-@Unique("UQ_MATCH", ["student", "pupil"])
+@Unique('UQ_MATCH', ['student', 'pupil'])
 export class Match {
     @PrimaryGeneratedColumn()
     id: number;
@@ -36,64 +25,64 @@ export class Match {
      *   0:  The match has been dissolved, because a member deactivated his account
      */
     @Column({
-        default: false
+        default: false,
     })
     dissolved: boolean;
 
     @Column({
         default: null,
-        nullable: true
+        nullable: true,
     })
     dissolveReason: number;
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     proposedTime: Date;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @ManyToOne((type) => Student, (student) => student.matches, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     student: Student;
 
     @ManyToOne((type) => Pupil, (pupil) => pupil.matches, {
-        eager: true
+        eager: true,
     })
     @JoinColumn()
     pupil: Pupil;
 
     //all emails that were sent associated with this match (i.e. emails about confirming the match, dissolving it, etc. )
     @Column({
-        default: false
+        default: false,
     })
     feedbackToPupilMail: boolean;
 
     @Column({
-        default: false
+        default: false,
     })
     feedbackToStudentMail: boolean;
 
     @Column({
-        default: false
+        default: false,
     })
     followUpToPupilMail: boolean;
 
     @Column({
-        default: false
+        default: false,
     })
     followUpToStudentMail: boolean;
 
     @Column({
-        type: "enum",
+        type: 'enum',
         enum: SourceType,
-        default: SourceType.MATCHEDINTERNAL
+        default: SourceType.MATCHEDINTERNAL,
     })
     source: SourceType; //stores if the match was imported from the old Database and not matched in the system itself
 
@@ -126,7 +115,6 @@ export class Match {
     }
 }
 
-
 export async function haveDissolvedMatch(s: Student, p: Pupil, manager: EntityManager) {
     return (await manager.find(Match, { student: s, pupil: p, dissolved: true })).length > 0;
 }
@@ -139,13 +127,13 @@ export async function alreadyMatched(s: Student, p: Pupil, manager: EntityManage
 
 export async function getMatchByID(id: number, manager: EntityManager): Promise<Match> {
     return manager.findOne(Match, {
-        id: id
+        id: id,
     });
 }
 
 ///Takes the given matches instances and re-queries them from the database, returning new instances for all of them.
 export async function reloadMatchesInstances(matches: Match[], manager: EntityManager): Promise<Match[]> {
-    return await Promise.all(matches.map(async m => await getMatchByID(m.id, manager)));
+    return await Promise.all(matches.map(async (m) => await getMatchByID(m.id, manager)));
 }
 
 /// An interface that can be used if someone wants to represent a match just as a pair of student and pupil (without additional match metadata). Every Match is also a MatchPair

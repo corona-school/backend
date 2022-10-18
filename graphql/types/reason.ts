@@ -1,11 +1,12 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from 'type-graphql';
 
 @ObjectType()
-export class Decision { // GraphQL Type for common/util/decision
-    @Field(type => Boolean)
+export class Decision {
+    // GraphQL Type for common/util/decision
+    @Field((type) => Boolean)
     allowed: boolean;
-    @Field(type => String, { nullable: true })
+    @Field((type) => String, { nullable: true })
     reason?: string;
-    @Field(type => Int, { nullable: true })
+    @Field((type) => Int, { nullable: true })
     limit?: number;
 }

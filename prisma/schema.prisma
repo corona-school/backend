@@ -54,6 +54,8 @@ model course {
   description                String                       @db.VarChar
   imageKey                   String?                      @db.VarChar
   category                   course_category_enum
+  subject                    course_subject_enum?
+  schooltype                 course_schooltype_enum[]     @default([other])
   courseState                course_coursestate_enum      @default(created)
   screeningComment           String?                      @db.VarChar
   publicRanking              Int                          @default(0)
@@ -267,6 +269,7 @@ model notification {
   delay             Int?
   interval          Int?
   sender            notification_sender_enum?
+  hookID            String?                   @db.VarChar
 }
 
 model participation_certificate {
@@ -862,4 +865,42 @@ enum secret_type_enum {
   PASSWORD
   TOKEN
   EMAIL_TOKEN
+}
+
+enum course_schooltype_enum {
+  grundschule
+  gesamtschule
+  hauptschule
+  realschule
+  gymnasium
+  f_rderschule @map("förderschule")
+  berufsschule
+  other
+}
+
+enum course_subject_enum {
+  Mathematik
+  Deutsch
+  Englisch
+  Biologie
+  Chemie
+  Physik
+  Informatik
+  Sachkunde
+  Geschichte
+  Erdkunde
+  Wirtschaft
+  Politik
+  Philosophie
+  Kunst
+  Musik
+  P_dagogik                @map("Pädagogik")
+  Franz_sisch              @map("Französisch")
+  Latein
+  Altgriechisch
+  Spanisch
+  Italienisch
+  Russisch
+  Niederl_ndisch           @map("Niederländisch")
+  Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
 }

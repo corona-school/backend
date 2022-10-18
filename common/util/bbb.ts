@@ -1,16 +1,16 @@
-import {hashToken} from "./hashing";
-import {getLogger} from 'log4js';
-import {Parser} from "xml2js";
-import {Pupil} from "../entity/Pupil";
-import {CourseAttendanceLog} from "../entity/CourseAttendanceLog";
-import {getManager} from "typeorm";
-import {Lecture} from "../entity/Lecture";
-import {getTransactionLog} from "../transactionlog";
-import CreateCourseAttendanceLogEvent from "../transactionlog/types/CreateCourseAttendanceLogEvent";
-import {BBBMeeting} from "../entity/BBBMeeting";
-import CreateBBBMeetingEvent from "../transactionlog/types/CreateBBBMeetingEvent";
-import {Student} from "../entity/Student";
-import { addCleanupAction } from "./cleanup";
+import { hashToken } from './hashing';
+import { getLogger } from 'log4js';
+import { Parser } from 'xml2js';
+import { Pupil } from '../entity/Pupil';
+import { CourseAttendanceLog } from '../entity/CourseAttendanceLog';
+import { getManager } from 'typeorm';
+import { Lecture } from '../entity/Lecture';
+import { getTransactionLog } from '../transactionlog';
+import CreateCourseAttendanceLogEvent from '../transactionlog/types/CreateCourseAttendanceLogEvent';
+import { BBBMeeting } from '../entity/BBBMeeting';
+import CreateBBBMeetingEvent from '../transactionlog/types/CreateBBBMeetingEvent';
+import { Student } from '../entity/Student';
+import { addCleanupAction } from './cleanup';
 
 const parser = new Parser();
 const logger = getLogger();
@@ -26,20 +26,20 @@ addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup o
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
     const entityManager = getManager();
-    const meeting = await entityManager.findOne(BBBMeeting, {meetingID: id});
+    const meeting = await entityManager.findOne(BBBMeeting, { meetingID: id });
     return !!meeting;
 }
 
 export async function getBBBMeetingFromDB(id: string): Promise<BBBMeeting> {
     const entityManager = getManager();
-    return await entityManager.findOne(BBBMeeting, {meetingID: id});
+    return await entityManager.findOne(BBBMeeting, { meetingID: id });
 }
 
 export async function createBBBMeeting(name: string, id: string, user: Pupil | Student): Promise<BBBMeeting> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
-    const attendeePW = hashToken('' + Math.random(), "sha1");
-    const moderatorPW = hashToken('' + Math.random(), "sha1");
+    const attendeePW = hashToken('' + Math.random(), 'sha1');
+    const moderatorPW = hashToken('' + Math.random(), 'sha1');
     const bbbMeeting = new BBBMeeting();
 
     try {
@@ -50,7 +50,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         bbbMeeting.attendeePW = attendeePW;
         await entityManager.save(BBBMeeting, bbbMeeting);
         await transactionLog.log(new CreateBBBMeetingEvent(user, bbbMeeting));
-        logger.info("Successfully saved new bbb meeting with id ", bbbMeeting.meetingID);
+        logger.info('Successfully saved new bbb meeting with id ', bbbMeeting.meetingID);
         return bbbMeeting;
     } catch (e) {
         logger.error("Can't save new bbb meeting: " + e.message);
@@ -65,29 +65,29 @@ export async function startBBBMeeting(meeting: BBBMeeting) {
         meetingID: meeting.meetingID,
         moderatorPW: meeting.moderatorPW,
         name: meeting.meetingName,
-        record: "false"
+        record: 'false',
     };
     const queryParams = new URLSearchParams(params).toString(); //use URLSearchParams to have correct encoding which also encodes "'" correctly as required by application/x-www-form-urlencoded format (which BBB seems to use and require)
 
-    const response = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`, {
+    const response = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`, {
         headers: {
             //explicitly use application/xml such that the server will respond with xml always (for some reaseon the BBB server supports json responses only if the request failed, but not if the request was successful)
-            accept: "application/xml"
-        }
+            accept: 'application/xml',
+        },
     });
     if (response.status !== 200) {
         //response level error (for example network error, server crash...)
-        throw new Error("Status code: " + response.status);
+        throw new Error('Status code: ' + response.status);
     }
 
     const data = await response.text();
 
     //in case of a successful *BBB* response, it always contains a returncode, which must be SUCCESS
-    const parsedResponseData = await (new Parser({
-        explicitArray: false //do not put all child nodes into an array automatically...
-    })).parseStringPromise(data);
+    const parsedResponseData = await new Parser({
+        explicitArray: false, //do not put all child nodes into an array automatically...
+    }).parseStringPromise(data);
 
-    if (parsedResponseData.response?.returncode !== "SUCCESS") {
+    if (parsedResponseData.response?.returncode !== 'SUCCESS') {
         logger.error(`An error occurred during creation of the BBB meeting (meetingID: ${meeting.meetingID}). Error: ${parsedResponseData.response.message}`);
         throw new Error(`Meeting with id '${meeting.meetingID}' couldn't be started!`);
         //TODO: improve error handling – also for the other calls (and refactor this whole thing here...)
@@ -100,38 +100,41 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
         fullName: name,
         meetingID: id,
         password: pw,
-        redirect: "true",
-        userID: userID
+        redirect: 'true',
+        userID: userID,
     };
     const queryParams = new URLSearchParams(params).toString();
 
-    return (`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+    return `${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`;
 }
-
 
 export async function isBBBMeetingRunning(id: string): Promise<boolean> {
     const callName = 'isMeetingRunning';
     const queryParams = encodeURI(`meetingID=${id}`);
-    return fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`)
-        .then(res => res.text())
-        .then(data => parser.parseStringPromise(data))
-        .then(jsonResponse => jsonResponse && jsonResponse.response && jsonResponse.response.running &&
-            jsonResponse.response.running.length > 0 && jsonResponse.response.running[0] === "true")
-        .catch(error => {
+    return fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`)
+        .then((res) => res.text())
+        .then((data) => parser.parseStringPromise(data))
+        .then(
+            (jsonResponse) =>
+                jsonResponse &&
+                jsonResponse.response &&
+                jsonResponse.response.running &&
+                jsonResponse.response.running.length > 0 &&
+                jsonResponse.response.running[0] === 'true'
+        )
+        .catch((error) => {
             logger.debug(error);
-            return Promise.reject("An error occurred.");
+            return Promise.reject('An error occurred.');
         });
 }
 
 export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
-    const callName = "getMeetings";
-
+    const callName = 'getMeetings';
 
     try {
-        const dataRaw = await fetch(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, "sha1")}`);
+        const dataRaw = await fetch(`${baseUrl}${callName}?checksum=${hashToken(callName + sharedSecret, 'sha1')}`);
         const data = await dataRaw.text();
         const jsonResponse = await parser.parseStringPromise(data);
-
 
         return mapJSONtoApiBBBMeetings(jsonResponse);
     } catch (error) {
@@ -141,22 +144,40 @@ export async function getRunningBBBMeetings(): Promise<ApiBBBMeeting[]> {
 }
 
 function mapJSONtoApiBBBMeetings(json: any): ApiBBBMeeting[] {
-    if (json && json.response && json.response.meetings && json.response.meetings.length > 0 && json.response.meetings[0] &&
-        json.response.meetings[0].meeting && json.response.meetings[0].meeting.length > 0) {
-        return json.response.meetings[0].meeting.map(o => mapJSONtoApiBBBMeeting(o));
+    if (
+        json &&
+        json.response &&
+        json.response.meetings &&
+        json.response.meetings.length > 0 &&
+        json.response.meetings[0] &&
+        json.response.meetings[0].meeting &&
+        json.response.meetings[0].meeting.length > 0
+    ) {
+        return json.response.meetings[0].meeting.map((o) => mapJSONtoApiBBBMeeting(o));
     }
     return [];
 }
 
 function mapJSONtoApiBBBMeeting(o: any): ApiBBBMeeting {
-    return new ApiBBBMeeting(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
-                             o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
-                             o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
-                             o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
-                             (userName: string, userID: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                                         o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0], userID),
-                             (userName: string): string => getMeetingUrl(o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0], userName,
-                                                                         o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]));
+    return new ApiBBBMeeting(
+        o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
+        o && o.meetingName && o.meetingName.length > 0 && o.meetingName[0],
+        o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+        o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0],
+        (userName: string, userID: string): string =>
+            getMeetingUrl(
+                o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
+                userName,
+                o && o.attendeePW && o.attendeePW.length > 0 && o.attendeePW[0],
+                userID
+            ),
+        (userName: string): string =>
+            getMeetingUrl(
+                o && o.meetingID && o.meetingID.length > 0 && o.meetingID[0],
+                userName,
+                o && o.moderatorPW && o.moderatorPW.length > 0 && o.moderatorPW[0]
+            )
+    );
 }
 
 export class ApiBBBMeeting {
@@ -168,8 +189,14 @@ export class ApiBBBMeeting {
     attendeeUrl: (userName: string, userID: string) => string;
     moderatorUrl: (userName: string) => string;
 
-    constructor(meetingID: string, meetingName: string, attendeePW: string, moderatorPW,
-                attendeeUrl: (userName: string, userID: string) => string, moderatorUrl: (userName: string) => string) {
+    constructor(
+        meetingID: string,
+        meetingName: string,
+        attendeePW: string,
+        moderatorPW,
+        attendeeUrl: (userName: string, userID: string) => string,
+        moderatorUrl: (userName: string) => string
+    ) {
         this.meetingID = meetingID;
         this.meetingName = meetingName;
         this.attendeePW = attendeePW;
@@ -185,7 +212,6 @@ export class Attendee {
     fullName: string;
     role: string;
 
-
     constructor(wix_id: string, fullName: string, role: string) {
         this.wix_id = wix_id;
         this.fullName = fullName;
@@ -194,17 +220,26 @@ export class Attendee {
 }
 
 function mapJSONtoAttendees(json: any): Attendee[] {
-    if (json && json.response && json.response.attendees && json.response.attendees.length > 0 && json.response.attendees[0] &&
-        json.response.attendees[0].attendee && json.response.attendees[0].attendee.length > 0) {
-        return json.response.attendees[0].attendee.map(o => mapJSONtoAttendee(o));
+    if (
+        json &&
+        json.response &&
+        json.response.attendees &&
+        json.response.attendees.length > 0 &&
+        json.response.attendees[0] &&
+        json.response.attendees[0].attendee &&
+        json.response.attendees[0].attendee.length > 0
+    ) {
+        return json.response.attendees[0].attendee.map((o) => mapJSONtoAttendee(o));
     }
     return [];
 }
 
 function mapJSONtoAttendee(o: any): Attendee {
-    return new Attendee(o && o.userID && o.userID.length > 0 && o.userID[0],
-                        o && o.fullName && o.fullName.length > 0 && o.fullName[0],
-                        o && o.role && o.role.length > 0 && o.role[0]);
+    return new Attendee(
+        o && o.userID && o.userID.length > 0 && o.userID[0],
+        o && o.fullName && o.fullName.length > 0 && o.fullName[0],
+        o && o.role && o.role.length > 0 && o.role[0]
+    );
 }
 
 function lessThanDate(date1: Date, date2: Date): boolean {
@@ -221,15 +256,11 @@ function lessThanDate(date1: Date, date2: Date): boolean {
 // Returns active lecture of the subcourse, assuming that there is only one active lecture of the subcourse
 async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture> {
     const entityManager = getManager();
-    const lectures = await entityManager
-        .createQueryBuilder(Lecture, "lecture")
-        .where("lecture.subcourse.id = :id", {id: subcourseId})
-        .getMany();
+    const lectures = await entityManager.createQueryBuilder(Lecture, 'lecture').where('lecture.subcourse.id = :id', { id: subcourseId }).getMany();
 
     // check if lecture is running now (lecture.start + duration > now)
     for (const lecture of lectures) {
-        if (!lessThanDate(lecture.start, new Date())
-            && (lecture.start.getTime() + (lecture.duration * 60000)) > new Date().getTime()) {
+        if (!lessThanDate(lecture.start, new Date()) && lecture.start.getTime() + lecture.duration * 60000 > new Date().getTime()) {
             return lecture;
         }
     }
@@ -240,9 +271,9 @@ async function getActiveLectureOfSubcourse(subcourseId: string): Promise<Lecture
 async function getCourseAttendanceLog(lectureId: number, pupilId: number): Promise<CourseAttendanceLog> {
     const entityManager = getManager();
     return await entityManager
-        .createQueryBuilder(CourseAttendanceLog, "courseAttendanceLog")
-        .where("courseAttendanceLog.lecture.id = :lectureId", {lectureId: lectureId})
-        .andWhere("courseAttendanceLog.pupil.id = :pupilId", {pupilId: pupilId})
+        .createQueryBuilder(CourseAttendanceLog, 'courseAttendanceLog')
+        .where('courseAttendanceLog.lecture.id = :lectureId', { lectureId: lectureId })
+        .andWhere('courseAttendanceLog.pupil.id = :pupilId', { pupilId: pupilId })
         .getOne();
 }
 
@@ -272,7 +303,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                 // Update log
                 await entityManager.save(CourseAttendanceLog, logToUpdate);
                 await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
-                logger.info("Successfully updated log with id: ", logToUpdate.id);
+                logger.info('Successfully updated log with id: ', logToUpdate.id);
             } else {
                 try {
                     // Create new log
@@ -282,7 +313,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     courseAttendanceLog.attendedTime = null;
                     await entityManager.save(CourseAttendanceLog, courseAttendanceLog);
                     await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
-                    logger.info("Successfully saved new Course Attendance to lecture with id ", activeLecture.id);
+                    logger.info('Successfully saved new Course Attendance to lecture with id ', activeLecture.id);
                 } catch (e) {
                     logger.error("Can't save new course attendance: " + e.message);
                     logger.debug(courseAttendanceLog, e);
@@ -295,11 +326,11 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
 }
 
 export async function getRunningBBBMeetingAttendees(meetingID: string): Promise<Attendee[]> {
-    const callName = "getMeetingInfo";
+    const callName = 'getMeetingInfo';
     const queryParams = encodeURI(`meetingID=${meetingID}`);
 
     try {
-        const dataRaw = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, "sha1")}`);
+        const dataRaw = await fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`);
         const data = await dataRaw.text();
         const jsonResponse = await parser.parseStringPromise(data);
         return mapJSONtoAttendees(jsonResponse);
@@ -325,8 +356,8 @@ export async function handleBBBMeetingInfos() {
                     }
                 }
                 for (const attendee of filteredMeetingAttendees) {
-                    if (attendee.role && attendee.role === "VIEWER") {
-                        const pupilFromDB = await entityManager.findOne(Pupil, {wix_id: attendee.wix_id});
+                    if (attendee.role && attendee.role === 'VIEWER') {
+                        const pupilFromDB = await entityManager.findOne(Pupil, { wix_id: attendee.wix_id });
                         if (pupilFromDB) {
                             await createOrUpdateCourseAttendanceLog(pupilFromDB, null, meeting.meetingID);
                         } else {

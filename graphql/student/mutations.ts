@@ -1,71 +1,82 @@
-import * as GraphQLModel from "../generated/models";
-import {Role} from "../authorizations";
-import {getStudent} from "../util";
-import {deactivateStudent} from "../../common/student/activation";
-import { deleteStudentMatchRequest, createStudentMatchRequest } from "../../common/match/request";
-import { isElevated, getSessionStudent, getSessionScreener } from "../authentication";
-import { GraphQLContext } from "../context";
-import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from "type-graphql";
-import { prisma } from "../../common/prisma";
-import { addInstructorScreening, addTutorScreening } from "../../common/student/screening";
-import { ProjectFieldWithGradeData } from "../../common/student/registration";
-import { Subject } from "../types/subject";
-import { student as Student, pupil_registrationsource_enum as RegistrationSource, pupil_projectfields_enum as ProjectField } from "@prisma/client";
-import { setProjectFields } from "../../common/student/update";
-import { PrerequisiteError } from "../../common/util/error";
-import { toStudentSubjectDatabaseFormat } from "../../common/util/subjectsutils";
-import { logInContext } from "../logging";
+import * as GraphQLModel from '../generated/models';
+import { Role } from '../authorizations';
+import { ensureNoNull, getStudent } from '../util';
+import { deactivateStudent } from '../../common/student/activation';
+import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
+import { isElevated, getSessionStudent, getSessionScreener } from '../authentication';
+import { GraphQLContext } from '../context';
+import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
+import { prisma } from '../../common/prisma';
+import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
+import { ProjectFieldWithGradeData } from '../../common/student/registration';
+import { Subject } from '../types/subject';
+import {
+    student as Student,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_projectfields_enum as ProjectField,
+    student_state_enum as State,
+} from '@prisma/client';
+import { setProjectFields } from '../../common/student/update';
+import { PrerequisiteError } from '../../common/util/error';
+import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
+import { logInContext } from '../logging';
 
-@InputType("Instructor_screeningCreateInput", {
-    isAbstract: true
+@InputType('Instructor_screeningCreateInput', {
+    isAbstract: true,
 })
 export class ScreeningInput {
-    @Field(_type => Boolean, {
-        nullable: false
+    @Field((_type) => Boolean, {
+        nullable: false,
     })
     success!: boolean;
 
-    @Field(_type => String, {
-        nullable: true
+    @Field((_type) => String, {
+        nullable: true,
     })
     comment?: string | undefined;
 
-    @Field(_type => String, {
-        nullable: true
+    @Field((_type) => String, {
+        nullable: true,
     })
     knowsCoronaSchoolFrom?: string | undefined;
 }
 
 @InputType()
 export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
-    @Field(type => ProjectField)
+    @Field((type) => ProjectField)
     projectField: ProjectField;
-    @Field(type => Int, { nullable: true })
+    @Field((type) => Int, { nullable: true })
     min: number;
-    @Field(type => Int, { nullable: true })
+    @Field((type) => Int, { nullable: true })
     max: number;
 }
 @InputType()
 export class StudentUpdateInput {
-    @Field(type => String, { nullable: true })
+    @Field((type) => String, { nullable: true })
     firstname?: string;
 
-    @Field(type => String, { nullable: true })
+    @Field((type) => String, { nullable: true })
     lastname?: string;
 
-    @Field(type => [Subject], { nullable: true })
+    @Field((type) => String, { nullable: true })
+    email?: string;
+
+    @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
 
-    @Field(type => [ProjectFieldWithGradeInput], { nullable: true })
+    @Field((type) => [ProjectFieldWithGradeInput], { nullable: true })
     projectFields: ProjectFieldWithGradeInput[];
 
-    @Field(type => RegistrationSource, { nullable: true })
+    @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
+
+    @Field((type) => State, { nullable: true })
+    state?: State;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
-    const log = logInContext("Student", context);
-    const { firstname, lastname, projectFields, subjects, registrationSource } = update;
+    const log = logInContext('Student', context);
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -75,43 +86,49 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
+    if (email != undefined && !isElevated(context)) {
+        throw new PrerequisiteError(`Only Admins may change the email without verification`);
+    }
+
     if (projectFields) {
         await setProjectFields(student, projectFields);
     }
 
     await prisma.student.update({
         data: {
-            firstname,
-            lastname,
+            firstname: ensureNoNull(firstname),
+            lastname: ensureNoNull(lastname),
+            email: ensureNoNull(email),
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
-            registrationSource
+            registrationSource: ensureNoNull(registrationSource),
+            state: ensureNoNull(state),
         },
-        where: { id: student.id }
+        where: { id: student.id },
     });
 
     log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
 }
-@Resolver(of => GraphQLModel.Student)
+@Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.STUDENT, Role.ADMIN)
-    async studentUpdate(@Ctx() context: GraphQLContext, @Arg("data") data: StudentUpdateInput, @Arg("studentId", { nullable: true }) studentId?: number) {
+    async studentUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: StudentUpdateInput, @Arg('studentId', { nullable: true }) studentId?: number) {
         const student = await getSessionStudent(context, studentId);
         await updateStudent(context, student, data);
         return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async studentDeactivate(@Arg("studentId") studentId: number): Promise<boolean> {
+    async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
         return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTOR)
-    async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
+    async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
 
         await createStudentMatchRequest(student, isElevated(context));
@@ -119,27 +136,27 @@ export class MutateStudentResolver {
         return true;
     }
 
-
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTOR)
-    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg("studentId", { nullable: true }) studentId?: number): Promise<boolean> {
+    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
         await deleteStudentMatchRequest(student);
 
         return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg("studentId") studentId: number, @Arg("screening") screening: ScreeningInput) {
+    async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
         const screener = await getSessionScreener(context);
         await addInstructorScreening(screener, student, screening);
+        return true;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg("studentId") studentId: number, @Arg("screening") screening: ScreeningInput) {
+    async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);

@@ -1,53 +1,44 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    EntityManager,
-    Index,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-import { Course } from "./Course";
-import { randomBytes } from "crypto";
-import { Student } from "./Student";
+import { Column, CreateDateColumn, Entity, EntityManager, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Course } from './Course';
+import { randomBytes } from 'crypto';
+import { Student } from './Student';
 
 @Entity()
 export class CourseGuest {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @CreateDateColumn({ type: "timestamp" })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
-    @UpdateDateColumn({ type: "timestamp" })
+    @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @Index({ unique: true })
     @Column({
-        nullable: false
+        nullable: false,
     })
     token: string;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     firstname: string;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     lastname: string;
 
     @Column({
-        nullable: false
+        nullable: false,
     })
     email: string;
 
-    @ManyToOne(type => Course, course => course.guests)
+    @ManyToOne((type) => Course, (course) => course.guests)
     course: Course;
 
-    @ManyToOne(type => Student, course => course.invitedGuests)
+    @ManyToOne((type) => Student, (course) => course.invitedGuests)
     inviter: Student;
 
     constructor(email: string, firstname: string, lastname: string, course: Course, inviter: Student, token: string) {
@@ -68,13 +59,14 @@ export class CourseGuest {
 export async function generateNewCourseGuestToken(manager: EntityManager): Promise<string> {
     let token;
     do {
-        token = randomBytes(48).toString("hex");
-    }
-    while (await manager.findOne(CourseGuest, {
-        where: {
-            token: token
-        }
-    }));
+        token = randomBytes(48).toString('hex');
+    } while (
+        await manager.findOne(CourseGuest, {
+            where: {
+                token: token,
+            },
+        })
+    );
 
     return token;
 }

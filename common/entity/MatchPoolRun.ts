@@ -1,15 +1,4 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    EntityManager,
-    Index,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn
-} from "typeorm";
+import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 
 /* Records statistics from match pool runs */
 @Entity()
@@ -26,6 +15,6 @@ export class MatchPoolRun {
     @Column()
     matchesCreated: number;
 
-    @Column({ type: "json" })
+    @Column({ type: 'json' })
     stats: object;
 }
