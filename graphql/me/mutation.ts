@@ -73,7 +73,7 @@ class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
-    @Field((type) => String)
+    @Field((type) => String, { defaultValue: '' })
     @MaxLength(500)
     aboutMe: string;
 
@@ -112,7 +112,7 @@ class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
-    @Field((type) => String)
+    @Field((type) => String, { defaultValue: '' })
     @MaxLength(500)
     aboutMe: string;
 
