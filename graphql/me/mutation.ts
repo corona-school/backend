@@ -74,6 +74,7 @@ class RegisterStudentInput implements RegisterStudentData {
     registrationSource: RegistrationSource;
 
     @Field((type) => String)
+    @MaxLength(500)
     aboutMe: string;
 
     /* After registration, the user receives an email to verify their account.
