@@ -26,7 +26,7 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
     let currentDate = new Date();
     const pastLectures = lectures.filter((lecture) => +lecture.start < +currentDate);
     if (pastLectures.length !== 0) {
-        return { allowed: false, reason: 'past-lectured' };
+        return { allowed: false, reason: 'past-lectures' };
     }
 
     return { allowed: true };
