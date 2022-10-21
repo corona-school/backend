@@ -7,9 +7,9 @@ class ByMonth {
     @Field({ nullable: true }) // null on invalid dates
     year?: number;
     @Field({ nullable: true })
-    month: number;
-    @Field()
-    value: number;
+    month?: number;
+    @Field({ nullable: true })
+    value?: number;
 
     @Field({ nullable: true })
     group?: string;
