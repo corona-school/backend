@@ -24,6 +24,8 @@ class Participant {
     grade: string;
     @Field((_type) => pupil_schooltype_enum)
     schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
+    @Field((_type) => String)
+    aboutMe: string;
 }
 
 const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
@@ -44,6 +46,8 @@ class OtherParticipant {
     firstname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => String)
+    aboutMe: string;
 }
 
 @Resolver((of) => Subcourse)
@@ -170,6 +174,7 @@ export class ExtendedFieldsSubcourseResolver {
                 lastname: true,
                 grade: true,
                 schooltype: true,
+                aboutMe: true,
             },
         });
     }
@@ -191,6 +196,7 @@ export class ExtendedFieldsSubcourseResolver {
                 id: true,
                 firstname: true,
                 grade: true,
+                aboutMe: true,
             },
         });
     }
