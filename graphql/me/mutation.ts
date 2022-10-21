@@ -31,6 +31,7 @@ import {
     RegisterStudentData,
 } from '../../common/student/registration';
 import {
+    becomeParticipant,
     becomeProjectCoachee,
     BecomeProjectCoacheeData,
     becomeStatePupil,
@@ -426,6 +427,25 @@ export class MutateMeResolver {
         }
 
         log.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.PUPIL, Role.ADMIN)
+    async meBecomeParticipant(@Ctx() context: GraphQLContext, @Arg('pupilId', (type) => Int, { nullable: true }) pupilId: number) {
+        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+
+        const pupil = await getSessionPupil(context, pupilId);
+        const log = logInContext('Me', context);
+        const updatedPupil = await becomeParticipant(pupil);
+        if (!byAdmin) {
+            await evaluatePupilRoles(updatedPupil, context);
+        }
+
+        log.info(
+            byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a PARTICIPANT` : `Pupil(${pupil.id}) upgraded their account to a PARTICIPANT`
+        );
 
         return true;
     }

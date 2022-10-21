@@ -132,7 +132,6 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     const updatedPupil = await prisma.pupil.update({
         data: {
             isPupil: true,
-            isParticipant: true,
             subjects: JSON.stringify(data.subjects.map(toPupilSubjectDatabaseFormat)),
             grade: `${data.gradeAsInt}. Klasse`,
             languages: data.languages ? { set: data.languages } : undefined,
@@ -142,6 +141,13 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     });
 
     return updatedPupil;
+}
+
+export async function becomeParticipant(pupil: Pupil) {
+    return await prisma.pupil.update({
+        data: { isParticipant: true },
+        where: { id: pupil.id },
+    });
 }
 
 export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData) {
