@@ -4,9 +4,9 @@ import { prisma } from '../../common/prisma';
 
 @ObjectType()
 class ByMonth {
-    @Field()
-    year: number;
-    @Field()
+    @Field({ nullable: true }) // null on invalid dates
+    year?: number;
+    @Field({ nullable: true })
     month: number;
     @Field()
     value: number;
@@ -318,7 +318,6 @@ export class StatisticsResolver {
                 "knowsCoronaSchoolFrom" AS group
             FROM "screening"
                 WHERE "success" = TRUE AND "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
-                AND "createdAt" IS NOT NULL
                 GROUP BY "year", "month", "knowsCoronaSchoolFrom"
                 ORDER BY "year" ASC, "month" ASC, "knowsCoronaSchoolFrom" ASC;`;
     }
@@ -332,7 +331,6 @@ export class StatisticsResolver {
                 "status" AS group
             FROM "pupil_tutoring_interest_confirmation_request"
                 WHERE "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
-                AND "createdAt" IS NOT NULL
                 GROUP BY "year", "month", "status"
                 ORDER BY "year" ASC, "month" ASC, "status" ASC;`;
     }
