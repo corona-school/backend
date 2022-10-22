@@ -73,9 +73,10 @@ export class FieldsMatchPoolResolver {
         @Root() matchPool: MatchPoolType,
         @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[],
         @Arg('skip', { nullable: true }) skip?: number,
-        @Arg('take', { nullable: true }) take?: number
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getStudents(matchPool, toggles ?? [], take, skip);
+        return await getStudents(matchPool, toggles ?? [], take, skip, search);
     }
 
     @FieldResolver((returns) => [Pupil])
@@ -84,9 +85,10 @@ export class FieldsMatchPoolResolver {
         @Root() matchPool: MatchPoolType,
         @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[],
         @Arg('skip', { nullable: true }) skip?: number,
-        @Arg('take', { nullable: true }) take?: number
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getPupils(matchPool, toggles ?? [], take, skip);
+        return await getPupils(matchPool, toggles ?? [], take, skip, search);
     }
 
     @FieldResolver((returns) => Int)

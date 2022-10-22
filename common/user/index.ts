@@ -7,6 +7,8 @@ import { getManager } from 'typeorm';
 
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
+import assert from 'assert';
+import { Prisma as PrismaTypes } from '@prisma/client';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -173,3 +175,13 @@ export async function getPupil(user: User): Promise<Pupil | never> {
 
     return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 }
+
+// Enriches a Prisma Query with a filter to search users
+export const addUserSearch = (query: PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput, search?: string) => {
+    if (!search) {
+        return;
+    }
+
+    assert(!query.OR);
+    query.OR = [{ email: { contains: search } }, { firstname: { contains: search.split(' ')[0] } }, { lastname: { contains: search.split(' ').pop() } }];
+};
