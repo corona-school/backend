@@ -74,11 +74,7 @@ export async function getPupils(pool: MatchPool, toggles: string[], take?: numbe
 
     return await prisma.pupil.findMany({
         where,
-        orderBy: {
-            match: { _count: 'asc' },
-            firstMatchRequest: { sort: 'asc', nulls: 'first' },
-            createdAt: 'asc',
-        },
+        orderBy: [{ match: { _count: 'asc' } }, { firstMatchRequest: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
         take,
         skip,
     });
