@@ -482,7 +482,7 @@ const OVERPROVISION_DEMAND = 20;
 export async function confirmationRequestsToSend(pool: MatchPool) {
     const offers = await getStudentOfferCount(pool, []);
     const requests = await getPupilDemandCount(pool, []);
-    const openOffers = Math.max(0, offers - requests) + OVERPROVISION_DEMAND;
+    const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
     const comfirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, openOffers - comfirmationsPending);
