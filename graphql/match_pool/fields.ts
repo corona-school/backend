@@ -30,6 +30,8 @@ class MatchPool {
     name: string;
     @Field({ nullable: true })
     automatic?: MatchPoolAutomatic;
+    @Field()
+    confirmInterest: boolean;
     @Field((type) => [String])
     toggles: string[];
 }
@@ -118,6 +120,10 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
     async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.confirmInterest) {
+            return 0;
+        }
+
         return await confirmationRequestsToSend(matchPool);
     }
 
