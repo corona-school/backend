@@ -67,7 +67,11 @@ export async function getStudents(pool: MatchPool, toggles: string[], take?: num
 export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
     return await prisma.pupil.findMany({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
-        orderBy: { createdAt: 'asc' },
+        orderBy: {
+            match: { _count: 'asc' },
+            firstMatchRequest: { sort: 'asc', nulls: 'first' },
+            createdAt: 'asc',
+        },
         take,
         skip,
     });
