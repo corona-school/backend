@@ -86,7 +86,7 @@ export class ExtendFieldsPupilResolver {
     @LimitEstimated(1)
     async tutoringInterestConfirmation(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
-            where: { pupilId: pupil.id },
+            where: { pupilId: pupil.id, invalidated: false },
         });
     }
 
