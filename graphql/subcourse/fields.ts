@@ -1,15 +1,16 @@
-import { Course, Lecture, Subcourse, Pupil, Bbb_meeting as BBBMeeting } from '../generated';
-import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { prisma } from '../../common/prisma';
-import { Role } from '../authorizations';
-import { LimitedQuery, LimitEstimated } from '../complexity';
+import { canPublish } from '../../common/courses/states';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { canJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { CourseState } from '../../common/entity/Course';
-import { PublicCache } from '../cache';
+import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { Role } from '../authorizations';
+import { PublicCache } from '../cache';
+import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
+import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
-import { canJoinSubcourse } from '../../common/courses/participants';
 
 @ObjectType()
 class Participant {
@@ -21,6 +22,10 @@ class Participant {
     lastname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => pupil_schooltype_enum)
+    schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
+    @Field((_type) => String)
+    aboutMe: string;
 }
 
 const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
@@ -32,6 +37,18 @@ const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
         },
     },
 };
+
+@ObjectType()
+class OtherParticipant {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    grade: string;
+    @Field((_type) => String)
+    aboutMe: string;
+}
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -151,6 +168,36 @@ export class ExtendedFieldsSubcourseResolver {
                     },
                 },
             },
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                grade: true,
+                schooltype: true,
+                aboutMe: true,
+            },
+        });
+    }
+
+    @FieldResolver((returns) => [OtherParticipant])
+    @Authorized(Role.SUBCOURSE_PARTICIPANT)
+    @LimitEstimated(100)
+    async otherParticipants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
+        return await prisma.pupil.findMany({
+            where: {
+                subcourse_participants_pupil: {
+                    some: {
+                        subcourseId: subcourse.id,
+                        pupilId: { not: context.user.pupilId },
+                    },
+                },
+            },
+            select: {
+                id: true,
+                firstname: true,
+                grade: true,
+                aboutMe: true,
+            },
         });
     }
 
@@ -204,9 +251,9 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.PUPIL)
-    async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('pupilId', { nullable: true }) pupilId: number) {
+    async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
-        return (await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
+        return isParticipant(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Boolean)
@@ -236,5 +283,11 @@ export class ExtendedFieldsSubcourseResolver {
     async canJoin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await canJoinSubcourse(subcourse, pupil);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canPublish(@Root() subcourse: Required<Subcourse>) {
+        return await canPublish(subcourse);
     }
 }

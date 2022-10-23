@@ -10,6 +10,7 @@ import { getLogger } from 'log4js';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { addUserSearch } from '../user';
 
 const logger = getLogger('MatchingPool');
 
@@ -55,19 +56,25 @@ const getViableUsers = (toggles: string[]) => {
     return viableUsers;
 };
 
-export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
+export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
+    const where = { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) };
+    addUserSearch(where, search);
+
     return await prisma.student.findMany({
-        where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
+        where,
         orderBy: { createdAt: 'asc' },
         take,
         skip,
     });
 }
 
-export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number) {
+export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
+    const where = { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) };
+    addUserSearch(where, search);
+
     return await prisma.pupil.findMany({
-        where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
-        orderBy: { createdAt: 'asc' },
+        where,
+        orderBy: [{ match: { _count: 'asc' } }, { firstMatchRequest: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
         take,
         skip,
     });
@@ -467,10 +474,15 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
 
 /* ------------------------------ Confirmation Requests ------------- */
 
+// It takes some time for pupils to confirm interest and get matched
+// (at most two weeks till the interest gets invalidated)
+// Thus we always want to have more pupils in the backlog
+const OVERPROVISION_DEMAND = 20;
+
 export async function confirmationRequestsToSend(pool: MatchPool) {
     const offers = await getStudentOfferCount(pool, []);
     const requests = await getPupilDemandCount(pool, []);
-    const openOffers = Math.max(0, offers - requests);
+    const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
     const comfirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, openOffers - comfirmationsPending);

@@ -73,6 +73,10 @@ class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
+    @Field((type) => String, { defaultValue: '' })
+    @MaxLength(500)
+    aboutMe: string;
+
     /* After registration, the user receives an email to verify their account.
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
@@ -107,6 +111,10 @@ class RegisterPupilInput implements RegisterPupilData {
 
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
+
+    @Field((type) => String, { defaultValue: '' })
+    @MaxLength(500)
+    aboutMe: string;
 
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */

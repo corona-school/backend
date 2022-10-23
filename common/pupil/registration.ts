@@ -28,6 +28,7 @@ export interface RegisterPupilData {
     schooltype?: SchoolType;
     state: State;
     registrationSource: RegistrationSource;
+    aboutMe: string;
 
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
@@ -81,6 +82,7 @@ export async function registerPupil(data: RegisterPupilData) {
             schoolId: data.schoolId,
             state: data.state,
             registrationSource: data.registrationSource,
+            aboutMe: data.aboutMe,
 
             // Compatibility with legacy foreign keys
             wix_id: 'Z-' + uuidv4(),

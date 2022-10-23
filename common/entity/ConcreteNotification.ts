@@ -55,6 +55,6 @@ export enum ConcreteNotificationState {
     SENT = 2, // we're pretty sure the notification arrived (no bounce, no API error)
     ERROR = 3, // the notification bounced
     ACTION_TAKEN = 4, // the user took an action which cancelled the pending reminder
-    ARCHIVED = 5,
-    DRAFTED = 6,
+    ARCHIVED = 5, // the notification was archived after some months due to privacy reasons (might contain data of other users)
+    DRAFTED = 6, // the notification was drafted and is not supposed to be sent out yet (mainly during campaigns)
 }

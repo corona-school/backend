@@ -11,6 +11,7 @@ import { GraphQLContext } from '../context';
 import { ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getSubcourse } from '../util';
+import { canPublish } from '../../common/courses/states';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -62,9 +63,7 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        if (course.courseState !== 'allowed') {
-            throw new ForbiddenError(`Course (${courseId}) not allowed (approved) yet`);
-        }
+
         const student = await getSessionStudent(context, studentId);
         const result = await prisma.subcourse.create({ data: { ...subcourse, courseId, published: false } });
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
@@ -78,15 +77,11 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        const lectures = await prisma.lecture.findMany({ where: { subcourseId } });
-        if (lectures.length == 0) {
-            throw new ForbiddenError(`Subcourse (${subcourseId}) must have at least one lecture to be published`);
+        const can = await canPublish(subcourse);
+        if (!can.allowed) {
+            throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
-        let currentDate = new Date();
-        const pastLectures = lectures.filter((lecture) => +lecture.start < +currentDate);
-        if (pastLectures.length !== 0) {
-            throw new ForbiddenError(`Lectures (${pastLectures.toString()}) of subcourse (${subcourseId}) must happen in the future.`);
-        }
+
         await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
         return true;
