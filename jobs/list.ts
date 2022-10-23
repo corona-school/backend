@@ -41,7 +41,8 @@ export const allJobs: CSCronJob[] = [
     // every hour during day
     { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
-    { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets },
-    { cronTime: "00 00 02 * * *", jobFunction: redactInactiveAccounts },
-    { cronTime: "00 00 01 * * *", jobFunction: dropOldNotificationContexts }
+    { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets }
+    // TODO: Enable
+    // { cronTime: "00 00 02 * * *", jobFunction: redactInactiveAccounts },
+    // { cronTime: "00 00 01 * * *", jobFunction: dropOldNotificationContexts }
 ];
