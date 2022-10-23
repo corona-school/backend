@@ -273,7 +273,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             projectMemberCount: nobody,
             updatedAt: nobody,
             wix_creation_date: nobody,
-
+            isRedacted: nobody,
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
 
@@ -340,7 +340,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             updatedAt: nobody,
             wix_creation_date: nobody,
             wix_id: nobody,
-
+            isRedacted: nobody,
             // these are associations which are wrongly in the TypeGraphQL generation
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
             screening: nobody,

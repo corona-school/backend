@@ -254,6 +254,7 @@ model mentor {
   message            String?                 @db.VarChar
   description        String?                 @db.VarChar
   imageUrl           String?                 @db.VarChar
+  isRedacted         Boolean                 @default(false)
 }
 
 model notification {
@@ -383,6 +384,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+  isRedacted                                   Boolean                                       @default(false)
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -517,6 +519,7 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
+  isRedacted                                Boolean                               @default(false)
 }
 
 model subcourse {
