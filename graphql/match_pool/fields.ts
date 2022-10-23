@@ -30,8 +30,8 @@ class MatchPool {
     name: string;
     @Field({ nullable: true })
     automatic?: MatchPoolAutomatic;
-    @Field()
-    confirmInterest: boolean;
+    @Field({ nullable: true })
+    confirmInterest?: boolean;
     @Field((type) => [String])
     toggles: string[];
 }
