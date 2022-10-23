@@ -309,7 +309,7 @@ export class StatisticsResolver {
         return await prisma.match.count({ where: { dissolved: false } });
     }
 
-    @FieldResolver((returns) => ByMonth)
+    @FieldResolver((returns) => [ByMonth])
     async knowsCoronaSchoolFrom(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
@@ -322,7 +322,7 @@ export class StatisticsResolver {
                 ORDER BY "year" ASC, "month" ASC, "knowsCoronaSchoolFrom" ASC;`;
     }
 
-    @FieldResolver((returns) => ByMonth)
+    @FieldResolver((returns) => [ByMonth])
     async interestConfirmationsByState(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
@@ -335,7 +335,7 @@ export class StatisticsResolver {
                 ORDER BY "year" ASC, "month" ASC, "status" ASC;`;
     }
 
-    @FieldResolver((returns) => ByMonth)
+    @FieldResolver((returns) => [ByMonth])
     async notificationsSent(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
         COUNT(*)::INT AS value,
