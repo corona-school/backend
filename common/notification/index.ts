@@ -302,6 +302,8 @@ async function deliverNotification(
     }
 }
 
+/* --------------------------- Attachments ---------------------------------------------------- */
+
 /**
  * Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
  * These objects include HTML for the attachment list which gets inserted into messages.
@@ -326,6 +328,8 @@ export async function createAttachments(files: Express.Multer.File[], uploader: 
     }
     return null;
 }
+
+/* --------------------------- Admin Actions for Notifications ----------------------------------- */
 
 const DEACTIVATION_MARKER = 'ACCOUNT_DEACTIVATION';
 
@@ -442,6 +446,8 @@ export async function rescheduleNotification(notification: ConcreteNotification,
     logger.info(`ConcreteNotification(${notification.id}) was manually rescheduled to ${sendAt.toISOString()}`);
 }
 
+/* --------------------------- Campaigns ---------------------------------------------------- */
+
 export function validateContext(notification: Notification, context: NotificationContext) {
     if (!notification.sample_context) {
         throw new Error(`Cannot validate Notification(${notification.id}) without sample_context`);
@@ -478,7 +484,7 @@ export async function bulkCreateNotifications(
         throw new Error(`ContextID must be unique for bulk notifications`);
     }
 
-    const { count: createdNotififications } = await prisma.concrete_notification.createMany({
+    const { count: createdNotifications } = await prisma.concrete_notification.createMany({
         data: users.map((user, index) => ({
             // the unique id is automatically created by the database
             notificationID: notification.id,
@@ -490,7 +496,7 @@ export async function bulkCreateNotifications(
         })),
     });
 
-    logger.info(`Created ${createdNotififications} notifications for Notification(${notification.id}) in ${ConcreteNotificationState[state]} state`);
+    logger.info(`Created ${createdNotifications} notifications for Notification(${notification.id}) in ${ConcreteNotificationState[state]} state`);
 }
 
 export async function publishDrafted(notification: Notification, contextID: string) {

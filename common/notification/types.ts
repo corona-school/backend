@@ -40,6 +40,9 @@ export interface NotificationContext {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress?: Email;
+    // Sometimes it makes sense to send to some other email than the user's
+    // (i.e. when verifying an email change, or when testing mails)
+    overrideReceiverEmail?: Email;
     attachments?: Attachment[];
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
