@@ -7,6 +7,8 @@ import assert from 'assert';
 import { getLogger } from 'log4js';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { ForbiddenError } from './error';
+import { isParticipant } from '../common/courses/participants';
+import { getPupil } from './util';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -42,6 +44,8 @@ export enum Role {
     PROJECT_COACHEE = 'PROJECT_COACHEE',
     /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
     STATE_PUPIL = 'STATE_PUPIL',
+    /* User is a pupil and participant of a specific subcourse */
+    SUBCOURSE_PARTICIPANT = 'SUBCOURSE_PARTICIPANT',
 }
 
 const authLogger = getLogger('GraphQL Authentication');
@@ -112,6 +116,13 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             return true;
         }
     }
+    if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
+        assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
+        assert(root, 'root value must be bound to determine access');
+        assert(context.user.pupilId, 'User must be a pupil');
+        const pupil = await getPupil(context.user.pupilId);
+        return await isParticipant(root, pupil);
+    }
 
     return false;
 }
@@ -159,7 +170,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         deleteOneCourse_tag: nobody,
         updateOneCourse_tag: nobody,
         updateManyCourse_tag: nobody,
-        upsertOneCourse_tag: nobody
+        upsertOneCourse_tag: nobody,
     },
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
@@ -230,6 +241,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isPupil'
             | 'languages'
             | 'projectFields'
+            | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -283,7 +295,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages'
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -376,7 +388,18 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Course: {
         fields: withPublicFields<
             Course,
-            'id' | 'name' | 'outline' | 'category' | 'subject' | 'schooltype' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
+            | 'id'
+            | 'name'
+            | 'outline'
+            | 'category'
+            | 'subject'
+            | 'schooltype'
+            | 'allowContact'
+            | 'courseState'
+            | 'publicRanking'
+            | 'description'
+            | 'createdAt'
+            | 'updatedAt'
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
@@ -387,7 +410,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             imageKey: nobody,
-            _count: nobody
+            _count: nobody,
         }),
     },
     Lecture: {
@@ -411,7 +434,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
             identifier: nobody,
             _count: nobody,
-            course_tags_course_tag: nobody
+            course_tags_course_tag: nobody,
         }),
-    }
+    },
 };

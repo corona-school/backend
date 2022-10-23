@@ -211,6 +211,9 @@ export class Pupil extends Person {
     })
     coduToken: string;
 
+    @Column({ default: '', nullable: false })
+    aboutMe: string;
+
     gradeAsNumber(): number | null {
         if (this.grade == null) {
             return null;

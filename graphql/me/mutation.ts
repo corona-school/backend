@@ -15,7 +15,7 @@ import {
     pupil_state_enum as State,
     student_module_enum as TeacherModule,
 } from '@prisma/client';
-import { MaxLength } from 'class-validator';
+import { MaxLength, ValidateNested } from 'class-validator';
 import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from '../../common/jufo/participationIndication';
 import { School } from '../../common/entity/School';
 import { RateLimit } from '../rate-limit';
@@ -73,6 +73,10 @@ class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
+    @Field((type) => String, { defaultValue: '' })
+    @MaxLength(500)
+    aboutMe: string;
+
     /* After registration, the user receives an email to verify their account.
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
@@ -108,6 +112,10 @@ class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
+    @Field((type) => String, { defaultValue: '' })
+    @MaxLength(500)
+    aboutMe: string;
+
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
@@ -125,9 +133,11 @@ class MeUpdateInput {
     lastname?: string;
 
     @Field((type) => PupilUpdateInput, { nullable: true })
+    @ValidateNested()
     pupil?: PupilUpdateInput;
 
     @Field((type) => StudentUpdateInput, { nullable: true })
+    @ValidateNested()
     student?: StudentUpdateInput;
 }
 

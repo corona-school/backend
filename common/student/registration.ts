@@ -29,6 +29,7 @@ export interface RegisterStudentData {
     email: string;
     newsletter: boolean;
     registrationSource: RegistrationSource;
+    aboutMe: string;
     /* After registration, the user receives an email to verify their account.
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
@@ -74,6 +75,7 @@ export async function registerStudent(data: RegisterStudentData) {
             lastname: data.lastname,
             newsletter: data.newsletter,
             registrationSource: data.registrationSource as any,
+            aboutMe: data.aboutMe,
 
             // Compatibility with legacy foreign keys
             wix_id: 'Z-' + uuidv4(),

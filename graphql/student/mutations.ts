@@ -3,7 +3,7 @@ import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
 import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import { isElevated, getSessionStudent, getSessionScreener } from '../authentication';
+import { isElevated, getSessionStudent, getSessionScreener, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -20,6 +20,8 @@ import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
+import { userForStudent } from '../../common/user';
+import { MaxLength } from 'class-validator';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -72,11 +74,15 @@ export class StudentUpdateInput {
 
     @Field((type) => State, { nullable: true })
     state?: State;
+
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    aboutMe?: string;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -94,7 +100,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         await setProjectFields(student, projectFields);
     }
 
-    await prisma.student.update({
+    const res = await prisma.student.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -102,9 +108,13 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
+            aboutMe: ensureNoNull(aboutMe),
         },
         where: { id: student.id },
     });
+
+    // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
+    await updateSessionUser(context, userForStudent(res));
 
     log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
 }

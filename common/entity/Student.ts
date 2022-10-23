@@ -323,6 +323,9 @@ export class Student extends Person {
     })
     remissionRequest: RemissionRequest;
 
+    @Column({ default: '', nullable: false })
+    aboutMe: string;
+
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
 

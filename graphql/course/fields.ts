@@ -35,13 +35,12 @@ export class ExtendedFieldsCourseResolver {
             where: {
                 course_tags_course_tag: {
                     some: {
-                        courseId: course.id
-                    }
-                }
-            }
+                        courseId: course.id,
+                    },
+                },
+            },
         });
     }
-
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT)

@@ -11,7 +11,7 @@ import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing'
 import { getLogger } from 'log4js';
 import { AuthenticationError, ForbiddenError } from './error';
 import { logInContext } from './logging';
-import { User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import {User, userForPupil, userForScreener, userForStudent} from '../common/user';
 import { loginPassword, loginToken } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
@@ -41,6 +41,13 @@ export const toPublicToken = (token: string) => token.slice(0, -5);
 
 export async function getUserForSession(sessionToken: string) {
     return userSessions.get(sessionToken);
+}
+
+export async function updateSessionUser(context: GraphQLContext, user: User) {
+    // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
+    if (context.user.userID === user.userID) {
+        await loginAsUser(user, context);
+    }
 }
 
 export function getSessionUser(context: GraphQLContext): GraphQLUser | never {
@@ -90,7 +97,7 @@ export async function getSessionPupil(context: GraphQLContext, pupilIdOverride?:
     }
 
     if (!pupilId) {
-        throw new ForbiddenError('Expected user to be student or if elevated, a studentId must be passed in');
+        throw new ForbiddenError('Expected user to be pupil or if elevated, a pupilId must be passed in');
     }
 
     return await getPupil(pupilId);
@@ -240,6 +247,8 @@ export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+        ensureSession(context);
+
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
