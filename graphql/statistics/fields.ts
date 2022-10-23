@@ -334,4 +334,26 @@ export class StatisticsResolver {
                 GROUP BY "year", "month", "status"
                 ORDER BY "year" ASC, "month" ASC, "status" ASC;`;
     }
+
+    @FieldResolver((returns) => ByMonth)
+    async notificationsSent(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT
+        COUNT(*)::INT AS value,
+        date_part('year', "sentAt"::date) AS year,
+        date_part('month', "sentAt"::date) AS month,
+        "state" AS group
+    FROM "concrete_notification"
+        WHERE "sentAt" > ${statistics.from}::timestamp AND "sentAt" < ${statistics.to}::timestamp
+        GROUP BY "year", "month", "state"
+        ORDER BY "year" ASC, "month" ASC, "state" ASC;`;
+    }
+
+    @FieldResolver((returns) => Int)
+    async loginsToday() {
+        const beginingOfTheDay = new Date();
+        beginingOfTheDay.setHours(0);
+        beginingOfTheDay.setMinutes(0);
+
+        return await prisma.secret.count({ where: { lastUsed: { gte: beginingOfTheDay } } });
+    }
 }
