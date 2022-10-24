@@ -6,6 +6,7 @@ import { Person } from '../../entity/Person';
 import { assert } from 'console';
 import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
+import { isDev } from '../../util/environment';
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
@@ -29,6 +30,16 @@ export const mailjetChannel: Channel = {
             logger.info(`When sending out ConcreteNotification(${concreteID}) the Receiver was overriden to '${receiverEmail}'`);
         }
 
+        // c.f. https://dev.mailjet.com/email/guides/send-campaigns-with-sendapi/
+        // This groups statistics in the Mailjet UI
+        let CustomCampaign: string | undefined = undefined;
+
+        if (!isDev) {
+            // For campaigns, we want dedicated statistics even though they share the same template
+            // For transactional mails, all are collected in the same campaign
+            CustomCampaign = context.campaign ?? `Backend Notification ${notification.id}`;
+        }
+
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: {
@@ -47,9 +58,7 @@ export const mailjetChannel: Channel = {
             TemplateErrorReporting: {
                 Email: 'backend@lern-fair.de',
             },
-            // c.f. https://dev.mailjet.com/email/guides/send-campaigns-with-sendapi/
-            // This groups statistics in the Mailjet UI
-            CustomCampaign: context.campaign ?? `Backend Notification ${notification.id}`,
+            CustomCampaign,
         };
 
         if (context.replyToAddress) {
