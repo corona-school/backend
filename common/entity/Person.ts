@@ -61,6 +61,11 @@ export abstract class Person {
         default: null,
     })
     authTokenSent: Date;
+
+    @Column({
+        default: false,
+    })
+    isRedacted: boolean;
 }
 
 export enum RegistrationSource {

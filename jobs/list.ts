@@ -13,13 +13,15 @@ import interestConfirmationRequestReminders from "./periodic/interest-confirmati
 import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { cleanupSecrets } from "../common/secret";
+import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
+import dropOldNotificationContexts from "./periodic/drop-old-notification-contexts";
 import { runInterestConfirmations } from "../common/match/pool";
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
     // every morning, quite early (but only on Monday and Thursday)
-    { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
-    // { cronTime: "00 55 07 * * 1,4", jobFunction: runInterestConfirmations },
+    // { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
+    { cronTime: "00 55 07 * * 1,4", jobFunction: runInterestConfirmations },
     // every morning
     { cronTime: "00 00 09 * * *", jobFunction: screeningReminderJob},
     { cronTime: "00 34 08 * * *", jobFunction: projectMatchMaking},
@@ -40,4 +42,7 @@ export const allJobs: CSCronJob[] = [
     { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
     { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets }
+    // TODO: Enable
+    // { cronTime: "00 00 02 * * *", jobFunction: redactInactiveAccounts },
+    // { cronTime: "00 00 01 * * *", jobFunction: dropOldNotificationContexts }
 ];

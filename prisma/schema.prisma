@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions"]
+  previewFeatures = ["interactiveTransactions", "orderByNulls"]
 }
 
 generator typegraphql {
@@ -14,7 +14,7 @@ datasource db {
 }
 
 model attachment {
-  id                String   @id @db.Uuid
+  id                String   @id(map: "PK_d2a80c3a8d467f08a750ac4b420") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   uploaderID        String   @db.VarChar
   filename          String   @db.VarChar
   size              Int
@@ -34,15 +34,15 @@ model bbb_meeting {
 }
 
 model concrete_notification {
-  id             Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
-  userId         String   @db.VarChar
-  notificationID Int
-  contextID      String?  @db.VarChar
-  context        Json     @db.Json
-  sentAt         DateTime @db.Timestamp(6)
+  id                Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
+  userId            String   @db.VarChar
+  notificationID    Int
+  contextID         String?  @db.VarChar
+  context           Json     @db.Json
   attachmentGroupId String?  @db.VarChar
-  state          Int
-  error          String?  @db.VarChar
+  sentAt            DateTime @db.Timestamp(6)
+  state             Int
+  error             String?  @db.VarChar
 }
 
 model course {
@@ -97,8 +97,8 @@ model course_guest {
 model course_instructors_student {
   courseId  Int
   studentId Int
-  course    course  @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_54bce9a9a93ae130beaa70bb2fa")
-  student   student @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_66b47860afa3098729925338c18")
+  course    course  @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "FK_54bce9a9a93ae130beaa70bb2fa")
+  student   student @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_66b47860afa3098729925338c18")
 
   @@id([courseId, studentId], map: "PK_aa54b28c5de0010f486dd0d72df")
   @@index([courseId], map: "IDX_54bce9a9a93ae130beaa70bb2f")
@@ -112,9 +112,9 @@ model course_participation_certificate {
   issuerId    Int?
   pupilId     Int?
   subcourseId Int?
-  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
   pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_585aa209315fc328d48af2765b4")
   subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_bc6a26ac82132b6e9f1d6de3e4c")
+  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
 }
 
 model course_tag {
@@ -128,8 +128,8 @@ model course_tag {
 model course_tags_course_tag {
   courseId    Int
   courseTagId Int
-  course      course     @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_d6261ad9de1fc5f06946095bf8c")
-  course_tag  course_tag @relation(fields: [courseTagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_af4499c3ae1153ac06782b2e5b9")
+  course_tag  course_tag @relation(fields: [courseTagId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_af4499c3ae1153ac06782b2e5b9")
+  course      course     @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "FK_d6261ad9de1fc5f06946095bf8c")
 
   @@id([courseId, courseTagId], map: "PK_3996cf424477234b88a0980fd39")
   @@index([courseTagId], map: "IDX_af4499c3ae1153ac06782b2e5b")
@@ -152,8 +152,8 @@ model expert_data {
 model expert_data_expertise_tags_expertise_tag {
   expertDataId   Int
   expertiseTagId Int
-  expert_data    expert_data   @relation(fields: [expertDataId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_73044a211048e72c2026425c81c")
-  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_8a81e80d1d580b868ed36ca1234")
+  expert_data    expert_data   @relation(fields: [expertDataId], references: [id], onDelete: Cascade, map: "FK_73044a211048e72c2026425c81c")
+  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8a81e80d1d580b868ed36ca1234")
 
   @@id([expertDataId, expertiseTagId], map: "PK_bc62a3cbf8ed9f07fc7e43163d4")
   @@index([expertDataId], map: "IDX_73044a211048e72c2026425c81")
@@ -175,8 +175,8 @@ model instructor_screening {
   updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?      @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
   student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 model jufo_verification_transmission {
@@ -195,8 +195,8 @@ model lecture {
   duration              Int
   instructorId          Int?
   subcourseId           Int?
-  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   subcourse             subcourse?              @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
+  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   course_attendance_log course_attendance_log[]
 }
 
@@ -254,6 +254,7 @@ model mentor {
   message            String?                 @db.VarChar
   description        String?                 @db.VarChar
   imageUrl           String?                 @db.VarChar
+  isRedacted         Boolean                 @default(false)
 }
 
 model notification {
@@ -303,8 +304,8 @@ model project_coaching_screening {
   updatedAt             DateTime  @default(now()) @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?      @unique(map: "REL_565d757e2fd9a97fc3f30f5129")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_91fa06e6e9aa04b5da93d034cae")
   student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_565d757e2fd9a97fc3f30f51297")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_91fa06e6e9aa04b5da93d034cae")
 }
 
 model project_field_with_grade_restriction {
@@ -336,52 +337,54 @@ model project_match {
 }
 
 model pupil {
-  id                                           Int                                           @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
-  createdAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
-  updatedAt                                    DateTime                                      @default(now()) @db.Timestamp(6)
-  firstname                                    String?                                       @db.VarChar
-  lastname                                     String?                                       @db.VarChar
-  active                                       Boolean                                       @default(true)
-  email                                        String                                        @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
-  verification                                 String?                                       @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
-  verifiedAt                                   DateTime?                                     @db.Timestamp(6)
-  authToken                                    String?                                       @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
-  authTokenUsed                                Boolean                                       @default(false)
-  authTokenSent                                DateTime?                                     @db.Timestamp(6)
-  wix_id                                       String                                        @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
-  wix_creation_date                            DateTime                                      @db.Timestamp(6)
-  state                                        pupil_state_enum                              @default(other)
-  schooltype                                   pupil_schooltype_enum                         @default(other)
-  msg                                          String?                                       @db.VarChar
-  grade                                        String?                                       @db.VarChar
-  newsletter                                   Boolean                                       @default(false)
-  isPupil                                      Boolean                                       @default(false)
-  subjects                                     String?                                       @db.VarChar
-  openMatchRequestCount                        Int                                           @default(1)
-  firstMatchRequest                            DateTime?                                     @db.Timestamp(6)
-  isParticipant                                Boolean                                       @default(true)
-  isProjectCoachee                             Boolean                                       @default(false)
-  projectFields                                pupil_projectfields_enum[]
-  isJufoParticipant                            String                                        @default("unsure") @db.VarChar
-  openProjectMatchRequestCount                 Int                                           @default(1)
-  projectMemberCount                           Int                                           @default(1)
-  languages                                    pupil_languages_enum[]
+  id                                           Int                                            @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
+  createdAt                                    DateTime                                       @default(now()) @db.Timestamp(6)
+  updatedAt                                    DateTime                                       @default(now()) @db.Timestamp(6)
+  firstname                                    String?                                        @db.VarChar
+  lastname                                     String?                                        @db.VarChar
+  active                                       Boolean                                        @default(true)
+  email                                        String                                         @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
+  verification                                 String?                                        @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
+  verifiedAt                                   DateTime?                                      @db.Timestamp(6)
+  authToken                                    String?                                        @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
+  authTokenUsed                                Boolean                                        @default(false)
+  authTokenSent                                DateTime?                                      @db.Timestamp(6)
+  wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
+  wix_creation_date                            DateTime                                       @db.Timestamp(6)
+  state                                        pupil_state_enum                               @default(other)
+  schooltype                                   pupil_schooltype_enum                          @default(other)
+  msg                                          String?                                        @db.VarChar
+  grade                                        String?                                        @db.VarChar
+  newsletter                                   Boolean                                        @default(false)
+  isPupil                                      Boolean                                        @default(false)
+  subjects                                     String?                                        @db.VarChar
+  openMatchRequestCount                        Int                                            @default(1)
+  firstMatchRequest                            DateTime?                                      @db.Timestamp(6)
+  isParticipant                                Boolean                                        @default(true)
+  isProjectCoachee                             Boolean                                        @default(false)
+  projectFields                                pupil_projectfields_enum[]                     @default([])
+  isJufoParticipant                            String                                         @default("unsure") @db.VarChar
+  openProjectMatchRequestCount                 Int                                            @default(1)
+  projectMemberCount                           Int                                            @default(1)
+  languages                                    pupil_languages_enum[]                         @default([])
   learningGermanSince                          pupil_learninggermansince_enum?
-  matchingPriority                             Int                                           @default(0)
-  lastUpdatedSettingsViaBlocker                DateTime?                                     @db.Timestamp(6)
-  teacherEmailAddress                          String?                                       @db.VarChar
-  registrationSource                           pupil_registrationsource_enum                 @default(dbgenerated("0"))
-  coduToken                                    String?                                       @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
+  matchingPriority                             Int                                            @default(0)
+  lastUpdatedSettingsViaBlocker                DateTime?                                      @db.Timestamp(6)
+  teacherEmailAddress                          String?                                        @db.VarChar
+  registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
+  coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
+  aboutMe                                      String                                         @default("") @db.VarChar
   schoolId                                     Int?
-  school                                       school?                                       @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
+  school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
   course_attendance_log                        course_attendance_log[]
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]
   project_match                                project_match[]
-  pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request?
+  pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+  isRedacted                                   Boolean                                       @default(false)
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -389,9 +392,10 @@ model pupil_tutoring_interest_confirmation_request {
   createdAt        DateTime  @default(now()) @db.Timestamp(6)
   updatedAt        DateTime  @default(now()) @db.Timestamp(6)
   status           String    @default("pending") @db.VarChar
+  invalidated      Boolean   @default(false)
   token            String    @unique(map: "IDX_8108668f1658b14b9db299634e") @db.VarChar
   reminderSentDate DateTime? @db.Timestamp(6)
-  pupilId          Int?      @unique(map: "REL_5928ac6454eee0bfbdb8e538ef")
+  pupilId          Int?
   pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 
@@ -490,13 +494,14 @@ model student {
   sentJufoAlumniScreeningReminderCount      Int                                    @default(0)
   lastSentJufoAlumniScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   supportsInDaZ                             Boolean?
-  languages                                 student_languages_enum[]
+  languages                                 student_languages_enum[]               @default([])
   sentScreeningReminderCount                Int                                    @default(0)
   lastSentScreeningInvitationDate           DateTime?                              @db.Timestamp(6)
   sentInstructorScreeningReminderCount      Int                                    @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  aboutMe                                   String                                 @default("") @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
@@ -514,6 +519,7 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
+  isRedacted                                Boolean                               @default(false)
 }
 
 model subcourse {
@@ -538,8 +544,8 @@ model subcourse {
 model subcourse_instructors_student {
   subcourseId Int
   studentId   Int
-  student     student   @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_b36e4eeff8040a09cc811dbb262")
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_3f0c594b9393bf4ca9ed3681967")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, map: "FK_3f0c594b9393bf4ca9ed3681967")
+  student     student   @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_b36e4eeff8040a09cc811dbb262")
 
   @@id([subcourseId, studentId], map: "PK_e41756ec54d1828c27b0a5dc055")
   @@index([subcourseId], map: "IDX_3f0c594b9393bf4ca9ed368196")
@@ -549,8 +555,8 @@ model subcourse_instructors_student {
 model subcourse_participants_pupil {
   subcourseId Int
   pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_47d9d98b6496554165e08ff61d9")
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_cde91c063947d1302d50c906dcd")
+  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_47d9d98b6496554165e08ff61d9")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, map: "FK_cde91c063947d1302d50c906dcd")
 
   @@id([subcourseId, pupilId], map: "PK_7b8738e08eab7b5bf796f0eaf1b")
   @@index([pupilId], map: "IDX_47d9d98b6496554165e08ff61d")
@@ -560,8 +566,8 @@ model subcourse_participants_pupil {
 model subcourse_waiting_list_pupil {
   subcourseId Int
   pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_3bd25f377afc44f574f7ac3d09b")
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_df9eb9663f8085da35f7ca55471")
+  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3bd25f377afc44f574f7ac3d09b")
+  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, map: "FK_df9eb9663f8085da35f7ca55471")
 
   @@id([subcourseId, pupilId], map: "PK_b35d059abbd7f4c4a1147f72ec9")
   @@index([pupilId], map: "IDX_3bd25f377afc44f574f7ac3d09")
@@ -595,6 +601,18 @@ model secret {
   secret    String           @db.VarChar
   expiresAt DateTime?        @db.Timestamp(6)
   lastUsed  DateTime?        @db.Timestamp(6)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model typeorm_metadata {
+  type     String  @db.VarChar
+  database String? @db.VarChar
+  schema   String? @db.VarChar
+  table    String? @db.VarChar
+  name     String? @db.VarChar
+  value    String?
+
+  @@ignore
 }
 
 enum course_category_enum {
@@ -666,10 +684,10 @@ enum mentor_division_enum {
 
 enum mentor_expertise_enum {
   language_difficulties_and_communication @map("language difficulties and communication")
-  specialized_expertise_in_subjects @map("specialized expertise in subjects")
-  educational_and_didactic_expertise @map("educational and didactic expertise")
-  technical_support @map("technical support")
-  self_organization @map("self-organization")
+  specialized_expertise_in_subjects       @map("specialized expertise in subjects")
+  educational_and_didactic_expertise      @map("educational and didactic expertise")
+  technical_support                       @map("technical support")
+  self_organization                       @map("self-organization")
 }
 
 enum project_field_with_grade_restriction_projectfield_enum {
@@ -677,7 +695,7 @@ enum project_field_with_grade_restriction_projectfield_enum {
   Biologie
   Chemie
   Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
-  Mathematik_Informatik @map("Mathematik/Informatik")
+  Mathematik_Informatik      @map("Mathematik/Informatik")
   Physik
   Technik
 }
@@ -692,14 +710,14 @@ enum pupil_languages_enum {
   Chinesisch
   Deutsch
   Englisch
-  Franz_sisch @map("Französisch")
+  Franz_sisch       @map("Französisch")
   Italienisch
   Kasachisch
   Kurdisch
   Polnisch
   Portugiesisch
   Russisch
-  T_rkisch @map("Türkisch")
+  T_rkisch          @map("Türkisch")
   Spanisch
   Ukrainisch
   Vietnamesisch
@@ -708,9 +726,9 @@ enum pupil_languages_enum {
 
 enum pupil_learninggermansince_enum {
   more_than_four @map(">4")
-  two_to_four @map("2-4")
-  one_to_two @map("1-2")
-  less_than_one @map("<1")
+  two_to_four    @map("2-4")
+  one_to_two     @map("1-2")
+  less_than_one  @map("<1")
 }
 
 enum pupil_projectfields_enum {
@@ -718,18 +736,18 @@ enum pupil_projectfields_enum {
   Biologie
   Chemie
   Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
-  Mathematik_Informatik @map("Mathematik/Informatik")
+  Mathematik_Informatik      @map("Mathematik/Informatik")
   Physik
   Technik
 }
 
 enum pupil_registrationsource_enum {
-  normal @map("0")
+  normal      @map("0")
   cooperation @map("1")
-  drehtuer @map("2")
-  other @map("3")
-  codu @map("4")
-  plus @map("5")
+  drehtuer    @map("2")
+  other       @map("3")
+  codu        @map("4")
+  plus        @map("5")
 }
 
 enum pupil_schooltype_enum {
@@ -804,14 +822,14 @@ enum student_languages_enum {
   Chinesisch
   Deutsch
   Englisch
-  Franz_sisch @map("Französisch")
+  Franz_sisch       @map("Französisch")
   Italienisch
   Kasachisch
   Kurdisch
   Polnisch
   Portugiesisch
   Russisch
-  T_rkisch @map("Türkisch")
+  T_rkisch          @map("Türkisch")
   Spanisch
   Ukrainisch
   Vietnamesisch
@@ -825,12 +843,12 @@ enum student_module_enum {
 }
 
 enum student_registrationsource_enum {
-  normal @map("0")
+  normal      @map("0")
   cooperation @map("1")
-  drehtuer @map("2")
-  other @map("3")
-  codu @map("4")
-  plus @map("5")
+  drehtuer    @map("2")
+  other       @map("3")
+  codu        @map("4")
+  plus        @map("5")
 }
 
 enum student_state_enum {
