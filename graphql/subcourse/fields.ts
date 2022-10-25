@@ -69,10 +69,12 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitedQuery()
     @PublicCache()
     async subcoursesPublic(
+        @Ctx() context: GraphQLContext,
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number,
         @Arg('search', { nullable: true }) search?: string,
-        @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean
+        @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean,
+        @Arg('excludeKnown', { nullable: true }) excludeKnown?: boolean
     ) {
         // All filters need to match
         const filters = [IS_PUBLIC_SUBCOURSE];
@@ -90,6 +92,19 @@ export class ExtendedFieldsSubcourseResolver {
                     { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
                 ],
             });
+        }
+
+        if (excludeKnown) {
+            if (isSessionStudent(context)) {
+                filters.push({
+                    subcourse_instructors_student: { none: { studentId: context.user!.studentId! } },
+                });
+            } else if (isSessionPupil(context)) {
+                filters.push({
+                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_waiting_list_pupil: { none: { pupilId: context.user!.pupilId! } },
+                });
+            } /* else ignore */
         }
 
         return await prisma.subcourse.findMany({
