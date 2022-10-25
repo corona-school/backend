@@ -28,16 +28,6 @@ class Participant {
     aboutMe: string;
 }
 
-const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
-    published: { equals: true },
-    cancelled: { equals: false },
-    course: {
-        is: {
-            courseState: { equals: CourseState.ALLOWED },
-        },
-    },
-};
-
 @ObjectType()
 class OtherParticipant {
     @Field((_type) => Int)
@@ -49,6 +39,28 @@ class OtherParticipant {
     @Field((_type) => String)
     aboutMe: string;
 }
+
+@ObjectType()
+class Instructor {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    lastname: string;
+    @Field((_type) => String)
+    aboutMe: string;
+}
+
+const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
+    published: { equals: true },
+    cancelled: { equals: false },
+    course: {
+        is: {
+            courseState: { equals: CourseState.ALLOWED },
+        },
+    },
+};
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -131,6 +143,15 @@ export class ExtendedFieldsSubcourseResolver {
                 id: subcourseId,
                 OR: accessGrantFilters,
             },
+        });
+    }
+
+    @FieldResolver((returns) => [Instructor])
+    @Authorized(Role.PUPIL, Role.STUDENT, Role.ADMIN)
+    async instructors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
+        return await prisma.student.findMany({
+            select: { firstname: true, lastname: true, id: true, aboutMe: true },
+            where: { subcourse_instructors_student: { some: { subcourseId: subcourse.id } } },
         });
     }
 
