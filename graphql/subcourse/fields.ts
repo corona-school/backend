@@ -162,7 +162,7 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => [Instructor])
-    @Authorized(Role.PUPIL, Role.STUDENT, Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async instructors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
         return await prisma.student.findMany({
             select: { firstname: true, lastname: true, id: true, aboutMe: true },
