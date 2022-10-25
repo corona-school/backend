@@ -1,17 +1,20 @@
-import { getMeetingUrl } from '../../common/util/bbb';
+import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
+import { getUserTypeORM } from '../../common/user';
+import { PrerequisiteError } from '../../common/util/error';
+import { Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -174,20 +177,36 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_PARTICIPANT)
     async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let url: string;
-        const meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
         if (!meeting) {
-            throw new Error(`No meeting exists yet`); // TODO: Create meeting on demand
+            meeting = await createBBBMeeting(course.name, '' + subcourse.id, await getUserTypeORM(context.user!.userID));
         }
 
         if (meeting.alternativeUrl) {
-            url = meeting.alternativeUrl;
-        } else {
-            url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
+            logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with alternative url '${meeting.alternativeUrl}'`);
+            return meeting.alternativeUrl;
         }
 
+        // Start Meeting if needed
+        const isRunning = await isBBBMeetingRunning(meeting.meetingID);
+        if (!isRunning) {
+            if (!isSessionStudent(context)) {
+                throw new PrerequisiteError(`Meeting not yet started. Only the Instructor can start the meeting`);
+            }
+
+            await startBBBMeeting(meeting);
+        }
+
+        // Log Course attendance for pupils
+        if (isSessionPupil(context)) {
+            await createOrUpdateCourseAttendanceLog((await getUserTypeORM(context.user!.userID)) as TypeORMPupil, context.ip, '' + subcourseId);
+        }
+
+        const url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
         logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
         return url;
     }
