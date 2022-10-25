@@ -26,7 +26,7 @@ class PublicSubcourseCreateInput {
     @TypeGraphQL.Field((_type) => Boolean)
     joinAfterStart!: boolean;
     @TypeGraphQL.Field((_type) => [PublicLectureInput], { nullable: true })
-    lecture?: PublicLectureInput[];
+    lectures?: PublicLectureInput[];
 }
 
 @InputType()
@@ -64,10 +64,15 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures } = subcourse;
+        const result = await prisma.subcourse.create({
+            data: { courseId, published: false, joinAfterStart, minGrade, maxGrade, maxParticipants, lecture: { createMany: { data: lectures } } },
+        });
+
         const student = await getSessionStudent(context, studentId);
-        const result = await prisma.subcourse.create({ data: { ...subcourse, courseId, published: false } });
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
-        logger.info(`Subcourse ${result.id} was created on course ${courseId}`);
+
+        logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;
     }
 
@@ -199,12 +204,9 @@ export class MutateSubcourseResolver {
 
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
-            throw new UserInputError(`Inputed lecture of subcourse (${subcourseId}) must happen in the future.`);
+            throw new UserInputError(`Lecture of subcourse (${subcourseId}) must happen in the future.`);
         }
-        let isSubcourseInstructor = (await prisma.subcourse_instructors_student.count({ where: { subcourseId, studentId: lecture.instructorId } })) > 0;
-        if (!isSubcourseInstructor) {
-            throw new UserInputError(`Inputed instructor (id: ${lecture.instructorId}) is not a subcourse instructor`);
-        }
+
         const result = await prisma.lecture.create({ data: { ...lecture, subcourseId } });
         logger.info(`Lecture (${result.id}) was created on subcourse (${subcourse.id})`);
         return result;
