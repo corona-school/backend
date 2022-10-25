@@ -171,7 +171,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => String)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER) // TODO: Allow participants to call this
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_PARTICIPANT)
     async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
@@ -243,7 +243,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT)
     async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
