@@ -262,7 +262,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT)
     async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -270,6 +270,8 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
         await leaveSubcourse(subcourse, pupil);
         return true;
     }
