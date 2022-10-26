@@ -41,6 +41,7 @@
         "newline-per-chained-call": "off",
         "lernfair-lint/graphql-authorized": "error",
         "lernfair-lint/graphql-deferred-auth": "error",
+        "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
         "require-await": "warn"
