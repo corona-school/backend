@@ -13,13 +13,10 @@ import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
 import dropOldNotificationContexts from "./periodic/drop-old-notification-contexts";
 import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
+import { runInterestConfirmations } from "../common/match/pool";
 
 export const executeJob = async (job) => {
     switch (job) {
-        case 'initialInterestConfirmationRequests': {
-            initialInterestConfirmationRequests(getManager());
-            break;
-        }
         case 'screeningReminderJob': {
             screeningReminderJob(getManager());
             break;
@@ -48,8 +45,8 @@ export const executeJob = async (job) => {
             tutoringMatchMaking(getManager());
             break;
         }
-        case 'interestConfirmationRequestReminders': {
-            interestConfirmationRequestReminders(getManager());
+        case 'InterestConfirmation': {
+            runInterestConfirmations();
             break;
         }
         case 'Notification': {
