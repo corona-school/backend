@@ -540,8 +540,7 @@ export async function sendConfirmationRequests(pool: MatchPool) {
 export async function runInterestConfirmations() {
     for (const pool of pools) {
         if (pool.confirmInterest) {
-            // TODO: Enable after confirming the heuristic is good
-            // await sendConfirmationRequests(pool);
+            await sendConfirmationRequests(pool);
         }
     }
 
