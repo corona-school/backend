@@ -5,6 +5,7 @@ import * as Notification from '../../common/notification/notification';
 import { NotificationCreateInput, NotificationUpdateInput } from '../generated';
 import { runBulkAction } from '../../common/notification/bulk';
 import { notification_sender_enum } from '@prisma/client';
+import { JSONResolver } from 'graphql-scalars';
 
 @InputType()
 class NotificationInput {
@@ -33,12 +34,21 @@ class NotificationInput {
     sender: notification_sender_enum | null;
     @Field((_type) => String, { nullable: true })
     hookID: string | null;
+    @Field((_type) => JSONResolver)
+    sample_context: any;
 }
 @Resolver((of) => GraphQLModel.Notification)
 export class MutateNotificationResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async notificationCreate(@Arg('notification') notification: NotificationCreateInput): Promise<boolean> {
+        if (
+            notification.sample_context &&
+            (typeof notification.sample_context !== 'object' || Object.values(notification.sample_context).some((it) => typeof it !== 'string'))
+        ) {
+            throw new Error(`Sample context must be an object with string values`);
+        }
+
         await Notification.create(notification);
         return true;
     }
@@ -55,6 +65,10 @@ export class MutateNotificationResolver {
     async notificationUpdate(@Arg('notificationId') notificationId: number, @Arg('update') update: NotificationUpdateInput): Promise<boolean> {
         if ('active' in update) {
             throw new Error('Cannot change active field through update');
+        }
+
+        if (update.sample_context && (typeof update.sample_context !== 'object' || Object.values(update.sample_context).some((it) => typeof it !== 'string'))) {
+            throw new Error(`Sample context must be an object with string values`);
         }
 
         await Notification.update(notificationId, update as any);

@@ -59,4 +59,11 @@ export class Notification {
     // This allows for user specific scheduling of code, which happens when the user is informed about it
     @Column({ nullable: true })
     hookID?: string;
+
+    // A sample context containing all the variables used in the templates for this notification
+    // Can be used to manually fill these fields (i.e. during campaigns) when creating concrete notifications
+    // Can also be used to test notifications
+    // In the future, this could also be used to validate actionTaken(...) calls against all notifications triggered
+    @Column({ type: 'json', nullable: true })
+    sample_context?: any;
 }

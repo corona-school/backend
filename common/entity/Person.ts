@@ -63,7 +63,7 @@ export abstract class Person {
     authTokenSent: Date;
 
     @Column({
-        default: false
+        default: false,
     })
     isRedacted: boolean;
 }

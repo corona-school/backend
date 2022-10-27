@@ -1,11 +1,12 @@
-import { Student, Pupil, Screener, Secret } from '../generated';
-import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from 'type-graphql';
+import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput } from '../generated';
+import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Arg } from 'type-graphql';
 import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { User } from '../../common/user';
+import { User, userForPupil, userForStudent } from '../../common/user';
+import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
 
 @ObjectType()
 export class UserType implements User {
@@ -89,5 +90,37 @@ export class UserFieldsResolver {
         const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
+    }
+
+    // During mail campaigns we need to retrieve a potentially large amount of users
+    // This endpoint has no restriction in the number of users returned,
+    //  and should thus be used with care
+    @Query((returns) => [UserType])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(ACCUMULATED_LIMIT) // no subqueries allowed
+    async usersForCampaign(
+        @Arg('pupilQuery', { nullable: true }) pupilQuery?: PupilWhereInput,
+        @Arg('studentQuery', { nullable: true }) studentQuery?: StudentWhereInput
+    ) {
+        const result: User[] = [];
+
+        if (pupilQuery) {
+            // Make sure only active users with verified email are returned
+            const pupils = await prisma.student.findMany({
+                select: { firstname: true, lastname: true, email: true, id: true },
+                where: { ...pupilQuery, active: true, verification: null },
+            });
+            result.push(...pupils.map(userForPupil));
+        }
+
+        if (studentQuery) {
+            const students = await prisma.student.findMany({
+                select: { firstname: true, lastname: true, email: true, id: true },
+                where: { ...studentQuery, active: true, verification: null },
+            });
+            result.push(...students.map(userForStudent));
+        }
+
+        return result;
     }
 }

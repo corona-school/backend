@@ -55,12 +55,12 @@ export function getNotifications(): Promise<NotificationsPerAction> {
 export async function getNotification(id: NotificationID, allowDeactivated = false): Promise<Notification | never> {
     const notification = await prisma.notification.findUnique({ where: { id } });
 
-    if (!allowDeactivated && !notification.active) {
-        throw new Error(`Notification(${id}) was deactivated`);
+    if (!notification) {
+        throw new Error(`Unknown Notification (${id})`);
     }
 
-    if (!notification) {
-        throw new Error(`No notification found for id: ${id}`);
+    if (!allowDeactivated && !notification.active) {
+        throw new Error(`Notification(${id}) was deactivated`);
     }
 
     return notification;

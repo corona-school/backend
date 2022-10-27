@@ -1,4 +1,4 @@
-import { createConnection } from "typeorm";
+import { getManager } from "typeorm";
 
 import screeningReminderJob from "./periodic/screening-reminder";
 import courseReminderJob from "./periodic/course-reminder";
@@ -15,43 +15,41 @@ import * as Notification from "../common/notification";
 import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 
 export const executeJob = async (job) => {
-    const jobConnection = await createConnection();
-
     switch (job) {
         case 'initialInterestConfirmationRequests': {
-            initialInterestConfirmationRequests(jobConnection.manager);
+            initialInterestConfirmationRequests(getManager());
             break;
         }
         case 'screeningReminderJob': {
-            screeningReminderJob(jobConnection.manager);
+            screeningReminderJob(getManager());
             break;
         }
         case 'courseReminderJob': {
-            courseReminderJob(jobConnection.manager);
+            courseReminderJob(getManager());
             break;
         }
         case 'feedbackRequestJob': {
-            feedbackRequestJob(jobConnection.manager);
+            feedbackRequestJob(getManager());
             break;
         }
         case 'matchFollowUpJob': {
-            matchFollowUpJob(jobConnection.manager);
+            matchFollowUpJob(getManager());
             break;
         }
         case 'jufoVerificationInfo': {
-            jufoVerificationInfo(jobConnection.manager);
+            jufoVerificationInfo(getManager());
             break;
         }
         case 'projectMatchMaking': {
-            projectMatchMaking(jobConnection.manager);
+            projectMatchMaking(getManager());
             break;
         }
         case 'tutoringMatchMaking': {
-            tutoringMatchMaking(jobConnection.manager);
+            tutoringMatchMaking(getManager());
             break;
         }
         case 'interestConfirmationRequestReminders': {
-            interestConfirmationRequestReminders(jobConnection.manager);
+            interestConfirmationRequestReminders(getManager());
             break;
         }
         case 'Notification': {

@@ -270,6 +270,7 @@ model notification {
   interval          Int?
   sender            notification_sender_enum?
   hookID            String?                   @db.VarChar
+  sample_context    Json?                     @db.Json
 }
 
 model participation_certificate {
