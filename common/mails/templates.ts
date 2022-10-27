@@ -35,53 +35,6 @@ export const mailjet = {
             variables: variables,
         };
     },
-    TUTEENEWMATCH: (variables: { pupilFirstname: string; studentFirstname: string; studentEmail: string; subjects: string; callURL: string }) => {
-        return <TemplateMail>{
-            type: 'pupilmatchmails',
-            id: 1336849,
-            sender: DEFAULTSENDERS.support,
-            title: 'Lern-Fair - Match',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    TUTORNEWMATCH: (variables: {
-        personFirstname: string;
-        pupilFirstname: string;
-        pupilEmail: string;
-        pupilGrade: string;
-        subjects: string;
-        callURL: string;
-    }) => {
-        return <TemplateMail>{
-            type: 'studentmatchmails',
-            id: 1336704,
-            sender: DEFAULTSENDERS.support,
-            title: 'Lern-Fair - Match',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    PUPILNEXTSTEPS: (variables: { pupilFirstname: string }) => {
-        return <TemplateMail>{
-            type: 'pupilnextsteps',
-            id: 1336558,
-            sender: DEFAULTSENDERS.support,
-            title: 'Lern-Fair - Nächste Schritte',
-            disabled: true,
-            variables: variables,
-        };
-    },
-    STUDENTNEXTSTEPS: (variables: { screeningURL: string; studentFirstname: string }) => {
-        return <TemplateMail>{
-            type: 'studentnextsteps',
-            id: 1336526,
-            sender: DEFAULTSENDERS.support,
-            title: 'Lern-Fair - Nächste Schritte',
-            disabled: true,
-            variables: variables,
-        };
-    },
     PUPILMATCHDISSOLVED: (variables: { studentFirstname: string; pupilFirstname: string }) => {
         return <TemplateMail>{
             type: 'pupilmatchdissolved',
@@ -98,16 +51,6 @@ export const mailjet = {
             id: 1337161,
             sender: DEFAULTSENDERS.support,
             title: 'Lern-Fair - Nächstes Mal',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    OLDAUTHTOKEN: (variables: { dashboardURL: string; personFirstname: string }) => {
-        return <TemplateMail>{
-            type: 'oldauthtoken',
-            id: 1338975,
-            sender: DEFAULTSENDERS.support,
-            title: 'Lern-Fair - Dein Account',
             disabled: false,
             variables: variables,
         };
@@ -172,22 +115,6 @@ export const mailjet = {
         return <TemplateMail>{
             type: 'courseupcomingfirstlecturereminderinstructors',
             id: 1498911,
-            sender: DEFAULTSENDERS.support,
-            title: 'Dein Kurs startet bald!',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    COURSESUPCOMINGREMINDERPARTICIPANT: (variables: {
-        participantFirstname: string;
-        courseName: string;
-        courseId: number;
-        firstLectureDate: string;
-        firstLectureTime: string;
-    }) => {
-        return <TemplateMail>{
-            type: 'courseupcomingfirstlecturereminderparticipants',
-            id: 1498899,
             sender: DEFAULTSENDERS.support,
             title: 'Dein Kurs startet bald!',
             disabled: false,
@@ -265,46 +192,6 @@ export const mailjet = {
                     base64Content: pdfBase64,
                 },
             ],
-        };
-    },
-    PUPILMATCHFOLLOWUP: (variables: { pupilFirstName: string; studentFirstName: string }) => {
-        return <TemplateMail>{
-            type: 'pupilmatchfollowup',
-            id: 1513038,
-            sender: DEFAULTSENDERS.support,
-            title: 'Wie läuft das gemeinsame Lernen?',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    STUDENTMATCHFOLLOWUP: (variables: { studentFirstName: string; pupilFirstName: string }) => {
-        return <TemplateMail>{
-            type: 'studentmatchfollowup',
-            id: 1513030,
-            sender: DEFAULTSENDERS.support,
-            title: 'Wie läuft das gemeinsame Lernen?',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    PUPILREQUESTFEEDBACK: (variables: { pupilFirstName: string; studentFirstName: string }) => {
-        return <TemplateMail>{
-            type: 'pupilrequestfeedback',
-            id: 1513025,
-            sender: DEFAULTSENDERS.support,
-            title: 'Dein Feedback zu Lern-Fair!',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    STUDENTREQUESTFEEDBACK: (variables: { studentFirstName: string; pupilFirstName: string }) => {
-        return <TemplateMail>{
-            type: 'studentrequestfeedback',
-            id: 1513023,
-            sender: DEFAULTSENDERS.support,
-            title: 'Dein Feedback zu Lern-Fair!',
-            disabled: false,
-            variables: variables,
         };
     },
     PROJECTCOACHJUFOALUMNIFIRSTSCREENINGINVITATION: (variables: { personFirstname: string; confirmationURL: string }) => {
