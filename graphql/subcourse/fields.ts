@@ -28,16 +28,6 @@ class Participant {
     aboutMe: string;
 }
 
-const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
-    published: { equals: true },
-    cancelled: { equals: false },
-    course: {
-        is: {
-            courseState: { equals: CourseState.ALLOWED },
-        },
-    },
-};
-
 @ObjectType()
 class OtherParticipant {
     @Field((_type) => Int)
@@ -50,6 +40,28 @@ class OtherParticipant {
     aboutMe: string;
 }
 
+@ObjectType()
+class Instructor {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    lastname: string;
+    @Field((_type) => String)
+    aboutMe: string;
+}
+
+const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
+    published: { equals: true },
+    cancelled: { equals: false },
+    course: {
+        is: {
+            courseState: { equals: CourseState.ALLOWED },
+        },
+    },
+};
+
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
     @Query((returns) => [Subcourse])
@@ -57,10 +69,12 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitedQuery()
     @PublicCache()
     async subcoursesPublic(
+        @Ctx() context: GraphQLContext,
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number,
         @Arg('search', { nullable: true }) search?: string,
-        @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean
+        @Arg('onlyJoinable', { nullable: true }) onlyJoinable?: boolean,
+        @Arg('excludeKnown', { nullable: true }) excludeKnown?: boolean
     ) {
         // All filters need to match
         const filters = [IS_PUBLIC_SUBCOURSE];
@@ -78,6 +92,19 @@ export class ExtendedFieldsSubcourseResolver {
                     { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
                 ],
             });
+        }
+
+        if (excludeKnown) {
+            if (isSessionStudent(context)) {
+                filters.push({
+                    subcourse_instructors_student: { none: { studentId: context.user!.studentId! } },
+                });
+            } else if (isSessionPupil(context)) {
+                filters.push({
+                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_waiting_list_pupil: { none: { pupilId: context.user!.pupilId! } },
+                });
+            } /* else ignore */
         }
 
         return await prisma.subcourse.findMany({
@@ -131,6 +158,15 @@ export class ExtendedFieldsSubcourseResolver {
                 id: subcourseId,
                 OR: accessGrantFilters,
             },
+        });
+    }
+
+    @FieldResolver((returns) => [Instructor])
+    @Authorized(Role.UNAUTHENTICATED)
+    async instructors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
+        return await prisma.student.findMany({
+            select: { firstname: true, lastname: true, id: true, aboutMe: true },
+            where: { subcourse_instructors_student: { some: { subcourseId: subcourse.id } } },
         });
     }
 

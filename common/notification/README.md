@@ -16,6 +16,10 @@ For each notification and reminder sent out to a user, a **concrete notification
 Optionally a notification can trigger a **notification hook** when it is sent out. This makes sense for notifications which inform the user about changes to their account (e.g. that it is deactivated). The hook is a function in the backend which is then executed.
 Thus by cancelling the notification or rescheduling it, one can influence whether and when the hook is run. 
 
+The Notification System can also be used to run **Campaigns**. A campaign is uniquely identified by a notification and a corresponding context (identified by the context's uniqueId, known as the contextID). 
+To create a campaign for a notification, one only has to create a concrete notification for every user that is supposed to receive the campaign. To be able to double check the campaign before sending, the concrete notifications are created in draft state and can then be released.
+All notifications that can be used for campaigns should be of category 'campaign' so that they show up properly in the Retool, they should have an 'example_context' for the Retool UI to fill the context to work correctly, and the context should contain a 'campaign' field, which will be used in Mailjet to group statistics for the campaign together.
+
 ## How do I create a new Notification / Reminder?
 
 1. Create a new Mailjet Template (or SMS Template or ...)

@@ -310,6 +310,7 @@ export class StatisticsResolver {
     }
 
     @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async knowsCoronaSchoolFrom(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
@@ -323,6 +324,7 @@ export class StatisticsResolver {
     }
 
     @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async interestConfirmationsByState(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
                 COUNT(*)::INT AS value,
@@ -336,6 +338,7 @@ export class StatisticsResolver {
     }
 
     @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async notificationsSent(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
         COUNT(*)::INT AS value,
@@ -349,6 +352,7 @@ export class StatisticsResolver {
     }
 
     @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN)
     async loginsToday() {
         const beginingOfTheDay = new Date();
         beginingOfTheDay.setHours(0);

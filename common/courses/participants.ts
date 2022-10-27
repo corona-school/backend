@@ -136,10 +136,10 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
-    if (subcourse.minGrade && subcourse.minGrade < pupilGrade) {
+    if (subcourse.minGrade && subcourse.minGrade > pupilGrade) {
         return { allowed: false, reason: 'grade-to-low' };
     }
-    if (subcourse.maxGrade && pupilGrade < subcourse.maxGrade) {
+    if (subcourse.maxGrade && pupilGrade > subcourse.maxGrade) {
         return { allowed: false, reason: 'grade-to-high' };
     }
 

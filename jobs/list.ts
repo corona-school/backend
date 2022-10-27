@@ -34,12 +34,12 @@ export const allJobs: CSCronJob[] = [
     // every afternoon
     { cronTime: "00 35 15 * * *", jobFunction: projectMatchMaking},
     // { cronTime: "00 47 14 * * *", jobFunction: tutoringMatchMaking}, // only scheduled manually, at the moment
-    { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
+    // { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo},
     { cronTime: "00 30 00 * * 0", jobFunction: deactivateMissingCoc},
-    // every hour during day
-    { cronTime: "00 00 09-17 * * *", jobFunction: Notification.checkReminders },
+    // every 10 minutes during the day (to distribute load and send out notifications faster)
+    { cronTime: "00 */10 * * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
     { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets }
     // TODO: Enable
