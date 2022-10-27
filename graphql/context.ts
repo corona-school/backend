@@ -1,11 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
-import { Role } from './authorizations';
 import { prisma } from '../common/prisma';
 import { getLogger } from 'log4js';
 import basicAuth from 'basic-auth';
 import * as crypto from 'crypto';
-import { getUserForSession, GraphQLUser, toPublicToken } from './authentication';
+import { getUserForSession, GraphQLUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
 import { AuthenticationError } from 'apollo-server-errors';
+import { Role } from './roles';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -36,14 +36,6 @@ const authLogger = getLogger('GraphQL Authentication');
 if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn('Missing ADMIN_AUTH_TOKEN, Admin API access is disabled');
 }
-
-export const UNAUTHENTICATED_USER = {
-    email: '-',
-    firstname: '',
-    lastname: '',
-    userID: '-/-',
-    roles: [Role.UNAUTHENTICATED],
-};
 
 export default async function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;

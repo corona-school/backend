@@ -16,7 +16,7 @@ import { Subject } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
 import { userForStudent } from '../../common/user';
 
 @Resolver((of) => Student)
