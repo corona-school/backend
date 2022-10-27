@@ -38,8 +38,8 @@ export const allJobs: CSCronJob[] = [
     // every day at midnight/beginning
     { cronTime: "00 00 00 * * *", jobFunction: jufoVerificationInfo},
     { cronTime: "00 30 00 * * 0", jobFunction: deactivateMissingCoc},
-    // every minute for testing TODO: Change to every 10 minutes during the day
-    { cronTime: "00 */1 * * * *", jobFunction: Notification.checkReminders },
+    // every 10 minutes during the day (to distribute load and send out notifications faster)
+    { cronTime: "00 */10 * * * *", jobFunction: Notification.checkReminders },
     // each night - database cleanups
     { cronTime: "00 00 04 * * *", jobFunction: cleanupSecrets }
     // TODO: Enable
