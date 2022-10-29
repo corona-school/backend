@@ -61,7 +61,8 @@ export default async function execute() {
                 email: "test+redacted+p+" + pupil.id + "@lern-fair.de", //email needs to be unique
                 teacherEmailAddress: null,
                 msg: null,
-                isRedacted: true
+                isRedacted: true,
+                matchReason: '',
             }
         });
         logger.debug(`Redacted pupil with ID ${pupil.id}.`);
