@@ -339,7 +339,7 @@ export class MutateSubcourseResolver {
             },
         });
 
-        await sendGuestInvitationMail(await getManager().findOneOrFail(TypeORMCourseGuest, guest.id));
+        await sendGuestInvitationMail(guest);
         logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
 
         return true;
