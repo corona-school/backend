@@ -16,6 +16,8 @@ import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
+import { getManager } from 'typeorm';
+import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -303,10 +305,18 @@ export class MutateSubcourseResolver {
         return true;
     }
 
-    @Mutation((returns => Boolean))
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async subcourseInviteGuest(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('firstname') firstname: string, @Arg('lastname') lastname: string, @Arg('email') email: string) {
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseInviteGuest(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('firstname') firstname: string,
+        @Arg('lastname') lastname: string,
+        @Arg('email') email: string
+    ) {
         const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
         const course = await getCourse(subcourse.courseId);
 
         const token = randomBytes(48).toString('hex');
@@ -325,11 +335,11 @@ export class MutateSubcourseResolver {
                 email,
                 token,
                 inviterId,
-                courseId: course.id
-            }
+                courseId: course.id,
+            },
         });
 
-        await sendGuestInvitationMail(guest);
+        await sendGuestInvitationMail(await getManager().findOneOrFail(TypeORMCourseGuest, guest.id));
         logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
 
         return true;
