@@ -49,7 +49,7 @@ import { evaluatePupilRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 

@@ -1,4 +1,4 @@
-import { test } from "./base";
+import { adminClient, createUserClient, test } from "./base";
 import { pupilOne } from "./user";
 import * as assert from "assert";
 
@@ -74,4 +74,13 @@ test("Token Request", async () => {
     await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
 
     // NOTE: We cannot further test integration here, as we cannot access the emails that might have been sent to the user
+});
+
+test("Admin Login", async () => {
+    const { client: pupilClient } = await pupilOne;
+    const unauthenticatedClient = createUserClient();
+
+    await unauthenticatedClient.requestShallFail(`query { pupils(take: 1) { id } }`);
+    await pupilClient.requestShallFail(`query { pupils(take: 1) { id } }`);
+    await adminClient.request(`query { pupils(take: 1) { id } }`);
 });

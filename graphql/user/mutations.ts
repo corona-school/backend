@@ -1,7 +1,7 @@
 import { Role } from '../authorizations';
 import { RateLimit } from '../rate-limit';
 import { Mutation, Resolver, Arg, Authorized } from 'type-graphql';
-import { UserType } from './fields';
+import { UserType } from '../types/user';
 import { isEmailAvailable } from '../../common/user/email';
 
 @Resolver((of) => UserType)

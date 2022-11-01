@@ -18,7 +18,7 @@ import { gradeAsInt } from '../../common/util/gradestrings';
 import { Decision } from '../types/reason';
 import { canPupilRequestMatch } from '../../common/match/request';
 import { canJoinSubcourses } from '../../common/courses/participants';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {

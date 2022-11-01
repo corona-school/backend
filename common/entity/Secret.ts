@@ -35,4 +35,7 @@ export class Secret {
 
     @Column({ nullable: true })
     lastUsed?: Date;
+
+    @Column({ nullable: true })
+    description: string;
 }
