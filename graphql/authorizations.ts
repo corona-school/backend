@@ -88,7 +88,10 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         assert(root, 'root value must be bound to determine access');
         assert(context.user.pupilId, 'User must be a pupil');
         const pupil = await getPupil(context.user.pupilId);
-        return await isParticipant(root, pupil);
+        const success = await isParticipant(root, pupil);
+        if (success) {
+            return true;
+        }
     }
 
     if (context.user === UNAUTHENTICATED_USER) {
