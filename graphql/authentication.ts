@@ -1,9 +1,9 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
-import { Role } from './authorizations';
+import { Role } from './roles';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
 import Keyv from 'keyv';
 import { v4 as uuid } from 'uuid';
-import { GraphQLContext } from './context';
+import type { GraphQLContext } from './context';
 import { assert } from 'console';
 import { Deprecated, getPupil, getScreener, getStudent } from './util';
 import { prisma } from '../common/prisma';
@@ -15,7 +15,7 @@ import { User, userForPupil, userForScreener, userForStudent } from '../common/u
 import { loginPassword, loginToken } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
-import { UserType } from './user/fields';
+import { UserType } from './types/user';
 
 const logger = getLogger('GraphQL Authentication');
 
@@ -24,6 +24,14 @@ const logger = getLogger('GraphQL Authentication');
 export interface GraphQLUser extends User {
     roles: Role[];
 }
+
+export const UNAUTHENTICATED_USER = {
+    email: '-',
+    firstname: '',
+    lastname: '',
+    userID: '-/-',
+    roles: [Role.UNAUTHENTICATED],
+};
 
 /* As we only have one backend, and there is probably no need to scale in the near future,
    a small in memory cache is sufficient. If multitenancy is needed, keyv supports other backing stores such as Redis.

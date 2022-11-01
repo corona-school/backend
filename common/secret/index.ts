@@ -15,7 +15,7 @@ export async function getSecrets(user: User): Promise<{}[]> {
             userId: user.userID,
             OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
         },
-        select: { createdAt: true, expiresAt: true, id: true, lastUsed: true, type: true, userId: true },
+        select: { createdAt: true, expiresAt: true, id: true, lastUsed: true, type: true, userId: true, description: true },
     });
 
     logger.info(`User(${user.userID}) retrieved ${result.length} secrets`);

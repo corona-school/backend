@@ -1,52 +1,20 @@
 import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
+import { UNAUTHENTICATED_USER } from './authentication';
 
 import { AuthChecker } from 'type-graphql';
 import { GraphQLContext } from './context';
 import assert from 'assert';
 import { getLogger } from 'log4js';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
-import { ForbiddenError } from './error';
+import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
+import { Role } from './roles';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
-export enum Role {
-    /* Elevated Access via Retool */
-    ADMIN = 'ADMIN',
-    /* Shortcut role for everyone with an account */
-    USER = 'USER',
-    /* Elevated Access via Screener Admin Interface */
-    SCREENER = 'SCREENER',
-    /* Access via User Interface, not yet E-Mail verified */
-    PUPIL = 'PUPIL',
-    STUDENT = 'STUDENT',
-    /* Accessible to everyone */
-    UNAUTHENTICATED = 'UNAUTHENTICATED',
-    /* User owns the entity as defined in graphql/ownership */
-    OWNER = 'OWNER',
-    /* No one should have access */
-    NOBODY = 'NOBODY',
-
-    /* User is a student, requested to be a tutor and was successfully screened (E-Mail also verified) */
-    TUTOR = 'TUTOR',
-    /* User is a student, requested to be a course instructor and was successfully "instructor screened" (E-Mail also verified) */
-    INSTRUCTOR = 'INSTRUCTOR',
-    /* User is a student, requested to be a project coach and was successfully screened (E-Mail also verified) */
-    PROJECT_COACH = 'PROJECT_COACH',
-
-    /* User is a pupil and requested to receive one-on-one tutoring */
-    TUTEE = 'TUTEE',
-    /* User is a pupil and requested to participate in courses */
-    PARTICIPANT = 'PARTICIPANT',
-    /* User is a pupil and requested to participate in project coaching */
-    PROJECT_COACHEE = 'PROJECT_COACHEE',
-    /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
-    STATE_PUPIL = 'STATE_PUPIL',
-    /* User is a pupil and participant of a specific subcourse */
-    SUBCOURSE_PARTICIPANT = 'SUBCOURSE_PARTICIPANT',
-}
+export { Role } from './roles';
 
 const authLogger = getLogger('GraphQL Authentication');
 
@@ -60,7 +28,9 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     );
     assert(context.user?.roles, 'Roles must have been initialized in context');
 
-    return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
+    assert(await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root));
+
+    return true; // or an error was thrown before
 };
 
 /* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during
@@ -88,10 +58,7 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
 
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
-    const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
-    if (!success) {
-        throw new ForbiddenError('Not Authorized');
-    }
+    assert(await accessCheck(context, context.deferredRequiredRoles, modelName, value));
 }
 
 async function accessCheck(context: GraphQLContext, requiredRoles: Role[], modelName: ResolverModelNames | undefined, root: any) {
@@ -121,10 +88,17 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         assert(root, 'root value must be bound to determine access');
         assert(context.user.pupilId, 'User must be a pupil');
         const pupil = await getPupil(context.user.pupilId);
-        return await isParticipant(root, pupil);
+        const success = await isParticipant(root, pupil);
+        if (success) {
+            return true;
+        }
     }
 
-    return false;
+    if (context.user === UNAUTHENTICATED_USER) {
+        throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);
+    }
+
+    throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
 }
 
 /* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
