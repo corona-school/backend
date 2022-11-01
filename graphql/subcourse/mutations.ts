@@ -3,7 +3,7 @@ import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendSubcourseCancelNotifications } from '../../common/mails/courses';
+import { sendGuestInvitationMail, sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -15,6 +15,9 @@ import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { randomBytes } from 'crypto';
+import { getManager } from 'typeorm';
+import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -299,6 +302,46 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseInviteGuest(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('firstname') firstname: string,
+        @Arg('lastname') lastname: string,
+        @Arg('email') email: string
+    ) {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const course = await getCourse(subcourse.courseId);
+
+        const token = randomBytes(48).toString('hex');
+        let inviterId: number | null = null;
+
+        if (isSessionStudent(context)) {
+            inviterId = context.user!.studentId;
+        }
+
+        // TODO: Move Guests from Course to Subcourse
+
+        const guest = await prisma.course_guest.create({
+            data: {
+                firstname,
+                lastname,
+                email,
+                token,
+                inviterId,
+                courseId: course.id,
+            },
+        });
+
+        await sendGuestInvitationMail(guest);
+        logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
+
         return true;
     }
 }

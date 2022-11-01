@@ -56,6 +56,10 @@ export class CourseGuest {
     }
 }
 
+export function getCourseGuestLink(courseGuest: Pick<CourseGuest, 'token'>): string {
+    return `https://my.lern-fair.de/video/${courseGuest.token}`;
+}
+
 export async function generateNewCourseGuestToken(manager: EntityManager): Promise<string> {
     let token;
     do {
