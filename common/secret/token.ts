@@ -29,7 +29,7 @@ export async function createToken(user: User, expiresAt: Date | null = null, des
             secret: hash,
             expiresAt,
             lastUsed: null,
-            // description,
+            description,
         },
     });
 
