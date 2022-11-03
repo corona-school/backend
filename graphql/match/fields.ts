@@ -28,7 +28,7 @@ export class ExtendedFieldsMatchResolver {
     }
 
     @FieldResolver((returns) => [Subject])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(1)
     async subjectsFormatted(@Root() match: Match) {
         const student = await getStudent(match.studentId);
