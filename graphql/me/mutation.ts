@@ -54,7 +54,7 @@ import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '.
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 
 @InputType()
-class RegisterStudentInput implements RegisterStudentData {
+export class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -162,7 +162,7 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 @InputType()
-class BecomeTutorInput implements BecomeTutorData {
+export class BecomeTutorInput implements BecomeTutorData {
     @Field((type) => [Subject])
     subjects: Subject[];
 

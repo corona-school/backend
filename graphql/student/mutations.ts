@@ -2,18 +2,22 @@ import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
-import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import { isElevated, getSessionStudent, getSessionScreener, updateSessionUser } from '../authentication';
+import {
+    canStudentRequestMatch,
+    createStudentMatchRequest,
+    deleteStudentMatchRequest,
+} from '../../common/match/request';
+import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
-import { ProjectFieldWithGradeData } from '../../common/student/registration';
+import { BecomeTutorData, ProjectFieldWithGradeData } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
-    student as Student,
-    pupil_registrationsource_enum as RegistrationSource,
     pupil_projectfields_enum as ProjectField,
+    pupil_registrationsource_enum as RegistrationSource,
+    student as Student,
     student_state_enum as State,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
@@ -22,6 +26,7 @@ import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils'
 import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -44,6 +49,23 @@ export class ScreeningInput {
 }
 
 @InputType()
+class StudentRegisterPlusInput {
+    @Field((type) => RegisterStudentInput, { nullable: true })
+    register: RegisterStudentInput;
+
+    @Field((type) => BecomeTutorInput, { nullable: true })
+    activate: BecomeTutorInput;
+
+    @Field((type) => ScreeningInput, { nullable: true })
+    screen: ScreeningInput;
+}
+
+@InputType()
+class StudentRegisterPlusManyInput {
+    entries: StudentRegisterPlusInput[];
+}
+
+@InputType()
 export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field((type) => ProjectField)
     projectField: ProjectField;
@@ -52,6 +74,7 @@ export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field((type) => Int, { nullable: true })
     max: number;
 }
+
 @InputType()
 export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
@@ -118,6 +141,65 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
 
     log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
 }
+
+async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<boolean> {
+    const log = logInContext('Student', ctx);
+    const { register, activate, screen } = data;
+    const screener = await getSessionScreener(ctx);
+
+    const existingAccount = await prisma.student.findUnique({ where: { email: register.email } });
+    let doRegister = register != null;
+    let doActivate = activate != null;
+    let doScreen = screen != null;
+
+    if (doRegister && existingAccount) {
+        log.info(`Account with email ${register.email} already exists, skipping registration phase`);
+        doRegister = false;
+    } else if (!register && !existingAccount) {
+        throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
+    }
+
+    if (activate && existingAccount.isStudent) {
+        log.info(`Account with email ${register.email} is already active, skipping activation phase`);
+        doActivate = false;
+    }
+
+    if (await canStudentRequestMatch(existingAccount)) {
+        log.info(`Account with email ${register.email} is already screened, skipping screening phase`);
+        doScreen = false;
+    }
+
+
+    try {
+        await prisma.$transaction([
+            const id = doRegister ? prisma.student.create({ data: register }) : undefined,
+            doActivate ? prisma.student.update({
+                data: {
+                    isStudent: true,
+                    openMatchRequestCount: 1,
+                    subjects: JSON.stringify(activate.subjects.map(toStudentSubjectDatabaseFormat)),
+                    languages: JSON.stringify(activate.languages),
+                    supportsInDaZ: activate.supportsInDaZ,
+                },
+                where: { email: register.email },
+            }): undefined,
+            doScreen ? await prisma.screening.create({
+                data: {
+                    ...screening,
+                    screenerId: screener.id,
+                    studentId: student.id,
+                },
+            }) : undefined,
+
+        ]);
+    } catch (e) {
+        log.error(`Error while registering student ${register.email}, skipping this one`, e);
+        return false;
+    }
+    return true;
+}
+
+
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation((returns) => Boolean)
@@ -172,4 +254,16 @@ export class MutateStudentResolver {
         await addTutorScreening(screener, student, screening);
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentRegisterMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
+        const { entries } = data;
+        for (const entry of entries) {
+            await studentRegisterPlus(entry, ctx);
+        }
+        return true;
+
+    }
+
 }
