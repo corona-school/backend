@@ -375,6 +375,7 @@ model pupil {
   registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
   coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   aboutMe                                      String                                         @default("") @db.VarChar
+  matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
   course_attendance_log                        course_attendance_log[]
@@ -385,7 +386,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
-  isRedacted                                   Boolean                                       @default(false)
+  isRedacted                                   Boolean                                        @default(false)
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -435,6 +436,7 @@ model screener {
   authToken                  String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
   authTokenUsed              Boolean                      @default(false)
   authTokenSent              DateTime?                    @db.Timestamp(6)
+  isRedacted                 Boolean                      @default(false)
   password                   String                       @db.VarChar
   verified                   Boolean?                     @default(false)
   oldNumberID                Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
@@ -520,7 +522,7 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-  isRedacted                                Boolean                               @default(false)
+  isRedacted                                Boolean                                @default(false)
 }
 
 model subcourse {

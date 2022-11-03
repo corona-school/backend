@@ -217,6 +217,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'projectFields'
             | 'aboutMe'
         >({
+            matchReason: everyone,
             authToken: nobody,
             authTokenSent: adminOrOwner,
             authTokenUsed: adminOrOwner,
