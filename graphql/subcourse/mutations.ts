@@ -1,14 +1,14 @@
 import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
-import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { sendGuestInvitationMail, sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
-import { ForbiddenError, UserInputError } from '../error';
+import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
@@ -209,7 +209,11 @@ export class MutateSubcourseResolver {
             await createOrUpdateCourseAttendanceLog((await getUserTypeORM(context.user!.userID)) as TypeORMPupil, context.ip, '' + subcourseId);
         }
 
-        const url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
+        const url = getMeetingUrl(
+            '' + subcourse.id,
+            `${context.user!.firstname} ${context.user!.lastname}`,
+            isSessionStudent(context) || isElevated(context) ? meeting.moderatorPW : meeting.attendeePW
+        );
         logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
         return url;
     }
@@ -343,5 +347,45 @@ export class MutateSubcourseResolver {
         logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
 
         return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.UNAUTHENTICATED)
+    async subcourseGuestJoin(@Arg('token') token: string) {
+        const guest = await prisma.course_guest.findFirst({
+            where: { token },
+        });
+
+        if (!guest) {
+            throw new AuthenticationError(`Invalid guest token`);
+        }
+
+        const course = await prisma.course.findUniqueOrThrow({
+            where: { id: guest.courseId },
+        });
+
+        // TODO: Adapt to subcourses
+        const subcourse = await prisma.subcourse.findFirstOrThrow({
+            where: { courseId: guest.courseId },
+        });
+
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        if (!meeting) {
+            throw new PrerequisiteError(`Meeting not started yet`);
+        }
+
+        if (meeting.alternativeUrl) {
+            logger.info(`Guest(${guest.id}) joins meeting of Subcourse(${subcourse.id}) with alternative url '${meeting.alternativeUrl}'`);
+            return meeting.alternativeUrl;
+        }
+
+        const isRunning = await isBBBMeetingRunning(meeting.meetingID);
+        if (!isRunning) {
+            throw new PrerequisiteError(`Meeting not started yet`);
+        }
+
+        const url = getMeetingUrl('' + subcourse.id, `${guest.firstname} ${guest.lastname}`, meeting.attendeePW);
+        logger.info(`Guest(${guest.id}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
+        return url;
     }
 }
