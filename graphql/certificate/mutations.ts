@@ -79,7 +79,7 @@ export class MutateParticipationCertificateResolver {
 
         const student = await getSessionStudent(context);
         const pdf = await getCertificatePDF(uuid, student, language as Language);
-        const file = addFile({ buffer: pdf, mimetype: 'application/pdf', originalname: 'Zertifikat.pdf' });
+        const file = addFile({ buffer: pdf, mimetype: 'application/pdf', originalname: 'Zertifikat.pdf', size: pdf.length });
         return getFileURL(file);
     }
 }

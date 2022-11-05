@@ -6,7 +6,7 @@ import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeO
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
-import { AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
+import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
 import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
@@ -311,7 +311,7 @@ async function deliverNotification(
  * @param uploader  User that intends to upload the files.
  * @return          Object with attachmentListHTML, attachmentGroupId, and attachmentIds
  */
-export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
+export async function createAttachments(files: File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
     if (files.length > 0) {
         let attachmentGroupId = uuid().toString();
 

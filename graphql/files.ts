@@ -30,19 +30,19 @@
   ensuring availability of the overall system while sacrificing availability of file handling.
 */
 
-
-import { v4 as uuid } from "uuid";
-import { getLogger } from "log4js";
+import { v4 as uuid } from 'uuid';
+import { getLogger } from 'log4js';
 
 const FILE_STORAGE_DURATION = 10 * 60 * 1000; // After 10 Minutes, files are removed from the store
 const FILE_STORAGE_MAX_SIZE = 20; // Prevent file storage from growing infinitely, potentially leading to OOM
 
-const log = getLogger("GraphQL Files");
+const log = getLogger('GraphQL Files');
 
 export interface File {
     originalname: string; //	Name of the file on the user's computer
     mimetype: string;
     buffer: Buffer; // of UTF-8 encoded data
+    size: number;
 }
 
 export type FileID = string;
