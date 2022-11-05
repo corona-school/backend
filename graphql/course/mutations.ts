@@ -149,7 +149,7 @@ export class MutateCourseResolver {
 
         await getStudent(studentId);
         await prisma.course_instructors_student.create({ data: { courseId, studentId } });
-        logger.info(`Student (${studentId}) was added as an instructor to course ${courseId} by User(${context.user!.userID})`);
+        logger.info(`Student (${studentId}) was added as an instructor to Course(${courseId}) by User(${context.user!.userID})`);
         return true;
     }
 
@@ -161,7 +161,7 @@ export class MutateCourseResolver {
         await getStudent(studentId);
 
         await prisma.course_instructors_student.delete({ where: { courseId_studentId: { courseId, studentId } } });
-        logger.info(`Student (${studentId}) was deleted from course ${courseId} by User(${context.user!.userID})`);
+        logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user!.userID})`);
         return true;
     }
 
