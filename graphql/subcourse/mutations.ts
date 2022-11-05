@@ -428,7 +428,7 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId', (type) => Int) subcourseId: number,
         @Arg('title') title: string,
         @Arg('body') body: string,
-        @Arg('files') fileIDs: string[]
+        @Arg('fileIDs', (type) => [String]) fileIDs: string[]
     ) {
         const subcourse = await prisma.subcourse.findUniqueOrThrow({
             where: { id: subcourseId },
@@ -451,7 +451,7 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId', (type) => Int) subcourseId: number,
         @Arg('title') title: string,
         @Arg('body') body: string,
-        @Arg('fileIDs') fileIDs: string[],
+        @Arg('fileIDs', (type) => [String]) fileIDs: string[],
         @Arg('participantIDs', (type) => [Int]) participantIDs: number[]
     ) {
         const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId } });
