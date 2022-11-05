@@ -7,20 +7,50 @@ import {
     Instructor_screening as InstructorScreening,
     Subcourse,
     Course,
+    StudentWhereInput,
 } from '../generated';
-import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
-import { LimitEstimated } from '../complexity';
+import { LimitedQuery, LimitEstimated } from '../complexity';
 import { Subject } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
 import { UserType } from '../types/user';
-import { userForStudent } from '../../common/user';
+import { addUserSearch, userForStudent } from '../../common/user';
+import { Instructor } from '../types/instructor';
+import { GraphQLContext } from '../context';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
+    @Query((returns) => [Instructor])
+    @Authorized(Role.INSTRUCTOR)
+    @LimitedQuery()
+    async otherInstructors(
+        @Ctx() context: GraphQLContext,
+        @Arg('search') search: string,
+        @Arg('take', (type) => Int) take: number,
+        @Arg('skip', (type) => Int) skip: number
+    ): Promise<Instructor[]> {
+        const query: StudentWhereInput = {
+            isInstructor: { equals: true },
+            active: { equals: true },
+            verification: null,
+            instructor_screening: { is: { success: { equals: true } } },
+            id: { not: { equals: context.user.studentId! } },
+        };
+
+        addUserSearch(query, search);
+
+        return await prisma.student.findMany({
+            where: query,
+            take,
+            skip,
+            select: { firstname: true, lastname: true, aboutMe: true, id: true },
+        });
+    }
+
     @FieldResolver((type) => UserType)
     @Authorized(Role.ADMIN, Role.OWNER)
     user(@Root() student: Required<Student>) {
