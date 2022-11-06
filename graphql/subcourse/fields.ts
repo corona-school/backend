@@ -11,6 +11,9 @@ import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
 import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
+import { Instructor } from '../types/instructor';
+import { canContactInstructors } from '../../common/courses/contact';
+import { getCourse } from '../util';
 
 @ObjectType()
 class Participant {
@@ -36,18 +39,6 @@ class OtherParticipant {
     firstname: string;
     @Field((_type) => String)
     grade: string;
-    @Field((_type) => String)
-    aboutMe: string;
-}
-
-@ObjectType()
-class Instructor {
-    @Field((_type) => Int)
-    id: number;
-    @Field((_type) => String)
-    firstname: string;
-    @Field((_type) => String)
-    lastname: string;
     @Field((_type) => String)
     aboutMe: string;
 }
@@ -325,5 +316,12 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canPublish(@Root() subcourse: Required<Subcourse>) {
         return await canPublish(subcourse);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
+        const course = await getCourse(subcourse.courseId);
+        return await canContactInstructors(course, subcourse);
     }
 }
