@@ -44,8 +44,6 @@ export default async function injectContext({ req }) {
 
     const context: GraphQLContext = { user: UNAUTHENTICATED_USER, prisma, sessionToken: undefined, ip };
 
-    let sessionToken: string | undefined = undefined;
-
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === 'admin') {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
             authLogger.warn(`Admin failed to authenticate from ${ip}`);
@@ -63,18 +61,18 @@ export default async function injectContext({ req }) {
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (auth && auth.name.includes('@')) {
         const user = await loginPassword(auth.name, auth.pass);
-        await loginAsUser(user, context);
+        await loginAsUser(user, context, /* noSession */ true);
     } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
-        sessionToken = req.headers['authorization'].slice('Bearer '.length);
+        context.sessionToken = req.headers['authorization'].slice('Bearer '.length);
 
-        if (sessionToken.length < 20) {
+        if (context.sessionToken.length < 20) {
             throw new AuthenticationError('Session Tokens must have at least 20 characters');
         }
 
-        const sessionUser = await getUserForSession(sessionToken);
+        const sessionUser = await getUserForSession(context.sessionToken);
 
         if (!sessionUser) {
-            authLogger.info(`Unauthenticated Session(${toPublicToken(sessionToken)}) started from ${ip}`);
+            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
         } else {
             context.user = sessionUser;
         }

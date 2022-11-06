@@ -133,8 +133,10 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext) {
-    ensureSession(context);
+export async function loginAsUser(user: User, context: GraphQLContext, noSession = false) {
+    if (!noSession) {
+        ensureSession(context);
+    }
 
     context.user = { ...user, roles: [] };
 
@@ -152,8 +154,10 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
         await evaluateScreenerRoles(user, context);
     }
 
-    userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    if (!noSession) {
+        userSessions.set(context.sessionToken, context.user);
+        logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    }
 }
 
 @Resolver((of) => UserType)
