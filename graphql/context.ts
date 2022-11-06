@@ -3,9 +3,10 @@ import { prisma } from '../common/prisma';
 import { getLogger } from 'log4js';
 import basicAuth from 'basic-auth';
 import * as crypto from 'crypto';
-import { getUserForSession, GraphQLUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
+import { getUserForSession, GraphQLUser, loginAsUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
 import { AuthenticationError } from 'apollo-server-errors';
 import { Role } from './roles';
+import { loginPassword } from '../common/secret';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -41,7 +42,7 @@ export default async function injectContext({ req }) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    let user: GraphQLUser = UNAUTHENTICATED_USER;
+    const context: GraphQLContext = { user: UNAUTHENTICATED_USER, prisma, sessionToken: undefined, ip };
 
     let sessionToken: string | undefined = undefined;
 
@@ -51,7 +52,7 @@ export default async function injectContext({ req }) {
             throw new AuthenticationError('Invalid Admin Password');
         }
 
-        user = {
+        context.user = {
             userID: 'admin/',
             firstname: 'Ed',
             lastname: 'Min',
@@ -60,6 +61,9 @@ export default async function injectContext({ req }) {
         };
 
         authLogger.info(`Admin authenticated from ${ip}`);
+    } else if (auth && auth.name.includes('@')) {
+        const user = await loginPassword(auth.name, auth.pass);
+        await loginAsUser(user, context);
     } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
         sessionToken = req.headers['authorization'].slice('Bearer '.length);
 
@@ -72,12 +76,11 @@ export default async function injectContext({ req }) {
         if (!sessionUser) {
             authLogger.info(`Unauthenticated Session(${toPublicToken(sessionToken)}) started from ${ip}`);
         } else {
-            user = sessionUser;
+            context.user = sessionUser;
         }
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
 
-    const context: GraphQLContext = { user, prisma, sessionToken, ip };
     return context;
 }
