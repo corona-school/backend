@@ -264,25 +264,20 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginPassword(
-        @Ctx() context: GraphQLContext,
-        @Arg('email') email: string,
-        @Arg('password') password: string,
-        @Arg('storeCookie', { nullable: true }) storeCookie: boolean = false
-    ) {
-        if (!storeCookie) {
-            ensureSession(context);
-        } else {
-            context.sessionToken = suggestToken();
-        }
+    createCookieSession(@Ctx() context: GraphQLContext) {
+        context.sessionToken = suggestToken();
+        context.setCookie('LERNFAIR_SESSION', context.sessionToken);
+        return true;
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => Boolean)
+    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+        ensureSession(context);
 
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
-
-            if (storeCookie) {
-                context.setCookie('LERNFAIR_SESSION', context.sessionToken);
-            }
 
             return true;
         } catch (error) {
