@@ -89,6 +89,12 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         }
 
         const sessionUser = await getUserForSession(context.sessionToken);
+
+        if (!sessionUser) {
+            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
+        } else {
+            context.user = sessionUser;
+        }
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
