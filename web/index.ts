@@ -140,7 +140,10 @@ createConnection().then(setupPDFGenerationEnvironment)
                     // User App (NEW)
                     "https://user-app-dev.herokuapp.com",
                     /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
-                    ...allowedSubdomains.map(d => `https://${d}.dev.corona-school.de`)
+                    ...allowedSubdomains.map(d => `https://${d}.dev.corona-school.de`),
+                    // Temporary access for Giftgruen
+                    // TODO: Remove after MVP is done
+                    "https://my.lernfair-dev.giftgruen.com"
                 ];
             } else {
                 origins = [
