@@ -68,7 +68,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {} };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }

@@ -7,6 +7,7 @@ import { getUserForSession, GraphQLUser, loginAsUser, toPublicToken, UNAUTHENTIC
 import { AuthenticationError } from 'apollo-server-errors';
 import { Role } from './roles';
 import { loginPassword } from '../common/secret';
+import { Request, Response } from 'express';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -30,6 +31,7 @@ export interface GraphQLContext {
     prisma: PrismaClient;
     deferredRequiredRoles?: Role[];
     ip: string;
+    setCookie(key: string, value: string);
 }
 
 const authLogger = getLogger('GraphQL Authentication');
@@ -38,11 +40,17 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn('Missing ADMIN_AUTH_TOKEN, Admin API access is disabled');
 }
 
-export default async function injectContext({ req }) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+export default async function injectContext({ req, res }: { req: Request; res: Response }) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    const context: GraphQLContext = { user: UNAUTHENTICATED_USER, prisma, sessionToken: undefined, ip };
+    const context: GraphQLContext = {
+        user: UNAUTHENTICATED_USER,
+        prisma,
+        sessionToken: undefined,
+        ip,
+        setCookie: (key, value) => res.cookie(key, value, { secure: true }),
+    };
 
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === 'admin') {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
@@ -59,9 +67,6 @@ export default async function injectContext({ req }) {
         };
 
         authLogger.info(`Admin authenticated from ${ip}`);
-    } else if (auth && auth.name.includes('@')) {
-        const user = await loginPassword(auth.name, auth.pass);
-        await loginAsUser(user, context, /* noSession */ true);
     } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
         context.sessionToken = req.headers['authorization'].slice('Bearer '.length);
 
@@ -76,6 +81,14 @@ export default async function injectContext({ req }) {
         } else {
             context.user = sessionUser;
         }
+    } else if (req.cookies['LERNFAIR_SESSION']) {
+        context.sessionToken = req.cookies['LERNFAIR_SESSION'];
+
+        if (context.sessionToken.length < 20) {
+            throw new AuthenticationError('Session Tokens must have at least 20 characters');
+        }
+
+        const sessionUser = await getUserForSession(context.sessionToken);
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
