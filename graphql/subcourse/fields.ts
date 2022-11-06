@@ -318,7 +318,7 @@ export class ExtendedFieldsSubcourseResolver {
         return await canPublish(subcourse);
     }
 
-    @FieldResolver((returns) => Boolean)
+    @FieldResolver((returns) => Decision)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
         const course = await getCourse(subcourse.courseId);
