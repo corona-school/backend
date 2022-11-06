@@ -159,6 +159,12 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
 @Resolver((of) => UserType)
 export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => String)
+    suggestSessionToken() {
+        return suggestToken();
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     @Deprecated('use loginPassword or loginToken instead')
     async loginLegacy(@Ctx() context: GraphQLContext, @Arg('authToken') authToken: string) {
