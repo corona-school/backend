@@ -270,7 +270,11 @@ export class AuthenticationResolver {
         @Arg('password') password: string,
         @Arg('storeCookie', { nullable: true }) storeCookie: boolean = false
     ) {
-        ensureSession(context);
+        if (!storeCookie) {
+            ensureSession(context);
+        } else {
+            context.sessionToken = suggestToken();
+        }
 
         try {
             const user = await loginPassword(email, password);
