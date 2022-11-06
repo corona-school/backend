@@ -32,7 +32,7 @@ import {getAttachmentUrlEndpoint} from "./controllers/attachmentController";
 import { isDev } from "../common/util/environment";
 import {isCommandArg} from "../common/util/basic";
 import { fileRouter } from "./controllers/fileController";
-import { cookieParser } from "cookie-parser";
+import cookieParser from "cookie-parser";
 
 // Logger setup
 try {
