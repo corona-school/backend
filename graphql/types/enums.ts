@@ -15,6 +15,7 @@ import {
     course_category_enum as CourseCategory,
 } from '@prisma/client';
 import { MentoringCategory } from '../../common/mentoring/categories';
+import { LoginOption } from '../../common/secret';
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
@@ -74,3 +75,5 @@ registerEnumType(CourseCategory, {
 registerEnumType(MentoringCategory, {
     name: 'MentorCategory',
 });
+
+registerEnumType(LoginOption, { name: 'LoginOption' });
