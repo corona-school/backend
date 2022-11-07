@@ -56,11 +56,11 @@ export async function _createFixedToken(user: User, token: string): Promise<void
 
 // Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
 // Also a redirectTo URL is provided which is passed through to the frontend
-export async function requestToken(user: User, action: 'user-register' | 'user-authenticate' | 'user-password-reset' | string, redirectTo?: string) {
+export async function requestToken(user: User, action: 'user-verify-email' | 'user-authenticate' | 'user-password-reset' | string, redirectTo?: string) {
     const token = await createSecretEmailToken(user);
     const person = await getUserTypeORM(user.userID);
 
-    if (!['user-authenticate', 'user-password-reset', 'user-register'].includes(action)) {
+    if (!['user-authenticate', 'user-password-reset', 'user-verify-email'].includes(action)) {
         throw new Error(`Unsupported Action for Token Request`);
     }
 
