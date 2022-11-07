@@ -52,7 +52,7 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-export async function registerPupil(data: RegisterPupilData) {
+export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
@@ -96,9 +96,10 @@ export async function registerPupil(data: RegisterPupilData) {
         },
     });
 
-    // TODO: Create a new E-Mail for registration
-    // TODO: Send auth token with this
-    await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+    if (!noEmail) {
+        await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+    }
+
     await logTransaction('verificationRequets', pupil, {});
 
     return pupil;
