@@ -56,11 +56,11 @@ export async function _createFixedToken(user: User, token: string): Promise<void
 
 // Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
 // Also a redirectTo URL is provided which is passed through to the frontend
-export async function requestToken(user: User, action: 'user-authenticate' | 'user-password-reset' | string, redirectTo?: string) {
+export async function requestToken(user: User, action: 'user-register' | 'user-authenticate' | 'user-password-reset' | string, redirectTo?: string) {
     const token = await createSecretEmailToken(user);
     const person = await getUserTypeORM(user.userID);
 
-    if (!['user-authenticate', 'user-password-reset'].includes(action)) {
+    if (!['user-authenticate', 'user-password-reset', 'user-register'].includes(action)) {
         throw new Error(`Unsupported Action for Token Request`);
     }
 
@@ -119,6 +119,38 @@ export async function loginToken(token: string): Promise<User | never> {
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
         logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);
+    }
+
+    if (secret.type === SecretType.EMAIL_TOKEN) {
+        if (user.studentId) {
+            const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
+                where: { id: user.studentId },
+                select: { verifiedAt: true, verification: true },
+            });
+            if (!verifiedAt || verification) {
+                await prisma.student.update({
+                    data: { verifiedAt: new Date(), verification: null },
+                    where: { id: user.studentId },
+                });
+
+                logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
+            }
+        }
+
+        if (user.pupilId) {
+            const { verifiedAt, verification } = await prisma.pupil.findUniqueOrThrow({
+                where: { id: user.pupilId },
+                select: { verifiedAt: true, verification: true },
+            });
+            if (!verifiedAt || verification) {
+                await prisma.pupil.update({
+                    data: { verifiedAt: new Date(), verification: null },
+                    where: { id: user.pupilId },
+                });
+
+                logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
+            }
+        }
     }
 
     return await user;
