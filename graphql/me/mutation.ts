@@ -232,14 +232,18 @@ export class MutateMeResolver {
     @Mutation((returns) => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterStudentInput) {
+    async meRegisterStudent(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: RegisterStudentInput,
+        @Arg('noEmail', { nullable: true }) noEmail: boolean = false
+    ) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const student = await registerStudent(data);
+        const student = await registerStudent(data, noEmail);
         const log = logInContext('Me', context);
         log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
@@ -258,14 +262,14 @@ export class MutateMeResolver {
     @Mutation((returns) => Pupil)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput) {
+    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail: boolean = false) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const pupil = await registerPupil(data);
+        const pupil = await registerPupil(data, noEmail);
         const log = logInContext('Me', context);
         log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 

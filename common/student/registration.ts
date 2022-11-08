@@ -63,7 +63,7 @@ export interface BecomeProjectCoachData {
     jufoPastParticipationInfo: string;
 }
 
-export async function registerStudent(data: RegisterStudentData) {
+export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
@@ -86,8 +86,10 @@ export async function registerStudent(data: RegisterStudentData) {
         },
     });
 
-    // TODO: Create a new E-Mail for registration
-    await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+    if (!noEmail) {
+        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+    }
+
     await logTransaction('verificationRequets', student, {});
 
     return student;
