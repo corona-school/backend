@@ -21,6 +21,7 @@ import { UserType } from '../types/user';
 import { addUserSearch, userForStudent } from '../../common/user';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
+import { predictedHookActionDate } from '../../common/notification';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -111,6 +112,13 @@ export class ExtendFieldsStudentResolver {
                 studentId: student.id,
             },
         });
+    }
+
+    // Date when a student will be deactivated as they have not handed in a valid certificate of conduct
+    @FieldResolver((type) => Date, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async certificateOfConductDeactivationDate(@Root() student: Required<Student>) {
+        return await predictedHookActionDate('coc_reminder', 'deactivate-student', userForStudent(student));
     }
 
     @FieldResolver((type) => [Screening])
