@@ -18,7 +18,7 @@ import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
 import { UserType } from '../types/user';
-import { addUserSearch, userForStudent } from '../../common/user';
+import { userForStudent, userSearch } from '../../common/user';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 
@@ -41,10 +41,8 @@ export class ExtendFieldsStudentResolver {
             id: { not: { equals: context.user.studentId! } },
         };
 
-        addUserSearch(query, search);
-
         return await prisma.student.findMany({
-            where: query,
+            where: { AND: [query, userSearch(search)] },
             take,
             skip,
             select: { firstname: true, lastname: true, aboutMe: true, id: true },
