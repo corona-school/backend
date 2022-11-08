@@ -95,7 +95,7 @@ export const studentOne = test("Register Student", async () => {
 
 export const instructorOne = test("Login as Instructor (Student 1)", async () => {
     const client = createUserClient();
-    await client.request(`mutation { loginLegacy(authtoken: "authtokenS1") }`);
+    await client.request(`mutation { loginLegacy(authToken: "authtokenS1") }`);
 
     return { client };
 });
