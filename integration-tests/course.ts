@@ -24,7 +24,7 @@ test("Search further instructors", async() => {
     const emailSearch = await client.request(`query { otherInstructors(search: "@Lern-Fair.de", take: 100, skip: 0) { id }}`);
     assert.equal(emailSearch.otherInstructors.length, 2);
 
-    const firstnameSearch = await client.request(`query { otherInstructors(search: "melanie, take: 100, skip: 0) { firstname }}`);
+    const firstnameSearch = await client.request(`query { otherInstructors(search: "melanie", take: 100, skip: 0) { firstname }}`);
     assert.equal(firstnameSearch.otherInstructors.length, 1);
     assert.equal(firstnameSearch.otherInstructors[0].firstname, "Melanie");
 
