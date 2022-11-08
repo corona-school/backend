@@ -10,7 +10,7 @@ import { getLogger } from 'log4js';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
-import { addUserSearch } from '../user';
+import { userSearch } from '../user';
 
 const logger = getLogger('MatchingPool');
 
@@ -58,10 +58,9 @@ const getViableUsers = (toggles: string[]) => {
 
 export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
     const where = { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) };
-    addUserSearch(where, search);
 
     return await prisma.student.findMany({
-        where,
+        where: { AND: [where, userSearch(search)] },
         orderBy: { createdAt: 'asc' },
         take,
         skip,
@@ -70,10 +69,9 @@ export async function getStudents(pool: MatchPool, toggles: string[], take?: num
 
 export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
     const where = { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) };
-    addUserSearch(where, search);
 
     return await prisma.pupil.findMany({
-        where,
+        where: { AND: [where, userSearch(search)] },
         orderBy: [{ match: { _count: 'asc' } }, { firstMatchRequest: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
         take,
         skip,

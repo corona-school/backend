@@ -9,6 +9,7 @@ import { pupil as Pupil, student as Student, screener as Screener } from '@prism
 import { prisma } from '../prisma';
 import assert from 'assert';
 import { Prisma as PrismaTypes } from '@prisma/client';
+import { query } from 'express';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -177,11 +178,35 @@ export async function getPupil(user: User): Promise<Pupil | never> {
 }
 
 // Enriches a Prisma Query with a filter to search users
-export const addUserSearch = (query: PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput, search?: string) => {
+// where: { AND: [originalWhere, userSearch("hello")]}
+
+export function userSearch(search?: string): PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput {
     if (!search) {
-        return;
+        return {};
     }
 
-    assert(!query.OR);
-    query.OR = [{ email: { contains: search } }, { firstname: { contains: search.split(' ')[0] } }, { lastname: { contains: search.split(' ').pop() } }];
-};
+    // Unfortunately Prisma's fuzzy search capabilities are quite limited
+    // c.f. https://github.com/prisma/prisma/issues/7986
+    // Thus the following is non-fuzzy
+
+    if (!search.includes(' ')) {
+        // Only one word entered, could be email, firstname or lastname
+        return {
+            OR: [
+                { email: { contains: search, mode: 'insensitive' } },
+                { firstname: { contains: search, mode: 'insensitive' } },
+                { lastname: { contains: search, mode: 'insensitive' } },
+            ],
+        };
+    } else {
+        // Multiple words entered, probably name
+        // We ignore middle names as they could be part of either first or lastname in the db
+        const firstWord = search.slice(0, search.indexOf(' '));
+        const lastWord = search.slice(search.lastIndexOf(' ') + 1);
+
+        return {
+            firstname: { contains: firstWord, mode: 'insensitive' },
+            lastname: { contains: lastWord, mode: 'insensitive' },
+        };
+    }
+}
