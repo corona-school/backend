@@ -1,5 +1,5 @@
-import { adminClient, defaultClient, test } from "./base";
-import { pupilOne, studentOne } from "./user";
+import { adminClient, test } from "./base";
+import { instructorOne } from "./user";
 import * as assert from "assert";
 
 test("Admin set subcourse meetingURL and join", async () => {
@@ -19,7 +19,7 @@ test("Admin set subcourse meetingURL and join", async () => {
 });
 
 test("Search further instructors", async() => {
-    const { client } = await studentOne;
+    const { client } = await instructorOne;
 
     const emailSearch = await client.request(`query { otherInstructors(search: "@Lern-Fair.de", take: 100, skip: 0) { id }}`);
     assert.equal(emailSearch.otherInstructors.length, 2);
