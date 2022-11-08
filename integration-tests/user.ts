@@ -98,4 +98,4 @@ export const instructorOne = test("Login as Instructor (Student 1)", async () =>
     await client.request(`mutation { loginLegacy(authtoken: "authtokenS1") }`);
 
     return { client };
-};
+});
