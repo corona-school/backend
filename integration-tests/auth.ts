@@ -71,7 +71,9 @@ test("Token Request", async () => {
     await client.requestShallFail(`mutation RequestTokenInvalidAction { tokenRequest(email: "${email}", action: "what-the-heck")}`);
 
     await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`);
-    await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
+
+    // Production only:
+    // await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
 
     // NOTE: We cannot further test integration here, as we cannot access the emails that might have been sent to the user
 });
