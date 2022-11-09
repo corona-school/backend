@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
+import { isDev } from '../util/environment';
 
 const logger = getLogger('Token');
 
@@ -67,7 +68,7 @@ export async function requestToken(user: User, action: 'user-verify-email' | 'us
     if (redirectTo) {
         // Ensures that the user is not redirected to a potential third party
         const { host } = new URL(redirectTo);
-        if (!host.endsWith('lern-fair.de')) {
+        if (!isDev && !host.endsWith('lern-fair.de')) {
             throw new Error(`Invalid redirectTo host '${host}'`);
         }
 
