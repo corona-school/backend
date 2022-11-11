@@ -19,6 +19,7 @@ export async function requestInterestConfirmation(pupil: Pupil) {
             token,
             pupilId: pupil.id,
             status: InterestConfirmationStatus.PENDING,
+            invalidated: false,
         },
     });
 
