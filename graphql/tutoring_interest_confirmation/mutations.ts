@@ -61,7 +61,7 @@ export class MutateTutoringInterestConfirmationResolver {
     async tutoringInterestCreate(@Arg('pupilId') pupilId: number, @Arg('status') status: InterestConfirmationStatus) {
         const pupil = await getPupil(pupilId);
         const existing = await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
-            where: { pupilId },
+            where: { pupilId, invalidated: false },
         });
 
         if (existing) {
@@ -70,7 +70,7 @@ export class MutateTutoringInterestConfirmationResolver {
         }
 
         await prisma.pupil_tutoring_interest_confirmation_request.create({
-            data: { token: generateToken(), pupilId, status },
+            data: { token: generateToken(), pupilId, status, invalidated: false },
         });
 
         logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
