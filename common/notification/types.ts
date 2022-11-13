@@ -57,6 +57,7 @@ export interface NotificationContext {
 export interface Context extends NotificationContext {
     user: Omit<Person, 'fullName'> & { fullName: string };
     authToken: string;
+    USER_APP_DOMAIN: string;
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)

@@ -10,6 +10,7 @@ import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachment
 import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
+import { USER_APP_DOMAIN } from '../util/environment';
 
 const logger = getLogger('Notification');
 
@@ -253,6 +254,7 @@ async function deliverNotification(
         ...notificationContext,
         user: { ...user, fullName: getFullName(user) },
         authToken: user.authToken ?? '',
+        USER_APP_DOMAIN,
     };
 
     try {
