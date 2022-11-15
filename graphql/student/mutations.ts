@@ -2,17 +2,13 @@ import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
-import {
-    canStudentRequestMatch,
-    createStudentMatchRequest,
-    deleteStudentMatchRequest,
-} from '../../common/match/request';
+import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
-import { BecomeTutorData, ProjectFieldWithGradeData } from '../../common/student/registration';
+import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
     pupil_projectfields_enum as ProjectField,
@@ -48,6 +44,15 @@ export class ScreeningInput {
     knowsCoronaSchoolFrom?: string | undefined;
 }
 
+@ObjectType()
+class StudentRegisterPlusManyOutput {
+    @Field((_type) => String, { nullable: true })
+    email: string;
+
+    @Field((_type) => Boolean, { nullable: false })
+    success: boolean;
+}
+
 @InputType()
 class StudentRegisterPlusInput {
     @Field((type) => RegisterStudentInput, { nullable: true })
@@ -62,6 +67,7 @@ class StudentRegisterPlusInput {
 
 @InputType()
 class StudentRegisterPlusManyInput {
+    @Field((type) => [StudentRegisterPlusInput], { nullable: true })
     entries: StudentRegisterPlusInput[];
 }
 
@@ -159,46 +165,40 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
         throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
     }
 
-    if (activate && existingAccount.isStudent) {
+    if (activate && existingAccount?.isStudent) {
         log.info(`Account with email ${register.email} is already active, skipping activation phase`);
         doActivate = false;
     }
 
-    if (await canStudentRequestMatch(existingAccount)) {
+    if (existingAccount && (await canStudentRequestMatch(existingAccount))) {
         log.info(`Account with email ${register.email} is already screened, skipping screening phase`);
         doScreen = false;
     }
 
-
     try {
-        await prisma.$transaction([
-            const id = doRegister ? prisma.student.create({ data: register }) : undefined,
-            doActivate ? prisma.student.update({
-                data: {
-                    isStudent: true,
-                    openMatchRequestCount: 1,
-                    subjects: JSON.stringify(activate.subjects.map(toStudentSubjectDatabaseFormat)),
-                    languages: JSON.stringify(activate.languages),
-                    supportsInDaZ: activate.supportsInDaZ,
-                },
-                where: { email: register.email },
-            }): undefined,
-            doScreen ? await prisma.screening.create({
-                data: {
-                    ...screening,
-                    screenerId: screener.id,
-                    studentId: student.id,
-                },
-            }) : undefined,
+        await prisma.$transaction(async (prisma) => {
+            let student;
+            if (doRegister) {
+                register.email = null; //TODO remove!!
+                student = await registerStudent(register);
+            } else {
+                student = existingAccount;
+            }
 
-        ]);
+            if (doActivate) {
+                await becomeTutor(student, activate);
+            }
+
+            if (doScreen) {
+                await addTutorScreening(screener, student, screen);
+            }
+        });
     } catch (e) {
         log.error(`Error while registering student ${register.email}, skipping this one`, e);
         return false;
     }
     return true;
 }
-
 
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
@@ -255,15 +255,15 @@ export class MutateStudentResolver {
         return true;
     }
 
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
-    async studentRegisterMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
+    @Mutation((returns) => [StudentRegisterPlusManyOutput])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
         const { entries } = data;
+        const results = [];
         for (const entry of entries) {
-            await studentRegisterPlus(entry, ctx);
+            const res = await studentRegisterPlus(entry, context);
+            results.push({ email: entry.register.email, success: res });
         }
-        return true;
-
+        return results;
     }
-
 }
