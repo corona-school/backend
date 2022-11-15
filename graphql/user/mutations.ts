@@ -10,6 +10,7 @@ import { toPublicToken } from '../authentication';
 import mailjet from '../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../common/mails/config';
 import { getLogger } from 'log4js';
+import { isDev } from '../../common/util/environment';
 
 const logger = getLogger('MutateUser');
 
@@ -72,7 +73,10 @@ export class MutateUserResolver {
 
         logger.info(`An issue was reported from the frontend: \n` + result);
 
-        await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
+        if (!isDev) {
+            await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
+        }
+
         return true;
     }
 }
