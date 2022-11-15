@@ -36,6 +36,12 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
+    @FieldResolver((returns) => String)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async headline(@Root() concreteNotification: ConcreteNotification) {
+        return `Mock Headline ${concreteNotification.id}`;
+    }
+
     @Query((returns) => [Campaign])
     @Authorized(Role.ADMIN)
     async concreteNotificationCampaign() {
