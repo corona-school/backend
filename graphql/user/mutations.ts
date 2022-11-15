@@ -9,6 +9,9 @@ import { GraphQLContext } from '../context';
 import { toPublicToken } from '../authentication';
 import mailjet from '../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../common/mails/config';
+import { getLogger } from 'log4js';
+
+const logger = getLogger('MutateUser');
 
 @Resolver((of) => UserType)
 export class MutateUserResolver {
@@ -65,6 +68,8 @@ export class MutateUserResolver {
 
         section('LOGS', 1);
         result += logs.join('\n');
+
+        logger.info(`An issue was reported from the frontend: \n` + result);
 
         await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
         return true;
