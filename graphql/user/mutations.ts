@@ -42,7 +42,7 @@ export class MutateUserResolver {
         @Arg('issueTag') issueTag: string,
         @Arg('errorMessage') errorMessage: string,
         @Arg('errorStack') errorStack: string,
-        @Arg('logs') logs: string[],
+        @Arg('logs', (type) => [String]) logs: string[],
         @Arg('userAgent') userAgent: string
     ) {
         let result = '';
