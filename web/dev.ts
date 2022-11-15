@@ -230,7 +230,9 @@ export async function setupDevDB() {
         await entityManager.save(Pupil, pupils[i]);
         console.log("Inserted Dev Pupil " + i);
         await _createFixedToken(userForPupil(pupils[i]), `authtokenP${i + 1}`);
-        await createPassword(userForPupil(pupils[i]), `test`);
+        if (i % 2 === 0) {
+            await createPassword(userForPupil(pupils[i]), `test`);
+        }
     }
     const students: Student[] = [];
 
@@ -381,7 +383,9 @@ export async function setupDevDB() {
         await entityManager.save(Student, students[i]);
         console.log("Inserted Dev Student " + i);
         await _createFixedToken(userForStudent(students[i]), `authtokenS${i + 1}`);
-        await createPassword(userForStudent(students[i]), `test`);
+        if (i % 2 === 0) {
+            await createPassword(userForStudent(students[i]), `test`);
+        }
     }
 
     const matches: Match[] = [];
