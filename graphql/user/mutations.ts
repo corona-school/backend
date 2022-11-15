@@ -37,6 +37,7 @@ export class MutateUserResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
+    @RateLimit('Report Issue', 5 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async userReportIssue(
         @Ctx() context: GraphQLContext,
         @Arg('issueTag') issueTag: string,
