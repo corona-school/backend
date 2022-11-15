@@ -55,7 +55,7 @@ export class MutateUserResolver {
         info('E-Mail', context.user.email);
 
         section('BACKEND', 0);
-        info('SessionID', toPublicToken(context.sessionToken));
+        info('SessionID', context.sessionToken ? toPublicToken(context.sessionToken) : '-');
         info('Roles', context.user.roles.join(', '));
         info('Time', new Date().toISOString());
 
