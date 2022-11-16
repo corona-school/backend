@@ -63,6 +63,7 @@ export async function setupDevDB() {
     p.openMatchRequestCount = 0;
     p.languages = [Language.bg, Language.it];
     p.learningGermanSince = LearningGermanSince.lessThanOne;
+    p.matchReason = "Ich möchte gerne einen Tutor haben, der mir beim Lernen hilft.";
     pupils.push(p);
 
     p = new Pupil();
@@ -78,6 +79,7 @@ export async function setupDevDB() {
     p.subjects = JSON.stringify([{ name: "Spanisch" }, { name: "Deutsch" }]);
     p.grade = "6. Klasse";
     p.openMatchRequestCount = 0;
+    p.matchReason = "Ich brauche Hilfe bei meinen Hausaufgaben.";
     pupils.push(p);
 
     p = new Pupil();
