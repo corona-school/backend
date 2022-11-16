@@ -153,7 +153,7 @@ const schema = buildSchemaSync({
         FindManyScreenerResolver,
         MutateScreenerResolver,
 
-        AdminMutationsResolver
+        AdminMutationsResolver,
     ],
     authChecker,
 });
