@@ -150,9 +150,10 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
-    if (!canJoin.allowed) {
+
+    if (strict && !canJoin.allowed) {
         throw new PrerequisiteError(canJoin.reason);
     }
 
@@ -271,7 +272,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil);
+            await joinSubcourse(subcourse, pupil, true);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
