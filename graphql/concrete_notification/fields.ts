@@ -50,7 +50,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     }
 
     // @TODO: this should be a field of ConcreteNotification
-    @FieldResolver((returns) => String)
+    @FieldResolver((returns) => Date)
     @Authorized(Role.OWNER, Role.ADMIN)
     async createdAt(@Root() concreteNotification: ConcreteNotification) {
         return getDummyCreatedAt(concreteNotification.id);
