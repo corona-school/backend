@@ -6,7 +6,6 @@ import courseReminderJob from './periodic/course-reminder';
 import jufoVerificationInfo from './periodic/jufo-verification-info';
 import projectMatchMaking from './periodic/project-match-making';
 import * as Notification from '../common/notification';
-import deactivateMissingCoc from './periodic/deactivate-missing-coc';
 import { cleanupSecrets } from '../common/secret';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
@@ -32,7 +31,6 @@ export const allJobs: CSCronJob[] = [
     // { cronTime: "00 30 16 * * *", jobFunction: interestConfirmationRequestReminders},
     // every day at midnight/beginning
     { cronTime: '00 00 00 * * *', jobFunction: jufoVerificationInfo },
-    { cronTime: '00 30 00 * * 0', jobFunction: deactivateMissingCoc },
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', jobFunction: Notification.checkReminders },
     // each night - database cleanups
