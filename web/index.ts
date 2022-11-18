@@ -152,6 +152,7 @@ createConnection().then(setupPDFGenerationEnvironment)
                     ...allowedSubdomains.map(d => `https://${d}.corona-school.de`),
                     "https://dashboard.lern-fair.de",
                     "https://my.lern-fair.de",
+                    "https://app.lern-fair.de",
                     ...allowedSubdomains.map(d => `https://${d}.lern-fair.de`)
                 ];
             }
