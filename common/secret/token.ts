@@ -18,6 +18,20 @@ export async function revokeToken(user: User, id: number) {
     logger.info(`User(${user.userID}) revoked token Secret(${id})`);
 }
 
+export async function revokeTokenByToken(user: User, token: string) {
+    const hash = hashToken(token);
+    const secret = await prisma.secret.findFirst({
+        where: { secret: hash, userId: user.userID },
+    });
+    if (!secret) {
+        throw new Error(`Secret not found`);
+    }
+
+    await prisma.secret.delete({ where: { id: secret.id } });
+
+    logger.info(`User(${user.userID}) revoked token Secret(${secret.id})`);
+}
+
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
 export async function createToken(user: User, expiresAt: Date | null = null, description: string | null = null): Promise<string> {
     const token = uuid();
