@@ -179,7 +179,6 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
         await prisma.$transaction(async (prisma) => {
             let student;
             if (doRegister) {
-                register.email = null; //TODO remove!!
                 student = await registerStudent(register);
             } else {
                 student = existingAccount;

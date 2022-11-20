@@ -5,9 +5,9 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
-import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
+import { canStudentRequestMatch, createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     pupil as Pupil,
@@ -23,6 +23,11 @@ import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { becomeTutor, registerStudent } from '../../common/student/registration';
+import { addTutorScreening } from '../../common/student/screening';
+import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../me/mutation';
+import { ScreeningInput } from '../student/mutations';
+import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 
 @InputType()
 export class PupilUpdateInput {
@@ -59,6 +64,21 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     aboutMe?: string;
+}
+
+@InputType()
+class PupilRegisterPlusInput {
+    @Field((type) => RegisterPupilInput, { nullable: true })
+    register: RegisterPupilInput;
+
+    @Field((type) => BecomeTuteeInput, { nullable: true })
+    activate: BecomeTuteeInput;
+}
+
+@InputType()
+class PupilRegisterPlusManyInput {
+    @Field((type) => [StudentRegisterPlusInput], { nullable: true })
+    entries: StudentRegisterPlusInput[];
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
@@ -99,6 +119,47 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
     await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
+}
+
+async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<boolean> {
+    const log = logInContext('Pupil', ctx);
+    const { register, activate } = data;
+    const screener = await getSessionScreener(ctx);
+
+    const existingAccount = await prisma.pupil.findUnique({ where: { email: register.email } });
+    let doRegister = register != null;
+    let doActivate = activate != null;
+
+    if (doRegister && existingAccount) {
+        log.info(`Account with email ${register.email} already exists, skipping registration phase`);
+        doRegister = false;
+    } else if (!register && !existingAccount) {
+        throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
+    }
+
+    if (activate && existingAccount?.isPupil) {
+        log.info(`Account with email ${register.email} is already active, skipping activation phase`);
+        doActivate = false;
+    }
+
+    try {
+        await prisma.$transaction(async (prisma) => {
+            let pupil;
+            if (doRegister) {
+                pupil = await registerPupil(register);
+            } else {
+                pupil = existingAccount;
+            }
+
+            if (doActivate) {
+                await becomeTutee(pupil, activate);
+            }
+        });
+    } catch (e) {
+        log.error(`Error while registering pupil ${register.email}, skipping this one`, e);
+        return false;
+    }
+    return true;
 }
 
 @Resolver((of) => GraphQLModel.Pupil)
@@ -156,5 +217,17 @@ export class MutatePupilResolver {
         await deletePupilMatchRequest(pupil);
 
         return true;
+    }
+
+    @Mutation((returns) => [PupilRegisterPlusManyOutput])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
+        const { entries } = data;
+        const results = [];
+        for (const entry of entries) {
+            const res = await studentRegisterPlus(entry, context);
+            results.push({ email: entry.register.email, success: res });
+        }
+        return results;
     }
 }

@@ -84,7 +84,7 @@ export class RegisterStudentInput implements RegisterStudentData {
 }
 
 @InputType()
-class RegisterPupilInput implements RegisterPupilData {
+export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -205,7 +205,7 @@ class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
 }
 
 @InputType()
-class BecomeTuteeInput implements BecomeTuteeData {
+export class BecomeTuteeInput implements BecomeTuteeData {
     @Field((type) => [Subject])
     subjects: Subject[];
 
