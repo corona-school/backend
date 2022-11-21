@@ -1,20 +1,23 @@
-import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import {
-    createCertificate,
-    signCertificate,
-    ICertificateCreationParams,
     CertificateState,
+    createCertificate,
     getCertificatePDF,
+    ICertificateCreationParams,
+    issueCertificateRequest,
     Language,
     LANGUAGES,
+    signCertificate,
 } from '../../common/certificate';
 import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionStudent } from '../authentication';
 import { IsIn } from 'class-validator';
 import { ValidationError } from '../error';
 import { addFile, getFileURL } from '../files';
+import { prisma } from '../../common/prisma';
+import moment from 'moment/moment';
 
 @InputType()
 class CertificateCreationInput implements ICertificateCreationParams {
@@ -35,6 +38,24 @@ class CertificateCreationInput implements ICertificateCreationParams {
     @Field()
     @IsIn([CertificateState.manual, CertificateState.awaitingApproval])
     state: CertificateState.manual | CertificateState.awaitingApproval;
+}
+
+@InputType()
+class CertificateUpdateInput {
+    @Field({ nullable: true })
+    endDate?: number;
+    @Field({ nullable: true })
+    subjects?: string;
+    @Field({ nullable: true })
+    hoursPerWeek?: number;
+    @Field({ nullable: true })
+    hoursTotal?: number;
+    @Field({ nullable: true })
+    medium?: string;
+    @Field({ nullable: true })
+    activities?: string;
+    @Field({ nullable: true })
+    ongoingLessons?: boolean;
 }
 
 @Resolver((of) => GraphQLModel.Participation_certificate)
@@ -70,6 +91,38 @@ export class MutateParticipationCertificateResolver {
         return true;
     }
 
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.STUDENT)
+    async participationCertificateUpdate(
+        @Ctx() context: GraphQLContext,
+        @Arg('certificateId') certificateId: string,
+        @Arg('data') data: CertificateUpdateInput
+    ): Promise<boolean> {
+        await prisma.participation_certificate.update({
+            where: {
+                uuid: certificateId,
+            },
+            data: {
+                endDate: moment(data.endDate, 'X').toDate(),
+                subjects: data.subjects,
+                hoursPerWeek: data.hoursPerWeek,
+                hoursTotal: data.hoursTotal,
+                medium: data.medium,
+                categories: data.activities,
+                ongoingLessons: data.ongoingLessons,
+            },
+        });
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.STUDENT)
+    async participationCertificateNotify(@Ctx() context: GraphQLContext, @Arg('certificateId') certificateId: string): Promise<boolean> {
+        const pc = await prisma.participation_certificate.findUnique({ where: { uuid: certificateId }, include: { pupil: true, student: true } });
+        await issueCertificateRequest(pc);
+        return true;
+    }
+
     @Mutation((returns) => String)
     @Authorized(Role.STUDENT)
     async participationCertificateAsPDF(@Ctx() context, @Arg('uuid') uuid: string, @Arg('language') language: string) {
@@ -79,7 +132,12 @@ export class MutateParticipationCertificateResolver {
 
         const student = await getSessionStudent(context);
         const pdf = await getCertificatePDF(uuid, student, language as Language);
-        const file = addFile({ buffer: pdf, mimetype: 'application/pdf', originalname: 'Zertifikat.pdf', size: pdf.length });
+        const file = addFile({
+            buffer: pdf,
+            mimetype: 'application/pdf',
+            originalname: 'Zertifikat.pdf',
+            size: pdf.length,
+        });
         return getFileURL(file);
     }
 }
