@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
-import { isDev } from '../util/environment';
+import { isDev, USER_APP_DOMAIN } from '../util/environment';
 
 const logger = getLogger('Token');
 
@@ -16,6 +16,20 @@ export async function revokeToken(user: User, id: number) {
     }
 
     logger.info(`User(${user.userID}) revoked token Secret(${id})`);
+}
+
+export async function revokeTokenByToken(user: User, token: string) {
+    const hash = hashToken(token);
+    const secret = await prisma.secret.findFirst({
+        where: { secret: hash, userId: user.userID },
+    });
+    if (!secret) {
+        throw new Error(`Secret not found`);
+    }
+
+    await prisma.secret.delete({ where: { id: secret.id } });
+
+    logger.info(`User(${user.userID}) revoked token Secret(${secret.id})`);
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
@@ -67,7 +81,7 @@ export async function requestToken(user: User, action: 'user-verify-email' | 'us
 
     if (redirectTo) {
         // Ensures that the user is not redirected to a potential third party
-        const { host } = new URL(redirectTo);
+        const { host } = new URL(redirectTo, `https://${USER_APP_DOMAIN}/`);
         if (!isDev && !host.endsWith('lern-fair.de')) {
             throw new Error(`Invalid redirectTo host '${host}'`);
         }
