@@ -98,6 +98,14 @@ export class MutateParticipationCertificateResolver {
         @Arg('certificateId') certificateId: string,
         @Arg('data') data: CertificateUpdateInput
     ): Promise<boolean> {
+        const cert = await prisma.participation_certificate.findUnique({ where: { uuid: certificateId } });
+        if (!cert) {
+            throw new Error("Couldn't find certificate.");
+        }
+        if (cert.state !== 'awaiting-approval') {
+            throw new Error('This participation certificate is already finalized and cannot be changed anymore.');
+        }
+
         await prisma.participation_certificate.update({
             where: {
                 uuid: certificateId,
