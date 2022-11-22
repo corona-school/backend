@@ -8,6 +8,7 @@ import {
     Subcourse,
     Course,
     StudentWhereInput,
+    SubcourseWhereInput,
 } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -138,8 +139,27 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesInstructing(@Root() student: Student) {
-        return await prisma.subcourse.findMany({ where: { subcourse_instructors_student: { some: { studentId: student.id } } } });
+    async subcoursesInstructing(@Root() student: Student, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+        const filters: SubcourseWhereInput[] = [
+            {
+                subcourse_instructors_student: { some: { studentId: { equals: student.id } } },
+            },
+        ];
+
+        if (excludePast) {
+            const prevDay = new Date();
+            prevDay.setDate(prevDay.getDate() - 1);
+
+            filters.push({
+                lecture: {
+                    some: {
+                        start: { gte: prevDay },
+                    },
+                },
+            });
+        }
+
+        return await prisma.subcourse.findMany({ where: { AND: filters } });
     }
 
     @FieldResolver((type) => [Course])
