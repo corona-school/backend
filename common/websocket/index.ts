@@ -15,7 +15,7 @@ interface ExtendedWebsocket extends WebSocket {
 type ConnectedClients = Map<UserId, Map<ClientId, ExtendedWebsocket>>;
 
 type Message = {
-    concreteNotificationId: string;
+    concreteNotificationId: number;
 };
 
 const log = getLogger();
