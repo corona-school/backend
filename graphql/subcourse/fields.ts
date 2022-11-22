@@ -180,6 +180,32 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourseId: subcourse.id,
             },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async firstLecture(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+            },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async nextLecture(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+                start: { gte: new Date() },
+            },
+            orderBy: { start: 'asc' },
         });
     }
 
