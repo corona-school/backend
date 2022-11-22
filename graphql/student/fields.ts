@@ -23,6 +23,8 @@ import { userForStudent, userSearch } from '../../common/user';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
+import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { Prisma } from '@prisma/client';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -139,24 +141,11 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesInstructing(@Root() student: Student, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
-        const filters: SubcourseWhereInput[] = [
-            {
-                subcourse_instructors_student: { some: { studentId: { equals: student.id } } },
-            },
-        ];
+    async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+        const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
         if (excludePast) {
-            const prevDay = new Date();
-            prevDay.setDate(prevDay.getDate() - 1);
-
-            filters.push({
-                lecture: {
-                    some: {
-                        start: { gte: prevDay },
-                    },
-                },
-            });
+            filters.push(excludePastSubcourses());
         }
 
         return await prisma.subcourse.findMany({ where: { AND: filters } });
