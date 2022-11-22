@@ -1,4 +1,4 @@
-import { test, createUserClient } from "./base";
+import { test, createUserClient, adminClient } from "./base";
 import * as assert from "assert";
 import { randomBytes } from "crypto";
 
@@ -93,9 +93,50 @@ export const studentOne = test("Register Student", async () => {
     return { client, student };
 });
 
-export const instructorOne = test("Login as Instructor (Student 1)", async () => {
+export const instructorOne = test("Register Instructor", async () => {
     const client = createUserClient();
-    await client.request(`mutation { loginLegacy(authToken: "authtokenS1") }`);
+    const userRandom = randomBytes(5).toString("base64");
 
-    return { client };
+    await client.request(`
+        mutation RegisterStudent {
+            meRegisterStudent(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    await client.request(`
+        mutation BecomeInstructor {
+            meBecomeInstructor(data: { 
+                message: ""
+            })
+        }
+    `);
+
+    const { me: instructor } = await client.request(`
+        query GetBasics {
+            me {
+                firstname
+                lastname
+                email
+                student { id }
+            }
+        }
+    `);
+
+    // Bypass email verification as this is hard to test automatically:
+    await adminClient.request(`mutation { _verifyEmail(userID: "student/${instructor.student.id}")}`);
+    await client.request(`mutation { loginRefresh }`);
+
+    const { myRoles } = await client.request(`query GetRoles { myRoles }`);
+    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
+    // Not yet INSTRUCTOR as not yet screened
+
+    return { client, instructor };
 });

@@ -137,36 +137,40 @@ export async function loginToken(token: string): Promise<User | never> {
     }
 
     if (secret.type === SecretType.EMAIL_TOKEN) {
-        if (user.studentId) {
-            const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
-                where: { id: user.studentId },
-                select: { verifiedAt: true, verification: true },
-            });
-            if (!verifiedAt || verification) {
-                await prisma.student.update({
-                    data: { verifiedAt: new Date(), verification: null },
-                    where: { id: user.studentId },
-                });
-
-                logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
-            }
-        }
-
-        if (user.pupilId) {
-            const { verifiedAt, verification } = await prisma.pupil.findUniqueOrThrow({
-                where: { id: user.pupilId },
-                select: { verifiedAt: true, verification: true },
-            });
-            if (!verifiedAt || verification) {
-                await prisma.pupil.update({
-                    data: { verifiedAt: new Date(), verification: null },
-                    where: { id: user.pupilId },
-                });
-
-                logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
-            }
-        }
+        await verifyEmail(user);
     }
 
     return await user;
+}
+
+export async function verifyEmail(user: User) {
+    if (user.studentId) {
+        const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
+            where: { id: user.studentId },
+            select: { verifiedAt: true, verification: true },
+        });
+        if (!verifiedAt || verification) {
+            await prisma.student.update({
+                data: { verifiedAt: new Date(), verification: null },
+                where: { id: user.studentId },
+            });
+
+            logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
+        }
+    }
+
+    if (user.pupilId) {
+        const { verifiedAt, verification } = await prisma.pupil.findUniqueOrThrow({
+            where: { id: user.pupilId },
+            select: { verifiedAt: true, verification: true },
+        });
+        if (!verifiedAt || verification) {
+            await prisma.pupil.update({
+                data: { verifiedAt: new Date(), verification: null },
+                where: { id: user.pupilId },
+            });
+
+            logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
+        }
+    }
 }
