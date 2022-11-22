@@ -5,13 +5,17 @@ import { v4 as createUuid } from 'uuid';
 import { getUserForSession, GraphQLUser } from '../../graphql/authentication';
 
 type UserId = string;
+type ClientId = string;
 
-type ConnectedClients = {
-    [k: UserId]: WebSocket[];
-};
+interface ExtendedWebsocket extends WebSocket {
+    clientId: ClientId;
+    userId: UserId;
+}
+
+type ConnectedClients = Map<UserId, Map<ClientId, ExtendedWebsocket>>;
 
 type Message = {
-    notificationId: string;
+    concreteNotificationId: string;
 };
 
 const log = getLogger();
@@ -19,12 +23,9 @@ const log = getLogger();
 class WebSocketService {
     private static instance: WebSocketService;
     private websocketServer: WebSocketServer;
-    private connectedClients: ConnectedClients = {};
+    private connectedClients: ConnectedClients = new Map();
 
-    constructor(server: Server) {
-        if (WebSocketService.instance) {
-            return WebSocketService.instance;
-        }
+    private constructor(server: Server) {
         this.websocketServer = new WebSocketServer({ server, clientTracking: true });
     }
 
@@ -42,25 +43,29 @@ class WebSocketService {
         return this.connectedClients;
     }
 
-    private addClient(userId: string, connection: WebSocket) {
-        (this.connectedClients[userId] = this.connectedClients[userId] || []).push(connection);
+    private addClient(userId: string, connection: ExtendedWebsocket) {
+        let userConnections = this.connectedClients.get(userId);
+        if (!userConnections) {
+            userConnections = new Map();
+        }
+        userConnections.set(connection.clientId, connection);
+        this.connectedClients.set(userId, userConnections);
     }
 
-    private removeClient(id: string) {
-        Object.keys(this.connectedClients).forEach((key) => {
-            const idx = this.connectedClients[key].findIndex((ws: WebSocket & { clientId: string }) => ws.clientId === id);
-            if (idx !== -1) {
-                this.connectedClients[key].splice(idx, 1);
-            }
-            if (this.connectedClients[key].length === 0) {
-                delete this.connectedClients[key];
-            }
-        });
-        delete this.connectedClients[id];
+    private removeClient(userId: string, clientId: string) {
+        if (!this.connectedClients.has(userId) || !this.connectedClients.get(userId)?.has(clientId)) {
+            log.error(`UserId or clientId not found in connected clients: ${[...this.connectedClients.entries()]}.`);
+            return;
+        }
+        this.connectedClients.get(userId).delete(clientId);
+
+        if (this.connectedClients.get(userId).size === 0) {
+            this.connectedClients.delete(userId);
+        }
     }
 
-    private getClientsByUserId(userId: string): WebSocket[] {
-        return this.connectedClients[userId];
+    private getClientsByUserId(userId: string): Map<ClientId, ExtendedWebsocket> | undefined {
+        return this.connectedClients.get(userId);
     }
 
     /**
@@ -73,9 +78,9 @@ class WebSocketService {
         if (!clients) {
             throw new Error('Client not connected.');
         }
-        clients.forEach((client) => {
+        for (let [_, client] of clients) {
             client.send(message, (err) => log.error(`Error while sending websocket message: ${err.message}`));
-        });
+        }
     }
 
     /**
@@ -84,14 +89,14 @@ class WebSocketService {
      * @returns {boolean} online status indicating whether the user has an active websocket connection to get notified
      */
     isUserOnline(userId: string): boolean {
-        return !!this.connectedClients[userId];
+        return this.connectedClients.has(userId);
     }
 
     /**
      * initializes the events and handlers for the websocket server
      */
     configure(): void {
-        this.websocketServer.on('connection', async (ws: WebSocket & { clientId: string }, request) => {
+        this.websocketServer.on('connection', async (ws: ExtendedWebsocket, request) => {
             try {
                 let sessionUser: GraphQLUser;
 
@@ -106,39 +111,43 @@ class WebSocketService {
                     sessionUser = await getUserForSession(sessionToken);
                     log.debug(`Session user: ${JSON.stringify(sessionUser)}`);
                 }
-
                 const userId = getUserIdFromConnectionRequest(request.url);
                 if (userId !== sessionUser.userID) {
                     throw new Error('Session user does not match user id from connection request parameter');
                 }
+                ws['userId'] = userId;
                 // create client
-                ws['clientId'] = createUuid();
+                const clientId = createUuid();
+                ws['clientId'] = clientId;
                 this.addClient(userId, ws);
-                log.info(`Connected websocket client with userId: ${userId}`);
-                log.debug(`Websocket client ids: ${Object.keys(this.getCients())}`);
+                log.info(`Connected websocket client with userId: ${userId} and clientId: ${clientId}`);
+                log.debug(`Websocket users: ${[...this.getCients().keys()]}`);
+                log.debug(`Websocket clients: ${JSON.stringify([this.getCients().values()])}`);
             } catch (err) {
                 if (!!err?.message) {
                     log.error(`Error in websocket service: ${err.message}`);
+                } else {
+                    log.error(`Error in websocket service.`);
                 }
-                log.error(`Error in websocket service.`);
                 ws.terminate();
             }
             ws.on('close', () => {
-                this.removeClient(ws.clientId);
+                this.removeClient(ws.userId, ws.clientId);
                 log.info(`Closing connection with id: ${ws.clientId}`);
-                log.debug(`Connected user ids: ${Object.keys(this.getCients())}`);
+                log.debug(`Connected user ids: ${[...this.getCients().keys()]}`);
             });
         });
     }
 }
 
 function getUserIdFromConnectionRequest(requestUrl: string | undefined) {
-    const idQueryParam = '?id=';
-    if (!requestUrl || requestUrl?.split(idQueryParam).length !== 2) {
+    // Looks a bit ugly but this is trimming the leading "/" in the request url
+    const searchParams = new URLSearchParams(requestUrl.slice(1));
+    if (!requestUrl || !searchParams.has('id')) {
         throw new Error(`Inavlid websocket connection request url: ${requestUrl}`);
     }
-    const urlParams = requestUrl.split(idQueryParam);
-    return urlParams[1];
+    const userId = searchParams.get('id');
+    return userId;
 }
 
 export { WebSocketService };
