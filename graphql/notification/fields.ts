@@ -52,4 +52,12 @@ export class NotificationExtendedFieldsResolver {
     hookDescription(@Root() notification: Notification) {
         return getHookDescription(notification.hookID);
     }
+
+    // @TODO: this should be a field of Notification
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER, Role.ADMIN)
+    async messageType(@Root() notification: Notification) {
+        // this is just a dummy type
+        return `Type ${notification.id}`;
+    }
 }
