@@ -1,10 +1,12 @@
 import { Concrete_notification as ConcreteNotification, Notification } from '../generated';
-import { Authorized, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { getDummyCreatedAt } from './dummy_data';
+import { GraphQLContext } from '../context';
+import { getSessionUser } from '../authentication';
 
 @ObjectType()
 class Campaign {
@@ -54,6 +56,13 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async createdAt(@Root() concreteNotification: ConcreteNotification) {
         return getDummyCreatedAt(concreteNotification.id);
+    }
+
+    // TODO new resolver for getting concrete notifications by notificationId
+    @Query((returns) => ConcreteNotification, { nullable: true })
+    @Authorized(Role.USER)
+    async concrete_notification(@Ctx() context: GraphQLContext, @Arg('concreteNotificationId', (type) => Int) concreteNotificationId: number) {
+        return await prisma.concrete_notification.findFirst({ where: { id: concreteNotificationId, userId: getSessionUser(context).userID } });
     }
 
     @Query((returns) => [Campaign])
