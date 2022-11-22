@@ -51,11 +51,16 @@ export class ExtendFieldsPupilResolver {
     async subcoursesWaitingList(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
             where: {
-                subcourse_waiting_list_pupil: {
-                    some: {
-                        pupilId: pupil.id,
+                AND: [
+                    {
+                        subcourse_waiting_list_pupil: {
+                            some: {
+                                pupilId: pupil.id,
+                            },
+                        },
                     },
-                },
+                    excludePastSubcourses(),
+                ],
             },
         });
     }
