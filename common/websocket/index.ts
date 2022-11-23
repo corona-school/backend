@@ -5,20 +5,20 @@ import { v4 as createUuid } from 'uuid';
 import { getUserForSession, GraphQLUser } from '../../graphql/authentication';
 
 type UserId = string;
-type ClientId = string;
+type ConnectionId = string;
 
 interface ExtendedWebsocket extends WebSocket {
-    clientId: ClientId;
+    connectionId: ConnectionId;
     userId: UserId;
 }
 
-type ConnectedUsers = Map<UserId, Map<ClientId, ExtendedWebsocket>>;
+type ConnectedUsers = Map<UserId, Map<ConnectionId, ExtendedWebsocket>>;
 
 type Message = {
     concreteNotificationId: number;
 };
 
-const log = getLogger();
+const log = getLogger('Websockets');
 
 class WebSocketService {
     private static instance: WebSocketService;
@@ -43,43 +43,43 @@ class WebSocketService {
         return this.connectedUsers;
     }
 
-    private addClient(userId: string, connection: ExtendedWebsocket) {
+    private addConnection(userId: string, connection: ExtendedWebsocket) {
         let userConnections = this.connectedUsers.get(userId);
         if (!userConnections) {
             userConnections = new Map();
         }
-        userConnections.set(connection.clientId, connection);
+        userConnections.set(connection.connectionId, connection);
         this.connectedUsers.set(userId, userConnections);
     }
 
-    private removeClient(userId: string, clientId: string) {
-        if (!this.connectedUsers.has(userId) || !this.connectedUsers.get(userId)?.has(clientId)) {
+    private removeConnection(userId: string, connectionId: string) {
+        if (!this.connectedUsers.has(userId) || !this.connectedUsers.get(userId)?.has(connectionId)) {
             log.error(`UserId or clientId not found in connected clients: ${[...this.connectedUsers.entries()]}.`);
             return;
         }
-        this.connectedUsers.get(userId).delete(clientId);
+        this.connectedUsers.get(userId).delete(connectionId);
 
         if (this.connectedUsers.get(userId).size === 0) {
             this.connectedUsers.delete(userId);
         }
     }
 
-    private getClientsByUserId(userId: string): Map<ClientId, ExtendedWebsocket> | undefined {
+    private getConnectionsByUserId(userId: string): Map<ConnectionId, ExtendedWebsocket> | undefined {
         return this.connectedUsers.get(userId);
     }
 
     /**
-     * Sends a message to an websocket client
+     * Sends a message to all websocket clients of a user that are connected
      * @param userId - user id
      * @param message - websocket message with notification id
      */
-    sendMessageToClients(userId: string, message: Message): void {
-        const clients = this.getClientsByUserId(userId);
-        if (!clients) {
-            throw new Error('Client not connected.');
+    sendMessageToUser(userId: string, message: Message): void {
+        const connections = this.getConnectionsByUserId(userId);
+        if (!connections) {
+            throw new Error('No connections found.');
         }
-        for (let [_, client] of clients) {
-            client.send(message, (err) => log.error(`Error while sending websocket message: ${err.message}`));
+        for (let [_, connection] of connections) {
+            connection.send(message, (err) => log.error(`Error while sending websocket message: ${err.message}`));
         }
     }
 
@@ -117,12 +117,12 @@ class WebSocketService {
                 }
                 ws['userId'] = userId;
                 // create client
-                const clientId = createUuid();
-                ws['clientId'] = clientId;
-                this.addClient(userId, ws);
-                log.info(`Connected websocket client with userId: ${userId} and clientId: ${clientId}`);
+                const connectionId = createUuid();
+                ws['connectionId'] = connectionId;
+                this.addConnection(userId, ws);
+                log.info(`Connected websocket client with userId: ${userId} and connectionId: ${connectionId}`);
                 log.debug(`Websocket users: ${[...this.getConnectedUsers().keys()]}`);
-                log.debug(`Websocket clients: ${JSON.stringify([this.getConnectedUsers().values()])}`);
+                log.debug(`Websocket connections: ${JSON.stringify([this.getConnectedUsers().values()])}`);
             } catch (err) {
                 if (!!err?.message) {
                     log.error(`Error in websocket service: ${err.message}`);
@@ -132,8 +132,8 @@ class WebSocketService {
                 ws.terminate();
             }
             ws.on('close', () => {
-                this.removeClient(ws.userId, ws.clientId);
-                log.info(`Closing connection with id: ${ws.clientId}`);
+                this.removeConnection(ws.userId, ws.connectionId);
+                log.info(`Closing connection with id: ${ws.connectionId}`);
                 log.debug(`Connected user ids: ${[...this.getConnectedUsers().keys()]}`);
             });
         });
