@@ -271,7 +271,7 @@ async function deliverNotification(
 
         // TODO: Check if user silenced this notification
 
-        Promise.all(
+        await Promise.all(
             channelsToSendTo.map(async (channel) => {
                 await channel.send(notification, user, context, concreteNotification.id, attachments, newUser);
             })
