@@ -12,7 +12,7 @@ interface ExtendedWebsocket extends WebSocket {
     userId: UserId;
 }
 
-type ConnectedClients = Map<UserId, Map<ClientId, ExtendedWebsocket>>;
+type ConnectedUsers = Map<UserId, Map<ClientId, ExtendedWebsocket>>;
 
 type Message = {
     concreteNotificationId: number;
@@ -23,7 +23,7 @@ const log = getLogger();
 class WebSocketService {
     private static instance: WebSocketService;
     private websocketServer: WebSocketServer;
-    private connectedClients: ConnectedClients = new Map();
+    private connectedUsers: ConnectedUsers = new Map();
 
     private constructor(server: Server) {
         this.websocketServer = new WebSocketServer({ server, clientTracking: true });
@@ -39,33 +39,33 @@ class WebSocketService {
         return this.instance;
     }
 
-    getCients(): ConnectedClients {
-        return this.connectedClients;
+    getConnectedUsers(): ConnectedUsers {
+        return this.connectedUsers;
     }
 
     private addClient(userId: string, connection: ExtendedWebsocket) {
-        let userConnections = this.connectedClients.get(userId);
+        let userConnections = this.connectedUsers.get(userId);
         if (!userConnections) {
             userConnections = new Map();
         }
         userConnections.set(connection.clientId, connection);
-        this.connectedClients.set(userId, userConnections);
+        this.connectedUsers.set(userId, userConnections);
     }
 
     private removeClient(userId: string, clientId: string) {
-        if (!this.connectedClients.has(userId) || !this.connectedClients.get(userId)?.has(clientId)) {
-            log.error(`UserId or clientId not found in connected clients: ${[...this.connectedClients.entries()]}.`);
+        if (!this.connectedUsers.has(userId) || !this.connectedUsers.get(userId)?.has(clientId)) {
+            log.error(`UserId or clientId not found in connected clients: ${[...this.connectedUsers.entries()]}.`);
             return;
         }
-        this.connectedClients.get(userId).delete(clientId);
+        this.connectedUsers.get(userId).delete(clientId);
 
-        if (this.connectedClients.get(userId).size === 0) {
-            this.connectedClients.delete(userId);
+        if (this.connectedUsers.get(userId).size === 0) {
+            this.connectedUsers.delete(userId);
         }
     }
 
     private getClientsByUserId(userId: string): Map<ClientId, ExtendedWebsocket> | undefined {
-        return this.connectedClients.get(userId);
+        return this.connectedUsers.get(userId);
     }
 
     /**
@@ -89,7 +89,7 @@ class WebSocketService {
      * @returns {boolean} online status indicating whether the user has an active websocket connection to get notified
      */
     isUserOnline(userId: string): boolean {
-        return this.connectedClients.has(userId);
+        return this.connectedUsers.has(userId);
     }
 
     /**
@@ -121,8 +121,8 @@ class WebSocketService {
                 ws['clientId'] = clientId;
                 this.addClient(userId, ws);
                 log.info(`Connected websocket client with userId: ${userId} and clientId: ${clientId}`);
-                log.debug(`Websocket users: ${[...this.getCients().keys()]}`);
-                log.debug(`Websocket clients: ${JSON.stringify([this.getCients().values()])}`);
+                log.debug(`Websocket users: ${[...this.getConnectedUsers().keys()]}`);
+                log.debug(`Websocket clients: ${JSON.stringify([this.getConnectedUsers().values()])}`);
             } catch (err) {
                 if (!!err?.message) {
                     log.error(`Error in websocket service: ${err.message}`);
@@ -134,7 +134,7 @@ class WebSocketService {
             ws.on('close', () => {
                 this.removeClient(ws.userId, ws.clientId);
                 log.info(`Closing connection with id: ${ws.clientId}`);
-                log.debug(`Connected user ids: ${[...this.getCients().keys()]}`);
+                log.debug(`Connected user ids: ${[...this.getConnectedUsers().keys()]}`);
             });
         });
     }
