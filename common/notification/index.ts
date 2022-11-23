@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -11,11 +11,12 @@ import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
+import { inAppChannel } from './channels/inapp';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel];
+const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -258,19 +259,24 @@ async function deliverNotification(
     };
 
     try {
-        const channel = channels.find((it) => it.canSend(notification));
-        if (!channel) {
+        const newUser = getUserForTypeORM(user);
+        const channelsToSendTo = channels.filter((it) => it.canSend(notification, newUser));
+        if (!channelsToSendTo || channelsToSendTo.length === 0) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
         if (notification.hookID) {
-            const newUser = getUserForTypeORM(user);
             await triggerHook(notification.hookID, newUser);
         }
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification, user, context, concreteNotification.id, attachments);
+        Promise.all(
+            channelsToSendTo.map(async (channel) => {
+                await channel.send(notification, user, context, concreteNotification.id, attachments, newUser);
+            })
+        );
+
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
