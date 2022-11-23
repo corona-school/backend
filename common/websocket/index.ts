@@ -2,7 +2,7 @@ import { Server } from 'http';
 import { getLogger } from 'log4js';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as createUuid } from 'uuid';
-import { getUserForSession, GraphQLUser } from '../../graphql/authentication';
+import { getUserForSession, GraphQLUser } from '../user/session';
 
 type UserId = string;
 type ConnectionId = string;
