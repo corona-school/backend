@@ -10,7 +10,7 @@ import { finalizeTests } from "./base";
 
 /* Base Tests - Other tests build on them and they always must run */
 import "./user";
-
+import "./screening";
 /* Feature Tests - These are independent and can be disabled */
 import "./matching";
 import "./auth";
