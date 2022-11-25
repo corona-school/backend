@@ -245,35 +245,35 @@ async function createConcreteNotification(
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    user: Person,
+    legacyUser: Person,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
     const context: Context = {
         ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken ?? '',
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
         USER_APP_DOMAIN,
     };
 
     try {
-        const legacyUser = getUserForTypeORM(user);
-        const channelsToSendTo = channels.filter((it) => it.canSend(notification, legacyUser));
+        const user = getUserForTypeORM(legacyUser);
+        const channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
         if (!channelsToSendTo || channelsToSendTo.length === 0) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
         if (notification.hookID) {
-            await triggerHook(notification.hookID, legacyUser);
+            await triggerHook(notification.hookID, user);
         }
 
         // TODO: Check if user silenced this notification
 
         await Promise.all(
             channelsToSendTo.map(async (channel) => {
-                await channel.send(notification, legacyUser, context, concreteNotification.id, attachments);
+                await channel.send(notification, user, context, concreteNotification.id, attachments);
             })
         );
 
@@ -290,9 +290,9 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 
         await prisma.concrete_notification.update({
             data: {
