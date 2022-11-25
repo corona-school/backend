@@ -7,6 +7,7 @@ import { assert } from 'console';
 import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
+import { User } from '../../user';
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
@@ -18,13 +19,13 @@ const senderEmails: { [sender in NotificationSender]: string } = {
 
 export const mailjetChannel: Channel = {
     type: 'mailjet',
-    async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
+    async send(notification: Notification, user: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
         const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
         assert(senderEmail !== undefined, 'Unknown sender emails');
 
-        let receiverEmail = to.email;
+        let receiverEmail = user.email;
         if (context.overrideReceiverEmail) {
             receiverEmail = context.overrideReceiverEmail;
             logger.info(`When sending out ConcreteNotification(${concreteID}) the Receiver was overriden to '${receiverEmail}'`);

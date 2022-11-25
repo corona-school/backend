@@ -259,21 +259,21 @@ async function deliverNotification(
     };
 
     try {
-        const newUser = getUserForTypeORM(user);
-        const channelsToSendTo = channels.filter((it) => it.canSend(notification, newUser));
+        const legacyUser = getUserForTypeORM(user);
+        const channelsToSendTo = channels.filter((it) => it.canSend(notification, legacyUser));
         if (!channelsToSendTo || channelsToSendTo.length === 0) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
         if (notification.hookID) {
-            await triggerHook(notification.hookID, newUser);
+            await triggerHook(notification.hookID, legacyUser);
         }
 
         // TODO: Check if user silenced this notification
 
         await Promise.all(
             channelsToSendTo.map(async (channel) => {
-                await channel.send(notification, user, context, concreteNotification.id, attachments, newUser);
+                await channel.send(notification, legacyUser, context, concreteNotification.id, attachments);
             })
         );
 

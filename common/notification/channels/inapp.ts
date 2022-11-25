@@ -5,7 +5,7 @@ import { User } from '../../user';
 
 export const inAppChannel: Channel = {
     type: 'inapp',
-    async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup, user?: User): Promise<void> {
+    async send(notification: Notification, user: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<void> {
         const ws = WebSocketService.getInstance();
         const message: Message = {
             concreteNotificationId: concreteID,
