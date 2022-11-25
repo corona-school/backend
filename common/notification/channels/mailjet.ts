@@ -114,7 +114,7 @@ export const mailjetChannel: Channel = {
         logger.info(`Sent Mail(${message.TemplateID})`);
     },
 
-    canSend: (notification: Notification) => {
+    canSend: (notification: Notification, _user: User) => {
         return notification.mailjetTemplateId !== undefined;
     },
 };

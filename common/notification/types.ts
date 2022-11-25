@@ -65,7 +65,7 @@ export interface Context extends NotificationContext {
 export interface Channel {
     type: 'mailjet' | 'inapp';
     send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification, user?: User): boolean;
+    canSend(notification: Notification, user: User): boolean;
 }
 
 export interface BulkAction<Entity> {

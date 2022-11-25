@@ -12,7 +12,7 @@ export const inAppChannel: Channel = {
         };
         await ws.sendMessageToUser(to.userID, message);
     },
-    canSend: (_notification: Notification, user?: User) => {
+    canSend: (_notification: Notification, user: User) => {
         const ws = WebSocketService.getInstance();
         return ws.isUserOnline(user.userID);
     },
