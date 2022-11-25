@@ -100,18 +100,13 @@ class WebSocketService {
             try {
                 let sessionUser: GraphQLUser;
 
-                if (request.headers['authorization'] && request.headers['authorization'].startsWith('Bearer ')) {
-                    const sessionToken = request.headers['authorization'].slice('Bearer '.length);
-                    log.debug(`Session token: ${sessionToken}`);
-
-                    if (sessionToken.length < 20) {
-                        throw new Error('Session Tokens must have at least 20 characters');
-                    }
-
-                    sessionUser = await getUserForSession(sessionToken);
-                    log.debug(`Session user: ${JSON.stringify(sessionUser)}`);
+                const { userId, sessionToken } = getParamsFromConnectionRequest(request.url);
+                log.debug(`Session token: ${sessionToken}`);
+                if (sessionToken.length < 20) {
+                    throw new Error('Session Tokens must have at least 20 characters');
                 }
-                const userId = getUserIdFromConnectionRequest(request.url);
+                sessionUser = await getUserForSession(sessionToken);
+                log.debug(`Session user: ${JSON.stringify(sessionUser)}`);
                 if (userId !== sessionUser.userID) {
                     throw new Error('Session user does not match user id from connection request parameter');
                 }
@@ -140,14 +135,15 @@ class WebSocketService {
     }
 }
 
-function getUserIdFromConnectionRequest(requestUrl: string | undefined) {
+function getParamsFromConnectionRequest(requestUrl: string | undefined): { sessionToken: string; userId: string } {
     // Looks a bit ugly but this is trimming the leading "/" in the request url
     const searchParams = new URLSearchParams(requestUrl.slice(1));
-    if (!requestUrl || !searchParams.has('id')) {
+    if (!requestUrl || !searchParams.has('id') || !!searchParams.has('token')) {
         throw new Error(`Inavlid websocket connection request url: ${requestUrl}`);
     }
     const userId = searchParams.get('id');
-    return userId;
+    const sessionToken = searchParams.get('token');
+    return { sessionToken, userId };
 }
 
 export { WebSocketService };
