@@ -77,7 +77,7 @@ class WebSocketService {
         try {
             const connections = this.getConnectionsByUserId(userId);
             if (!connections) {
-                throw new Error('No connections found.');
+                throw new Error(`No connections found for user with userId: ${userId}`);
             }
             for await (let [_, connection] of connections) {
                 return new Promise((resolve, reject) => {
