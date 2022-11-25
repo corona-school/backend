@@ -10,6 +10,7 @@ import { cleanupSecrets } from '../common/secret';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import { runInterestConfirmations } from '../common/match/pool';
+import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
@@ -34,6 +35,7 @@ export const allJobs: CSCronJob[] = [
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', jobFunction: Notification.checkReminders },
     // each night - database cleanups
+    { cronTime: '00 00 05 * * *', jobFunction: anonymiseAttendanceLog },
     { cronTime: '00 00 04 * * *', jobFunction: cleanupSecrets },
     { cronTime: '00 00 02 * * *', jobFunction: redactInactiveAccounts },
     { cronTime: '00 00 01 * * *', jobFunction: dropOldNotificationContexts },
