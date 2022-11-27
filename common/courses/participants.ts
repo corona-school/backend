@@ -179,7 +179,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         });
         logger.debug(`Found ${pupilSubCourseCount} active subcourses where the Pupil(${pupil.id}) participates`);
 
-        if (pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
+        if (strict && pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
             throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
