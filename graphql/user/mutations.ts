@@ -95,9 +95,16 @@ export class MutateUserResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async userContactSupport(@Ctx() context: GraphQLContext, @Arg('message') message: SupportMessage) {
+        let body =
+            message.message +
+            `\n\n\n` +
+            `+------ Tech-Team Infos ------------------------+\n` +
+            `SessionID: ${context.sessionToken ? toPublicToken(context.sessionToken) : '-'}\n` +
+            `Roles: ${context.user.roles.join(', ')}\n`;
+
         await mailjet.sendPure(
             `User-App - ${getFullName(context.user!)} - ${message.subject}`,
-            message.message,
+            body,
             /* from */ DEFAULTSENDERS.noreply,
             /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
             /* from name */ 'User-App Kontaktformular',
