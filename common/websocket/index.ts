@@ -2,7 +2,7 @@ import { Server } from 'http';
 import { getLogger } from 'log4js';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as createUuid } from 'uuid';
-import { getUserForSession, GraphQLUser } from '../../graphql/authentication';
+import { getUserForSession, GraphQLUser } from '../user/session';
 
 type UserId = string;
 type ConnectionId = string;
@@ -14,7 +14,7 @@ interface ExtendedWebsocket extends WebSocket {
 
 type ConnectedUsers = Map<UserId, Map<ConnectionId, ExtendedWebsocket>>;
 
-type Message = {
+export type Message = {
     concreteNotificationId: number;
 };
 
@@ -73,13 +73,24 @@ class WebSocketService {
      * @param userId - user id
      * @param message - websocket message with notification id
      */
-    sendMessageToUser(userId: string, message: Message): void {
-        const connections = this.getConnectionsByUserId(userId);
-        if (!connections) {
-            throw new Error('No connections found.');
-        }
-        for (let [_, connection] of connections) {
-            connection.send(message, (err) => log.error(`Error while sending websocket message: ${err.message}`));
+    async sendMessageToUser(userId: string, message: Message): Promise<void> {
+        try {
+            const connections = this.getConnectionsByUserId(userId);
+            if (!connections) {
+                throw new Error(`No connections found for user with userId: ${userId}`);
+            }
+            for await (let [_, connection] of connections) {
+                return new Promise((resolve, reject) => {
+                    connection.send(message, (err?: Error) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        resolve();
+                    });
+                });
+            }
+        } catch (err) {
+            log.error(`Error while sending websocket message: ${err.message}`);
         }
     }
 

@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -11,11 +11,12 @@ import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
+import { inAppChannel } from './channels/inapp';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel];
+const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -244,33 +245,38 @@ async function createConcreteNotification(
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    user: Person,
+    legacyUser: Person,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
     const context: Context = {
         ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken ?? '',
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
         USER_APP_DOMAIN,
     };
 
     try {
-        const channel = channels.find((it) => it.canSend(notification));
-        if (!channel) {
+        const user = getUserForTypeORM(legacyUser);
+        const channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
+        if (!channelsToSendTo || channelsToSendTo.length === 0) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
 
         if (notification.hookID) {
-            const newUser = getUserForTypeORM(user);
-            await triggerHook(notification.hookID, newUser);
+            await triggerHook(notification.hookID, user);
         }
 
         // TODO: Check if user silenced this notification
 
-        await channel.send(notification, user, context, concreteNotification.id, attachments);
+        await Promise.all(
+            channelsToSendTo.map(async (channel) => {
+                await channel.send(notification, user, context, concreteNotification.id, attachments);
+            })
+        );
+
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
@@ -284,9 +290,9 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 
         await prisma.concrete_notification.update({
             data: {
