@@ -212,6 +212,43 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async ongoingLecture(@Root() subcourse: Subcourse) {
+        // It is assumed that only one lecture can happen at a time
+
+        // It might be desirable to show a lecture as ongoing right before it starts,
+        // so that users can prepare:
+        const SLACK = 10; /* minutes */
+
+        const inNMinutes = new Date();
+        inNMinutes.setMinutes(inNMinutes.getMinutes() + SLACK);
+
+        // Get the lecture that started last, not necessarily still ongoing
+        const firstStarted = await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+                start: { lte: inNMinutes },
+            },
+            orderBy: { start: 'asc' },
+        });
+
+        if (!firstStarted) {
+            return null;
+        }
+
+        const endsAt = new Date(firstStarted.createdAt);
+        endsAt.setMinutes(endsAt.getMinutes() + firstStarted.duration + SLACK);
+
+        if (+endsAt < Date.now()) {
+            // Lecture already ended
+            return null;
+        }
+
+        return firstStarted;
+    }
+
     @FieldResolver((returns) => [Participant])
     @Authorized(Role.OWNER)
     @LimitEstimated(100)
