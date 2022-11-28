@@ -20,4 +20,6 @@ export class UserType implements User {
     student?: Student;
     @Field({ nullable: true })
     screener?: Screener;
+    @Field({ nullable: true })
+    lastTimeCheckedNotifications?: Date;
 }

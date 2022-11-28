@@ -59,11 +59,27 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     aboutMe?: string;
+
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext('Pupil', context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype, languages, aboutMe } = update;
+    const {
+        subjects,
+        gradeAsInt,
+        projectFields,
+        firstname,
+        lastname,
+        registrationSource,
+        email,
+        state,
+        schooltype,
+        languages,
+        aboutMe,
+        lastTimeCheckedNotifications,
+    } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
@@ -91,6 +107,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             schooltype: ensureNoNull(schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
+            lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
         },
         where: { id: pupil.id },
     });

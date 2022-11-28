@@ -66,6 +66,13 @@ export abstract class Person {
         default: false,
     })
     isRedacted: boolean;
+
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+        default: new Date(),
+    })
+    lastTimeCheckedNotifications: Date;
 }
 
 export enum RegistrationSource {
