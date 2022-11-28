@@ -149,7 +149,7 @@ class WebSocketService {
 function getParamsFromConnectionRequest(requestUrl: string | undefined): { sessionToken: string; userId: string } {
     // Looks a bit ugly but this is trimming the leading "/" in the request url
     const searchParams = new URLSearchParams(requestUrl.slice(1));
-    if (!requestUrl || !searchParams.has('id') || !!searchParams.has('token')) {
+    if (!requestUrl || !searchParams.has('id') || !searchParams.has('token')) {
         throw new Error(`Inavlid websocket connection request url: ${requestUrl}`);
     }
     const userId = searchParams.get('id');
