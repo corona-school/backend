@@ -1,10 +1,10 @@
-import LogUserEvent from "./LogUserEvent";
-import { Pupil } from "../../entity/Pupil";
-import { Student } from "../../entity/Student";
-import LogType from "./LogType";
+import LogUserEvent from './LogUserEvent';
+import { Pupil } from '../../entity/Pupil';
+import { Student } from '../../entity/Student';
+import LogType from './LogType';
 
 export default class UpdatedByScreenerEvent extends LogUserEvent {
-    constructor(user: Pupil | Student, screener: string, changes?: {prev: any, new: any}) {
-        super(LogType.UPDATED_BY_SCREENER, user, { screener: screener, changes: changes});
+    constructor({ wix_id }: Pupil | Student, screener: string) {
+        super(LogType.UPDATED_BY_SCREENER, wix_id, { screener });
     }
 }
