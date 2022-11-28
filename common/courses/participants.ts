@@ -161,7 +161,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
-        if (participantCount > subcourse.maxParticipants) {
+        if (strict && participantCount > subcourse.maxParticipants) {
             throw new CapacityReachedError(`Subcourse is full`);
         }
 
