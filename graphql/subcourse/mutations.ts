@@ -305,7 +305,7 @@ export class MutateSubcourseResolver {
     async subcourseJoinManual(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
-        @Arg('pupilId', { nullable: false }) pupilId?: number
+        @Arg('pupilId', { nullable: false }) pupilId: number
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
