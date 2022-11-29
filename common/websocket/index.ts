@@ -68,6 +68,14 @@ class WebSocketService {
         return this.connectedUsers.get(userId);
     }
 
+    private logConnections() {
+        const connections = {};
+        this.getConnectedUsers().forEach((connection, userid) => (connections[userid] = [...connection.keys()]));
+
+        log.debug(`Connected user ids: ${[...this.getConnectedUsers().keys()]}`);
+        log.debug('Websocket connections: ', JSON.stringify(connections));
+    }
+
     /**
      * Sends a message to all websocket clients of a user that are connected
      * @param userId - user id
@@ -81,7 +89,7 @@ class WebSocketService {
             }
             for await (let [_, connection] of connections) {
                 return new Promise((resolve, reject) => {
-                    connection.send(message, (err?: Error) => {
+                    connection.send(JSON.stringify(message), (err?: Error) => {
                         if (err) {
                             reject(err);
                         }
@@ -127,8 +135,7 @@ class WebSocketService {
                 ws['connectionId'] = connectionId;
                 this.addConnection(userId, ws);
                 log.info(`Connected websocket client with userId: ${userId} and connectionId: ${connectionId}`);
-                log.debug(`Websocket users: ${[...this.getConnectedUsers().keys()]}`);
-                log.debug(`Websocket connections: ${JSON.stringify([this.getConnectedUsers().values()])}`);
+                this.logConnections();
             } catch (err) {
                 if (!!err?.message) {
                     log.error(`Error in websocket service: ${err.message}`);
@@ -140,7 +147,7 @@ class WebSocketService {
             ws.on('close', () => {
                 this.removeConnection(ws.userId, ws.connectionId);
                 log.info(`Closing connection with id: ${ws.connectionId}`);
-                log.debug(`Connected user ids: ${[...this.getConnectedUsers().keys()]}`);
+                this.logConnections();
             });
         });
     }
@@ -150,7 +157,7 @@ function getParamsFromConnectionRequest(requestUrl: string | undefined): { sessi
     // Looks a bit ugly but this is trimming the leading "/" in the request url
     const searchParams = new URLSearchParams(requestUrl.slice(1));
     if (!requestUrl || !searchParams.has('id') || !searchParams.has('token')) {
-        throw new Error(`Inavlid websocket connection request url: ${requestUrl}`);
+        throw new Error(`Invalid websocket connection request url: ${requestUrl}`);
     }
     const userId = searchParams.get('id');
     const sessionToken = searchParams.get('token');
