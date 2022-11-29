@@ -296,7 +296,20 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
-        await joinSubcourse(subcourse, pupil);
+        await joinSubcourse(subcourse, pupil, true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async subcourseJoinManual(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourse(subcourse, pupil, false);
         return true;
     }
 
