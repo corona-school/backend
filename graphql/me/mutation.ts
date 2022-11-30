@@ -132,6 +132,9 @@ class MeUpdateInput {
     @MaxLength(100)
     lastname?: string;
 
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
+
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()
     pupil?: PupilUpdateInput;
@@ -289,7 +292,7 @@ export class MutateMeResolver {
     async meUpdate(@Ctx() context: GraphQLContext, @Arg('update') update: MeUpdateInput) {
         const log = logInContext('Me', context);
 
-        const { firstname, lastname, pupil, student } = update;
+        const { firstname, lastname, lastTimeCheckedNotifications, pupil, student } = update;
 
         if (isSessionPupil(context)) {
             const prevPupil = await getSessionPupil(context);
@@ -298,7 +301,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            await updatePupil(context, prevPupil, { firstname, lastname, ...pupil });
+            await updatePupil(context, prevPupil, { firstname, lastname, lastTimeCheckedNotifications, ...pupil });
             return true;
         }
 
@@ -309,7 +312,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, { firstname, lastname, ...student });
+            await updateStudent(context, prevStudent, { firstname, lastname, lastTimeCheckedNotifications, ...student });
             return true;
         }
 

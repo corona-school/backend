@@ -233,28 +233,29 @@ model match {
 }
 
 model mentor {
-  id                 Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
-  createdAt          DateTime                @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime                @default(now()) @db.Timestamp(6)
-  firstname          String?                 @db.VarChar
-  lastname           String?                 @db.VarChar
-  active             Boolean                 @default(true)
-  email              String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
-  verification       String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
-  verifiedAt         DateTime?               @db.Timestamp(6)
-  authToken          String?                 @unique(map: "IDX_d6c74ee02bc266daf510d3ef2a") @db.VarChar
-  authTokenUsed      Boolean                 @default(false)
-  authTokenSent      DateTime?               @db.Timestamp(6)
-  wix_id             String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
-  wix_creation_date  DateTime                @db.Timestamp(6)
-  division           mentor_division_enum[]
-  expertise          mentor_expertise_enum[]
-  subjects           String?                 @db.VarChar
-  teachingExperience Boolean?
-  message            String?                 @db.VarChar
-  description        String?                 @db.VarChar
-  imageUrl           String?                 @db.VarChar
-  isRedacted         Boolean                 @default(false)
+  id                           Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
+  createdAt                    DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                @default(now()) @db.Timestamp(6)
+  firstname                    String?                 @db.VarChar
+  lastname                     String?                 @db.VarChar
+  active                       Boolean                 @default(true)
+  email                        String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
+  verification                 String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
+  verifiedAt                   DateTime?               @db.Timestamp(6)
+  authToken                    String?                 @unique(map: "IDX_d6c74ee02bc266daf510d3ef2a") @db.VarChar
+  authTokenUsed                Boolean                 @default(false)
+  authTokenSent                DateTime?               @db.Timestamp(6)
+  isRedacted                   Boolean                 @default(false)
+  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'2022-11-28 23:00:39.702'::timestamp without time zone")) @db.Timestamp(6)
+  wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
+  wix_creation_date            DateTime                @db.Timestamp(6)
+  division                     mentor_division_enum[]
+  expertise                    mentor_expertise_enum[]
+  subjects                     String?                 @db.VarChar
+  teachingExperience           Boolean?
+  message                      String?                 @db.VarChar
+  description                  String?                 @db.VarChar
+  imageUrl                     String?                 @db.VarChar
 }
 
 model notification {
@@ -350,6 +351,8 @@ model pupil {
   authToken                                    String?                                        @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
   authTokenUsed                                Boolean                                        @default(false)
   authTokenSent                                DateTime?                                      @db.Timestamp(6)
+  isRedacted                                   Boolean                                        @default(false)
+  lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'2022-11-28 23:00:39.702'::timestamp without time zone")) @db.Timestamp(6)
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
   state                                        pupil_state_enum                               @default(other)
@@ -386,7 +389,6 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
-  isRedacted                                   Boolean                                        @default(false)
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -424,25 +426,26 @@ model school {
 }
 
 model screener {
-  id                         Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
-  createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
-  firstname                  String?                      @db.VarChar
-  lastname                   String?                      @db.VarChar
-  active                     Boolean                      @default(true)
-  email                      String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
-  verification               String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
-  verifiedAt                 DateTime?                    @db.Timestamp(6)
-  authToken                  String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
-  authTokenUsed              Boolean                      @default(false)
-  authTokenSent              DateTime?                    @db.Timestamp(6)
-  isRedacted                 Boolean                      @default(false)
-  password                   String                       @db.VarChar
-  verified                   Boolean?                     @default(false)
-  oldNumberID                Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
-  instructor_screening       instructor_screening[]
-  project_coaching_screening project_coaching_screening[]
-  screenings                 screening[]
+  id                           Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
+  createdAt                    DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                     @default(now()) @db.Timestamp(6)
+  firstname                    String?                      @db.VarChar
+  lastname                     String?                      @db.VarChar
+  active                       Boolean                      @default(true)
+  email                        String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
+  verification                 String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
+  verifiedAt                   DateTime?                    @db.Timestamp(6)
+  authToken                    String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
+  authTokenUsed                Boolean                      @default(false)
+  authTokenSent                DateTime?                    @db.Timestamp(6)
+  isRedacted                   Boolean                      @default(false)
+  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'2022-11-28 23:00:39.702'::timestamp without time zone")) @db.Timestamp(6)
+  password                     String                       @db.VarChar
+  verified                     Boolean?                     @default(false)
+  oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
+  instructor_screening         instructor_screening[]
+  project_coaching_screening   project_coaching_screening[]
+  screenings                   screening[]
 }
 
 model screening {
@@ -471,6 +474,8 @@ model student {
   authToken                                 String?                                @unique(map: "IDX_f4d0994b549167f69e3cec7c00") @db.VarChar
   authTokenUsed                             Boolean                                @default(false)
   authTokenSent                             DateTime?                              @db.Timestamp(6)
+  isRedacted                                Boolean                                @default(false)
+  lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'2022-11-28 23:00:39.702'::timestamp without time zone")) @db.Timestamp(6)
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
   phone                                     String?                                @db.VarChar
@@ -522,7 +527,6 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-  isRedacted                                Boolean                                @default(false)
 }
 
 model subcourse {

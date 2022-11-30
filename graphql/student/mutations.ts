@@ -78,11 +78,14 @@ export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     aboutMe?: string;
+
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications: Date;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, lastTimeCheckedNotifications } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -109,6 +112,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
+            lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
         },
         where: { id: student.id },
     });
