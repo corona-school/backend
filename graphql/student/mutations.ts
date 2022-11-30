@@ -80,7 +80,6 @@ export class StudentUpdateInput {
     aboutMe?: string;
 
     @Field((type) => Date, { nullable: true })
-    @MaxLength(100)
     lastTimeCheckedNotifications: Date;
 }
 
