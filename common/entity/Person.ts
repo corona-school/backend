@@ -73,6 +73,9 @@ export abstract class Person {
         default: new Date(),
     })
     lastTimeCheckedNotifications: Date;
+
+    @Column({ nullable: true })
+    notificationPreferences: string;
 }
 
 export enum RegistrationSource {

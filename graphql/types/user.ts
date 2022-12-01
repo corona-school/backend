@@ -22,4 +22,6 @@ export class UserType implements User {
     screener?: Screener;
     @Field({ nullable: true })
     lastTimeCheckedNotifications?: Date;
+    @Field({ nullable: true })
+    notificationPreferences?: string;
 }

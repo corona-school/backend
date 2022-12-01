@@ -22,6 +22,7 @@ import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils'
 import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { Preferences } from '../types/preferences';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -81,6 +82,9 @@ export class StudentUpdateInput {
 
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications: Date;
+
+    @Field((type) => [Preferences], { nullable: true })
+    notificationPreferences?: Preferences[];
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {

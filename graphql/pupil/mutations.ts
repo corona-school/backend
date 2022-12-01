@@ -23,6 +23,7 @@ import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { Preferences } from '../types/preferences';
 
 @InputType()
 export class PupilUpdateInput {
@@ -62,6 +63,9 @@ export class PupilUpdateInput {
 
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
+
+    @Field((type) => [Preferences], { nullable: true })
+    notificationPreferences?: Preferences[];
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
@@ -79,6 +83,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         languages,
         aboutMe,
         lastTimeCheckedNotifications,
+        notificationPreferences,
     } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
