@@ -1,18 +1,30 @@
 import { Role } from '../authorizations';
 import { RateLimit } from '../rate-limit';
-import { Mutation, Resolver, Arg, Authorized, Ctx } from 'type-graphql';
+import { Mutation, Resolver, Arg, Authorized, Ctx, InputType, Field } from 'type-graphql';
 import { UserType } from '../types/user';
 import { isEmailAvailable } from '../../common/user/email';
 import { determinePreferredLoginOption, LoginOption } from '../../common/secret';
-import { getUserByEmail } from '../../common/user';
+import { getFullName, getUserByEmail } from '../../common/user';
 import { GraphQLContext } from '../context';
 import { toPublicToken } from '../authentication';
 import mailjet from '../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../common/mails/config';
 import { getLogger } from 'log4js';
 import { isDev } from '../../common/util/environment';
+import { Length } from 'class-validator';
 
 const logger = getLogger('MutateUser');
+
+@InputType()
+class SupportMessage {
+    @Field()
+    @Length(/* min */ 1, /* max */ 10_000)
+    message: string;
+
+    @Field()
+    @Length(/* min */ 1, /* max */ 200)
+    subject: string;
+}
 
 @Resolver((of) => UserType)
 export class MutateUserResolver {
@@ -76,6 +88,30 @@ export class MutateUserResolver {
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
         }
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userContactSupport(@Ctx() context: GraphQLContext, @Arg('message') message: SupportMessage) {
+        let body =
+            message.message +
+            `\n\n\n` +
+            `+------ Tech-Team Infos ------------------------+\n` +
+            `SessionID: ${context.sessionToken ? toPublicToken(context.sessionToken) : '-'}\n` +
+            `Roles: ${context.user.roles.join(', ')}\n`;
+
+        await mailjet.sendPure(
+            `User-App - ${getFullName(context.user!)} - ${message.subject}`,
+            body,
+            /* from */ DEFAULTSENDERS.noreply,
+            /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
+            /* from name */ 'User-App Kontaktformular',
+            /* to name */ `Das beste Supportteam der Welt`,
+            /* reply to */ context.user!.email,
+            /* reply to name */ getFullName(context.user!)
+        );
 
         return true;
     }

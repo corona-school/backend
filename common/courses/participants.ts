@@ -150,9 +150,10 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
-    if (!canJoin.allowed) {
+
+    if (strict && !canJoin.allowed) {
         throw new PrerequisiteError(canJoin.reason);
     }
 
@@ -160,7 +161,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
-        if (participantCount > subcourse.maxParticipants) {
+        if (strict && participantCount > subcourse.maxParticipants) {
             throw new CapacityReachedError(`Subcourse is full`);
         }
 
@@ -178,7 +179,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         });
         logger.debug(`Found ${pupilSubCourseCount} active subcourses where the Pupil(${pupil.id}) participates`);
 
-        if (pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
+        if (strict && pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
             throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
@@ -271,7 +272,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil);
+            await joinSubcourse(subcourse, pupil, true);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }

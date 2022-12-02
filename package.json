@@ -102,6 +102,8 @@
     "@typescript-eslint/eslint-plugin": "^5.41.0",
     "apidoc": "^0.22.1",
     "eslint": "^7.2.0",
+    "eslint-import-resolver-typescript": "^3.5.2",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-lernfair-lint": "./linter/",
     "pre-commit": "^1.2.2",
     "prettier": "^2.7.1",

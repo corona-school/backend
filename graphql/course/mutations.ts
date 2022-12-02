@@ -27,10 +27,10 @@ class PublicCourseCreateInput {
     category!: 'revision' | 'club' | 'coaching';
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
-    @TypeGraphQL.Field((_type) => course_subject_enum)
-    subject?: course_subject_enum;
 
-    @TypeGraphQL.Field((_type) => course_schooltype_enum)
+    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
+    subject?: course_subject_enum;
+    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 
@@ -46,6 +46,11 @@ class PublicCourseEditInput {
     category?: 'revision' | 'club' | 'coaching';
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
+
+    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
+    subject?: course_subject_enum;
+    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 
 @InputType()
