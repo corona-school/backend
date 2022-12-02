@@ -241,7 +241,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
             lastTimeCheckedNotifications: adminOrOwner,
-
+            notificationPreferences: adminOrOwner,
             // these should look differently in a clean data model
             // by blacklisting them we prevent accidental usage
             lastUpdatedSettingsViaBlocker: nobody,
@@ -294,6 +294,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             isCodu: adminOrOwner,
             registrationSource: adminOrOwner,
             lastTimeCheckedNotifications: adminOrOwner,
+            notificationPreferences: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted

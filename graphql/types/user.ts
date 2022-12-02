@@ -15,13 +15,14 @@ export class UserType implements User {
     email: string;
 
     @Field({ nullable: true })
+    lastTimeCheckedNotifications: Date;
+    @Field({ nullable: true })
+    notificationPreferences: string;
+
+    @Field({ nullable: true })
     pupil?: Pupil;
     @Field({ nullable: true })
     student?: Student;
     @Field({ nullable: true })
     screener?: Screener;
-    @Field({ nullable: true })
-    lastTimeCheckedNotifications?: Date;
-    @Field({ nullable: true })
-    notificationPreferences?: string;
 }

@@ -10,7 +10,6 @@ class Channel {
     @Field()
     whatsapp: boolean;
 }
-
 @InputType('PreferencesInput')
 @ObjectType()
 export class Preferences {

@@ -70,13 +70,15 @@ export type User = {
     email: string;
     firstname: string;
     lastname: string;
+    lastTimeCheckedNotifications: Date;
+    notificationPreferences: string;
 
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
 };
 
-const userSelection = { id: true, firstname: true, lastname: true, email: true };
+const userSelection = { id: true, firstname: true, lastname: true, email: true, lastTimeCheckedNotifications: true, notificationPreferences: true };
 
 export async function getUser(userID: string): Promise<User> {
     const [type, _id] = userID.split('/');
@@ -119,32 +121,40 @@ export async function getUserByEmail(email: string): Promise<User> {
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email'>) {
+export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>) {
     return {
         userID: `pupil/${pupil.id}`,
         firstname: pupil.firstname,
         lastname: pupil.lastname,
         email: pupil.email,
+        lastTimeCheckedNotifications: pupil.lastTimeCheckedNotifications,
+        notificationPreferences: pupil.notificationPreferences,
         pupilId: pupil.id,
     };
 }
 
-export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email'>) {
+export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>) {
     return {
         userID: `student/${student.id}`,
         firstname: student.firstname,
         lastname: student.lastname,
         email: student.email,
+        lastTimeCheckedNotifications: student.lastTimeCheckedNotifications,
+        notificationPreferences: student.notificationPreferences,
         studentId: student.id,
     };
 }
 
-export function userForScreener(screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email'>) {
+export function userForScreener(
+    screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>
+) {
     return {
         userID: `screener/${screener.id}`,
         firstname: screener.firstname,
         lastname: screener.lastname,
         email: screener.email,
+        lastTimeCheckedNotifications: screener.lastTimeCheckedNotifications,
+        notificationPreferences: screener.notificationPreferences,
         screenerId: screener.id,
     };
 }

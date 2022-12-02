@@ -113,6 +113,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
+            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
         },
         where: { id: pupil.id },
     });

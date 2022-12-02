@@ -15,6 +15,8 @@ export const UNAUTHENTICATED_USER = {
     firstname: '',
     lastname: '',
     userID: '-/-',
+    lastTimeCheckedNotifications: new Date(),
+    notificationPreferences: '{}',
     roles: [Role.UNAUTHENTICATED],
 };
 
