@@ -258,7 +258,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
     const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
     const seatsLeft = subcourse.maxParticipants - participantCount;
     if (seatsLeft <= 0) {
-        throw new Error(`Subcourse(${subcourse.id}) is full`);
+        return;
     }
 
     logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
