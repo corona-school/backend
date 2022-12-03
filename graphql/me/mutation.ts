@@ -45,13 +45,14 @@ import '../types/enums';
 import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
-import { evaluatePupilRoles } from '../roles';
+import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
+import { deactivateStudent } from '../../common/student/activation';
 
 @InputType()
 class RegisterStudentInput implements RegisterStudentData {
@@ -318,19 +319,25 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext) {
+    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
         const log = logInContext('Me', context);
 
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil);
+            const updatedPupil = await deactivatePupil(pupil, reason);
             await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
         }
 
-        // TODO: Student deactivation
+        if (isSessionStudent(context)) {
+            const student = await getSessionStudent(context);
+            const updatedStudent = await deactivateStudent(student, false, reason);
+            await evaluateStudentRoles(updatedStudent, context);
+            log.info(`Student(${student.id}) deactivated their account`);
+            return true;
+        }
 
         throw new Error(`This mutation is currently not supported for this user type`);
     }
