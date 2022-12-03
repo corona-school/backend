@@ -279,9 +279,9 @@ export class MutateSubcourseResolver {
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } else if (subcourse.published) {
+        } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        }
+        } */
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
