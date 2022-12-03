@@ -56,8 +56,6 @@ export default async function injectContext({ req }) {
             firstname: 'Ed',
             lastname: 'Min',
             email: 'test@lern-fair.de',
-            lastTimeCheckedNotifications: new Date(),
-            notificationPreferences: null,
             roles: [Role.ADMIN, Role.UNAUTHENTICATED],
         };
 

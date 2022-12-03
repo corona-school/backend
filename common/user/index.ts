@@ -70,15 +70,13 @@ export type User = {
     email: string;
     firstname: string;
     lastname: string;
-    lastTimeCheckedNotifications: Date;
-    notificationPreferences: string;
 
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
 };
 
-const userSelection = { id: true, firstname: true, lastname: true, email: true, lastTimeCheckedNotifications: true, notificationPreferences: true };
+const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export async function getUser(userID: string): Promise<User> {
     const [type, _id] = userID.split('/');
@@ -121,40 +119,32 @@ export async function getUserByEmail(email: string): Promise<User> {
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>) {
+export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `pupil/${pupil.id}`,
         firstname: pupil.firstname,
         lastname: pupil.lastname,
         email: pupil.email,
-        lastTimeCheckedNotifications: pupil.lastTimeCheckedNotifications,
-        notificationPreferences: pupil.notificationPreferences,
         pupilId: pupil.id,
     };
 }
 
-export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>) {
+export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `student/${student.id}`,
         firstname: student.firstname,
         lastname: student.lastname,
         email: student.email,
-        lastTimeCheckedNotifications: student.lastTimeCheckedNotifications,
-        notificationPreferences: student.notificationPreferences,
         studentId: student.id,
     };
 }
 
-export function userForScreener(
-    screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email' | 'lastTimeCheckedNotifications' | 'notificationPreferences'>
-) {
+export function userForScreener(screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email'>) {
     return {
         userID: `screener/${screener.id}`,
         firstname: screener.firstname,
         lastname: screener.lastname,
         email: screener.email,
-        lastTimeCheckedNotifications: screener.lastTimeCheckedNotifications,
-        notificationPreferences: screener.notificationPreferences,
         screenerId: screener.id,
     };
 }
@@ -219,4 +209,31 @@ export function userSearch(search?: string): PrismaTypes.pupilWhereInput | Prism
             lastname: { contains: lastWord, mode: 'insensitive' },
         };
     }
+}
+
+type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
+
+export async function queryUser<Select extends UserSelect>(user: User, select: Select) {
+    if (user.studentId) {
+        return await prisma.student.findUnique({
+            where: { id: user.studentId },
+            select,
+        });
+    }
+
+    if (user.pupilId) {
+        return await prisma.pupil.findUnique({
+            where: { id: user.pupilId },
+            select,
+        });
+    }
+
+    if (user.screenerId) {
+        return await prisma.screener.findUnique({
+            where: { id: user.screenerId },
+            select,
+        });
+    }
+
+    throw new Error(`Unknown User(${user.userID})`);
 }

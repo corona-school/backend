@@ -5,10 +5,11 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { User, userForPupil, userForStudent } from '../../common/user';
+import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
 import { UserType } from '../types/user';
 import { getDummyConcreteNotifications } from '../concrete_notification/dummy_data';
+import { JSONResolver } from 'graphql-scalars';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -78,6 +79,18 @@ export class UserFieldsResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async concreteNotifications(@Root() user: User): Promise<ConcreteNotification[]> {
         return getDummyConcreteNotifications(user.userID);
+    }
+
+    @FieldResolver((returns) => Date, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async lastTimeCheckedNotifications(@Root() user: User): Promise<Date | null> {
+        return (await queryUser(user, { lastTimeCheckedNotifications: true })).lastTimeCheckedNotifications;
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async notificationPreferences(@Root() user: User) {
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences;
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
