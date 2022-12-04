@@ -3,6 +3,8 @@
 
 import { Pupil as TypeORMPupil } from '../entity/Pupil';
 import { Student as TypeORMStudent } from '../entity/Student';
+import { Screener as TypeORMScreener } from '../entity/Screener';
+
 import { getManager } from 'typeorm';
 
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
@@ -38,7 +40,7 @@ export function getUserIdTypeORM(person: Person) {
     throw new Error(`Person was neither a Student or a Pupil`);
 }
 
-export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | never> {
+export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | TypeORMScreener | never> {
     const [type, id] = userID.split('/');
     const manager = getManager();
     if (type === 'student') {
@@ -49,6 +51,9 @@ export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | T
         return await manager.findOneOrFail(TypeORMPupil, { where: { id } });
     }
 
+    if (type === 'screener') {
+        return await manager.findOneOrFail(TypeORMScreener, { where: { id } });
+    }
     throw new Error(`Unknown User(${userID})`);
 }
 
