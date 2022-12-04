@@ -102,8 +102,10 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext) {
-    ensureSession(context);
+export async function loginAsUser(user: User, context: GraphQLContext, noSession = false) {
+    if (!noSession) {
+        ensureSession(context);
+    }
 
     context.user = { ...user, roles: [] };
 
@@ -121,12 +123,20 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
         await evaluateScreenerRoles(user, context);
     }
 
-    userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    if (!noSession) {
+        userSessions.set(context.sessionToken, context.user);
+        logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    }
 }
 
 @Resolver((of) => UserType)
 export class AuthenticationResolver {
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => String)
+    suggestSessionToken() {
+        return suggestToken();
+    }
+
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     @Deprecated('use loginPassword or loginToken instead')
@@ -223,12 +233,21 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
+    createCookieSession(@Ctx() context: GraphQLContext) {
+        context.sessionToken = suggestToken();
+        context.setCookie('LERNFAIR_SESSION', context.sessionToken);
+        return true;
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
         ensureSession(context);
 
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
+
             return true;
         } catch (error) {
             throw new AuthenticationError('Invalid E-Mail or Password');

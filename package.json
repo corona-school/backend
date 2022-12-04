@@ -47,6 +47,7 @@
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "class-validator": "^0.13.1",
+    "cookie-parser": "^1.4.6",
     "corona-school-matching": "1.2.0",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
