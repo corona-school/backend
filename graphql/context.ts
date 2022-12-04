@@ -3,9 +3,11 @@ import { prisma } from '../common/prisma';
 import { getLogger } from 'log4js';
 import basicAuth from 'basic-auth';
 import * as crypto from 'crypto';
-import { getUserForSession, GraphQLUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
+import { getUserForSession, GraphQLUser, loginAsUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
 import { AuthenticationError } from 'apollo-server-errors';
 import { Role } from './roles';
+import { loginPassword } from '../common/secret';
+import { Request, Response } from 'express';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -29,6 +31,7 @@ export interface GraphQLContext {
     prisma: PrismaClient;
     deferredRequiredRoles?: Role[];
     ip: string;
+    setCookie(key: string, value: string);
 }
 
 const authLogger = getLogger('GraphQL Authentication');
@@ -37,13 +40,17 @@ if (!process.env.ADMIN_AUTH_TOKEN) {
     authLogger.warn('Missing ADMIN_AUTH_TOKEN, Admin API access is disabled');
 }
 
-export default async function injectContext({ req }) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+export default async function injectContext({ req, res }: { req: Request; res: Response }) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
     const auth = basicAuth(req);
 
-    let user: GraphQLUser = UNAUTHENTICATED_USER;
-
-    let sessionToken: string | undefined = undefined;
+    const context: GraphQLContext = {
+        user: UNAUTHENTICATED_USER,
+        prisma,
+        sessionToken: undefined,
+        ip,
+        setCookie: (key, value) => res.cookie(key, value, { secure: true }),
+    };
 
     if (process.env.ADMIN_AUTH_TOKEN && auth && auth.name === 'admin') {
         if (!timingSafeCompare(process.env.ADMIN_AUTH_TOKEN, auth.pass)) {
@@ -51,7 +58,7 @@ export default async function injectContext({ req }) {
             throw new AuthenticationError('Invalid Admin Password');
         }
 
-        user = {
+        context.user = {
             userID: 'admin/',
             firstname: 'Ed',
             lastname: 'Min',
@@ -61,23 +68,36 @@ export default async function injectContext({ req }) {
 
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
-        sessionToken = req.headers['authorization'].slice('Bearer '.length);
+        context.sessionToken = req.headers['authorization'].slice('Bearer '.length);
 
-        if (sessionToken.length < 20) {
+        if (context.sessionToken.length < 20) {
             throw new AuthenticationError('Session Tokens must have at least 20 characters');
         }
 
-        const sessionUser = await getUserForSession(sessionToken);
+        const sessionUser = await getUserForSession(context.sessionToken);
 
         if (!sessionUser) {
-            authLogger.info(`Unauthenticated Session(${toPublicToken(sessionToken)}) started from ${ip}`);
+            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
         } else {
-            user = sessionUser;
+            context.user = sessionUser;
+        }
+    } else if (req.cookies['LERNFAIR_SESSION']) {
+        context.sessionToken = req.cookies['LERNFAIR_SESSION'];
+
+        if (context.sessionToken.length < 20) {
+            throw new AuthenticationError('Session Tokens must have at least 20 characters');
+        }
+
+        const sessionUser = await getUserForSession(context.sessionToken);
+
+        if (!sessionUser) {
+            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
+        } else {
+            context.user = sessionUser;
         }
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
 
-    const context: GraphQLContext = { user, prisma, sessionToken, ip };
     return context;
 }
