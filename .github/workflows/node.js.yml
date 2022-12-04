@@ -5,37 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  install: 
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v2
-        with:
-          path: ./node_modules
-          key: modules-${{ hashFiles('package-lock.json') }}
-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
-
-      - name: Regenerate Prisma if node_modules were cached
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: npx prisma generate
-
-  build:
-    runs-on: ubuntu-20.04
-    needs: install
-    steps:
-      - run: npm run build --if-present
-
   integration:
-    needs: build
     runs-on: ubuntu-20.04
 
     strategy:
@@ -54,6 +24,27 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
+
+      - name: Install Prisma
+        run: npx prisma generate
+
+      - run: npm run build --if-present
       - run: (npm run web:nopdf &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &) || exit 0
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
@@ -67,6 +58,25 @@ jobs:
 
   lint:
     runs-on: ubuntu-20.04
-    needs: install
+
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
+
+      - name: Install Prisma
+        run: npx prisma generate
+
       - run: npm run linter
