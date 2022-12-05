@@ -8,7 +8,6 @@ import { getSecrets } from '../../common/secret';
 import { User, userForPupil, userForStudent } from '../../common/user';
 import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
 import { UserType } from '../types/user';
-import { getDummyConcreteNotifications } from '../concrete_notification/dummy_data';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -77,7 +76,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [ConcreteNotification])
     @Authorized(Role.OWNER, Role.ADMIN)
     async concreteNotifications(@Root() user: User): Promise<ConcreteNotification[]> {
-        return getDummyConcreteNotifications(user.userID);
+        return await prisma.concrete_notification.findMany({ where: { userId: user.userID } });
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
