@@ -7,7 +7,6 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { getMessage, MessageTemplate } from '../../notifications/templates';
-import { NotificationContext } from '../../common/notification/types';
 
 @ObjectType()
 class Campaign {
