@@ -5,10 +5,6 @@ import { Field, InputType, ObjectType } from 'type-graphql';
 class Channel {
     @Field()
     email: boolean;
-    @Field()
-    chat: boolean;
-    @Field()
-    whatsapp: boolean;
 }
 @InputType('PreferencesInput')
 @ObjectType()

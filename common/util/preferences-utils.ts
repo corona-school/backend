@@ -1,7 +1,5 @@
 type ChannelPreference = {
     email: boolean;
-    chat: boolean;
-    whatsapp: boolean;
 };
 
 type PreferenceCategories = 'chat' | 'match' | 'course' | 'appointment' | 'survey' | 'news';
