@@ -1,9 +1,9 @@
 export enum MessageType {
-    MESSAGE,
-    MATCH,
-    COURSE,
-    APPOINTMENT,
-    SURVEY,
-    NEWS,
-    CHAT,
+    MESSAGE = 'MessageType.MESSAGE',
+    MATCH = 'MessageType.MATCH',
+    COURSE = 'MessageType.COURSE',
+    APPOINTMENT = 'MessageType.APPOINTMENT',
+    SURVEY = 'MessageType.SURVEY',
+    NEWS = 'MessageType.NEWS',
+    CHAT = 'MessageType.CHAT',
 }

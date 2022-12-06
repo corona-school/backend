@@ -39,6 +39,6 @@ export const getMessage = (notificationId: number, s: TemplateVariables): Messag
             navigateTo: 'welcome',
         },
     };
-    const key = templates.hasOwnProperty(notificationId) ? notificationId : 0;
-    return templates[key];
+    const index = templates.hasOwnProperty(notificationId) ? notificationId : 0;
+    return templates[index];
 };
