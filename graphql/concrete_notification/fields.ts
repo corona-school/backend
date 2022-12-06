@@ -7,6 +7,7 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { getMessage, MessageTemplate } from '../../notifications/templates';
+import { NotificationContext } from '../../common/notification/types';
 
 @ObjectType()
 class Campaign {
@@ -42,9 +43,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @FieldResolver((returns) => ConcreteNotification)
     @Authorized(Role.OWNER, Role.ADMIN)
     message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): MessageTemplate {
-        const { firstname, lastname } = getSessionUser(context);
-
-        return getMessage(concreteNotification.notificationID, { firstname, lastname });
+        return getMessage(concreteNotification, getSessionUser(context));
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })

@@ -1,4 +1,6 @@
 import { MessageType } from './messageTypes';
+import { GraphQLUser } from '../common/user/session';
+import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 
 // only actionPath or url is optionally allowed but not both
 type NotificationAction = { navigateTo?: string; url?: undefined } | { url: string; navigateTo?: undefined };
@@ -8,37 +10,36 @@ export type MessageTemplate = {
     messageType: MessageType;
 } & NotificationAction;
 
-type TemplateVariables = {
-    [key: string]: string;
-};
+export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): MessageTemplate => {
+    const { firstname, lastname } = user;
+    const { notificationID, context } = concreteNotification;
 
-export const getMessage = (notificationId: number, s: TemplateVariables): MessageTemplate => {
     const templates: { [key: number]: MessageTemplate } = {
         1: {
-            header: `bla bla ${s.firstname}`,
-            body: `bla bla ${s.firstname} bla bla ${s.lastname}`,
-            navigateTo: `somepath/${s.pathVar1}/${s.pathVar2}`,
+            header: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
+            navigateTo: `somepath`,
             messageType: MessageType.APPOINTMENT,
         },
         2: {
-            header: `bla bla ${s.firstname}`,
-            body: `bla bla ${s.firstname} bla bla ${s.lastname}`,
+            header: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
             messageType: MessageType.APPOINTMENT,
         },
         3: {
-            header: `bla bla ${s.firstname}`,
-            body: `bla bla ${s.firstname} bla bla ${s.lastname}`,
+            header: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
             messageType: MessageType.MATCH,
         },
         // 0 used as fallback
         0: {
             header: `Message not found`,
-            body: `Error: message details not found. Message for ${s.firstname} ${s.lastname}`,
+            body: `Error: message details not found. Message for ${firstname} ${lastname}`,
             messageType: MessageType.MATCH,
             navigateTo: 'welcome',
         },
     };
-    const index = templates.hasOwnProperty(notificationId) ? notificationId : 0;
+    const index = templates.hasOwnProperty(notificationID) ? notificationID : 0;
     return templates[index];
 };
