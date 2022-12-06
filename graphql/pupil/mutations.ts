@@ -1,7 +1,7 @@
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
@@ -66,10 +66,14 @@ export class PupilUpdateInput {
 
     @Field((type) => [Preferences], { nullable: true })
     notificationPreferences?: Preferences[];
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    matchReason?: string;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext('Pupil', context);
+
     const {
         subjects,
         gradeAsInt,
@@ -82,6 +86,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         schooltype,
         languages,
         aboutMe,
+        matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
     } = update;
@@ -114,6 +119,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            matchReason: ensureNoNull(matchReason),
         },
         where: { id: pupil.id },
     });

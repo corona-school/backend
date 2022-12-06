@@ -8,6 +8,7 @@ import {
     Subcourse,
     Course,
     StudentWhereInput,
+    SubcourseWhereInput,
 } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -22,6 +23,8 @@ import { userForStudent, userSearch } from '../../common/user';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
+import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { Prisma } from '@prisma/client';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -138,8 +141,14 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesInstructing(@Root() student: Student) {
-        return await prisma.subcourse.findMany({ where: { subcourse_instructors_student: { some: { studentId: student.id } } } });
+    async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+        const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
+
+        if (excludePast) {
+            filters.push(excludePastSubcourses());
+        }
+
+        return await prisma.subcourse.findMany({ where: { AND: filters } });
     }
 
     @FieldResolver((type) => [Course])

@@ -216,6 +216,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'languages'
             | 'projectFields'
             | 'aboutMe'
+            | 'schooltype'
         >({
             matchReason: everyone,
             authToken: nobody,
@@ -236,7 +237,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             registrationSource: adminOrOwner,
             school: adminOrOwner,
             schoolId: adminOrOwner,
-            schooltype: adminOrOwner,
             state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,

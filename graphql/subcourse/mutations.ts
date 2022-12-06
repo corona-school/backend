@@ -14,12 +14,13 @@ import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
-import { Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
 import { getManager } from 'typeorm';
 import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
+import { Student } from '../../common/entity/Student';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -218,7 +219,7 @@ export class MutateSubcourseResolver {
 
         let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
         if (!meeting) {
-            meeting = await createBBBMeeting(course.name, '' + subcourse.id, await getUserTypeORM(context.user!.userID));
+            meeting = await createBBBMeeting(course.name, '' + subcourse.id, (await getUserTypeORM(context.user!.userID)) as Student | Pupil);
         }
 
         if (meeting.alternativeUrl) {
@@ -279,9 +280,9 @@ export class MutateSubcourseResolver {
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } else if (subcourse.published) {
+        } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        }
+        } */
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
@@ -296,7 +297,20 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
-        await joinSubcourse(subcourse, pupil);
+        await joinSubcourse(subcourse, pupil, true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async subcourseJoinManual(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourse(subcourse, pupil, false);
         return true;
     }
 

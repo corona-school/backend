@@ -9,8 +9,8 @@ import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing'
 import { getLogger } from 'log4js';
 import { AuthenticationError, ForbiddenError } from './error';
 import { logInContext } from './logging';
-import { User, userForPupil, userForScreener, userForStudent } from '../common/user';
-import { loginPassword, loginToken } from '../common/secret';
+import { getUser, User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
 import { UserType } from './types/user';
@@ -102,8 +102,10 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext) {
-    ensureSession(context);
+export async function loginAsUser(user: User, context: GraphQLContext, noSession = false) {
+    if (!noSession) {
+        ensureSession(context);
+    }
 
     context.user = { ...user, roles: [] };
 
@@ -121,12 +123,20 @@ export async function loginAsUser(user: User, context: GraphQLContext) {
         await evaluateScreenerRoles(user, context);
     }
 
-    userSessions.set(context.sessionToken, context.user);
-    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    if (!noSession) {
+        userSessions.set(context.sessionToken, context.user);
+        logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    }
 }
 
 @Resolver((of) => UserType)
 export class AuthenticationResolver {
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => String)
+    suggestSessionToken() {
+        return suggestToken();
+    }
+
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     @Deprecated('use loginPassword or loginToken instead')
@@ -223,12 +233,21 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
+    createCookieSession(@Ctx() context: GraphQLContext) {
+        context.sessionToken = suggestToken();
+        context.setCookie('LERNFAIR_SESSION', context.sessionToken);
+        return true;
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
         ensureSession(context);
 
         try {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
+
             return true;
         } catch (error) {
             throw new AuthenticationError('Invalid E-Mail or Password');
@@ -245,6 +264,21 @@ export class AuthenticationResolver {
         } catch (error) {
             throw new AuthenticationError('Invalid Token');
         }
+    }
+
+    @Authorized(Role.USER)
+    @Mutation((returns) => Boolean)
+    async loginRefresh(@Ctx() context: GraphQLContext) {
+        await updateSessionUser(context, getSessionUser(context));
+        return true;
+    }
+
+    @Authorized(Role.ADMIN)
+    @Mutation((returns) => Boolean)
+    async _verifyEmail(@Arg('userID') userID: string) {
+        const user = await getUser(userID);
+        await verifyEmail(user);
+        return true;
     }
 
     @Authorized(Role.USER)

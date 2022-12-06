@@ -43,15 +43,18 @@ class OtherParticipant {
     aboutMe: string;
 }
 
-const IS_PUBLIC_SUBCOURSE: Prisma.subcourseWhereInput = {
-    published: { equals: true },
-    cancelled: { equals: false },
-    course: {
-        is: {
-            courseState: { equals: CourseState.ALLOWED },
+function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
+    return {
+        published: { equals: true },
+        cancelled: { equals: false },
+        course: {
+            is: {
+                courseState: { equals: CourseState.ALLOWED },
+            },
         },
-    },
-};
+        lecture: { some: { start: { gt: new Date() } } },
+    };
+}
 
 @Resolver((of) => Subcourse)
 export class ExtendedFieldsSubcourseResolver {
@@ -68,7 +71,7 @@ export class ExtendedFieldsSubcourseResolver {
         @Arg('excludeKnown', { nullable: true }) excludeKnown?: boolean
     ) {
         // All filters need to match
-        const filters = [IS_PUBLIC_SUBCOURSE];
+        const filters = [IS_PUBLIC_SUBCOURSE()];
 
         if (search) {
             filters.push({
@@ -115,7 +118,7 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         // Only one of the filters needs to match to grant the user access:
-        const accessGrantFilters = [IS_PUBLIC_SUBCOURSE];
+        const accessGrantFilters = [IS_PUBLIC_SUBCOURSE()];
 
         if (isSessionPupil(context)) {
             // A pupil has access to unpublished subcourses if they are a participant ...
@@ -180,7 +183,70 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourseId: subcourse.id,
             },
+            orderBy: { start: 'asc' },
         });
+    }
+
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async firstLecture(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+            },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async nextLecture(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+                start: { gte: new Date() },
+            },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @LimitEstimated(1)
+    async ongoingLecture(@Root() subcourse: Subcourse) {
+        // It is assumed that only one lecture can happen at a time
+
+        // It might be desirable to show a lecture as ongoing right before it starts,
+        // so that users can prepare:
+        const SLACK = 10; /* minutes */
+
+        const inNMinutes = new Date();
+        inNMinutes.setMinutes(inNMinutes.getMinutes() + SLACK);
+
+        // Get the lecture that started last, not necessarily still ongoing
+        const firstStarted = await prisma.lecture.findFirst({
+            where: {
+                subcourseId: subcourse.id,
+                start: { lte: inNMinutes },
+            },
+            orderBy: { start: 'asc' },
+        });
+
+        if (!firstStarted) {
+            return null;
+        }
+
+        const endsAt = new Date(firstStarted.createdAt);
+        endsAt.setMinutes(endsAt.getMinutes() + firstStarted.duration + SLACK);
+
+        if (+endsAt < Date.now()) {
+            // Lecture already ended
+            return null;
+        }
+
+        return firstStarted;
     }
 
     @FieldResolver((returns) => [Participant])

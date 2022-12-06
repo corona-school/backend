@@ -5,10 +5,12 @@ import {
     pupil as PrismaPupil,
     student as PrismaStudent,
     mentor as PrismaMentor,
+    screener as PrismaScreener,
 } from '.prisma/client';
 import { Pupil as TypeORMPupil } from './../entity/Pupil';
 import { Student as TypeORMStudent } from './../entity/Student';
 import { Mentor as TypeORMMentor } from './../entity/Mentor';
+import { Screener as TypeORMScreener } from './../entity/Screener';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
 
@@ -16,7 +18,8 @@ import { User } from '../user';
 type Pupil = PrismaPupil | TypeORMPupil;
 type Student = PrismaStudent | TypeORMStudent;
 type Mentor = PrismaMentor | TypeORMMentor;
-export type Person = Pupil | Student | Mentor;
+type Screener = PrismaScreener | TypeORMScreener;
+export type Person = Pupil | Student | Mentor | Screener;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails

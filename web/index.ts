@@ -32,6 +32,7 @@ import {getAttachmentUrlEndpoint} from "./controllers/attachmentController";
 import { isDev } from "../common/util/environment";
 import {isCommandArg} from "../common/util/basic";
 import { fileRouter } from "./controllers/fileController";
+import cookieParser from "cookie-parser";
 import { WebSocketService } from "../common/websocket";
 
 // Logger setup
@@ -93,6 +94,7 @@ createConnection().then(setupPDFGenerationEnvironment)
 
         // Express setup
         app.use(bodyParser.json());
+        app.use(cookieParser());
         app.use(favicon('./assets/favicon.ico'));
         app.use("/public", express.static('./assets/public'));
 
