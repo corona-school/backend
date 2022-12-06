@@ -6,6 +6,7 @@ import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
+import { getMessage, MessageTemplate } from '../../notifications/templates';
 
 @ObjectType()
 class Campaign {
@@ -38,16 +39,12 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => String)
+    @FieldResolver((returns) => ConcreteNotification)
     @Authorized(Role.OWNER, Role.ADMIN)
-    async headline(@Root() concreteNotification: ConcreteNotification) {
-        return `Mock Headline ${concreteNotification.id}`;
-    }
+    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): MessageTemplate {
+        const { firstname, lastname } = getSessionUser(context);
 
-    @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
-    async body() {
-        return `Mock Body Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut`;
+        return getMessage(concreteNotification.notificationID, { firstname, lastname });
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
