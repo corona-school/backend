@@ -77,7 +77,11 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [ConcreteNotification])
     @Authorized(Role.OWNER, Role.ADMIN)
     @LimitedQuery()
-    async concreteNotifications(@Root() user: User): Promise<ConcreteNotification[]> {
+    async concreteNotifications(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number
+    ): Promise<ConcreteNotification[]> {
         return await prisma.concrete_notification.findMany({ where: { userId: user.userID, state: ConcreteNotificationState.SENT } });
     }
 
