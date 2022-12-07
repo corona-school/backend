@@ -82,7 +82,7 @@ export class UserFieldsResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<ConcreteNotification[]> {
-        return await prisma.concrete_notification.findMany({ where: { userId: user.userID, state: ConcreteNotificationState.SENT } });
+        return await prisma.concrete_notification.findMany({ where: { userId: user.userID, state: ConcreteNotificationState.SENT }, take, skip });
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
