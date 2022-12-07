@@ -4,9 +4,9 @@ import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { getDummyCreatedAt } from './dummy_data';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
-import { getMessage, NotificationMessage } from '../../notifications/templates';
 
 @ObjectType()
 class Campaign {
@@ -39,12 +39,26 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => NotificationMessage)
+    @FieldResolver((returns) => String)
     @Authorized(Role.OWNER, Role.ADMIN)
-    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessage {
-        return getMessage(concreteNotification, getSessionUser(context));
+    async headline(@Root() concreteNotification: ConcreteNotification) {
+        return `Mock Headline ${concreteNotification.id}`;
     }
 
+    @FieldResolver((returns) => String)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async body() {
+        return `Mock Body Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut`;
+    }
+
+    // @TODO: this should be a field of ConcreteNotification
+    @FieldResolver((returns) => Date)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async createdAt(@Root() concreteNotification: ConcreteNotification) {
+        return getDummyCreatedAt(concreteNotification.id);
+    }
+
+    // TODO new resolver for getting concrete notifications by notificationId
     @Query((returns) => ConcreteNotification, { nullable: true })
     @Authorized(Role.USER)
     async concrete_notification(@Ctx() context: GraphQLContext, @Arg('concreteNotificationId', (type) => Int) concreteNotificationId: number) {
