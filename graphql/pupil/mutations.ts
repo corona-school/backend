@@ -23,7 +23,7 @@ import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
-import { Preferences } from '../types/preferences';
+import { NotificationPreferences } from '../types/preferences';
 
 @InputType()
 export class PupilUpdateInput {
@@ -64,8 +64,8 @@ export class PupilUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => [Preferences], { nullable: true })
-    notificationPreferences?: Preferences[];
+    @Field((type) => [NotificationPreferences], { nullable: true })
+    notificationPreferences?: NotificationPreferences[];
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;

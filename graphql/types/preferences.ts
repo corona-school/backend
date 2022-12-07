@@ -2,23 +2,23 @@ import { Field, InputType, ObjectType } from 'type-graphql';
 
 @InputType('ChannelInput')
 @ObjectType()
-class Channel {
+class Channels {
     @Field()
     email: boolean;
 }
 @InputType('PreferencesInput')
 @ObjectType()
-export class Preferences {
+export class NotificationPreferences {
     @Field()
-    chat: Channel;
+    chat: Channels;
     @Field()
-    match: Channel;
+    match: Channels;
     @Field()
-    course: Channel;
+    course: Channels;
     @Field()
-    appointment: Channel;
+    appointment: Channels;
     @Field()
-    survey: Channel;
+    survey: Channels;
     @Field()
-    news: Channel;
+    news: Channels;
 }

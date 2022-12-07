@@ -52,7 +52,7 @@ import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '..
 import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
-import { Preferences } from '../types/preferences';
+import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
 
 @InputType()
@@ -137,8 +137,8 @@ class MeUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => [Preferences], { nullable: true })
-    notificationPreferences?: Preferences[];
+    @Field((type) => [NotificationPreferences], { nullable: true })
+    notificationPreferences?: NotificationPreferences[];
 
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()
