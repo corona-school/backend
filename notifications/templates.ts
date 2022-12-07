@@ -8,6 +8,7 @@ export type MessageTemplate = {
     header: string;
     body: string;
     messageType: MessageType;
+    error?: string;
 } & NotificationAction;
 
 export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): MessageTemplate => {
@@ -32,14 +33,16 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
             body: `bla bla ${firstname} bla bla ${lastname}`,
             messageType: MessageType.MATCH,
         },
-        // 0 used as fallback
-        0: {
-            header: `Message not found`,
-            body: `Error: message details not found. Message for ${firstname} ${lastname}`,
-            messageType: MessageType.MATCH,
-            navigateTo: 'welcome',
-        },
     };
-    const index = templates.hasOwnProperty(notificationID) ? notificationID : 0;
-    return templates[index];
+
+    if (templates.hasOwnProperty(notificationID)) {
+        return templates[notificationID];
+    }
+
+    return {
+        header: `Message not found`,
+        body: `Error: message details not found. Message for ${firstname} ${lastname}`,
+        messageType: MessageType.MATCH,
+        error: 'Template for notification does not exist',
+    };
 };
