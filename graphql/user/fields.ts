@@ -6,7 +6,7 @@ import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
 import { User, userForPupil, userForStudent } from '../../common/user';
-import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
+import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { UserType } from '../types/user';
 
 @Resolver((of) => UserType)
@@ -75,6 +75,7 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => [ConcreteNotification])
     @Authorized(Role.OWNER, Role.ADMIN)
+    @LimitedQuery()
     async concreteNotifications(@Root() user: User): Promise<ConcreteNotification[]> {
         return await prisma.concrete_notification.findMany({ where: { userId: user.userID } });
     }
