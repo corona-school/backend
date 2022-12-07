@@ -3,7 +3,7 @@ import { GraphQLUser } from '../common/user/session';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 
 // using abstract class instead of interface to be used in @FieldResolver which does not allow TS types or interfaces for return type
-export abstract class MessageTemplate {
+export abstract class NotificationMessage {
     header: string;
     body: string;
     messageType: MessageType;
@@ -12,11 +12,11 @@ export abstract class MessageTemplate {
     error?: string;
 }
 
-export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): MessageTemplate => {
+export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): NotificationMessage => {
     const { firstname, lastname } = user;
     const { notificationID, context } = concreteNotification;
 
-    const templates: { [key: number]: MessageTemplate } = {
+    const templates: { [key: number]: NotificationMessage } = {
         1: {
             header: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,

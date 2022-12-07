@@ -6,7 +6,7 @@ import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
-import { getMessage, MessageTemplate } from '../../notifications/templates';
+import { getMessage, NotificationMessage } from '../../notifications/templates';
 
 @ObjectType()
 class Campaign {
@@ -39,9 +39,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => MessageTemplate)
+    @FieldResolver((returns) => NotificationMessage)
     @Authorized(Role.OWNER, Role.ADMIN)
-    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): MessageTemplate {
+    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessage {
         return getMessage(concreteNotification, getSessionUser(context));
     }
 
