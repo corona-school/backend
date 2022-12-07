@@ -4,7 +4,7 @@ import { Concrete_notification as ConcreteNotification } from '../graphql/genera
 
 // using abstract class instead of interface to be used in @FieldResolver which does not allow TS types or interfaces for return type
 export abstract class NotificationMessage {
-    header: string;
+    headline: string;
     body: string;
     messageType: MessageType;
     navigateTo?: string;
@@ -18,20 +18,20 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
 
     const templates: { [key: number]: NotificationMessage } = {
         1: {
-            header: `bla bla ${firstname}`,
+            headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
             messageType: MessageType.APPOINTMENT,
         },
         2: {
-            header: `bla bla ${firstname}`,
+            headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
             messageType: MessageType.APPOINTMENT,
         },
         3: {
-            header: `bla bla ${firstname}`,
+            headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             messageType: MessageType.MATCH,
         },
@@ -42,7 +42,7 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
     }
 
     return {
-        header: `Message not found`,
+        headline: `Message not found`,
         body: `Error: message details not found. Message for ${firstname} ${lastname}`,
         messageType: MessageType.MATCH,
         error: 'Template for notification does not exist',
