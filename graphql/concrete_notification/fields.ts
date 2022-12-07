@@ -6,7 +6,8 @@ import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
-import { getMessage, NotificationMessage } from '../../notifications/templates';
+import { getMessage } from '../../notifications/templates';
+import { NotificationMessage } from '../types/notificationMessage';
 
 @ObjectType()
 class Campaign {
