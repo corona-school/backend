@@ -19,12 +19,30 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.APPOINTMENT,
+            messageType: MessageType.COURSE,
         },
         3: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.MATCH,
+            messageType: MessageType.MESSAGE,
+        },
+        4: {
+            headline: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
+            navigateTo: `http://www.somewhere`,
+            isUrlExternal: true,
+            messageType: MessageType.CHAT,
+        },
+        5: {
+            headline: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
+            navigateTo: 'welcome',
+            messageType: MessageType.NEWS,
+        },
+        6: {
+            headline: `bla bla ${firstname}`,
+            body: `bla bla ${firstname} bla bla ${lastname}`,
+            messageType: MessageType.SURVEY,
         },
     };
 
