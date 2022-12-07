@@ -2,14 +2,15 @@ import { MessageType } from './messageTypes';
 import { GraphQLUser } from '../common/user/session';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 
-// only actionPath or url is optionally allowed but not both
-type NotificationAction = { navigateTo?: string; url?: undefined } | { url: string; navigateTo?: undefined };
-export type MessageTemplate = {
+// using abstract class instead of interface to be used in @FieldResolver which does not allow TS types or interfaces for return type
+export abstract class MessageTemplate {
     header: string;
     body: string;
     messageType: MessageType;
+    navigateTo?: string;
+    isUrlExternal?: boolean;
     error?: string;
-} & NotificationAction;
+}
 
 export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): MessageTemplate => {
     const { firstname, lastname } = user;
@@ -19,7 +20,8 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
         1: {
             header: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            navigateTo: `somepath`,
+            navigateTo: `http://www.somewhere`,
+            isUrlExternal: true,
             messageType: MessageType.APPOINTMENT,
         },
         2: {

@@ -39,7 +39,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => Object)
+    @FieldResolver((returns) => MessageTemplate)
     @Authorized(Role.OWNER, Role.ADMIN)
     message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): MessageTemplate {
         return getMessage(concreteNotification, getSessionUser(context));
