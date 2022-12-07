@@ -15,6 +15,8 @@ import { query } from 'express';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
+type UserTypes = 'student' | 'pupil' | 'screener';
+
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
    Unfortunately we do not have a way to detect the database table a Prisma query returned from
    Thus for interoperability with Prisma we need to decide based on the fields available
@@ -83,9 +85,18 @@ export type User = {
 
 const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
+export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
+    const validTypes = ['student', 'pupil', 'screener'];
+    const [type, id] = userId.split('/');
+    if (!validTypes.includes(type)) {
+        throw Error('No valid user type found in user id');
+    }
+    const parsedId = parseInt(id, 10);
+    return [type as UserTypes, parsedId];
+}
+
 export async function getUser(userID: string): Promise<User> {
-    const [type, _id] = userID.split('/');
-    const id = parseInt(_id, 10);
+    const [type, id] = getUserTypeAndIdForUserId(userID);
 
     if (type === 'student') {
         const student = await prisma.student.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });

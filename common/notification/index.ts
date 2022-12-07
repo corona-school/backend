@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, getUserTypeAndIdForUserId, getStudent, getPupil } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +12,7 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
+import { Prisma } from '@prisma/client';
 
 const logger = getLogger('Notification');
 
@@ -260,7 +261,7 @@ async function deliverNotification(
 
     try {
         const user = getUserForTypeORM(legacyUser);
-        const channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
+        let channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
         if (!channelsToSendTo || channelsToSendTo.length === 0) {
             throw new Error(`No fitting channel found for Notification(${notification.id})`);
         }
@@ -270,6 +271,40 @@ async function deliverNotification(
         }
 
         // TODO: Check if user silenced this notification
+        const [type] = getUserTypeAndIdForUserId(user.userID);
+        let notificationPreferences: Prisma.JsonValue;
+        if (type === 'student') {
+            const student = await getStudent(user);
+            notificationPreferences = student.notificationPreferences;
+        }
+        if (type === 'pupil') {
+            const pupil = await getPupil(user);
+            notificationPreferences = pupil.notificationPreferences;
+        }
+
+        if (typeof notificationPreferences !== 'string') {
+            throw Error('notificatinPreference has wrong type');
+        }
+
+        // TODO replace with messageTypes from another PR
+        const notiType = 'chat';
+        type Category = { [channel: string]: boolean };
+
+        const category: Category = JSON.parse(notificationPreferences)[notiType];
+
+        // default is inapp
+        const activeChannelForNotificationType: string[] = ['inapp'];
+
+        for (const channel in category) {
+            if (category[channel] === true) {
+                activeChannelForNotificationType.push(channel);
+            }
+        }
+
+        channelsToSendTo = channelsToSendTo.filter((c) => {
+            const compareValue = c.type === 'mailjet' ? 'email' : c.type;
+            return activeChannelForNotificationType.includes(compareValue);
+        });
 
         await Promise.all(
             channelsToSendTo.map(async (channel) => {
