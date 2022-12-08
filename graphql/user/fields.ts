@@ -83,7 +83,12 @@ export class UserFieldsResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<ConcreteNotification[]> {
-        return await prisma.concrete_notification.findMany({ where: { userId: user.userID, state: ConcreteNotificationState.SENT }, take, skip });
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: { userId: user.userID, state: ConcreteNotificationState.SENT },
+            take,
+            skip,
+        });
     }
 
     @FieldResolver((returns) => Date, { nullable: true })
