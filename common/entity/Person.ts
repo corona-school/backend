@@ -70,7 +70,7 @@ export abstract class Person {
     @Column({
         type: 'timestamp',
         nullable: true,
-        default: new Date(),
+        default: new Date(0),
     })
     lastTimeCheckedNotifications: Date;
 
