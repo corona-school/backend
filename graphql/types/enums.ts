@@ -52,7 +52,7 @@ registerEnumType(Language, {
 });
 
 registerEnumType(StudentLanguage, {
-    name: 'Language',
+    name: 'StudentLanguage',
     description: 'languages commonly spoken at Lern-Fair (except TypeScript)',
 });
 
