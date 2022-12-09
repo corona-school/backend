@@ -15,6 +15,7 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     pupil_projectfields_enum as ProjectField,
     student_state_enum as State,
+    student_languages_enum as Language,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
@@ -85,11 +86,14 @@ export class StudentUpdateInput {
 
     @Field((type) => [NotificationPreferences], { nullable: true })
     notificationPreferences?: NotificationPreferences[];
+
+    @Field((type) => [Language], { nullable: true })
+    languages: Language[];
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, lastTimeCheckedNotifications, notificationPreferences } =
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, , languages, lastTimeCheckedNotifications, notificationPreferences } =
         update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -119,6 +123,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            languages: ensureNoNull(languages),
         },
         where: { id: student.id },
     });
