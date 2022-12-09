@@ -2,8 +2,9 @@ import { MessageType } from './messageTypes';
 import { GraphQLUser } from '../common/user/session';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 import { NotificationMessage } from '../graphql/types/notificationMessage';
+import { User } from '../common/user';
 
-export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): NotificationMessage => {
+export const getMessage = (concreteNotification: ConcreteNotification, user: User): NotificationMessage => {
     const { firstname, lastname } = user;
     const { notificationID, context } = concreteNotification;
 
