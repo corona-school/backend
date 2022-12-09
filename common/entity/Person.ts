@@ -76,7 +76,7 @@ export abstract class Person {
     lastTimeCheckedNotifications: Date;
 
     @Column({ nullable: true, type: 'json' })
-    notificationPreferences: Prisma.JsonValue;
+    notificationPreferences: any;
 }
 
 export enum RegistrationSource {
