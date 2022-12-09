@@ -13,6 +13,7 @@ import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { Prisma } from '@prisma/client';
+import { getMessage } from '../../notifications/templates';
 
 const logger = getLogger('Notification');
 
@@ -286,11 +287,10 @@ async function deliverNotification(
             throw Error('notificatinPreference has wrong type');
         }
 
-        // TODO replace with messageTypes from another PR
-        const notiType = 'chat';
+        const messageType = getMessage(concreteNotification, user);
         type Category = { [channel: string]: boolean };
 
-        const category: Category = JSON.parse(notificationPreferences)[notiType];
+        const category: Category = JSON.parse(notificationPreferences)[messageType.messageType];
 
         // default is inapp
         const activeChannelForNotificationType: string[] = ['inapp'];
