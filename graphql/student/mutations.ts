@@ -93,8 +93,19 @@ export class StudentUpdateInput {
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, , languages, lastTimeCheckedNotifications, notificationPreferences } =
-        update;
+    const {
+        firstname,
+        lastname,
+        email,
+        projectFields,
+        subjects,
+        registrationSource,
+        state,
+        aboutMe,
+        languages,
+        lastTimeCheckedNotifications,
+        notificationPreferences,
+    } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
