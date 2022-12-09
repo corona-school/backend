@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { NotificationPreferences } from '../../graphql/types/preferences';
+import { Prisma } from '@prisma/client';
 
 export abstract class Person {
     @PrimaryGeneratedColumn()
@@ -76,7 +76,7 @@ export abstract class Person {
     lastTimeCheckedNotifications: Date;
 
     @Column({ nullable: true, type: 'json' })
-    notificationPreferences: NotificationPreferences[];
+    notificationPreferences: Prisma.JsonValue;
 }
 
 export enum RegistrationSource {
