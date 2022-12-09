@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, EntityManager, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { NotificationPreferences } from '../../graphql/types/preferences';
 
 export abstract class Person {
     @PrimaryGeneratedColumn()
@@ -75,7 +76,7 @@ export abstract class Person {
     lastTimeCheckedNotifications: Date;
 
     @Column({ nullable: true, type: 'json' })
-    notificationPreferences: any;
+    notificationPreferences: NotificationPreferences[];
 }
 
 export enum RegistrationSource {
