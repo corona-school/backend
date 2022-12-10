@@ -126,7 +126,7 @@ export async function loginToken(token: string): Promise<User | never> {
         throw new Error(`Invalid Token`);
     }
 
-    const user = await getUser(secret.userId);
+    const user = await getUser(secret.userId, /* active */ true);
 
     if (secret.type === SecretType.EMAIL_TOKEN) {
         await prisma.secret.delete({ where: { id: secret.id } });
