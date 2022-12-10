@@ -41,8 +41,9 @@ test("Token Login", async () => {
     assert.equal(secretsSwapped.me.secrets.length, 1);
 });
 
-test("Password Login", async () => {
-    const { client, pupil: { email } } = await pupilOne;
+export const pupilOneWithPassword = test("Password Login", async () => {
+    const { client, pupil } = await pupilOne;
+    const password = "test123";
 
     await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
 
@@ -50,13 +51,15 @@ test("Password Login", async () => {
 
     await client.requestShallFail(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
 
-    await client.requestShallFail(`mutation InvalidEmailFails { loginPassword(email: "test+wrong@lern-fair.de", password: "test123")}`);
+    await client.requestShallFail(`mutation InvalidEmailFails { loginPassword(email: "test+wrong@lern-fair.de", password: "${password}")}`);
 
-    await client.requestShallFail(`mutation InvalidPasswordFails { loginPassword(email: "${email}", password: "test")}`);
+    await client.requestShallFail(`mutation InvalidPasswordFails { loginPassword(email: "${pupil.email}", password: "test")}`);
 
-    await client.request(`mutation LoginSucceeds { loginPassword(email: "${email}", password: "test123")}`);
+    await client.request(`mutation LoginSucceeds { loginPassword(email: "${pupil.email}", password: "test123")}`);
 
     await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
+
+    return { client, pupil, password };
 });
 
 test("Token Request", async () => {
