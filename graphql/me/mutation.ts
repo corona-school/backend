@@ -66,7 +66,7 @@ class RegisterStudentInput implements RegisterStudentData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -224,6 +224,7 @@ class BecomeTuteeInput implements BecomeTuteeData {
 @InputType()
 class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field((type) => String)
+    @ValidateEmail()
     teacherEmail: string;
     @Field((type) => Int, { nullable: true })
     gradeAsInt?: number;

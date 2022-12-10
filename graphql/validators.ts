@@ -36,12 +36,22 @@ const CreateValidate = <Options, Value>(validate: Validator<Options, Value>['val
         };
     };
 
-// Usage:
-//   @Field(type => String)
-//   @ValidateEmail()
-//   email: string;
+// --------- Runtime - Validate incoming arguments against Metadata --------
+export function validate(argValue: any, argType: Function) {
+    if (!validatorRegistry.has(argType)) {
+        return;
+    }
 
-export const ValidateEmail = CreateValidate<undefined, string>((email: string) => {
+    const validators = validatorRegistry.get(argType);
+    for (const validator of validators) {
+        argValue[validator.field] = validator.validate(argValue[validator.field], validator.options);
+    }
+}
+
+// -------- Validators ---------------------------------------------------
+// ---------- Email -----------------------------
+
+export function validateEmail(email: string) {
     // Validate E-Mail
 
     if (!isEmail(email)) {
@@ -59,16 +69,11 @@ export const ValidateEmail = CreateValidate<undefined, string>((email: string) =
     email = email.toLowerCase();
 
     return email;
-});
-
-// --------- Runtime - Validate incoming arguments against Metadata --------
-export function validate(argValue: any, argType: Function) {
-    if (!validatorRegistry.has(argType)) {
-        return;
-    }
-
-    const validators = validatorRegistry.get(argType);
-    for (const validator of validators) {
-        argValue[validator.field] = validator.validate(argValue[validator.field], validator.options);
-    }
 }
+
+// Usage:
+//   @Field(type => String)
+//   @ValidateEmail()
+//   email: string;
+
+export const ValidateEmail = CreateValidate<undefined, string>(validateEmail);
