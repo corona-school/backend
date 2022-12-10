@@ -14,7 +14,7 @@ const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`
 const senders: { [sender in NotificationSender]: { Name: string; Email: string } } = {
     [NotificationSender.SUPPORT]: {
         Email: 'support@lern-fair.de',
-        Name: 'Lern-Fair Support',
+        Name: 'Lern-Fair Team',
     },
     [NotificationSender.CERTIFICATE_OF_CONDUCT]: {
         Email: 'fz@lern-fair.de',
