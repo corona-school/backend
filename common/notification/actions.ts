@@ -5,7 +5,8 @@
 
 type NestedStringObject = { [key: string]: string | NestedStringObject };
 
-interface NotificationAction {
+export interface NotificationAction {
+    readonly id: string;
     readonly description: string;
     readonly sampleContext?: NestedStringObject;
     readonly recommendedCancelations?: readonly string[];
@@ -277,4 +278,15 @@ const _notificationActions = {
 } as const;
 
 export type ActionID = keyof typeof _notificationActions;
-export const notificationActions: { readonly [actionId: string]: NotificationAction } = _notificationActions;
+const notificationActions: { readonly [actionId: string]: Omit<NotificationAction, 'id'> } = _notificationActions;
+
+export function getNotificationActions(): NotificationAction[] {
+    return Object.entries(notificationActions).map(([id, it]) => ({
+        ...it,
+        id,
+        sampleContext: {
+            ...(it.sampleContext ?? {}),
+            user: sampleUser,
+        },
+    }));
+}
