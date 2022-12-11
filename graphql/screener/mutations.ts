@@ -6,12 +6,14 @@ import { createToken } from '../../common/secret';
 import { userForScreener } from '../../common/user';
 import { getLogger } from 'log4js';
 import { getScreener } from '../util';
+import { ValidateEmail } from '../validators';
 
 const log = getLogger('ScreenerMutations');
 
 @InputType()
 class ScreenerCreateInput {
     @Field()
+    @ValidateEmail()
     email: string;
     @Field()
     firstname: string;

@@ -53,6 +53,7 @@ import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 import { deactivateStudent } from '../../common/student/activation';
+import { ValidateEmail } from '../validators';
 
 @InputType()
 class RegisterStudentInput implements RegisterStudentData {
@@ -65,7 +66,7 @@ class RegisterStudentInput implements RegisterStudentData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -95,7 +96,7 @@ class RegisterPupilInput implements RegisterPupilData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -223,6 +224,7 @@ class BecomeTuteeInput implements BecomeTuteeData {
 @InputType()
 class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field((type) => String)
+    @ValidateEmail()
     teacherEmail: string;
     @Field((type) => Int, { nullable: true })
     gradeAsInt?: number;

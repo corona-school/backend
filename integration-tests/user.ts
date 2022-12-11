@@ -22,6 +22,22 @@ export const pupilOne = test("Register Pupil", async () => {
         }
     `);
 
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterPupilAgain {
+            meRegisterPupil(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
+                newsletter: false
+                state: bw
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
     await client.request(`
         mutation BecomeTutee {
             meBecomeTutee(data: {
@@ -48,6 +64,9 @@ export const pupilOne = test("Register Pupil", async () => {
     assert.equal(pupil.lastname, `lastname:${userRandom}`);
     assert.equal(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
 
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    pupil.email = pupil.email.toUpperCase();
+
     return { client, pupil };
 });
 
@@ -61,6 +80,21 @@ export const studentOne = test("Register Student", async () => {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
                 email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterStudentAgain {
+            meRegisterStudent(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
             }) {
@@ -90,6 +124,9 @@ export const studentOne = test("Register Student", async () => {
         }
     `);
 
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    student.email = student.email.toUpperCase();
+
     return { client, student };
 });
 
@@ -103,6 +140,21 @@ export const instructorOne = test("Register Instructor", async () => {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
                 email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterStudentAgain {
+            meRegisterStudent(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
             }) {
@@ -137,6 +189,9 @@ export const instructorOne = test("Register Instructor", async () => {
     const { myRoles } = await client.request(`query GetRoles { myRoles }`);
     assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
     // Not yet INSTRUCTOR as not yet screened
+
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    instructor.email = instructor.email.toUpperCase();
 
     return { client, instructor };
 });
