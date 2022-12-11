@@ -23,7 +23,7 @@ export type Person = Pupil | Student | Mentor | Screener;
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
-export type ActionID = string;
+export type { ActionID } from './actions';
 export type Email = `${string}@${string}.${string}`;
 
 export { ConcreteNotification, Notification };

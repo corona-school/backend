@@ -8,7 +8,7 @@ import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { isSessionPupil, getSessionPupil, getSessionStudent } from '../authentication';
 import { createPupilMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import { pools } from '../../common/match/pool';
+import { ConcreteMatchPool, pools } from '../../common/match/pool';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -22,7 +22,7 @@ export class MutateMatchResolver {
             throw new Error(`Unknown MatchPool(${poolName})`);
         }
 
-        await createMatch(pupil, student, pool);
+        await createMatch(pupil, student, pool as ConcreteMatchPool);
 
         return true;
     }

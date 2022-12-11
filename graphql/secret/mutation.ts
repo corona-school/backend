@@ -63,7 +63,12 @@ export class MutateSecretResolver {
         @Arg('redirectTo', { nullable: true }) redirectTo?: string
     ) {
         const user = await getUserByEmail(email);
-        await requestToken(user, action, redirectTo);
+
+        if (!['user-authenticate', 'user-password-reset', 'user-verify-email'].includes(action)) {
+            throw new UserInputError(`Unsupported Action for Token Request`);
+        }
+
+        await requestToken(user, action as any, redirectTo);
         return true;
     }
 }
