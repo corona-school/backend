@@ -46,13 +46,13 @@ export const pupilOneWithPassword = test("Password Login", async () => {
     const password = "test123";
 
     // Before the user has a password, email login is proposed:
-    const emailLoginProposed = await defaultClient.request(`mutation EmailLoginProposed { userDetermineLoginOptions(email: "${email}") }`);
+    const emailLoginProposed = await defaultClient.request(`mutation EmailLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
     assert.strictEqual(emailLoginProposed.userDetermineLoginOptions, "email");
 
     await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
 
     // Now password login is proposed for the user:
-    const passwordLoginProposed = await defaultClient.request(`mutation PasswordLoginProposed { userDetermineLoginOptions(email: "${email}") }`);
+    const passwordLoginProposed = await defaultClient.request(`mutation PasswordLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
     assert.strictEqual(passwordLoginProposed.userDetermineLoginOptions, "password");
 
     await client.request(`mutation Logout { logout }`);
