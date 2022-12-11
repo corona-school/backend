@@ -267,7 +267,7 @@ export class MutateMeResolver {
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail: boolean = false) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
-        console.log('Email in Mutation', data.email);
+
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
