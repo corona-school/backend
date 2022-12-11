@@ -59,6 +59,7 @@ import { AdminMutationsResolver } from './admin';
 import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
 import { MutateScreenerResolver } from './screener/mutations';
+import { validate } from './validators';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -66,6 +67,7 @@ applyModelsEnhanceMap(authorizationModelEnhanceMap);
 applyModelsEnhanceMap(cacheModelEnhancementMap);
 
 const schema = buildSchemaSync({
+    validate,
     resolvers: [
         /* User Authentication & Information */
         AuthenticationResolver,
@@ -153,7 +155,7 @@ const schema = buildSchemaSync({
         FindManyScreenerResolver,
         MutateScreenerResolver,
 
-        AdminMutationsResolver
+        AdminMutationsResolver,
     ],
     authChecker,
 });

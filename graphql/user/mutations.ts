@@ -12,6 +12,7 @@ import { DEFAULTSENDERS } from '../../common/mails/config';
 import { getLogger } from 'log4js';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateUser');
 
@@ -32,7 +33,7 @@ export class MutateUserResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @RateLimit('Email Availability', 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async isEmailAvailable(@Arg('email') email: string) {
-        return await isEmailAvailable(email);
+        return await isEmailAvailable(validateEmail(email));
     }
 
     @Mutation((returns) => String)
@@ -40,7 +41,7 @@ export class MutateUserResolver {
     @RateLimit('Determine Login Options', 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async userDetermineLoginOptions(@Arg('email') email: string) {
         try {
-            const user = await getUserByEmail(email);
+            const user = await getUserByEmail(validateEmail(email));
             return await determinePreferredLoginOption(user);
         } catch (error) {
             // Invalid email

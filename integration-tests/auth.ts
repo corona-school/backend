@@ -1,4 +1,4 @@
-import { adminClient, createUserClient, test } from "./base";
+import { adminClient, createUserClient, defaultClient, test } from "./base";
 import { pupilOne } from "./user";
 import * as assert from "assert";
 
@@ -45,7 +45,15 @@ export const pupilOneWithPassword = test("Password Login", async () => {
     const { client, pupil } = await pupilOne;
     const password = "test123";
 
+    // Before the user has a password, email login is proposed:
+    const emailLoginProposed = await defaultClient.request(`mutation EmailLoginProposed { userDetermineLoginOptions(email: "${email}") }`);
+    assert.strictEqual(emailLoginProposed.userDetermineLoginOptions, "email");
+
     await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
+
+    // Now password login is proposed for the user:
+    const passwordLoginProposed = await defaultClient.request(`mutation PasswordLoginProposed { userDetermineLoginOptions(email: "${email}") }`);
+    assert.strictEqual(passwordLoginProposed.userDetermineLoginOptions, "password");
 
     await client.request(`mutation Logout { logout }`);
 

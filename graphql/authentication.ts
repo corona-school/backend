@@ -16,6 +16,7 @@ import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
 import { UserType } from './types/user';
+import { validateEmail } from './validators';
 
 const logger = getLogger('GraphQL Authentication');
 
@@ -240,6 +241,8 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     @Deprecated('Use loginPassword instead')
     async loginPasswordLegacy(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+        email = validateEmail(email);
+
         ensureSession(context);
         const logger = logInContext(`GraphQL Authentication`, context);
 
@@ -273,6 +276,8 @@ export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
     async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+        email = validateEmail(email);
+
         ensureSession(context);
 
         try {
