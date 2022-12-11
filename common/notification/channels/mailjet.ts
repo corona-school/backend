@@ -11,9 +11,15 @@ import { isDev } from '../../util/environment';
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
 
-const senderEmails: { [sender in NotificationSender]: string } = {
-    [NotificationSender.SUPPORT]: 'support@lern-fair.de',
-    [NotificationSender.CERTIFICATE_OF_CONDUCT]: 'fz@lern-fair.de',
+const senders: { [sender in NotificationSender]: { Name: string; Email: string } } = {
+    [NotificationSender.SUPPORT]: {
+        Email: 'support@lern-fair.de',
+        Name: 'Lern-Fair Team',
+    },
+    [NotificationSender.CERTIFICATE_OF_CONDUCT]: {
+        Email: 'fz@lern-fair.de',
+        Name: 'Lern-Fair Führungszeugnisse',
+    },
 };
 
 export const mailjetChannel: Channel = {
@@ -21,8 +27,8 @@ export const mailjetChannel: Channel = {
     async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
-        const senderEmail = senderEmails[notification.sender ?? NotificationSender.SUPPORT];
-        assert(senderEmail !== undefined, 'Unknown sender emails');
+        const sender = senders[notification.sender ?? NotificationSender.SUPPORT];
+        assert(sender !== undefined, 'Unknown sender');
 
         let receiverEmail = to.email;
         if (context.overrideReceiverEmail) {
@@ -42,9 +48,7 @@ export const mailjetChannel: Channel = {
 
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
-            From: {
-                Email: senderEmail,
-            },
+            From: sender,
             To: [
                 {
                     Email: receiverEmail,
