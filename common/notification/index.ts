@@ -2,18 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import {
-    getUserIdTypeORM,
-    getUserTypeORM,
-    getFullName,
-    getUserForTypeORM,
-    User,
-    getUserTypeAndIdForUserId,
-    getStudent,
-    getPupil,
-    getUser,
-    getStudentOrPupil,
-} from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, getStudentOrPupil } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -23,7 +12,6 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
-import { Prisma } from '@prisma/client';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
 
@@ -274,40 +262,39 @@ async function deliverNotification(
 
     try {
         const user = getUserForTypeORM(legacyUser);
-        let channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
-        if (!channelsToSendTo || channelsToSendTo.length === 0) {
-            throw new Error(`No fitting channel found for Notification(${notification.id})`);
-        }
 
         if (notification.hookID) {
             await triggerHook(notification.hookID, user);
         }
 
+        const { messageType } = getMessage(concreteNotification);
+
+        // default channel is inapp
+        const activeChannelForNotificationType: string[] = ['inapp'];
+
         // TODO: Check if user silenced this notification
         const { notificationPreferences } = await getStudentOrPupil(user);
 
-        if (typeof notificationPreferences !== 'string') {
-            throw Error('notificatinPreference has wrong type');
-        }
+        if (notificationPreferences && typeof notificationPreferences === 'string') {
+            const enabledChannels: { [channel: string]: boolean } = JSON.parse(notificationPreferences)[messageType];
 
-        const messageType = getMessage(concreteNotification, user);
-        type Category = { [channel: string]: boolean };
-
-        const category: Category = JSON.parse(notificationPreferences)[messageType.messageType];
-
-        // default is inapp
-        const activeChannelForNotificationType: string[] = ['inapp'];
-
-        for (const channel in category) {
-            if (category[channel] === true) {
-                activeChannelForNotificationType.push(channel);
+            for (const channel in enabledChannels) {
+                if (enabledChannels[channel] === true) {
+                    activeChannelForNotificationType.push(channel);
+                }
             }
         }
 
-        channelsToSendTo = channelsToSendTo.filter((c) => {
-            const compareValue = c.type === 'mailjet' ? 'email' : c.type;
-            return activeChannelForNotificationType.includes(compareValue);
-        });
+        const channelsToSendTo = channels
+            .filter((it) => it.canSend(notification, user))
+            .filter((c) => {
+                const compareValue = c.type === 'mailjet' ? 'email' : c.type;
+                return activeChannelForNotificationType.includes(compareValue);
+            });
+
+        if (!channelsToSendTo || channelsToSendTo.length === 0) {
+            throw new Error(`No possible channel found for Notification(${notification.id})`);
+        }
 
         await Promise.all(
             channelsToSendTo.map(async (channel) => {
