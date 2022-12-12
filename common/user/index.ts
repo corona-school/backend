@@ -95,7 +95,7 @@ export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id:
     return [type as UserTypes, parsedId];
 }
 
-export async function getUser(userID: string): Promise<User> {
+export async function getUser(userID: string, active?: boolean): Promise<User> {
     const [type, id] = getUserTypeAndIdForUserId(userID);
 
     if (type === 'student') {
