@@ -1,13 +1,11 @@
 import { prisma } from '../../common/prisma';
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { getMatch, getPupil, getStudent } from '../util';
+import { getMatch, getStudent } from '../util';
 import { dissolveMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
-import { isSessionPupil, getSessionPupil, getSessionStudent } from '../authentication';
-import { createPupilMatchRequest, createStudentMatchRequest } from '../../common/match/request';
 import { pools } from '../../common/match/pool';
 
 @Resolver((of) => GraphQLModel.Match)
@@ -15,7 +13,11 @@ export class MutateMatchResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async matchAdd(@Arg('pupilId') pupilId: number, @Arg('studentId') studentId: number, @Arg('poolName') poolName: string): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
+        const pupil = await prisma.pupil.findUnique({
+            where: { id: pupilId },
+            include: { pupil_tutoring_interest_confirmation_request: true },
+            rejectOnNotFound: true,
+        });
         const student = await getStudent(studentId);
         const pool = pools.find((it) => it.name === poolName);
         if (!pool) {
@@ -23,7 +25,10 @@ export class MutateMatchResolver {
         }
 
         await createMatch(pupil, student, pool);
-
+        await prisma.pupil_tutoring_interest_confirmation_request.updateMany({
+            where: { id: { in: pupil.pupil_tutoring_interest_confirmation_request.map((x) => x.id) } },
+            data: { invalidated: true },
+        });
         return true;
     }
 
