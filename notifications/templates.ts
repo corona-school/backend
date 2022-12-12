@@ -4,7 +4,7 @@ import { NotificationMessage } from '../graphql/types/notificationMessage';
 import { User } from '../common/user';
 
 export const getMessage = (concreteNotification: ConcreteNotification, user?: User): NotificationMessage => {
-    const { firstname, lastname } = user;
+    const { firstname, lastname } = user ? user : { firstname: '', lastname: '' };
     const { notificationID, context } = concreteNotification;
 
     const templates: { [key: number]: NotificationMessage } = {
