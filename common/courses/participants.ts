@@ -220,7 +220,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
             await sendTemplateMail(mail, pupil.email);
 
-            await Notification.actionTaken(pupil, 'participant_subcourse_joined', {
+            await Notification.actionTaken(pupil, 'participant_course_joined', {
                 course,
                 firstLectureDate: courseStart.format('DD.MM.YYYY'),
                 firstLectureTime: courseStart.format('HH:mm'),
@@ -249,7 +249,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
 
     const course = prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
-    await Notification.actionTaken(pupil, 'participant_subcourse_leave', {
+    await Notification.actionTaken(pupil, 'participant_course_leave', {
         course,
     });
 }

@@ -12,6 +12,7 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
+import { ActionID } from './actions';
 
 const logger = getLogger('Notification');
 
@@ -37,7 +38,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
+export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;

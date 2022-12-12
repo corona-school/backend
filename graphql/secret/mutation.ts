@@ -8,6 +8,7 @@ import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from 'log4js';
 import { UserInputError } from 'apollo-server-express';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -62,8 +63,13 @@ export class MutateSecretResolver {
         @Arg('action', { nullable: true }) action: string = 'user-authenticate',
         @Arg('redirectTo', { nullable: true }) redirectTo?: string
     ) {
-        const user = await getUserByEmail(email);
-        await requestToken(user, action, redirectTo);
+        const user = await getUserByEmail(validateEmail(email));
+
+        if (!['user-authenticate', 'user-password-reset', 'user-verify-email'].includes(action)) {
+            throw new UserInputError(`Unsupported Action for Token Request`);
+        }
+
+        await requestToken(user, action as any, redirectTo);
         return true;
     }
 }
