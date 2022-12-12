@@ -2,7 +2,18 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, getUserTypeAndIdForUserId, getStudent, getPupil } from '../user';
+import {
+    getUserIdTypeORM,
+    getUserTypeORM,
+    getFullName,
+    getUserForTypeORM,
+    User,
+    getUserTypeAndIdForUserId,
+    getStudent,
+    getPupil,
+    getUser,
+    getStudentOrPupil,
+} from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -273,16 +284,7 @@ async function deliverNotification(
         }
 
         // TODO: Check if user silenced this notification
-        const [type] = getUserTypeAndIdForUserId(user.userID);
-        let notificationPreferences: Prisma.JsonValue;
-        if (type === 'student') {
-            const student = await getStudent(user);
-            notificationPreferences = student.notificationPreferences;
-        }
-        if (type === 'pupil') {
-            const pupil = await getPupil(user);
-            notificationPreferences = pupil.notificationPreferences;
-        }
+        const { notificationPreferences } = await getStudentOrPupil(user);
 
         if (typeof notificationPreferences !== 'string') {
             throw Error('notificatinPreference has wrong type');

@@ -9,9 +9,7 @@ import { getManager } from 'typeorm';
 
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
-import assert from 'assert';
 import { Prisma as PrismaTypes } from '@prisma/client';
-import { query } from 'express';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -101,75 +99,82 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     if (type === 'student') {
         const student = await prisma.student.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (student) {
-            return userForStudent(student);
+            return userForStudent(student as Student);
         }
     }
 
     if (type === 'pupil') {
         const pupil = await prisma.pupil.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (pupil) {
-            return userForPupil(pupil);
+            return userForPupil(pupil as Pupil);
         }
     }
 
     if (type === 'screener') {
         const screener = await prisma.screener.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (screener) {
-            return userForScreener(screener);
+            return userForScreener(screener as Screener);
         }
     }
 
     throw new Error(`Unknown User(${userID})`);
 }
 
+export function getStudentOrPupil(user: User): Promise<Student | Pupil> {
+    const [type] = getUserTypeAndIdForUserId(user.userID);
+
+    if (type === 'student') {
+        return getStudent(user);
+    }
+
+    if (type === 'pupil') {
+        return getPupil(user);
+    }
+
+    throw new Error(`Not implemented`);
+}
+
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
     const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
-        return userForStudent(student);
+        return userForStudent(student as Student);
     }
 
     const pupil = await prisma.pupil.findFirst({ where: { email, active }, select: userSelection });
     if (pupil) {
-        return userForPupil(pupil);
+        return userForPupil(pupil as Pupil);
     }
 
     const screener = await prisma.screener.findFirst({ where: { email, active }, select: userSelection });
     if (screener) {
-        return userForScreener(screener);
+        return userForScreener(screener as Screener);
     }
 
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `pupil/${pupil.id}`,
-        firstname: pupil.firstname,
-        lastname: pupil.lastname,
-        email: pupil.email,
-        pupilId: pupil.id,
-    };
+export function userForPupil(pupil: Pupil | TypeORMPupil) {
+    return userForType(pupil, 'pupil');
 }
 
-export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `student/${student.id}`,
-        firstname: student.firstname,
-        lastname: student.lastname,
-        email: student.email,
-        studentId: student.id,
-    };
+export function userForStudent(student: Student | TypeORMStudent) {
+    return userForType(student, 'student');
 }
 
-export function userForScreener(screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `screener/${screener.id}`,
-        firstname: screener.firstname,
-        lastname: screener.lastname,
-        email: screener.email,
-        screenerId: screener.id,
-    };
+export function userForScreener(screener: Screener | TypeORMScreener) {
+    return userForType(screener, 'screener');
 }
+
+type userType = 'student' | 'pupil' | 'screener';
+const userForType = (user: Pupil | Student | Screener | TypeORMPupil | TypeORMStudent | TypeORMScreener, type: userType): User => {
+    return {
+        userID: `${type}/${user.id}`,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        [`${type}Id`]: user.id,
+    };
+};
 
 export function getFullName({ firstname, lastname }: { firstname?: string; lastname?: string }): string {
     if (!firstname) {
