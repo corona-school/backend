@@ -1,4 +1,4 @@
-import { adminClient, createUserClient, test } from "./base";
+import { adminClient, createUserClient, defaultClient, test } from "./base";
 import { pupilOne } from "./user";
 import * as assert from "assert";
 
@@ -41,22 +41,33 @@ test("Token Login", async () => {
     assert.equal(secretsSwapped.me.secrets.length, 1);
 });
 
-test("Password Login", async () => {
-    const { client, pupil: { email } } = await pupilOne;
+export const pupilOneWithPassword = test("Password Login", async () => {
+    const { client, pupil } = await pupilOne;
+    const password = "test123";
+
+    // Before the user has a password, email login is proposed:
+    const emailLoginProposed = await defaultClient.request(`mutation EmailLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
+    assert.strictEqual(emailLoginProposed.userDetermineLoginOptions, "email");
 
     await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
+
+    // Now password login is proposed for the user:
+    const passwordLoginProposed = await defaultClient.request(`mutation PasswordLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
+    assert.strictEqual(passwordLoginProposed.userDetermineLoginOptions, "password");
 
     await client.request(`mutation Logout { logout }`);
 
     await client.requestShallFail(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
 
-    await client.requestShallFail(`mutation InvalidEmailFails { loginPassword(email: "test+wrong@lern-fair.de", password: "test123")}`);
+    await client.requestShallFail(`mutation InvalidEmailFails { loginPassword(email: "test+wrong@lern-fair.de", password: "${password}")}`);
 
-    await client.requestShallFail(`mutation InvalidPasswordFails { loginPassword(email: "${email}", password: "test")}`);
+    await client.requestShallFail(`mutation InvalidPasswordFails { loginPassword(email: "${pupil.email}", password: "test")}`);
 
-    await client.request(`mutation LoginSucceeds { loginPassword(email: "${email}", password: "test123")}`);
+    await client.request(`mutation LoginSucceeds { loginPassword(email: "${pupil.email}", password: "test123")}`);
 
     await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
+
+    return { client, pupil, password };
 });
 
 test("Token Request", async () => {

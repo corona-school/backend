@@ -3,7 +3,8 @@ import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root } f
 import { bulkRuns } from '../../common/notification/bulk';
 import { Notification } from '../generated';
 import { getHookDescription } from '../../common/notification';
-
+import { getNotificationActions, NotificationAction } from '../../common/notification/actions';
+import { JSONResolver } from 'graphql-scalars';
 @ObjectType()
 class BulkRunNotificationCount {
     @Field()
@@ -33,6 +34,18 @@ class BulkRun {
     finishedAt?: string;
 }
 
+@ObjectType()
+class NotificationActionType implements NotificationAction {
+    @Field((type) => String)
+    id: string;
+    @Field((type) => String)
+    description: string;
+    @Field((type) => JSONResolver, { nullable: true })
+    sampleContext?: any;
+    @Field((type) => [String], { nullable: true })
+    recommendedCancelations?: string[];
+}
+
 @Resolver((of) => BulkRun)
 export class NotificationBulkRunResolver {
     @Query((returns) => [BulkRun])
@@ -51,5 +64,11 @@ export class NotificationExtendedFieldsResolver {
     @Authorized(Role.UNAUTHENTICATED)
     hookDescription(@Root() notification: Notification) {
         return getHookDescription(notification.hookID);
+    }
+
+    @Query((returns) => [NotificationActionType])
+    @Authorized(Role.UNAUTHENTICATED)
+    notificationActions() {
+        return getNotificationActions();
     }
 }

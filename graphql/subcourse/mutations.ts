@@ -21,6 +21,7 @@ import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGue
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -364,6 +365,8 @@ export class MutateSubcourseResolver {
         @Arg('lastname') lastname: string,
         @Arg('email') email: string
     ) {
+        email = validateEmail(email);
+
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 

@@ -123,7 +123,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
 
     await sendTemplateMail(mail, participant.email);
 
-    await Notification.actionTaken(participant, 'participant_subcourse_joined', {
+    await Notification.actionTaken(participant, 'participant_course_joined', {
         course,
         firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
         firstLectureTime: firstLectureMoment.format('HH:mm'),

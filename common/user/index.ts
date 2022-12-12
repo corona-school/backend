@@ -99,35 +99,41 @@ export async function getUser(userID: string): Promise<User> {
     const [type, id] = getUserTypeAndIdForUserId(userID);
 
     if (type === 'student') {
-        const student = await prisma.student.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForStudent(student);
+        const student = await prisma.student.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (student) {
+            return userForStudent(student);
+        }
     }
 
     if (type === 'pupil') {
-        const pupil = await prisma.pupil.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForPupil(pupil);
+        const pupil = await prisma.pupil.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (pupil) {
+            return userForPupil(pupil);
+        }
     }
 
     if (type === 'screener') {
-        const screener = await prisma.screener.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForScreener(screener);
+        const screener = await prisma.screener.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (screener) {
+            return userForScreener(screener);
+        }
     }
 
     throw new Error(`Unknown User(${userID})`);
 }
 
-export async function getUserByEmail(email: string): Promise<User> {
-    const student = await prisma.student.findFirst({ where: { email }, select: userSelection });
+export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
+    const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
         return userForStudent(student);
     }
 
-    const pupil = await prisma.pupil.findFirst({ where: { email }, select: userSelection });
+    const pupil = await prisma.pupil.findFirst({ where: { email, active }, select: userSelection });
     if (pupil) {
         return userForPupil(pupil);
     }
 
-    const screener = await prisma.screener.findFirst({ where: { email }, select: userSelection });
+    const screener = await prisma.screener.findFirst({ where: { email, active }, select: userSelection });
     if (screener) {
         return userForScreener(screener);
     }
