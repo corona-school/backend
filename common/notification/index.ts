@@ -292,15 +292,15 @@ async function deliverNotification(
                 return activeChannelForNotificationType.includes(compareValue);
             });
 
-        if (!channelsToSendTo || channelsToSendTo.length === 0) {
-            throw new Error(`No possible channel found for Notification(${notification.id})`);
+        // Channels can be empty if preference is in-app, but there is no WebSocket connection.
+        // In this case message will be not pushed, but can be pulled later
+        if (channelsToSendTo && channelsToSendTo.length) {
+            await Promise.all(
+                channelsToSendTo.map(async (channel) => {
+                    await channel.send(notification, user, context, concreteNotification.id, attachments);
+                })
+            );
         }
-
-        await Promise.all(
-            channelsToSendTo.map(async (channel) => {
-                await channel.send(notification, user, context, concreteNotification.id, attachments);
-            })
-        );
 
         await prisma.concrete_notification.update({
             data: {
