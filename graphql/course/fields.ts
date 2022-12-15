@@ -1,4 +1,4 @@
-import { Course, Subcourse, Course_tag as CourseTag, Course_category as CourseCategory } from '../generated';
+import { Course, Subcourse, Course_tag as CourseTag, course_category_enum as CourseCategory } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
