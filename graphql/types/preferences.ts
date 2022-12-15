@@ -21,4 +21,20 @@ export class NotificationPreferences {
     survey: Channels;
     @Field()
     news: Channels;
+    @Field()
+    newsletter: Channels;
+    @Field()
+    training: Channels;
+    @Field()
+    events: Channels;
+    @Field()
+    newsoffer: Channels;
+    @Field()
+    request: Channels;
+    @Field()
+    learnoffer: Channels;
+    @Field()
+    alternativeoffer: Channels;
+    @Field()
+    feedback: Channels;
 }
