@@ -343,22 +343,34 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.UNAUTHENTICATED)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        if (!isElevated(context) && !isSessionPupil(context)) {
+            return false;
+        }
+
         const pupil = await getSessionPupil(context, pupilId);
         return isParticipant(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT)
+    @Authorized(Role.UNAUTHENTICATED)
     async isInstructor(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('studentId', { nullable: true }) studentId: number) {
+        if (!isElevated(context) && !isSessionStudent(context)) {
+            return false;
+        }
+
         const student = await getSessionStudent(context, studentId);
         return (await prisma.subcourse_instructors_student.count({ where: { subcourseId: subcourse.id, studentId: student.id } })) > 0;
     }
 
     @FieldResolver((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.UNAUTHENTICATED)
     async isOnWaitingList(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        if (!isElevated(context) && !isSessionPupil(context)) {
+            return false;
+        }
+
         const pupil = await getSessionPupil(context, pupilId);
         return (await prisma.subcourse_waiting_list_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
     }
