@@ -1023,17 +1023,21 @@ export async function setupDevDB() {
     const hours = now.getHours();
     const minutes = now.getMinutes();
 
-    const lecture1: Lecture = new Lecture();
-    lecture1.subcourse = subcourse1;
-    lecture1.duration = 45;
-    lecture1.start = new Date(year, month, date + 5, 20, 0, 0, 0);
-    lecture1.instructor = s1;
+    {
+        // The first course has a lot of lectures to better test joining course meetings
+        let currentLecture = Date.now();
+        let endLectures = Date.now() + 24 * 60 * 60 * 1000;
+        while (currentLecture < endLectures) {
+            const lecture: Lecture = new Lecture();
+            lecture.subcourse = subcourse1;
+            lecture.duration = 15;
+            lecture.start = new Date(currentLecture);
+            lecture.instructor = s1;
+            lectures.push(lecture);
 
-    const lecture2: Lecture = new Lecture();
-    lecture2.subcourse = subcourse1;
-    lecture2.duration = 45;
-    lecture2.start = new Date(year, month, date + 6, 20, 0, 0, 0);
-    lecture2.instructor = s1;
+            currentLecture += 15 * 60 * 1000;
+        }
+    }
 
     const lecture3: Lecture = new Lecture();
     lecture3.subcourse = subcourse2;
@@ -1105,8 +1109,6 @@ export async function setupDevDB() {
     lecture13.instructor = s1;
 
     lectures.push(
-        lecture1,
-        lecture2,
         lecture3,
         lecture4,
         lecture5,
