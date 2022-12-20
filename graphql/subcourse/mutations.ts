@@ -3,7 +3,7 @@ import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendGuestInvitationMail, sendSubcourseCancelNotifications } from '../../common/mails/courses';
+import { sendGuestInvitationMail, sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -126,6 +126,7 @@ export class MutateSubcourseResolver {
         if (!can.allowed) {
             throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
+        sendPupilCourseSuggestion(subcourse);
 
         await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);

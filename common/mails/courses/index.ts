@@ -186,19 +186,24 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
 }
 
 // TODO filter pupils with grades from course
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+export async function sendPupilCourseSuggestion(subcourse: Subcourse | Prisma.subcourse) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
 
-    const gradeRange = Array.from({ length: maxGrade - minGrade }, (_, grade) => grade + minGrade);
-    const gradeRangeString = gradeRange.map(String);
+    const grades = [];
+
+    for (let grade = minGrade; grade <= maxGrade; grade++) {
+        grades.push(`${grade}. Klasse`);
+    }
 
     const pupils: Person[] = await prisma.pupil.findMany({
-        where: { grade: { in: gradeRangeString } },
+        where: { grade: { in: grades } },
     });
 
     // TODO send notification foreach pupil
-    // for (let pupil in pupils) {
-    //     await Notification.actionTaken(pupil, 'instructor_subcourse_published', { subcourse, course });
-    // }
+    for (let pupil in pupils) {
+        // await Notification.actionTaken(pupil, 'instructor_subcourse_published', { subcourse, course });
+        logger.info(`Notificate Pupil ${JSON.stringify(pupil)} because he is in on of the grades`);
+    }
+    process.exit();
 }
