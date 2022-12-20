@@ -312,6 +312,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     courseAttendanceLog.lecture = activeLecture;
                     courseAttendanceLog.attendedTime = null;
                     await entityManager.save(CourseAttendanceLog, courseAttendanceLog);
+                    courseAttendanceLog.ip = '';
                     await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
                     logger.info('Successfully saved new Course Attendance to lecture with id ', activeLecture.id);
                 } catch (e) {
