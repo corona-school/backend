@@ -12,6 +12,7 @@ import * as Notification from '../../../common/notification';
 import { getFullName } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
+import { Person } from '../../entity/Person';
 
 const logger = getLogger();
 
@@ -182,4 +183,22 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
 
     //send mail 🎉
     await sendTemplateMail(mail, participant.email);
+}
+
+// TODO filter pupils with grades from course
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+    const minGrade = subcourse.minGrade;
+    const maxGrade = subcourse.maxGrade;
+
+    const gradeRange = Array.from({ length: maxGrade - minGrade }, (_, grade) => grade + minGrade);
+    const gradeRangeString = gradeRange.map(String);
+
+    const pupils: Person[] = await prisma.pupil.findMany({
+        where: { grade: { in: gradeRangeString } },
+    });
+
+    // TODO send notification foreach pupil
+    // for (let pupil in pupils) {
+    //     await Notification.actionTaken(pupil, 'instructor_subcourse_published', { subcourse, course });
+    // }
 }
