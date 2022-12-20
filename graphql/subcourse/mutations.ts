@@ -121,12 +121,13 @@ export class MutateSubcourseResolver {
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
+        const course = await getCourse(subcourse.courseId);
 
         const can = await canPublish(subcourse);
         if (!can.allowed) {
             throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
-        sendPupilCourseSuggestion(subcourse);
+        sendPupilCourseSuggestion(course, subcourse);
 
         await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
