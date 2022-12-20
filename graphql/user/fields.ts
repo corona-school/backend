@@ -10,6 +10,7 @@ import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { DEFAULT_PREFERENCES } from '../../notifications/preferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -100,7 +101,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
-        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences;
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? JSON.stringify(DEFAULT_PREFERENCES);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
