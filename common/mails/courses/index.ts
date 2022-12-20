@@ -185,10 +185,17 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
     await sendTemplateMail(mail, participant.email);
 }
 
-// TODO filter pupils with grades from course
 export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
+
+    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    let firstLecture = lectures[0].start;
+    for (let i = 1; i < lectures.length; i++) {
+        if (lectures[i].start < firstLecture) {
+            firstLecture = lectures[i].start;
+        }
+    }
 
     const grades = [];
 
@@ -196,24 +203,20 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         grades.push(`${grade}. Klasse`);
     }
 
-    const pupilsInGrade = await prisma.pupil.findMany({
+    const pupils = await prisma.pupil.findMany({
         where: { active: true, grade: { in: grades } },
     });
 
-    // TODO send notification foreach pupil
-    for (let pupil in pupilsInGrade) {
-        const mail = mailjetTemplates.INSTRUCTORSUBCOURSEPUBLISHED({
+    // TODO get courseDate and Time from lecture
+    for (let pupil of pupils) {
+        await Notification.actionTaken(pupil, 'instructor_subcourse_published', {
             courseTitle: course.name,
             courseDescription: course.description,
-            courseDate: '2022-12-24',
+            courseDate: moment(firstLecture).format('DD.MM.YYYY'),
             courseName: course.name,
-            courseTime: '2022-12-24',
-            courseImageURL: 'http://',
-            courseURL: 'http://',
+            courseTime: moment(firstLecture).format('HH:mm'),
+            courseImageURL: 'https://picsum.photos/200/300',
+            courseURL: 'https://google.com',
         });
-        await sendTemplateMail(mail, pupil.email);
-        await Notification.actionTaken(pupil, 'instructor_subcourse_published', { subcourse, course });
-        logger.info(`Notificate Pupil ${JSON.stringify(pupil)} because he is in on of the grades`);
     }
-    process.exit();
 }

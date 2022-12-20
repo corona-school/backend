@@ -120,8 +120,9 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
-        await hasAccess(context, 'Subcourse', subcourse);
         const course = await getCourse(subcourse.courseId);
+
+        await hasAccess(context, 'Subcourse', subcourse);
 
         const can = await canPublish(subcourse);
         if (!can.allowed) {
