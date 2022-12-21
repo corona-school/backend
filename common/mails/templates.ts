@@ -225,40 +225,6 @@ export const mailjet = {
             variables: variables,
         };
     },
-    // TODO new subcourse published
-    INSTRUCTORSUBCOURSEPUBLISHED: (variables: {
-        courseTitle: string;
-        courseDescription: string;
-        courseDate: string;
-        courseName: string;
-        courseTime: string;
-        courseImageURL: string;
-        courseURL: string;
-    }) => {
-        return <TemplateMail>{
-            type: 'instructorsubcoursepublished',
-            id: 4396314,
-            disabled: false,
-            variables: variables,
-        };
-    },
-    // TODO still available places on subcourse
-    PLACESAVAILABLEONSUBCOURSE: (variables: {
-        courseTitle: string;
-        courseDescription: string;
-        courseDate: string;
-        courseName: string;
-        courseTime: string;
-        courseImageURL: string;
-        courseURL: string;
-    }) => {
-        return <TemplateMail>{
-            type: 'placesavailableonsubcourse',
-            id: 4396339,
-            disabled: false,
-            variables: variables,
-        };
-    },
     CERTIFICATEREQUEST: (variables: { certificateLink: string; studentFirstname: string; pupilFirstname: string }) =>
         <TemplateMail>{
             type: 'certificaterequest',
