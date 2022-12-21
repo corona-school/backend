@@ -20,10 +20,7 @@ import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels: { [key: string]: Channel } = {
-    email: mailjetChannel,
-    webApp: inAppChannel,
-};
+const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -288,13 +285,13 @@ async function deliverNotification(
         }
 
         // default channel is webApp is always enabled
-        const enabledChannels: Array<Channel> = [channels['webApp']];
+        const enabledChannels: Array<Channel> = [inAppChannel];
 
         const messageTypeChannelPreferences = await getNotificationChannelPreferences(user, concreteNotification);
 
-        Object.keys(channels).forEach((channelType) => {
-            if (messageTypeChannelPreferences?.[channelType] === true) {
-                enabledChannels.push(channels[channelType]);
+        channels.forEach((channel) => {
+            if (messageTypeChannelPreferences?.[channel.type] === true) {
+                enabledChannels.push(channel);
             }
         });
 
