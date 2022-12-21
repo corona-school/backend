@@ -191,12 +191,12 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
 
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     let firstLecture = lectures[0].start;
+
     for (let i = 1; i < lectures.length; i++) {
         if (lectures[i].start < firstLecture) {
             firstLecture = lectures[i].start;
         }
     }
-
     const grades = [];
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
@@ -207,9 +207,9 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         where: { active: true, grade: { in: grades } },
     });
 
-    // TODO get courseDate and Time from lecture
     for (let pupil of pupils) {
         await Notification.actionTaken(pupil, 'instructor_subcourse_published', {
+            pupil,
             courseTitle: course.name,
             courseDescription: course.description,
             courseDate: moment(firstLecture).format('DD.MM.YYYY'),
