@@ -86,7 +86,13 @@ export class StudentUpdateInput {
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
+    let { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
+
+    if (context.user.roles.includes(Role.STUDENT)) {
+        // Students aren't allowed to change their name by themselves as this is verified during screening
+        firstname = undefined;
+        lastname = undefined;
+    }
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);

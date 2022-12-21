@@ -311,8 +311,6 @@ export class MutateMeResolver {
             if (pupil) {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
-            student.firstname = undefined; // don't allow students to change their names by themselves as their identity is verified during screening
-            student.lastname = undefined;
 
             await updateStudent(context, prevStudent, student);
             return true;
