@@ -14,7 +14,8 @@ import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
-import { NotificationPreferences } from '../../graphql/types/preferences';
+import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
@@ -248,6 +249,21 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const { messageType } = getMessage(concreteNotification);
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    const channelsPreference = DEFAULT_PREFERENCES[messageType];
+    try {
+        const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
+        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
+    } catch (error) {
+        logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
+    }
+
+    return channelsPreference;
+};
+
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
@@ -276,18 +292,13 @@ async function deliverNotification(
         // default channel is webApp is always enabled
         const enabledChannels: Array<Channel> = [channels['webApp']];
 
-        // TODO: Check if user silenced this notification
+        const messageTypeChannelPreferences = await getNotificationChannelPreferences(user, concreteNotification);
 
-        const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-
-        if (notificationPreferences && typeof notificationPreferences === 'string') {
-            const messageTypePreferences = (JSON.parse(notificationPreferences) as NotificationPreferences)[messageType];
-            Object.keys(channels).forEach((channelType) => {
-                if (messageTypePreferences?.[channelType] === true) {
-                    enabledChannels.push(channels[channelType]);
-                }
-            });
-        }
+        Object.keys(channels).forEach((channelType) => {
+            if (messageTypeChannelPreferences?.[channelType] === true) {
+                enabledChannels.push(channels[channelType]);
+            }
+        });
 
         await Promise.all(
             enabledChannels
@@ -308,7 +319,7 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
+        logger.info(`Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
         logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 

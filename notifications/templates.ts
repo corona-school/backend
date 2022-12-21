@@ -1,7 +1,9 @@
-import { MessageType } from './messageTypes';
+import { MessageCategories } from './messageCategories';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 import { NotificationMessage } from '../graphql/types/notificationMessage';
 import { User } from '../common/user';
+
+// TODO: rename messageType to messageCategory (requires changes in frontend)
 
 export const getMessage = (concreteNotification: ConcreteNotification, user?: User): NotificationMessage => {
     const { firstname, lastname } = user ? user : { firstname: '', lastname: '' };
@@ -13,36 +15,36 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.appointment,
+            messageType: MessageCategories.appointment,
         },
         2: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.course,
+            messageType: MessageCategories.course,
         },
         3: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.chat,
+            messageType: MessageCategories.chat,
         },
         4: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.alternativeoffer,
+            messageType: MessageCategories.alternativeoffer,
         },
         5: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.news,
+            messageType: MessageCategories.news,
         },
         6: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.survey,
+            messageType: MessageCategories.survey,
         },
     };
 
@@ -53,7 +55,7 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
     return {
         headline: `Message ${concreteNotification.id} not found`,
         body: `Error: template ${concreteNotification.notificationID} not found.`,
-        messageType: MessageType.match,
+        messageType: MessageCategories.match,
         error: 'Template for notification does not exist',
     };
 };

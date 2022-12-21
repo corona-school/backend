@@ -10,7 +10,7 @@ import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
-import { DEFAULT_PREFERENCES } from '../../notifications/preferences';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
