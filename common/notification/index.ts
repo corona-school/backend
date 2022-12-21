@@ -1,8 +1,8 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, getStudentOrPupil } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -14,11 +14,15 @@ import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
+import { NotificationPreferences } from '../../graphql/types/preferences';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel, inAppChannel];
+const channels: { [key: string]: Channel } = {
+    email: mailjetChannel,
+    webApp: inAppChannel,
+};
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -269,38 +273,27 @@ async function deliverNotification(
 
         const { messageType } = getMessage(concreteNotification);
 
-        // default channel is inapp
-        const activeChannelForNotificationType: string[] = ['inapp'];
+        // default channel is webApp is always enabled
+        const enabledChannels: Array<Channel> = [channels['webApp']];
 
         // TODO: Check if user silenced this notification
-        const { notificationPreferences } = await getStudentOrPupil(user);
+
+        const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
         if (notificationPreferences && typeof notificationPreferences === 'string') {
-            const enabledChannels: { [channel: string]: boolean } = JSON.parse(notificationPreferences)[messageType];
-
-            for (const channel in enabledChannels) {
-                if (enabledChannels[channel] === true) {
-                    activeChannelForNotificationType.push(channel);
+            const messageTypePreferences = (JSON.parse(notificationPreferences) as NotificationPreferences)[messageType];
+            Object.keys(channels).forEach((channelType) => {
+                if (messageTypePreferences?.[channelType] === true) {
+                    enabledChannels.push(channels[channelType]);
                 }
-            }
-        }
-
-        const channelsToSendTo = channels
-            .filter((it) => it.canSend(notification, user))
-            .filter((c) => {
-                const compareValue = c.type === 'mailjet' ? 'email' : c.type;
-                return activeChannelForNotificationType.includes(compareValue);
             });
-
-        // Channels can be empty if preference is in-app, but there is no WebSocket connection.
-        // In this case message will be not pushed, but can be pulled later
-        if (channelsToSendTo && channelsToSendTo.length) {
-            await Promise.all(
-                channelsToSendTo.map(async (channel) => {
-                    await channel.send(notification, user, context, concreteNotification.id, attachments);
-                })
-            );
         }
+
+        await Promise.all(
+            enabledChannels
+                .filter((channel) => channel.canSend(notification, user))
+                .map(async (channel) => await channel.send(notification, user, context, concreteNotification.id, attachments))
+        );
 
         await prisma.concrete_notification.update({
             data: {

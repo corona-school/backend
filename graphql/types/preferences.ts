@@ -2,7 +2,7 @@ import { Field, InputType, ObjectType } from 'type-graphql';
 
 @InputType('ChannelInput')
 @ObjectType()
-class Channels {
+export class Channels {
     @Field()
     email: boolean;
 }

@@ -2,7 +2,6 @@ import { Channel, Context, Notification } from '../types';
 import * as mailjet from '../../mails/mailjetTypes';
 import { mailjetSmtp } from '../../mails/config';
 import { getLogger } from 'log4js';
-import { Person } from '../../entity/Person';
 import { assert } from 'console';
 import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
@@ -24,7 +23,7 @@ const senders: { [sender in NotificationSender]: { Name: string; Email: string }
 };
 
 export const mailjetChannel: Channel = {
-    type: 'mailjet',
+    type: 'email',
     async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 

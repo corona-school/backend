@@ -120,20 +120,6 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     throw new Error(`Unknown User(${userID})`);
 }
 
-export function getStudentOrPupil(user: User): Promise<Student | Pupil> {
-    const [type] = getUserTypeAndIdForUserId(user.userID);
-
-    if (type === 'student') {
-        return getStudent(user);
-    }
-
-    if (type === 'pupil') {
-        return getPupil(user);
-    }
-
-    throw new Error(`Not implemented`);
-}
-
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
     const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {

@@ -8,7 +8,7 @@ export abstract class NotificationMessage {
     @Field((_type) => String)
     body: string;
     @Field((_type) => String)
-    messageType: MessageType;
+    messageType: keyof typeof MessageType;
     @Field((_type) => String, { nullable: true })
     navigateTo?: string;
     @Field((_type) => Boolean, { nullable: true })

@@ -13,36 +13,36 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.APPOINTMENT,
+            messageType: MessageType.appointment,
         },
         2: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.COURSE,
+            messageType: MessageType.course,
         },
         3: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.MESSAGE,
+            messageType: MessageType.chat,
         },
         4: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.CHAT,
+            messageType: MessageType.alternativeoffer,
         },
         5: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageType.news,
         },
         6: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.SURVEY,
+            messageType: MessageType.survey,
         },
     };
 
@@ -53,7 +53,7 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
     return {
         headline: `Message ${concreteNotification.id} not found`,
         body: `Error: template ${concreteNotification.notificationID} not found.`,
-        messageType: MessageType.MATCH,
+        messageType: MessageType.match,
         error: 'Template for notification does not exist',
     };
 };
