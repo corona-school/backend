@@ -5,7 +5,7 @@ import { Pupil } from '../../entity/Pupil';
 import { Mentor } from '../../entity/Mentor';
 
 export default class UpdatePersonalEvent extends LogUserEvent {
-    constructor({ wix_id }: Pupil | Student | Mentor) {
-        super(LogType.UPDATE_PERSONAL, wix_id, {});
+    constructor(pupil: Pupil | Student | Mentor) {
+        super(LogType.UPDATE_PERSONAL, pupil, {});
     }
 }
