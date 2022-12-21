@@ -287,10 +287,10 @@ async function deliverNotification(
         // default channel is webApp is always enabled
         const enabledChannels: Array<Channel> = [inAppChannel];
 
-        const messageTypeChannelPreferences = await getNotificationChannelPreferences(user, concreteNotification);
+        const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
 
         channels.forEach((channel) => {
-            if (messageTypeChannelPreferences?.[channel.type] === true) {
+            if (channelPreferencesForMessageType?.[channel.type] === true) {
                 enabledChannels.push(channel);
             }
         });
