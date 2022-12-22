@@ -191,7 +191,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const maxGrade = subcourse.maxGrade;
 
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id }, orderBy: { start: 'asc' }, take: 1 });
-    if (lectures.length == 0) {
+    if (!lectures.length) {
         logger.info('No lectures found: no suggestions sent for subcourse ' + subcourse.id + ' of course ' + course.name);
         return;
     }
