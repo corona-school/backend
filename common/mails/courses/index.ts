@@ -186,13 +186,10 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
     await sendTemplateMail(mail, participant.email);
 }
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
-    const minGrade = subcourse.minGrade;
-    const maxGrade = subcourse.maxGrade;
-
-    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id }, orderBy: { start: 'asc' }, take: 1 });
+async function getCourseStartDate(subcourseId: number) {
+    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourseId }, orderBy: { start: 'asc' }, take: 1 });
     if (!lectures.length) {
-        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourse.id + ' of course ' + course.name);
+        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourseId);
         return;
     }
 
@@ -203,6 +200,13 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         }
     }
 
+    return firstLecture;
+}
+
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+    const minGrade = subcourse.minGrade;
+    const maxGrade = subcourse.maxGrade;
+    const courseStartDate = await getCourseStartDate(subcourse.id);
     const grades = [];
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
@@ -219,9 +223,9 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             pupil,
             courseTitle: course.name,
             courseDescription: course.description,
-            courseDate: moment(firstLecture).format('DD.MM.YYYY'),
+            courseDate: moment(courseStartDate).format('DD.MM.YYYY'),
             courseName: course.name,
-            courseTime: moment(firstLecture).format('HH:mm'),
+            courseTime: moment(courseStartDate).format('HH:mm'),
             courseImageURL: accessURLForKey(course.imageKey),
             courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
