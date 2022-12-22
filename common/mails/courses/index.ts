@@ -13,6 +13,7 @@ import { getFullName } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { Person } from '../../entity/Person';
+import { accessURLForKey } from '../../file-bucket';
 
 const logger = getLogger();
 
@@ -189,22 +190,28 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
 
-    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
-    let firstLecture = lectures[0].start;
+    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id }, orderBy: { start: 'asc' }, take: 1 });
+    if (lectures.length == 0) {
+        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourse.id + ' of course ' + course.name);
+        return;
+    }
 
+    let firstLecture = lectures[0].start;
     for (let i = 1; i < lectures.length; i++) {
         if (lectures[i].start < firstLecture) {
             firstLecture = lectures[i].start;
         }
     }
+
     const grades = [];
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
     }
 
+    // TODO filter pupils
     const pupils = await prisma.pupil.findMany({
-        where: { active: true, grade: { in: grades } },
+        where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
     for (let pupil of pupils) {
@@ -215,8 +222,8 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             courseDate: moment(firstLecture).format('DD.MM.YYYY'),
             courseName: course.name,
             courseTime: moment(firstLecture).format('HH:mm'),
-            courseImageURL: 'https://picsum.photos/200/300',
-            courseURL: 'https://google.com',
+            courseImageURL: accessURLForKey(course.imageKey),
+            courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
     }
 }
