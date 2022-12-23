@@ -250,7 +250,7 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
-    const channelsPreference = DEFAULT_PREFERENCES[0][messageType];
+    const channelsPreference = DEFAULT_PREFERENCES[messageType];
     try {
         const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
         Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
