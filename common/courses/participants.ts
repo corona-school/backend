@@ -278,3 +278,11 @@ export async function fillSubcourse(subcourse: Subcourse) {
         }
     }
 }
+
+export async function getCourseCapacity(subcourse: Subcourse) {
+    const maxCapacity = subcourse.maxParticipants;
+    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+
+    const capactiy: number = participants / maxCapacity;
+    return capactiy;
+}
