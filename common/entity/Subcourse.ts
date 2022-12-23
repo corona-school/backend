@@ -77,6 +77,12 @@ export class Subcourse {
     })
     cancelled: boolean;
 
+    @Column({
+        type: 'boolean',
+        default: false,
+    })
+    promoted: boolean;
+
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
 
