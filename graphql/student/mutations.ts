@@ -88,12 +88,6 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
     const log = logInContext('Student', context);
     let { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
 
-    if (context.user.roles.includes(Role.STUDENT)) {
-        // Students aren't allowed to change their name by themselves as this is verified during screening
-        firstname = undefined;
-        lastname = undefined;
-    }
-
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
     }
@@ -104,6 +98,10 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
 
     if (email != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
+    }
+
+    if ((firstname != undefined || lastname != undefined) && !isElevated(context)) {
+        throw new PrerequisiteError(`Only Admins may change the name without verification`);
     }
 
     if (projectFields) {
