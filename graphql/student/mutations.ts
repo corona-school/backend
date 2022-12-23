@@ -23,6 +23,7 @@ import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils'
 import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { NotificationPreferences } from '../types/preferences';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -80,13 +81,31 @@ export class StudentUpdateInput {
     @MaxLength(500)
     aboutMe?: string;
 
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications: Date;
+
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
+
     @Field((type) => [Language], { nullable: true })
     languages: Language[];
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
+    const {
+        firstname,
+        lastname,
+        email,
+        projectFields,
+        subjects,
+        registrationSource,
+        state,
+        aboutMe,
+        languages,
+        lastTimeCheckedNotifications,
+        notificationPreferences,
+    } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -113,6 +132,8 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
+            lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
+            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
             languages: ensureNoNull(languages),
         },
         where: { id: student.id },

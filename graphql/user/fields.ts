@@ -5,10 +5,12 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { User, userForPupil, userForStudent } from '../../common/user';
-import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
+import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
+import { JSONResolver } from 'graphql-scalars';
+import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -82,7 +84,24 @@ export class UserFieldsResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<ConcreteNotification[]> {
-        return await prisma.concrete_notification.findMany({ where: { userId: user.userID, state: ConcreteNotificationState.SENT }, take, skip });
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: { userId: user.userID },
+            take,
+            skip,
+        });
+    }
+
+    @FieldResolver((returns) => Date, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async lastTimeCheckedNotifications(@Root() user: User): Promise<Date | null> {
+        return (await queryUser(user, { lastTimeCheckedNotifications: true })).lastTimeCheckedNotifications;
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async notificationPreferences(@Root() user: User) {
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? JSON.stringify(DEFAULT_PREFERENCES);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users

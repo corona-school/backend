@@ -1,8 +1,8 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -12,7 +12,10 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
+import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
+import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
@@ -243,6 +246,21 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const { messageType } = getMessage(concreteNotification);
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    const channelsPreference = DEFAULT_PREFERENCES[messageType];
+    try {
+        const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
+        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
+    } catch (error) {
+        logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
+    }
+
+    return channelsPreference;
+};
+
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
@@ -261,21 +279,26 @@ async function deliverNotification(
 
     try {
         const user = getUserForTypeORM(legacyUser);
-        const channelsToSendTo = channels.filter((it) => it.canSend(notification, user));
-        if (!channelsToSendTo || channelsToSendTo.length === 0) {
-            throw new Error(`No fitting channel found for Notification(${notification.id})`);
-        }
 
         if (notification.hookID) {
             await triggerHook(notification.hookID, user);
         }
 
-        // TODO: Check if user silenced this notification
+        // default channel is webApp is always enabled
+        const enabledChannels: Array<Channel> = [inAppChannel];
+
+        const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
+
+        channels.forEach((channel) => {
+            if (channelPreferencesForMessageType?.[channel.type] === true) {
+                enabledChannels.push(channel);
+            }
+        });
 
         await Promise.all(
-            channelsToSendTo.map(async (channel) => {
-                await channel.send(notification, user, context, concreteNotification.id, attachments);
-            })
+            enabledChannels
+                .filter((channel) => channel.canSend(notification, user))
+                .map(async (channel) => await channel.send(notification, user, context, concreteNotification.id, attachments))
         );
 
         await prisma.concrete_notification.update({
@@ -291,7 +314,7 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
+        logger.info(`Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
         logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 
