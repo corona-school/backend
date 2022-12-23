@@ -14,6 +14,7 @@ import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { Person } from '../../entity/Person';
 import { accessURLForKey } from '../../file-bucket';
+import { ActionID } from '../../notification/actions';
 
 const logger = getLogger();
 
@@ -189,7 +190,6 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
 async function getCourseStartDate(subcourseId: number) {
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourseId }, orderBy: { start: 'asc' }, take: 1 });
     if (!lectures.length) {
-        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourseId);
         return;
     }
 
@@ -203,11 +203,15 @@ async function getCourseStartDate(subcourseId: number) {
     return firstLecture;
 }
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse, actionId?: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
     const grades = [];
+
+    if (!courseStartDate) {
+        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
+    }
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
@@ -217,9 +221,10 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
+    logger.info(`action to send course suggestions again ${actionId}`);
 
     for (let pupil of pupils) {
-        await Notification.actionTaken(pupil, 'instructor_subcourse_published', {
+        await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
             courseDescription: course.description,
@@ -230,4 +235,5 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
     }
+    process.exit();
 }
