@@ -138,8 +138,8 @@ class MeUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => [NotificationPreferences], { nullable: true })
-    notificationPreferences?: NotificationPreferences[];
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
 
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()

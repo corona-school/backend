@@ -64,8 +64,8 @@ export class PupilUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => [NotificationPreferences], { nullable: true })
-    notificationPreferences?: NotificationPreferences[];
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;

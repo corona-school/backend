@@ -55,13 +55,13 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
             headline: 'Neuer Kurs online',
             body: `Kursvorschlag für dich, ${firstname}!`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageCategories.news,
         },
         31: {
             headline: 'Noch freie Plätze im Kurs',
             body: `Sei schnell! Es sind noch Plätze frei im Kurs: ${firstname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageCategories.news,
         },
     };
 
