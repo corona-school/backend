@@ -312,7 +312,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, { firstname, lastname, ...student });
+            await updateStudent(context, prevStudent, student);
             return true;
         }
 
