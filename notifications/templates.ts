@@ -51,6 +51,18 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
             body: `Hello ${firstname} ${lastname} template ${concreteNotification.notificationID} :)`,
             messageType: MessageCategories.match,
         },
+        30: {
+            headline: 'Neuer Kurs online',
+            body: `Kursvorschlag für dich, ${firstname}!`,
+            navigateTo: 'welcome',
+            messageType: MessageType.NEWS,
+        },
+        31: {
+            headline: 'Noch freie Plätze im Kurs',
+            body: `Sei schnell! Es sind noch Plätze frei im Kurs: ${firstname}`,
+            navigateTo: 'welcome',
+            messageType: MessageType.NEWS,
+        },
     };
 
     if (templates.hasOwnProperty(notificationID)) {
