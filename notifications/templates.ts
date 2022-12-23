@@ -44,6 +44,18 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
             body: `bla bla ${firstname} bla bla ${lastname}`,
             messageType: MessageType.SURVEY,
         },
+        30: {
+            headline: 'Neuer Kurs online',
+            body: `Kursvorschlag für dich, ${firstname}!`,
+            navigateTo: 'welcome',
+            messageType: MessageType.NEWS,
+        },
+        31: {
+            headline: 'Noch freie Plätze im Kurs',
+            body: `Sei schnell! Es sind noch Plätze frei im Kurs: ${firstname}`,
+            navigateTo: 'welcome',
+            messageType: MessageType.NEWS,
+        },
     };
 
     if (templates.hasOwnProperty(notificationID)) {
