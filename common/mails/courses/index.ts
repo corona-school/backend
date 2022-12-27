@@ -219,17 +219,11 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         grades.push(`${grade}. Klasse`);
     }
 
-    // TODO filter pupils
     const pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
-    logger.info(`action to send course suggestions again ${actionId}`);
 
-    for (let pupil of pupils) {
-        //if courseSubject =>  actionTaken für alle Schüler
-        const subjects = parseSubjectString(pupil.subjects);
-        subjects.some((subject) => subject.name == courseSubject);
-        // boolean
+    async function notify(pupil) {
         await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
@@ -241,5 +235,16 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
     }
-    process.exit();
+    for (let pupil of pupils) {
+        const subjects = parseSubjectString(pupil.subjects);
+
+        if (!courseSubject) {
+            notify(pupil);
+        } else {
+            const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
+            if (isPupilsSubject) {
+                notify(pupil);
+            }
+        }
+    }
 }
