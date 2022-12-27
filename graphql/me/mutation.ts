@@ -319,7 +319,8 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, ...student });
+            await updateStudent(context, prevStudent, {lastTimeCheckedNotifications, notificationPreferences, ...student });
+
             return true;
         }
 

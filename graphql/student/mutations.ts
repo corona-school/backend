@@ -93,7 +93,7 @@ export class StudentUpdateInput {
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const {
+    let {
         firstname,
         lastname,
         email,
@@ -117,6 +117,10 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
 
     if (email != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
+    }
+
+    if ((firstname != undefined || lastname != undefined) && !isElevated(context)) {
+        throw new PrerequisiteError(`Only Admins may change the name without verification`);
     }
 
     if (projectFields) {

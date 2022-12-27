@@ -44,7 +44,7 @@ export function isElevated(context: GraphQLContext) {
 
 export function assertElevated(context: GraphQLContext) {
     if (!isElevated(context)) {
-        throw new Error(`Only Admins or Screeners can override the session pupil`);
+        throw new Error(`Only Admins or Screeners can override the session pupil/student`);
     }
 }
 
