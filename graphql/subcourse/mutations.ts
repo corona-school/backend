@@ -493,7 +493,8 @@ export class MutateSubcourseResolver {
 
         await hasAccess(context, 'Subcourse', subcourse);
         sendPupilCourseSuggestion(course, subcourse, 'available_places_on_subcourse');
-        // TODO set promoted to true
+        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourseId } });
+
         return true;
     }
 }
