@@ -15,6 +15,7 @@ import { getFirstLecture } from '../../courses/lectures';
 import { Person } from '../../entity/Person';
 import { accessURLForKey } from '../../file-bucket';
 import { ActionID } from '../../notification/actions';
+import { parseSubjectString } from '../../util/subjectsutils';
 
 const logger = getLogger();
 
@@ -207,6 +208,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
+    const courseSubject = course.subject;
     const grades = [];
 
     if (!courseStartDate) {
@@ -224,6 +226,10 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     logger.info(`action to send course suggestions again ${actionId}`);
 
     for (let pupil of pupils) {
+        //if courseSubject =>  actionTaken für alle Schüler
+        const subjects = parseSubjectString(pupil.subjects);
+        subjects.some((subject) => subject.name == courseSubject);
+        // boolean
         await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
