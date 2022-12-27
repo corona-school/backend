@@ -72,6 +72,9 @@ export class Subcourse {
     @Column()
     published: boolean;
 
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    publishedAt: Date;
+
     @Column({
         default: false,
     })
