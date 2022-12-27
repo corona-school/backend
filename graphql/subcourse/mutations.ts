@@ -130,7 +130,7 @@ export class MutateSubcourseResolver {
         }
         sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
 
-        await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
+        await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
         return true;
     }
