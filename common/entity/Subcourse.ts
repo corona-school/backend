@@ -81,7 +81,7 @@ export class Subcourse {
         type: 'boolean',
         default: false,
     })
-    promoted: boolean;
+    alreadyPromoted: boolean;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
