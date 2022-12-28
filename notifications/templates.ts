@@ -1,10 +1,12 @@
-import { MessageType } from './messageTypes';
-import { GraphQLUser } from '../common/user/session';
+import { MessageCategories } from './messageCategories';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 import { NotificationMessage } from '../graphql/types/notificationMessage';
+import { User } from '../common/user';
 
-export const getMessage = (concreteNotification: ConcreteNotification, user: GraphQLUser): NotificationMessage => {
-    const { firstname, lastname } = user;
+// TODO: rename messageType to messageCategory (requires changes in frontend)
+
+export const getMessage = (concreteNotification: ConcreteNotification, user?: User): NotificationMessage => {
+    const { firstname, lastname } = user ? user : { firstname: '', lastname: '' };
     const { notificationID, context } = concreteNotification;
 
     const templates: { [key: number]: NotificationMessage } = {
@@ -13,48 +15,53 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.APPOINTMENT,
+            messageType: MessageCategories.appointment,
         },
         2: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.COURSE,
+            messageType: MessageCategories.course,
         },
         3: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.MESSAGE,
+            messageType: MessageCategories.chat,
         },
         4: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: `http://www.somewhere`,
             isUrlExternal: true,
-            messageType: MessageType.CHAT,
+            messageType: MessageCategories.alternativeoffer,
         },
         5: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageCategories.news,
         },
         6: {
             headline: `bla bla ${firstname}`,
             body: `bla bla ${firstname} bla bla ${lastname}`,
-            messageType: MessageType.SURVEY,
+            messageType: MessageCategories.survey,
+        },
+        29: {
+            headline: `User Login Notification ${concreteNotification.id}`,
+            body: `Hello ${firstname} ${lastname} template ${concreteNotification.notificationID} :)`,
+            messageType: MessageCategories.match,
         },
         30: {
             headline: 'Neuer Kurs online',
             body: `Kursvorschlag für dich, ${firstname}!`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageCategories.news,
         },
         31: {
             headline: 'Noch freie Plätze im Kurs',
             body: `Sei schnell! Es sind noch Plätze frei im Kurs: ${firstname}`,
             navigateTo: 'welcome',
-            messageType: MessageType.NEWS,
+            messageType: MessageCategories.news,
         },
     };
 
@@ -63,9 +70,9 @@ export const getMessage = (concreteNotification: ConcreteNotification, user: Gra
     }
 
     return {
-        headline: `Message not found`,
-        body: `Error: message details not found. Message for ${firstname} ${lastname}`,
-        messageType: MessageType.MATCH,
+        headline: `Message ${concreteNotification.id} not found`,
+        body: `Error: template ${concreteNotification.notificationID} not found.`,
+        messageType: MessageCategories.match,
         error: 'Template for notification does not exist',
     };
 };

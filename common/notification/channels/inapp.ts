@@ -1,6 +1,6 @@
 import { Message, WebSocketService } from '../../websocket';
 import { AttachmentGroup } from '../../attachments';
-import { Channel, Context, Person, Notification } from '../types';
+import { Channel, Context, Notification } from '../types';
 import { User } from '../../user';
 
 export const inAppChannel: Channel = {

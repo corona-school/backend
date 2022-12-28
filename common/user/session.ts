@@ -4,6 +4,7 @@ import { Role } from './roles';
 import Keyv from 'keyv';
 import { User } from '.';
 import { v4 as uuid } from 'uuid';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 // As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
 export interface GraphQLUser extends User {
@@ -15,6 +16,8 @@ export const UNAUTHENTICATED_USER = {
     firstname: '',
     lastname: '',
     userID: '-/-',
+    lastTimeCheckedNotifications: new Date(),
+    notificationPreferences: DEFAULT_PREFERENCES,
     roles: [Role.UNAUTHENTICATED],
 };
 
