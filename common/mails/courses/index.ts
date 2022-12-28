@@ -204,7 +204,7 @@ async function getCourseStartDate(subcourseId: number) {
     return firstLecture;
 }
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse, actionId?: ActionID) {
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse, actionId: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
