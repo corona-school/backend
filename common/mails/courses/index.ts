@@ -236,11 +236,10 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         });
     }
     for (let pupil of pupils) {
-        const subjects = parseSubjectString(pupil.subjects);
-
         if (!courseSubject) {
             notify(pupil);
         } else {
+            const subjects = parseSubjectString(pupil.subjects);
             const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
             if (isPupilsSubject) {
                 notify(pupil);

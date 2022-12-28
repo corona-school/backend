@@ -405,7 +405,7 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => Number)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
-    async courseCapacity(@Root() subcourse: Required<Subcourse>) {
+    async capacity(@Root() subcourse: Required<Subcourse>) {
         return getCourseCapacity(subcourse);
     }
 }
