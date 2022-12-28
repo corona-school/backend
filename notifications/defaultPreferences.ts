@@ -1,18 +1,26 @@
-import { NotificationPreferences } from '../graphql/types/preferences';
+type EmailChannel = { email: boolean };
+type Channel = { [channel: string]: boolean };
+export type Preference = { [category: string]: EmailChannel };
 
-export const DEFAULT_PREFERENCES: NotificationPreferences = {
+export const DEFAULT_PREFERENCES: Preference = {
     chat: { email: true },
+    survey: { email: true },
+    appointment: { email: true },
+    advice: { email: true },
+    suggestion: { email: true },
+    announcement: { email: true },
+    call: { email: true },
+    news: { email: true },
+    event: { email: true },
+    request: { email: true },
+    alternative: { email: true },
+};
+
+export const FIX_PREFERENCES: Preference = {
+    account: { email: true },
+    onboarding: { email: true },
     match: { email: true },
     course: { email: true },
-    appointment: { email: true },
-    survey: { email: true },
-    news: { email: true },
-    newsletter: { email: false },
-    training: { email: false },
-    events: { email: false },
-    newsoffer: { email: false },
-    request: { email: false },
-    learnoffer: { email: false },
-    alternativeoffer: { email: false },
-    feedback: { email: false },
+    certificate: { email: true },
+    legacy: { email: true },
 };

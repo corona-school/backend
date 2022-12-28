@@ -15,7 +15,7 @@ import { inAppChannel } from './channels/inapp';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
 import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
-import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
+import { DEFAULT_PREFERENCES, FIX_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
@@ -250,15 +250,16 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
-    const channelsPreference = DEFAULT_PREFERENCES[messageType];
+    const allPreferences = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES)[messageType];
+
     try {
         const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
-        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
+        Object.keys(savedPreferences).forEach((channelType) => (allPreferences[channelType] = savedPreferences[channelType]));
     } catch (error) {
         logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
     }
 
-    return channelsPreference;
+    return allPreferences;
 };
 
 async function deliverNotification(

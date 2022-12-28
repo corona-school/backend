@@ -1,31 +1,29 @@
-import { NotificationPreferences } from '../graphql/types/preferences';
-
-export type MessageCategory = keyof NotificationPreferences;
-
-const categories: MessageCategory[] = [
-    'chat',
+const categories = [
+    'account',
+    'onboarding',
     'match',
     'course',
-    'appointment',
+    'certificate',
+    'legacy',
+    'chat',
     'survey',
+    'appointment',
+    'advice',
+    'suggestion',
+    'announcement',
+    'call',
     'news',
-    'newsletter',
-    'training',
-    'events',
-    'newsoffer',
+    'event',
     'request',
-    'learnoffer',
-    'alternativeoffer',
-    'feedback',
+    'alternative',
 ];
 
-type MessageCategoriesMapping = { [key in MessageCategory]: MessageCategory };
-const MessageCategories: MessageCategoriesMapping = (() => {
+const MessageCategories = (() => {
     const result = {};
     for (const messageCategory of categories) {
         result[messageCategory] = messageCategory;
     }
-    return result as MessageCategoriesMapping;
+    return result;
 })();
 
 export { MessageCategories };
