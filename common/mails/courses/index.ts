@@ -208,6 +208,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
+    const { capacity, alreadyPromoted, published, publishedAt } = subcourse;
     const courseSubject = course.subject;
     const grades = [];
 
@@ -223,6 +224,22 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
+    // TODO Validation
+    const getDaysDifference = ({ date }) => {
+        const today = new Date().getDay();
+        const published = new Date(date).getDay();
+        const diff = today - published;
+        return diff;
+    };
+
+    const validateCourse = () => {
+        const daysDiff = getDaysDifference(publishedAt);
+        if (capacity < 0.75 && alreadyPromoted === false && daysDiff > 3) {
+            return true;
+        }
+        return false;
+    };
+
     async function notify(pupil) {
         await Notification.actionTaken(pupil, actionId, {
             pupil,
@@ -235,6 +252,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
     }
+
     for (let pupil of pupils) {
         if (!courseSubject) {
             notify(pupil);
