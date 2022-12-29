@@ -9,11 +9,11 @@ import { getManager } from 'typeorm';
 
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
-import assert from 'assert';
 import { Prisma as PrismaTypes } from '@prisma/client';
-import { query } from 'express';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
+
+type UserTypes = 'student' | 'pupil' | 'screener';
 
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
    Unfortunately we do not have a way to detect the database table a Prisma query returned from
@@ -83,28 +83,37 @@ export type User = {
 
 const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
+export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
+    const validTypes = ['student', 'pupil', 'screener'];
+    const [type, id] = userId.split('/');
+    if (!validTypes.includes(type)) {
+        throw Error('No valid user type found in user id');
+    }
+    const parsedId = parseInt(id, 10);
+    return [type as UserTypes, parsedId];
+}
+
 export async function getUser(userID: string, active?: boolean): Promise<User> {
-    const [type, _id] = userID.split('/');
-    const id = parseInt(_id, 10);
+    const [type, id] = getUserTypeAndIdForUserId(userID);
 
     if (type === 'student') {
         const student = await prisma.student.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (student) {
-            return userForStudent(student);
+            return userForStudent(student as Student);
         }
     }
 
     if (type === 'pupil') {
         const pupil = await prisma.pupil.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (pupil) {
-            return userForPupil(pupil);
+            return userForPupil(pupil as Pupil);
         }
     }
 
     if (type === 'screener') {
         const screener = await prisma.screener.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
         if (screener) {
-            return userForScreener(screener);
+            return userForScreener(screener as Screener);
         }
     }
 
@@ -114,51 +123,44 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
     const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
-        return userForStudent(student);
+        return userForStudent(student as Student);
     }
 
     const pupil = await prisma.pupil.findFirst({ where: { email, active }, select: userSelection });
     if (pupil) {
-        return userForPupil(pupil);
+        return userForPupil(pupil as Pupil);
     }
 
     const screener = await prisma.screener.findFirst({ where: { email, active }, select: userSelection });
     if (screener) {
-        return userForScreener(screener);
+        return userForScreener(screener as Screener);
     }
 
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pick<Pupil, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `pupil/${pupil.id}`,
-        firstname: pupil.firstname,
-        lastname: pupil.lastname,
-        email: pupil.email,
-        pupilId: pupil.id,
-    };
+export function userForPupil(pupil: Pupil | TypeORMPupil) {
+    return userForType(pupil, 'pupil');
 }
 
-export function userForStudent(student: Pick<Student, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `student/${student.id}`,
-        firstname: student.firstname,
-        lastname: student.lastname,
-        email: student.email,
-        studentId: student.id,
-    };
+export function userForStudent(student: Student | TypeORMStudent) {
+    return userForType(student, 'student');
 }
 
-export function userForScreener(screener: Pick<Screener, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    return {
-        userID: `screener/${screener.id}`,
-        firstname: screener.firstname,
-        lastname: screener.lastname,
-        email: screener.email,
-        screenerId: screener.id,
-    };
+export function userForScreener(screener: Screener | TypeORMScreener) {
+    return userForType(screener, 'screener');
 }
+
+type userType = 'student' | 'pupil' | 'screener';
+const userForType = (user: Pupil | Student | Screener | TypeORMPupil | TypeORMStudent | TypeORMScreener, type: userType): User => {
+    return {
+        userID: `${type}/${user.id}`,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        [`${type}Id`]: user.id,
+    };
+};
 
 export function getFullName({ firstname, lastname }: { firstname?: string; lastname?: string }): string {
     if (!firstname) {
@@ -220,4 +222,31 @@ export function userSearch(search?: string): PrismaTypes.pupilWhereInput | Prism
             lastname: { contains: lastWord, mode: 'insensitive' },
         };
     }
+}
+
+type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
+
+export async function queryUser<Select extends UserSelect>(user: User, select: Select) {
+    if (user.studentId) {
+        return await prisma.student.findUnique({
+            where: { id: user.studentId },
+            select,
+        });
+    }
+
+    if (user.pupilId) {
+        return await prisma.pupil.findUnique({
+            where: { id: user.pupilId },
+            select,
+        });
+    }
+
+    if (user.screenerId) {
+        return await prisma.screener.findUnique({
+            where: { id: user.screenerId },
+            select,
+        });
+    }
+
+    throw new Error(`Unknown User(${user.userID})`);
 }

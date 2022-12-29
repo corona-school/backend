@@ -52,6 +52,7 @@ import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '..
 import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
+import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 
@@ -133,6 +134,12 @@ class MeUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(100)
     lastname?: string;
+
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
+
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
 
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()
@@ -292,7 +299,7 @@ export class MutateMeResolver {
     async meUpdate(@Ctx() context: GraphQLContext, @Arg('update') update: MeUpdateInput) {
         const log = logInContext('Me', context);
 
-        const { firstname, lastname, pupil, student } = update;
+        const { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, pupil, student } = update;
 
         if (isSessionPupil(context)) {
             const prevPupil = await getSessionPupil(context);
@@ -301,7 +308,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            await updatePupil(context, prevPupil, { firstname, lastname, ...pupil });
+            await updatePupil(context, prevPupil, { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, ...pupil });
             return true;
         }
 
@@ -312,7 +319,8 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, student);
+            await updateStudent(context, prevStudent, {lastTimeCheckedNotifications, notificationPreferences, ...student });
+
             return true;
         }
 

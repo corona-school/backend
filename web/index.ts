@@ -33,6 +33,7 @@ import { isDev } from "../common/util/environment";
 import {isCommandArg} from "../common/util/basic";
 import { fileRouter } from "./controllers/fileController";
 import cookieParser from "cookie-parser";
+import { WebSocketService } from "../common/websocket";
 
 // Logger setup
 try {
@@ -413,8 +414,13 @@ createConnection().then(setupPDFGenerationEnvironment)
                 await setupDevDB();
             }
 
+            const server = http.createServer(app);
+
+            const ws = WebSocketService.getInstance(server);
+            ws.configure();
+
             // Start listening
-            return http.createServer(app).listen(port, () =>
+            return server.listen(port, () =>
                 logger.info(`${isDev ? "DEV-": ""}Server listening on port ${port}`)
             ); //return server such that it can be used afterwards
         }

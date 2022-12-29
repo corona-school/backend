@@ -12,6 +12,7 @@ import { Student as TypeORMStudent } from './../entity/Student';
 import { Mentor as TypeORMMentor } from './../entity/Mentor';
 import { Screener as TypeORMScreener } from './../entity/Screener';
 import { AttachmentGroup } from '../attachments';
+import { User } from '../user';
 
 // Temporary interop between TypeORM and Prisma
 type Pupil = PrismaPupil | TypeORMPupil;
@@ -65,9 +66,9 @@ export interface Context extends NotificationContext {
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
-    type: 'mailjet';
-    send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification): boolean;
+    type: 'email' | 'inapp';
+    send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
+    canSend(notification: Notification, user: User): boolean;
 }
 
 export interface BulkAction<Entity> {
