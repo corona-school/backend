@@ -249,17 +249,17 @@ async function createConcreteNotification(
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-
-    const allPreferences = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES)[messageType];
+    const allPreferences = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES);
+    const channelsPreference = allPreferences[messageType];
 
     try {
         const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
-        Object.keys(savedPreferences).forEach((channelType) => (allPreferences[channelType] = savedPreferences[channelType]));
+        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
     } catch (error) {
         logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
     }
 
-    return allPreferences;
+    return channelsPreference;
 };
 
 async function deliverNotification(
