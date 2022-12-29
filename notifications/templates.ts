@@ -1,4 +1,3 @@
-import { MessageCategories } from './messageCategories';
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
 import { NotificationMessage } from '../graphql/types/notificationMessage';
 import { User } from '../common/user';

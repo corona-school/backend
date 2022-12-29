@@ -3,17 +3,17 @@ type Channel = { [channel: string]: boolean };
 export type Preference = { [category: string]: EmailChannel };
 
 export const DEFAULT_PREFERENCES: Preference = {
-    chat: { email: true },
-    survey: { email: true },
-    appointment: { email: true },
-    advice: { email: true },
-    suggestion: { email: true },
-    announcement: { email: true },
-    call: { email: true },
-    news: { email: true },
-    event: { email: true },
-    request: { email: true },
-    alternative: { email: true },
+    chat: { email: false },
+    survey: { email: false },
+    appointment: { email: false },
+    advice: { email: false },
+    suggestion: { email: false },
+    announcement: { email: false },
+    call: { email: false },
+    news: { email: false },
+    event: { email: false },
+    request: { email: false },
+    alternative: { email: false },
 };
 
 export const FIX_PREFERENCES: Preference = {

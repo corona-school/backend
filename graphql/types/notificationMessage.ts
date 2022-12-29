@@ -1,4 +1,3 @@
-import { MessageCategories } from '../../notifications/messageCategories';
 import { ObjectType, Field, Int } from 'type-graphql';
 
 @ObjectType('NotificationMessage')
