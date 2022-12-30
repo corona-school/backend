@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { MessageTranslation } from './MessageTranslation';
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
@@ -12,6 +13,26 @@ export enum NotificationRecipient {
 export enum NotificationSender {
     SUPPORT = 'SUPPORT',
     CERTIFICATE_OF_CONDUCT = 'CERTIFICATE_OF_CONDUCT',
+}
+
+export enum NotificationType {
+    CHAT = 'chat',
+    SURVEY = 'survey',
+    APPOINTMENT = 'appointment',
+    ADVICE = 'advice',
+    SUGGESTION = 'suggestion',
+    ANNOUNCEMENT = 'announcement',
+    CALL = 'call',
+    NEWS = 'news',
+    EVENT = 'event',
+    REQUEST = 'request',
+    ALTERNATIVE = 'alternative',
+    ACCOUNT = 'account',
+    ONBOARDING = 'onboarding',
+    MATCH = 'match',
+    COURSE = 'course',
+    CERTIFICATE = 'certificate',
+    LEGACY = 'legacy',
 }
 
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
@@ -38,8 +59,13 @@ export class Notification {
     // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
     @Column('text', { array: true })
     onActions: string[];
-    @Column('text', { array: true })
-    category: string[];
+    @Column({
+        type: 'enum',
+        enum: NotificationType,
+        nullable: false,
+        default: NotificationType.LEGACY,
+    })
+    type: NotificationType;
 
     // Reminders additionally have these attributes set:
     // If the user takes one of these actions, the reminder gets cancelled
@@ -66,4 +92,9 @@ export class Notification {
     // In the future, this could also be used to validate actionTaken(...) calls against all notifications triggered
     @Column({ type: 'json', nullable: true })
     sample_context?: any;
+
+    @OneToMany((type) => MessageTranslation, (messageTranslation) => messageTranslation.notification, {
+        eager: true,
+    })
+    messageTranslations: MessageTranslation[];
 }
