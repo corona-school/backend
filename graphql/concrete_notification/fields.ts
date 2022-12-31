@@ -7,7 +7,7 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { getMessage } from '../../notifications/templates';
-import { NotificationMessage } from '../types/notificationMessage';
+import { NotificationMessageType } from '../types/notificationMessage';
 
 @ObjectType()
 class Campaign {
@@ -40,9 +40,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => NotificationMessage)
+    @FieldResolver((returns) => NotificationMessageType)
     @Authorized(Role.OWNER, Role.ADMIN)
-    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessage {
+    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessageType {
         return getMessage(concreteNotification, getSessionUser(context));
     }
 
@@ -57,7 +57,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { category: { has: 'campaign' } },
+            where: { sample_context: { not: null } },
         });
 
         const aggregated = await prisma.concrete_notification.groupBy({

@@ -1,6 +1,6 @@
 type EmailChannel = { email: boolean };
 type Channel = { [channel: string]: boolean };
-export type Preference = { [category: string]: EmailChannel };
+export type Preference = { [type: string]: EmailChannel };
 
 export const DEFAULT_PREFERENCES: Preference = {
     chat: { email: false },

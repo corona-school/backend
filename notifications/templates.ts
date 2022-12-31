@@ -1,9 +1,8 @@
 import { Concrete_notification as ConcreteNotification } from '../graphql/generated';
-import { NotificationMessage } from '../graphql/types/notificationMessage';
 import { User } from '../common/user';
+import { NotificationMessage } from '../common/notification/messages';
 
-// TODO: rename messageType to messageCategory (requires changes in frontend)
-
+// TODO: Migrate to common/notification/index.ts getMessage(...)
 export const getMessage = (concreteNotification: ConcreteNotification, user?: User): NotificationMessage => {
     const { firstname, lastname } = user ? user : { firstname: '', lastname: '' };
     const { notificationID, context } = concreteNotification;
