@@ -1,17 +1,8 @@
 type EmailChannel = { email: boolean };
-export type Preferences = { [category: Categories]: EmailChannel };
-type Categories = typeof categories[number];
+type Channel = { [channel: string]: boolean };
+export type Preference = { [type: string]: EmailChannel };
 
-export const ENABLED_NOTIFICATIONS: Preferences = {
-    account: { email: true },
-    onboarding: { email: true },
-    match: { email: true },
-    course: { email: true },
-    certificate: { email: true },
-    legacy: { email: true },
-};
-
-export const DEFAULT_PREFERENCES: Preferences = {
+export const DEFAULT_PREFERENCES: Preference = {
     chat: { email: false },
     survey: { email: false },
     appointment: { email: false },
@@ -25,23 +16,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
     alternative: { email: false },
 };
 
-const categories = [
-    'account',
-    'onboarding',
-    'course',
-    'certificate',
-    'legacy',
-    'chat',
-    'survey',
-    'appointment',
-    'advice',
-    'suggestion',
-    'announcement',
-    'call',
-    'news',
-    'event',
-    'request',
-    'alternative',
-];
-
-export const ALL_PREFERENCES: Preferences = Object.assign(ENABLED_NOTIFICATIONS, DEFAULT_PREFERENCES);
+export const FIX_PREFERENCES: Preference = {
+    account: { email: true },
+    onboarding: { email: true },
+    match: { email: true },
+    course: { email: true },
+    certificate: { email: true },
+    legacy: { email: true },
+};

@@ -1421,7 +1421,6 @@ async function importNotificationsFromProd() {
                         active
                         recipient
                         onActions
-                        category
                         cancelledOnAction
                         delay
                         interval
