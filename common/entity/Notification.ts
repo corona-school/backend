@@ -54,11 +54,17 @@ export class Notification {
     active: boolean;
 
     // Sometimes we want to send an Email not to the user directly, but to another email that is in a 1 to 1 relationship to the user
+    // Currently unused though, was initially planned for 'Teacher' and 'Parent' Accounts
     @Column()
     recipient: NotificationRecipient;
     // If a user triggers an action, this Notification will be sent, or if it is a reminder it gets scheduled for the future
+    // If this is empty, the notification is either 'unreachable', or if a sample_context is set, it can be sent out manually
+    //  by admins as a campaign
     @Column('text', { array: true })
     onActions: string[];
+
+    // The Notification type is visually indicated to the user, also they can maintain per type whether they want to receive
+    // notifications of a certain type via a certain Channel
     @Column({
         type: 'enum',
         enum: NotificationType,
@@ -87,12 +93,18 @@ export class Notification {
     hookID?: string;
 
     // A sample context containing all the variables used in the templates for this notification
-    // Can be used to manually fill these fields (i.e. during campaigns) when creating concrete notifications
-    // Can also be used to test notifications
-    // In the future, this could also be used to validate actionTaken(...) calls against all notifications triggered
+    // Can be used to manually fill these fields - during campaigns - when creating concrete notifications
+    // NOTE: If the sample_context is set, this is a Campaign Notification that is sent out manually,
+    //       if this is not set, the notification context is the subset of all sampleContexts of all actions in onActions,
+    //       as the notification is then instantiated via Notification.actionTaken
     @Column({ type: 'json', nullable: true })
     sample_context?: any;
 
+    // A message is a title and a body sent to the user as notification,
+    //  it is shown in the User-App's notification inbox and might be used for other Channels such as Web-Push or other messengers in the future
+    // The messages are localized, though currently only german is maintained
+    // When a Notification is instantiated to a ConcreteNotification,
+    //  the message translation template can be instantiated (rendered) to a concrete message
     @OneToMany((type) => MessageTranslation, (messageTranslation) => messageTranslation.notification, {
         eager: true,
     })

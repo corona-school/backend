@@ -6,6 +6,7 @@ export enum TranslationLanguage {
     DE = 'de',
 }
 
+// See Notification.messageTranslations
 @Entity()
 export class MessageTranslation {
     @PrimaryGeneratedColumn()
