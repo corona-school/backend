@@ -16,7 +16,7 @@ import * as Notification from "../common/notification";
 import { runInterestConfirmations } from "../common/match/pool";
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
-// Run inside the Job Dyno via npm run jobs -- --execute <jobName>
+// Run inside the Job Dyno via npm run jobs --execute <jobName
 export const executeJob = async (job) => {
     switch (job) {
         case 'screeningReminderJob': {
