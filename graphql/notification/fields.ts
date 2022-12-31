@@ -1,10 +1,12 @@
 import { Role } from '../authorizations';
 import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root } from 'type-graphql';
 import { bulkRuns } from '../../common/notification/bulk';
-import { Notification } from '../generated';
+import { Message_translation as MessageTranslation, NestedBoolFilter, Notification } from '../generated';
 import { getHookDescription } from '../../common/notification';
 import { getNotificationActions, NotificationAction } from '../../common/notification/actions';
 import { JSONResolver } from 'graphql-scalars';
+import { prisma } from '../../common/prisma';
+import { getSampleContextVariables } from '../../common/notification/notification';
 @ObjectType()
 class BulkRunNotificationCount {
     @Field()
@@ -64,6 +66,30 @@ export class NotificationExtendedFieldsResolver {
     @Authorized(Role.UNAUTHENTICATED)
     hookDescription(@Root() notification: Notification) {
         return getHookDescription(notification.hookID);
+    }
+
+    @FieldResolver((returns) => [MessageTranslation], {
+        description:
+            "The message translation will be rendered in the user's language with a concrete notification context to produce the message the user sees",
+    })
+    @Authorized(Role.ADMIN)
+    async messageTranslations(@Root() notification: Notification) {
+        return await prisma.message_translation.findMany({
+            where: { notificationId: notification.id },
+        });
+    }
+
+    @FieldResolver((returns) => [[String]], {
+        description:
+            "Returns an array of tuples ['nested.path', 'example value']\n" +
+            'These Variables can be used inside the messages and Mailjet Templates created for this notification, like:\n' +
+            " ['user.firstname', 'Jonas'] -> Mailjet: {{var:user.firstname}}, Message: {{user.firstname}}              \n" +
+            'Additionally they can be set when manually sending out the concrete notification by passing in a context: \n' +
+            " { user: { firstname: 'Jeff' } }",
+    })
+    @Authorized(Role.ADMIN)
+    variables(@Root() notification: Required<Notification>) {
+        return getSampleContextVariables(notification);
     }
 
     @Query((returns) => [NotificationActionType])
