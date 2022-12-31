@@ -30,6 +30,6 @@ if (process.argv.length >= 4 && process.argv[2] === "--execute") {
         executeJob(job);
     });
 } else {
-    log.info("To directly run one of the jobs, use --execute <name>, we know schedule Cron Jobs to run in the future");
+    log.info("To directly run one of the jobs, use --execute <name>, we now schedule Cron Jobs to run in the future");
     scheduleJobs(allJobs);
 }
