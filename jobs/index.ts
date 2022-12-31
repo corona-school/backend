@@ -4,10 +4,12 @@ import { scheduleJobs } from "./scheduler";
 import * as scheduler from "./scheduler";
 import { allJobs } from "./list";
 import { configureGracefulShutdown } from "./shutdown";
+import { executeJob } from "./manualExecution";
 
 //SETUP: logger
 setupLogging();
-getLogger().info("Backend started");
+const log = getLogger();
+log.info("Backend started");
 
 //SETUP: moment
 moment.locale("de"); //set global moment date format
@@ -18,3 +20,12 @@ scheduleJobs(allJobs);
 
 //SETUP: Add a graceful shutdown to the scheduler used
 configureGracefulShutdown(scheduler);
+
+// Manual job execution via npm run jobs -- --execute <name>
+if (process.argv.length >= 4 && process.argv[2] === "--execute") {
+    const job = process.argv[3];
+    log.info(`Manually executing ${job}`);
+    executeJob(job);
+} else {
+    log.info("To directly run one of the jobs, use --execute <name>");
+}
