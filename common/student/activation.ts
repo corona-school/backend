@@ -6,14 +6,6 @@ import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
 
-Notification.registerStudentHook(
-    'deactivate-student',
-    'Account gets deactivated, matches are dissolved, courses are cancelled',
-    async (student) => {
-        await deactivateStudent(student, true, 'missing coc');
-    } // the hook does not send out a notification again, the user already knows that their account was deactivated
-);
-
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
         throw new Error('Student was already deactivated');
