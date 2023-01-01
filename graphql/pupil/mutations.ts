@@ -132,10 +132,9 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
 }
 
-async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<boolean> {
+async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Pupil', ctx);
     const { register, activate } = data;
-    const screener = await getSessionScreener(ctx);
 
     const existingAccount = await prisma.pupil.findUnique({ where: { email: register.email } });
     let doRegister = register != null;
@@ -143,7 +142,8 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 
     if (doRegister && existingAccount) {
         log.info(`Account with email ${register.email} already exists, skipping registration phase`);
-        doRegister = false;
+        // doRegister = false;
+        return { success: false, reason: 'User already exists, please manually edit data' };
     } else if (!register && !existingAccount) {
         throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
     }
@@ -161,16 +161,17 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
             } else {
                 pupil = existingAccount;
             }
-
+            console.log('PRISMA1', pupil.email);
             if (doActivate) {
                 await becomeTutee(pupil, activate);
             }
+            console.log('PRISMA2', pupil.email);
         });
     } catch (e) {
         log.error(`Error while registering pupil ${register.email}, skipping this one`, e);
-        return false;
+        return { success: false, reason: 'unknown - contact tech team' };
     }
-    return true;
+    return { success: true, reason: '' };
 }
 
 @Resolver((of) => GraphQLModel.Pupil)
@@ -237,7 +238,7 @@ export class MutatePupilResolver {
         const results = [];
         for (const entry of entries) {
             const res = await pupilRegisterPlus(entry, context);
-            results.push({ email: entry.register.email, success: res });
+            results.push({ email: entry.register.email, success: res.success, reason: res.reason });
         }
         return results;
     }
