@@ -1,13 +1,10 @@
-name: Node.js CI
+name: Master Barrier
 
 on:
-  push:
-    branches: [ master, dev ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master ]
 
 jobs:
-  
   integration:
     runs-on: ubuntu-20.04
 
@@ -29,10 +26,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Install Prisma
+        run: npx prisma generate
+
       - run: npm run build --if-present
       - run: (npm run web:nopdf &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &) || exit 0
         env:
@@ -50,8 +61,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.x'
-      - run: npm ci
+          node-version: '18.x'
+      
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Install Prisma
+        run: npx prisma generate
+
       - run: npm run linter

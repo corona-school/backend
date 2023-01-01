@@ -8,6 +8,10 @@ import { logTransaction } from '../../common/transactionlog/log';
 import { RedundantError } from '../../common/util/error';
 import { UserInputError } from '../error';
 import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
+import { requestInterestConfirmation } from '../../common/match/interest';
+import { getLogger } from 'log4js';
+
+const logger = getLogger('MutateTutoringInterest');
 
 async function changeStatus(token: string, status: InterestConfirmationStatus) {
     const confirmation = await prisma.pupil_tutoring_interest_confirmation_request.findUnique({
@@ -57,7 +61,7 @@ export class MutateTutoringInterestConfirmationResolver {
     async tutoringInterestCreate(@Arg('pupilId') pupilId: number, @Arg('status') status: InterestConfirmationStatus) {
         const pupil = await getPupil(pupilId);
         const existing = await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
-            where: { pupilId },
+            where: { pupilId, invalidated: false },
         });
 
         if (existing) {
@@ -66,7 +70,7 @@ export class MutateTutoringInterestConfirmationResolver {
         }
 
         await prisma.pupil_tutoring_interest_confirmation_request.create({
-            data: { token: generateToken(), pupilId, status },
+            data: { token: generateToken(), pupilId, status, invalidated: false },
         });
 
         logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
@@ -74,6 +78,17 @@ export class MutateTutoringInterestConfirmationResolver {
             previousStatus: InterestConfirmationStatus.PENDING,
             newStatus: status,
         });
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async tutoringInterestRequest(@Arg('pupilId') pupilId: number) {
+        const pupil = await getPupil(pupilId);
+        await requestInterestConfirmation(pupil);
+
+        logger.info(`Admin requested interest of Pupil(${pupilId})`);
 
         return true;
     }

@@ -2,7 +2,7 @@ import { Authorized, Ctx, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
 
 @Resolver((of) => UserType)
 export class FieldMeResolver {

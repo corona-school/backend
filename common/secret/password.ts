@@ -26,7 +26,7 @@ export async function createPassword(user: User, password: string) {
 }
 
 export async function loginPassword(email: string, password: string): Promise<User | never> {
-    const user = await getUserByEmail(email);
+    const user = await getUserByEmail(email, /* active */ true);
 
     const secrets = await prisma.secret.findMany({
         where: {

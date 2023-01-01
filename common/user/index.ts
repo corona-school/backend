@@ -3,12 +3,15 @@
 
 import { Pupil as TypeORMPupil } from '../entity/Pupil';
 import { Student as TypeORMStudent } from '../entity/Student';
+import { Screener as TypeORMScreener } from '../entity/Screener';
+
 import { getManager } from 'typeorm';
 
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import assert from 'assert';
 import { Prisma as PrismaTypes } from '@prisma/client';
+import { query } from 'express';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -37,7 +40,7 @@ export function getUserIdTypeORM(person: Person) {
     throw new Error(`Person was neither a Student or a Pupil`);
 }
 
-export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | never> {
+export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | TypeORMScreener | never> {
     const [type, id] = userID.split('/');
     const manager = getManager();
     if (type === 'student') {
@@ -48,6 +51,9 @@ export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | T
         return await manager.findOneOrFail(TypeORMPupil, { where: { id } });
     }
 
+    if (type === 'screener') {
+        return await manager.findOneOrFail(TypeORMScreener, { where: { id } });
+    }
     throw new Error(`Unknown User(${userID})`);
 }
 
@@ -77,40 +83,46 @@ export type User = {
 
 const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
-export async function getUser(userID: string): Promise<User> {
+export async function getUser(userID: string, active?: boolean): Promise<User> {
     const [type, _id] = userID.split('/');
     const id = parseInt(_id, 10);
 
     if (type === 'student') {
-        const student = await prisma.student.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForStudent(student);
+        const student = await prisma.student.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (student) {
+            return userForStudent(student);
+        }
     }
 
     if (type === 'pupil') {
-        const pupil = await prisma.pupil.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForPupil(pupil);
+        const pupil = await prisma.pupil.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (pupil) {
+            return userForPupil(pupil);
+        }
     }
 
     if (type === 'screener') {
-        const screener = await prisma.screener.findUnique({ where: { id }, rejectOnNotFound: true, select: userSelection });
-        return userForScreener(screener);
+        const screener = await prisma.screener.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        if (screener) {
+            return userForScreener(screener);
+        }
     }
 
     throw new Error(`Unknown User(${userID})`);
 }
 
-export async function getUserByEmail(email: string): Promise<User> {
-    const student = await prisma.student.findFirst({ where: { email }, select: userSelection });
+export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
+    const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
         return userForStudent(student);
     }
 
-    const pupil = await prisma.pupil.findFirst({ where: { email }, select: userSelection });
+    const pupil = await prisma.pupil.findFirst({ where: { email, active }, select: userSelection });
     if (pupil) {
         return userForPupil(pupil);
     }
 
-    const screener = await prisma.screener.findFirst({ where: { email }, select: userSelection });
+    const screener = await prisma.screener.findFirst({ where: { email, active }, select: userSelection });
     if (screener) {
         return userForScreener(screener);
     }
@@ -177,11 +189,35 @@ export async function getPupil(user: User): Promise<Pupil | never> {
 }
 
 // Enriches a Prisma Query with a filter to search users
-export const addUserSearch = (query: PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput, search?: string) => {
+// where: { AND: [originalWhere, userSearch("hello")]}
+
+export function userSearch(search?: string): PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput {
     if (!search) {
-        return;
+        return {};
     }
 
-    assert(!query.OR);
-    query.OR = [{ email: { contains: search } }, { firstname: { contains: search.split(' ')[0] } }, { lastname: { contains: search.split(' ').pop() } }];
-};
+    // Unfortunately Prisma's fuzzy search capabilities are quite limited
+    // c.f. https://github.com/prisma/prisma/issues/7986
+    // Thus the following is non-fuzzy
+
+    if (!search.includes(' ')) {
+        // Only one word entered, could be email, firstname or lastname
+        return {
+            OR: [
+                { email: { contains: search, mode: 'insensitive' } },
+                { firstname: { contains: search, mode: 'insensitive' } },
+                { lastname: { contains: search, mode: 'insensitive' } },
+            ],
+        };
+    } else {
+        // Multiple words entered, probably name
+        // We ignore middle names as they could be part of either first or lastname in the db
+        const firstWord = search.slice(0, search.indexOf(' '));
+        const lastWord = search.slice(search.lastIndexOf(' ') + 1);
+
+        return {
+            firstname: { contains: firstWord, mode: 'insensitive' },
+            lastname: { contains: lastWord, mode: 'insensitive' },
+        };
+    }
+}

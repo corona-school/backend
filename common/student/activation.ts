@@ -9,10 +9,12 @@ import * as Notification from '../notification';
 Notification.registerStudentHook(
     'deactivate-student',
     'Account gets deactivated, matches are dissolved, courses are cancelled',
-    (student) => deactivateStudent(student, true) // the hook does not send out a notification again, the user already knows that their account was deactivated
+    async (student) => {
+        await deactivateStudent(student, true, 'missing coc');
+    } // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 
-export async function deactivateStudent(student: Student, silent: boolean = false) {
+export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
         throw new Error('Student was already deactivated');
     }
@@ -97,10 +99,12 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         }
     }
 
-    await prisma.student.update({
+    const updatedStudent = await prisma.student.update({
         data: { active: false },
         where: { id: student.id },
     });
 
-    await getTransactionLog().log(new DeActivateEvent(student, false));
+    await getTransactionLog().log(new DeActivateEvent(student, false, reason));
+
+    return updatedStudent;
 }

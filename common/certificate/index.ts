@@ -11,7 +11,7 @@ import { createAutoLoginLink } from '../../web/controllers/utils';
 import * as Notification from '../notification';
 import { Pupil } from '../entity/Pupil';
 import { Student } from '../entity/Student';
-import { pupil as PrismaPupil, student as PrismaStudent } from '@prisma/client';
+import { pupil as PrismaPupil, student as PrismaStudent, participation_certificate as PrismaParticipationCertificate } from '@prisma/client';
 import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '../entity/ParticipationCertificate';
@@ -121,6 +121,23 @@ export interface ICertificateCreationParams {
     state: CertificateState.manual | CertificateState.awaitingApproval;
 }
 
+export async function issueCertificateRequest(
+    pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
+) {
+    const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
+    const mail = mailjetTemplates.CERTIFICATEREQUEST({
+        certificateLink,
+        pupilFirstname: pc.pupil.firstname,
+        studentFirstname: pc.student.firstname,
+    });
+    await sendTemplateMail(mail, pc.pupil.email);
+    await Notification.actionTaken(pc.pupil, 'pupil_certificate_approval', {
+        uniqueId: `${pc.id}`,
+        certificateLink,
+        student: pc.student,
+    });
+}
+
 /* Students can create certificates, which pupils can then sign */
 export async function createCertificate(
     _requestor: Student | PrismaStudent,
@@ -158,18 +175,7 @@ export async function createCertificate(
     await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
 
     if (params.state === 'awaiting-approval') {
-        const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
-        const mail = mailjetTemplates.CERTIFICATEREQUEST({
-            certificateLink,
-            pupilFirstname: pc.pupil.firstname,
-            studentFirstname: pc.student.firstname,
-        });
-        await sendTemplateMail(mail, pc.pupil.email);
-        await Notification.actionTaken(pc.pupil, 'pupil_certificate_approval', {
-            uniqueId: `${pc.id}`,
-            certificateLink,
-            student: pc.student,
-        });
+        await issueCertificateRequest(pc);
     }
 
     return pc;

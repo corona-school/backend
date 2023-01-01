@@ -597,13 +597,14 @@ model match_pool_run {
 }
 
 model secret {
-  id        Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
-  createdAt DateTime         @default(now()) @db.Timestamp(6)
-  userId    String           @db.VarChar
-  type      secret_type_enum
-  secret    String           @db.VarChar
-  expiresAt DateTime?        @db.Timestamp(6)
-  lastUsed  DateTime?        @db.Timestamp(6)
+  id          Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
+  createdAt   DateTime         @default(now()) @db.Timestamp(6)
+  userId      String           @db.VarChar
+  type        secret_type_enum
+  secret      String           @db.VarChar
+  expiresAt   DateTime?        @db.Timestamp(6)
+  lastUsed    DateTime?        @db.Timestamp(6)
+  description String?          @db.VarChar
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.

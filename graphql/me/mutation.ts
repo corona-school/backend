@@ -45,13 +45,15 @@ import '../types/enums';
 import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
-import { evaluatePupilRoles } from '../roles';
+import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
+import { deactivateStudent } from '../../common/student/activation';
+import { ValidateEmail } from '../validators';
 
 @InputType()
 export class RegisterStudentInput implements RegisterStudentData {
@@ -64,7 +66,7 @@ export class RegisterStudentInput implements RegisterStudentData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -94,7 +96,7 @@ export class RegisterPupilInput implements RegisterPupilData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -222,6 +224,7 @@ export class BecomeTuteeInput implements BecomeTuteeData {
 @InputType()
 class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field((type) => String)
+    @ValidateEmail()
     teacherEmail: string;
     @Field((type) => Int, { nullable: true })
     gradeAsInt?: number;
@@ -232,14 +235,18 @@ export class MutateMeResolver {
     @Mutation((returns) => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterStudentInput) {
+    async meRegisterStudent(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: RegisterStudentInput,
+        @Arg('noEmail', { nullable: true }) noEmail: boolean = false
+    ) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const student = await registerStudent(data);
+        const student = await registerStudent(data, noEmail);
         const log = logInContext('Me', context);
         log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
@@ -258,14 +265,14 @@ export class MutateMeResolver {
     @Mutation((returns) => Pupil)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput) {
+    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail: boolean = false) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const pupil = await registerPupil(data);
+        const pupil = await registerPupil(data, noEmail);
         const log = logInContext('Me', context);
         log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
@@ -314,19 +321,25 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext) {
+    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
         const log = logInContext('Me', context);
 
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil);
+            const updatedPupil = await deactivatePupil(pupil, reason);
             await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
         }
 
-        // TODO: Student deactivation
+        if (isSessionStudent(context)) {
+            const student = await getSessionStudent(context);
+            const updatedStudent = await deactivateStudent(student, false, reason);
+            await evaluateStudentRoles(updatedStudent, context);
+            log.info(`Student(${student.id}) deactivated their account`);
+            return true;
+        }
 
         throw new Error(`This mutation is currently not supported for this user type`);
     }

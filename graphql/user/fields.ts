@@ -7,26 +7,7 @@ import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
 import { User, userForPupil, userForStudent } from '../../common/user';
 import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
-
-@ObjectType()
-export class UserType implements User {
-    @Field()
-    userID: string;
-
-    @Field()
-    firstname: string;
-    @Field()
-    lastname: string;
-    @Field()
-    email: string;
-
-    @Field({ nullable: true })
-    pupil?: Pupil;
-    @Field({ nullable: true })
-    student?: Student;
-    @Field({ nullable: true })
-    screener?: Screener;
-}
+import { UserType } from '../types/user';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -87,7 +68,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {} };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }

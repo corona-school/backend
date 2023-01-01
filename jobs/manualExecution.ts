@@ -11,8 +11,8 @@ import initialInterestConfirmationRequests from "./periodic/interest-confirmatio
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
 import dropOldNotificationContexts from "./periodic/drop-old-notification-contexts";
+import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import * as Notification from "../common/notification";
-import deactivateMissingCoc from "./periodic/deactivate-missing-coc";
 import { runInterestConfirmations } from "../common/match/pool";
 
 export const executeJob = async (job) => {
@@ -53,16 +53,16 @@ export const executeJob = async (job) => {
             Notification.checkReminders();
             break;
         }
-        case 'deactivateMissingCoc': {
-            deactivateMissingCoc();
-            break;
-        }
         case 'redactInactiveAccounts': {
             redactInactiveAccounts();
             break;
         }
         case 'dropOldNotificationContexts': {
             dropOldNotificationContexts();
+            break;
+        }
+        case 'anonymiseAttendanceLog': {
+            anonymiseAttendanceLog();
             break;
         }
         default: {

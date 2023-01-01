@@ -7,6 +7,13 @@ import { getUserIdTypeORM } from '../user';
 import { friendlyFileSize } from '../util/basic';
 import { Attachment } from '../entity/Attachment';
 
+export interface File {
+    originalname: string;
+    size: number;
+    buffer: Buffer;
+    mimetype: string;
+}
+
 export interface AttachmentGroup {
     attachmentGroupId: string;
     attachmentListHTML: string;
@@ -21,7 +28,7 @@ export interface AttachmentGroup {
  * @param   attachmentGroupId  Unique per group of attachments (per message)
  * @return  attachmentId       Unique per individual attachment
  */
-export async function createAttachment(file: Express.Multer.File, uploader: Student | Pupil, attachmentGroupId: string) {
+export async function createAttachment(file: File, uploader: Student | Pupil, attachmentGroupId: string) {
     let attachmentId = uuid().toString();
     await prisma.attachment.create({
         data: {

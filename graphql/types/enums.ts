@@ -11,10 +11,12 @@ import {
     pupil_state_enum as State,
     student_state_enum as StudentState,
     student_module_enum as TeacherModule,
+    student_languages_enum as StudentLanguage,
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
 } from '@prisma/client';
 import { MentoringCategory } from '../../common/mentoring/categories';
+import { LoginOption } from '../../common/secret';
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
@@ -49,6 +51,11 @@ registerEnumType(Language, {
     description: 'languages commonly spoken at Lern-Fair (except TypeScript)',
 });
 
+registerEnumType(StudentLanguage, {
+    name: 'StudentLanguage',
+    description: 'languages commonly spoken at Lern-Fair (except TypeScript)',
+});
+
 registerEnumType(TuteeJufoParticipationIndication, {
     name: 'TuteeJufoParticipationIndication',
     description: 'A complicated way of storing TRUE / FALSE / NULL',
@@ -74,3 +81,5 @@ registerEnumType(CourseCategory, {
 registerEnumType(MentoringCategory, {
     name: 'MentorCategory',
 });
+
+registerEnumType(LoginOption, { name: 'LoginOption' });

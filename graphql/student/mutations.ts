@@ -15,6 +15,7 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     student as Student,
     student_state_enum as State,
+    student_languages_enum as Language,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
@@ -107,11 +108,14 @@ export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     aboutMe?: string;
+
+    @Field((type) => [Language], { nullable: true })
+    languages: Language[];
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
     const log = logInContext('Student', context);
-    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe } = update;
+    const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
 
     if (projectFields && !student.isProjectCoach) {
         throw new PrerequisiteError(`Only project coaches can set the project fields`);
@@ -138,6 +142,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
+            languages: ensureNoNull(languages),
         },
         where: { id: student.id },
     });
