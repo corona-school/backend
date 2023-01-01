@@ -1,21 +1,21 @@
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
-import { canStudentRequestMatch, createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
+import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     pupil as Pupil,
-    pupil_registrationsource_enum as RegistrationSource,
-    pupil_projectfields_enum as ProjectField,
-    pupil_state_enum as State,
-    pupil_schooltype_enum as SchoolType,
     pupil_languages_enum as Language,
+    pupil_projectfields_enum as ProjectField,
+    pupil_registrationsource_enum as RegistrationSource,
+    pupil_schooltype_enum as SchoolType,
+    pupil_state_enum as State,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -23,10 +23,7 @@ import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
-import { becomeTutor, registerStudent } from '../../common/student/registration';
-import { addTutorScreening } from '../../common/student/screening';
-import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../me/mutation';
-import { ScreeningInput } from '../student/mutations';
+import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 
 @InputType()
@@ -75,10 +72,19 @@ class PupilRegisterPlusInput {
     activate: BecomeTuteeInput;
 }
 
+@ObjectType()
+class PupilRegisterPlusManyOutput {
+    @Field((_type) => String, { nullable: true })
+    email: string;
+
+    @Field((_type) => Boolean, { nullable: false })
+    success: boolean;
+}
+
 @InputType()
 class PupilRegisterPlusManyInput {
-    @Field((type) => [StudentRegisterPlusInput], { nullable: true })
-    entries: StudentRegisterPlusInput[];
+    @Field((type) => [PupilRegisterPlusInput], { nullable: true })
+    entries: PupilRegisterPlusInput[];
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
@@ -221,11 +227,11 @@ export class MutatePupilResolver {
 
     @Mutation((returns) => [PupilRegisterPlusManyOutput])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
+    async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
         const { entries } = data;
         const results = [];
         for (const entry of entries) {
-            const res = await studentRegisterPlus(entry, context);
+            const res = await pupilRegisterPlus(entry, context);
             results.push({ email: entry.register.email, success: res });
         }
         return results;
