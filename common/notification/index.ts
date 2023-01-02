@@ -15,7 +15,7 @@ import { inAppChannel } from './channels/inapp';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
 import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
-import { DEFAULT_PREFERENCES, FIX_PREFERENCES } from '../../notifications/defaultPreferences';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
@@ -249,8 +249,7 @@ async function createConcreteNotification(
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-    const allPreferences = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES);
-    const channelsPreference = allPreferences[messageType];
+    const channelsPreference = ALL_PREFERENCES[messageType];
 
     try {
         const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
