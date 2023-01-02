@@ -16,6 +16,7 @@ import { Person } from '../../entity/Person';
 import { accessURLForKey } from '../../file-bucket';
 import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
+import { getCourseCapacity } from '../../courses/participants';
 
 const logger = getLogger();
 
@@ -208,7 +209,8 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
-    const { capacity, alreadyPromoted, published, publishedAt } = subcourse;
+    const courseCapacity = await getCourseCapacity(subcourse);
+    const { alreadyPromoted, publishedAt } = subcourse;
     const courseSubject = course.subject;
     const grades = [];
 
@@ -224,23 +226,22 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
-    // TODO Validation
-    const getDaysDifference = ({ date }) => {
+    const getDaysDifference = (date: string): number => {
         const today = new Date().getDay();
         const published = new Date(date).getDay();
         const diff = today - published;
         return diff;
     };
 
-    const validateCourse = () => {
+    const isCourseValid = (publishedAt: string, capacity: number, alreadyPromoted: boolean): boolean => {
         const daysDiff = getDaysDifference(publishedAt);
-        if (capacity < 0.75 && alreadyPromoted === false && daysDiff > 3) {
+        if (capacity < 0.75 && alreadyPromoted === false && (publishedAt === null || daysDiff > 3)) {
             return true;
         }
         return false;
     };
 
-    async function notify(pupil) {
+    async function notify(pupil: Pupil): Promise<void> {
         await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
@@ -253,15 +254,20 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         });
     }
 
-    for (let pupil of pupils) {
-        if (!courseSubject) {
-            notify(pupil);
-        } else {
-            const subjects = parseSubjectString(pupil.subjects);
-            const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-            if (isPupilsSubject) {
+    if (isCourseValid(publishedAt, courseCapacity, alreadyPromoted)) {
+        for (let pupil of pupils) {
+            if (!courseSubject) {
                 notify(pupil);
+            } else {
+                const subjects = parseSubjectString(pupil.subjects);
+                const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
+                if (isPupilsSubject) {
+                    notify(pupil);
+                }
             }
         }
+        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
+    } else {
+        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because the course data is not valid.`);
     }
 }
