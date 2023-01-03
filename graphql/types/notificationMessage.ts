@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int, InputType } from 'type-graphql';
+import { ObjectType, Field, InputType } from 'type-graphql';
 import type { MessageTemplate } from '../../common/notification/messages';
 import type { NotificationMessage } from '../../common/notification/messages';
 

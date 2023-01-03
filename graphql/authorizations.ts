@@ -351,6 +351,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'courseId'
             | 'createdAt'
             | 'updatedAt'
+            | 'publishedAt'
             | 'joinAfterStart'
             | 'minGrade'
             | 'maxGrade'
@@ -362,6 +363,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
+            alreadyPromoted: adminOrOwner,
         }),
     },
     Course: {

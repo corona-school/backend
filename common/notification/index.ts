@@ -12,6 +12,7 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
+import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
 import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
@@ -19,10 +20,7 @@ import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-// Default Channels are always on, the user cannot turn them off
-const DEFAULT_CHANNELS = [inAppChannel];
-// The optional channels are steered via the user preferences
-const OPTIONAL_CHANNELS = [mailjetChannel];
+const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -203,15 +201,7 @@ export async function checkReminders() {
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 
-// Renders a Message for a certain Concrete Notification
-export async function getMessage(concreteNotification: ConcreteNotification) {
-    const notification = await getNotification(concreteNotification.notificationID);
-    const legacyUser = await getUserTypeORM(concreteNotification.userId);
-    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
-
-    return await getMessageForNotification(notification, context);
-}
-
+// TODO: function for user preferences "categories"
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
@@ -256,33 +246,20 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
-// FIX_PREFERENCES are the ones the user cannot set,
-// DEFAULT_PREFERENCES are the ones taken if a user has not set a preference,
-//  combines they provide a good fallback if no preference is set in the user preferences:
-const BASE_PREFERENCES = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES);
-
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
-    const notification = await getNotification(concreteNotification.notificationID);
-
+    const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
     const channelsPreference = ALL_PREFERENCES[messageType];
 
-    const channelsBasePreference = BASE_PREFERENCES[notification.type];
-    assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
+    try {
+        const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
+        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
+    } catch (error) {
+        logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
+    }
 
-    const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
-
-    return Object.assign({}, channelsBasePreference, channelsUserPreference);
+    return channelsPreference;
 };
-
-function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
-    return {
-        ...notificationContext,
-        user: { ...legacyUser, fullName: getFullName(legacyUser) },
-        authToken: legacyUser.authToken ?? '',
-        USER_APP_DOMAIN,
-    };
-}
 
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
@@ -293,7 +270,12 @@ async function deliverNotification(
 ): Promise<void> {
     logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
-    const context = getContext(notificationContext, legacyUser);
+    const context: Context = {
+        ...notificationContext,
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
+        USER_APP_DOMAIN,
+    };
 
     try {
         const user = getUserForTypeORM(legacyUser);
@@ -302,15 +284,16 @@ async function deliverNotification(
             await triggerHook(notification.hookID, user);
         }
 
-        const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
+        // default channel is webApp is always enabled
+        const enabledChannels: Array<Channel> = [inAppChannel];
 
         const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
 
-        for (const channel of OPTIONAL_CHANNELS) {
-            if (channelPreferencesForMessageType[channel.type]) {
+        channels.forEach((channel) => {
+            if (channelPreferencesForMessageType?.[channel.type] === true) {
                 enabledChannels.push(channel);
             }
-        }
+        });
 
         await Promise.all(
             enabledChannels
@@ -322,6 +305,9 @@ async function deliverNotification(
             data: {
                 state: ConcreteNotificationState.SENT,
                 sentAt: new Date(),
+                // drop the context, as it is irrelevant from now on, and only eats up memory
+                // TODO: Clarify if in the future notifications should be shown in the user section
+                // context: {}
             },
             where: {
                 id: concreteNotification.id,
@@ -564,3 +550,6 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
+
+// Ensure hooks are always loaded
+import './hooks';

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, isParticipant } from '../../common/courses/participants';
+import { canJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
 import { CourseState } from '../../common/entity/Course';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
@@ -401,5 +401,11 @@ export class ExtendedFieldsSubcourseResolver {
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
         const course = await getCourse(subcourse.courseId);
         return await canContactInstructors(course, subcourse);
+    }
+
+    @FieldResolver((returns) => Number)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    async capacity(@Root() subcourse: Required<Subcourse>) {
+        return getCourseCapacity(subcourse);
     }
 }
