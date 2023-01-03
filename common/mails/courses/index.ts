@@ -243,10 +243,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
 
     const isPromotionValid = (publishedAt: string, capacity: number, alreadyPromoted: boolean): boolean => {
         const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
-        if (capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3)) {
-            return true;
-        }
-        return false;
+        return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
     };
 
     async function notify(pupil: Pupil): Promise<void> {
