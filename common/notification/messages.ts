@@ -43,7 +43,7 @@ export async function getMessageForNotification(notification: Notification, cont
 export async function setMessageTranslation(notification: Notification, language: MessageTranslationLanguage, template: MessageTemplate) {
     const sampleContext = getSampleContext(notification);
     // Validate template with sample context
-    throw new Error(`Missing validation`);
+    //throw new Error(`Missing validation`);
 
     // Atomically swap the template for this (notification, language)
     await prisma.$transaction([

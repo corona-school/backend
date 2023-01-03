@@ -1,5 +1,5 @@
 import { Role } from '../authorizations';
-import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root } from 'type-graphql';
+import { ObjectType, Field, Resolver, Query, Authorized, FieldResolver, Root, Arg } from 'type-graphql';
 import { bulkRuns } from '../../common/notification/bulk';
 import { Message_translation as MessageTranslation, NestedBoolFilter, Notification } from '../generated';
 import { getHookDescription } from '../../common/notification';
@@ -7,6 +7,7 @@ import { getNotificationActions, NotificationAction } from '../../common/notific
 import { JSONResolver } from 'graphql-scalars';
 import { prisma } from '../../common/prisma';
 import { getSampleContextVariables } from '../../common/notification/notification';
+import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 @ObjectType()
 class BulkRunNotificationCount {
     @Field()
@@ -76,6 +77,13 @@ export class NotificationExtendedFieldsResolver {
     async messageTranslations(@Root() notification: Notification) {
         return await prisma.message_translation.findMany({
             where: { notificationId: notification.id },
+        });
+    }
+
+    @Authorized(Role.USER)
+    async messageTranslation(@Root() notification: Notification, @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage) {
+        return await prisma.message_translation.findMany({
+            where: { notificationId: notification.id, language },
         });
     }
 

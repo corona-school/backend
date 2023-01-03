@@ -246,7 +246,7 @@ model mentor {
   authTokenUsed                Boolean                 @default(false)
   authTokenSent                DateTime?               @db.Timestamp(6)
   isRedacted                   Boolean                 @default(false)
-  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
   wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
   wix_creation_date            DateTime                @db.Timestamp(6)
@@ -354,7 +354,7 @@ model pupil {
   authTokenUsed                                Boolean                                        @default(false)
   authTokenSent                                DateTime?                                      @db.Timestamp(6)
   isRedacted                                   Boolean                                        @default(false)
-  lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
@@ -442,7 +442,7 @@ model screener {
   authTokenUsed                Boolean                      @default(false)
   authTokenSent                DateTime?                    @db.Timestamp(6)
   isRedacted                   Boolean                      @default(false)
-  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
   password                     String                       @db.VarChar
   verified                     Boolean?                     @default(false)
@@ -479,7 +479,7 @@ model student {
   authTokenUsed                             Boolean                                @default(false)
   authTokenSent                             DateTime?                              @db.Timestamp(6)
   isRedacted                                Boolean                                @default(false)
-  lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
