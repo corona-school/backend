@@ -1,6 +1,6 @@
 type EmailChannel = { email: boolean };
-type Channel = { [channel: string]: boolean };
-export type Preferences = { [category: string]: EmailChannel };
+export type Preferences = { [category: Categories]: EmailChannel };
+type Categories = typeof categories[number];
 
 export const ENABLED_NOTIFICATIONS: Preferences = {
     account: { email: true },
@@ -24,5 +24,24 @@ export const DEFAULT_PREFERENCES: Preferences = {
     request: { email: false },
     alternative: { email: false },
 };
+
+const categories = [
+    'account',
+    'onboarding',
+    'course',
+    'certificate',
+    'legacy',
+    'chat',
+    'survey',
+    'appointment',
+    'advice',
+    'suggestion',
+    'announcement',
+    'call',
+    'news',
+    'event',
+    'request',
+    'alternative',
+];
 
 export const ALL_PREFERENCES: Preferences = Object.assign(ENABLED_NOTIFICATIONS, DEFAULT_PREFERENCES);
