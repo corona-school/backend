@@ -550,3 +550,6 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
+
+// Ensure hooks are always loaded
+import './hooks';
