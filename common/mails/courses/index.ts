@@ -227,15 +227,28 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     });
 
     const getDaysDifference = (date: string): number => {
-        const today = new Date().getDay();
-        const published = new Date(date).getDay();
-        const diff = today - published;
-        return diff;
+        const today = new Date().getTime();
+        const published = new Date(date).getTime();
+        const diffInMs = today - published;
+        if (!diffInMs) {
+            return;
+        }
+        const diffInSec = diffInMs / 1000;
+        const diffInMin = diffInSec / 60;
+        const diffInHours = diffInMin / 60;
+        const diffInDays = diffInHours / 24;
+
+        return diffInDays;
     };
 
-    const isCourseValid = (publishedAt: string, capacity: number, alreadyPromoted: boolean): boolean => {
-        const daysDiff = getDaysDifference(publishedAt);
-        if (capacity < 0.75 && alreadyPromoted === false && (publishedAt === null || daysDiff > 3)) {
+    const isPromotionValid = (publishedAt: string, capacity: number, alreadyPromoted: boolean): boolean => {
+        let daysDiff: number | string;
+        if (publishedAt === null) {
+            daysDiff = publishedAt;
+        } else {
+            daysDiff = getDaysDifference(publishedAt);
+        }
+        if (capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3)) {
             return true;
         }
         return false;
@@ -254,16 +267,12 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         });
     }
 
-    if (isCourseValid(publishedAt, courseCapacity, alreadyPromoted)) {
+    if (isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
         for (let pupil of pupils) {
-            if (!courseSubject) {
+            const subjects = parseSubjectString(pupil.subjects);
+            const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
+            if (!courseSubject || isPupilsSubject) {
                 notify(pupil);
-            } else {
-                const subjects = parseSubjectString(pupil.subjects);
-                const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-                if (isPupilsSubject) {
-                    notify(pupil);
-                }
             }
         }
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
