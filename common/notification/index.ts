@@ -14,8 +14,7 @@ import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID } from './actions';
 import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
-import { DEFAULT_PREFERENCES, FIX_PREFERENCES } from '../../notifications/defaultPreferences';
-import { getMessageForNotification } from './messages';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
@@ -266,6 +265,7 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const notification = await getNotification(concreteNotification.notificationID);
 
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    const channelsPreference = ALL_PREFERENCES[messageType];
 
     const channelsBasePreference = BASE_PREFERENCES[notification.type];
     assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
