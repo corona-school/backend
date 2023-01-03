@@ -542,7 +542,9 @@ model subcourse {
   maxParticipants                  Int
   joinAfterStart                   Boolean                            @default(false)
   published                        Boolean
+  publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
+  alreadyPromoted                  Boolean                            @default(false)
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
