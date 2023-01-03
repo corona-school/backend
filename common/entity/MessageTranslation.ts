@@ -19,6 +19,9 @@ export class MessageTranslation {
     @Column({ type: 'json', nullable: false })
     template: any;
 
+    @Column({ type: 'text', nullable: true })
+    navigateTo: string;
+
     @Column({
         type: 'enum',
         enum: TranslationLanguage,

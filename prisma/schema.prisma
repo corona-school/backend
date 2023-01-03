@@ -631,6 +631,7 @@ model typeorm_metadata {
 model message_translation {
   id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
   template       Json                              @db.Json
+  navigateTo     String?
   language       message_translation_language_enum @default(de)
   notificationId Int?
   notification   notification?                     @relation(fields: [notificationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5ae486c5ef53f5335af8a4ae260")
