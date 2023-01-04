@@ -6,7 +6,6 @@ import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
-import { getMessage } from '../../notifications/templates';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 
@@ -44,7 +43,8 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @FieldResolver((returns) => NotificationMessageType)
     @Authorized(Role.OWNER, Role.ADMIN)
     message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessageType {
-        return getMessage(concreteNotification, getSessionUser(context));
+        return {} as any;
+        //return getMessage(concreteNotification, getSessionUser(context));
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })

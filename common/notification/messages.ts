@@ -8,21 +8,10 @@ type Template = string;
 export interface MessageTemplate {
     headline: Template;
     body: Template;
-    navigateTo?: Template;
 }
 
-export interface NotificationMessage {
-    headline: string;
-    body: string;
+export interface NotificationMessage extends MessageTemplate {
     navigateTo?: string;
-
-    // TODO: Can we move to notification.type in the frontend?
-    messageType: string;
-
-    // TODO: Needed? Isn't this done in frontend?
-    isUrlExternal?: boolean;
-    // TODO: Needed?
-    error?: string;
 }
 
 export async function getMessageForNotification(notification: Notification, context: Context): Promise<NotificationMessage | null> {
