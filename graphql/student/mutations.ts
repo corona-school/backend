@@ -1,5 +1,5 @@
 import * as GraphQLModel from '../generated/models';
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
 import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
@@ -25,6 +25,9 @@ import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { getLogger } from 'log4js';
+import { getManager } from 'typeorm';
+import { createRemissionRequestPDF } from '../../common/remission-request';
+import { getFileURL, addFile } from '../files';
 
 const log = getLogger(`StudentMutation`);
 
@@ -221,5 +224,24 @@ export class MutateStudentResolver {
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
         return true;
+    }
+
+    @Mutation((returns) => String)
+    @Authorized(Role.STUDENT)
+    async studentGetRemissionRequestAsPDF(@Ctx() context: GraphQLContext) {
+        const student = await getSessionStudent(context);
+        const pdf = await createRemissionRequestPDF(student);
+
+        if (!pdf) {
+            throw new Error(`No Remission Request issued for Student(${student.id}) so far`);
+        }
+
+        const file = addFile({
+            buffer: pdf,
+            mimetype: 'application/pdf',
+            originalname: 'Zertifikat.pdf',
+            size: pdf.length,
+        });
+        return getFileURL(file);
     }
 }
