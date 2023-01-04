@@ -89,6 +89,9 @@ export class StudentUpdateInput {
 
     @Field((type) => [Language], { nullable: true })
     languages: Language[];
+
+    @Field((type) => String, { nullable: true })
+    university: string;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
@@ -105,6 +108,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         languages,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        university,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -139,6 +143,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
             languages: ensureNoNull(languages),
+            university: ensureNoNull(university),
         },
         where: { id: student.id },
     });
