@@ -205,7 +205,7 @@ async function getCourseStartDate(subcourseId: number) {
     return firstLecture;
 }
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse, actionId: ActionID) {
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
@@ -226,9 +226,9 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
-    const getDaysDifference = (date: string): number => {
+    const getDaysDifference = (date: Date): number => {
         const today = new Date().getTime();
-        const published = new Date(date).getTime();
+        const published = date.getTime();
         const diffInMs = today - published;
         if (!diffInMs) {
             return;
@@ -241,12 +241,12 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         return diffInDays;
     };
 
-    const isPromotionValid = (publishedAt: string, capacity: number, alreadyPromoted: boolean): boolean => {
+    const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
         const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
         return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
     };
 
-    async function notify(pupil: Pupil): Promise<void> {
+    async function notify(pupil: Prisma.pupil): Promise<void> {
         await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
