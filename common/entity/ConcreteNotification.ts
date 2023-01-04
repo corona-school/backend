@@ -1,5 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { MessageTranslation } from './MessageTranslation';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 /* This definition just exists because of the double maintenance of TypeORM and Prisma.
    For queries, use Prisma! */
