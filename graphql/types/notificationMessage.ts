@@ -17,13 +17,3 @@ export abstract class NotificationMessageType implements NotificationMessage {
     @Field((_type) => String, { nullable: true })
     error?: string;
 }
-
-@InputType('MessageTemplate')
-export abstract class MessageTemplateType implements MessageTemplate {
-    @Field((_type) => String)
-    headline: string;
-    @Field((_type) => String)
-    body: string;
-    @Field((_type) => String, { nullable: true })
-    navigateTo?: string;
-}

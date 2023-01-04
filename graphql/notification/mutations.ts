@@ -4,8 +4,7 @@ import { Role } from '../authorizations';
 import * as Notification from '../../common/notification/notification';
 import { message_translation_language_enum as MessageTranslationLanguage, NotificationCreateInput, NotificationUpdateInput } from '../generated';
 import { runBulkAction } from '../../common/notification/bulk';
-import { MessageTemplateType } from '../types/notificationMessage';
-import { setMessageTranslation } from '../../common/notification/messages';
+import { MessageTemplate, setMessageTranslation } from '../../common/notification/messages';
 
 /* import { notification_sender_enum } from '@prisma/client';
 import { JSONResolver } from 'graphql-scalars';
@@ -84,7 +83,7 @@ export class MutateNotificationResolver {
     async notificationSetMessageTranslation(
         @Arg('notificationId') notificationId: number,
         @Arg('language') language: MessageTranslationLanguage,
-        @Arg('template') template: MessageTemplateType
+        @Arg('template') template: MessageTemplate
     ) {
         const notification = await Notification.getNotification(notificationId);
         await setMessageTranslation(notification, language, template);
