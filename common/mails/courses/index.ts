@@ -246,6 +246,17 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
     };
 
+    function canNotify(actionId: string, publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean {
+        if (actionId === 'available_places_on_subcourse') {
+            const promotionValid = isPromotionValid(publishedAt, capacity, alreadyPromoted);
+            return promotionValid;
+        } else if (actionId === 'instructor_subcourse_published') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     async function notify(pupil: Prisma.pupil): Promise<void> {
         await Notification.actionTaken(pupil, actionId, {
             pupil,
@@ -259,7 +270,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         });
     }
 
-    if (isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+    if (canNotify(actionId, publishedAt, courseCapacity, alreadyPromoted)) {
         for (let pupil of pupils) {
             const subjects = parseSubjectString(pupil.subjects);
             const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
@@ -267,7 +278,6 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
                 notify(pupil);
             }
         }
-        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
     } else {
         throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because the course data is not valid.`);
     }
