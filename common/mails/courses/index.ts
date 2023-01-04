@@ -247,14 +247,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
     };
 
     function canNotify(actionId: string, publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean {
-        if (actionId === 'available_places_on_subcourse') {
-            const promotionValid = isPromotionValid(publishedAt, capacity, alreadyPromoted);
-            return promotionValid;
-        } else if (actionId === 'instructor_subcourse_published') {
-            return true;
-        } else {
-            return false;
-        }
+        return actionId === 'available_places_on_subcourse' ? isPromotionValid(publishedAt, capacity, alreadyPromoted) : true;
     }
 
     async function notify(pupil: Prisma.pupil): Promise<void> {
