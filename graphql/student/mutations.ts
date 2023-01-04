@@ -24,6 +24,9 @@ import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
+import { getLogger } from 'log4js';
+
+const log = getLogger(`StudentMutation`);
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -194,6 +197,12 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
+
+        if (!student.isInstructor) {
+            await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
+            log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
+        }
+
         const screener = await getSessionScreener(context);
         await addInstructorScreening(screener, student, screening);
         return true;
@@ -203,6 +212,12 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
+
+        if (!student.isStudent) {
+            await prisma.student.update({ data: { isStudent: true }, where: { id: student.id } });
+            log.info(`Student(${student.id}) was screened as a tutor, so we assume they also want to be tutor`);
+        }
+
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
         return true;
