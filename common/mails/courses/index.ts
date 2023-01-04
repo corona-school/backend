@@ -228,7 +228,7 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
 
     const getDaysDifference = (date: Date): number => {
         const today = new Date().getTime();
-        const published = date.getTime();
+        const published = new Date(date).getTime();
         const diffInMs = today - published;
         if (!diffInMs) {
             return;
