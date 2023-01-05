@@ -1,5 +1,5 @@
 import * as GraphQLModel from '../generated/models';
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
 import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
@@ -24,6 +24,12 @@ import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
+import { getLogger } from 'log4js';
+import { getManager } from 'typeorm';
+import { createRemissionRequestPDF } from '../../common/remission-request';
+import { getFileURL, addFile } from '../files';
+
+const log = getLogger(`StudentMutation`);
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -89,6 +95,9 @@ export class StudentUpdateInput {
 
     @Field((type) => [Language], { nullable: true })
     languages: Language[];
+
+    @Field((type) => String, { nullable: true })
+    university: string;
 }
 
 export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
@@ -105,6 +114,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         languages,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        university,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -139,6 +149,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
             languages: ensureNoNull(languages),
+            university: ensureNoNull(university),
         },
         where: { id: student.id },
     });
@@ -189,6 +200,12 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
+
+        if (!student.isInstructor) {
+            await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
+            log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
+        }
+
         const screener = await getSessionScreener(context);
         await addInstructorScreening(screener, student, screening);
         return true;
@@ -198,8 +215,33 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
+
+        if (!student.isStudent) {
+            await prisma.student.update({ data: { isStudent: true }, where: { id: student.id } });
+            log.info(`Student(${student.id}) was screened as a tutor, so we assume they also want to be tutor`);
+        }
+
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
         return true;
+    }
+
+    @Mutation((returns) => String)
+    @Authorized(Role.STUDENT)
+    async studentGetRemissionRequestAsPDF(@Ctx() context: GraphQLContext) {
+        const student = await getSessionStudent(context);
+        const pdf = await createRemissionRequestPDF(student);
+
+        if (!pdf) {
+            throw new Error(`No Remission Request issued for Student(${student.id}) so far`);
+        }
+
+        const file = addFile({
+            buffer: pdf,
+            mimetype: 'application/pdf',
+            originalname: 'Zertifikat.pdf',
+            size: pdf.length,
+        });
+        return getFileURL(file);
     }
 }
