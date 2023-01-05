@@ -153,21 +153,8 @@ class MeUpdateInput {
 @InputType()
 class BecomeInstructorInput implements BecomeInstructorData {
     @Field((type) => String, { nullable: true })
-    @MaxLength(100)
-    university: string;
-
-    @Field((type) => State, { nullable: true })
-    state: State;
-
-    @Field((type) => TeacherModule, { nullable: true })
-    teacherModule: TeacherModule;
-
-    @Field((type) => Int, { nullable: true })
-    moduleHours: number;
-
-    @Field((type) => String)
     @MaxLength(3000)
-    message: string;
+    message?: string;
 }
 
 @InputType()
@@ -373,8 +360,12 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.STUDENT)
-    async meBecomeInstructor(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeInstructorInput) {
-        const student = await getSessionStudent(context);
+    async meBecomeInstructor(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: BecomeInstructorInput,
+        @Arg('studentId', { nullable: true }) studentId: number
+    ) {
+        const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
         await becomeInstructor(student, data);

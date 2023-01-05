@@ -36,17 +36,16 @@ export interface RegisterStudentData {
 }
 
 export interface BecomeInstructorData {
-    university: string;
-    state: State;
-    teacherModule: TeacherModule;
-    moduleHours: number;
-    message: string;
+    // Message to the Screener, this for sure makes little sense if the screener does this on behalf of the student
+    message?: string;
 }
 
 export interface BecomeTutorData {
-    subjects: Subject[];
-    languages: Language[];
-    supportsInDaZ: boolean;
+    // It would make sense to fill these infos here as otherwise the tutor won't be matched,
+    // though this can also be done later with updateStudent
+    subjects?: Subject[];
+    languages?: Language[];
+    supportsInDaZ?: boolean;
 }
 
 export interface ProjectFieldWithGradeData {
@@ -100,16 +99,12 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
         throw new RedundantError(`Student is already instructor`);
     }
 
-    const { university, message, state, teacherModule, moduleHours } = data;
+    const { message } = data;
 
     await prisma.student.update({
         data: {
             isInstructor: true,
-            state,
-            university,
             msg: message,
-            module: teacherModule,
-            moduleHours,
             lastSentInstructorScreeningInvitationDate: new Date(),
         },
         where: { id: student.id },
