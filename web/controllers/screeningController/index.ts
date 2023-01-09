@@ -266,7 +266,7 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         getManager().save(student);
 
         //update transaction log
-        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email));
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.id));
 
         res.status(200).send("Student updated successfully!");
     } else {
