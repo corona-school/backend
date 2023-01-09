@@ -26,7 +26,6 @@ export class MutateMatchResolver {
 
         await createMatch(pupil, student, pool as ConcreteMatchPool);
 
-        await createMatch(pupil, student, pool);
         await prisma.pupil_tutoring_interest_confirmation_request.updateMany({
             where: { id: { in: pupil.pupil_tutoring_interest_confirmation_request.map((x) => x.id) } },
             data: { invalidated: true },
