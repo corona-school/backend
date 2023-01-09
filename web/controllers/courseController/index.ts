@@ -2376,7 +2376,7 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
                 await sendParticipantRegistrationConfirmationMail(pupil, course, subcourse);
 
 
-                await Notification.actionTaken(pupil, "participant_course_join", {
+                await Notification.actionTaken(pupil, "participant_course_joined", {
                     course: dropCourseRelations(course),
                     subcourse: dropSubcourseRelations(subcourse)
                 });

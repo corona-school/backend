@@ -6,6 +6,7 @@ import { getMatch, getStudent } from '../util';
 import { dissolveMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
+import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { pools } from '../../common/match/pool';
 
 @Resolver((of) => GraphQLModel.Match)
@@ -23,6 +24,8 @@ export class MutateMatchResolver {
         if (!pool) {
             throw new Error(`Unknown MatchPool(${poolName})`);
         }
+
+        await createMatch(pupil, student, pool as ConcreteMatchPool);
 
         await createMatch(pupil, student, pool);
         await prisma.pupil_tutoring_interest_confirmation_request.updateMany({

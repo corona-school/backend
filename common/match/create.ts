@@ -7,11 +7,11 @@ import * as Notification from '../notification';
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from 'log4js';
 import { PrerequisiteError } from '../util/error';
-import type { MatchPool } from './pool';
+import type { ConcreteMatchPool, MatchPool } from './pool';
 
 const logger = getLogger('Match');
 
-export async function createMatch(pupil: Pupil, student: Student, pool: MatchPool) {
+export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool) {
     const uuid = generateUUID();
 
     if (pupil.openMatchRequestCount < 1) {

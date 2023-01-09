@@ -1023,40 +1023,44 @@ export async function setupDevDB() {
     const hours = now.getHours();
     const minutes = now.getMinutes();
 
-    const lecture1: Lecture = new Lecture();
-    lecture1.subcourse = subcourse1;
-    lecture1.duration = 45;
-    lecture1.start = new Date(year, month, date + 5, 20, 0, 0, 0);
-    lecture1.instructor = s1;
+    {
+        // The first course has a lot of lectures to better test joining course meetings
+        let currentLecture = Date.now();
+        let endLectures = Date.now() + 24 * 60 * 60 * 1000;
+        while (currentLecture < endLectures) {
+            const lecture: Lecture = new Lecture();
+            lecture.subcourse = subcourse2;
+            lecture.duration = 15;
+            lecture.start = new Date(currentLecture);
+            lecture.instructor = s1;
+            lectures.push(lecture);
 
-    const lecture2: Lecture = new Lecture();
-    lecture2.subcourse = subcourse1;
-    lecture2.duration = 45;
-    lecture2.start = new Date(year, month, date + 6, 20, 0, 0, 0);
-    lecture2.instructor = s1;
+            currentLecture += 15 * 60 * 1000;
+        }
+    }
 
     const lecture3: Lecture = new Lecture();
-    lecture3.subcourse = subcourse2;
+    lecture3.subcourse = subcourse1;
     lecture3.duration = 120;
     lecture3.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture3.instructor = s1;
 
     const lecture4: Lecture = new Lecture();
-    lecture4.subcourse = subcourse2;
+    lecture4.subcourse = subcourse1;
     lecture4.duration = 120;
     lecture4.start = new Date(year, month, date + 14, 21, 0, 0, 0);
     lecture4.instructor = s1;
 
     // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
-    lecture5.subcourse = subcourse2;
+    lecture5.subcourse = subcourse1;
     lecture5.duration = 120;
     lecture5.start = new Date(year, month, date, 4, 0, 0, 0);
     lecture5.instructor = s1;
 
     // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
-    lecture6.subcourse = subcourse2;
+    lecture6.subcourse = subcourse1;
     lecture6.duration = 60;
     lecture6.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture6.instructor = s1;
@@ -1105,8 +1109,6 @@ export async function setupDevDB() {
     lecture13.instructor = s1;
 
     lectures.push(
-        lecture1,
-        lecture2,
         lecture3,
         lecture4,
         lecture5,

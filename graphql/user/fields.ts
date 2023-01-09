@@ -1,13 +1,16 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput } from '../generated';
-import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Arg } from 'type-graphql';
-import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser, loginAsUser } from '../authentication';
+import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification } from '../generated';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
+import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { User, userForPupil, userForStudent } from '../../common/user';
-import { ACCUMULATED_LIMIT, LimitEstimated } from '../complexity';
+import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
+import { JSONResolver } from 'graphql-scalars';
+import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
+import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -68,9 +71,37 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {} };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    @LimitedQuery()
+    async concreteNotifications(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number
+    ): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: { userId: user.userID },
+            take,
+            skip,
+        });
+    }
+
+    @FieldResolver((returns) => Date, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async lastTimeCheckedNotifications(@Root() user: User): Promise<Date | null> {
+        return (await queryUser(user, { lastTimeCheckedNotifications: true })).lastTimeCheckedNotifications;
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async notificationPreferences(@Root() user: User) {
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? JSON.stringify(DEFAULT_PREFERENCES);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users

@@ -3,7 +3,7 @@ import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendGuestInvitationMail, sendSubcourseCancelNotifications } from '../../common/mails/courses';
+import { sendGuestInvitationMail, sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -14,12 +14,14 @@ import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
-import { Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
 import { getManager } from 'typeorm';
 import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
+import { Student } from '../../common/entity/Student';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -118,12 +120,15 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
         await hasAccess(context, 'Subcourse', subcourse);
 
         const can = await canPublish(subcourse);
         if (!can.allowed) {
             throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
+        sendPupilCourseSuggestion(course, subcourse);
 
         await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
@@ -218,7 +223,7 @@ export class MutateSubcourseResolver {
 
         let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
         if (!meeting) {
-            meeting = await createBBBMeeting(course.name, '' + subcourse.id, await getUserTypeORM(context.user!.userID));
+            meeting = await createBBBMeeting(course.name, '' + subcourse.id, (await getUserTypeORM(context.user!.userID)) as Student | Pupil);
         }
 
         if (meeting.alternativeUrl) {
@@ -279,9 +284,9 @@ export class MutateSubcourseResolver {
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } else if (subcourse.published) {
+        } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        }
+        } */
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
@@ -363,6 +368,8 @@ export class MutateSubcourseResolver {
         @Arg('lastname') lastname: string,
         @Arg('email') email: string
     ) {
+        email = validateEmail(email);
+
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 

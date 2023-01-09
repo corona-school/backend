@@ -45,13 +45,16 @@ import '../types/enums';
 import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
-import { evaluatePupilRoles } from '../roles';
+import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { toPupilSubjectDatabaseFormat, toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { UserType } from '../types/user';
 import { ProjectFieldWithGradeInput, StudentUpdateInput, updateStudent } from '../student/mutations';
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
+import { NotificationPreferences } from '../types/preferences';
+import { deactivateStudent } from '../../common/student/activation';
+import { ValidateEmail } from '../validators';
 
 @InputType()
 class RegisterStudentInput implements RegisterStudentData {
@@ -64,7 +67,7 @@ class RegisterStudentInput implements RegisterStudentData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -94,7 +97,7 @@ class RegisterPupilInput implements RegisterPupilData {
     lastname: string;
 
     @Field((type) => String)
-    @MaxLength(100)
+    @ValidateEmail()
     email: string;
 
     @Field((type) => Boolean)
@@ -132,6 +135,12 @@ class MeUpdateInput {
     @MaxLength(100)
     lastname?: string;
 
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
+
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
+
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()
     pupil?: PupilUpdateInput;
@@ -144,21 +153,8 @@ class MeUpdateInput {
 @InputType()
 class BecomeInstructorInput implements BecomeInstructorData {
     @Field((type) => String, { nullable: true })
-    @MaxLength(100)
-    university: string;
-
-    @Field((type) => State, { nullable: true })
-    state: State;
-
-    @Field((type) => TeacherModule, { nullable: true })
-    teacherModule: TeacherModule;
-
-    @Field((type) => Int, { nullable: true })
-    moduleHours: number;
-
-    @Field((type) => String)
     @MaxLength(3000)
-    message: string;
+    message?: string;
 }
 
 @InputType()
@@ -222,6 +218,7 @@ class BecomeTuteeInput implements BecomeTuteeData {
 @InputType()
 class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field((type) => String)
+    @ValidateEmail()
     teacherEmail: string;
     @Field((type) => Int, { nullable: true })
     gradeAsInt?: number;
@@ -289,7 +286,7 @@ export class MutateMeResolver {
     async meUpdate(@Ctx() context: GraphQLContext, @Arg('update') update: MeUpdateInput) {
         const log = logInContext('Me', context);
 
-        const { firstname, lastname, pupil, student } = update;
+        const { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, pupil, student } = update;
 
         if (isSessionPupil(context)) {
             const prevPupil = await getSessionPupil(context);
@@ -298,7 +295,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            await updatePupil(context, prevPupil, { firstname, lastname, ...pupil });
+            await updatePupil(context, prevPupil, { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, ...pupil });
             return true;
         }
 
@@ -309,7 +306,8 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, { firstname, lastname, ...student });
+            await updateStudent(context, prevStudent, { lastTimeCheckedNotifications, notificationPreferences, ...student });
+
             return true;
         }
 
@@ -318,19 +316,25 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext) {
+    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
         const log = logInContext('Me', context);
 
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil);
+            const updatedPupil = await deactivatePupil(pupil, reason);
             await evaluatePupilRoles(updatedPupil, context);
             log.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
         }
 
-        // TODO: Student deactivation
+        if (isSessionStudent(context)) {
+            const student = await getSessionStudent(context);
+            const updatedStudent = await deactivateStudent(student, false, reason);
+            await evaluateStudentRoles(updatedStudent, context);
+            log.info(`Student(${student.id}) deactivated their account`);
+            return true;
+        }
 
         throw new Error(`This mutation is currently not supported for this user type`);
     }
@@ -356,8 +360,12 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.STUDENT)
-    async meBecomeInstructor(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeInstructorInput) {
-        const student = await getSessionStudent(context);
+    async meBecomeInstructor(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: BecomeInstructorInput,
+        @Arg('studentId', { nullable: true }) studentId: number
+    ) {
+        const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
         await becomeInstructor(student, data);

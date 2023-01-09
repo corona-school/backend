@@ -12,6 +12,8 @@ import * as Notification from '../../../common/notification';
 import { getFullName } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
+import { Person } from '../../entity/Person';
+import { accessURLForKey } from '../../file-bucket';
 
 const logger = getLogger();
 
@@ -123,7 +125,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
 
     await sendTemplateMail(mail, participant.email);
 
-    await Notification.actionTaken(participant, 'participant_subcourse_joined', {
+    await Notification.actionTaken(participant, 'participant_course_joined', {
         course,
         firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
         firstLectureTime: firstLectureMoment.format('HH:mm'),
@@ -182,4 +184,50 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
 
     //send mail 🎉
     await sendTemplateMail(mail, participant.email);
+}
+
+async function getCourseStartDate(subcourseId: number) {
+    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourseId }, orderBy: { start: 'asc' }, take: 1 });
+    if (!lectures.length) {
+        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourseId);
+        return;
+    }
+
+    let firstLecture = lectures[0].start;
+    for (let i = 1; i < lectures.length; i++) {
+        if (lectures[i].start < firstLecture) {
+            firstLecture = lectures[i].start;
+        }
+    }
+
+    return firstLecture;
+}
+
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+    const minGrade = subcourse.minGrade;
+    const maxGrade = subcourse.maxGrade;
+    const courseStartDate = await getCourseStartDate(subcourse.id);
+    const grades = [];
+
+    for (let grade = minGrade; grade <= maxGrade; grade++) {
+        grades.push(`${grade}. Klasse`);
+    }
+
+    // TODO filter pupils
+    const pupils = await prisma.pupil.findMany({
+        where: { active: true, isParticipant: true, grade: { in: grades } },
+    });
+
+    for (let pupil of pupils) {
+        await Notification.actionTaken(pupil, 'instructor_subcourse_published', {
+            pupil,
+            courseTitle: course.name,
+            courseDescription: course.description,
+            courseDate: moment(courseStartDate).format('DD.MM.YYYY'),
+            courseName: course.name,
+            courseTime: moment(courseStartDate).format('HH:mm'),
+            courseImageURL: accessURLForKey(course.imageKey),
+            courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
+        });
+    }
 }

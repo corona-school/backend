@@ -5,22 +5,26 @@ import {
     pupil as PrismaPupil,
     student as PrismaStudent,
     mentor as PrismaMentor,
+    screener as PrismaScreener,
 } from '.prisma/client';
 import { Pupil as TypeORMPupil } from './../entity/Pupil';
 import { Student as TypeORMStudent } from './../entity/Student';
 import { Mentor as TypeORMMentor } from './../entity/Mentor';
+import { Screener as TypeORMScreener } from './../entity/Screener';
 import { AttachmentGroup } from '../attachments';
+import { User } from '../user';
 
 // Temporary interop between TypeORM and Prisma
 type Pupil = PrismaPupil | TypeORMPupil;
 type Student = PrismaStudent | TypeORMStudent;
 type Mentor = PrismaMentor | TypeORMMentor;
-export type Person = Pupil | Student | Mentor;
+type Screener = PrismaScreener | TypeORMScreener;
+export type Person = Pupil | Student | Mentor | Screener;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
-export type ActionID = string;
+export type { ActionID } from './actions';
 export type Email = `${string}@${string}.${string}`;
 
 export { ConcreteNotification, Notification };
@@ -62,9 +66,9 @@ export interface Context extends NotificationContext {
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
-    type: 'mailjet';
-    send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification): boolean;
+    type: 'email' | 'inapp';
+    send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
+    canSend(notification: Notification, user: User): boolean;
 }
 
 export interface BulkAction<Entity> {

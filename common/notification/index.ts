@@ -1,8 +1,8 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -11,11 +11,17 @@ import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
+//import { inAppChannel } from './channels/inapp';
+import { getMessage } from '../../notifications/templates';
+import { ActionID } from './actions';
+import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
 const channels = [mailjetChannel];
+//const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -36,7 +42,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
+export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;
@@ -241,36 +247,62 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const { messageType } = getMessage(concreteNotification);
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    const channelsPreference = DEFAULT_PREFERENCES[messageType];
+    try {
+        const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
+        Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
+    } catch (error) {
+        logger.warn(`Failed to parse notification preferences of User(${user.userID})`, error);
+    }
+
+    return channelsPreference;
+};
+
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    user: Person,
+    legacyUser: Person,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
     const context: Context = {
         ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken ?? '',
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
         USER_APP_DOMAIN,
     };
 
     try {
-        const channel = channels.find((it) => it.canSend(notification));
-        if (!channel) {
-            throw new Error(`No fitting channel found for Notification(${notification.id})`);
-        }
+        const user = getUserForTypeORM(legacyUser);
 
         if (notification.hookID) {
-            const newUser = getUserForTypeORM(user);
-            await triggerHook(notification.hookID, newUser);
+            await triggerHook(notification.hookID, user);
         }
 
-        // TODO: Check if user silenced this notification
+        // default channel is webApp is always enabled
+        const enabledChannels: Array<Channel> = [];
+        //const enabledChannels: Array<Channel> = [inAppChannel];
 
-        await channel.send(notification, user, context, concreteNotification.id, attachments);
+        const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
+
+        channels.forEach((channel) => {
+            if (channelPreferencesForMessageType?.[channel.type] === true) {
+                enabledChannels.push(channel);
+            }
+        });
+
+        await Promise.all(
+            enabledChannels
+                .filter((channel) => channel.canSend(notification, user))
+                .map(async (channel) => await channel.send(notification, user, context, concreteNotification.id, attachments))
+        );
+
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
@@ -284,9 +316,9 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(`Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 
         await prisma.concrete_notification.update({
             data: {
@@ -520,3 +552,6 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
+
+// Ensure hooks are always loaded
+import './hooks';

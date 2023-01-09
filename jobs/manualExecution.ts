@@ -11,9 +11,12 @@ import initialInterestConfirmationRequests from "./periodic/interest-confirmatio
 import interestConfirmationRequestReminders from "./periodic/interest-confirmation-request-reminders";
 import redactInactiveAccounts from "./periodic/redact-inactive-accounts";
 import dropOldNotificationContexts from "./periodic/drop-old-notification-contexts";
+import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import * as Notification from "../common/notification";
 import { runInterestConfirmations } from "../common/match/pool";
 
+// Run inside the Web Dyno via GraphQL (mutation _executeJob)
+// Run inside the Job Dyno via npm run jobs --execute <jobName
 export const executeJob = async (job) => {
     switch (job) {
         case 'screeningReminderJob': {
@@ -58,6 +61,10 @@ export const executeJob = async (job) => {
         }
         case 'dropOldNotificationContexts': {
             dropOldNotificationContexts();
+            break;
+        }
+        case 'anonymiseAttendanceLog': {
+            anonymiseAttendanceLog();
             break;
         }
         default: {
