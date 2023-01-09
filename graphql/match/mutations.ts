@@ -7,7 +7,6 @@ import { dissolveMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
-import { pools } from '../../common/match/pool';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
