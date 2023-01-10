@@ -262,14 +262,11 @@ export async function updateStudentByMailHandler(req: Request, res: Response, ne
         //update student info
         await updateStudentInformation(student, studentInfo, screener);
 
-        //get updated new student info
-        const newState = await StudentInfoDTO.buildFrom(student);
-
         //save changes
         getManager().save(student);
 
         //update transaction log
-        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.email, { prev: prevState, new: newState }));
+        getTransactionLog().log(new UpdatedByScreenerEvent(student, screener.id));
 
         res.status(200).send("Student updated successfully!");
     } else {
