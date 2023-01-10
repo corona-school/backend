@@ -7,6 +7,7 @@ import { dissolveMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
+import { removeInterest } from '../../common/match/interest';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -26,10 +27,7 @@ export class MutateMatchResolver {
 
         await createMatch(pupil, student, pool as ConcreteMatchPool);
 
-        await prisma.pupil_tutoring_interest_confirmation_request.updateMany({
-            where: { id: { in: pupil.pupil_tutoring_interest_confirmation_request.map((x) => x.id) } },
-            data: { invalidated: true },
-        });
+        await removeInterest(pupil);
         return true;
     }
 
