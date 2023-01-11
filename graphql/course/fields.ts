@@ -46,7 +46,7 @@ export class ExtendedFieldsCourseResolver {
     @Authorized(Role.UNAUTHENTICATED)
     async courseTags(@Arg('category') category: CourseCategory) {
         return await prisma.course_tag.findMany({
-            where: { category }
+            where: { category },
         });
     }
 
