@@ -71,7 +71,7 @@ export const getMessage = (concreteNotification: ConcreteNotification, user?: Us
     return {
         headline: `Message ${concreteNotification.id} not found`,
         body: `Error: template ${concreteNotification.notificationID} not found.`,
-        messageType: 'suggestion',
+        messageType: 'legacy',
         error: 'Template for notification does not exist',
     };
 };
