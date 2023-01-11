@@ -8,6 +8,9 @@ import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
+import { getLogger } from 'log4js';
+
+const logger = getLogger('Concrete Notification');
 
 @ObjectType()
 class Campaign {
@@ -42,32 +45,29 @@ export class ExtendedFieldsConcreteNotificationResolver {
 
     @FieldResolver((returns) => NotificationMessageType)
     @Authorized(Role.OWNER, Role.ADMIN)
-    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessageType {
-        return {} as any;
-        //return getMessage(concreteNotification, getSessionUser(context));
-    }
-
-    @Query((returns) => ConcreteNotification, { nullable: true })
-    @Authorized(Role.USER)
-    async concrete_notification(
+    async message(
+        @Root() concreteNotification: ConcreteNotification,
         @Ctx() context: GraphQLContext,
-        @Arg('concreteNotificationId', (type) => Int) concreteNotificationId: number,
         @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
-    ) {
-        const concreteNotification = await prisma.concrete_notification.findFirst({
-            where: { id: concreteNotificationId, userId: getSessionUser(context).userID },
-            select: { context: true, notificationID: true },
-        });
-        const notification = await prisma.notification.findFirst({
-            where: { id: concreteNotification.notificationID },
-            select: { sample_context: true },
-        });
+    ): Promise<NotificationMessageType> {
         const translation = await prisma.message_translation.findFirst({
             where: { notificationId: concreteNotification.notificationID, language },
         });
 
-        console.log(concreteNotification, notification, translation);
-        return { ...concreteNotification, translation, sampleContext: notification.sample_context };
+        const notification = await prisma.notification.findUnique({
+            where: { id: concreteNotification.notificationID }, //include: {message_translation: true},
+            select: { type: true },
+        });
+
+        const headline = translation.template.toString();
+        const body = translation.template.toString();
+        return { messageType: notification.type, body, headline, navigateTo: translation.navigateTo };
+    }
+
+    @Query((returns) => ConcreteNotification, { nullable: true })
+    @Authorized(Role.USER)
+    async concrete_notification(@Ctx() context: GraphQLContext, @Arg('concreteNotificationId', (type) => Int) concreteNotificationId: number) {
+        return await prisma.concrete_notification.findFirst({ where: { id: concreteNotificationId, userId: getSessionUser(context).userID } });
     }
 
     @Query((returns) => [Campaign])
