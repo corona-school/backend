@@ -118,6 +118,6 @@ export const mailjetChannel: Channel = {
     },
 
     canSend: (notification: Notification, _user: User) => {
-        return notification.mailjetTemplateId !== undefined;
+        return notification.mailjetTemplateId != null;
     },
 };
