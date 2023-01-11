@@ -126,7 +126,7 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
     await prisma.student.update({
         data: {
             isStudent: true,
-            openMatchRequestCount: 1,
+            openMatchRequestCount: 0,
             subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
             languages,
             supportsInDaZ,
