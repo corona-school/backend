@@ -14,6 +14,9 @@ import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { Person } from '../../entity/Person';
 import { accessURLForKey } from '../../file-bucket';
+import { ActionID } from '../../notification/actions';
+import { parseSubjectString } from '../../util/subjectsutils';
+import { getCourseCapacity } from '../../courses/participants';
 
 const logger = getLogger();
 
@@ -189,7 +192,6 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
 async function getCourseStartDate(subcourseId: number) {
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourseId }, orderBy: { start: 'asc' }, take: 1 });
     if (!lectures.length) {
-        logger.info('No lectures found: no suggestions sent for subcourse ' + subcourseId);
         return;
     }
 
@@ -203,23 +205,53 @@ async function getCourseStartDate(subcourseId: number) {
     return firstLecture;
 }
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseStartDate = await getCourseStartDate(subcourse.id);
+    const courseCapacity = await getCourseCapacity(subcourse);
+    const { alreadyPromoted, publishedAt } = subcourse;
+    const courseSubject = course.subject;
     const grades = [];
+
+    if (!courseStartDate) {
+        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
+    }
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
     }
 
-    // TODO filter pupils
     const pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
-    for (let pupil of pupils) {
-        await Notification.actionTaken(pupil, 'instructor_subcourse_published', {
+    const getDaysDifference = (date: Date): number => {
+        const today = new Date().getTime();
+        const published = new Date(date).getTime();
+        const diffInMs = today - published;
+        if (!diffInMs) {
+            return;
+        }
+        const diffInSec = diffInMs / 1000;
+        const diffInMin = diffInSec / 60;
+        const diffInHours = diffInMin / 60;
+        const diffInDays = diffInHours / 24;
+
+        return diffInDays;
+    };
+
+    const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
+        const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
+        return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
+    };
+
+    function canNotify(actionId: string, publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean {
+        return actionId === 'available_places_on_subcourse' ? isPromotionValid(publishedAt, capacity, alreadyPromoted) : true;
+    }
+
+    async function notify(pupil: Prisma.pupil): Promise<void> {
+        await Notification.actionTaken(pupil, actionId, {
             pupil,
             courseTitle: course.name,
             courseDescription: course.description,
@@ -229,5 +261,17 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
             courseImageURL: accessURLForKey(course.imageKey),
             courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
         });
+    }
+
+    if (canNotify(actionId, publishedAt, courseCapacity, alreadyPromoted)) {
+        for (let pupil of pupils) {
+            const subjects = parseSubjectString(pupil.subjects);
+            const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
+            if (!courseSubject || isPupilsSubject) {
+                notify(pupil);
+            }
+        }
+    } else {
+        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because the course data is not valid.`);
     }
 }

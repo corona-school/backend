@@ -11,17 +11,16 @@ import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
-//import { inAppChannel } from './channels/inapp';
+import { inAppChannel } from './channels/inapp';
 import { getMessage } from '../../notifications/templates';
 import { ActionID } from './actions';
 import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
-import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel];
-//const channels = [mailjetChannel, inAppChannel];
+const channels = [mailjetChannel, inAppChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -250,8 +249,8 @@ async function createConcreteNotification(
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const { messageType } = getMessage(concreteNotification);
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    const channelsPreference = ALL_PREFERENCES[messageType];
 
-    const channelsPreference = DEFAULT_PREFERENCES[messageType];
     try {
         const savedPreferences: NotificationPreferences = JSON.parse(notificationPreferences as string)[messageType];
         Object.keys(savedPreferences).forEach((channelType) => (channelsPreference[channelType] = savedPreferences[channelType]));
@@ -286,8 +285,7 @@ async function deliverNotification(
         }
 
         // default channel is webApp is always enabled
-        const enabledChannels: Array<Channel> = [];
-        //const enabledChannels: Array<Channel> = [inAppChannel];
+        const enabledChannels: Array<Channel> = [inAppChannel];
 
         const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
 

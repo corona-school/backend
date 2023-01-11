@@ -72,10 +72,19 @@ export class Subcourse {
     @Column()
     published: boolean;
 
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    publishedAt: Date;
+
     @Column({
         default: false,
     })
     cancelled: boolean;
+
+    @Column({
+        type: 'boolean',
+        default: false,
+    })
+    alreadyPromoted: boolean;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);

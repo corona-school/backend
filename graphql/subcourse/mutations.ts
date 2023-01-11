@@ -128,9 +128,9 @@ export class MutateSubcourseResolver {
         if (!can.allowed) {
             throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
-        sendPupilCourseSuggestion(course, subcourse);
+        await sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
 
-        await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
+        await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
         return true;
     }
@@ -482,6 +482,19 @@ export class MutateSubcourseResolver {
         const files = fileIDs.map(getFile);
 
         await contactParticipants(course, subcourse, instructor, title, body, files, participantIDs);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.INSTRUCTOR)
+    async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
+        await hasAccess(context, 'Subcourse', subcourse);
+        await sendPupilCourseSuggestion(course, subcourse, 'available_places_on_subcourse');
+        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
+
         return true;
     }
 }
