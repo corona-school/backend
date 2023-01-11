@@ -870,7 +870,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
     try {
         await entityManager.save(type, person);
-        await transactionLog.log(new UpdatePersonalEvent(person, oldPerson));
+        await transactionLog.log(new UpdatePersonalEvent(person));
         if (person instanceof Student && req.isCodu) {
             await Notification.actionTaken(person, "codu_student_registration", {});
         }
