@@ -10,6 +10,8 @@ import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
+    Prisma,
+    PrismaClient,
     pupil as Pupil,
     pupil_languages_enum as Language,
     pupil_projectfields_enum as ProjectField,
@@ -69,6 +71,9 @@ export class PupilUpdateInput {
 
 @InputType()
 class PupilRegisterPlusInput {
+    @Field(() => String) // required to identify pupil even when registration is not desired
+    email: string;
+
     @Field((type) => RegisterPupilInput, { nullable: true })
     register: RegisterPupilInput;
 
@@ -83,6 +88,9 @@ class PupilRegisterPlusManyOutput {
 
     @Field((_type) => Boolean, { nullable: false })
     success: boolean;
+
+    @Field((_type) => String, { nullable: false })
+    reason: string;
 }
 
 @InputType()
@@ -91,7 +99,12 @@ class PupilRegisterPlusManyInput {
     entries: PupilRegisterPlusInput[];
 }
 
-export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
+export async function updatePupil(
+    context: GraphQLContext,
+    pupil: Pupil,
+    update: PupilUpdateInput,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
+) {
     const log = logInContext('Pupil', context);
     const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype, languages, aboutMe, matchReason } = update;
 
@@ -107,7 +120,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
-    const res = await prisma.pupil.update({
+    const res = await prismaInstance.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -130,46 +143,49 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
     await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
+    return res;
 }
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Pupil', ctx);
-    const { register, activate } = data;
-
-    const existingAccount = await prisma.pupil.findUnique({ where: { email: register.email } });
-    let doRegister = register != null;
-    let doActivate = activate != null;
-
-    if (doRegister && existingAccount) {
-        log.info(`Account with email ${register.email} already exists, skipping registration phase`);
-        // doRegister = false;
-        return { success: false, reason: 'User already exists, please manually edit data' };
-    } else if (!register && !existingAccount) {
-        throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
-    }
-
-    if (activate && existingAccount?.isPupil) {
-        log.info(`Account with email ${register.email} is already active, skipping activation phase`);
-        doActivate = false;
-    }
+    const { email, register, activate } = data;
 
     try {
-        await prisma.$transaction(async (prisma) => {
+        if (register && register.email !== email) {
+            throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+        }
+
+        const existingAccount = await prisma.pupil.findUnique({ where: { email } });
+
+        if (!register && !existingAccount) {
+            throw new PrerequisiteError(`Account with email ${email} doesn't exist and no registration data was provided`);
+        }
+
+        await prisma.$transaction(async (tx) => {
             let pupil;
-            if (doRegister) {
-                pupil = await registerPupil(register);
+            if (register != null) {
+                if (existingAccount) {
+                    // if account already exists, overwrite relevant data with new plus data
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead...`);
+                    pupil = await updatePupil(ctx, existingAccount, { ...register, projectFields: undefined }, tx);
+                } else {
+                    pupil = await registerPupil(register, true, tx);
+                    log.info(`Registered account with email ${email}`);
+                }
             } else {
                 pupil = existingAccount;
             }
-            console.log('PRISMA1', pupil.email);
-            if (doActivate) {
-                await becomeTutee(pupil, activate);
+            if (activate && pupil?.isPupil) {
+                log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead...`);
+                await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
+            } else if (activate) {
+                await becomeTutee(pupil, activate, tx);
+                log.info(`Made account with email ${email} a tutee`);
             }
-            console.log('PRISMA2', pupil.email);
         });
     } catch (e) {
-        log.error(`Error while registering pupil ${register.email}, skipping this one`, e);
-        return { success: false, reason: 'unknown - contact tech team' };
+        log.error(`Error while registering pupil ${email}, skipping this one`, e);
+        return { success: false, reason: e.publicMessage || e.toString() };
     }
     return { success: true, reason: '' };
 }
@@ -238,7 +254,7 @@ export class MutatePupilResolver {
         const results = [];
         for (const entry of entries) {
             const res = await pupilRegisterPlus(entry, context);
-            results.push({ email: entry.register.email, success: res.success, reason: res.reason });
+            results.push({ email: entry.email, ...res });
         }
         return results;
     }

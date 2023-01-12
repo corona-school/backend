@@ -9,6 +9,8 @@ import {
     student_languages_enum as Language,
     student_state_enum as State,
     student_module_enum as TeacherModule,
+    Prisma,
+    PrismaClient,
 } from '@prisma/client';
 import { Subject } from '../entity/Student';
 import {
@@ -63,12 +65,12 @@ export interface BecomeProjectCoachData {
     jufoPastParticipationInfo: string;
 }
 
-export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false) {
+export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    const student = await prisma.student.create({
+    const student = await prismaInstance.student.create({
         data: {
             email: data.email.toLowerCase(),
             firstname: data.firstname,
@@ -121,14 +123,19 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
     }
 }
 
-export async function becomeTutor(student: Student, data: BecomeTutorData) {
+export async function becomeTutor(
+    student: Student,
+    data: BecomeTutorData,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
+    batchMode = false
+) {
     if (student.isStudent) {
         throw new RedundantError(`Student is already tutor`);
     }
 
     const { languages, subjects, supportsInDaZ } = data;
 
-    await prisma.student.update({
+    let res = await prismaInstance.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 1,
@@ -140,12 +147,12 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
     });
 
     const isScreenedCoach =
-        (await prisma.project_coaching_screening.count({
+        (await prismaInstance.project_coaching_screening.count({
             where: { studentId: student.id, success: true },
         })) > 0;
 
     if (isScreenedCoach) {
-        await prisma.screening.create({
+        await prismaInstance.screening.create({
             data: {
                 success: true,
                 screenerId: DEFAULT_SCREENER_NUMBER_ID,
@@ -153,10 +160,11 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
                 knowsCoronaSchoolFrom: '',
             },
         });
-
-        await Notification.actionTaken(student, 'tutor_screening_success', {});
+        if (!batchMode) {
+            await Notification.actionTaken(student, 'tutor_screening_success', {});
+        }
     }
-
+    return res;
     // TODO: Currently students are not invited for screening again when they want to become tutors? Why is that?
 }
 

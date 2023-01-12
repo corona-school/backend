@@ -1,4 +1,4 @@
-import { student as Student, screener as Screener } from '@prisma/client';
+import { student as Student, screener as Screener, Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
@@ -30,8 +30,14 @@ export async function addInstructorScreening(screener: Screener, student: Studen
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
 }
 
-export async function addTutorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
-    await prisma.screening.create({
+export async function addTutorScreening(
+    screener: Screener,
+    student: Student,
+    screening: ScreeningInput,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
+    batchMode = false
+) {
+    await prismaInstance.screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
@@ -39,11 +45,13 @@ export async function addTutorScreening(screener: Screener, student: Student, sc
         },
     });
 
-    if (screening.success) {
-        await ScheduleCoCReminders(student);
-        await Notification.actionTaken(student, 'tutor_screening_success', {});
-    } else {
-        await Notification.actionTaken(student, 'tutor_screening_rejection', {});
+    if (!batchMode) {
+        if (screening.success) {
+            await ScheduleCoCReminders(student);
+            await Notification.actionTaken(student, 'tutor_screening_success', {});
+        } else {
+            await Notification.actionTaken(student, 'tutor_screening_rejection', {});
+        }
     }
 
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);

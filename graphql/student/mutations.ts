@@ -16,6 +16,8 @@ import {
     student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    PrismaClient,
+    Prisma,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
@@ -52,10 +54,16 @@ class StudentRegisterPlusManyOutput {
 
     @Field((_type) => Boolean, { nullable: false })
     success: boolean;
+
+    @Field((_type) => String, { nullable: true })
+    reason: string;
 }
 
 @InputType()
 class StudentRegisterPlusInput {
+    @Field((type) => String) // required to identify student even when registration is not desired
+    email: string;
+
     @Field((type) => RegisterStudentInput, { nullable: true })
     register: RegisterStudentInput;
 
@@ -113,7 +121,12 @@ export class StudentUpdateInput {
     languages: Language[];
 }
 
-export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
+export async function updateStudent(
+    context: GraphQLContext,
+    student: Student,
+    update: StudentUpdateInput,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
+) {
     const log = logInContext('Student', context);
     const { firstname, lastname, email, projectFields, subjects, registrationSource, state, aboutMe, languages } = update;
 
@@ -133,7 +146,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         await setProjectFields(student, projectFields);
     }
 
-    const res = await prisma.student.update({
+    const res = await prismaInstance.student.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -151,57 +164,71 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
     await updateSessionUser(context, userForStudent(res));
 
     log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
+    return res;
 }
 
-async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<boolean> {
+async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Student', ctx);
-    const { register, activate, screen } = data;
+    const { email, register, activate, screen } = data;
     const screener = await getSessionScreener(ctx);
 
-    const existingAccount = await prisma.student.findUnique({ where: { email: register.email } });
-    let doRegister = register != null;
-    let doActivate = activate != null;
-    let doScreen = screen != null;
-
-    if (doRegister && existingAccount) {
-        log.info(`Account with email ${register.email} already exists, skipping registration phase`);
-        doRegister = false;
-    } else if (!register && !existingAccount) {
-        throw new PrerequisiteError(`Account with email ${register.email} doesn't exist and no registration data was provided`);
-    }
-
-    if (activate && existingAccount?.isStudent) {
-        log.info(`Account with email ${register.email} is already active, skipping activation phase`);
-        doActivate = false;
-    }
-
-    if (existingAccount && (await canStudentRequestMatch(existingAccount))) {
-        log.info(`Account with email ${register.email} is already screened, skipping screening phase`);
-        doScreen = false;
-    }
-
     try {
-        await prisma.$transaction(async (prisma) => {
+        if (register && register.email !== email) {
+            throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+        }
+
+        const existingAccount = await prisma.student.findUnique({ where: { email } });
+
+        if (!register && !existingAccount) {
+            throw new PrerequisiteError(`Account with email ${email} doesn't exist and no registration data was provided`);
+        }
+
+        await prisma.$transaction(async (tx) => {
             let student;
-            if (doRegister) {
-                student = await registerStudent(register);
+            if (!!register) {
+                //registration data was provided
+                if (!!existingAccount) {
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead...`);
+                    // updating existing account with new registration data:
+                    student = await updateStudent(ctx, existingAccount, { ...register, projectFields: undefined, languages: undefined }, tx); // languages are added in next step (becomeTutor)
+                } else {
+                    student = await registerStudent(register, true, tx);
+                    log.info(`Registered account with email ${email}`);
+                }
             } else {
+                // don't register; use existing account data
                 student = existingAccount;
             }
 
-            if (doActivate) {
-                await becomeTutor(student, activate);
+            if (!!activate && !student.isStudent) {
+                // activation data was provided; student isn't a tutor yet
+                student = await becomeTutor(student, activate, tx, true);
+                log.info(`Made account with email ${email} a tutor`);
+            } else if (!!activate) {
+                // activation data was provided but student already is a tutor
+                log.info(`Account with email ${email} is already a tutor, updating student with activation data...`);
+                // update existing account with new activation data:
+                student = await updateStudent(ctx, student, { ...activate, projectFields: undefined }, tx);
             }
 
-            if (doScreen) {
-                await addTutorScreening(screener, student, screen);
+            if (!!screen) {
+                // screening data was provided
+                let canRequest = await canStudentRequestMatch(student);
+                if (!canRequest.allowed && canRequest.reason === 'not-screened') {
+                    await addTutorScreening(screener, student, screen, tx, true);
+                    log.info(`Screened account with email ${email}`);
+                } else if (!canRequest.allowed) {
+                    throw new PrerequisiteError(`Screening error: ${canRequest.reason}`);
+                } else {
+                    log.info(`Account with email ${email} is already screened`);
+                }
             }
         });
     } catch (e) {
-        log.error(`Error while registering student ${register.email}, skipping this one`, e);
-        return false;
+        log.error(`Error while registering student ${email}, skipping this one`, e);
+        return { success: false, reason: e.publicMessage || e.toString() };
     }
-    return true;
+    return { success: true, reason: '' };
 }
 
 @Resolver((of) => GraphQLModel.Student)
@@ -266,7 +293,7 @@ export class MutateStudentResolver {
         const results = [];
         for (const entry of entries) {
             const res = await studentRegisterPlus(entry, context);
-            results.push({ email: entry.register.email, success: res });
+            results.push({ email: entry.email, ...res });
         }
         return results;
     }
