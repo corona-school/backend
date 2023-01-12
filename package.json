@@ -13,7 +13,6 @@
     "build:clean": "(rm -rf ./built/ 2> /dev/null || find ./built/ -mindepth 1 -delete) && npm run build",
     "heroku-postbuild": "npm run build && ./setup.sh",
     "jobs": "node ./built/jobs/index.js",
-    "jobsDEV": "node ./built/jobs/manualExecution.js dropOldNotificationContexts",
     "jobs:dev": "node -r dotenv/config ./built/jobs/index.js",
     "jobs:debug": "npm run build && node --inspect=0 ./built/jobs/index.js",
     "web": "node ./built/web/index.js",
