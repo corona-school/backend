@@ -373,7 +373,7 @@ createConnection()
 
         async function deployServer() {
             const port = process.env.PORT || 5000;
-            if (isDev && !isCommandArg('--noSync')) {
+            if (isDev && !isCommandArg('--keepDB')) {
                 await setupDevDB();
             }
 
