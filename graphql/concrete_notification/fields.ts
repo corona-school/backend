@@ -9,6 +9,8 @@ import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 import { getLogger } from 'log4js';
+import { NotificationTypeValue } from '../../common/entity/Notification';
+import { MessageTemplate } from '../../common/notification/messages';
 
 const logger = getLogger('Concrete Notification');
 
@@ -59,9 +61,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
             select: { type: true },
         });
 
-        const headline = translation.template.toString();
-        const body = translation.template.toString();
-        return { messageType: notification.type, body, headline, navigateTo: translation.navigateTo };
+        const { headline, body } = translation.template as any as MessageTemplate; // @TODO: is it possible to fix any?
+        //const context1 = JSON.stringify(concreteNotification.context);
+        return { type: notification.type as NotificationTypeValue, body, headline, navigateTo: translation.navigateTo };
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })

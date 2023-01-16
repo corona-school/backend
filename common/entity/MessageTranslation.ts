@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Notification } from './Notification';
+import { MessageTemplate } from '../notification/messages';
 
 export enum TranslationLanguage {
     EN = 'en',
@@ -17,7 +18,7 @@ export class MessageTranslation {
     notification: Notification;
 
     @Column({ type: 'json', nullable: false })
-    template: any;
+    template: MessageTemplate;
 
     @Column({ type: 'text', nullable: true })
     navigateTo: string;

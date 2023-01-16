@@ -35,6 +35,8 @@ export enum NotificationType {
     LEGACY = 'legacy',
 }
 
+export type NotificationTypeValue = typeof NotificationType[keyof typeof NotificationType];
+
 // A Notification is actually something maintained in one or multiple external systems, e.g. a Mailjet Template
 // Yet we have to store some meta information for a Notification, which we do in this model:
 @Entity()
