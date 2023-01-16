@@ -13,8 +13,8 @@ import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID } from './actions';
-import { Channels, NotificationPreferences } from '../../graphql/types/preferences';
-import { DEFAULT_PREFERENCES, FIX_PREFERENCES } from '../../notifications/defaultPreferences';
+import { Channels } from '../../graphql/types/preferences';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 import { getMessageForNotification } from './messages';
 
 const logger = getLogger('Notification');
@@ -257,17 +257,12 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
-// FIX_PREFERENCES are the ones the user cannot set,
-// DEFAULT_PREFERENCES are the ones taken if a user has not set a preference,
-//  combines they provide a good fallback if no preference is set in the user preferences:
-const BASE_PREFERENCES = Object.assign(FIX_PREFERENCES, DEFAULT_PREFERENCES);
-
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const notification = await getNotification(concreteNotification.notificationID);
 
     const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
-    const channelsBasePreference = BASE_PREFERENCES[notification.type];
+    const channelsBasePreference = ALL_PREFERENCES[notification.type];
     assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
 
     const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
