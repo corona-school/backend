@@ -1425,6 +1425,7 @@ async function importNotificationsFromProd() {
                         delay
                         interval
                         sender
+                        hookID
                     }
                 }`,
             variables: {}

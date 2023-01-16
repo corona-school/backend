@@ -118,10 +118,6 @@ export async function create(notification: Prisma.notificationCreateInput) {
         throw new Error('Notifications must be created in inactive state');
     }
 
-    if (!notification.mailjetTemplateId) {
-        throw new Error('As long as Mailjet is our main channel, it is required to set the mailjetTemplateId');
-    }
-
     // To keep DEV and PROD parity, notifications are inserted with their id (see "importNotifications")
     // Unfortunately this creates inconsistency between the ids present and the sequence used to generate new ids
     // Thus the id is manually calculated and does not rely on the DEFAULT value
