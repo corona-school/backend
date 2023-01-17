@@ -1,5 +1,6 @@
 import { Concrete_notification as ConcreteNotification, Notification } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { compile } from 'handlebars';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -8,11 +9,9 @@ import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
-import { getLogger } from 'log4js';
 import { NotificationTypeValue } from '../../common/entity/Notification';
 import { MessageTemplate } from '../../common/notification/messages';
-
-const logger = getLogger('Concrete Notification');
+import { renderTemplate } from '../../utils/helpers';
 
 @ObjectType()
 class Campaign {
@@ -62,8 +61,13 @@ export class ExtendedFieldsConcreteNotificationResolver {
         });
 
         const { headline, body } = translation.template as any as MessageTemplate; // @TODO: is it possible to fix any?
-        //const context1 = JSON.stringify(concreteNotification.context);
-        return { type: notification.type as NotificationTypeValue, body, headline, navigateTo: translation.navigateTo };
+
+        return {
+            type: notification.type as NotificationTypeValue,
+            body: renderTemplate(body, concreteNotification.context as {}),
+            headline: renderTemplate(headline, concreteNotification.context as {}),
+            navigateTo: translation.navigateTo,
+        };
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
