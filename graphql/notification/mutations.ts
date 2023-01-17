@@ -2,10 +2,11 @@ import { Resolver, Mutation, Root, Arg, Authorized, InputType, Field, Int } from
 import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import * as Notification from '../../common/notification/notification';
-import { message_translation_language_enum as MessageTranslationLanguage, NotificationCreateInput, NotificationUpdateInput } from '../generated';
+import { NotificationCreateInput, NotificationUpdateInput } from '../generated';
 import { runBulkAction } from '../../common/notification/bulk';
 import { setMessageTranslation } from '../../common/notification/messages';
 import { MessageTemplateType } from '../types/notificationMessage';
+import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 
 /* import { notification_sender_enum } from '@prisma/client';
 import { JSONResolver } from 'graphql-scalars';
@@ -83,11 +84,13 @@ export class MutateNotificationResolver {
     @Authorized(Role.ADMIN)
     async notificationSetMessageTranslation(
         @Arg('notificationId') notificationId: number,
-        @Arg('language') language: MessageTranslationLanguage,
-        @Arg('template') template: MessageTemplateType
+        @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage,
+        @Arg('headline') headline: string,
+        @Arg('body') body: string,
+        @Arg('navigateTo') navigateTo: string
     ) {
         const notification = await Notification.getNotification(notificationId);
-        await setMessageTranslation(notification, language, {} as any);
+        await setMessageTranslation({ notification, language, body, headline, navigateTo });
 
         return true;
     }

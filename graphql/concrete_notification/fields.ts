@@ -8,9 +8,7 @@ import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
-import { NotificationTypeValue } from '../../common/entity/Notification';
-import { renderTemplate } from '../../utils/helpers';
-import { Context, TranslationTemplate } from '../../common/notification/types';
+import { getMessage } from '../../common/notification';
 
 @ObjectType()
 class Campaign {
@@ -47,26 +45,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async message(
         @Root() concreteNotification: ConcreteNotification,
-        @Ctx() context: GraphQLContext,
         @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
     ): Promise<NotificationMessageType> {
-        const translation = await prisma.message_translation.findFirst({
-            where: { notificationId: concreteNotification.notificationID, language },
-        });
-
-        const notification = await prisma.notification.findUnique({
-            where: { id: concreteNotification.notificationID }, //include: {message_translation: true},
-            select: { type: true },
-        });
-
-        const { headline, body } = translation.template as any as TranslationTemplate; // @TODO: is it possible to fix any?
-
-        return {
-            type: notification.type as NotificationTypeValue,
-            body: renderTemplate(body, concreteNotification.context as Context),
-            headline: renderTemplate(headline, concreteNotification.context as Context),
-            navigateTo: translation.navigateTo,
-        };
+        return getMessage(concreteNotification, language);
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })

@@ -1,5 +1,6 @@
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
+import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
@@ -16,6 +17,9 @@ import { ActionID } from './actions';
 import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
 import { getMessageForNotification } from './messages';
+import { TranslationLanguage } from '../entity/MessageTranslation';
+import { renderTemplate } from '../../utils/helpers';
+import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 
 const logger = getLogger('Notification');
 
@@ -205,12 +209,21 @@ export async function checkReminders() {
 }
 
 // Renders a Message for a certain Concrete Notification
-export async function getMessage(concreteNotification: ConcreteNotification) {
-    const notification = await getNotification(concreteNotification.notificationID);
+export async function getMessage(
+    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
+    language: TranslationLanguage = TranslationLanguage.DE
+): Promise<NotificationMessageType> {
     const legacyUser = await getUserTypeORM(concreteNotification.userId);
     const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
 
-    return await getMessageForNotification(notification, context);
+    const { type, headline, body, navigateTo } = await getMessageForNotification(concreteNotification.notificationID, language);
+
+    return {
+        type,
+        body: renderTemplate(body, context),
+        headline: renderTemplate(headline, context),
+        navigateTo,
+    };
 }
 
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
