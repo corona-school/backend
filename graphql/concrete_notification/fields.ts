@@ -1,6 +1,5 @@
 import { Concrete_notification as ConcreteNotification, Notification } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { compile } from 'handlebars';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -10,8 +9,8 @@ import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 import { NotificationTypeValue } from '../../common/entity/Notification';
-import { MessageTemplate } from '../../common/notification/messages';
 import { renderTemplate } from '../../utils/helpers';
+import { Context, TranslationTemplate } from '../../common/notification/types';
 
 @ObjectType()
 class Campaign {
@@ -60,12 +59,12 @@ export class ExtendedFieldsConcreteNotificationResolver {
             select: { type: true },
         });
 
-        const { headline, body } = translation.template as any as MessageTemplate; // @TODO: is it possible to fix any?
+        const { headline, body } = translation.template as any as TranslationTemplate; // @TODO: is it possible to fix any?
 
         return {
             type: notification.type as NotificationTypeValue,
-            body: renderTemplate(body, concreteNotification.context as {}),
-            headline: renderTemplate(headline, concreteNotification.context as {}),
+            body: renderTemplate(body, concreteNotification.context as Context),
+            headline: renderTemplate(headline, concreteNotification.context as Context),
             navigateTo: translation.navigateTo,
         };
     }

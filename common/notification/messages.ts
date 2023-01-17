@@ -1,35 +1,31 @@
 import { message_translation_language_enum as MessageTranslationLanguage } from '@prisma/client';
-import { getNotification, getSampleContext } from './notification';
-import { ConcreteNotification, Notification, Context } from './types';
+import { getSampleContext } from './notification';
+import { Notification, Context, TranslationTemplate } from './types';
 import { prisma } from '../prisma';
 
-type Template = string;
+export async function getMessageForNotification(notification: Notification, context: Context): Promise<TranslationTemplate | null> {
+    const { body, headline } = (
+        await prisma.message_translation.findFirst({
+            where: { language: 'de', notificationId: notification.id },
+        })
+    ).template as any as TranslationTemplate; // @TODO: is it possible to fix any?
 
-export interface MessageTemplate {
-    headline: Template;
-    body: Template;
-}
-
-export interface NotificationMessage extends MessageTemplate {
-    navigateTo?: string;
-}
-
-export async function getMessageForNotification(notification: Notification, context: Context): Promise<NotificationMessage | null> {
-    const message = await prisma.message_translation.findFirst({
-        where: { language: 'de', notificationId: notification.id },
-    });
-
-    if (!message) {
+    if (!body || !headline) {
         return null;
     }
 
-    const template = message.template as unknown as MessageTemplate;
+    //return renderTemplate(template, context);
 
     // TODO: Render message.template with context
     throw new Error(`TODO`);
 }
 
-export async function setMessageTranslation(notification: Notification, language: MessageTranslationLanguage, template: MessageTemplate) {
+export async function setMessageTranslation(
+    notification: Notification,
+    language: MessageTranslationLanguage,
+    template: TranslationTemplate,
+    navigateTo?: string
+): Promise<void> {
     const sampleContext = getSampleContext(notification);
     // Validate template with sample context
     //throw new Error(`Missing validation`);
@@ -40,7 +36,7 @@ export async function setMessageTranslation(notification: Notification, language
         prisma.message_translation.deleteMany({ where: { language, notificationId: notification.id } }),
         // eslint-disable-next-line lernfair-lint/prisma-laziness
         prisma.message_translation.create({
-            data: { language, notificationId: notification.id, template: template as any },
+            data: { language, notificationId: notification.id, template: template as any, navigateTo },
         }),
     ]);
 }

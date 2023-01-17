@@ -1,7 +1,4 @@
 import { compile } from 'handlebars';
-
-interface Context {
-    [key: string]: string | number;
-}
+import { Context } from '../common/notification/types';
 
 export const renderTemplate = (template: string, context: Context) => compile(template)(context);
