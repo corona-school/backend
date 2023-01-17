@@ -2,7 +2,7 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Notification, NotificationID } from './types';
+import { Context, Notification, NotificationID } from './types';
 import { NotificationRecipient } from '../entity/Notification';
 import { Prisma } from '@prisma/client';
 import { getLogger } from 'log4js';
@@ -232,12 +232,13 @@ export async function importNotifications(notifications: Notification[], overwri
 // templates which should be rendered with concrete notification contexts,
 // as it contains at least the subset of the available fields in the context,
 // which will definitely be available
-export function getSampleContext(notification: Notification): object {
+type SampleContext = Partial<Context>;
+export function getSampleContext(notification: Notification): SampleContext {
     // For campaigns, there is no action that triggers the notification, instead this is done by an Admin for many users
     // For that, the notification has a sample_context which can be used in the notification templates,
     //  and which has to be provided by the Admin
     if (notification.sample_context) {
-        return notification.sample_context as object;
+        return notification.sample_context as SampleContext;
     }
 
     // For non-campaigns, the available context is the subset of all actions that trigger the notification
@@ -245,7 +246,7 @@ export function getSampleContext(notification: Notification): object {
         .filter((it) => notification.onActions.includes(it.id))
         .map((it) => it.sampleContext);
 
-    return sampleContexts.reduce(subset);
+    return sampleContexts.reduce(subset) as SampleContext;
 }
 
 // Returns the sample context as [['user.firstname', 'Jonas'], ['user.lastname', 'Wilms']]

@@ -4,6 +4,7 @@ import { Notification, NotificationMessage, TranslationTemplate } from './types'
 import { prisma } from '../prisma';
 import { TranslationLanguage } from '../entity/MessageTranslation';
 import { NotificationType } from '../entity/Notification';
+import { renderTemplate } from '../../utils/helpers';
 
 export async function getMessageForNotification(
     notificationId: number,
@@ -41,8 +42,13 @@ export async function setMessageTranslation({
     navigateTo?: string;
 }): Promise<void> {
     const sampleContext = getSampleContext(notification);
-    // Validate template with sample context
-    //throw new Error(`Missing validation`);
+    try {
+        // try to render using sample context
+        renderTemplate(body, sampleContext, true);
+        renderTemplate(headline, sampleContext, true);
+    } catch (error) {
+        throw new Error(`Template does not work with provided sample context: ${error.message}`);
+    }
 
     // Atomically swap the template for this (notification, language)
     await prisma.$transaction([
