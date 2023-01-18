@@ -212,11 +212,17 @@ export async function checkReminders() {
 export async function getMessage(
     concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
     language: TranslationLanguage = TranslationLanguage.DE
-): Promise<NotificationMessageType> {
+): Promise<NotificationMessageType | null> {
     const legacyUser = await getUserTypeORM(concreteNotification.userId);
     const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
 
-    const { type, headline, body, navigateTo } = await getMessageForNotification(concreteNotification.notificationID, language);
+    const message = await getMessageForNotification(concreteNotification.notificationID, language);
+
+    if (!message) {
+        return null;
+    }
+
+    const { type, headline, body, navigateTo } = message;
 
     return {
         type,

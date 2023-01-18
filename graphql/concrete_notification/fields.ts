@@ -47,7 +47,11 @@ export class ExtendedFieldsConcreteNotificationResolver {
         @Root() concreteNotification: ConcreteNotification,
         @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
     ): Promise<NotificationMessageType> {
-        return getMessage(concreteNotification, language);
+        const message = await getMessage(concreteNotification, language);
+        if (!message) {
+            throw new Error(`No message found for notification ${concreteNotification.notificationID} in language ${language}`);
+        }
+        return message;
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
