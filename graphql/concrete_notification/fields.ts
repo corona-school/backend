@@ -41,17 +41,13 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => NotificationMessageType)
+    @FieldResolver((returns) => NotificationMessageType, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async message(
         @Root() concreteNotification: ConcreteNotification,
         @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
-    ): Promise<NotificationMessageType> {
-        const message = await getMessage(concreteNotification, language);
-        if (!message) {
-            throw new Error(`No message found for notification ${concreteNotification.notificationID} in language ${language}`);
-        }
-        return message;
+    ): Promise<NotificationMessageType | null> {
+        return getMessage(concreteNotification, language);
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
