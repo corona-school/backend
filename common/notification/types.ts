@@ -13,6 +13,7 @@ import { Mentor as TypeORMMentor } from './../entity/Mentor';
 import { Screener as TypeORMScreener } from './../entity/Screener';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
+import { NotificationType } from '../entity/Notification';
 
 // Temporary interop between TypeORM and Prisma
 type Pupil = PrismaPupil | TypeORMPupil;
@@ -78,4 +79,16 @@ export interface BulkAction<Entity> {
     getUser: (entity: Entity) => Promise<Person>;
     getContext: (entity: Entity) => Promise<NotificationContext>;
     getActionDate: (entity: Entity) => Date;
+}
+
+type Template = string;
+
+export interface TranslationTemplate {
+    headline: Template;
+    body: Template;
+}
+
+export interface NotificationMessage extends TranslationTemplate {
+    type: NotificationType;
+    navigateTo?: string;
 }

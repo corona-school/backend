@@ -2,11 +2,12 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Notification, NotificationID } from './types';
+import { Context, Notification, NotificationID } from './types';
 import { NotificationRecipient } from '../entity/Notification';
 import { Prisma } from '@prisma/client';
 import { getLogger } from 'log4js';
 import { hookExists } from './hook';
+import { getNotificationActions } from './actions';
 
 type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
@@ -223,6 +224,64 @@ export async function importNotifications(notifications: Notification[], overwri
 
     logger.info(log);
     return log;
+}
+
+/* -------------------- Sample Context ------------------------------ */
+
+// Returns a sample context for a notification, this can be used to validate
+// templates which should be rendered with concrete notification contexts,
+// as it contains at least the subset of the available fields in the context,
+// which will definitely be available
+type SampleContext = Partial<Context>;
+export function getSampleContext(notification: Notification): SampleContext {
+    // For campaigns, there is no action that triggers the notification, instead this is done by an Admin for many users
+    // For that, the notification has a sample_context which can be used in the notification templates,
+    //  and which has to be provided by the Admin
+    if (notification.sample_context) {
+        return notification.sample_context as SampleContext;
+    }
+
+    // For non-campaigns, the available context is the subset of all actions that trigger the notification
+    const sampleContexts = getNotificationActions()
+        .filter((it) => notification.onActions.includes(it.id))
+        .map((it) => it.sampleContext);
+
+    return sampleContexts.reduce(subset) as SampleContext;
+}
+
+// Returns the sample context as [['user.firstname', 'Jonas'], ['user.lastname', 'Wilms']]
+// This is useful in template editors etc.
+export const getSampleContextVariables = (notification: Notification) => flatten(getSampleContext(notification));
+
+/* ------------------ Object Utilies --------------------- */
+
+function flatten(obj: object, result: [string, string][] = [], prefix = '') {
+    for (const [key, value] of Object.entries(obj)) {
+        const path = (prefix ? prefix + '.' : '') + key;
+        if (typeof value === 'string') {
+            result.push([path, value]);
+        } else if (typeof value === 'object' && !Array.isArray(value)) {
+            flatten(value, result, path);
+        } // else ignore
+    }
+
+    return result;
+}
+
+function subset<T extends object>(a: T, b: T): T {
+    // Remove all keys from a that are not in b, thus all resulting keys are in a AND b
+    const bKeys = new Set(Object.keys(b));
+    const resultEntries = Object.entries(a).filter(([key, value]) => bKeys.has(key));
+
+    // Potentially continue with nested objects
+    for (const entry of resultEntries) {
+        if (typeof entry[1] === 'object' && !Array.isArray(entry[1])) {
+            entry[1] = subset(entry[1], b[entry[0]]);
+        }
+        // NOTE: This does not support Arrays
+    }
+
+    return Object.fromEntries(resultEntries) as T;
 }
 
 function diff(prev: any, curr: any, depth = 0) {
