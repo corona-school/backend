@@ -2,7 +2,7 @@ import { message_translation_language_enum as MessageTranslationLanguage } from 
 import { getSampleContext } from './notification';
 import { Notification, NotificationMessage, TranslationTemplate } from './types';
 import { prisma } from '../prisma';
-import { TranslationLanguage } from '../entity/MessageTranslation';
+import { MessageTranslation, TranslationLanguage } from '../entity/MessageTranslation';
 import { NotificationType } from '../entity/Notification';
 import { renderTemplate } from '../../utils/helpers';
 
@@ -14,12 +14,12 @@ export async function getMessageForNotification(
         where: { id: notificationId },
         select: { type: true },
     });
-    const translation = await prisma.message_translation.findFirst({
+    const translation = (await prisma.message_translation.findFirst({
         where: { notificationId: notificationId, language },
         select: { template: true, navigateTo: true },
-    });
+    })) as unknown as Partial<MessageTranslation> | null;
 
-    const { headline, body } = translation.template as any as TranslationTemplate; // @TODO: is it possible to fix any?
+    const { headline, body } = translation?.template || {};
 
     if (!body || !headline || !notification.type) {
         return null;
