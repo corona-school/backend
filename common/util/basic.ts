@@ -51,7 +51,7 @@ export function friendlyFileSize(bytes, si = false, dp = 1) {
  Dashes are replaced.
  **/
 export function isCommandArg(arg: string, short?: string): boolean {
-    return process.argv.slice(2).some((a) => a.replace('--', '') === arg.replace('--', '') || a.replace('-', '') === short.replace('-', ''));
+    return process.argv.slice(2).some((a) => a.replace('--', '') === arg.replace('--', '') || a.replace('-', '') === short?.replace('-', ''));
 }
 
 export const assertExists = <Type>(optional: Type | null | undefined): Type | never => {

@@ -6,8 +6,9 @@ import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
-import { getMessage } from '../../notifications/templates';
-import { NotificationMessage } from '../types/notificationMessage';
+import { NotificationMessageType } from '../types/notificationMessage';
+import { TranslationLanguage } from '../../common/entity/MessageTranslation';
+import { getMessage } from '../../common/notification';
 
 @ObjectType()
 class Campaign {
@@ -40,10 +41,13 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
-    @FieldResolver((returns) => NotificationMessage)
+    @FieldResolver((returns) => NotificationMessageType, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
-    message(@Root() concreteNotification: ConcreteNotification, @Ctx() context: GraphQLContext): NotificationMessage {
-        return getMessage(concreteNotification, getSessionUser(context));
+    async message(
+        @Root() concreteNotification: ConcreteNotification,
+        @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
+    ): Promise<NotificationMessageType | null> {
+        return getMessage(concreteNotification, language);
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
@@ -57,7 +61,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { category: { has: 'campaign' } },
+            where: { sample_context: { not: null } },
         });
 
         const aggregated = await prisma.concrete_notification.groupBy({

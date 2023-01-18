@@ -246,7 +246,7 @@ model mentor {
   authTokenUsed                Boolean                 @default(false)
   authTokenSent                DateTime?               @db.Timestamp(6)
   isRedacted                   Boolean                 @default(false)
-  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
   wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
   wix_creation_date            DateTime                @db.Timestamp(6)
@@ -260,19 +260,20 @@ model mentor {
 }
 
 model notification {
-  id                Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
-  mailjetTemplateId Int?
-  description       String                    @db.VarChar
-  active            Boolean
-  recipient         Int
-  onActions         String[]
-  category          String[]
-  cancelledOnAction String[]
-  delay             Int?
-  interval          Int?
-  sender            notification_sender_enum?
-  hookID            String?                   @db.VarChar
-  sample_context    Json?                     @db.Json
+  id                  Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  mailjetTemplateId   Int?
+  description         String                    @db.VarChar
+  active              Boolean
+  recipient           Int
+  onActions           String[]
+  type                notification_type_enum    @default(legacy)
+  cancelledOnAction   String[]
+  delay               Int?
+  interval            Int?
+  sender              notification_sender_enum?
+  hookID              String?                   @db.VarChar
+  sample_context      Json?                     @db.Json
+  message_translation message_translation[]
 }
 
 model participation_certificate {
@@ -353,7 +354,7 @@ model pupil {
   authTokenUsed                                Boolean                                        @default(false)
   authTokenSent                                DateTime?                                      @db.Timestamp(6)
   isRedacted                                   Boolean                                        @default(false)
-  lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
@@ -441,7 +442,7 @@ model screener {
   authTokenUsed                Boolean                      @default(false)
   authTokenSent                DateTime?                    @db.Timestamp(6)
   isRedacted                   Boolean                      @default(false)
-  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
   password                     String                       @db.VarChar
   verified                     Boolean?                     @default(false)
@@ -478,7 +479,7 @@ model student {
   authTokenUsed                             Boolean                                @default(false)
   authTokenSent                             DateTime?                              @db.Timestamp(6)
   isRedacted                                Boolean                                @default(false)
-  lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'2022-12-01 13:02:07.969'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
@@ -627,6 +628,15 @@ model typeorm_metadata {
   value    String?
 
   @@ignore
+}
+
+model message_translation {
+  id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
+  template       Json                              @db.Json
+  navigateTo     String?
+  language       message_translation_language_enum @default(de)
+  notificationId Int?
+  notification   notification?                     @relation(fields: [notificationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5ae486c5ef53f5335af8a4ae260")
 }
 
 enum course_category_enum {
@@ -932,4 +942,29 @@ enum course_subject_enum {
   Russisch
   Niederl_ndisch           @map("Niederländisch")
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
+}
+
+enum message_translation_language_enum {
+  en
+  de
+}
+
+enum notification_type_enum {
+  chat
+  survey
+  appointment
+  advice
+  suggestion
+  announcement
+  call
+  news
+  event
+  request
+  alternative
+  account
+  onboarding
+  match
+  course
+  certificate
+  legacy
 }
