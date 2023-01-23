@@ -1,8 +1,9 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
+import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM, User } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -11,12 +12,22 @@ import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
+import { inAppChannel } from './channels/inapp';
 import { ActionID } from './actions';
+import { Channels } from '../../graphql/types/preferences';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
+import { getMessageForNotification } from './messages';
+import { TranslationLanguage } from '../entity/MessageTranslation';
+import { renderTemplate } from '../../utils/helpers';
+import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel];
+// Default Channels are always on, the user cannot turn them off
+const DEFAULT_CHANNELS = [inAppChannel];
+// The optional channels are steered via the user preferences
+const OPTIONAL_CHANNELS = [mailjetChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -197,7 +208,30 @@ export async function checkReminders() {
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 
-// TODO: function for user preferences "categories"
+// Renders a Message for a certain Concrete Notification
+export async function getMessage(
+    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
+    language: TranslationLanguage = TranslationLanguage.DE
+): Promise<NotificationMessageType | null> {
+    const legacyUser = await getUserTypeORM(concreteNotification.userId);
+    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
+
+    const message = await getMessageForNotification(concreteNotification.notificationID, language);
+
+    if (!message) {
+        return null;
+    }
+
+    const { type, headline, body, navigateTo } = message;
+
+    return {
+        type,
+        body: renderTemplate(body, context),
+        headline: renderTemplate(headline, context),
+        navigateTo,
+    };
+}
+
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
@@ -242,52 +276,75 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const notification = await getNotification(concreteNotification.notificationID);
+
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    const channelsBasePreference = ALL_PREFERENCES[notification.type];
+    assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
+
+    const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
+
+    return Object.assign({}, channelsBasePreference, channelsUserPreference);
+};
+
+function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
+    return {
+        ...notificationContext,
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
+        USER_APP_DOMAIN,
+    };
+}
+
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    user: Person,
+    legacyUser: Person,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
-    const context: Context = {
-        ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken ?? '',
-        USER_APP_DOMAIN,
-    };
+    const context = getContext(notificationContext, legacyUser);
 
     try {
-        const channel = channels.find((it) => it.canSend(notification));
-        if (!channel) {
-            throw new Error(`No fitting channel found for Notification(${notification.id})`);
-        }
+        const user = getUserForTypeORM(legacyUser);
 
         if (notification.hookID) {
-            const newUser = getUserForTypeORM(user);
-            await triggerHook(notification.hookID, newUser);
+            await triggerHook(notification.hookID, user);
         }
 
-        // TODO: Check if user silenced this notification
+        const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
 
-        await channel.send(notification, user, context, concreteNotification.id, attachments);
+        const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
+
+        for (const channel of OPTIONAL_CHANNELS) {
+            if (channelPreferencesForMessageType[channel.type]) {
+                enabledChannels.push(channel);
+            }
+        }
+
+        await Promise.all(
+            enabledChannels
+                .filter((channel) => channel.canSend(notification, user))
+                .map(async (channel) => await channel.send(notification, user, context, concreteNotification.id, attachments))
+        );
+
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
                 sentAt: new Date(),
-                // drop the context, as it is irrelevant from now on, and only eats up memory
-                // TODO: Clarify if in the future notifications should be shown in the user section
-                // context: {}
             },
             where: {
                 id: concreteNotification.id,
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(`Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
 
         await prisma.concrete_notification.update({
             data: {

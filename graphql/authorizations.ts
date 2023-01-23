@@ -189,6 +189,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
+    Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -240,7 +241,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
-
+            lastTimeCheckedNotifications: adminOrOwner,
+            notificationPreferences: adminOrOwner,
             // these should look differently in a clean data model
             // by blacklisting them we prevent accidental usage
             lastUpdatedSettingsViaBlocker: nobody,
@@ -292,6 +294,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             certificate_of_conduct: adminOrOwner,
             isCodu: adminOrOwner,
             registrationSource: adminOrOwner,
+            lastTimeCheckedNotifications: adminOrOwner,
+            notificationPreferences: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -347,6 +351,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'courseId'
             | 'createdAt'
             | 'updatedAt'
+            | 'publishedAt'
             | 'joinAfterStart'
             | 'minGrade'
             | 'maxGrade'
@@ -358,6 +363,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
+            alreadyPromoted: adminOrOwner,
         }),
     },
     Course: {

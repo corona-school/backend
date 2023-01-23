@@ -1,14 +1,13 @@
 import { prisma } from '../../common/prisma';
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
 import { dissolveMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
-import { isSessionPupil, getSessionPupil, getSessionStudent } from '../authentication';
-import { createPupilMatchRequest, createStudentMatchRequest } from '../../common/match/request';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
+import { removeInterest } from '../../common/match/interest';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -24,6 +23,7 @@ export class MutateMatchResolver {
 
         await createMatch(pupil, student, pool as ConcreteMatchPool);
 
+        await removeInterest(pupil);
         return true;
     }
 

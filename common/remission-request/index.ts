@@ -58,7 +58,7 @@ async function createQRCode(uuid: string): Promise<string> {
     return QRCode.toDataURL(verificationURL);
 }
 
-export async function createRemissionRequestPDF(student: TypeORMStudent): Promise<Buffer> {
+export async function createRemissionRequestPDF(student: { id: number; firstname: string; lastname: string }): Promise<Buffer> {
     const remissionRequest = await prisma.remission_request.findUnique({ where: { studentId: student.id } });
 
     if (remissionRequest === null) {

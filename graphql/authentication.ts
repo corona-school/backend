@@ -1,8 +1,6 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Role } from './roles';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
-import Keyv from 'keyv';
-import { v4 as uuid } from 'uuid';
 import type { GraphQLContext } from './context';
 import { assert } from 'console';
 import { Deprecated, getPupil, getScreener, getStudent } from './util';
@@ -16,41 +14,12 @@ import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
 import { UserType } from './types/user';
+import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
 
+export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
+
 const logger = getLogger('GraphQL Authentication');
-
-// This interface is close to what might be a user entity in the future
-// As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
-export interface GraphQLUser extends User {
-    roles: Role[];
-}
-
-export const UNAUTHENTICATED_USER = {
-    email: '-',
-    firstname: '',
-    lastname: '',
-    userID: '-/-',
-    roles: [Role.UNAUTHENTICATED],
-};
-
-/* As we only have one backend, and there is probably no need to scale in the near future,
-   a small in memory cache is sufficient. If multitenancy is needed, keyv supports other backing stores such as Redis.
-   This has the advantage over JWTs that the session can stay persistent even during registration / login and we can trace users even better */
-const SESSION_DURATION = 1000 * 60 * 60 * 24; /* one day */
-const userSessions = new Keyv<GraphQLUser>({ ttl: SESSION_DURATION });
-
-/* We generate session tokens clientside as we can then use the same session token for all GraphQL requests without changing HTTP headers.
-   Nevertheless the backend can suggest secure tokens */
-export const suggestToken = () => uuid();
-
-// Logging the session token would allow admins with access to the logs to impersonate users
-// By logging only part of the token, we can identify users whilst preventing session takeover
-export const toPublicToken = (token: string) => token.slice(0, -5);
-
-export async function getUserForSession(sessionToken: string) {
-    return userSessions.get(sessionToken);
-}
 
 export async function updateSessionUser(context: GraphQLContext, user: User) {
     // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
@@ -75,7 +44,7 @@ export function isElevated(context: GraphQLContext) {
 
 export function assertElevated(context: GraphQLContext) {
     if (!isElevated(context)) {
-        throw new Error(`Only Admins or Screeners can override the session pupil`);
+        throw new Error(`Only Admins or Screeners can override the session pupil/student`);
     }
 }
 

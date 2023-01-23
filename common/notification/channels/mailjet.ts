@@ -2,11 +2,11 @@ import { Channel, Context, Notification } from '../types';
 import * as mailjet from '../../mails/mailjetTypes';
 import { mailjetSmtp } from '../../mails/config';
 import { getLogger } from 'log4js';
-import { Person } from '../../entity/Person';
 import { assert } from 'console';
 import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
+import { User } from '../../user';
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
@@ -23,8 +23,8 @@ const senders: { [sender in NotificationSender]: { Name: string; Email: string }
 };
 
 export const mailjetChannel: Channel = {
-    type: 'mailjet',
-    async send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup) {
+    type: 'email',
+    async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
         const sender = senders[notification.sender ?? NotificationSender.SUPPORT];
@@ -117,7 +117,7 @@ export const mailjetChannel: Channel = {
         logger.info(`Sent Mail(${message.TemplateID})`);
     },
 
-    canSend: (notification: Notification) => {
-        return notification.mailjetTemplateId !== undefined;
+    canSend: (notification: Notification, _user: User) => {
+        return notification.mailjetTemplateId != null;
     },
 };

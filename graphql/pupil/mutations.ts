@@ -27,6 +27,7 @@ import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
+import { NotificationPreferences } from '../types/preferences';
 
 @InputType()
 export class PupilUpdateInput {
@@ -64,6 +65,11 @@ export class PupilUpdateInput {
     @MaxLength(500)
     aboutMe?: string;
 
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
+
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
@@ -106,7 +112,23 @@ export async function updatePupil(
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
 ) {
     const log = logInContext('Pupil', context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype, languages, aboutMe, matchReason } = update;
+
+    const {
+        subjects,
+        gradeAsInt,
+        projectFields,
+        firstname,
+        lastname,
+        registrationSource,
+        email,
+        state,
+        schooltype,
+        languages,
+        aboutMe,
+        matchReason,
+        lastTimeCheckedNotifications,
+        notificationPreferences,
+    } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
@@ -134,6 +156,8 @@ export async function updatePupil(
             schooltype: ensureNoNull(schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
+            lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
+            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
             matchReason: ensureNoNull(matchReason),
         },
         where: { id: pupil.id },

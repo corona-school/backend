@@ -1,9 +1,14 @@
 import { Concrete_notification as ConcreteNotification, Notification } from '../generated';
-import { Authorized, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { GraphQLContext } from '../context';
+import { getSessionUser } from '../authentication';
+import { NotificationMessageType } from '../types/notificationMessage';
+import { TranslationLanguage } from '../../common/entity/MessageTranslation';
+import { getMessage } from '../../common/notification';
 
 @ObjectType()
 class Campaign {
@@ -36,12 +41,27 @@ export class ExtendedFieldsConcreteNotificationResolver {
         return await prisma.notification.findUnique({ where: { id: concreteNotification.notificationID } });
     }
 
+    @FieldResolver((returns) => NotificationMessageType, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async message(
+        @Root() concreteNotification: ConcreteNotification,
+        @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
+    ): Promise<NotificationMessageType | null> {
+        return getMessage(concreteNotification, language);
+    }
+
+    @Query((returns) => ConcreteNotification, { nullable: true })
+    @Authorized(Role.USER)
+    async concrete_notification(@Ctx() context: GraphQLContext, @Arg('concreteNotificationId', (type) => Int) concreteNotificationId: number) {
+        return await prisma.concrete_notification.findFirst({ where: { id: concreteNotificationId, userId: getSessionUser(context).userID } });
+    }
+
     @Query((returns) => [Campaign])
     @Authorized(Role.ADMIN)
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { category: { has: 'campaign' } },
+            where: { sample_context: { not: null } },
         });
 
         const aggregated = await prisma.concrete_notification.groupBy({

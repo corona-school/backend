@@ -148,6 +148,24 @@ const _notificationActions = {
             },
         },
     },
+    instructor_subcourse_published: {
+        description: 'Instructor / Subcourse published',
+        sampleContext: {
+            course: {
+                title: 'Hallo Welt',
+                description: 'Ein Subkurs',
+            },
+        },
+    },
+    available_places_on_subcourse: {
+        description: 'Instructor / Available places on subcourse',
+        sampleContext: {
+            course: {
+                title: 'Hallo Welt',
+                description: 'Ein Subkurs',
+            },
+        },
+    },
     student_certificate_sign: {
         description: 'Student / Tutoring Certificate was signed',
         sampleContext: {
