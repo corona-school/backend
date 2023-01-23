@@ -29,6 +29,10 @@ class WebSocketService {
         this.websocketServer = new WebSocketServer({ server, clientTracking: true });
     }
 
+    public static hasInstance(): boolean {
+        return !!this.instance;
+    }
+
     public static getInstance(server?: Server) {
         if (!this.instance && !server) {
             throw new Error('No instance running and no instantiation possible without a server.');

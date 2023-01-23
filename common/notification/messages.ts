@@ -5,6 +5,7 @@ import { prisma } from '../prisma';
 import { MessageTranslation, TranslationLanguage } from '../entity/MessageTranslation';
 import { NotificationType } from '../entity/Notification';
 import { renderTemplate } from '../../utils/helpers';
+import { ClientError } from '../util/error';
 
 export async function getMessageForNotification(
     notificationId: number,
@@ -51,12 +52,36 @@ export async function setMessageTranslation({
     navigateTo?: string;
 }): Promise<void> {
     const sampleContext = getSampleContext(notification);
+
+    function abortWithError(error: any, field: string, template: string) {
+        console.log(error);
+        if (error.lineNumber && error.column && error.endColumn) {
+            const line = template.split('\n')[error.lineNumber - 1];
+            const region = line.slice(Math.max(0, error.column - 10), Math.min(line.length, error.endColumn + 10));
+            throw new ClientError(
+                'Invalid Template',
+                `Invalid Template for Field ${field}:\n` +
+                    `${error.message}\n\n` +
+                    `${region}\n` +
+                    `${' '.repeat(Math.min(10, error.column))}${'^'.repeat(error.endColumn - error.column)}\n\n` +
+                    `sample context:\n` +
+                    `${JSON.stringify(sampleContext, null, 2)}`
+            );
+        }
+
+        throw new Error(`Unexpected error occured when rendering ${field}: ${error.message} - sample context: ${JSON.stringify(sampleContext)}`);
+    }
+
     try {
-        // try to render using sample context
         renderTemplate(body, sampleContext, true);
+    } catch (error) {
+        abortWithError(error, 'body', body);
+    }
+
+    try {
         renderTemplate(headline, sampleContext, true);
     } catch (error) {
-        throw new Error(`Template does not work with provided sample context: ${error.message}`);
+        abortWithError(error, 'headline', headline);
     }
 
     // Atomically swap the template for this (notification, language)

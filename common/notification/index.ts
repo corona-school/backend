@@ -308,6 +308,8 @@ async function deliverNotification(
     logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
     const context = getContext(notificationContext, legacyUser);
+    const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
+    let activeChannels: Channel[] = [];
 
     try {
         const user = getUserForTypeORM(legacyUser);
@@ -316,20 +318,30 @@ async function deliverNotification(
             await triggerHook(notification.hookID, user);
         }
 
-        const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
-
         const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
 
         for (const channel of OPTIONAL_CHANNELS) {
             if (channelPreferencesForMessageType[channel.type]) {
                 enabledChannels.push(channel);
+            } else {
+                logger.debug(`ConcreteNotification(${concreteNotification.id}) not sent via ${channel.type} as the user opted out`);
             }
         }
 
+        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+
+        if (!activeChannels.length) {
+            logger.warn(
+                `None of the enabled Channels (${enabledChannels.map((it) => it.type).join(', ')}) can send ConcreteNotification(${concreteNotification.id})`
+            );
+            // NOTE: This might be legitimate for notifications only shown inside the UserApp
+        }
+
         await Promise.all(
-            enabledChannels
-                .filter((channel) => channel.canSend(notification, user))
-                .map(async (channel) => await channel.send(notification, user, context, concreteNotification.id, attachments))
+            activeChannels.map(async (channel) => {
+                await channel.send(notification, user, context, concreteNotification.id, attachments);
+                logger.debug(`Sent ConcreteNotification(${concreteNotification.id}) via Channel ${channel.type}`);
+            })
         );
 
         await prisma.concrete_notification.update({
@@ -342,9 +354,18 @@ async function deliverNotification(
             },
         });
 
-        logger.info(`Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
+        logger.info(
+            `Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
+                legacyUser.id
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`
+        );
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`, error);
+        logger.warn(
+            `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
+                legacyUser.id
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
+            error
+        );
 
         await prisma.concrete_notification.update({
             data: {
@@ -578,3 +599,6 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
+
+// Ensure hooks are always loaded - also in the Jobs Dyno
+import './hooks';
