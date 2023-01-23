@@ -60,6 +60,7 @@ import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
 import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
+import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -116,6 +117,7 @@ const schema = buildSchemaSync({
         FindManyConcrete_notificationResolver,
         ExtendedFieldsConcreteNotificationResolver,
         MutateConcreteNotificationsResolver,
+        ExtendedFieldsMessageTranslationResolver,
 
         /* TutoringInterestConfirmation */
         MutateTutoringInterestConfirmationResolver,
