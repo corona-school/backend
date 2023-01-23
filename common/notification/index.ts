@@ -309,6 +309,7 @@ async function deliverNotification(
 
     const context = getContext(notificationContext, legacyUser);
     const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
+    let activeChannels: Channel[] = [];
 
     try {
         const user = getUserForTypeORM(legacyUser);
@@ -325,7 +326,7 @@ async function deliverNotification(
             }
         }
 
-        const activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
 
         if (!activeChannels.length) {
             logger.warn(
@@ -354,13 +355,13 @@ async function deliverNotification(
         logger.info(
             `Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
                 legacyUser.id
-            }) via Channels (${enabledChannels.map((it) => it.type).join(', ')})`
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`
         );
     } catch (error) {
         logger.warn(
             `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
                 legacyUser.id
-            }) via Channels (${enabledChannels.map((it) => it.type).join(', ')})`,
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
             error
         );
 
