@@ -323,6 +323,8 @@ async function deliverNotification(
         for (const channel of OPTIONAL_CHANNELS) {
             if (channelPreferencesForMessageType[channel.type]) {
                 enabledChannels.push(channel);
+            } else {
+                logger.debug(`ConcreteNotification(${concreteNotification.id}) not sent via ${channel.type} as the user opted out`);
             }
         }
 
