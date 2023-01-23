@@ -325,13 +325,20 @@ async function deliverNotification(
             }
         }
 
+        const activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+
+        if (!activeChannels.length) {
+            logger.warn(
+                `None of the enabled Channels (${enabledChannels.map((it) => it.type).join(', ')}) can send ConcreteNotification(${concreteNotification.id})`
+            );
+            // NOTE: This might be legitimate for notifications only shown inside the UserApp
+        }
+
         await Promise.all(
-            enabledChannels
-                .filter((channel) => channel.canSend(notification, user))
-                .map(async (channel) => {
-                    await channel.send(notification, user, context, concreteNotification.id, attachments);
-                    logger.debug(`Sent ConcreteNotification(${concreteNotification.id}) via Channel ${channel.type}`);
-                })
+            activeChannels.map(async (channel) => {
+                await channel.send(notification, user, context, concreteNotification.id, attachments);
+                logger.debug(`Sent ConcreteNotification(${concreteNotification.id}) via Channel ${channel.type}`);
+            })
         );
 
         await prisma.concrete_notification.update({
