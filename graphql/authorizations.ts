@@ -1,4 +1,4 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag } from './generated';
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag, Concrete_notification } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
 
@@ -416,6 +416,17 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             identifier: nobody,
             _count: nobody,
             course_tags_course_tag: nobody,
+        }),
+    },
+    Concrete_notification: {
+        fields: withPublicFields<Concrete_notification, 'id' | 'userId' | 'notificationID' | 'sentAt' | 'state'>({
+            attachmentGroupId: nobody,
+            // The context might contain sensitivie information of other users for which we do not know whether the user should access those
+            // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
+            context: nobody,
+            contextID: nobody,
+            // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
+            error: nobody,
         }),
     },
 };
