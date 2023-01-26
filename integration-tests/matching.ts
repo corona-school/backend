@@ -1,17 +1,18 @@
 import { adminClient, defaultClient, test } from "./base";
 import { pupilOne } from "./user";
+import * as assert from "assert";
 
 test("Pupil Request Match", async () => {
     const { client, pupil } = await pupilOne;
 
-    // Pupil is not yet a TUTEE
-    await client.requestShallFail(`
+    // Pupil is a TUTEE by registration
+    await client.request(`
         mutation {
             pupilCreateMatchRequest
         }
     `);
 
-    // TODO
+    // TODO assertion
 });
 
 test("Anyone Request Matching Statistics", async () => {
