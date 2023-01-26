@@ -55,14 +55,20 @@ export const pupilOne = test("Register Pupil", async () => {
                 firstname
                 lastname
                 email
-                pupil { id }
+                pupil { 
+                    id 
+                    isPupil
+                    isParticipant
+                }
             }
         }
     `);
 
-    assert.equal(pupil.firstname, `firstname:${userRandom}`);
-    assert.equal(pupil.lastname, `lastname:${userRandom}`);
-    assert.equal(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.firstname, `firstname:${userRandom}`);
+    assert.strictEqual(pupil.lastname, `lastname:${userRandom}`);
+    assert.strictEqual(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.pupil.isPupil, true);
+    assert.strictEqual(pupil.pupil.isParticipant, true);
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
