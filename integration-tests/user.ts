@@ -2,7 +2,14 @@ import { test, createUserClient, adminClient } from "./base";
 import * as assert from "assert";
 import { randomBytes } from "crypto";
 
+const setup = test("Setup Configuration", async () => {
+    // Ensure Rate Limits are deterministic when running the tests multiple times
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+});
+
 export const pupilOne = test("Register Pupil", async () => {
+    await setup;
+
     const client = createUserClient();
 
     const userRandom = randomBytes(5).toString("base64");
@@ -71,6 +78,8 @@ export const pupilOne = test("Register Pupil", async () => {
 });
 
 export const studentOne = test("Register Student", async () => {
+    await setup;
+
     const client = createUserClient();
     const userRandom = randomBytes(5).toString("base64");
 
@@ -131,6 +140,8 @@ export const studentOne = test("Register Student", async () => {
 });
 
 export const instructorOne = test("Register Instructor", async () => {
+    await setup;
+
     const client = createUserClient();
     const userRandom = randomBytes(5).toString("base64");
 
