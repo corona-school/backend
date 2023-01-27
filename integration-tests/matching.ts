@@ -17,14 +17,14 @@ test("Pupil Request Match", async () => {
 
     // Match request is 0 after registration
     assert.strictEqual(p.pupil.openMatchRequestCount, 0);
-    
+
     await client.request(`
         mutation {
             pupilCreateMatchRequest
         }
     `);
 
-    const { me : p1 } = await client.request(`
+    const { me: p1 } = await client.request(`
         query GetOpenMatchRequestCount {
             me {
                 pupil { 
@@ -35,7 +35,7 @@ test("Pupil Request Match", async () => {
     `);
 
     assert.strictEqual(p1.pupil.openMatchRequestCount, 1);
-    
+
 });
 
 test("Anyone Request Matching Statistics", async () => {
