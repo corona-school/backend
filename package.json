@@ -30,6 +30,7 @@
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
     "integration-tests": "node ./built/integration-tests/index.js",
+    "integration-tests:local": "node -r dotenv/config ./built/integration-tests/index.js",
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write"
   },
