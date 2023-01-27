@@ -4,11 +4,12 @@
 
 **Non Goals** of the tests is to cover each and every feature and ensure that nothing breaks, also we do not want to reach full coverage / test-driven development. We simply don't have capacity for that.
 
+To run integration tests locally, ensure that the environment variables `ADMIN_AUTH_TOKEN` and `INTEGRATION_TARGET` are set correctly in your `.env` (i.e. take them over from `.env.example`). Then start the Backend with `npm run web:nopdf` and run the integration tests with `npm run integration-tests:local`.
 
 To write a new integration test, add a new Typescript file to `/integration-tests` and import it from `index.ts`.
 A test consists of the following parts:
 - the `test` function gives the test a name and handles errors
-- with the clients `defaultClient` (unauthenticated user), `adminClient` and `createUserClient` one can send requests to GraphQL via the `.request` and `.requestShallFail`
+- with the clients `defaultClient` (unauthenticated user), `adminClient` and the clients created with `createUserClient` one can send requests to GraphQL via the `.request` and `.requestShallFail` methods
 - For validation the [`assert`](https://nodejs.org/api/assert.html) module of NodeJS is used
 
 The result when look like this:
