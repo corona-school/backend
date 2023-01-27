@@ -38,17 +38,6 @@ export const pupilOne = test("Register Pupil", async () => {
         }
     `);
 
-    await client.request(`
-        mutation BecomeTutee {
-            meBecomeTutee(data: {
-                subjects: [{ name: "Deutsch" }]
-                languages: [Deutsch]
-                learningGermanSince: more_than_four
-                gradeAsInt: 10
-            })
-        }
-    `);
-
     const { me: pupil } = await client.request(`
         query GetBasics {
             me {
