@@ -95,6 +95,9 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
 
             // the authToken is used to verify the e-mail instead
             verification,
+
+            // Pupils need to specifically request a match
+            openMatchRequestCount: 0,
         },
     });
 
