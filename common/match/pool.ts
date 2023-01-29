@@ -485,7 +485,7 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
     const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
     // If the interest confirmation rate is 10%, we need to ask 100 pupils to get 10 confirmations
-    const confirmationsNeeded = openOffers / (await getInterestConfirmationRate());
+    const confirmationsNeeded = Math.floor(openOffers / (await getInterestConfirmationRate()));
 
     const confirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, confirmationsNeeded - confirmationsPending);
