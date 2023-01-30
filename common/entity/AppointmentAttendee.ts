@@ -1,5 +1,4 @@
-import { Column, Index, ManyToOne, PrimaryColumn } from 'typeorm';
-import { Lecture as Appointment } from './Lecture';
+import { Column, Index, PrimaryColumn } from 'typeorm';
 
 export enum AttendanceStatus {
     ACCEPTED = 'accepted',
