@@ -1,9 +1,10 @@
-import { Entity, Column, OneToMany, EntityManager } from 'typeorm';
+import { Entity, Column, OneToMany, EntityManager, ManyToMany } from 'typeorm';
 import { ScreenerDTO } from '../dto/ScreenerDTO';
 import { Screening } from './Screening';
 import { Person } from './Person';
 import { prisma } from '../prisma';
 import { init } from '../util/basic';
+import { Lecture as Appointment } from './Lecture';
 
 @Entity()
 export class Screener extends Person {
@@ -26,6 +27,9 @@ export class Screener extends Person {
         nullable: true,
     })
     screenings: Promise<Screening[]>;
+
+    @ManyToMany((type) => Appointment, (appointment) => appointment.participantsScreeners, {})
+    appointments: Appointment[];
 
     async addScreenerDTO(screenerDTO: ScreenerDTO) {
         this.firstname = screenerDTO.firstname;

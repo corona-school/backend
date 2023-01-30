@@ -1,4 +1,4 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne, JoinTable } from 'typeorm';
 import { Match } from './Match';
 import { Person, RegistrationSource } from './Person';
 import { Subcourse } from './Subcourse';
@@ -15,6 +15,7 @@ import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from '../ut
 import { LearningGermanSince } from '../daz/learningGermanSince';
 import { Language } from '../daz/language';
 import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
+import { Lecture as Appointment } from './Lecture';
 
 @Entity()
 export class Pupil extends Person {
@@ -216,6 +217,14 @@ export class Pupil extends Person {
 
     @Column({ default: '', nullable: false })
     matchReason: string;
+
+    @ManyToMany((type) => Appointment, (appointment) => appointment.participantsPupils, {})
+    @JoinTable({
+        name: 'appointment_participant_pupil',
+        joinColumn: { name: 'pupilId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'appointmentId', referencedColumnName: 'id' },
+    })
+    appointments: Appointment[];
 
     gradeAsNumber(): number | null {
         if (this.grade == null) {

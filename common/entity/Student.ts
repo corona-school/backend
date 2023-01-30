@@ -1,9 +1,9 @@
-import { Column, Entity, EntityManager, getManager, Index, ManyToMany, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, EntityManager, getManager, Index, JoinTable, ManyToMany, OneToMany, OneToOne } from 'typeorm';
 import { Match } from './Match';
 import { Screening } from './Screening';
 import { Person, RegistrationSource } from './Person';
 import { Course } from './Course';
-import { Lecture } from './Lecture';
+import { Lecture as Appointment, Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from './Subcourse';
 import { InstructorScreening } from './InstructorScreening';
@@ -325,6 +325,17 @@ export class Student extends Person {
 
     @Column({ default: '', nullable: false })
     aboutMe: string;
+
+    @ManyToMany((type) => Appointment, (appointment) => appointment.participantsStudents, {})
+    appointments: Appointment[];
+
+    @ManyToMany((type) => Appointment, (appointment) => appointment.organizers, {})
+    @JoinTable({
+        name: 'appointment_organizer',
+        joinColumn: { name: 'studentId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'appointmentId', referencedColumnName: 'id' },
+    })
+    appointmentsOrganizer: Appointment[];
 
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;

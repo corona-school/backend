@@ -3,9 +3,10 @@ import { Student } from './Student';
 import { Subcourse } from './Subcourse';
 import { CourseAttendanceLog } from './CourseAttendanceLog';
 import { OneToMany } from 'typeorm/index';
+import { AbstractAppointment } from './AbstractAppointment';
 
 @Entity()
-export class Lecture {
+export class Lecture extends AbstractAppointment {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -21,7 +22,7 @@ export class Lecture {
     @JoinColumn()
     instructor: Student;
 
-    @ManyToOne((type) => Subcourse, (subcourse) => subcourse.lectures)
+    @ManyToOne((type) => Subcourse, (subcourse) => subcourse.lectures, { nullable: true, eager: false })
     @JoinColumn()
     subcourse: Subcourse;
 
