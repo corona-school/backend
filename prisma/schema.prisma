@@ -188,16 +188,27 @@ model jufo_verification_transmission {
 }
 
 model lecture {
-  id                    Int                     @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
-  createdAt             DateTime                @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                @default(now()) @db.Timestamp(6)
-  start                 DateTime                @db.Timestamp(6)
-  duration              Int
-  instructorId          Int?
-  subcourseId           Int?
-  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
-  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
-  course_attendance_log course_attendance_log[]
+  id                               Int                                @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
+  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  start                            DateTime                           @db.Timestamp(6)
+  duration                         Int
+  title                            String?
+  description                      String?
+  appointmentType                  lecture_appointmenttype_enum       @default(legacy_lecture)
+  meetingLink                      String?                            @db.VarChar
+  isCanceled                       Boolean?
+  instructorId                     Int?
+  subcourseId                      Int?
+  matchId                          Int?
+  subcourse                        subcourse?                         @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
+  student                          student?                           @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
+  match                            match?                             @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
+  appointment_organizer            appointment_organizer[]
+  appointment_participant_pupil    appointment_participant_pupil[]
+  appointment_participant_screener appointment_participant_screener[]
+  appointment_participant_student  appointment_participant_student[]
+  course_attendance_log            course_attendance_log[]
 }
 
 model log {
@@ -228,6 +239,7 @@ model match {
   pupilId                  Int?
   pupil                    pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
   student                  student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
+  lecture                  lecture[]
 
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
@@ -384,6 +396,7 @@ model pupil {
   matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
+  appointment_participant_pupil                appointment_participant_pupil[]
   course_attendance_log                        course_attendance_log[]
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
@@ -429,27 +442,28 @@ model school {
 }
 
 model screener {
-  id                           Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
-  createdAt                    DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt                    DateTime                     @default(now()) @db.Timestamp(6)
-  firstname                    String?                      @db.VarChar
-  lastname                     String?                      @db.VarChar
-  active                       Boolean                      @default(true)
-  email                        String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
-  verification                 String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
-  verifiedAt                   DateTime?                    @db.Timestamp(6)
-  authToken                    String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
-  authTokenUsed                Boolean                      @default(false)
-  authTokenSent                DateTime?                    @db.Timestamp(6)
-  isRedacted                   Boolean                      @default(false)
-  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
-  notificationPreferences      Json?                        @db.Json
-  password                     String                       @db.VarChar
-  verified                     Boolean?                     @default(false)
-  oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
-  instructor_screening         instructor_screening[]
-  project_coaching_screening   project_coaching_screening[]
-  screenings                   screening[]
+  id                               Int                                @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
+  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  firstname                        String?                            @db.VarChar
+  lastname                         String?                            @db.VarChar
+  active                           Boolean                            @default(true)
+  email                            String                             @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
+  verification                     String?                            @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
+  verifiedAt                       DateTime?                          @db.Timestamp(6)
+  authToken                        String?                            @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
+  authTokenUsed                    Boolean                            @default(false)
+  authTokenSent                    DateTime?                          @db.Timestamp(6)
+  isRedacted                       Boolean                            @default(false)
+  lastTimeCheckedNotifications     DateTime?                          @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  notificationPreferences          Json?                              @db.Json
+  password                         String                             @db.VarChar
+  verified                         Boolean?                           @default(false)
+  oldNumberID                      Int?                               @unique(map: "UQ_96dc11de485d62615e78a875293")
+  appointment_participant_screener appointment_participant_screener[]
+  instructor_screening             instructor_screening[]
+  project_coaching_screening       project_coaching_screening[]
+  screenings                       screening[]
 }
 
 model screening {
@@ -515,6 +529,8 @@ model student {
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
   aboutMe                                   String                                 @default("") @db.VarChar
+  appointment_organizer                     appointment_organizer[]
+  appointment_participant_student           appointment_participant_student[]
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
@@ -637,6 +653,58 @@ model message_translation {
   language       message_translation_language_enum @default(de)
   notificationId Int?
   notification   notification?                     @relation(fields: [notificationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5ae486c5ef53f5335af8a4ae260")
+}
+
+model appointment_organizer {
+  appointmentId Int
+  studentId     Int
+  status        appointment_organizer_status_enum @default(accepted)
+  student       student                           @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3c35166da05f2d01b0f7a356223")
+  lecture       lecture                           @relation(fields: [appointmentId], references: [id], onDelete: Cascade, map: "FK_94585a075d9c53d290e05dff587")
+
+  @@id([appointmentId, studentId], map: "PK_c6be94a37c868a0f1d6dc1dbdcc")
+  @@index([studentId], map: "IDX_3c35166da05f2d01b0f7a35622")
+  @@index([status], map: "IDX_663993228113c003df5ab4325c")
+  @@index([appointmentId], map: "IDX_94585a075d9c53d290e05dff58")
+}
+
+model appointment_participant_pupil {
+  appointmentId Int
+  pupilId       Int
+  status        appointment_participant_pupil_status_enum @default(accepted)
+  lecture       lecture                                   @relation(fields: [appointmentId], references: [id], onDelete: Cascade, map: "FK_78d1b067a6141aad3e57b229236")
+  pupil         pupil                                     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_896b4d484fef3fd34d2478ecb64")
+
+  @@id([appointmentId, pupilId], map: "PK_74833d50008d051feb2f7809786")
+  @@index([status], map: "IDX_318b2ad16817f27bc091d1f564")
+  @@index([appointmentId], map: "IDX_78d1b067a6141aad3e57b22923")
+  @@index([pupilId], map: "IDX_896b4d484fef3fd34d2478ecb6")
+}
+
+model appointment_participant_screener {
+  appointmentId Int
+  screenerId    Int
+  status        appointment_participant_screener_status_enum @default(accepted)
+  screener      screener                                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0a8d1879d93a2c114d14fb9bade")
+  lecture       lecture                                      @relation(fields: [appointmentId], references: [id], onDelete: Cascade, map: "FK_17f70e66854b86f480dd767bcce")
+
+  @@id([appointmentId, screenerId], map: "PK_e62bdfce2c0fd7def5be58fc83e")
+  @@index([screenerId], map: "IDX_0a8d1879d93a2c114d14fb9bad")
+  @@index([appointmentId], map: "IDX_17f70e66854b86f480dd767bcc")
+  @@index([status], map: "IDX_228bb5330683338479bc19ed44")
+}
+
+model appointment_participant_student {
+  appointmentId Int
+  studentId     Int
+  status        appointment_participant_student_status_enum @default(accepted)
+  lecture       lecture                                     @relation(fields: [appointmentId], references: [id], onDelete: Cascade, map: "FK_277d879a84f17a51285a9cb23a9")
+  student       student                                     @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4d3bbcc2d0b1a2df8fe1474f4dd")
+
+  @@id([appointmentId, studentId], map: "PK_8441a1bce3bcee8b6e7a81cbafc")
+  @@index([appointmentId], map: "IDX_277d879a84f17a51285a9cb23a")
+  @@index([studentId], map: "IDX_4d3bbcc2d0b1a2df8fe1474f4d")
+  @@index([status], map: "IDX_6bbb7bec336dee923853580700")
 }
 
 enum course_category_enum {
@@ -967,4 +1035,31 @@ enum notification_type_enum {
   course
   certificate
   legacy
+}
+
+enum appointment_organizer_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_pupil_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_screener_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_student_status_enum {
+  accepted
+  declined
+}
+
+enum lecture_appointmenttype_enum {
+  group
+  on1            @map("1on1")
+  other_internal @map("other-internal")
+  legacy_lecture @map("legacy-lecture")
 }
