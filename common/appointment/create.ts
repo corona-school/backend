@@ -16,7 +16,7 @@ export abstract class AppointmentCreateInput {
     appointmentType: AppointmentType;
 }
 export async function createAppointment(appointment: AppointmentCreateInput) {
-    prisma.lecture.create({
+    await prisma.lecture.create({
         data: {
             title: appointment.title,
             duration: appointment.duration,
