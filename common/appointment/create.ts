@@ -19,7 +19,19 @@ export async function createAppointment(appointment: AppointmentCreateInput) {
     await prisma.lecture.create({
         data: {
             title: appointment.title,
+            description: appointment.description,
+            start: appointment.start,
             duration: appointment.duration,
+            meetingLink: appointment.meetingLink,
+            subcourseId: appointment.subcourseId,
+            matchId: appointment.matchId,
+        },
+        include: {
+            appointment_organizer: {
+                connect: appointment.organizers.map((id) => ({
+                    studentId: id,
+                })),
+            },
         },
     });
 }
