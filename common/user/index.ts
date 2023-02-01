@@ -13,7 +13,7 @@ import { Prisma as PrismaTypes } from '@prisma/client';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
-type UserTypes = 'student' | 'pupil' | 'screener';
+type UserType = 'student' | 'pupil' | 'screener';
 
 /* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
    Unfortunately we do not have a way to detect the database table a Prisma query returned from
@@ -83,14 +83,33 @@ export type User = {
 
 const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
-export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
+export function getUserTypeAndIdForUserId(userId: string): [type: UserType, id: number] {
     const validTypes = ['student', 'pupil', 'screener'];
     const [type, id] = userId.split('/');
     if (!validTypes.includes(type)) {
         throw Error('No valid user type found in user id');
     }
     const parsedId = parseInt(id, 10);
-    return [type as UserTypes, parsedId];
+    return [type as UserType, parsedId];
+}
+
+export function getUserTypeForUserId(userId: string): UserType {
+    const validTypes = ['student', 'pupil', 'screener'];
+    const [type] = userId.split('/');
+    if (!validTypes.includes(type)) {
+        throw Error('No valid user type found in user id');
+    }
+    return type as UserType;
+}
+
+export function getOrmIdOfUserId(userId: string): [type: UserType, id: number] {
+    const validTypes = ['student', 'pupil', 'screener'];
+    const [type, id] = userId.split('/');
+    if (!validTypes.includes(type)) {
+        throw Error('No valid user type found in user id');
+    }
+    const parsedId = parseInt(id, 10);
+    return [type as UserType, parsedId];
 }
 
 export async function getUser(userID: string, active?: boolean): Promise<User> {

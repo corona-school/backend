@@ -1,6 +1,7 @@
 import { AppointmentType } from '../entity/Lecture';
 import { InputType } from 'type-graphql';
 import { prisma } from '../prisma';
+import { lecture_appointmenttype_enum } from '../../graphql/generated/enums/lecture_appointmenttype_enum';
 
 @InputType()
 export abstract class AppointmentCreateInput {
@@ -11,8 +12,10 @@ export abstract class AppointmentCreateInput {
     meetingLink?: string;
     subcourseId?: number;
     matchId?: number;
-    organizers?: string[]; // StudentIds
-    participants?: string[]; // Student-, Pupil- & ScreenerIds
+    organizers?: number[]; // StudentIds
+    participants_pupil?: number[];
+    participants_student?: number[];
+    participants_screener?: number[];
     appointmentType: AppointmentType;
 }
 export async function createAppointment(appointment: AppointmentCreateInput) {
@@ -25,12 +28,34 @@ export async function createAppointment(appointment: AppointmentCreateInput) {
             meetingLink: appointment.meetingLink,
             subcourseId: appointment.subcourseId,
             matchId: appointment.matchId,
-        },
-        include: {
+            appointmentType: appointment.appointmentType as unknown as lecture_appointmenttype_enum,
             appointment_organizer: {
-                connect: appointment.organizers.map((id) => ({
-                    studentId: id,
-                })),
+                createMany: {
+                    data: appointment.organizers.map((id) => ({
+                        studentId: id,
+                    })) as [],
+                },
+            },
+            appointment_participant_pupil: {
+                createMany: {
+                    data: appointment.participants_pupil.map((id) => ({
+                        studentId: id,
+                    })) as [],
+                },
+            },
+            appointment_participant_student: {
+                createMany: {
+                    data: appointment.participants_student.map((id) => ({
+                        studentId: id,
+                    })) as [],
+                },
+            },
+            appointment_participant_screener: {
+                createMany: {
+                    data: appointment.participants_screener.map((id) => ({
+                        studentId: id,
+                    })) as [],
+                },
             },
         },
     });

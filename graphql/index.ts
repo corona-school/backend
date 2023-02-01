@@ -61,6 +61,7 @@ import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screenin
 import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
+import { MutateAppointmentResolver } from './appointment/mutation';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -158,6 +159,9 @@ const schema = buildSchemaSync({
         MutateScreenerResolver,
 
         AdminMutationsResolver,
+
+        /* Appointment */
+        MutateAppointmentResolver,
     ],
     authChecker,
 });
