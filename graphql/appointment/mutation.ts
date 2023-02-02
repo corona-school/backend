@@ -7,7 +7,7 @@ import { AppointmentCreateInput, createAppointment } from '../../common/appointm
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @Authorized(Role.STUDENT)
-    async appointmentCreate(@Arg('input') input: AppointmentCreateInput) {
-        return createAppointment(input);
+    async appointmentCreate(@Arg('appointment') appointment: AppointmentCreateInput) {
+        return createAppointment(appointment);
     }
 }
