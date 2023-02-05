@@ -90,7 +90,7 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        const subcourses = await getSubcoursesForCourse(courseId);
+        const subcourses = await getSubcoursesForCourse(courseId, true);
         if (!subcourses.every((subcourse) => hasSubcourseFinished(subcourse))) {
             throw new ForbiddenError('Cannot edit course that has already finished');
         }
