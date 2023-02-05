@@ -14,12 +14,23 @@ test("Student Settings", async () => {
         }`
     );
 
+    // Student cannot set non-existing subjects
+    await client.requestShallFail(`
+        mutation SetSubjects {
+            meUpdate(update: { 
+                student: { 
+                    subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
+                }
+            })
+        }
+    `);
+
     // Student can set subjects
     await client.request(`
         mutation SetSubjects {
             meUpdate(update: { 
                 student: { 
-                    subjects: { name: "Deutch", grade: { min: 1, max: 2 } }
+                    subjects: { name: "Deutsch", grade: { min: 1, max: 2 } }
                 }
             })
         }
@@ -30,7 +41,7 @@ test("Student Settings", async () => {
         mutation SetMandatorySubject {
             meUpdate(update: { 
                 student: { 
-                    subjects: { name: "Deutch", grade: { min: 1, max: 2 }, mandatory: true }
+                    subjects: { name: "Deutsch", grade: { min: 1, max: 2 }, mandatory: true }
                 }
             })
         }
@@ -48,6 +59,17 @@ test("Pupil Settings", async () => {
           })
         }`
     );
+
+    // Pupil cannot set non-existing subjects
+    await client.requestShallFail(`
+        mutation SetSubject {
+            meUpdate(update: { 
+                pupil: { 
+                    subjects: [{ name: "Deutch" }]
+                }
+            })
+        }
+    `);
 
     // Pupil can set subjects
     await client.request(`
