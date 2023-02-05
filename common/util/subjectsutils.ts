@@ -51,7 +51,9 @@ export function isValidSubject(s: Subject) {
 
 // The format how subjects are stored in the database
 export function toStudentSubjectDatabaseFormat(s: Subject) {
-    if (!isValidSubject(s)) throw new Error(`Invalid subject`);
+    if (!isValidSubject(s)) {
+        throw new Error(`Invalid subject`);
+    }
 
     if ('mandatory' in s) {
         throw new Error(`Only pupils may have mandatory subjects`);
@@ -64,7 +66,9 @@ export function toStudentSubjectDatabaseFormat(s: Subject) {
     };
 }
 export function toPupilSubjectDatabaseFormat(s: Subject) {
-    if (!isValidSubject(s)) throw new Error(`Invalid subject`);
+    if (!isValidSubject(s)) {
+        throw new Error(`Invalid subject`);
+    }
 
     if ('grade' in s) {
         throw new Error(`Only students may have grade restrictions for subjects`);
