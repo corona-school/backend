@@ -16,6 +16,7 @@ import {
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
+import { SUBJECTS } from '../../common/util/subjectsutils';
 
 @ObjectType()
 class MatchPoolAutomatic {
@@ -58,6 +59,12 @@ class StatisticType implements MatchPoolStatistics {
 }
 @Resolver((of) => MatchPool)
 export class FieldsMatchPoolResolver {
+    @Query((returns) => [String])
+    @Authorized(Role.UNAUTHENTICATED)
+    subjects() {
+        return SUBJECTS;
+    }
+
     @Query((returns) => [MatchPool])
     @Authorized(Role.UNAUTHENTICATED)
     match_pools() {
