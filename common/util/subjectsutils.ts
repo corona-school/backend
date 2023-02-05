@@ -24,7 +24,6 @@ export const SUBJECTS = [
     "Englisch",
     "Erdkunde",
     "Französisch",
-    "Französisch",
     "Geschichte",
     "Informatik",
     "Italienisch",
