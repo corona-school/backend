@@ -9,11 +9,13 @@ import { getSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getStudent } from '../util';
+import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { courseImageKey } from '../../web/controllers/courseController/course-images';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 import { course_schooltype_enum, course_subject_enum } from '../generated';
+import { hasSubcourseFinished } from './util';
+import { ForbiddenError } from '../error';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -88,6 +90,10 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
+        const subcourses = await getSubcoursesForCourse(courseId);
+        if (!subcourses.every((subcourse) => hasSubcourseFinished(subcourse))) {
+            throw new ForbiddenError('Cannot edit course that has already finished');
+        }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
         return result;
