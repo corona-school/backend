@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class AddReligionToSubjectsEnum1675649382865 implements MigrationInterface {
-    name = 'AddReligionToSubjectsEnum1675649382865'
+    name = 'AddReligionToSubjectsEnum1675649382865';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TYPE "public"."course_subject_enum" RENAME TO "course_subject_enum_old"`);
