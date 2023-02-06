@@ -70,23 +70,17 @@ export class Lecture {
     })
     isCanceled: boolean;
 
-    /**
-     * already present in Lecture
-     @ManyToOne((type) => Subcourse, null, {
-        eager: true,
-        nullable: true,
-    })
-     @JoinColumn()
-     subcourse: Subcourse;
-     */
-
-    @ManyToOne((type) => Match, null, {
+    @ManyToOne((type) => Match, (match) => match.appointments, {
         eager: true,
         nullable: true,
     })
     @JoinColumn()
     match: Match;
 
+    /**
+     * for group and match appointments there should be only one organizer
+     * for future types of appointments there might be multiple organizers
+     */
     @ManyToMany((type) => Student, (student) => student.appointmentsOrganizer, {
         eager: true,
         nullable: false,

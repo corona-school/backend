@@ -11,6 +11,9 @@ import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
+import { Lecture as Appointment } from '../../common/entity/Lecture';
+import { AttendanceStatus } from '../../common/entity/AppointmentAttendee';
+import { getAppointmentsForUser } from '../../common/appointment/get';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -93,6 +96,17 @@ export class UserFieldsResolver {
             take,
             skip,
         });
+    }
+
+    @FieldResolver((returns) => [Appointment])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    @LimitedQuery()
+    async appointments(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number
+    ): Promise<Appointment[]> {
+        return getAppointmentsForUser(user, take, skip);
     }
 
     @FieldResolver((returns) => Date, { nullable: true })

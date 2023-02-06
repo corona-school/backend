@@ -93,23 +93,16 @@ export function getUserTypeAndIdForUserId(userId: string): [type: UserType, id: 
     return [type as UserType, parsedId];
 }
 
-export function getUserTypeForUserId(userId: string): UserType {
-    const validTypes = ['student', 'pupil', 'screener'];
-    const [type] = userId.split('/');
-    if (!validTypes.includes(type)) {
-        throw Error('No valid user type found in user id');
+export function getUserType(user: User): UserType {
+    if (user.pupilId) {
+        return 'pupil';
     }
-    return type as UserType;
-}
-
-export function getOrmIdOfUserId(userId: string): [type: UserType, id: number] {
-    const validTypes = ['student', 'pupil', 'screener'];
-    const [type, id] = userId.split('/');
-    if (!validTypes.includes(type)) {
-        throw Error('No valid user type found in user id');
+    if (user.studentId) {
+        return 'student';
     }
-    const parsedId = parseInt(id, 10);
-    return [type as UserType, parsedId];
+    if (user.screenerId) {
+        return 'screener';
+    }
 }
 
 export async function getUser(userID: string, active?: boolean): Promise<User> {

@@ -2,9 +2,10 @@ import { AppointmentType } from '../entity/Lecture';
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import { lecture_appointmenttype_enum } from '../../graphql/generated/enums/lecture_appointmenttype_enum';
+import { PrerequisiteError } from '../util/error';
 
 @InputType()
-export abstract class AppointmentCreateInput {
+export abstract class AppointmentCreateInputBase {
     @Field()
     title: string;
     @Field()
@@ -15,6 +16,22 @@ export abstract class AppointmentCreateInput {
     duration: number;
     @Field({ nullable: true })
     meetingLink?: string;
+}
+
+@InputType()
+export abstract class AppointmentCreateMatchInput extends AppointmentCreateInputBase {
+    @Field(() => Int, { nullable: false })
+    matchId: number;
+}
+
+@InputType()
+export abstract class AppointmentCreateGroupInput extends AppointmentCreateInputBase {
+    @Field(() => Int, { nullable: false })
+    subcourseId: number;
+}
+
+@InputType()
+export abstract class AppointmentCreateInputFull extends AppointmentCreateInputBase {
     @Field(() => Int, { nullable: true })
     subcourseId?: number;
     @Field(() => Int, { nullable: true })
@@ -30,7 +47,11 @@ export abstract class AppointmentCreateInput {
     @Field(() => lecture_appointmenttype_enum)
     appointmentType: AppointmentType;
 }
-export async function createAppointment(appointment: AppointmentCreateInput) {
+
+export async function createAppointment(appointment: AppointmentCreateInputFull) {
+    if (!appointment?.organizers) {
+        throw new PrerequisiteError(`Appointment must have at least one organizer`);
+    }
     const lecture = await prisma.lecture.create({
         data: {
             title: appointment.title,

@@ -1,6 +1,19 @@
-import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    EntityManager,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    Unique,
+    UpdateDateColumn,
+} from 'typeorm';
 import { Student } from './Student';
 import { Pupil } from './Pupil';
+import { Lecture as Appointment } from './Lecture';
 import { Subject } from '../util/subjectsutils';
 import { v4 as generateUUID } from 'uuid';
 
@@ -57,6 +70,9 @@ export class Match {
     })
     @JoinColumn()
     pupil: Pupil;
+
+    @OneToMany(() => Appointment, (appointment) => appointment.match, { nullable: true })
+    appointments: Appointment[];
 
     //all emails that were sent associated with this match (i.e. emails about confirming the match, dissolving it, etc. )
     @Column({
