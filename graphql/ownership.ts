@@ -1,5 +1,4 @@
 import { GraphQLUser } from './authentication';
-import { ResolversEnhanceMap } from './generated';
 import type * as models from './generated/models';
 import { prisma } from '../common/prisma';
 import { User } from '../common/user';
@@ -29,6 +28,9 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         }
         const instructor = await prisma.subcourse_instructors_student.findFirst({ where: { subcourseId: subcourse.id, studentId: user.studentId } });
         return !!instructor;
+    },
+    Lecture: async (user, lecture) => {
+        return true;
     },
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,

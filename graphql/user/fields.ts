@@ -1,4 +1,13 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification } from '../generated';
+import {
+    Student,
+    Pupil,
+    Screener,
+    Secret,
+    PupilWhereInput,
+    StudentWhereInput,
+    Concrete_notification as ConcreteNotification,
+    Lecture as Appointment,
+} from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -9,10 +18,7 @@ import { queryUser, User, userForPupil, userForStudent } from '../../common/user
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
-import { Lecture as Appointment } from '../../common/entity/Lecture';
-import { AttendanceStatus } from '../../common/entity/AppointmentAttendee';
 import { getAppointmentsForUser } from '../../common/appointment/get';
 
 @Resolver((of) => UserType)
@@ -106,7 +112,7 @@ export class UserFieldsResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<Appointment[]> {
-        return getAppointmentsForUser(user, take, skip);
+        return getAppointmentsForUser(user, take, skip) as unknown as Appointment[];
     }
 
     @FieldResolver((returns) => Date, { nullable: true })
