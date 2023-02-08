@@ -23,7 +23,7 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
             id: {
                 in: appointmentIds,
             },
-            isCanceled: false,
+            OR: [{ isCanceled: false }, { isCanceled: null }], //@TODO: probably null will not be needed after field changes to not nullable
         },
         orderBy: [{ start: 'desc' }],
         take,

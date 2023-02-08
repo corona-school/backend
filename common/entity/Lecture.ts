@@ -66,7 +66,8 @@ export class Lecture {
     meetingLink: string;
 
     @Column({
-        nullable: true,
+        nullable: true, //@TODO: probably should be changed with new migratioons
+        default: false,
     })
     isCanceled: boolean;
 
