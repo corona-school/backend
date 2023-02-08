@@ -104,7 +104,7 @@ export class UserFieldsResolver {
         });
     }
 
-    @FieldResolver((returns) => [Appointment])
+    @FieldResolver((returns) => [Appointment], { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     @LimitedQuery()
     async appointments(

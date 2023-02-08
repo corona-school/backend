@@ -5,6 +5,7 @@ import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCre
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AppointmentType } from '../../common/entity/Lecture';
+import { prisma } from '../../common/prisma';
 const getOrganizersUserId = (context: GraphQLContext) => getSessionUser(context).studentId || null;
 
 const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: GraphQLContext) => {
@@ -41,6 +42,7 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @Authorized(Role.STUDENT)
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
+        prisma.subcourse_participants_pupil;
         const appointmentMatch: AppointmentCreateInputFull = {
             ...appointment,
             appointmentType: AppointmentType.GROUP,
