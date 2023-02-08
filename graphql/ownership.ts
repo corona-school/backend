@@ -1,7 +1,8 @@
 import { GraphQLUser } from './authentication';
 import type * as models from './generated/models';
 import { prisma } from '../common/prisma';
-import { User } from '../common/user';
+import { getUserType, User } from '../common/user';
+import { AttendanceStatus } from '../common/entity/AppointmentAttendee';
 
 /* ResolverModelNames is a union type of all Model classes, ResolverModel can then be used to refer to a class named as such */
 export type ResolverModelNames = keyof typeof models;
@@ -30,7 +31,19 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         return !!instructor;
     },
     Lecture: async (user, lecture) => {
-        return true;
+        const where = { appointmentId: lecture.id, status: AttendanceStatus.ACCEPTED };
+        switch (getUserType(user)) {
+            case 'student':
+                return (
+                    !!(await prisma.appointment_organizer.findFirst({ where: { ...where, studentId: user.studentId } })) ||
+                    !!(await prisma.appointment_participant_student.findFirst({ where: { ...where, studentId: user.studentId } }))
+                );
+            case 'pupil':
+                return !!(await prisma.appointment_participant_pupil.findFirst({ where: { ...where, pupilId: user.pupilId } }));
+            case 'screener':
+                return !!(await prisma.appointment_participant_screener.findFirst({ where: { ...where, screenerId: user.screenerId } }));
+        }
+        return false;
     },
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,
