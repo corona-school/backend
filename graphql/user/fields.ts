@@ -105,7 +105,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => [Appointment], { nullable: true })
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.USER) // @TODO Role.USER gets overridden somewhere with roles: ADMIN,OWNER, needs to be fixed preferrably adding role Participant
     @LimitedQuery()
     async appointments(
         @Root() user: User,

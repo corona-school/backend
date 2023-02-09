@@ -3,6 +3,7 @@ import type * as models from './generated/models';
 import { prisma } from '../common/prisma';
 import { getUserType, User } from '../common/user';
 import { AttendanceStatus } from '../common/entity/AppointmentAttendee';
+import { isParticipant } from '../common/courses/participants';
 
 /* ResolverModelNames is a union type of all Model classes, ResolverModel can then be used to refer to a class named as such */
 export type ResolverModelNames = keyof typeof models;
@@ -32,6 +33,9 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
     },
     Lecture: async (user, lecture) => {
         const where = { appointmentId: lecture.id, status: AttendanceStatus.ACCEPTED };
+
+        /* following implementation checks participation and not ownership as a workaround */
+        // @TODO fix authorisation introducing a new role for participants
         switch (getUserType(user)) {
             case 'student':
                 return (
@@ -39,10 +43,21 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
                     !!(await prisma.appointment_participant_student.findFirst({ where: { ...where, studentId: user.studentId } }))
                 );
             case 'pupil':
-                return !!(await prisma.appointment_participant_pupil.findFirst({ where: { ...where, pupilId: user.pupilId } }));
+                return (
+                    (await isParticipant({ id: lecture.subcourseId }, { id: user.pupilId })) ||
+                    !!(await prisma.appointment_participant_pupil.findFirst({ where: { ...where, pupilId: user.pupilId } }))
+                );
             case 'screener':
                 return !!(await prisma.appointment_participant_screener.findFirst({ where: { ...where, screenerId: user.screenerId } }));
         }
+
+        /* following is the correct ownership logic implementation
+
+        if (getUserType(user) === 'student') {
+            return !!(await prisma.appointment_organizer.findFirst({ where: { ...where, studentId: user.studentId } }));
+        }
+        */
+
         return false;
     },
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,

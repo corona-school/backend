@@ -93,6 +93,17 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             return true;
         }
     }
+    if (requiredRoles.includes(Role.APPOINTMENT_SUBCOURSE_PARTICIPANT_PUPIL)) {
+        // @TODO this doesn't work correctly, as the model name is User, not Lecture for me query
+        assert(modelName === 'Lecture', 'Type must be a Lecture(Appointment) to determine access to it ' + modelName);
+        assert(root, 'root value must be bound to determine access');
+        assert(context.user.pupilId, 'User must be a pupil');
+        const pupil = await getPupil(context.user.pupilId);
+        const success = await isParticipant({ id: root.subcourseId }, pupil);
+        if (success) {
+            return true;
+        }
+    }
 
     if (context.user === UNAUTHENTICATED_USER) {
         throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);

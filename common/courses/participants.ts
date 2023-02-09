@@ -56,7 +56,10 @@ async function acquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: (
     }
 }
 
-export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
+interface withId {
+    id: number;
+}
+export async function isParticipant(subcourse: withId, pupil: withId) {
     return (
         (await prisma.subcourse_participants_pupil.count({
             where: { pupilId: pupil.id, subcourseId: subcourse.id },
@@ -64,7 +67,7 @@ export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
     );
 }
 
-export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
+export async function isOnWaitingList(subcourse: withId, pupil: withId) {
     return (
         (await prisma.subcourse_waiting_list_pupil.count({
             where: { pupilId: pupil.id, subcourseId: subcourse.id },

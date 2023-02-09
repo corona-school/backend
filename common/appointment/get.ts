@@ -15,9 +15,9 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
             break;
         case 'screener':
             appointmentIds = await getScreenerAppointmentIds(user.screenerId);
-    }
-    if (appointmentIds.length === 0) {
-        return null;
+            break;
+        default:
+            throw new Error(`Unknown user type: ${userType}`);
     }
 
     appointmentIds = deduplicate(sortIds(appointmentIds));
