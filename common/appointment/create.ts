@@ -48,12 +48,15 @@ export abstract class AppointmentCreateInputFull extends AppointmentCreateInputB
     appointmentType: AppointmentType;
 }
 
-export async function createAppointment(appointment: AppointmentCreateInputFull) {
-    if (!appointment?.organizers) {
-        throw new PrerequisiteError(`Appointment must have at least one organizer`);
+export async function createAppointments(appointments: AppointmentCreateInputFull | AppointmentCreateInputFull[]) {
+    let appointmentsData = appointments instanceof Array ? appointments : [appointments];
+
+    if (!appointmentsData.every((appointment) => !!appointment.organizers.length)) {
+        throw new PrerequisiteError(`Appointments must have at least one organizer`);
     }
-    const lecture = await prisma.lecture.create({
-        data: {
+
+    const entries = await prisma.lecture.createMany({
+        data: appointmentsData.map((appointment) => ({
             title: appointment.title,
             description: appointment.description,
             start: appointment.start,
@@ -98,11 +101,12 @@ export async function createAppointment(appointment: AppointmentCreateInputFull)
                       },
                   }
                 : undefined,
-        },
+        })),
     });
 
-    if (lecture.id) {
+    if (entries.count) {
         return true;
     }
-    return false;
+
+    throw new Error(`No appointments persisted`);
 }

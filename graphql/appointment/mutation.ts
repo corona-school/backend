@@ -1,7 +1,7 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
-import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCreateMatchInput, createAppointment } from '../../common/appointment/create';
+import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCreateMatchInput, createAppointments } from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AppointmentType } from '../../common/entity/Lecture';
@@ -25,7 +25,14 @@ export class MutateAppointmentResolver {
     @Authorized(Role.ADMIN)
     async appointmentCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateInputFull) {
         appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context);
-        return createAppointment(appointment);
+        return createAppointments([appointment]);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async appointmentsCreate(@Ctx() context: GraphQLContext, @Arg('appointments') appointments: AppointmentCreateInputFull[]) {
+        appointments.forEach((appointment) => (appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context)));
+        return createAppointments(appointments);
     }
 
     @Mutation(() => Boolean)
@@ -36,7 +43,7 @@ export class MutateAppointmentResolver {
             appointmentType: AppointmentType.ONE_ON_ONE,
             organizers: [getOrganizersUserId(context)],
         };
-        return createAppointment(appointmentMatch);
+        return createAppointments([appointmentMatch]);
     }
 
     @Mutation(() => Boolean)
@@ -48,6 +55,6 @@ export class MutateAppointmentResolver {
             appointmentType: AppointmentType.GROUP,
             organizers: [getOrganizersUserId(context)],
         };
-        return createAppointment(appointmentMatch);
+        return createAppointments([appointmentMatch]);
     }
 }
