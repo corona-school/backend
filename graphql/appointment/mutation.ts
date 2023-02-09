@@ -22,15 +22,18 @@ const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: Gr
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.STUDENT)
     async appointmentCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateInputFull) {
         appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context);
         return createAppointments([appointment]);
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
-    async appointmentsCreate(@Ctx() context: GraphQLContext, @Arg('appointments') appointments: AppointmentCreateInputFull[]) {
+    @Authorized(Role.ADMIN, Role.STUDENT)
+    async appointmentsCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('appointments', () => [AppointmentCreateInputFull]) appointments: AppointmentCreateInputFull[]
+    ) {
         appointments.forEach((appointment) => (appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context)));
         return createAppointments(appointments);
     }

@@ -52,59 +52,65 @@ export async function createAppointments(appointments: AppointmentCreateInputFul
     let appointmentsData = appointments instanceof Array ? appointments : [appointments];
 
     if (!appointmentsData.every((appointment) => !!appointment.organizers.length)) {
-        throw new PrerequisiteError(`Appointments must have at least one organizer`);
+        //throw new PrerequisiteError(`Appointments must have at least one organizer`);
     }
 
-    const entries = await prisma.lecture.createMany({
-        data: appointmentsData.map((appointment) => ({
-            title: appointment.title,
-            description: appointment.description,
-            start: appointment.start,
-            duration: appointment.duration,
-            meetingLink: appointment.meetingLink,
-            subcourseId: appointment.subcourseId,
-            matchId: appointment.matchId,
-            appointmentType: appointment.appointmentType as unknown as lecture_appointmenttype_enum,
-            appointment_organizer: appointment.organizers?.length
-                ? {
-                      createMany: {
-                          data: appointment.organizers.map((id) => ({
-                              studentId: id,
-                          })) as [],
-                      },
-                  }
-                : undefined,
-            appointment_participant_pupil: appointment.participants_pupil?.length
-                ? {
-                      createMany: {
-                          data: appointment.participants_pupil.map((id) => ({
-                              pupilId: id,
-                          })) as [],
-                      },
-                  }
-                : undefined,
-            appointment_participant_student: appointment.participants_student?.length
-                ? {
-                      createMany: {
-                          data: appointment.participants_student?.map((id) => ({
-                              studentId: id,
-                          })) as [],
-                      },
-                  }
-                : undefined,
-            appointment_participant_screener: appointment.participants_screener?.length
-                ? {
-                      createMany: {
-                          data: appointment.participants_screener?.map((id) => ({
-                              screenerId: id,
-                          })) as [],
-                      },
-                  }
-                : undefined,
-        })),
-    });
+    const entries = await Promise.all(
+        appointmentsData.map(
+            async (appointment) =>
+                await prisma.lecture.create({
+                    data: {
+                        title: appointment.title,
+                        description: appointment.description,
+                        start: appointment.start,
+                        duration: appointment.duration,
+                        meetingLink: appointment.meetingLink,
+                        subcourseId: appointment.subcourseId,
+                        matchId: appointment.matchId,
+                        appointmentType: appointment.appointmentType as unknown as lecture_appointmenttype_enum,
+                        appointment_organizer: appointment.organizers?.length
+                            ? {
+                                  createMany: {
+                                      data: appointment.organizers.map((id) => ({
+                                          studentId: id,
+                                      })),
+                                  },
+                              }
+                            : undefined,
+                        appointment_participant_pupil: appointment.participants_pupil?.length
+                            ? {
+                                  createMany: {
+                                      data: appointment.participants_pupil.map((id) => ({
+                                          pupilId: id,
+                                      })),
+                                  },
+                              }
+                            : undefined,
+                        appointment_participant_student: appointment.participants_student?.length
+                            ? {
+                                  createMany: {
+                                      data: appointment.participants_student?.map((id) => ({
+                                          studentId: id,
+                                      })),
+                                  },
+                              }
+                            : undefined,
+                        appointment_participant_screener: appointment.participants_screener?.length
+                            ? {
+                                  createMany: {
+                                      data: appointment.participants_screener?.map((id) => ({
+                                          screenerId: id,
+                                      })),
+                                  },
+                              }
+                            : undefined,
+                    },
+                })
+        )
+    );
 
-    if (entries.count) {
+    // could be improved: success when at least some entries saved
+    if (entries.some((entry) => !!entry.id)) {
         return true;
     }
 
