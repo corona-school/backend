@@ -1,7 +1,13 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
-import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCreateMatchInput, createAppointments } from '../../common/appointment/create';
+import {
+    AppointmentCreateGroupInput,
+    AppointmentCreateInputFull,
+    AppointmentCreateMatchInput,
+    createAppointments,
+    createWeeklyAppointments,
+} from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AppointmentType } from '../../common/entity/Lecture';
@@ -36,6 +42,17 @@ export class MutateAppointmentResolver {
     ) {
         appointments.forEach((appointment) => (appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context)));
         return createAppointments(appointments);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT)
+    async appointmentsCreateWeekly(
+        @Ctx() context: GraphQLContext,
+        @Arg('baseAppointment') baseAppointment: AppointmentCreateInputFull,
+        @Arg('totalCount') totalCount: number
+    ) {
+        baseAppointment.organizers = mergeOrganizersWithSessionUserId(baseAppointment.organizers, context);
+        return createWeeklyAppointments(baseAppointment, totalCount);
     }
 
     @Mutation(() => Boolean)
