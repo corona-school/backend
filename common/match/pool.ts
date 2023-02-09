@@ -477,7 +477,7 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
 // It takes some time for pupils to confirm interest and get matched
 // (at most two weeks till the interest gets invalidated)
 // Thus we always want to have more pupils in the backlog
-const OVERPROVISION_DEMAND = 20;
+const OVERPROVISION_DEMAND = 40;
 
 export async function confirmationRequestsToSend(pool: MatchPool) {
     const offers = await getStudentOfferCount(pool, []);
