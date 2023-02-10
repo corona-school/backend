@@ -37,7 +37,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT)
+    @Authorized(Role.ADMIN, Role.STUDENT) //@TODO: check ownership of match or subcourse
     async appointmentsCreate(
         @Ctx() context: GraphQLContext,
         @Arg('appointments', () => [AppointmentCreateInputFull]) appointments: AppointmentCreateInputFull[]
@@ -48,26 +48,33 @@ export class MutateAppointmentResolver {
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
+    // hasAccess is called in hasAccessMatch
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
-        const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
-        await hasAccess(context, 'Match', match);
+        await hasAccessMatch(context, appointment.matchId);
 
         return createAppointments([getFullAppointment(appointment, AppointmentType.MATCH, context)]);
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.STUDENT)
+    @AuthorizedDeferred(Role.OWNER)
+    // hasAccess is called in hasAccessSubcourse
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
+        await hasAccessSubcourse(context, appointment.subcourseId);
         return createAppointments([getFullAppointment(appointment, AppointmentType.GROUP, context)]);
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.STUDENT)
+    @AuthorizedDeferred(Role.OWNER)
+    // hasAccess is called in hasAccessSubcourse
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentGroupWeeklyCreate(
         @Ctx() context: GraphQLContext,
         @Arg('baseAppointment') baseAppointment: AppointmentCreateGroupInput,
         @Arg('weeklyTexts', () => [AppointmentInputText]) weeklyTexts: AppointmentInputText[]
     ) {
+        await hasAccessSubcourse(context, baseAppointment.subcourseId);
         return createWeeklyAppointments(getFullAppointment(baseAppointment, AppointmentType.GROUP, context), weeklyTexts);
     }
 }
@@ -81,3 +88,13 @@ const getFullAppointment = (
     appointmentType: type,
     organizers: [getOrganizersUserId(context)],
 });
+
+const hasAccessSubcourse = async (context: GraphQLContext, subcourseId: number): Promise<void> => {
+    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+    await hasAccess(context, 'Subcourse', subcourse);
+};
+
+const hasAccessMatch = async (context: GraphQLContext, matchId: number): Promise<void> => {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    await hasAccess(context, 'Match', match);
+};
