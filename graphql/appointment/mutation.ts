@@ -12,6 +12,8 @@ import {
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AppointmentType } from '../../common/entity/Lecture';
+import { AuthorizedDeferred, hasAccess } from '../authorizations';
+import { prisma } from '../../common/prisma';
 const getOrganizersUserId = (context: GraphQLContext) => getSessionUser(context).studentId || null;
 
 const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: GraphQLContext) => {
@@ -45,9 +47,12 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.STUDENT)
+    @AuthorizedDeferred(Role.OWNER)
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
-        return createAppointments([getFullAppointment(appointment, AppointmentType.ONE_ON_ONE, context)]);
+        const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
+        await hasAccess(context, 'Match', match);
+
+        return createAppointments([getFullAppointment(appointment, AppointmentType.MATCH, context)]);
     }
 
     @Mutation(() => Boolean)

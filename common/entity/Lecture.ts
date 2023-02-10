@@ -9,7 +9,7 @@ import { Screener } from './Screener';
 
 export enum AppointmentType {
     GROUP = 'group',
-    ONE_ON_ONE = '1on1',
+    MATCH = 'match',
     OTHER_INTERNAL = 'other-internal',
     LEGACY_LECTURE = 'legacy-lecture',
 }

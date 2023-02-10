@@ -1,9 +1,9 @@
 import { AppointmentType } from '../entity/Lecture';
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { lecture_appointmenttype_enum } from '../../graphql/generated/enums/lecture_appointmenttype_enum';
 import { lecture as Appointment } from '@prisma/client';
 import { PrerequisiteError } from '../util/error';
+import { lecture_appointmenttype_enum } from '../../graphql/generated';
 
 @InputType()
 export class AppointmentInputText {
