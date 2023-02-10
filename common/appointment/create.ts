@@ -2,14 +2,18 @@ import { AppointmentType } from '../entity/Lecture';
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import { lecture_appointmenttype_enum } from '../../graphql/generated/enums/lecture_appointmenttype_enum';
+import { lecture as Appointment } from '@prisma/client';
 import { PrerequisiteError } from '../util/error';
 
 @InputType()
-export abstract class AppointmentCreateInputBase {
+export class AppointmentInputText {
     @Field()
     title: string;
     @Field()
     description: string;
+}
+@InputType()
+export abstract class AppointmentCreateInputBase extends AppointmentInputText {
     @Field()
     start: Date;
     @Field()
@@ -99,31 +103,39 @@ const createSingleAppointment = async (appointment: AppointmentCreateInputFull) 
     });
 };
 
-export async function createAppointments(appointments: AppointmentCreateInputFull | AppointmentCreateInputFull[]) {
-    let appointmentsData = appointments instanceof Array ? appointments : [appointments];
+export async function createAppointments(appointments: AppointmentCreateInputFull[]) {
+    validate(appointments);
 
-    if (!appointmentsData.every((appointment) => !!appointment.organizers.length)) {
-        //throw new PrerequisiteError(`Appointments must have at least one organizer`);
+    const entries = await Promise.all(appointments.map(createSingleAppointment));
+
+    return savedOkay(entries);
+}
+
+export async function createWeeklyAppointments(baseAppointment: AppointmentCreateInputFull, weeklyTexts: AppointmentInputText[]) {
+    validate([baseAppointment]);
+    const entries = [];
+
+    entries.push(await createSingleAppointment(baseAppointment));
+    weeklyTexts.map(async (weekly, index) => {
+        const start: Date = new Date(baseAppointment.start);
+        start.setDate(baseAppointment.start.getDate() + 7 * (index + 1));
+        entries.push(await createSingleAppointment({ ...baseAppointment, ...weekly, start }));
+    });
+
+    return savedOkay(entries);
+}
+
+const validate = (appointments: AppointmentCreateInputFull[]) => {
+    if (!appointments.every((appointment) => !!appointment.organizers.length)) {
+        throw new PrerequisiteError(`Appointments must have at least one organizer`);
     }
+};
 
-    const entries = await Promise.all(appointmentsData.map(createSingleAppointment));
-
+const savedOkay = (appointments: Appointment[]) => {
     // could be improved: success when at least some entries saved
-    if (entries.some((entry) => !!entry.id)) {
+    if (appointments.some((appointment) => !!appointment.id)) {
         return true;
     }
 
     throw new Error(`No appointments persisted`);
-}
-
-export async function createWeeklyAppointments(baseAppointment: AppointmentCreateInputFull, totalCount: number) {
-    const entries = [];
-    for (let i = 0; i < totalCount; i++) {
-        const start: Date = new Date(baseAppointment.start);
-        start.setDate(baseAppointment.start.getDate() + 7 * i);
-        await createSingleAppointment({ ...baseAppointment, start });
-    }
-
-    // @TODO check for success
-    return true;
-}
+};

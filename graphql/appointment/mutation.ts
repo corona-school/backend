@@ -5,13 +5,13 @@ import {
     AppointmentCreateGroupInput,
     AppointmentCreateInputFull,
     AppointmentCreateMatchInput,
+    AppointmentInputText,
     createAppointments,
     createWeeklyAppointments,
 } from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AppointmentType } from '../../common/entity/Lecture';
-import { prisma } from '../../common/prisma';
 const getOrganizersUserId = (context: GraphQLContext) => getSessionUser(context).studentId || null;
 
 const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: GraphQLContext) => {
@@ -45,36 +45,34 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT)
-    async appointmentsCreateWeekly(
-        @Ctx() context: GraphQLContext,
-        @Arg('baseAppointment') baseAppointment: AppointmentCreateInputFull,
-        @Arg('totalCount') totalCount: number
-    ) {
-        baseAppointment.organizers = mergeOrganizersWithSessionUserId(baseAppointment.organizers, context);
-        return createWeeklyAppointments(baseAppointment, totalCount);
-    }
-
-    @Mutation(() => Boolean)
     @Authorized(Role.STUDENT)
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
-        const appointmentMatch: AppointmentCreateInputFull = {
-            ...appointment,
-            appointmentType: AppointmentType.ONE_ON_ONE,
-            organizers: [getOrganizersUserId(context)],
-        };
-        return createAppointments([appointmentMatch]);
+        return createAppointments([getFullAppointment(appointment, AppointmentType.ONE_ON_ONE, context)]);
     }
 
     @Mutation(() => Boolean)
     @Authorized(Role.STUDENT)
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
-        prisma.subcourse_participants_pupil;
-        const appointmentMatch: AppointmentCreateInputFull = {
-            ...appointment,
-            appointmentType: AppointmentType.GROUP,
-            organizers: [getOrganizersUserId(context)],
-        };
-        return createAppointments([appointmentMatch]);
+        return createAppointments([getFullAppointment(appointment, AppointmentType.GROUP, context)]);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT)
+    async appointmentGroupWeeklyCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('baseAppointment') baseAppointment: AppointmentCreateGroupInput,
+        @Arg('weeklyTexts', () => [AppointmentInputText]) weeklyTexts: AppointmentInputText[]
+    ) {
+        return createWeeklyAppointments(getFullAppointment(baseAppointment, AppointmentType.GROUP, context), weeklyTexts);
     }
 }
+
+const getFullAppointment = (
+    appointment: AppointmentCreateGroupInput | AppointmentCreateMatchInput,
+    type: AppointmentType,
+    context: GraphQLContext
+): AppointmentCreateInputFull => ({
+    ...appointment,
+    appointmentType: type,
+    organizers: [getOrganizersUserId(context)],
+});
