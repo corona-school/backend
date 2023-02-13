@@ -40,10 +40,12 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
 const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Promise<Appointment[]> => {
     return (await prisma.lecture.findMany({
         where: {
-            id: {
-                in: appointmentIds,
+            AND: {
+                id: {
+                    in: appointmentIds,
+                },
+                OR: [{ isCanceled: null }, { isCanceled: false }], //@TODO: probably null will not be needed after field changes to not nullable
             },
-            AND: [{ isCanceled: false }, { isCanceled: null }], //@TODO: probably null will not be needed after field changes to not nullable
         },
         orderBy: [{ start: 'desc' }],
         take,
