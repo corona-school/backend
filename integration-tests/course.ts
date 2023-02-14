@@ -153,10 +153,10 @@ test("Search further instructors", async() => {
 
     // Partial searches yield no result to not leak infos
     const partialSearch = await client.request(`query { otherInstructors(search: "melanie", take: 100, skip: 0) { id }}`);
-    assert.ok(partialSearch.otherInstructors.length === 3);
+    assert.ok(partialSearch.otherInstructors.length === 0);
 
     const partialEmailSearch = await client.request(`query { otherInstructors(search: "@lern-fair.de", take: 100, skip: 0) { id }}`);
-    assert.ok(partialEmailSearch.otherInstructors.length === 3);
+    assert.ok(partialEmailSearch.otherInstructors.length === 0);
 
     const fullNameSearch = await client.request(`query { otherInstructors(search: "melanie meiers", take: 100, skip: 0) { firstname lastname }}`);
     assert.equal(fullNameSearch.otherInstructors.length, 1);
