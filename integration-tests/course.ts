@@ -151,19 +151,18 @@ test("Admin set subcourse meetingURL and join", async () => {
 test("Search further instructors", async() => {
     const { client } = await screenedInstructorOne;
 
-    const emailSearch = await client.request(`query { otherInstructors(search: "@Lern-Fair.de", take: 100, skip: 0) { id }}`);
-    assert.ok(emailSearch.otherInstructors.length >= 3);
+    // Partial searches yield no result to not leak infos
+    const partialSearch = await client.request(`query { otherInstructors(search: "melanie", take: 100, skip: 0) { id }}`);
+    assert.ok(partialSearch.otherInstructors.length === 3);
 
-    const firstnameSearch = await client.request(`query { otherInstructors(search: "melanie", take: 100, skip: 0) { firstname }}`);
-    assert.equal(firstnameSearch.otherInstructors.length, 1);
-    assert.equal(firstnameSearch.otherInstructors[0].firstname, "Melanie");
+    const partialEmailSearch = await client.request(`query { otherInstructors(search: "@lern-fair.de", take: 100, skip: 0) { id }}`);
+    assert.ok(partialEmailSearch.otherInstructors.length === 3);
 
-    const lastnameSearch = await client.request(`query { otherInstructors(search: "meiers", take: 100, skip: 0) { lastname }}`);
-    assert.equal(lastnameSearch.otherInstructors.length, 1);
-    assert.equal(lastnameSearch.otherInstructors[0].lastname, "Meiers");
+    const fullNameSearch = await client.request(`query { otherInstructors(search: "melanie meiers", take: 100, skip: 0) { firstname lastname }}`);
+    assert.equal(fullNameSearch.otherInstructors.length, 1);
+    assert.equal(fullNameSearch.otherInstructors[0].firstname, "Melanie");
 
-    const nameSearch = await client.request(`query { otherInstructors(search: "melanie meiers", take: 100, skip: 0) { firstname lastname }}`);
-    assert.equal(nameSearch.otherInstructors.length, 1);
-    assert.equal(nameSearch.otherInstructors[0].firstname, "Melanie");
-
+    const fullEmailSearch = await client.request(`query { otherInstructors(search: "test+dev+s2@lern-fair.de", take: 100, skip: 0) { firstname lastname }}`);
+    assert.equal(fullEmailSearch.otherInstructors.length, 1);
+    assert.equal(fullEmailSearch.otherInstructors[0].firstname, "Melanie");
 });
