@@ -19,7 +19,7 @@ import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
 import { UserType } from '../types/user';
-import { userForStudent, userSearch } from '../../common/user';
+import { strictUserSearch, userForStudent, userSearch } from '../../common/user';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
@@ -46,7 +46,7 @@ export class ExtendFieldsStudentResolver {
         };
 
         return await prisma.student.findMany({
-            where: { AND: [query, userSearch(search)] },
+            where: { AND: [query, strictUserSearch(search)] },
             take,
             skip,
             select: { firstname: true, lastname: true, aboutMe: true, id: true },
