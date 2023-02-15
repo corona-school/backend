@@ -7,6 +7,11 @@ import { getUserForSession, GraphQLUser } from '../user/session';
 type UserId = string;
 type ConnectionId = string;
 
+enum CloseCodes {
+    NORMAL = 1000,
+    SERVER_ERROR = 1011,
+}
+
 interface ExtendedWebsocket extends WebSocket {
     connectionId: ConnectionId;
     userId: UserId;
@@ -146,7 +151,7 @@ class WebSocketService {
                 } else {
                     log.error(`Error in websocket service.`);
                 }
-                ws.terminate();
+                ws.close(CloseCodes.SERVER_ERROR, err?.message ?? 'Internal server error while operating');
             }
             ws.on('close', () => {
                 this.removeConnection(ws.userId, ws.connectionId);

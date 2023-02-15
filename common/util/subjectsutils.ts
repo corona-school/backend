@@ -7,12 +7,54 @@ export type Subject = {
     mandatory?: boolean;
 };
 
+// Historically we have not validated subject names
+// This reflects the status quo from the database on 05-02-2023 and should be validated from now on
+// To check the db, run:
+// SELECT subject FROM (
+//    SELECT (json_array_elements("subjects"::json)->'name')::varchar as subject FROM "pupil" UNION
+//    SELECT (json_array_elements("subjects"::json)->'name')::varchar as subject FROM "student") AS subject GROUP BY subject ORDER BY subject ASC;
+
+export const SUBJECTS = [
+    "Altgriechisch",
+    "Biologie",
+    "Chemie",
+    "Chinesisch",
+    "Deutsch",
+    "Deutsch als Zweitsprache",
+    "Englisch",
+    "Erdkunde",
+    "Französisch",
+    "Geschichte",
+    "Informatik",
+    "Italienisch",
+    "Kunst",
+    "Latein",
+    "Mathematik",
+    "Musik",
+    "Niederländisch",
+    "Pädagogik",
+    "Philosophie",
+    "Physik",
+    "Politik",
+    "Religion",
+    "Russisch",
+    "Sachkunde",
+    "Spanisch",
+    "Wirtschaft"
+] as const;
+
+export const isValidSubjectName = (subject: string) => SUBJECTS.includes(subject as any);
+
 export function isValidSubject(s: Subject) {
-    return typeof s.name === 'string' && (!s.grade || (typeof s.grade.max === 'number' && typeof s.grade.min === 'number'));
+    return typeof s.name === 'string' && isValidSubjectName(s.name) && (!s.grade || (typeof s.grade.max === 'number' && typeof s.grade.min === 'number'));
 }
 
 // The format how subjects are stored in the database
 export function toStudentSubjectDatabaseFormat(s: Subject) {
+    if (!isValidSubject(s)) {
+        throw new Error(`Invalid subject`);
+    }
+
     if ('mandatory' in s) {
         throw new Error(`Only pupils may have mandatory subjects`);
     }
@@ -24,6 +66,10 @@ export function toStudentSubjectDatabaseFormat(s: Subject) {
     };
 }
 export function toPupilSubjectDatabaseFormat(s: Subject) {
+    if (!isValidSubject(s)) {
+        throw new Error(`Invalid subject`);
+    }
+
     if ('grade' in s) {
         throw new Error(`Only students may have grade restrictions for subjects`);
     }

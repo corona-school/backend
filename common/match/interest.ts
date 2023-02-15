@@ -12,6 +12,13 @@ const REMOVE_AFTER = 14; /* days */
 const log = getLogger('InterestConfirmation');
 
 export async function requestInterestConfirmation(pupil: Pupil) {
+    const existingInterestConfirmation = await prisma.pupil_tutoring_interest_confirmation_request.count({
+        where: { pupilId: pupil.id, invalidated: false }
+    }) > 0;
+    if (existingInterestConfirmation) {
+        throw new Error(`Pupil(${pupil.id}) already has an interest confirmation, do not request new one`);
+    }
+
     const token = await uuid();
 
     const confirmationRequest = await prisma.pupil_tutoring_interest_confirmation_request.create({

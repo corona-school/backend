@@ -37,6 +37,7 @@ import {
     BecomeStatePupilData,
     becomeTutee,
     BecomeTuteeData,
+    becomeParticipant,
     registerPupil,
     RegisterPupilData,
 } from '../../common/pupil/registration';
@@ -237,7 +238,7 @@ export class MutateMeResolver {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
-            throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
+            throw new UserInputError('Lern-Fair Plus students may only be registered by admins');
         }
 
         const student = await registerStudent(data, noEmail);
@@ -452,6 +453,20 @@ export class MutateMeResolver {
         await evaluatePupilRoles(updatedPupil, context);
 
         log.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.PUPIL, Role.ADMIN)
+    async meBecomeParticipant(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
+        const log = logInContext('Me', context);
+
+        const updatedPupil = await becomeParticipant(pupil);
+        await evaluatePupilRoles(updatedPupil, context);
+
+        log.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);
 
         return true;
     }
