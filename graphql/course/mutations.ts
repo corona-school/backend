@@ -91,7 +91,7 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         const subcourses = await getSubcoursesForCourse(courseId, true);
-        if (!subcourses.every((subcourse) => hasSubcourseFinished(subcourse))) {
+        if (subcourses.some((subcourse) => !hasSubcourseFinished(subcourse))) {
             throw new ForbiddenError('Cannot edit course that has already finished');
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
