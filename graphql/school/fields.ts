@@ -4,6 +4,7 @@ import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { Address } from 'address-rfc2821';
+import { validateEmail } from '../validators';
 
 @Resolver((of) => School)
 export class ExtendedFieldsSchoolResolver {
@@ -11,7 +12,7 @@ export class ExtendedFieldsSchoolResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @LimitedQuery()
     async schoolForTeacherEmail(@Arg('teacherEmail') teacherEmail: string) {
-        const email = new Address(teacherEmail);
+        const email = new Address(validateEmail(teacherEmail));
 
         const school = await prisma.school.findFirst({
             where: {

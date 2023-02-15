@@ -29,23 +29,23 @@ export interface RegisterStudentData {
     email: string;
     newsletter: boolean;
     registrationSource: RegistrationSource;
+    aboutMe: string;
     /* After registration, the user receives an email to verify their account.
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
 }
 
 export interface BecomeInstructorData {
-    university: string;
-    state: State;
-    teacherModule: TeacherModule;
-    moduleHours: number;
-    message: string;
+    // Message to the Screener, this for sure makes little sense if the screener does this on behalf of the student
+    message?: string;
 }
 
 export interface BecomeTutorData {
-    subjects: Subject[];
-    languages: Language[];
-    supportsInDaZ: boolean;
+    // It would make sense to fill these infos here as otherwise the tutor won't be matched,
+    // though this can also be done later with updateStudent
+    subjects?: Subject[];
+    languages?: Language[];
+    supportsInDaZ?: boolean;
 }
 
 export interface ProjectFieldWithGradeData {
@@ -62,7 +62,7 @@ export interface BecomeProjectCoachData {
     jufoPastParticipationInfo: string;
 }
 
-export async function registerStudent(data: RegisterStudentData) {
+export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
@@ -74,6 +74,7 @@ export async function registerStudent(data: RegisterStudentData) {
             lastname: data.lastname,
             newsletter: data.newsletter,
             registrationSource: data.registrationSource as any,
+            aboutMe: data.aboutMe,
 
             // Compatibility with legacy foreign keys
             wix_id: 'Z-' + uuidv4(),
@@ -81,11 +82,15 @@ export async function registerStudent(data: RegisterStudentData) {
 
             // the authToken is used to verify the e-mail instead
             verification: uuidv4(),
+
+            openMatchRequestCount: 0,
         },
     });
 
-    // TODO: Create a new E-Mail for registration
-    await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+    if (!noEmail) {
+        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+    }
+
     await logTransaction('verificationRequets', student, {});
 
     return student;
@@ -96,16 +101,12 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
         throw new RedundantError(`Student is already instructor`);
     }
 
-    const { university, message, state, teacherModule, moduleHours } = data;
+    const { message } = data;
 
     await prisma.student.update({
         data: {
             isInstructor: true,
-            state,
-            university,
             msg: message,
-            module: teacherModule,
-            moduleHours,
             lastSentInstructorScreeningInvitationDate: new Date(),
         },
         where: { id: student.id },
@@ -127,7 +128,7 @@ export async function becomeTutor(student: Student, data: BecomeTutorData) {
     await prisma.student.update({
         data: {
             isStudent: true,
-            openMatchRequestCount: 1,
+            openMatchRequestCount: 0,
             subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
             languages,
             supportsInDaZ,

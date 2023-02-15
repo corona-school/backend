@@ -1,14 +1,13 @@
 import { prisma } from '../../common/prisma';
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
+import { Arg, Authorized, Ctx, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
-import { dissolveMatch } from '../../common/match/dissolve';
+import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
-import { isSessionPupil, getSessionPupil, getSessionStudent } from '../authentication';
-import { createPupilMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import { pools } from '../../common/match/pool';
+import { ConcreteMatchPool, pools } from '../../common/match/pool';
+import { removeInterest } from '../../common/match/interest';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -22,8 +21,9 @@ export class MutateMatchResolver {
             throw new Error(`Unknown MatchPool(${poolName})`);
         }
 
-        await createMatch(pupil, student, pool);
+        await createMatch(pupil, student, pool as ConcreteMatchPool);
 
+        await removeInterest(pupil);
         return true;
     }
 
@@ -34,6 +34,17 @@ export class MutateMatchResolver {
         await hasAccess(context, 'Match', match);
 
         await dissolveMatch(match, dissolveReason, /* dissolver:*/ null);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN)
+    async matchReactivate(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
+        const match = await getMatch(matchId);
+        await hasAccess(context, 'Match', match);
+
+        await reactivateMatch(match);
 
         return true;
     }

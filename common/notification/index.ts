@@ -1,20 +1,33 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
+import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUser, getUserForTypeORM } from '../user';
+import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from 'log4js';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
-import { AttachmentGroup, createAttachment, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
+import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
 import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
+import { USER_APP_DOMAIN } from '../util/environment';
+import { inAppChannel } from './channels/inapp';
+import { ActionID } from './actions';
+import { Channels } from '../../graphql/types/preferences';
+import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
+import { getMessageForNotification } from './messages';
+import { TranslationLanguage } from '../entity/MessageTranslation';
+import { renderTemplate } from '../../utils/helpers';
+import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 
 const logger = getLogger('Notification');
 
 // This is the main extension point of notifications: Implement the Channel interface, then add the channel here
-const channels = [mailjetChannel];
+// Default Channels are always on, the user cannot turn them off
+const DEFAULT_CHANNELS = [inAppChannel];
+// The optional channels are steered via the user preferences
+const OPTIONAL_CHANNELS = [mailjetChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -35,7 +48,7 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 
-export async function actionTaken(user: Person, actionId: string, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
+export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;
@@ -195,7 +208,30 @@ export async function checkReminders() {
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 
-// TODO: function for user preferences "categories"
+// Renders a Message for a certain Concrete Notification
+export async function getMessage(
+    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
+    language: TranslationLanguage = TranslationLanguage.DE
+): Promise<NotificationMessageType | null> {
+    const legacyUser = await getUserTypeORM(concreteNotification.userId);
+    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
+
+    const message = await getMessageForNotification(concreteNotification.notificationID, language);
+
+    if (!message) {
+        return null;
+    }
+
+    const { type, headline, body, navigateTo } = message;
+
+    return {
+        type,
+        body: renderTemplate(body, context),
+        headline: renderTemplate(headline, context),
+        navigateTo,
+    };
+}
+
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
@@ -240,51 +276,96 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const notification = await getNotification(concreteNotification.notificationID);
+
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    const channelsBasePreference = ALL_PREFERENCES[notification.type];
+    assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
+
+    const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
+
+    return Object.assign({}, channelsBasePreference, channelsUserPreference);
+};
+
+function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
+    return {
+        ...notificationContext,
+        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        authToken: legacyUser.authToken ?? '',
+        USER_APP_DOMAIN,
+    };
+}
+
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    user: Person,
+    legacyUser: Person,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
 
-    const context: Context = {
-        ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        authToken: user.authToken ?? '',
-    };
+    const context = getContext(notificationContext, legacyUser);
+    const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
+    let activeChannels: Channel[] = [];
 
     try {
-        const channel = channels.find((it) => it.canSend(notification));
-        if (!channel) {
-            throw new Error(`No fitting channel found for Notification(${notification.id})`);
-        }
+        const user = getUserForTypeORM(legacyUser);
 
         if (notification.hookID) {
-            const newUser = getUserForTypeORM(user);
-            await triggerHook(notification.hookID, newUser);
+            await triggerHook(notification.hookID, user);
         }
 
-        // TODO: Check if user silenced this notification
+        const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
 
-        await channel.send(notification, user, context, concreteNotification.id, attachments);
+        for (const channel of OPTIONAL_CHANNELS) {
+            if (channelPreferencesForMessageType[channel.type]) {
+                enabledChannels.push(channel);
+            } else {
+                logger.debug(`ConcreteNotification(${concreteNotification.id}) not sent via ${channel.type} as the user opted out`);
+            }
+        }
+
+        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+
+        if (!activeChannels.length) {
+            logger.warn(
+                `None of the enabled Channels (${enabledChannels.map((it) => it.type).join(', ')}) can send ConcreteNotification(${concreteNotification.id})`
+            );
+            // NOTE: This might be legitimate for notifications only shown inside the UserApp
+        }
+
+        await Promise.all(
+            activeChannels.map(async (channel) => {
+                await channel.send(notification, user, context, concreteNotification.id, attachments);
+                logger.debug(`Sent ConcreteNotification(${concreteNotification.id}) via Channel ${channel.type}`);
+            })
+        );
+
         await prisma.concrete_notification.update({
             data: {
                 state: ConcreteNotificationState.SENT,
                 sentAt: new Date(),
-                // drop the context, as it is irrelevant from now on, and only eats up memory
-                // TODO: Clarify if in the future notifications should be shown in the user section
-                // context: {}
             },
             where: {
                 id: concreteNotification.id,
             },
         });
 
-        logger.info(`Succesfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`);
+        logger.info(
+            `Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
+                legacyUser.id
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`
+        );
     } catch (error) {
-        logger.warn(`Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.id})`, error);
+        logger.warn(
+            `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
+                legacyUser.id
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
+            error
+        );
 
         await prisma.concrete_notification.update({
             data: {
@@ -302,6 +383,8 @@ async function deliverNotification(
     }
 }
 
+/* --------------------------- Attachments ---------------------------------------------------- */
+
 /**
  * Creates AttachmentGroup objects for use in the notification system or returns `null` if no files are passed to the method.
  * These objects include HTML for the attachment list which gets inserted into messages.
@@ -309,7 +392,7 @@ async function deliverNotification(
  * @param uploader  User that intends to upload the files.
  * @return          Object with attachmentListHTML, attachmentGroupId, and attachmentIds
  */
-export async function createAttachments(files: Express.Multer.File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
+export async function createAttachments(files: File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
     if (files.length > 0) {
         let attachmentGroupId = uuid().toString();
 
@@ -326,6 +409,8 @@ export async function createAttachments(files: Express.Multer.File[], uploader: 
     }
     return null;
 }
+
+/* --------------------------- Admin Actions for Notifications ----------------------------------- */
 
 const DEACTIVATION_MARKER = 'ACCOUNT_DEACTIVATION';
 
@@ -442,4 +527,78 @@ export async function rescheduleNotification(notification: ConcreteNotification,
     logger.info(`ConcreteNotification(${notification.id}) was manually rescheduled to ${sendAt.toISOString()}`);
 }
 
+/* --------------------------- Campaigns ---------------------------------------------------- */
+
+export function validateContext(notification: Notification, context: NotificationContext) {
+    if (!notification.sample_context) {
+        throw new Error(`Cannot validate Notification(${notification.id}) without sample_context`);
+    }
+
+    const expectedKeys = Object.keys(notification.sample_context);
+    const actualKeys = Object.keys(context);
+    const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+
+    if (missing.length) {
+        throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+}
+
+// Bulk Concrete Notifications can be created in drafted state
+// Then one can validate and check that all notifications were created correctly before sending them out
+export async function bulkCreateNotifications(
+    notification: Notification,
+    users: User[],
+    context: NotificationContext,
+    state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED,
+    startAt: Date
+) {
+    if (users.length > 10 && state !== ConcreteNotificationState.DRAFTED) {
+        throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
+    }
+
+    const contextIDExists =
+        (await prisma.concrete_notification.count({
+            where: { contextID: context.uniqueId },
+        })) > 0;
+
+    if (contextIDExists) {
+        throw new Error(`ContextID must be unique for bulk notifications`);
+    }
+
+    const { count: createdNotifications } = await prisma.concrete_notification.createMany({
+        data: users.map((user, index) => ({
+            // the unique id is automatically created by the database
+            notificationID: notification.id,
+            state,
+            userId: user.userID,
+            sentAt: new Date(+startAt + 1000 * 60 * 60 * 24 * Math.floor(index / 500)),
+            contextID: context.uniqueId,
+            context,
+        })),
+    });
+
+    logger.info(`Created ${createdNotifications} notifications for Notification(${notification.id}) in ${ConcreteNotificationState[state]} state`);
+}
+
+export async function publishDrafted(notification: Notification, contextID: string) {
+    const { count: publishedCount } = await prisma.concrete_notification.updateMany({
+        where: { state: ConcreteNotificationState.DRAFTED, notificationID: notification.id, contextID },
+        data: { state: ConcreteNotificationState.DELAYED },
+    });
+
+    logger.info(`Published ${publishedCount} notifications for Notification(${notification.id})`);
+}
+
+export async function cancelDraftedAndDelayed(notification: Notification, contextID: string) {
+    const { count: publishedCount } = await prisma.concrete_notification.updateMany({
+        where: { state: { in: [ConcreteNotificationState.DRAFTED, ConcreteNotificationState.DELAYED] }, notificationID: notification.id, contextID },
+        data: { state: ConcreteNotificationState.ACTION_TAKEN, error: 'Draft cancelled' },
+    });
+
+    logger.info(`Cancelled ${publishedCount} drafted notifications for Notification(${notification.id})`);
+}
+
 export * from './hook';
+
+// Ensure hooks are always loaded - also in the Jobs Dyno
+import './hooks';

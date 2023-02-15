@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, EntityManager, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Prisma } from '@prisma/client';
 
 export abstract class Person {
     @PrimaryGeneratedColumn()
@@ -63,9 +64,19 @@ export abstract class Person {
     authTokenSent: Date;
 
     @Column({
-        default: false
+        default: false,
     })
     isRedacted: boolean;
+
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+        default: new Date(0),
+    })
+    lastTimeCheckedNotifications: Date;
+
+    @Column({ nullable: true, type: 'json' })
+    notificationPreferences: any;
 }
 
 export enum RegistrationSource {

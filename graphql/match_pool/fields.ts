@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener, Match_pool_run as MatchPoolRun } from '../generated';
-import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int, Float } from 'type-graphql';
 import {
     getStudents,
     getPupils,
@@ -12,9 +12,11 @@ import {
     MatchPoolStatistics,
     confirmationRequestsToSend,
     getPupilsToRequestInterest,
+    getInterestConfirmationRate,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
+import { SUBJECTS } from '../../common/util/subjectsutils';
 
 @ObjectType()
 class MatchPoolAutomatic {
@@ -30,6 +32,8 @@ class MatchPool {
     name: string;
     @Field({ nullable: true })
     automatic?: MatchPoolAutomatic;
+    @Field({ nullable: true })
+    confirmInterest?: boolean;
     @Field((type) => [String])
     toggles: string[];
 }
@@ -55,6 +59,12 @@ class StatisticType implements MatchPoolStatistics {
 }
 @Resolver((of) => MatchPool)
 export class FieldsMatchPoolResolver {
+    @Query((returns) => [String])
+    @Authorized(Role.UNAUTHENTICATED)
+    subjects() {
+        return SUBJECTS;
+    }
+
     @Query((returns) => [MatchPool])
     @Authorized(Role.UNAUTHENTICATED)
     match_pools() {
@@ -73,9 +83,10 @@ export class FieldsMatchPoolResolver {
         @Root() matchPool: MatchPoolType,
         @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[],
         @Arg('skip', { nullable: true }) skip?: number,
-        @Arg('take', { nullable: true }) take?: number
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getStudents(matchPool, toggles ?? [], take, skip);
+        return await getStudents(matchPool, toggles ?? [], take, skip, search);
     }
 
     @FieldResolver((returns) => [Pupil])
@@ -84,9 +95,10 @@ export class FieldsMatchPoolResolver {
         @Root() matchPool: MatchPoolType,
         @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[],
         @Arg('skip', { nullable: true }) skip?: number,
-        @Arg('take', { nullable: true }) take?: number
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getPupils(matchPool, toggles ?? [], take, skip);
+        return await getPupils(matchPool, toggles ?? [], take, skip, search);
     }
 
     @FieldResolver((returns) => Int)
@@ -116,6 +128,10 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
     async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.confirmInterest) {
+            return 0;
+        }
+
         return await confirmationRequestsToSend(matchPool);
     }
 
@@ -127,5 +143,11 @@ export class FieldsMatchPoolResolver {
         }
 
         return await getPupilsToRequestInterest(matchPool);
+    }
+
+    @Query((returns) => Float)
+    @Authorized(Role.UNAUTHENTICATED)
+    async interestConfirmationRate() {
+        return await getInterestConfirmationRate();
     }
 }

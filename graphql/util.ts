@@ -1,3 +1,4 @@
+import { getUser } from '../common/user';
 import { Directive } from 'type-graphql';
 import { prisma } from '../common/prisma';
 
@@ -10,17 +11,18 @@ export const getScreener = (screenerId: number) => prisma.screener.findUnique({ 
 export const getCourse = (courseId: number) => prisma.course.findUnique({ where: { id: courseId }, rejectOnNotFound: true });
 export const getLecture = (lectureId: number) => prisma.lecture.findUnique({ where: { id: lectureId }, rejectOnNotFound: true });
 
+export const getUsers = (userIds: string[]) => Promise.all(userIds.map((userId) => getUser(userId)));
+
 export function Deprecated(reason: string) {
     return Directive(`@deprecated(reason: "${reason}")`);
 }
-
 
 /* GraphQL only has 'null values' whereas Prisma has dedicated semantics:
    - null means 'set to NULL'
    - undefined means 'do not change'
    Thus in a lot of cases we want to make sure that undefined is passed to Prisma
    (and never null) */
-   export function ensureNoNull<T>(value: T | null | undefined): T | undefined {
+export function ensureNoNull<T>(value: T | null | undefined): T | undefined {
     if (value === null) {
         return undefined;
     }

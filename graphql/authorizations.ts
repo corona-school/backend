@@ -1,48 +1,20 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag } from './generated';
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag, Concrete_notification } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
+import { UNAUTHENTICATED_USER } from './authentication';
 
 import { AuthChecker } from 'type-graphql';
 import { GraphQLContext } from './context';
 import assert from 'assert';
 import { getLogger } from 'log4js';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
-import { ForbiddenError } from './error';
+import { AuthenticationError, ForbiddenError } from './error';
+import { isParticipant } from '../common/courses/participants';
+import { getPupil } from './util';
+import { Role } from './roles';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
-export enum Role {
-    /* Elevated Access via Retool */
-    ADMIN = 'ADMIN',
-    /* Shortcut role for everyone with an account */
-    USER = 'USER',
-    /* Elevated Access via Screener Admin Interface */
-    SCREENER = 'SCREENER',
-    /* Access via User Interface, not yet E-Mail verified */
-    PUPIL = 'PUPIL',
-    STUDENT = 'STUDENT',
-    /* Accessible to everyone */
-    UNAUTHENTICATED = 'UNAUTHENTICATED',
-    /* User owns the entity as defined in graphql/ownership */
-    OWNER = 'OWNER',
-    /* No one should have access */
-    NOBODY = 'NOBODY',
-
-    /* User is a student, requested to be a tutor and was successfully screened (E-Mail also verified) */
-    TUTOR = 'TUTOR',
-    /* User is a student, requested to be a course instructor and was successfully "instructor screened" (E-Mail also verified) */
-    INSTRUCTOR = 'INSTRUCTOR',
-    /* User is a student, requested to be a project coach and was successfully screened (E-Mail also verified) */
-    PROJECT_COACH = 'PROJECT_COACH',
-
-    /* User is a pupil and requested to receive one-on-one tutoring */
-    TUTEE = 'TUTEE',
-    /* User is a pupil and requested to participate in courses */
-    PARTICIPANT = 'PARTICIPANT',
-    /* User is a pupil and requested to participate in project coaching */
-    PROJECT_COACHEE = 'PROJECT_COACHEE',
-    /* User is a pupil and linked his teacher's email address (matching his school, which is a cooperation school) */
-    STATE_PUPIL = 'STATE_PUPIL',
-}
+export { Role } from './roles';
 
 const authLogger = getLogger('GraphQL Authentication');
 
@@ -56,7 +28,9 @@ export const authChecker: AuthChecker<GraphQLContext> = async ({ context, info, 
     );
     assert(context.user?.roles, 'Roles must have been initialized in context');
 
-    return await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root);
+    assert(await accessCheck(context, requiredRoles as Role[], info.parentType?.name as ResolverModelNames, root));
+
+    return true; // or an error was thrown before
 };
 
 /* Inside mutations, determining Ownership is hard because the actual value is retrieved by it's primary key during
@@ -84,10 +58,7 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
 
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
-    const success = await accessCheck(context, context.deferredRequiredRoles, modelName, value);
-    if (!success) {
-        throw new ForbiddenError('Not Authorized');
-    }
+    assert(await accessCheck(context, context.deferredRequiredRoles, modelName, value));
 }
 
 async function accessCheck(context: GraphQLContext, requiredRoles: Role[], modelName: ResolverModelNames | undefined, root: any) {
@@ -112,8 +83,22 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             return true;
         }
     }
+    if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
+        assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
+        assert(root, 'root value must be bound to determine access');
+        assert(context.user.pupilId, 'User must be a pupil');
+        const pupil = await getPupil(context.user.pupilId);
+        const success = await isParticipant(root, pupil);
+        if (success) {
+            return true;
+        }
+    }
 
-    return false;
+    if (context.user === UNAUTHENTICATED_USER) {
+        throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);
+    }
+
+    throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
 }
 
 /* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
@@ -159,7 +144,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         deleteOneCourse_tag: nobody,
         updateOneCourse_tag: nobody,
         updateManyCourse_tag: nobody,
-        upsertOneCourse_tag: nobody
+        upsertOneCourse_tag: nobody,
     },
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
@@ -204,6 +189,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
+    Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -230,7 +216,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isPupil'
             | 'languages'
             | 'projectFields'
+            | 'aboutMe'
+            | 'schooltype'
         >({
+            matchReason: everyone,
             authToken: nobody,
             authTokenSent: adminOrOwner,
             authTokenUsed: adminOrOwner,
@@ -249,11 +238,11 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             registrationSource: adminOrOwner,
             school: adminOrOwner,
             schoolId: adminOrOwner,
-            schooltype: adminOrOwner,
             state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
-
+            lastTimeCheckedNotifications: adminOrOwner,
+            notificationPreferences: adminOrOwner,
             // these should look differently in a clean data model
             // by blacklisting them we prevent accidental usage
             lastUpdatedSettingsViaBlocker: nobody,
@@ -283,7 +272,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages'
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -305,6 +294,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             certificate_of_conduct: adminOrOwner,
             isCodu: adminOrOwner,
             registrationSource: adminOrOwner,
+            lastTimeCheckedNotifications: adminOrOwner,
+            notificationPreferences: adminOrOwner,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
@@ -360,6 +351,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'courseId'
             | 'createdAt'
             | 'updatedAt'
+            | 'publishedAt'
             | 'joinAfterStart'
             | 'minGrade'
             | 'maxGrade'
@@ -371,12 +363,24 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_participants_pupil: nobody,
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
+            alreadyPromoted: adminOrOwner,
         }),
     },
     Course: {
         fields: withPublicFields<
             Course,
-            'id' | 'name' | 'outline' | 'category' | 'subject' | 'schooltype' | 'allowContact' | 'courseState' | 'publicRanking' | 'description' | 'createdAt' | 'updatedAt'
+            | 'id'
+            | 'name'
+            | 'outline'
+            | 'category'
+            | 'subject'
+            | 'schooltype'
+            | 'allowContact'
+            | 'courseState'
+            | 'publicRanking'
+            | 'description'
+            | 'createdAt'
+            | 'updatedAt'
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
@@ -387,7 +391,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             imageKey: nobody,
-            _count: nobody
+            _count: nobody,
         }),
     },
     Lecture: {
@@ -411,7 +415,18 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
             identifier: nobody,
             _count: nobody,
-            course_tags_course_tag: nobody
+            course_tags_course_tag: nobody,
         }),
-    }
+    },
+    Concrete_notification: {
+        fields: withPublicFields<Concrete_notification, 'id' | 'userId' | 'notificationID' | 'sentAt' | 'state'>({
+            attachmentGroupId: nobody,
+            // The context might contain sensitivie information of other users for which we do not know whether the user should access those
+            // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
+            context: nobody,
+            contextID: nobody,
+            // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
+            error: nobody,
+        }),
+    },
 };

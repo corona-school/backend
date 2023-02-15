@@ -1,17 +1,19 @@
-import { Role } from "../authorizations";
-import { Screener } from "../generated";
-import { Arg, Authorized, Field, InputType, Mutation, Resolver } from "type-graphql";
-import { prisma } from "../../common/prisma";
-import { createToken } from "../../common/secret";
-import { userForScreener } from "../../common/user";
-import { getLogger } from "log4js";
-import { getScreener } from "../util";
+import { Role } from '../authorizations';
+import { Screener } from '../generated';
+import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
+import { prisma } from '../../common/prisma';
+import { createToken } from '../../common/secret';
+import { userForScreener } from '../../common/user';
+import { getLogger } from 'log4js';
+import { getScreener } from '../util';
+import { ValidateEmail } from '../validators';
 
-const log = getLogger("ScreenerMutations");
+const log = getLogger('ScreenerMutations');
 
 @InputType()
 class ScreenerCreateInput {
     @Field()
+    @ValidateEmail()
     email: string;
     @Field()
     firstname: string;
@@ -19,11 +21,11 @@ class ScreenerCreateInput {
     lastname: string;
 }
 
-@Resolver(of => Screener)
+@Resolver((of) => Screener)
 export class MutateScreenerResolver {
-    @Mutation(returns => String)
+    @Mutation((returns) => String)
     @Authorized(Role.ADMIN)
-    async screenerCreate(@Arg("data") data: ScreenerCreateInput) {
+    async screenerCreate(@Arg('data') data: ScreenerCreateInput) {
         const { email, firstname, lastname } = data;
 
         const screener = await prisma.screener.create({
@@ -31,10 +33,10 @@ export class MutateScreenerResolver {
                 email,
                 firstname,
                 lastname,
-                password: "DEPRECATED",
+                password: 'DEPRECATED',
                 active: true,
-                verifiedAt: new Date()
-            }
+                verifiedAt: new Date(),
+            },
         });
 
         const token = await createToken(userForScreener(screener));
@@ -44,12 +46,12 @@ export class MutateScreenerResolver {
         return token;
     }
 
-    @Mutation(returns => Boolean)
+    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async screenerActivate(@Arg("screenerId") screenerId: number, @Arg("active") active: boolean) {
+    async screenerActivate(@Arg('screenerId') screenerId: number, @Arg('active') active: boolean) {
         const screener = await getScreener(screenerId);
-        await prisma.screener.update({ data: { active }, where: { id: screener.id }});
-        log.info(`Admin set Screener(${screener.id}) to ${active ? "active" : "inactive"}`);
+        await prisma.screener.update({ data: { active }, where: { id: screener.id } });
+        log.info(`Admin set Screener(${screener.id}) to ${active ? 'active' : 'inactive'}`);
         return true;
     }
 }

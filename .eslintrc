@@ -6,8 +6,18 @@
     },
     "plugins": [
         "@typescript-eslint",
-        "lernfair-lint"
+        "lernfair-lint",
+        "import"
     ],
+    "settings": {
+        "import/parsers": {
+            "@typescript-eslint/parser": [".ts"]
+        },
+        "import/resolver": {
+            "typescript": true,
+            "node": true
+        }
+    },
     "rules": {
         "block-scoped-var": "error",
         "camelcase": ["warn", {"allow": ["wix_id", "wix_creation_date"]}],
@@ -41,8 +51,10 @@
         "newline-per-chained-call": "off",
         "lernfair-lint/graphql-authorized": "error",
         "lernfair-lint/graphql-deferred-auth": "error",
+        "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
-        "require-await": "warn"
+        "require-await": "warn",
+        "import/no-cycle": ["warn"]
     }
 }

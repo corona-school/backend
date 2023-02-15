@@ -28,6 +28,7 @@ export interface RegisterPupilData {
     schooltype?: SchoolType;
     state: State;
     registrationSource: RegistrationSource;
+    aboutMe: string;
 
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
@@ -51,7 +52,7 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-export async function registerPupil(data: RegisterPupilData) {
+export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
@@ -81,6 +82,7 @@ export async function registerPupil(data: RegisterPupilData) {
             schoolId: data.schoolId,
             state: data.state,
             registrationSource: data.registrationSource,
+            aboutMe: data.aboutMe,
 
             // Compatibility with legacy foreign keys
             wix_id: 'Z-' + uuidv4(),
@@ -88,15 +90,21 @@ export async function registerPupil(data: RegisterPupilData) {
 
             // Every pupil can participate in courses
             isParticipant: true,
+            // Every pupil is made a Tutee by registration.
+            isPupil: true,
 
             // the authToken is used to verify the e-mail instead
             verification,
+
+            // Pupils need to specifically request a match
+            openMatchRequestCount: 0,
         },
     });
 
-    // TODO: Create a new E-Mail for registration
-    // TODO: Send auth token with this
-    await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+    if (!noEmail) {
+        await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+    }
+
     await logTransaction('verificationRequets', pupil, {});
 
     return pupil;
@@ -130,6 +138,7 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
     const updatedPupil = await prisma.pupil.update({
         data: {
             isPupil: true,
+            isParticipant: true,
             subjects: JSON.stringify(data.subjects.map(toPupilSubjectDatabaseFormat)),
             grade: `${data.gradeAsInt}. Klasse`,
             languages: data.languages ? { set: data.languages } : undefined,
@@ -161,6 +170,21 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
         data: {
             teacherEmailAddress: data.teacherEmail,
             grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse` : undefined,
+        },
+        where: { id: pupil.id },
+    });
+
+    return updatedPupil;
+}
+
+export async function becomeParticipant(pupil: Pupil) {
+    if (pupil.isParticipant) {
+        throw new RedundantError(`Pupil is already a participant`);
+    }
+
+    const updatedPupil = await prisma.pupil.update({
+        data: {
+            isParticipant: true,
         },
         where: { id: pupil.id },
     });

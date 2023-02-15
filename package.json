@@ -17,6 +17,7 @@
     "jobs:debug": "npm run build && node --inspect=0 ./built/jobs/index.js",
     "web": "node ./built/web/index.js",
     "web:dev": "node -r dotenv/config ./built/web/index.js",
+    "web:keep-db": "node -r dotenv/config ./built/web/index.js --keepDB",
     "web:nopdf": "node -r dotenv/config ./built/web/index.js --noPDF",
     "web:debug": "npm run build && node --inspect=0 ./built/web/index.js",
     "web:docs": "apidoc -i web/controllers -i common -o web/public/docs",
@@ -29,7 +30,8 @@
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
     "integration-tests": "node ./built/integration-tests/index.js",
-    "prettier": "prettier --write './(common|graphql)/!(generated|migration)/?**.ts'",
+    "integration-tests:local": "node -r dotenv/config ./built/integration-tests/index.js",
+    "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write"
   },
   "dependencies": {
@@ -37,6 +39,8 @@
     "@aws-sdk/s3-request-presigner": "^3.137.0",
     "@prisma/client": "4.3.0",
     "@types/keyv": "^3.1.2",
+    "@types/ws": "^8.5.3",
+    "@typescript-eslint/parser": "^5.41.0",
     "address-rfc2821": "^1.1.3",
     "apollo-server-express": "3.4.0",
     "apollo-server-plugin-response-cache": "3.4.0",
@@ -44,7 +48,8 @@
     "basic-auth": "^2.0.1",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
-    "class-validator": "^0.13.1",
+    "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.6",
     "corona-school-matching": "1.2.0",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
@@ -60,6 +65,7 @@
     "graphql-fields": "^2.0.3",
     "graphql-request": "^4.2.0",
     "graphql-scalars": "^1.10.0",
+    "handlebars": "^4.7.7",
     "helmet": "^3.22.0",
     "hpp": "^0.2.3",
     "html-pppdf": "^1.0.1",
@@ -78,6 +84,7 @@
     "typeorm": "^0.2.29",
     "unique-names-generator": "^4.3.1",
     "uuid": "^7.0.3",
+    "ws": "^8.11.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
@@ -96,11 +103,13 @@
     "@types/papaparse": "^5.0.3",
     "@types/react-select": "^3.0.12",
     "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "^3.3.0",
-    "@typescript-eslint/parser": "^3.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
     "apidoc": "^0.22.1",
     "eslint": "^7.2.0",
+    "eslint-import-resolver-typescript": "^3.5.2",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-lernfair-lint": "./linter/",
+    "pre-commit": "^1.2.2",
     "prettier": "^2.7.1",
     "prisma": "4.3.0",
     "ts-node": "^8.10.1",
@@ -116,5 +125,8 @@
     "heroku",
     "express"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "pre-commit": [
+    "prettier"
+  ]
 }

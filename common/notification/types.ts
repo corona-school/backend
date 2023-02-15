@@ -5,22 +5,27 @@ import {
     pupil as PrismaPupil,
     student as PrismaStudent,
     mentor as PrismaMentor,
+    screener as PrismaScreener,
 } from '.prisma/client';
 import { Pupil as TypeORMPupil } from './../entity/Pupil';
 import { Student as TypeORMStudent } from './../entity/Student';
 import { Mentor as TypeORMMentor } from './../entity/Mentor';
+import { Screener as TypeORMScreener } from './../entity/Screener';
 import { AttachmentGroup } from '../attachments';
+import { User } from '../user';
+import { NotificationType } from '../entity/Notification';
 
 // Temporary interop between TypeORM and Prisma
 type Pupil = PrismaPupil | TypeORMPupil;
 type Student = PrismaStudent | TypeORMStudent;
 type Mentor = PrismaMentor | TypeORMMentor;
-export type Person = Pupil | Student | Mentor;
+type Screener = PrismaScreener | TypeORMScreener;
+export type Person = Pupil | Student | Mentor | Screener;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
 // An action is something the user does. One action might trigger / cancel multiple notifications
-export type ActionID = string;
+export type { ActionID } from './actions';
 export type Email = `${string}@${string}.${string}`;
 
 export { ConcreteNotification, Notification };
@@ -40,7 +45,13 @@ export interface NotificationContext {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress?: Email;
+    // Sometimes it makes sense to send to some other email than the user's
+    // (i.e. when verifying an email change, or when testing mails)
+    overrideReceiverEmail?: Email;
     attachments?: Attachment[];
+    // The notification is sent out as part of a certain campaign,
+    // This will be used by Mailjet to show statistics for all notifications with the same campaign
+    campaign?: string;
     // As it is not quite useful to maintain the variable shape in the backend as a missmatch with the Mailjet template won't be detected anyways,
     // further props can be set at will
     [key: string]: any;
@@ -51,13 +62,14 @@ export interface NotificationContext {
 export interface Context extends NotificationContext {
     user: Omit<Person, 'fullName'> & { fullName: string };
     authToken: string;
+    USER_APP_DOMAIN: string;
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
-    type: 'mailjet';
-    send(notification: Notification, to: Person, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification): boolean;
+    type: 'email' | 'inapp';
+    send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
+    canSend(notification: Notification, user: User): boolean;
 }
 
 export interface BulkAction<Entity> {
@@ -67,4 +79,16 @@ export interface BulkAction<Entity> {
     getUser: (entity: Entity) => Promise<Person>;
     getContext: (entity: Entity) => Promise<NotificationContext>;
     getActionDate: (entity: Entity) => Date;
+}
+
+type Template = string;
+
+export interface TranslationTemplate {
+    headline: Template;
+    body: Template;
+}
+
+export interface NotificationMessage extends TranslationTemplate {
+    type: NotificationType;
+    navigateTo?: string;
 }

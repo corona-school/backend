@@ -7,7 +7,7 @@ import {
     Participation_certificate as ParticipationCertificate,
     Match,
 } from '../generated';
-import { Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { getUserIdTypeORM, userForPupil } from '../../common/user';
@@ -18,7 +18,9 @@ import { gradeAsInt } from '../../common/util/gradestrings';
 import { Decision } from '../types/reason';
 import { canPupilRequestMatch } from '../../common/match/request';
 import { canJoinSubcourses } from '../../common/courses/participants';
-import { UserType } from '../user/fields';
+import { UserType } from '../types/user';
+import { Prisma } from '@prisma/client';
+import { joinedBy, excludePastSubcourses } from '../../common/courses/filters';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -31,15 +33,15 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesJoined(@Root() pupil: Pupil) {
+    async subcoursesJoined(@Root() pupil: Required<Pupil>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+        const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
+
+        if (excludePast) {
+            filters.push(excludePastSubcourses());
+        }
+
         return await prisma.subcourse.findMany({
-            where: {
-                subcourse_participants_pupil: {
-                    some: {
-                        pupilId: pupil.id,
-                    },
-                },
-            },
+            where: { AND: filters },
         });
     }
 
@@ -49,11 +51,16 @@ export class ExtendFieldsPupilResolver {
     async subcoursesWaitingList(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
             where: {
-                subcourse_waiting_list_pupil: {
-                    some: {
-                        pupilId: pupil.id,
+                AND: [
+                    {
+                        subcourse_waiting_list_pupil: {
+                            some: {
+                                pupilId: pupil.id,
+                            },
+                        },
                     },
-                },
+                    excludePastSubcourses(),
+                ],
             },
         });
     }
@@ -86,7 +93,7 @@ export class ExtendFieldsPupilResolver {
     @LimitEstimated(1)
     async tutoringInterestConfirmation(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_tutoring_interest_confirmation_request.findFirst({
-            where: { pupilId: pupil.id },
+            where: { pupilId: pupil.id, invalidated: false },
         });
     }
 

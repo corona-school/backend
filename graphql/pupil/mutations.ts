@@ -1,13 +1,13 @@
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, isElevated } from '../authentication';
+import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     pupil as Pupil,
@@ -15,11 +15,15 @@ import {
     pupil_projectfields_enum as ProjectField,
     pupil_state_enum as State,
     pupil_schooltype_enum as SchoolType,
+    pupil_languages_enum as Language,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
+import { userForPupil } from '../../common/user';
+import { MaxLength } from 'class-validator';
+import { NotificationPreferences } from '../types/preferences';
 
 @InputType()
 export class PupilUpdateInput {
@@ -49,11 +53,43 @@ export class PupilUpdateInput {
 
     @Field((type) => SchoolType, { nullable: true })
     schooltype?: SchoolType;
+
+    @Field((type) => [Language], { nullable: true })
+    languages?: Language[];
+
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    aboutMe?: string;
+
+    @Field((type) => Date, { nullable: true })
+    lastTimeCheckedNotifications?: Date;
+
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
+    @Field((type) => String, { nullable: true })
+    @MaxLength(500)
+    matchReason?: string;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
     const log = logInContext('Pupil', context);
-    const { subjects, gradeAsInt, projectFields, firstname, lastname, registrationSource, email, state, schooltype } = update;
+
+    const {
+        subjects,
+        gradeAsInt,
+        projectFields,
+        firstname,
+        lastname,
+        registrationSource,
+        email,
+        state,
+        schooltype,
+        languages,
+        aboutMe,
+        matchReason,
+        lastTimeCheckedNotifications,
+        notificationPreferences,
+    } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
         throw new PrerequisiteError(`Only project coachees can set the project fields`);
@@ -67,7 +103,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
-    await prisma.pupil.update({
+    const res = await prisma.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -79,9 +115,17 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(state),
             schooltype: ensureNoNull(schooltype),
+            languages: ensureNoNull(languages),
+            aboutMe: ensureNoNull(aboutMe),
+            lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
+            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            matchReason: ensureNoNull(matchReason),
         },
         where: { id: pupil.id },
     });
+
+    // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
+    await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
 }

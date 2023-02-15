@@ -21,7 +21,7 @@ export async function activatePupil(pupil: Pupil) {
     return updatedPupil;
 }
 
-export async function deactivatePupil(pupil: Pupil) {
+export async function deactivatePupil(pupil: Pupil, reason?: string) {
     if (!pupil.active) {
         throw new RedundantError('Pupil was already deactivated');
     }
@@ -46,7 +46,7 @@ export async function deactivatePupil(pupil: Pupil) {
         where: { id: pupil.id },
     });
 
-    await getTransactionLog().log(new DeActivateEvent(pupil, false));
+    await getTransactionLog().log(new DeActivateEvent(pupil, false, reason));
 
     return updatedPupil;
 }

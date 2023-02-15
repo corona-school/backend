@@ -7,20 +7,52 @@ import {
     Instructor_screening as InstructorScreening,
     Subcourse,
     Course,
+    StudentWhereInput,
+    SubcourseWhereInput,
 } from '../generated';
-import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
-import { LimitEstimated } from '../complexity';
+import { LimitedQuery, LimitEstimated } from '../complexity';
 import { Subject } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
-import { UserType } from '../user/fields';
-import { userForStudent } from '../../common/user';
+import { UserType } from '../types/user';
+import { strictUserSearch, userForStudent, userSearch } from '../../common/user';
+import { Instructor } from '../types/instructor';
+import { GraphQLContext } from '../context';
+import { predictedHookActionDate } from '../../common/notification';
+import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { Prisma } from '@prisma/client';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
+    @Query((returns) => [Instructor])
+    @Authorized(Role.INSTRUCTOR)
+    @LimitedQuery()
+    async otherInstructors(
+        @Ctx() context: GraphQLContext,
+        @Arg('search') search: string,
+        @Arg('take', (type) => Int) take: number,
+        @Arg('skip', (type) => Int) skip: number
+    ): Promise<Instructor[]> {
+        const query: StudentWhereInput = {
+            isInstructor: { equals: true },
+            active: { equals: true },
+            verification: null,
+            instructor_screening: { is: { success: { equals: true } } },
+            id: { not: { equals: context.user.studentId! } },
+        };
+
+        return await prisma.student.findMany({
+            where: { AND: [query, strictUserSearch(search)] },
+            take,
+            skip,
+            select: { firstname: true, lastname: true, aboutMe: true, id: true },
+        });
+    }
+
     @FieldResolver((type) => UserType)
     @Authorized(Role.ADMIN, Role.OWNER)
     user(@Root() student: Required<Student>) {
@@ -83,6 +115,13 @@ export class ExtendFieldsStudentResolver {
         });
     }
 
+    // Date when a student will be deactivated as they have not handed in a valid certificate of conduct
+    @FieldResolver((type) => Date, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async certificateOfConductDeactivationDate(@Root() student: Required<Student>) {
+        return await predictedHookActionDate('coc_reminder', 'deactivate-student', userForStudent(student));
+    }
+
     @FieldResolver((type) => [Screening])
     @Authorized(Role.ADMIN, Role.OWNER)
     async tutorScreenings(@Root() student: Student) {
@@ -102,8 +141,14 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesInstructing(@Root() student: Student) {
-        return await prisma.subcourse.findMany({ where: { subcourse_instructors_student: { some: { studentId: student.id } } } });
+    async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+        const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
+
+        if (excludePast) {
+            filters.push(excludePastSubcourses());
+        }
+
+        return await prisma.subcourse.findMany({ where: { AND: filters } });
     }
 
     @FieldResolver((type) => [Course])

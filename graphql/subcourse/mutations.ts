@@ -1,16 +1,27 @@
-import { getMeetingUrl } from '../../common/util/bbb';
+import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
 import { getLogger } from 'log4js';
 import * as TypeGraphQL from 'type-graphql';
-import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendSubcourseCancelNotifications } from '../../common/mails/courses';
+import { sendGuestInvitationMail, sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
-import { ForbiddenError, UserInputError } from '../error';
+import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getSubcourse } from '../util';
+import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
+import { canPublish } from '../../common/courses/states';
+import { getUserTypeORM } from '../../common/user';
+import { PrerequisiteError } from '../../common/util/error';
+import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { randomBytes } from 'crypto';
+import { getManager } from 'typeorm';
+import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
+import { getFile } from '../files';
+import { contactInstructors, contactParticipants } from '../../common/courses/contact';
+import { Student } from '../../common/entity/Student';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -25,7 +36,7 @@ class PublicSubcourseCreateInput {
     @TypeGraphQL.Field((_type) => Boolean)
     joinAfterStart!: boolean;
     @TypeGraphQL.Field((_type) => [PublicLectureInput], { nullable: true })
-    lecture?: PublicLectureInput[];
+    lectures?: PublicLectureInput[];
 }
 
 @InputType()
@@ -62,32 +73,64 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        if (course.courseState !== 'allowed') {
-            throw new ForbiddenError(`Course (${courseId}) not allowed (approved) yet`);
-        }
+
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures } = subcourse;
+        const result = await prisma.subcourse.create({
+            data: { courseId, published: false, joinAfterStart, minGrade, maxGrade, maxParticipants, lecture: { createMany: { data: lectures } } },
+        });
+
         const student = await getSessionStudent(context, studentId);
-        const result = await prisma.subcourse.create({ data: { ...subcourse, courseId, published: false } });
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
-        logger.info(`Subcourse ${result.id} was created on course ${courseId}`);
+
+        logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseAddInstructor(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('studentId') studentId: number
+    ): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        await getStudent(studentId);
+        await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
+        logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseDeleteInstructor(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('studentId') studentId: number
+    ): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        await getStudent(studentId);
+        await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
+        logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
+        return true;
     }
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
         await hasAccess(context, 'Subcourse', subcourse);
 
-        const lectures = await prisma.lecture.findMany({ where: { subcourseId } });
-        if (lectures.length == 0) {
-            throw new ForbiddenError(`Subcourse (${subcourseId}) must have at least one lecture to be published`);
+        const can = await canPublish(subcourse);
+        if (!can.allowed) {
+            throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
         }
-        let currentDate = new Date();
-        const pastLectures = lectures.filter((lecture) => +lecture.start < +currentDate);
-        if (pastLectures.length !== 0) {
-            throw new ForbiddenError(`Lectures (${pastLectures.toString()}) of subcourse (${subcourseId}) must happen in the future.`);
-        }
-        await prisma.subcourse.update({ data: { published: true }, where: { id: subcourseId } });
+        await sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
+
+        await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourseId } });
         logger.info(`Subcourse (${subcourseId}) was published`);
         return true;
     }
@@ -171,23 +214,43 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => String)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER) // TODO: Allow participants to call this
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_PARTICIPANT)
     async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let url: string;
-        const meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
         if (!meeting) {
-            throw new Error(`No meeting exists yet`); // TODO: Create meeting on demand
+            meeting = await createBBBMeeting(course.name, '' + subcourse.id, (await getUserTypeORM(context.user!.userID)) as Student | Pupil);
         }
 
         if (meeting.alternativeUrl) {
-            url = meeting.alternativeUrl;
-        } else {
-            url = getMeetingUrl('' + subcourse.id, `${context.user!.firstname} ${context.user!.lastname}`, meeting.moderatorPW);
+            logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with alternative url '${meeting.alternativeUrl}'`);
+            return meeting.alternativeUrl;
         }
 
+        // Start Meeting if needed
+        const isRunning = await isBBBMeetingRunning(meeting.meetingID);
+        if (!isRunning) {
+            if (!isSessionStudent(context)) {
+                throw new PrerequisiteError(`Meeting not yet started. Only the Instructor can start the meeting`);
+            }
+
+            await startBBBMeeting(meeting);
+        }
+
+        // Log Course attendance for pupils
+        if (isSessionPupil(context)) {
+            await createOrUpdateCourseAttendanceLog((await getUserTypeORM(context.user!.userID)) as TypeORMPupil, context.ip, '' + subcourseId);
+        }
+
+        const url = getMeetingUrl(
+            '' + subcourse.id,
+            `${context.user!.firstname} ${context.user!.lastname}`,
+            isSessionStudent(context) || isElevated(context) ? meeting.moderatorPW : meeting.attendeePW
+        );
         logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
         return url;
     }
@@ -204,12 +267,9 @@ export class MutateSubcourseResolver {
 
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
-            throw new UserInputError(`Inputed lecture of subcourse (${subcourseId}) must happen in the future.`);
+            throw new UserInputError(`Lecture of subcourse (${subcourseId}) must happen in the future.`);
         }
-        let isSubcourseInstructor = (await prisma.subcourse_instructors_student.count({ where: { subcourseId, studentId: lecture.instructorId } })) > 0;
-        if (!isSubcourseInstructor) {
-            throw new UserInputError(`Inputed instructor (id: ${lecture.instructorId}) is not a subcourse instructor`);
-        }
+
         const result = await prisma.lecture.create({ data: { ...lecture, subcourseId } });
         logger.info(`Lecture (${result.id}) was created on subcourse (${subcourse.id})`);
         return result;
@@ -224,9 +284,9 @@ export class MutateSubcourseResolver {
         let currentDate = new Date();
         if (+lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } else if (subcourse.published) {
+        } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        }
+        } */
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
@@ -241,12 +301,25 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
-        await joinSubcourse(subcourse, pupil);
+        await joinSubcourse(subcourse, pupil, true);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN)
+    async subcourseJoinManual(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ): Promise<boolean> {
+        const pupil = await getSessionPupil(context, pupilId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourse(subcourse, pupil, false);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT)
     async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -254,6 +327,8 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
         await leaveSubcourse(subcourse, pupil);
         return true;
     }
@@ -281,6 +356,145 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseInviteGuest(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('firstname') firstname: string,
+        @Arg('lastname') lastname: string,
+        @Arg('email') email: string
+    ) {
+        email = validateEmail(email);
+
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const course = await getCourse(subcourse.courseId);
+
+        const token = randomBytes(48).toString('hex');
+        let inviterId: number | null = null;
+
+        if (isSessionStudent(context)) {
+            inviterId = context.user!.studentId;
+        }
+
+        // TODO: Move Guests from Course to Subcourse
+
+        const guest = await prisma.course_guest.create({
+            data: {
+                firstname,
+                lastname,
+                email,
+                token,
+                inviterId,
+                courseId: course.id,
+            },
+        });
+
+        await sendGuestInvitationMail(guest);
+        logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.UNAUTHENTICATED)
+    async subcourseGuestJoin(@Arg('token') token: string) {
+        const guest = await prisma.course_guest.findFirst({
+            where: { token },
+        });
+
+        if (!guest) {
+            throw new AuthenticationError(`Invalid guest token`);
+        }
+
+        const course = await prisma.course.findUniqueOrThrow({
+            where: { id: guest.courseId },
+        });
+
+        // TODO: Adapt to subcourses
+        const subcourse = await prisma.subcourse.findFirstOrThrow({
+            where: { courseId: guest.courseId },
+        });
+
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        if (!meeting) {
+            throw new PrerequisiteError(`Meeting not started yet`);
+        }
+
+        if (meeting.alternativeUrl) {
+            logger.info(`Guest(${guest.id}) joins meeting of Subcourse(${subcourse.id}) with alternative url '${meeting.alternativeUrl}'`);
+            return meeting.alternativeUrl;
+        }
+
+        const isRunning = await isBBBMeetingRunning(meeting.meetingID);
+        if (!isRunning) {
+            throw new PrerequisiteError(`Meeting not started yet`);
+        }
+
+        const url = getMeetingUrl('' + subcourse.id, `${guest.firstname} ${guest.lastname}`, meeting.attendeePW);
+        logger.info(`Guest(${guest.id}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
+        return url;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.SUBCOURSE_PARTICIPANT)
+    async subcourseNotifyInstructor(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId', (type) => Int) subcourseId: number,
+        @Arg('title') title: string,
+        @Arg('body') body: string,
+        @Arg('fileIDs', (type) => [String]) fileIDs: string[]
+    ) {
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({
+            where: { id: subcourseId },
+        });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const course = await getCourse(subcourse.courseId);
+
+        const pupil = await getSessionPupil(context);
+        const files = fileIDs.map(getFile);
+
+        await contactInstructors(course, subcourse, pupil, title, body, files);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseNotifyParticipants(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId', (type) => Int) subcourseId: number,
+        @Arg('title') title: string,
+        @Arg('body') body: string,
+        @Arg('fileIDs', (type) => [String]) fileIDs: string[],
+        @Arg('participantIDs', (type) => [Int]) participantIDs: number[]
+    ) {
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId } });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const course = await getCourse(subcourse.courseId);
+        const instructor = await getSessionStudent(context);
+        const files = fileIDs.map(getFile);
+
+        await contactParticipants(course, subcourse, instructor, title, body, files, participantIDs);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.INSTRUCTOR)
+    async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+
+        await hasAccess(context, 'Subcourse', subcourse);
+        await sendPupilCourseSuggestion(course, subcourse, 'available_places_on_subcourse');
+        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
+
         return true;
     }
 }

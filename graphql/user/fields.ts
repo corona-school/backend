@@ -1,31 +1,16 @@
-import { Student, Pupil, Screener, Secret } from '../generated';
-import { Root, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver } from 'type-graphql';
-import { getSessionPupil, getSessionScreener, getSessionStudent, getSessionUser, GraphQLUser, loginAsUser } from '../authentication';
+import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification } from '../generated';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
+import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { User } from '../../common/user';
-
-@ObjectType()
-export class UserType implements User {
-    @Field()
-    userID: string;
-
-    @Field()
-    firstname: string;
-    @Field()
-    lastname: string;
-    @Field()
-    email: string;
-
-    @Field({ nullable: true })
-    pupil?: Pupil;
-    @Field({ nullable: true })
-    student?: Student;
-    @Field({ nullable: true })
-    screener?: Screener;
-}
+import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { UserType } from '../types/user';
+import { JSONResolver } from 'graphql-scalars';
+import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
+import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
+import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -86,8 +71,71 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake' };
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {} };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    @LimitedQuery()
+    async concreteNotifications(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number
+    ): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: { userId: user.userID },
+            // where state == ConcreteNotificationState.SENT is problematic, because there could be an error state from mailJet,
+            // but websocket delivery could still be successful
+            // where: { userId: user.userID, state: ConcreteNotificationState.SENT },
+            take,
+            skip,
+        });
+    }
+
+    @FieldResolver((returns) => Date, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async lastTimeCheckedNotifications(@Root() user: User): Promise<Date | null> {
+        return (await queryUser(user, { lastTimeCheckedNotifications: true })).lastTimeCheckedNotifications;
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async notificationPreferences(@Root() user: User) {
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? JSON.stringify(DEFAULT_PREFERENCES);
+    }
+
+    // During mail campaigns we need to retrieve a potentially large amount of users
+    // This endpoint has no restriction in the number of users returned,
+    //  and should thus be used with care
+    @Query((returns) => [UserType])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(ACCUMULATED_LIMIT) // no subqueries allowed
+    async usersForCampaign(
+        @Arg('pupilQuery', { nullable: true }) pupilQuery?: PupilWhereInput,
+        @Arg('studentQuery', { nullable: true }) studentQuery?: StudentWhereInput
+    ) {
+        const result: User[] = [];
+
+        if (pupilQuery) {
+            // Make sure only active users with verified email are returned
+            const pupils = await prisma.student.findMany({
+                select: { firstname: true, lastname: true, email: true, id: true },
+                where: { ...pupilQuery, active: true, verification: null },
+            });
+            result.push(...pupils.map(userForPupil));
+        }
+
+        if (studentQuery) {
+            const students = await prisma.student.findMany({
+                select: { firstname: true, lastname: true, email: true, id: true },
+                where: { ...studentQuery, active: true, verification: null },
+            });
+            result.push(...students.map(userForStudent));
+        }
+
+        return result;
     }
 }

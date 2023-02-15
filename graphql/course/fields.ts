@@ -1,5 +1,5 @@
-import { Course, Subcourse, Course_tag as CourseTag } from '../generated';
-import { Arg, Authorized, Ctx, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Course, Subcourse, Course_tag as CourseTag, course_category_enum as CourseCategory } from '../generated';
+import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { accessURLForKey } from '../../common/file-bucket/s3';
@@ -35,13 +35,20 @@ export class ExtendedFieldsCourseResolver {
             where: {
                 course_tags_course_tag: {
                     some: {
-                        courseId: course.id
-                    }
-                }
-            }
+                        courseId: course.id,
+                    },
+                },
+            },
         });
     }
 
+    @Query((returns) => [CourseTag])
+    @Authorized(Role.UNAUTHENTICATED)
+    async courseTags(@Arg('category') category: CourseCategory) {
+        return await prisma.course_tag.findMany({
+            where: { category },
+        });
+    }
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT)

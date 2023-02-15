@@ -1,9 +1,11 @@
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { User } from '../common/user';
 import { prisma } from '../common/prisma';
-import { Role } from './authorizations';
-import { GraphQLContext } from './context';
+import type { GraphQLContext } from './context';
 import { logInContext } from './logging';
+import { Role } from '../common/user/roles';
+
+export { Role } from '../common/user/roles';
 
 export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
     const logger = logInContext(`GraphQL Authentication`, context);

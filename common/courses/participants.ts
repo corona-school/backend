@@ -136,10 +136,10 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
-    if (subcourse.minGrade && subcourse.minGrade < pupilGrade) {
+    if (subcourse.minGrade && subcourse.minGrade > pupilGrade) {
         return { allowed: false, reason: 'grade-to-low' };
     }
-    if (subcourse.maxGrade && pupilGrade < subcourse.maxGrade) {
+    if (subcourse.maxGrade && pupilGrade > subcourse.maxGrade) {
         return { allowed: false, reason: 'grade-to-high' };
     }
 
@@ -150,9 +150,10 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
-    if (!canJoin.allowed) {
+
+    if (strict && !canJoin.allowed) {
         throw new PrerequisiteError(canJoin.reason);
     }
 
@@ -160,7 +161,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
-        if (participantCount > subcourse.maxParticipants) {
+        if (strict && participantCount > subcourse.maxParticipants) {
             throw new CapacityReachedError(`Subcourse is full`);
         }
 
@@ -178,7 +179,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
         });
         logger.debug(`Found ${pupilSubCourseCount} active subcourses where the Pupil(${pupil.id}) participates`);
 
-        if (pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
+        if (strict && pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
             throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
@@ -219,7 +220,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise
 
             await sendTemplateMail(mail, pupil.email);
 
-            await Notification.actionTaken(pupil, 'participant_subcourse_joined', {
+            await Notification.actionTaken(pupil, 'participant_course_joined', {
                 course,
                 firstLectureDate: courseStart.format('DD.MM.YYYY'),
                 firstLectureTime: courseStart.format('HH:mm'),
@@ -248,7 +249,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
 
     const course = prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
-    await Notification.actionTaken(pupil, 'participant_subcourse_leave', {
+    await Notification.actionTaken(pupil, 'participant_course_leave', {
         course,
     });
 }
@@ -257,7 +258,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
     const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
     const seatsLeft = subcourse.maxParticipants - participantCount;
     if (seatsLeft <= 0) {
-        throw new Error(`Subcourse(${subcourse.id}) is full`);
+        return;
     }
 
     logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
@@ -271,9 +272,17 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil);
+            await joinSubcourse(subcourse, pupil, true);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
     }
+}
+
+export async function getCourseCapacity(subcourse: Subcourse) {
+    const maxCapacity = subcourse.maxParticipants;
+    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+
+    const capactiy: number = participants / maxCapacity;
+    return capactiy;
 }
