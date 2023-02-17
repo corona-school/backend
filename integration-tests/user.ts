@@ -2,12 +2,19 @@ import { test, createUserClient, adminClient } from "./base";
 import * as assert from "assert";
 import { randomBytes } from "crypto";
 
+const setup = test("Setup Configuration", async () => {
+    // Ensure Rate Limits are deterministic when running the tests multiple times
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+});
+
 export const pupilOne = test("Register Pupil", async () => {
+    await setup;
+
     const client = createUserClient();
 
     const userRandom = randomBytes(5).toString("base64");
 
-    await client.request(`
+    const { meRegisterPupil: { id } } = await client.request(`
         mutation RegisterPupil {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
@@ -38,31 +45,43 @@ export const pupilOne = test("Register Pupil", async () => {
         }
     `);
 
-    await client.request(`
-        mutation BecomeTutee {
-            meBecomeTutee(data: {
-                subjects: [{ name: "Deutsch" }]
-                languages: [Deutsch]
-                learningGermanSince: more_than_four
-                gradeAsInt: 10
-            })
+    const { myRoles: rolesBeforeEmailVerification } = await client.request(`
+        query GetRolesBeforeEmailVerification {
+            myRoles
         }
     `);
 
-    const { me: pupil } = await client.request(`
+    assert.deepStrictEqual(rolesBeforeEmailVerification, ['UNAUTHENTICATED', 'USER', 'PUPIL']);
+
+    // Bypass email verification as this is hard to test automatically:
+    await adminClient.request(`mutation BypassEmailVerification { _verifyEmail(userID: "pupil/${id}")}`);
+    await client.request(`mutation RefreshLogin { loginRefresh }`);
+
+    const { me: pupil, myRoles } = await client.request(`
         query GetBasics {
+            myRoles
             me {
                 firstname
                 lastname
                 email
-                pupil { id }
+                pupil { 
+                    id 
+                    isPupil
+                    isParticipant
+                    openMatchRequestCount
+                }
             }
         }
     `);
 
-    assert.equal(pupil.firstname, `firstname:${userRandom}`);
-    assert.equal(pupil.lastname, `lastname:${userRandom}`);
-    assert.equal(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.firstname, `firstname:${userRandom}`);
+    assert.strictEqual(pupil.lastname, `lastname:${userRandom}`);
+    assert.strictEqual(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.pupil.isPupil, true);
+    assert.strictEqual(pupil.pupil.isParticipant, true);
+    assert.strictEqual(pupil.pupil.openMatchRequestCount, 0);
+
+    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'PUPIL', 'TUTEE', 'PARTICIPANT']);
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
@@ -71,6 +90,8 @@ export const pupilOne = test("Register Pupil", async () => {
 });
 
 export const studentOne = test("Register Student", async () => {
+    await setup;
+
     const client = createUserClient();
     const userRandom = randomBytes(5).toString("base64");
 
@@ -131,6 +152,8 @@ export const studentOne = test("Register Student", async () => {
 });
 
 export const instructorOne = test("Register Instructor", async () => {
+    await setup;
+
     const client = createUserClient();
     const userRandom = randomBytes(5).toString("base64");
 

@@ -1,14 +1,25 @@
-import { Role } from '../authorizations';
-import { Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Resolver, Root } from 'type-graphql';
+import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Subcourse, Pupil, Match, Student } from '../generated';
 import { LimitEstimated } from '../complexity';
 import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
 import { Subject } from '../types/subject';
+import { GraphQLContext } from '../context';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
+    @Query((returns) => Match)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async match(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number) {
+        const match = await prisma.match.findUniqueOrThrow({
+            where: { id: matchId },
+        });
+        await hasAccess(context, 'Match', match);
+        return match;
+    }
+
     @FieldResolver((returns) => Pupil)
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(1)

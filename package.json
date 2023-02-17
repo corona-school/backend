@@ -30,6 +30,7 @@
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
     "integration-tests": "node ./built/integration-tests/index.js",
+    "integration-tests:local": "node -r dotenv/config ./built/integration-tests/index.js",
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write"
   },
@@ -47,7 +48,7 @@
     "basic-auth": "^2.0.1",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
-    "class-validator": "^0.13.1",
+    "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
     "corona-school-matching": "1.2.0",
     "cors": "^2.8.5",

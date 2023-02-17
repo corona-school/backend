@@ -41,6 +41,19 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 }
 
+export async function reactivateMatch(match: Match) {
+    if (!match.dissolved) {
+        throw new RedundantError(`Match was already reactivated`);
+    }
+
+    await prisma.match.update({
+        data: { dissolved: false, dissolveReason: null },
+        where: { id: match.id },
+    });
+
+    logger.info(`Match(${match.id}) was reactivated`);
+}
+
 export async function dissolveProjectMatch(match: Project_match, dissolveReason: number, dissolver: Pupil | Student | null) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');

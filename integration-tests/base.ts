@@ -15,6 +15,11 @@ const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
 const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
 const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
 
+console.log(
+    blue(`\n\nBackend Integration Tests\n`) +
+    ` testing ${URL}\n\n`
+);
+
 /* -------------- GraphQL Client Wrapper ------------------ */
 
 // This wrapper provides assertions and logging around a GraphQLClient of the graphql-request package
@@ -67,7 +72,6 @@ function wrapClient(client: GraphQLClient) {
 export const defaultClient = wrapClient(new GraphQLClient(URL));
 
 const adminAuthorization = `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`;
-console.log("admin authorization", ADMIN_TOKEN, adminAuthorization);
 
 export const adminClient = wrapClient(new GraphQLClient(URL, {
     headers: {

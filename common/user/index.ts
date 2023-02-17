@@ -236,6 +236,22 @@ export function userSearch(search?: string): PrismaTypes.pupilWhereInput | Prism
     }
 }
 
+// Enriches a Prisma Query with a filter to find users based on exact matches
+// This should be used in cases where users are only allowed to see other users 'they know'
+export function strictUserSearch(search?: string): PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput {
+    return {
+        OR: [
+            { email: { equals: search, mode: 'insensitive' } },
+            {
+                AND: [
+                    { firstname: { equals: search.slice(0, search.indexOf(' ')), mode: 'insensitive' } },
+                    { lastname: { equals: search.slice(search.indexOf(' ') + 1), mode: 'insensitive' } },
+                ],
+            },
+        ],
+    };
+}
+
 type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
 
 export async function queryUser<Select extends UserSelect>(user: User, select: Select) {

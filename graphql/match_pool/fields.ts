@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener, Match_pool_run as MatchPoolRun } from '../generated';
-import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int, Float } from 'type-graphql';
 import {
     getStudents,
     getPupils,
@@ -12,9 +12,11 @@ import {
     MatchPoolStatistics,
     confirmationRequestsToSend,
     getPupilsToRequestInterest,
+    getInterestConfirmationRate,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
+import { SUBJECTS } from '../../common/util/subjectsutils';
 
 @ObjectType()
 class MatchPoolAutomatic {
@@ -57,6 +59,12 @@ class StatisticType implements MatchPoolStatistics {
 }
 @Resolver((of) => MatchPool)
 export class FieldsMatchPoolResolver {
+    @Query((returns) => [String])
+    @Authorized(Role.UNAUTHENTICATED)
+    subjects() {
+        return SUBJECTS;
+    }
+
     @Query((returns) => [MatchPool])
     @Authorized(Role.UNAUTHENTICATED)
     match_pools() {
@@ -135,5 +143,11 @@ export class FieldsMatchPoolResolver {
         }
 
         return await getPupilsToRequestInterest(matchPool);
+    }
+
+    @Query((returns) => Float)
+    @Authorized(Role.UNAUTHENTICATED)
+    async interestConfirmationRate() {
+        return await getInterestConfirmationRate();
     }
 }
