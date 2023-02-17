@@ -1,7 +1,7 @@
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Subcourse, Pupil, Match, Student } from '../generated';
+import { Subcourse, Pupil, Match, Student, Lecture } from '../generated';
 import { LimitEstimated } from '../complexity';
 import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
@@ -14,7 +14,7 @@ export class ExtendedFieldsMatchResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async match(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number) {
         const match = await prisma.match.findUniqueOrThrow({
-            where: { id: matchId }
+            where: { id: matchId },
         });
         await hasAccess(context, 'Match', match);
         return match;
@@ -65,5 +65,12 @@ export class ExtendedFieldsMatchResolver {
         return await (
             await prisma.student.findUniqueOrThrow({ where: { id: match.studentId }, select: { email: true } })
         ).email;
+    }
+
+    // TODO change return type to Appointment, if BE from appointments from another PR is merged
+    @FieldResolver((returns) => [Lecture])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async appointments(@Root() match: Match) {
+        return await prisma.lecture.findMany({ where: { id: match.id } });
     }
 }
