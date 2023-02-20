@@ -4,7 +4,7 @@ import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { assert } from 'console';
 import { createRemissionRequestPDF, createRemissionRequestVerificationPage } from "../../../common/remission-request";
-import { CERTIFICATE_MEDIUMS, CertificateState, ICertificateCreationParams, createCertificate, DefaultLanguage, LANGUAGES, Language, signCertificate, VALID_BASE64, getCertificatePDF, getConfirmationPage, getCertificatesFor, CertificateError } from '../../../common/certificate';
+import { CERTIFICATE_MEDIUMS, CertificateState, ICertificateCreationParams, createCertificate, DefaultLanguage, LANGUAGES, Language, signCertificate, VALID_BASE64, getCertificatePDF, getConfirmationPage, getCertificatesFor, CertificateError, createCertificateLEGACY } from '../../../common/certificate';
 
 const logger = getLogger();
 
@@ -94,7 +94,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
 
         let state = automatic ? CertificateState.awaitingApproval : CertificateState.manual;
 
-        let params: ICertificateCreationParams = {
+        let params = {
             endDate,
             subjects: subjects.join(","),
             hoursPerWeek,
@@ -107,7 +107,7 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
 
         // Students may only request for their matches
 
-        const certificate = await createCertificate(requestor, pupil, params);
+        const certificate = await createCertificateLEGACY(requestor, pupil, params);
 
         return res.json({ uuid: certificate.uuid, automatic });
     } catch (error) {
