@@ -47,7 +47,7 @@ const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Pr
                 OR: [{ isCanceled: null }, { isCanceled: false }], //@TODO: probably null will not be needed after field changes to not nullable
             },
         },
-        orderBy: [{ start: 'desc' }],
+        orderBy: [{ start: 'asc' }],
         take,
         skip,
     })) as unknown as Appointment[];
