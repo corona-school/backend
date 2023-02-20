@@ -111,7 +111,8 @@ export async function getCertificatePDF(certificateId: string, _requestor: Stude
 }
 
 export interface ICertificateCreationParams {
-    endDate: number;
+    startDate?: Date;
+    endDate: Date;
     subjects: string;
     hoursPerWeek: number;
     hoursTotal: number;
@@ -138,6 +139,13 @@ export async function issueCertificateRequest(
     });
 }
 
+export async function createCertificateLEGACY(
+    _requestor: Student | PrismaStudent,
+    matchId: string,
+    params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
+) {
+    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
+}
 /* Students can create certificates, which pupils can then sign */
 export async function createCertificate(
     _requestor: Student | PrismaStudent,
@@ -162,8 +170,8 @@ export async function createCertificate(
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.medium = params.medium;
-    pc.startDate = match.createdAt;
-    pc.endDate = moment(params.endDate, 'X').toDate();
+    pc.startDate = params.startDate ?? match.createdAt;
+    pc.endDate = params.endDate;
     pc.ongoingLessons = params.ongoingLessons;
     pc.state = params.state;
 
