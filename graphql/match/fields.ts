@@ -7,6 +7,7 @@ import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
 import { Subject } from '../types/subject';
 import { GraphQLContext } from '../context';
+import { Lecture as Appointment } from '../generated/models';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -65,5 +66,11 @@ export class ExtendedFieldsMatchResolver {
         return await (
             await prisma.student.findUniqueOrThrow({ where: { id: match.studentId }, select: { email: true } })
         ).email;
+    }
+
+    @FieldResolver((returns) => [Appointment])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async appointments(@Root() match: Match) {
+        return await prisma.lecture.findMany({ where: { matchId: match.id } });
     }
 }
