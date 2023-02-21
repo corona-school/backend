@@ -32,5 +32,6 @@ export enum Role {
     STATE_PUPIL = 'STATE_PUPIL',
     /* User is a pupil and participant of a specific subcourse */
     SUBCOURSE_PARTICIPANT = 'SUBCOURSE_PARTICIPANT',
-    APPOINTMENT_SUBCOURSE_PARTICIPANT_PUPIL = 'APPOINTMENT_SUBCOURSE_PARTICIPANT_PUPIL',
+    /* User is a pupil and participant of a specific appointment */
+    APPOINTMENT_PARTICIPANT = 'APPOINTMENT_PARTICIPANT',
 }

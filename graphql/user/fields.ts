@@ -1,17 +1,8 @@
-import {
-    Student,
-    Pupil,
-    Screener,
-    Secret,
-    PupilWhereInput,
-    StudentWhereInput,
-    Concrete_notification as ConcreteNotification,
-    Lecture as Appointment,
-} from '../generated';
-import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
+import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
 import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
@@ -103,16 +94,19 @@ export class UserFieldsResolver {
             skip,
         });
     }
-
-    @FieldResolver((returns) => [Appointment], { nullable: true })
-    @Authorized(Role.USER) // @TODO Role.USER gets overridden somewhere with roles: ADMIN,OWNER, needs to be fixed preferrably adding role Participant
+    // TODO clean up by removing comments and casts
+    @FieldResolver((returns) => [Lecture], { nullable: true })
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitedQuery()
     async appointments(
+        @Ctx() context: GraphQLContext,
         @Root() user: User,
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
-    ): Promise<Appointment[]> {
-        return getAppointmentsForUser(user, take, skip) as unknown as Appointment[];
+    ): Promise<Lecture[]> {
+        const appointments = await getAppointmentsForUser(user, take, skip);
+        await hasAccess(context, 'Lecture', appointments[1] as unknown as Lecture); // <- hier kommen potentiell Kurs-Appointments und Match-Appointments und vorallem mehrere
+        return appointments as unknown as Lecture[];
     }
 
     @FieldResolver((returns) => Date, { nullable: true })

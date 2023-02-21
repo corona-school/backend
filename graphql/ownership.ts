@@ -32,33 +32,11 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         return !!instructor;
     },
     Lecture: async (user, lecture) => {
-        const where = { appointmentId: lecture.id, status: AttendanceStatus.ACCEPTED };
-
-        /* following implementation checks participation and not ownership as a workaround */
-        // @TODO fix authorisation introducing a new role for participants
-        switch (getUserType(user)) {
-            case 'student':
-                return (
-                    !!(await prisma.appointment_organizer.findFirst({ where: { ...where, studentId: user.studentId } })) ||
-                    !!(await prisma.appointment_participant_student.findFirst({ where: { ...where, studentId: user.studentId } }))
-                );
-            case 'pupil':
-                return (
-                    (await isParticipant({ id: lecture.subcourseId }, { id: user.pupilId })) ||
-                    !!(await prisma.appointment_participant_pupil.findFirst({ where: { ...where, pupilId: user.pupilId } }))
-                );
-            case 'screener':
-                return !!(await prisma.appointment_participant_screener.findFirst({ where: { ...where, screenerId: user.screenerId } }));
+        if (!user.studentId) {
+            return false;
         }
-
-        /* following is the correct ownership logic implementation
-
-        if (getUserType(user) === 'student') {
-            return !!(await prisma.appointment_organizer.findFirst({ where: { ...where, studentId: user.studentId } }));
-        }
-        */
-
-        return false;
+        const where = { appointmentId: lecture.id };
+        return !!(await prisma.appointment_organizer.findFirst({ where: { ...where, studentId: user.studentId } }));
     },
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,

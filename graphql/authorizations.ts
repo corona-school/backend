@@ -93,9 +93,8 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             return true;
         }
     }
-    if (requiredRoles.includes(Role.APPOINTMENT_SUBCOURSE_PARTICIPANT_PUPIL)) {
-        // @TODO this doesn't work correctly, as the model name is User, not Lecture for me query
-        assert(modelName === 'Lecture', 'Type must be a Lecture(Appointment) to determine access to it ' + modelName);
+    if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
+        assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
         assert(root, 'root value must be bound to determine access');
         assert(context.user.pupilId, 'User must be a pupil');
         const pupil = await getPupil(context.user.pupilId);

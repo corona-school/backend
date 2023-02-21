@@ -8,9 +8,9 @@ import { lecture_appointmenttype_enum } from '../../graphql/generated';
 @InputType()
 export class AppointmentInputText {
     @Field()
-    title: string;
+    title?: string;
     @Field()
-    description: string;
+    description?: string;
 }
 @InputType()
 export abstract class AppointmentCreateInputBase extends AppointmentInputText {
@@ -133,6 +133,7 @@ const validate = (appointments: AppointmentCreateInputFull[]) => {
 
 const savedOkay = (appointments: Appointment[]) => {
     // could be improved: success when at least some entries saved
+    // TODO remove No-ops
     if (appointments.some((appointment) => !!appointment.id)) {
         return true;
     }
