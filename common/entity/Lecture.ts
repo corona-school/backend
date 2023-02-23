@@ -6,13 +6,7 @@ import { OneToMany } from 'typeorm/index';
 import { Match } from './Match';
 import { Pupil } from './Pupil';
 import { Screener } from './Screener';
-
-export enum AppointmentType {
-    GROUP = 'group',
-    MATCH = 'match',
-    OTHER_INTERNAL = 'other-internal',
-    LEGACY_LECTURE = 'legacy-lecture',
-}
+import { lecture_appointmenttype_enum } from '@prisma/client';
 
 @Entity()
 export class Lecture {
@@ -54,11 +48,11 @@ export class Lecture {
 
     @Column({
         type: 'enum',
-        enum: AppointmentType,
+        enum: lecture_appointmenttype_enum,
         nullable: false,
-        default: AppointmentType.LEGACY_LECTURE,
+        default: lecture_appointmenttype_enum.legacy_lecture,
     })
-    appointmentType: AppointmentType;
+    appointmentType: lecture_appointmenttype_enum;
 
     @Column({
         nullable: true,

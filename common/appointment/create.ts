@@ -1,9 +1,7 @@
-import { AppointmentType } from '../entity/Lecture';
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { lecture as Appointment } from '@prisma/client';
+import { lecture_appointmenttype_enum } from '@prisma/client';
 import { PrerequisiteError } from '../util/error';
-import { lecture_appointmenttype_enum } from '../../graphql/generated';
 
 @InputType()
 export class AppointmentInputText {
@@ -49,7 +47,7 @@ export abstract class AppointmentCreateInputFull extends AppointmentCreateInputB
     @Field(() => [Int], { nullable: true })
     participants_screener?: number[];
     @Field(() => lecture_appointmenttype_enum)
-    appointmentType: AppointmentType;
+    appointmentType: lecture_appointmenttype_enum;
 }
 
 const createSingleAppointment = async (appointment: AppointmentCreateInputFull) => {
@@ -106,37 +104,11 @@ const createSingleAppointment = async (appointment: AppointmentCreateInputFull) 
 export async function createAppointments(appointments: AppointmentCreateInputFull[]) {
     validate(appointments);
 
-    const entries = await Promise.all(appointments.map(createSingleAppointment));
-
-    return savedOkay(entries);
-}
-
-export async function createWeeklyAppointments(baseAppointment: AppointmentCreateInputFull, weeklyTexts: AppointmentInputText[]) {
-    validate([baseAppointment]);
-    const entries = [];
-
-    entries.push(await createSingleAppointment(baseAppointment));
-    weeklyTexts.map(async (weekly, index) => {
-        const start: Date = new Date(baseAppointment.start);
-        start.setDate(baseAppointment.start.getDate() + 7 * (index + 1));
-        entries.push(await createSingleAppointment({ ...baseAppointment, ...weekly, start }));
-    });
-
-    return savedOkay(entries);
+    await Promise.all(appointments.map(createSingleAppointment));
 }
 
 const validate = (appointments: AppointmentCreateInputFull[]) => {
     if (!appointments.every((appointment) => !!appointment.organizers.length)) {
         throw new PrerequisiteError(`Appointments must have at least one organizer`);
     }
-};
-
-const savedOkay = (appointments: Appointment[]) => {
-    // could be improved: success when at least some entries saved
-    // TODO remove No-ops
-    if (appointments.some((appointment) => !!appointment.id)) {
-        return true;
-    }
-
-    throw new Error(`No appointments persisted`);
 };

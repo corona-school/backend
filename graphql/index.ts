@@ -61,7 +61,7 @@ import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screenin
 import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
-import { MutateAppointmentResolver } from './appointment/mutation';
+import { MutateAppointmentResolver } from './appointment/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);

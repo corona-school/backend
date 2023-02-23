@@ -2,7 +2,7 @@ import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, C
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
 import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
@@ -96,16 +96,10 @@ export class UserFieldsResolver {
     }
     // TODO clean up by removing comments and casts
     @FieldResolver((returns) => [Lecture], { nullable: true })
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitedQuery()
-    async appointments(
-        @Ctx() context: GraphQLContext,
-        @Root() user: User,
-        @Arg('take', { nullable: true }) take?: number,
-        @Arg('skip', { nullable: true }) skip?: number
-    ): Promise<Lecture[]> {
+    async appointments(@Root() user: User, @Arg('take', { nullable: true }) take?: number, @Arg('skip', { nullable: true }) skip?: number): Promise<Lecture[]> {
         const appointments = await getAppointmentsForUser(user, take, skip);
-        await hasAccess(context, 'Lecture', appointments[1] as unknown as Lecture); // <- hier kommen potentiell Kurs-Appointments und Match-Appointments und vorallem mehrere
         return appointments as unknown as Lecture[];
     }
 

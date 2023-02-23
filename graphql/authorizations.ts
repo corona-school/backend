@@ -412,11 +412,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt'>({
-            description: adminOrOwner,
-            title: adminOrOwner,
+        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'isCanceled'>({
             appointmentType: adminOrOwner,
-            isCanceled: adminOrOwner,
             course_attendance_log: nobody,
             subcourseId: adminOrOwner,
             subcourse: adminOrOwner,

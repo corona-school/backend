@@ -1,19 +1,18 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
-import {
-    AppointmentCreateGroupInput,
-    AppointmentCreateInputFull,
-    AppointmentCreateMatchInput,
-    AppointmentInputText,
-    createAppointments,
-    createWeeklyAppointments,
-} from '../../common/appointment/create';
+import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCreateMatchInput, createAppointments } from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { AppointmentType } from '../../common/entity/Lecture';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import { getLecture } from '../../graphql/util';
+import { getLogger } from 'log4js';
+import { Field, InputType, Int } from 'type-graphql';
+import { lecture_appointmenttype_enum } from '@prisma/client';
+
+const logger = getLogger('MutateAppointmentsResolver');
+
 const getOrganizersUserId = (context: GraphQLContext) => getSessionUser(context).studentId || null;
 
 const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: GraphQLContext) => {
@@ -27,13 +26,28 @@ const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: Gr
     return [...organizers, userId];
 };
 
+@InputType()
+class AppointmentUpdateInput {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String, { nullable: true })
+    title?: string;
+    @Field(() => String, { nullable: true })
+    description?: string;
+    @Field(() => Date)
+    start: Date;
+    @Field(() => Int)
+    duration: number;
+}
+
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT)
     async appointmentCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateInputFull) {
         appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context);
-        return createAppointments([appointment]);
+        await createAppointments([appointment]);
+        return true;
     }
 
     @Mutation(() => Boolean)
@@ -43,7 +57,8 @@ export class MutateAppointmentResolver {
         @Arg('appointments', () => [AppointmentCreateInputFull]) appointments: AppointmentCreateInputFull[]
     ) {
         appointments.forEach((appointment) => (appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context)));
-        return createAppointments(appointments);
+        await createAppointments(appointments);
+        return true;
     }
 
     @Mutation(() => Boolean)
@@ -53,7 +68,8 @@ export class MutateAppointmentResolver {
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
         await hasAccessMatch(context, appointment.matchId);
 
-        return createAppointments([getFullAppointment(appointment, AppointmentType.MATCH, context)]);
+        await createAppointments([getFullAppointment(appointment, lecture_appointmenttype_enum.match, context)]);
+        return true;
     }
 
     @Mutation(() => Boolean)
@@ -62,26 +78,61 @@ export class MutateAppointmentResolver {
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         await hasAccessSubcourse(context, appointment.subcourseId);
-        return createAppointments([getFullAppointment(appointment, AppointmentType.GROUP, context)]);
+        await createAppointments([getFullAppointment(appointment, lecture_appointmenttype_enum.group, context)]);
+        return true;
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     // hasAccess is called in hasAccessSubcourse
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
-    async appointmentGroupWeeklyCreate(
-        @Ctx() context: GraphQLContext,
-        @Arg('baseAppointment') baseAppointment: AppointmentCreateGroupInput,
-        @Arg('weeklyTexts', () => [AppointmentInputText]) weeklyTexts: AppointmentInputText[]
-    ) {
-        await hasAccessSubcourse(context, baseAppointment.subcourseId);
-        return createWeeklyAppointments(getFullAppointment(baseAppointment, AppointmentType.GROUP, context), weeklyTexts);
+    async appointmentsUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentsToBeUpdated') appointmentsToBeUpdated: AppointmentUpdateInput[]) {
+        await Promise.all(
+            appointmentsToBeUpdated.map(async (a) => {
+                const appointment = await getLecture(a.id);
+                await hasAccessSubcourse(context, appointment.subcourseId);
+            })
+        );
+        await Promise.all(
+            appointmentsToBeUpdated.map(async (a) => {
+                await prisma.lecture.update({
+                    where: { id: a.id },
+                    data: { ...a },
+                });
+            })
+        );
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        // TODO add to declinedByIds
+
+        // * Send notification here
+        logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+        await prisma.lecture.update({ data: { isCanceled: true }, where: { id: appointment.id } });
+        // * Send notification here
+        logger.info(`Appointment (id: ${appointment.id}) was cancelled`);
+        return true;
     }
 }
 
 const getFullAppointment = (
     appointment: AppointmentCreateGroupInput | AppointmentCreateMatchInput,
-    type: AppointmentType,
+    type: lecture_appointmenttype_enum,
     context: GraphQLContext
 ): AppointmentCreateInputFull => ({
     ...appointment,
