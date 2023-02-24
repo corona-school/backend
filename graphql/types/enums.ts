@@ -14,6 +14,7 @@ import {
     student_languages_enum as StudentLanguage,
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
+    lecture_appointmenttype_enum as AppointmentType,
 } from '@prisma/client';
 import { MentoringCategory } from '../../common/mentoring/categories';
 import { LoginOption } from '../../common/secret';
@@ -83,3 +84,5 @@ registerEnumType(MentoringCategory, {
 });
 
 registerEnumType(LoginOption, { name: 'LoginOption' });
+
+registerEnumType(AppointmentType, { name: 'AppointmentType' });

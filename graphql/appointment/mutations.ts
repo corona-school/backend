@@ -51,7 +51,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT) //@TODO: check ownership of match or subcourse
+    @Authorized(Role.ADMIN, Role.STUDENT)
     async appointmentsCreate(
         @Ctx() context: GraphQLContext,
         @Arg('appointments', () => [AppointmentCreateInputFull]) appointments: AppointmentCreateInputFull[]
@@ -86,7 +86,10 @@ export class MutateAppointmentResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     // hasAccess is called in hasAccessSubcourse
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
-    async appointmentsUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentsToBeUpdated') appointmentsToBeUpdated: AppointmentUpdateInput[]) {
+    async appointmentsUpdate(
+        @Ctx() context: GraphQLContext,
+        @Arg('appointmentsToBeUpdated', () => [AppointmentUpdateInput]) appointmentsToBeUpdated: AppointmentUpdateInput[]
+    ) {
         await Promise.all(
             appointmentsToBeUpdated.map(async (a) => {
                 const appointment = await getLecture(a.id);
@@ -109,9 +112,7 @@ export class MutateAppointmentResolver {
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-
-        // TODO add to declinedByIds
-
+        // TODO add declined state for user
         // * Send notification here
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
 

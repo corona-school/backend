@@ -94,7 +94,6 @@ export class UserFieldsResolver {
             skip,
         });
     }
-    // TODO clean up by removing comments and casts
     @FieldResolver((returns) => [Lecture], { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitedQuery()

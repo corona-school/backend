@@ -1,9 +1,38 @@
 import { Role } from '../authorizations';
-import { Arg, Authorized, Ctx, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Resolver, Root, Int } from 'type-graphql';
 import { Lecture as Appointment } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
 import assert from 'assert';
+import { LimitEstimated } from '../../graphql/complexity';
+import { prisma } from '../../common/prisma';
+import { getUserType } from '../../common/user';
+
+@ObjectType()
+class AppointmentParticipant {
+    @Field((_type) => Int, { nullable: true })
+    id: number;
+    @Field((_type) => String, { nullable: true })
+    firstname: string;
+    @Field((_type) => String, { nullable: true })
+    lastname: string;
+    @Field((_type) => Boolean, { nullable: true })
+    isStudent?: boolean;
+    @Field((_type) => Boolean, { nullable: true })
+    isPupil?: boolean;
+}
+
+@ObjectType()
+class Organizer {
+    @Field((_type) => Int)
+    id: number;
+    @Field((_type) => String)
+    firstname: string;
+    @Field((_type) => String)
+    lastname: string;
+    @Field((_type) => Boolean)
+    isStudent: boolean;
+}
 
 @Resolver((of) => Appointment)
 export class ExtendedFieldsLectureResolver {
@@ -21,25 +50,106 @@ export class ExtendedFieldsLectureResolver {
         }
 
         const student = await getSessionStudent(context, studentId);
-        const organizerIds = appointment.appointment_organizer.map((organizer) => organizer.studentId);
-        return organizerIds.includes(student.id);
+        const isOrganizer = (await prisma.appointment_organizer.count({ where: { appointmentId: appointment.id, studentId: student.id } })) > 0;
+        return isOrganizer;
     }
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() appointment: Appointment) {
         const user = await getUserForSession(context.sessionToken);
         assert(user.pupilId || user.studentId || user.screenerId, 'Cannot determine participation without id.');
-        if (user.pupilId) {
-            const pupilIds = appointment.appointment_participant_pupil.map((pupil) => pupil.pupilId);
-            return pupilIds.includes(user.pupilId);
+        switch (getUserType(user)) {
+            case 'pupil': {
+                return (await prisma.appointment_participant_pupil.count({ where: { appointmentId: appointment.id, pupilId: user.pupilId } })) > 0;
+            }
+            case 'student': {
+                return (await prisma.appointment_participant_student.count({ where: { appointmentId: appointment.id, studentId: user.studentId } })) > 0;
+            }
+            case 'screener': {
+                return (await prisma.appointment_participant_screener.count({ where: { appointmentId: appointment.id, screenerId: user.screenerId } })) > 0;
+            }
+            default:
+                throw new Error('Cannot determine participation for unauthenticated user');
         }
-        if (user.studentId) {
-            const studentIds = appointment.appointment_participant_student.map((student) => student.studentId);
-            return studentIds.includes(user.studentId);
-        }
-        if (user.screenerId) {
-            const screenerIds = appointment.appointment_participant_screener.map((screener) => screener.screenerId);
-            return screenerIds.includes(user.screenerId);
-        }
+    }
+    @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @LimitEstimated(30)
+    async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        const participantPupils = await prisma.pupil.findMany({
+            where: {
+                appointment_participant_pupil: {
+                    some: {
+                        appointmentId: appointment.id,
+                    },
+                },
+            },
+            take,
+            skip,
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                isPupil: true,
+            },
+        });
+        const participantStudents = await prisma.student.findMany({
+            where: {
+                appointment_participant_student: {
+                    some: {
+                        appointmentId: appointment.id,
+                    },
+                },
+            },
+            take,
+            skip,
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                isStudent: true,
+            },
+        });
+        const participantScreener = await prisma.screener.findMany({
+            where: {
+                appointment_participant_screener: {
+                    some: {
+                        appointmentId: appointment.id,
+                    },
+                },
+            },
+            take,
+            skip,
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+            },
+        });
+        const participants = [...participantPupils, ...participantStudents, ...participantScreener];
+        return participants;
+    }
+
+    @FieldResolver((returns) => [Organizer])
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @LimitEstimated(5)
+    async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        return await prisma.student.findMany({
+            where: {
+                appointment_organizer: {
+                    some: {
+                        appointmentId: appointment.id,
+                    },
+                },
+            },
+            take,
+            skip,
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                isStudent: true,
+            },
+        });
     }
 }

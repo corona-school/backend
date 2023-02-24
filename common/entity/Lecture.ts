@@ -50,7 +50,7 @@ export class Lecture {
         type: 'enum',
         enum: lecture_appointmenttype_enum,
         nullable: false,
-        default: lecture_appointmenttype_enum.legacy_lecture,
+        default: lecture_appointmenttype_enum.legacy,
     })
     appointmentType: lecture_appointmenttype_enum;
 
@@ -60,7 +60,7 @@ export class Lecture {
     meetingLink: string;
 
     @Column({
-        nullable: true, //@TODO: probably should be changed with new migratioons
+        nullable: true,
         default: false,
     })
     isCanceled: boolean;

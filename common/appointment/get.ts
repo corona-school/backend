@@ -24,17 +24,7 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
 
     const appointments = await getAppointmentsByIdList(appointmentIds, take, skip);
 
-    if (userType !== 'pupil') {
-        return appointments;
-    }
-
-    /*
-     * in the first iteration pupils are not added as appointment participants automatically
-     * that's why we need to get appointments linked to subcourse and it's participants
-     * if pupils decline, than an entry in appointment_participant_pupil is created
-     *  */
-    const subcourseAppointments = await getPupilSubcourseAppointments(user.pupilId, take, skip);
-    return [...subcourseAppointments, ...appointments].sort((a, b) => b.start.getTime() - a.start.getTime());
+    return appointments;
 };
 
 const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Promise<Appointment[]> => {
@@ -44,7 +34,7 @@ const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Pr
                 id: {
                     in: appointmentIds,
                 },
-                OR: [{ isCanceled: null }, { isCanceled: false }], //@TODO: probably null will not be needed after field changes to not nullable
+                OR: [{ isCanceled: false }],
             },
         },
         orderBy: [{ start: 'asc' }],
@@ -78,43 +68,4 @@ const getPupilAppointmentIds = async (pupilId: number): Promise<number[]> => {
 const getScreenerAppointmentIds = async (screenerId: number): Promise<number[]> => {
     const selection = select({ screenerId });
     return (await prisma.appointment_participant_pupil.findMany(selection)).map(mapAppointmentId);
-};
-
-const getPupilSubcourseAppointments = async (pupilId: number, take?: number, skip?: number): Promise<Appointment[]> => {
-    const subcourseIds = (await prisma.subcourse_participants_pupil.findMany({ where: { pupilId: pupilId }, select: { subcourseId: true } })).map(
-        (participation) => participation.subcourseId
-    );
-
-    const declinedAppointmentIds = await getDeclinedSubcourseAppointmentIdsPupil(pupilId);
-
-    return (await prisma.lecture.findMany({
-        where: {
-            AND: [
-                {
-                    subcourseId: {
-                        in: subcourseIds,
-                    },
-                    id: {
-                        notIn: declinedAppointmentIds,
-                    },
-                },
-            ],
-            OR: [{ isCanceled: false }, { isCanceled: null }], //@TODO: probably null will not be needed after field changes to not nullable
-        },
-        orderBy: [{ start: 'desc' }],
-        take,
-        skip,
-    })) as unknown as Appointment[];
-};
-
-const getDeclinedSubcourseAppointmentIdsPupil = async (pupilId: number): Promise<number[]> => {
-    return (
-        await prisma.appointment_participant_pupil.findMany({
-            where: {
-                pupilId: pupilId,
-                status: AttendanceStatus.DECLINED,
-            },
-            select: { appointmentId: true },
-        })
-    ).map((participation) => participation.appointmentId);
 };

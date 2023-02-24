@@ -195,7 +195,7 @@ model lecture {
   duration                         Int
   title                            String?
   description                      String?
-  appointmentType                  lecture_appointmenttype_enum       @default(legacy_lecture)
+  appointmentType                  lecture_appointmenttype_enum       @default(legacy)
   meetingLink                      String?                            @db.VarChar
   isCanceled                       Boolean?                           @default(false)
   instructorId                     Int?
@@ -1061,6 +1061,6 @@ enum appointment_participant_student_status_enum {
 enum lecture_appointmenttype_enum {
   group
   match
-  other_internal @map("other-internal")
-  legacy_lecture @map("legacy-lecture")
+  internal @map("internal")
+  legacy @map("legacy")
 }

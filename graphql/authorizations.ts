@@ -11,6 +11,7 @@ import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from './roles';
+import { isAppointmentParticipant } from '../common/appointment/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -96,12 +97,8 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
         assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
         assert(root, 'root value must be bound to determine access');
-        assert(context.user.pupilId, 'User must be a pupil');
-        const pupil = await getPupil(context.user.pupilId);
-        const success = await isParticipant({ id: root.subcourseId }, pupil);
-        if (success) {
-            return true;
-        }
+        assert(context.user, 'User must be defined');
+        return isAppointmentParticipant(root, context.user);
     }
 
     if (context.user === UNAUTHENTICATED_USER) {
