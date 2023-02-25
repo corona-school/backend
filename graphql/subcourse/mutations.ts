@@ -189,7 +189,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         const existingMeeting = await prisma.bbb_meeting.findFirst({
-            where: { meetingID: '' + subcourse.id },
+            where: { meetingID: ('' + subcourse.id).padStart(2, '0') },
         });
 
         if (existingMeeting) {
@@ -203,7 +203,7 @@ export class MutateSubcourseResolver {
 
         await prisma.bbb_meeting.create({
             data: {
-                meetingID: '' + subcourse.id,
+                meetingID: ('' + subcourse.id).padStart(2, '0'),
                 meetingName: course.name,
                 alternativeUrl: meetingURL,
             },
@@ -221,7 +221,7 @@ export class MutateSubcourseResolver {
 
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: ('' + subcourse.id).padStart(2, '0') } });
         if (!meeting) {
             meeting = await createBBBMeeting(course.name, '' + subcourse.id, (await getUserTypeORM(context.user!.userID)) as Student | Pupil);
         }
@@ -421,7 +421,7 @@ export class MutateSubcourseResolver {
             where: { courseId: guest.courseId },
         });
 
-        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: ('' + subcourse.id).padStart(2, '0') } });
         if (!meeting) {
             throw new PrerequisiteError(`Meeting not started yet`);
         }
