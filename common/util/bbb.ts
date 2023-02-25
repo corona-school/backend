@@ -25,12 +25,18 @@ const bbbMeetingInfoHandlerTimeout = setInterval(() => {
 addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
+
     const entityManager = getManager();
     const meeting = await entityManager.findOne(BBBMeeting, { meetingID: id });
     return !!meeting;
 }
 
 export async function getBBBMeetingFromDB(id: string): Promise<BBBMeeting> {
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
+
     const entityManager = getManager();
     return await entityManager.findOne(BBBMeeting, { meetingID: id });
 }
