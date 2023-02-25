@@ -25,6 +25,6 @@ export class ExtendedFieldsParticipationCertificateResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(1)
     student(@Root() certificate: ParticipationCertificate) {
-        return getStudent(certificate.pupilId);
+        return getStudent(certificate.studentId);
     }
 }
