@@ -42,6 +42,9 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
     const moderatorPW = hashToken('' + Math.random(), 'sha1');
     const bbbMeeting = new BBBMeeting();
 
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
+
     try {
         // Create new BBBMeeting
         bbbMeeting.meetingID = id;
