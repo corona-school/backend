@@ -107,7 +107,7 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
     const callName = 'join';
     const params = {
         fullName: name,
-        meetingID: id,
+        meetingID: id.padStart(2, '0'),
         password: pw,
         redirect: 'true',
         userID: userID,
@@ -118,6 +118,8 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
 }
 
 export async function isBBBMeetingRunning(id: string): Promise<boolean> {
+    id = id.padStart(2, '0');
+
     const callName = 'isMeetingRunning';
     const queryParams = encodeURI(`meetingID=${id}`);
     return fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`)
