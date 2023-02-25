@@ -168,6 +168,15 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         // School data is public knowledge and can be queried by everyone
         schools: everyone,
     },
+    Important_information: {
+        createOneImportant_information: adminOrOwner,
+        deleteOneImportant_information: adminOrOwner,
+        updateOneImportant_information: adminOrOwner,
+        createManyImportant_information: adminOrOwner,
+        deleteManyImportant_information: adminOrOwner,
+        updateManyImportant_information: adminOrOwner,
+        important_informations: everyone,
+    },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Subcourse_waiting_list_pupil: allAdmin,
