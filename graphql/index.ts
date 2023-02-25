@@ -11,6 +11,7 @@ import {
     FindManySchoolResolver,
     FindManyScreenerResolver,
     FindManyCourse_tagResolver,
+    Important_informationCrudResolver,
 } from './generated/resolvers/crud';
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
 import { MutatePupilResolver } from './pupil/mutations';
@@ -118,6 +119,9 @@ const schema = buildSchemaSync({
         ExtendedFieldsConcreteNotificationResolver,
         MutateConcreteNotificationsResolver,
         ExtendedFieldsMessageTranslationResolver,
+
+        /* Important Information */
+        Important_informationCrudResolver,
 
         /* TutoringInterestConfirmation */
         MutateTutoringInterestConfirmationResolver,
