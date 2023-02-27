@@ -3,6 +3,8 @@ import { prisma } from '../prisma';
 import { lecture_appointmenttype_enum } from '@prisma/client';
 import { PrerequisiteError } from '../util/error';
 
+type StudentId = number;
+
 @InputType()
 export class AppointmentInputText {
     @Field()
@@ -39,7 +41,7 @@ export abstract class AppointmentCreateInputFull extends AppointmentCreateInputB
     @Field(() => Int, { nullable: true })
     matchId?: number;
     @Field(() => [Int])
-    organizers: number[]; // StudentIds
+    organizers: StudentId[];
     @Field(() => [Int], { nullable: true })
     participants_pupil?: number[];
     @Field(() => [Int], { nullable: true })
@@ -60,7 +62,7 @@ const createSingleAppointment = async (appointment: AppointmentCreateInputFull) 
             meetingLink: appointment.meetingLink,
             subcourseId: appointment.subcourseId,
             matchId: appointment.matchId,
-            appointmentType: appointment.appointmentType as unknown as lecture_appointmenttype_enum,
+            appointmentType: appointment.appointmentType,
             appointment_organizer: appointment.organizers?.length
                 ? {
                       createMany: {
