@@ -406,6 +406,11 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Number)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async capacity(@Root() subcourse: Required<Subcourse>) {
-        return getCourseCapacity(subcourse);
+        return await getCourseCapacity(subcourse);
+    }
+    @FieldResolver((returns) => [Lecture])
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.APPOINTMENT_PARTICIPANT)
+    async appointments(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     }
 }

@@ -10,6 +10,7 @@ import { getLecture } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
 import { lecture_appointmenttype_enum } from '@prisma/client';
+import { getUserType } from '../../common/user';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -108,11 +109,38 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        // TODO add declined state for user
+        const userType = getUserType(context.user);
+
+        switch (userType) {
+            case 'pupil': {
+                await prisma.appointment_participant_pupil.update({
+                    data: { status: 'declined' },
+                    where: { appointmentId_pupilId: { appointmentId, pupilId: context.user.pupilId } },
+                });
+                break;
+            }
+            case 'student': {
+                await prisma.appointment_participant_student.update({
+                    data: { status: 'declined' },
+                    where: { appointmentId_studentId: { appointmentId, studentId: context.user.studentId } },
+                });
+                break;
+            }
+            case 'screener': {
+                await prisma.appointment_participant_screener.update({
+                    data: { status: 'declined' },
+                    where: { appointmentId_screenerId: { appointmentId, screenerId: context.user.screenerId } },
+                });
+                break;
+            }
+            default:
+                throw new Error(`Cannot decline appointment with user type: ${userType}`);
+        }
+
         // * Send notification here
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
 

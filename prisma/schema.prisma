@@ -1061,6 +1061,6 @@ enum appointment_participant_student_status_enum {
 enum lecture_appointmenttype_enum {
   group
   match
-  internal @map("internal")
-  legacy @map("legacy")
+  internal
+  legacy
 }

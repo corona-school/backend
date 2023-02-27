@@ -152,4 +152,31 @@ export class ExtendedFieldsLectureResolver {
             },
         });
     }
+    @FieldResolver((returns) => [AppointmentParticipant])
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @LimitEstimated(30)
+    async declinedBy(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        const declinedPupils = await prisma.appointment_participant_pupil.findMany({
+            where: {
+                appointmentId: appointment.id,
+                status: 'declined',
+            },
+        });
+
+        const declinedStudents = await prisma.appointment_participant_student.findMany({
+            where: {
+                appointmentId: appointment.id,
+                status: 'declined',
+            },
+        });
+
+        const declinedScreeners = await prisma.appointment_participant_screener.findMany({
+            where: {
+                appointmentId: appointment.id,
+                status: 'declined',
+            },
+        });
+        const participants = [...declinedPupils, ...declinedStudents, ...declinedScreeners];
+        return participants;
+    }
 }
