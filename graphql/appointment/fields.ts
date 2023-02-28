@@ -200,4 +200,34 @@ export class ExtendedFieldsLectureResolver {
         const participants = [...declinedPupils, ...declinedStudents, ...declinedScreeners];
         return participants;
     }
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async position(@Root() appointment: Appointment): Promise<number> {
+        if (appointment.subcourseId) {
+            return (
+                (await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId }, orderBy: { start: 'asc' } })).findIndex(
+                    (currentAppointment) => currentAppointment.id === appointment.id
+                ) + 1
+            );
+        }
+        if (appointment.matchId) {
+            return (
+                (await prisma.lecture.findMany({ where: { matchId: appointment.matchId }, orderBy: { start: 'asc' } })).findIndex(
+                    (currentAppointment) => currentAppointment.id === appointment.id
+                ) + 1
+            );
+        }
+        throw new Error('Cannot determine position of loose appointment');
+    }
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async total(@Root() appointment: Appointment): Promise<number> {
+        if (appointment.subcourseId) {
+            return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId } });
+        }
+        if (appointment.matchId) {
+            return await prisma.lecture.count({ where: { matchId: appointment.matchId } });
+        }
+        throw new Error('Cannot determine total of loose appointment');
+    }
 }

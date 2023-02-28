@@ -14,17 +14,23 @@ import { getUserType } from '../../common/user';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
-const getOrganizersUserId = (context: GraphQLContext) => getSessionUser(context).studentId || null;
+const getOrganizersStudentId = (context: GraphQLContext) => {
+    const { studentId } = getSessionUser(context);
+    if (!studentId) {
+        throw new Error('Only students can be organizers');
+    }
+    return studentId;
+};
 
 const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: GraphQLContext) => {
-    const userId = getOrganizersUserId(context);
-    if (!userId) {
+    const studentId = getOrganizersStudentId(context);
+    if (!studentId) {
         return organizers; // only Students can be organizers
     }
-    if (organizers.includes(userId)) {
+    if (organizers.includes(studentId)) {
         return organizers; // already in organizers
     }
-    return [...organizers, userId];
+    return [...organizers, studentId];
 };
 
 @InputType()
@@ -166,7 +172,7 @@ const getFullAppointment = (
 ): AppointmentCreateInputFull => ({
     ...appointment,
     appointmentType: type,
-    organizers: [getOrganizersUserId(context)],
+    organizers: [getOrganizersStudentId(context)],
 });
 
 const hasAccessSubcourse = async (context: GraphQLContext, subcourseId: number): Promise<void> => {
