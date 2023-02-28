@@ -1,0 +1,1 @@
+// TODO add some tests to simulate a user clicking through the app (especially appointments) with right rights and wrong rights

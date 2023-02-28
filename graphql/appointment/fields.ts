@@ -1,5 +1,5 @@
-import { Role } from '../authorizations';
-import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Resolver, Root, Int } from 'type-graphql';
+import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Resolver, Root, Int, Query } from 'type-graphql';
 import { Lecture as Appointment } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
@@ -7,6 +7,7 @@ import assert from 'assert';
 import { LimitEstimated } from '../../graphql/complexity';
 import { prisma } from '../../common/prisma';
 import { getUserType } from '../../common/user';
+import { Deprecated } from '../../graphql/util';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -20,6 +21,8 @@ class AppointmentParticipant {
     isStudent?: boolean;
     @Field((_type) => Boolean, { nullable: true })
     isPupil?: boolean;
+    @Field((_type) => Boolean, { nullable: true })
+    isScreener?: boolean;
 }
 
 @ObjectType()
@@ -36,15 +39,24 @@ class Organizer {
 
 @Resolver((of) => Appointment)
 export class ExtendedFieldsLectureResolver {
+    @Query((returns) => Appointment)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async appointment(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointmentId } });
+        await hasAccess(context, 'Lecture', appointment);
+        return appointment;
+    }
+
+    @Deprecated('use isOrganizer instead')
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT)
-    async isInstructor(@Ctx() context: GraphQLContext, @Root() appointment: Appointment, @Arg('studentId', { nullable: true }) studentId: number) {
+    async isInstructor(@Ctx() context: GraphQLContext, @Root() appointment: Appointment, @Arg('studentId', { nullable: true }) studentId?: number) {
         const student = await getSessionStudent(context, studentId);
         return appointment.instructorId === student.id;
     }
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
-    async isOrganizer(@Ctx() context: GraphQLContext, @Root() appointment: Appointment, @Arg('studentId', { nullable: true }) studentId: number) {
+    async isOrganizer(@Ctx() context: GraphQLContext, @Root() appointment: Appointment, @Arg('studentId', { nullable: true }) studentId?: number) {
         if (!isElevated(context) && !isSessionStudent(context)) {
             return false;
         }
@@ -54,10 +66,9 @@ export class ExtendedFieldsLectureResolver {
         return isOrganizer;
     }
     @FieldResolver((returns) => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
+    @Authorized(Role.USER)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() appointment: Appointment) {
         const user = await getUserForSession(context.sessionToken);
-        assert(user.pupilId || user.studentId || user.screenerId, 'Cannot determine participation without id.');
         switch (getUserType(user)) {
             case 'pupil': {
                 return (await prisma.appointment_participant_pupil.count({ where: { appointmentId: appointment.id, pupilId: user.pupilId } })) > 0;
@@ -69,7 +80,7 @@ export class ExtendedFieldsLectureResolver {
                 return (await prisma.appointment_participant_screener.count({ where: { appointmentId: appointment.id, screenerId: user.screenerId } })) > 0;
             }
             default:
-                throw new Error('Cannot determine participation for unauthenticated user');
+                throw new Error(`Cannot determine participation for user type: ${getUserType(user)}`);
         }
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
@@ -90,7 +101,6 @@ export class ExtendedFieldsLectureResolver {
                 id: true,
                 firstname: true,
                 lastname: true,
-                isPupil: true,
             },
         });
         const participantStudents = await prisma.student.findMany({
@@ -107,7 +117,6 @@ export class ExtendedFieldsLectureResolver {
                 id: true,
                 firstname: true,
                 lastname: true,
-                isStudent: true,
             },
         });
         const participantScreener = await prisma.screener.findMany({
@@ -126,14 +135,16 @@ export class ExtendedFieldsLectureResolver {
                 lastname: true,
             },
         });
+        // TODO add boolean fields before spreading (isPupil etc.)
         const participants = [...participantPupils, ...participantStudents, ...participantScreener];
         return participants;
     }
 
     @FieldResolver((returns) => [Organizer])
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.USER)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        // TODO add isStudent boolean programatically
         return await prisma.student.findMany({
             where: {
                 appointment_organizer: {
@@ -148,7 +159,6 @@ export class ExtendedFieldsLectureResolver {
                 id: true,
                 firstname: true,
                 lastname: true,
-                isStudent: true,
             },
         });
     }
