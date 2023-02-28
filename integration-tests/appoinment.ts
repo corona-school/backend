@@ -7,6 +7,8 @@ const secondAppointmentTitle = "Test Subcourse Appointment 2";
 
 const createCourseAppointments = test('Create course appointment as student', async () => {
     const {client} = await studentOne;
+    const {pupil} = await pupilOne;
+    const pupilId = pupil.pupil.id;
 
     await client.request(`mutation createAppointments {
         appointmentsCreate(appointments: [
@@ -16,7 +18,7 @@ const createCourseAppointments = test('Create course appointment as student', as
             start: "2023-02-14T16:00:00Z"
             duration: 15
             organizers:[1]
-            participants_pupil:[1]
+            participants_pupil:[${pupilId}]
             subcourseId:1
             appointmentType: group
             },
@@ -26,7 +28,7 @@ const createCourseAppointments = test('Create course appointment as student', as
             start: "2023-02-14T16:30:00Z"
             duration: 15
             organizers:[1]
-            participants_pupil:[1]
+            participants_pupil:[${pupilId}]
             subcourseId:1
             appointmentType: group
             }
@@ -96,6 +98,7 @@ test('Querying my appointments as pupil', async () => {
         ])
       }`
     );
+
     const result = await client.request(`
         query myAppointments{
             me{
@@ -107,6 +110,7 @@ test('Querying my appointments as pupil', async () => {
             }
         }
     `);
+
     assert.strictEqual(result.me.appointments.length, 2);
     assert.strictEqual(result.me.appointments[0].title, firstAppointmentTitle);
     assert.strictEqual(result.me.appointments[1].title, secondAppointmentTitle);

@@ -64,8 +64,8 @@ export const pupilOne = test("Register Pupil", async () => {
                 firstname
                 lastname
                 email
-                pupil { 
-                    id 
+                pupil {
+                    id
                     isPupil
                     isParticipant
                     openMatchRequestCount
@@ -126,7 +126,7 @@ export const studentOne = test("Register Student", async () => {
 
     await client.request(`
         mutation BecomeTutor {
-            meBecomeTutor(data: { 
+            meBecomeTutor(data: {
                 subjects: [{ name: "Deutsch", grade: { min: 1, max: 10 }}]
                 languages: [Deutsch]
                 supportsInDaZ: false
@@ -188,7 +188,7 @@ export const instructorOne = test("Register Instructor", async () => {
 
     await client.request(`
         mutation BecomeInstructor {
-            meBecomeInstructor(data: { 
+            meBecomeInstructor(data: {
                 message: ""
             })
         }
