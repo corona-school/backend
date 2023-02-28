@@ -73,10 +73,6 @@ export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
 }
 
 export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil) {
-    if (await hasStarted(subcourse)) {
-        throw new TooLateError(`Subourse has already started, cannot join waiting list`);
-    }
-
     if (await isParticipant(subcourse, pupil)) {
         throw new RedundantError(`Pupil is already participant`);
     }
