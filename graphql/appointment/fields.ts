@@ -3,7 +3,6 @@ import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Resolver, Root,
 import { Lecture as Appointment } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import assert from 'assert';
 import { LimitEstimated } from '../../graphql/complexity';
 import { prisma } from '../../common/prisma';
 import { getUserType } from '../../common/user';
@@ -87,55 +86,60 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
     async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        const participantPupils = await prisma.pupil.findMany({
-            where: {
-                appointment_participant_pupil: {
-                    some: {
-                        appointmentId: appointment.id,
+        const participantPupils = (
+            await prisma.pupil.findMany({
+                where: {
+                    appointment_participant_pupil: {
+                        some: {
+                            appointmentId: appointment.id,
+                        },
                     },
                 },
-            },
-            take,
-            skip,
-            select: {
-                id: true,
-                firstname: true,
-                lastname: true,
-            },
-        });
-        const participantStudents = await prisma.student.findMany({
-            where: {
-                appointment_participant_student: {
-                    some: {
-                        appointmentId: appointment.id,
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                },
+            })
+        ).map((p) => ({ ...p, isPupil: true }));
+        const participantStudents = (
+            await prisma.student.findMany({
+                where: {
+                    appointment_participant_student: {
+                        some: {
+                            appointmentId: appointment.id,
+                        },
                     },
                 },
-            },
-            take,
-            skip,
-            select: {
-                id: true,
-                firstname: true,
-                lastname: true,
-            },
-        });
-        const participantScreener = await prisma.screener.findMany({
-            where: {
-                appointment_participant_screener: {
-                    some: {
-                        appointmentId: appointment.id,
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                },
+            })
+        ).map((p) => ({ ...p, isStudent: true }));
+        const participantScreener = (
+            await prisma.screener.findMany({
+                where: {
+                    appointment_participant_screener: {
+                        some: {
+                            appointmentId: appointment.id,
+                        },
                     },
                 },
-            },
-            take,
-            skip,
-            select: {
-                id: true,
-                firstname: true,
-                lastname: true,
-            },
-        });
-        // TODO add boolean fields before spreading (isPupil etc.)
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                },
+            })
+        ).map((p) => ({ ...p, isScreener: true }));
         const participants = [...participantPupils, ...participantStudents, ...participantScreener];
         return participants;
     }
@@ -144,48 +148,55 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        // TODO add isStudent boolean programatically
-        return await prisma.student.findMany({
-            where: {
-                appointment_organizer: {
-                    some: {
-                        appointmentId: appointment.id,
+        return (
+            await prisma.student.findMany({
+                where: {
+                    appointment_organizer: {
+                        some: {
+                            appointmentId: appointment.id,
+                        },
                     },
                 },
-            },
-            take,
-            skip,
-            select: {
-                id: true,
-                firstname: true,
-                lastname: true,
-            },
-        });
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                },
+            })
+        ).map((p) => ({ ...p, isStudent: true }));
     }
     @FieldResolver((returns) => [AppointmentParticipant])
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
     async declinedBy(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        const declinedPupils = await prisma.appointment_participant_pupil.findMany({
-            where: {
-                appointmentId: appointment.id,
-                status: 'declined',
-            },
-        });
+        const declinedPupils = (
+            await prisma.appointment_participant_pupil.findMany({
+                where: {
+                    appointmentId: appointment.id,
+                    status: 'declined',
+                },
+            })
+        ).map((p) => ({ ...p, isPupil: true }));
 
-        const declinedStudents = await prisma.appointment_participant_student.findMany({
-            where: {
-                appointmentId: appointment.id,
-                status: 'declined',
-            },
-        });
+        const declinedStudents = (
+            await prisma.appointment_participant_student.findMany({
+                where: {
+                    appointmentId: appointment.id,
+                    status: 'declined',
+                },
+            })
+        ).map((p) => ({ ...p, isStudent: true }));
 
-        const declinedScreeners = await prisma.appointment_participant_screener.findMany({
-            where: {
-                appointmentId: appointment.id,
-                status: 'declined',
-            },
-        });
+        const declinedScreeners = (
+            await prisma.appointment_participant_screener.findMany({
+                where: {
+                    appointmentId: appointment.id,
+                    status: 'declined',
+                },
+            })
+        ).map((p) => ({ ...p, isScreener: true }));
         const participants = [...declinedPupils, ...declinedStudents, ...declinedScreeners];
         return participants;
     }

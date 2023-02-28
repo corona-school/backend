@@ -19,7 +19,6 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
         default:
             throw new Error(`Unknown user type: ${userType}`);
     }
-
     appointmentIds = deduplicate(sortIds(appointmentIds));
 
     const appointments = await getAppointmentsByIdList(appointmentIds, take, skip);
