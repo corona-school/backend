@@ -1,7 +1,14 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
-import { AppointmentCreateGroupInput, AppointmentCreateInputFull, AppointmentCreateMatchInput, createAppointments } from '../../common/appointment/create';
+import {
+    AppointmentCreateGroupInput,
+    AppointmentCreateInputFull,
+    AppointmentCreateMatchInput,
+    createAppointments,
+    createGroupAppointment,
+    createMatchAppointment,
+} from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
@@ -75,7 +82,7 @@ export class MutateAppointmentResolver {
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
         await hasAccessMatch(context, appointment.matchId);
 
-        await createAppointments([getFullAppointment(appointment, lecture_appointmenttype_enum.match, context)]);
+        await createMatchAppointment(appointment);
         return true;
     }
 
@@ -85,7 +92,7 @@ export class MutateAppointmentResolver {
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         await hasAccessSubcourse(context, appointment.subcourseId);
-        await createAppointments([getFullAppointment(appointment, lecture_appointmenttype_enum.group, context)]);
+        await createGroupAppointment(appointment);
         return true;
     }
 
@@ -100,7 +107,11 @@ export class MutateAppointmentResolver {
         await Promise.all(
             appointmentsToBeUpdated.map(async (a) => {
                 const appointment = await getLecture(a.id);
-                await hasAccessSubcourse(context, appointment.subcourseId);
+                if (appointment.subcourseId) {
+                    await hasAccessSubcourse(context, appointment.subcourseId);
+                } else {
+                    await hasAccessMatch(context, appointment.matchId);
+                }
             })
         );
         await Promise.all(
@@ -154,7 +165,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
