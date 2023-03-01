@@ -95,7 +95,7 @@ export class MutateAppointmentResolver {
     async appointmentsMatchCreate(
         @Ctx() context: GraphQLContext,
         @Arg('matchId') matchId: number,
-        @Arg('appointments') appointments: AppointmentCreateMatchInput[]
+        @Arg('appointments', () => [AppointmentCreateMatchInput]) appointments: AppointmentCreateMatchInput[]
     ) {
         await hasAccessMatch(context, matchId);
         createMatchAppointments(matchId, appointments);
@@ -119,7 +119,7 @@ export class MutateAppointmentResolver {
     async appointmentsGroupCreate(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
-        @Arg('appointments') appointments: AppointmentCreateGroupInput[]
+        @Arg('appointments', () => [AppointmentCreateGroupInput]) appointments: AppointmentCreateGroupInput[]
     ) {
         await hasAccessSubcourse(context, subcourseId);
 
