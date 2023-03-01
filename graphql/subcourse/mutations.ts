@@ -10,7 +10,7 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
+import { Deprecated, getCourse, getLecture, getStudent, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
@@ -22,6 +22,7 @@ import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
+import { addGroupOrganizer, addGroupParticipantPupils, removeGroupOrganizer, removeGroupParticipantPupils } from '../../common/appointment/participants';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -97,6 +98,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         await getStudent(studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
+        await addGroupOrganizer(subcourseId, studentId);
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -112,6 +114,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         await getStudent(studentId);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
+        await removeGroupOrganizer(subcourseId, studentId);
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -254,7 +257,7 @@ export class MutateSubcourseResolver {
         logger.info(`User(${context.user?.userID}) joins meeting of Subcourse(${subcourse.id}) with url '${url}'`);
         return url;
     }
-
+    @Deprecated('In favour of appointment resolvers')
     @Mutation((returns) => GraphQLModel.Lecture)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async lectureCreate(
@@ -302,6 +305,7 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
+        await addGroupParticipantPupils(subcourseId, pupil.id);
         return true;
     }
 
@@ -315,6 +319,7 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
+        await addGroupParticipantPupils(subcourseId, pupilId);
         return true;
     }
 
@@ -330,6 +335,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await leaveSubcourse(subcourse, pupil);
+        await removeGroupParticipantPupils(subcourseId, pupilId);
         return true;
     }
 

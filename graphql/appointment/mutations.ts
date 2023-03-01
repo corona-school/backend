@@ -7,7 +7,9 @@ import {
     AppointmentCreateMatchInput,
     createAppointments,
     createGroupAppointment,
+    createGroupAppointments,
     createMatchAppointment,
+    createMatchAppointments,
 } from '../../common/appointment/create';
 import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -88,11 +90,40 @@ export class MutateAppointmentResolver {
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
+    // hasAccess is called in hasAccessMatch
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
+    async appointmentsMatchCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('matchId') matchId: number,
+        @Arg('appointments') appointments: AppointmentCreateMatchInput[]
+    ) {
+        await hasAccessMatch(context, matchId);
+        createMatchAppointments(matchId, appointments);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
     // hasAccess is called in hasAccessSubcourse
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         await hasAccessSubcourse(context, appointment.subcourseId);
         await createGroupAppointment(appointment);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    // hasAccess is called in hasAccessSubcourse
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
+    async appointmentsGroupCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('appointments') appointments: AppointmentCreateGroupInput[]
+    ) {
+        await hasAccessSubcourse(context, subcourseId);
+
+        await createGroupAppointments(subcourseId, appointments);
         return true;
     }
 
@@ -157,7 +188,6 @@ export class MutateAppointmentResolver {
             default:
                 throw new Error(`Cannot decline appointment with user type: ${userType}`);
         }
-
         // * Send notification here
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
 
