@@ -177,8 +177,11 @@ export class ExtendedFieldsLectureResolver {
                     appointmentId: appointment.id,
                     status: 'declined',
                 },
+                select: {
+                    pupil: true,
+                },
             })
-        ).map((p) => ({ ...p, isPupil: true }));
+        ).map((p) => ({ ...p.pupil, isPupil: true }));
 
         const declinedStudents = (
             await prisma.appointment_participant_student.findMany({
@@ -186,8 +189,11 @@ export class ExtendedFieldsLectureResolver {
                     appointmentId: appointment.id,
                     status: 'declined',
                 },
+                select: {
+                    student: true,
+                },
             })
-        ).map((p) => ({ ...p, isStudent: true }));
+        ).map((p) => ({ ...p.student, isStudent: true }));
 
         const declinedScreeners = (
             await prisma.appointment_participant_screener.findMany({
@@ -195,8 +201,11 @@ export class ExtendedFieldsLectureResolver {
                     appointmentId: appointment.id,
                     status: 'declined',
                 },
+                select: {
+                    screener: true,
+                },
             })
-        ).map((p) => ({ ...p, isScreener: true }));
+        ).map((p) => ({ ...p.screener, isScreener: true }));
         const participants = [...declinedPupils, ...declinedStudents, ...declinedScreeners];
         return participants;
     }
