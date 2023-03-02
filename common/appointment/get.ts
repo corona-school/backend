@@ -19,7 +19,7 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
         default:
             throw new Error(`Unknown user type: ${userType}`);
     }
-    appointmentIds = deduplicate(sortIds(appointmentIds));
+    appointmentIds = removeDuplicateIds(appointmentIds);
 
     const appointments = await getAppointmentsByIdList(appointmentIds, take, skip);
 
@@ -33,7 +33,7 @@ const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Pr
                 id: {
                     in: appointmentIds,
                 },
-                OR: [{ isCanceled: false }],
+                isCanceled: false,
             },
         },
         orderBy: [{ start: 'asc' }],
@@ -44,15 +44,13 @@ const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Pr
 
 const mergeIdLists = (...listsOfIds: number[][]): number[] => listsOfIds.reduce((flat, current) => flat.concat(current), []);
 
-const deduplicate = (list: number[]) => [...new Set(list)];
-
-const sortIds = (list: number[]) => [...new Uint32Array([...list]).sort()];
+const removeDuplicateIds = (list: number[]) => [...new Set(list)];
 
 const mapAppointmentId = (relation) => relation.appointmentId;
-const select = (addWhere: {}) => ({ where: { status: AttendanceStatus.ACCEPTED, ...addWhere }, select: { appointmentId: true } });
+const selectAccepted = (addWhere: {}) => ({ where: { status: AttendanceStatus.ACCEPTED, ...addWhere }, select: { appointmentId: true } });
 
 const getStudentAppointmentIds = async (studentId: number): Promise<number[]> => {
-    const selection = select({ studentId });
+    const selection = selectAccepted({ studentId });
     const appointmentsOrganizer: number[] = (await prisma.appointment_organizer.findMany(selection)).map(mapAppointmentId);
     const appointmentsParticipant: number[] = (await prisma.appointment_participant_student.findMany(selection)).map(mapAppointmentId);
 
@@ -60,11 +58,11 @@ const getStudentAppointmentIds = async (studentId: number): Promise<number[]> =>
 };
 
 const getPupilAppointmentIds = async (pupilId: number): Promise<number[]> => {
-    const selection = select({ pupilId });
+    const selection = selectAccepted({ pupilId });
     return (await prisma.appointment_participant_pupil.findMany(selection)).map(mapAppointmentId);
 };
 
 const getScreenerAppointmentIds = async (screenerId: number): Promise<number[]> => {
-    const selection = select({ screenerId });
+    const selection = selectAccepted({ screenerId });
     return (await prisma.appointment_participant_pupil.findMany(selection)).map(mapAppointmentId);
 };

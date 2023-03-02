@@ -53,10 +53,6 @@ export class Appointment1675158151260 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "lecture" ADD "meetingLink" character varying`);
         await queryRunner.query(`ALTER TABLE "lecture" ADD "isCanceled" boolean`);
         await queryRunner.query(`ALTER TABLE "lecture" ADD "matchId" integer`);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "mentor" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
         await queryRunner.query(`CREATE INDEX "IDX_663993228113c003df5ab4325c" ON "appointment_organizer" ("status") `);
         await queryRunner.query(`CREATE INDEX "IDX_228bb5330683338479bc19ed44" ON "appointment_participant_screener" ("status") `);
         await queryRunner.query(`CREATE INDEX "IDX_318b2ad16817f27bc091d1f564" ON "appointment_participant_pupil" ("status") `);

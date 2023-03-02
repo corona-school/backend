@@ -59,7 +59,7 @@ class AppointmentUpdateInput {
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT)
+    @Authorized(Role.ADMIN)
     async appointmentCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateInputFull) {
         appointment.organizers = mergeOrganizersWithSessionUserId(appointment.organizers, context);
         await createAppointments([appointment]);
@@ -128,7 +128,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN)
     // hasAccess is called in hasAccessSubcourse
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async appointmentsUpdate(
@@ -140,8 +140,10 @@ export class MutateAppointmentResolver {
                 const appointment = await getLecture(a.id);
                 if (appointment.subcourseId) {
                     await hasAccessSubcourse(context, appointment.subcourseId);
+                    await hasAccess(context, 'Lecture', appointment);
                 } else {
                     await hasAccessMatch(context, appointment.matchId);
+                    await hasAccess(context, 'Lecture', appointment);
                 }
             })
         );

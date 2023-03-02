@@ -3,18 +3,14 @@ import { prisma } from '../prisma';
 import { lecture_appointmenttype_enum } from '@prisma/client';
 import { PrerequisiteError } from '../util/error';
 import assert from 'assert';
-
-type StudentId = number;
+import { Student } from '../../graphql/generated';
 
 @InputType()
-export class AppointmentInputText {
+export abstract class AppointmentCreateInputBase {
     @Field({ nullable: true })
     title?: string;
     @Field({ nullable: true })
     description?: string;
-}
-@InputType()
-export abstract class AppointmentCreateInputBase extends AppointmentInputText {
     @Field()
     start: Date;
     @Field()
@@ -35,6 +31,7 @@ export abstract class AppointmentCreateMatchInput extends AppointmentCreateInput
 export abstract class AppointmentCreateGroupInput extends AppointmentCreateInputBase {
     @Field(() => Int, { nullable: false })
     subcourseId: number;
+    @Field(() => lecture_appointmenttype_enum)
     appointmentType: 'group';
 }
 
@@ -45,7 +42,7 @@ export abstract class AppointmentCreateInputFull extends AppointmentCreateInputB
     @Field(() => Int, { nullable: true })
     matchId?: number;
     @Field(() => [Int])
-    organizers: StudentId[];
+    organizers: Student['id'][];
     @Field(() => [Int], { nullable: true })
     participants_pupil?: number[];
     @Field(() => [Int], { nullable: true })
@@ -116,7 +113,7 @@ export const createGroupAppointment = async (appointmentToBeCreated: Appointment
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: appointmentToBeCreated.subcourseId } });
     assert(
         instructors.length > 0,
-        `No instructors found for subcourse ${appointmentToBeCreated.subcourseId} there must be at least one organizer for an appointment`
+        `No instructors found for Subcourse(${appointmentToBeCreated.subcourseId}) there must be at least one organizer for an appointment`
     );
     return await prisma.lecture.create({
         data: {
