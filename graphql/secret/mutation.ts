@@ -22,13 +22,13 @@ export class MutateSecretResolver {
 
     @Mutation((returns) => String)
     @Authorized(Role.ADMIN)
-    async tokenCreateAdmin(@Arg('userId') userId: string) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
+    async tokenCreateAdmin(@Arg('userId') userId: string, @Arg('description', { nullable: true }) description?: string) {
+        const inOneWeek = new Date();
+        inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
-        const token = await createToken(user, /* expiresAt */ tomorrow, 'Support One-Day Access');
-        logger.info(`Admin created a one-day login token for User(${userId})`);
+        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`);
+        logger.info(`Admin created a login token for User(${userId})`);
         return token;
     }
 
