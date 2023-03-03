@@ -20,7 +20,7 @@ import { canPupilRequestMatch } from '../../common/match/request';
 import { canJoinSubcourses } from '../../common/courses/participants';
 import { UserType } from '../types/user';
 import { Prisma } from '@prisma/client';
-import { joinedBy, excludePastSubcourses } from '../../common/courses/filters';
+import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -33,11 +33,19 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesJoined(@Root() pupil: Required<Pupil>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+    async subcoursesJoined(
+        @Root() pupil: Required<Pupil>,
+        @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('onlyPast', { nullable: true }) onlyPast?: boolean
+    ) {
         const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
 
         if (excludePast) {
             filters.push(excludePastSubcourses());
+        }
+
+        if (onlyPast) {
+            filters.push(onlyPastSubcourses());
         }
 
         return await prisma.subcourse.findMany({
