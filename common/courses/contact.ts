@@ -67,6 +67,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
                     messageTitle: title,
                     messageBody: body,
                     participantMail: pupil.email,
+                    replyToAddress: pupil.email as any,
                 },
                 attachmentGroup
             );
@@ -112,6 +113,7 @@ export async function contactParticipants(
                     messageTitle: title,
                     messageBody: body,
                     instructorMail: student.email,
+                    replyToAddress: student.email as any,
                 },
                 attachmentGroup
             );

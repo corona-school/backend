@@ -17,12 +17,13 @@ import { IsIn } from 'class-validator';
 import { ValidationError } from '../error';
 import { addFile, getFileURL } from '../files';
 import { prisma } from '../../common/prisma';
-import moment from 'moment/moment';
 
 @InputType()
 class CertificateCreationInput implements ICertificateCreationParams {
+    @Field({ nullable: true })
+    startDate?: Date;
     @Field()
-    endDate: number;
+    endDate: Date;
     @Field()
     subjects: string;
     @Field()
@@ -43,7 +44,9 @@ class CertificateCreationInput implements ICertificateCreationParams {
 @InputType()
 class CertificateUpdateInput {
     @Field({ nullable: true })
-    endDate?: number;
+    startDate?: Date;
+    @Field({ nullable: true })
+    endDate?: Date;
     @Field({ nullable: true })
     subjects?: string;
     @Field({ nullable: true })
@@ -111,7 +114,8 @@ export class MutateParticipationCertificateResolver {
                 uuid: certificateId,
             },
             data: {
-                endDate: moment(data.endDate, 'X').toDate(),
+                startDate: data.startDate,
+                endDate: data.endDate,
                 subjects: data.subjects,
                 hoursPerWeek: data.hoursPerWeek,
                 hoursTotal: data.hoursTotal,
