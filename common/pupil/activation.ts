@@ -33,6 +33,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
 
     let matches = await prisma.match.findMany({
         where: {
+            dissolved: false,
             pupilId: pupil.id,
         },
     });
