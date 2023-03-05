@@ -125,7 +125,7 @@ export class StudentUpdateInput {
     aboutMe?: string;
 
     @Field((type) => Date, { nullable: true })
-    lastTimeCheckedNotifications: Date;
+    lastTimeCheckedNotifications?: Date;
 
     @Field((type) => NotificationPreferences, { nullable: true })
     notificationPreferences?: NotificationPreferences;
@@ -134,7 +134,7 @@ export class StudentUpdateInput {
     languages: Language[];
 
     @Field((type) => String, { nullable: true })
-    university: string;
+    university?: string;
 }
 
 export async function updateStudent(
