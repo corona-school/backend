@@ -389,6 +389,7 @@ model pupil {
   match                                        match[]
   participation_certificate                    participation_certificate[]
   project_match                                project_match[]
+  pupil_screening                              pupil_screening[]
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
@@ -646,6 +647,17 @@ model important_information {
   recipients  important_information_recipients_enum
   navigateTo  String?
   language    important_information_language_enum   @default(de)
+}
+
+model pupil_screening {
+  id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
+  createdAt   DateTime                    @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime                    @default(now()) @db.Timestamp(6)
+  status      pupil_screening_status_enum @default(dbgenerated("0"))
+  invalidated Boolean
+  comment     String?                     @db.VarChar
+  pupilId     Int?
+  pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 }
 
 enum course_category_enum {
@@ -987,4 +999,11 @@ enum important_information_language_enum {
 enum important_information_recipients_enum {
   students
   pupils
+}
+
+enum pupil_screening_status_enum {
+  pending   @map("0")
+  success   @map("1")
+  rejection @map("2")
+  dispute   @map("3")
 }
