@@ -1,4 +1,4 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag } from './generated';
+import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag, Concrete_notification } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
 
@@ -167,6 +167,15 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         updateManySchool: adminOrOwner,
         // School data is public knowledge and can be queried by everyone
         schools: everyone,
+    },
+    Important_information: {
+        createOneImportant_information: adminOrOwner,
+        deleteOneImportant_information: adminOrOwner,
+        updateOneImportant_information: adminOrOwner,
+        createManyImportant_information: adminOrOwner,
+        deleteManyImportant_information: adminOrOwner,
+        updateManyImportant_information: adminOrOwner,
+        important_informations: everyone,
     },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
@@ -416,6 +425,17 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             identifier: nobody,
             _count: nobody,
             course_tags_course_tag: nobody,
+        }),
+    },
+    Concrete_notification: {
+        fields: withPublicFields<Concrete_notification, 'id' | 'userId' | 'notificationID' | 'sentAt' | 'state'>({
+            attachmentGroupId: nobody,
+            // The context might contain sensitivie information of other users for which we do not know whether the user should access those
+            // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
+            context: nobody,
+            contextID: nobody,
+            // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
+            error: nobody,
         }),
     },
 };

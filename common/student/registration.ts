@@ -84,6 +84,8 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
 
             // the authToken is used to verify the e-mail instead
             verification: uuidv4(),
+
+            openMatchRequestCount: 0,
         },
     });
 

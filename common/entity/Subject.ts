@@ -23,4 +23,5 @@ export enum Subject {
     RUSSISCH = 'Russisch',
     NIEDERLAENDISCH = 'Niederländisch',
     DEUTSCH_ALS_ZWEITSPRACHE = 'Deutsch als Zweitsprache',
+    RELIGION = 'Religion',
 }

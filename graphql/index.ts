@@ -11,6 +11,7 @@ import {
     FindManySchoolResolver,
     FindManyScreenerResolver,
     FindManyCourse_tagResolver,
+    Important_informationCrudResolver,
 } from './generated/resolvers/crud';
 import { authChecker, authorizationEnhanceMap, authorizationModelEnhanceMap } from './authorizations';
 import { MutatePupilResolver } from './pupil/mutations';
@@ -60,6 +61,7 @@ import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
 import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
+import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -116,6 +118,10 @@ const schema = buildSchemaSync({
         FindManyConcrete_notificationResolver,
         ExtendedFieldsConcreteNotificationResolver,
         MutateConcreteNotificationsResolver,
+        ExtendedFieldsMessageTranslationResolver,
+
+        /* Important Information */
+        Important_informationCrudResolver,
 
         /* TutoringInterestConfirmation */
         MutateTutoringInterestConfirmationResolver,

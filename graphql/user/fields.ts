@@ -10,7 +10,7 @@ import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
-import { DEFAULT_PREFERENCES } from '../../notifications/defaultPreferences';
+import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -86,10 +86,7 @@ export class UserFieldsResolver {
     ): Promise<ConcreteNotification[]> {
         return await prisma.concrete_notification.findMany({
             orderBy: [{ sentAt: 'desc' }],
-            where: { userId: user.userID },
-            // where state == ConcreteNotificationState.SENT is problematic, because there could be an error state from mailJet,
-            // but websocket delivery could still be successful
-            // where: { userId: user.userID, state: ConcreteNotificationState.SENT },
+            where: { userId: user.userID, state: ConcreteNotificationState.SENT },
             take,
             skip,
         });

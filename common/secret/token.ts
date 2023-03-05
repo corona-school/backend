@@ -125,8 +125,18 @@ export async function loginToken(token: string): Promise<User | never> {
     const user = await getUser(secret.userId, /* active */ true);
 
     if (secret.type === SecretType.EMAIL_TOKEN) {
-        await prisma.secret.delete({ where: { id: secret.id } });
-        logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}), revoked token`);
+        if (!secret.expiresAt) {
+            // Sometimes users fail to perform the desired action with the token and retry by clicking the email again,
+            //  or they try to use the same link on multiple devices. Thus we allow the link to be used more than once,
+            //  but only expire it soon to not reduce the possibility that eavesdroppers use the token
+            const inOneHour = new Date();
+            inOneHour.setHours(inOneHour.getHours() + 1);
+            await prisma.secret.update({ where: { id: secret.id }, data: { expiresAt: inOneHour, lastUsed: new Date() } });
+            logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}), token will be revoked in one hour`);
+        } else {
+            await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
+            logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
+        }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
         logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);

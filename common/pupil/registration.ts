@@ -92,9 +92,14 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
 
             // Every pupil can participate in courses
             isParticipant: true,
+            // Every pupil is made a Tutee by registration.
+            isPupil: true,
 
             // the authToken is used to verify the e-mail instead
             verification,
+
+            // Pupils need to specifically request a match
+            openMatchRequestCount: 0,
         },
     });
 
@@ -167,6 +172,21 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
         data: {
             teacherEmailAddress: data.teacherEmail,
             grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse` : undefined,
+        },
+        where: { id: pupil.id },
+    });
+
+    return updatedPupil;
+}
+
+export async function becomeParticipant(pupil: Pupil) {
+    if (pupil.isParticipant) {
+        throw new RedundantError(`Pupil is already a participant`);
+    }
+
+    const updatedPupil = await prisma.pupil.update({
+        data: {
+            isParticipant: true,
         },
         where: { id: pupil.id },
     });

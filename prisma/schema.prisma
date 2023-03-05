@@ -639,6 +639,15 @@ model message_translation {
   notification   notification?                     @relation(fields: [notificationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5ae486c5ef53f5335af8a4ae260")
 }
 
+model important_information {
+  id          Int                                   @id(map: "PK_bcd2068ca02cc6f323bf01754a5") @default(autoincrement())
+  title       String
+  description String
+  recipients  important_information_recipients_enum
+  navigateTo  String?
+  language    important_information_language_enum   @default(de)
+}
+
 enum course_category_enum {
   revision
   club
@@ -942,6 +951,7 @@ enum course_subject_enum {
   Russisch
   Niederl_ndisch           @map("Niederländisch")
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
+  Religion
 }
 
 enum message_translation_language_enum {
@@ -967,4 +977,14 @@ enum notification_type_enum {
   course
   certificate
   legacy
+}
+
+enum important_information_language_enum {
+  en
+  de
+}
+
+enum important_information_recipients_enum {
+  students
+  pupils
 }
