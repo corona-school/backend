@@ -16,12 +16,11 @@ import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
-import { getManager } from 'typeorm';
-import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
+import { hasSubcourseFinished } from '../course/util';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -152,8 +151,11 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('subcourse') data: PublicSubcourseEditInput
     ): Promise<GraphQLModel.Subcourse> {
-        const subcourse = await getSubcourse(subcourseId);
+        const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
+        if (hasSubcourseFinished(subcourse)) {
+            throw new ForbiddenError('Cannot edit subcourse that has already finished');
+        }
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (data.maxParticipants < participantCount) {
             throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
