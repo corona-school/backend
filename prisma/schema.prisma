@@ -661,6 +661,8 @@ model pupil_screening {
 }
 
 enum course_category_enum {
+  language
+  focus
   revision
   club
   coaching
