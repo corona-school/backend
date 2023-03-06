@@ -44,7 +44,7 @@ try {
         categories: {
             default: {
                 appenders: ['stderr'],
-                level: process.env.DEBUG_LOG ? 'debug' : 'info',
+                level: isCommandArg('--debug') ? 'debug' : 'info',
             }
         },
     });
