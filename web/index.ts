@@ -44,7 +44,7 @@ try {
         categories: {
             default: {
                 appenders: ['stderr'],
-                level: 'info',
+                level: process.env.DEBUG_LOG ? 'debug' : 'info',
             }
         },
     });
@@ -54,6 +54,7 @@ try {
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+logger.debug('Debug logging enabled');
 
 //SETUP: moment
 moment.locale('de'); //set global moment date format

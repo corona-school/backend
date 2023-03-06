@@ -20,6 +20,7 @@
     "web:keep-db": "node -r dotenv/config ./built/web/index.js --keepDB",
     "web:nopdf": "node -r dotenv/config ./built/web/index.js --noPDF",
     "web:debug": "npm run build && node --inspect=0 ./built/web/index.js",
+    "web:debug-log": "DEBUG_LOG=true node ./built/web/index.js",
     "web:docs": "apidoc -i web/controllers -i common -o web/public/docs",
     "typeorm": "npm run build:clean && npx typeorm",
     "db:migration:create": "npm run typeorm -- migration:create -n",
