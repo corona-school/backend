@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class FurtherCourseCategories1678142085410 implements MigrationInterface {
-    name = 'FurtherCourseCategories1678142085410'
+    name = 'FurtherCourseCategories1678142085410';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TYPE "public"."course_category_enum" RENAME TO "course_category_enum_old"`);
