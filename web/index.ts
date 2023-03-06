@@ -39,25 +39,13 @@ import { WebSocketService } from '../common/websocket';
 try {
     configure({
         appenders: {
-            file: { type: 'dateFile', filename: 'logs/web.log', keepFileExt: true },
-            'file-filtered': { type: 'logLevelFilter', appender: 'file', level: 'info' },
-            'file-webaccess': { type: 'dateFile', filename: 'logs/access.log', keepFileExt: true },
-
-            stdout: { type: 'stdout' },
-            'stdout-filtered': { type: 'logLevelFilter', appender: 'stdout', level: isDev ? 'debug' : 'info' },
-
             stderr: { type: 'stderr' },
-            'stderr-filtered': { type: 'logLevelFilter', appender: 'stdout', level: 'all', maxLevel: 'debug' },
         },
         categories: {
             default: {
-                appenders: ['stderr-filtered', 'stdout-filtered', 'file-filtered'],
-                level: 'all',
-            },
-            access: {
-                appenders: ['file-webaccess', 'stdout-filtered'],
-                level: 'all',
-            },
+                appenders: ['stderr'],
+                level: 'info',
+            }
         },
     });
 } catch (e) {
