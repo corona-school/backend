@@ -339,7 +339,7 @@ export class MutateSubcourseResolver {
         }
 
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-        if (participantCount <= subcourse.maxParticipants) {
+        if (participantCount >= subcourse.maxParticipants) {
             // Course is full, create one single place for the pupil
             await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } } });
         }
