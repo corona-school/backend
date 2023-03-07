@@ -13,7 +13,7 @@ import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enu
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors } from '../../common/courses/contact';
-import { getCourse } from '../util';
+import { Deprecated, getCourse } from '../util';
 
 @ObjectType()
 class Participant {
@@ -318,6 +318,23 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver((returns) => [Participant])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(100)
+    async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
+        return await prisma.pupil.findMany({
+            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true },
+            where: {
+                subcourse_waiting_list_pupil: {
+                    some: {
+                        subcourseId: subcourse.id,
+                    },
+                },
+            },
+        });
+    }
+
+    @Deprecated('Use pupilsOnWaitinglist instead')
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
