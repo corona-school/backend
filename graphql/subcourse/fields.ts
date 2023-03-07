@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
+import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
 import { CourseState } from '../../common/entity/Course';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
@@ -405,6 +405,13 @@ export class ExtendedFieldsSubcourseResolver {
     async canJoin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await canJoinSubcourse(subcourse, pupil);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async canJoinWaitinglist(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
+        return await couldJoinSubcourse(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Decision)
