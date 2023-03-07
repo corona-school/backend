@@ -12,6 +12,34 @@ export const ENABLED_NOTIFICATIONS: Preferences = {
     legacy: { email: true },
 };
 
+export const ENABLED_NEWSLETTER: Preferences = {
+    chat: { email: true },
+    survey: { email: true },
+    appointment: { email: true },
+    advice: { email: true },
+    suggestion: { email: true },
+    announcement: { email: true },
+    call: { email: true },
+    news: { email: true },
+    event: { email: true },
+    request: { email: true },
+    alternative: { email: true },
+};
+
+export const DISABLED_NEWSLETTER: Preferences = {
+    chat: { email: true },
+    survey: { email: true },
+    appointment: { email: true },
+    advice: { email: true },
+    suggestion: { email: true },
+    announcement: { email: true },
+    call: { email: true },
+    news: { email: false },
+    event: { email: false },
+    request: { email: false },
+    alternative: { email: false },
+};
+
 // These are taken until the user changes their preferences in the settings
 export const DEFAULT_PREFERENCES: Preferences = {
     chat: { email: true },
