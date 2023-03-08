@@ -37,6 +37,7 @@ export const allJobs: CSCronJob[] = [
     // each night - database cleanups
     { cronTime: '00 00 05 * * *', jobFunction: anonymiseAttendanceLog },
     { cronTime: '00 00 04 * * *', jobFunction: cleanupSecrets },
-    { cronTime: '00 00 02 * * *', jobFunction: redactInactiveAccounts },
+    // TODO: Reenable once we have fixed accounts being redacted too early
+    // { cronTime: '00 00 02 * * *', jobFunction: redactInactiveAccounts },
     { cronTime: '00 00 01 * * *', jobFunction: dropOldNotificationContexts },
 ];
