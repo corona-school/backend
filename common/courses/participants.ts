@@ -73,10 +73,6 @@ export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
 }
 
 export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil) {
-    if (await hasStarted(subcourse)) {
-        throw new TooLateError(`Subourse has already started, cannot join waiting list`);
-    }
-
     if (await isParticipant(subcourse, pupil)) {
         throw new RedundantError(`Pupil is already participant`);
     }
@@ -119,6 +115,20 @@ export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
 }
 
 export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<Decision<CourseDecision>> {
+    const couldJoin = await couldJoinSubcourse(subcourse, pupil);
+    if (!couldJoin.allowed) {
+        return couldJoin;
+    }
+
+    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+    if (subcourse.maxParticipants <= participants) {
+        return { allowed: false, reason: 'subcourse-full' };
+    }
+    return { allowed: true };
+}
+
+// Whether the pupil could join the course if the course was not full (i.e. pupils can still join the waitinglist)
+export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<Decision<CourseDecision>> {
     if (!canJoinSubcourses(pupil).allowed) {
         return canJoinSubcourses(pupil);
     }
@@ -143,10 +153,6 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
         return { allowed: false, reason: 'grade-to-high' };
     }
 
-    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-    if (subcourse.maxParticipants <= participants) {
-        return { allowed: false, reason: 'subcourse-full' };
-    }
     return { allowed: true };
 }
 

@@ -168,6 +168,15 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         // School data is public knowledge and can be queried by everyone
         schools: everyone,
     },
+    Important_information: {
+        createOneImportant_information: adminOrOwner,
+        deleteOneImportant_information: adminOrOwner,
+        updateOneImportant_information: adminOrOwner,
+        createManyImportant_information: adminOrOwner,
+        deleteManyImportant_information: adminOrOwner,
+        updateManyImportant_information: adminOrOwner,
+        important_informations: everyone,
+    },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Subcourse_waiting_list_pupil: allAdmin,
@@ -190,6 +199,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
     Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
+    Pupil_screening: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -253,6 +263,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             isRedacted: nobody,
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
+            pupil_screening: adminOrOwner,
 
             // these are associations which are wrongly in the TypeGraphQL generation
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones

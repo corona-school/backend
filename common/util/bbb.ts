@@ -25,12 +25,18 @@ const bbbMeetingInfoHandlerTimeout = setInterval(() => {
 addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
+
     const entityManager = getManager();
     const meeting = await entityManager.findOne(BBBMeeting, { meetingID: id });
     return !!meeting;
 }
 
 export async function getBBBMeetingFromDB(id: string): Promise<BBBMeeting> {
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
+
     const entityManager = getManager();
     return await entityManager.findOne(BBBMeeting, { meetingID: id });
 }
@@ -41,6 +47,9 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
     const attendeePW = hashToken('' + Math.random(), 'sha1');
     const moderatorPW = hashToken('' + Math.random(), 'sha1');
     const bbbMeeting = new BBBMeeting();
+
+    // Meeting IDs must be at least 2 chars
+    id = id.padStart(2, '0');
 
     try {
         // Create new BBBMeeting
@@ -98,7 +107,7 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
     const callName = 'join';
     const params = {
         fullName: name,
-        meetingID: id,
+        meetingID: id.padStart(2, '0'),
         password: pw,
         redirect: 'true',
         userID: userID,
@@ -109,6 +118,8 @@ export function getMeetingUrl(id: string, name: string, pw: string, userID?: str
 }
 
 export async function isBBBMeetingRunning(id: string): Promise<boolean> {
+    id = id.padStart(2, '0');
+
     const callName = 'isMeetingRunning';
     const queryParams = encodeURI(`meetingID=${id}`);
     return fetch(`${baseUrl}${callName}?${queryParams}&checksum=${hashToken(callName + queryParams + sharedSecret, 'sha1')}`)

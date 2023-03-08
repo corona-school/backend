@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
+import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
 import { CourseState } from '../../common/entity/Course';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
@@ -13,7 +13,7 @@ import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enu
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors } from '../../common/courses/contact';
-import { getCourse } from '../util';
+import { Deprecated, getCourse } from '../util';
 
 @ObjectType()
 class Participant {
@@ -318,6 +318,23 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver((returns) => [Participant])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitEstimated(100)
+    async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
+        return await prisma.pupil.findMany({
+            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true },
+            where: {
+                subcourse_waiting_list_pupil: {
+                    some: {
+                        subcourseId: subcourse.id,
+                    },
+                },
+            },
+        });
+    }
+
+    @Deprecated('Use pupilsOnWaitinglist instead')
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     @LimitEstimated(100)
@@ -388,6 +405,13 @@ export class ExtendedFieldsSubcourseResolver {
     async canJoin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await canJoinSubcourse(subcourse, pupil);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.PUPIL)
+    async canJoinWaitinglist(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
+        const pupil = await getSessionPupil(context, pupilId);
+        return await couldJoinSubcourse(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Decision)

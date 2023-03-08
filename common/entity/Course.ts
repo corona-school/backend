@@ -18,7 +18,10 @@ export enum CourseState {
 }
 
 export enum CourseCategory {
+    LANGUAGE = 'language',
+    FOCUS = 'focus',
     REVISION = 'revision',
+    /* DEPRECATED: These have been used a while ago with differening semantics: */
     CLUB = 'club',
     COACHING = 'coaching',
 }

@@ -10,18 +10,17 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
+import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
-import { getManager } from 'typeorm';
-import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
+import { hasSubcourseFinished } from '../course/util';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -152,8 +151,11 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('subcourse') data: PublicSubcourseEditInput
     ): Promise<GraphQLModel.Subcourse> {
-        const subcourse = await getSubcourse(subcourseId);
+        const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
+        if (hasSubcourseFinished(subcourse)) {
+            throw new ForbiddenError('Cannot edit subcourse that has already finished');
+        }
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (data.maxParticipants < participantCount) {
             throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
@@ -189,7 +191,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         const existingMeeting = await prisma.bbb_meeting.findFirst({
-            where: { meetingID: '' + subcourse.id },
+            where: { meetingID: ('' + subcourse.id).padStart(2, '0') },
         });
 
         if (existingMeeting) {
@@ -203,7 +205,7 @@ export class MutateSubcourseResolver {
 
         await prisma.bbb_meeting.create({
             data: {
-                meetingID: '' + subcourse.id,
+                meetingID: ('' + subcourse.id).padStart(2, '0'),
                 meetingName: course.name,
                 alternativeUrl: meetingURL,
             },
@@ -221,7 +223,7 @@ export class MutateSubcourseResolver {
 
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: ('' + subcourse.id).padStart(2, '0') } });
         if (!meeting) {
             meeting = await createBBBMeeting(course.name, '' + subcourse.id, (await getUserTypeORM(context.user!.userID)) as Student | Pupil);
         }
@@ -315,6 +317,36 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseJoinFromWaitinglist(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ) {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        const pupil = await getPupil(pupilId);
+
+        const isOnWaitingList = (await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
+        if (!isOnWaitingList) {
+            throw new PrerequisiteError(
+                `Pupil(${pupil.id}) is not on the waitinglist of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`
+            );
+        }
+
+        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCount >= subcourse.maxParticipants) {
+            // Course is full, create one single place for the pupil
+            await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } } });
+        }
+
+        // Joining the subcourse will automatically remove the pupil from the waitinglist
+        await joinSubcourse(subcourse, pupil, true);
+
         return true;
     }
 
@@ -421,7 +453,7 @@ export class MutateSubcourseResolver {
             where: { courseId: guest.courseId },
         });
 
-        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: '' + subcourse.id } });
+        let meeting = await prisma.bbb_meeting.findFirst({ where: { meetingID: ('' + subcourse.id).padStart(2, '0') } });
         if (!meeting) {
             throw new PrerequisiteError(`Meeting not started yet`);
         }
