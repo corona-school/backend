@@ -10,7 +10,7 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
+import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { canPublish } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
@@ -317,6 +317,36 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseJoinFromWaitinglist(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ) {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        const pupil = await getPupil(pupilId);
+
+        const isOnWaitingList = (await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
+        if (!isOnWaitingList) {
+            throw new PrerequisiteError(
+                `Pupil(${pupil.id}) is not on the waitinglist of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`
+            );
+        }
+
+        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCount >= subcourse.maxParticipants) {
+            // Course is full, create one single place for the pupil
+            await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } } });
+        }
+
+        // Joining the subcourse will automatically remove the pupil from the waitinglist
+        await joinSubcourse(subcourse, pupil, true);
+
         return true;
     }
 
