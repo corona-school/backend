@@ -25,5 +25,5 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
     await Notification.actionTaken(pupil, 'pupil_screening_add', {});
 
-    logger.info(`Pupil (${pupil.id}) was screened`, screening);
+    logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }

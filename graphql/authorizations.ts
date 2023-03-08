@@ -105,6 +105,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
+const onlyAdmin = [Authorized(Role.ADMIN)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
@@ -439,5 +440,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
             error: nobody,
         }),
+    },
+    Pupil_screening: {
+        fields: {
+            comment: onlyAdmin,
+        },
     },
 };
