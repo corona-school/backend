@@ -29,7 +29,7 @@ export class PupilScreening {
     })
     status: PupilScreeningStatus;
 
-    @Column()
+    @Column({ default: false })
     invalidated: boolean;
 
     @Column({ nullable: true })
