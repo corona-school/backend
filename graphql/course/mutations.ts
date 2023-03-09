@@ -26,7 +26,7 @@ class PublicCourseCreateInput {
     @TypeGraphQL.Field((_type) => String)
     description!: string;
     @TypeGraphQL.Field((_type) => course_category_enum)
-    category!: 'revision' | 'club' | 'coaching';
+    category!: course_category_enum;
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
 
