@@ -24,6 +24,7 @@ import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
+import { invalidatePupilScreening } from '../../common/pupil/screening';
 
 @InputType()
 export class PupilUpdateInput {
@@ -184,6 +185,13 @@ export class MutatePupilResolver {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
 
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilInvalidateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
+        await invalidatePupilScreening(pupilId);
         return true;
     }
 }
