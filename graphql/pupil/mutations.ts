@@ -24,6 +24,7 @@ import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
+import { addPupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 
 @InputType()
@@ -184,6 +185,15 @@ export class MutatePupilResolver {
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
+        const pupil = await getPupil(pupilId);
+        await addPupilScreening(pupil);
 
         return true;
     }

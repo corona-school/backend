@@ -35,6 +35,9 @@ const _notificationActions = {
     user_registration_verified_email: {
         description: 'User / E-Mail verified',
     },
+    pupil_screening_add: {
+        description: 'Pupil / Screening was added',
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
     },
