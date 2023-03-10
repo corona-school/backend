@@ -11,6 +11,7 @@ import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user';
+import { addPupilScreening } from '../pupil/screening';
 
 const logger = getLogger('MatchingPool');
 
@@ -537,6 +538,7 @@ export async function sendConfirmationRequests(pool: MatchPool) {
     const pupils = await getPupilsToRequestInterest(pool);
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
+        await addPupilScreening(pupil, { comment: 'Created by interest confirmation job' });
     }
 }
 
