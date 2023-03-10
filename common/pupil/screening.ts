@@ -38,3 +38,8 @@ export async function invalidatePupilScreening(screeningId: number) {
     await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
     logger.info(`Invalidated pupil screening ${screeningId} for pupil ${screening.pupilId}`);
 }
+
+// Use this whenever you want to invalidate a pupil's screenings. A pupil should only have one valid screening at most; but we go sure that all are invalidated.
+export async function invalidateAllScreeningsOfPupil(pupilId: number) {
+    await prisma.pupil_screening.updateMany({ where: { pupilId }, data: { invalidated: true } });
+}
