@@ -200,8 +200,21 @@ export class MutatePupilResolver {
 
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN)
-    async pupilInvalidateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
-        await invalidatePupilScreening(pupilId);
+    async pupilInvalidateScreening(
+        @Arg('pupilId', { nullable: true }) pupilId?: number,
+        @Arg('pupilScreeningId', { nullable: true }) pupilScreeningId?: number
+    ): Promise<boolean> {
+        let screeningId;
+        if (pupilId != null) {
+            const screening = await prisma.pupil_screening.findFirstOrThrow({ where: { pupilId: pupilId, invalidated: false } });
+            screeningId = screening.id;
+        } else if (pupilScreeningId == null) {
+            throw new PrerequisiteError('Need to provide either pupilId or pupilScreeningId');
+        } else {
+            screeningId = pupilScreeningId;
+        }
+
+        await invalidatePupilScreening(screeningId);
         return true;
     }
 }
