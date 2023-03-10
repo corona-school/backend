@@ -30,9 +30,11 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
 
 export async function invalidatePupilScreening(screeningId: number) {
     const screening = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: screeningId } });
+
     if (screening.invalidated) {
         throw new RedundantError(`Pupil screening ${screeningId} is already invalidated`);
     }
+
     await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
     logger.info(`Invalidated pupil screening ${screeningId} for pupil ${screening.pupilId}`);
 }
