@@ -538,7 +538,7 @@ export async function sendConfirmationRequests(pool: MatchPool) {
     const pupils = await getPupilsToRequestInterest(pool);
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
-        await addPupilScreening(pupil, { comment: 'Created by interest confirmation job' });
+        // await addPupilScreening(pupil, { comment: 'Created by interest confirmation job' });
     }
 }
 
