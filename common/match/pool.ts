@@ -486,7 +486,7 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
     const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
     // If the interest confirmation rate is 10%, we need to ask 100 pupils to get 10 confirmations
-    const confirmationsNeeded = Math.floor(openOffers / (await getInterestConfirmationRate()));
+    const confirmationsNeeded = Math.floor(openOffers / ((await getInterestConfirmationRate()) || 1));
 
     const confirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, confirmationsNeeded - confirmationsPending);
@@ -538,11 +538,25 @@ export async function sendConfirmationRequests(pool: MatchPool) {
     const pupils = await getPupilsToRequestInterest(pool);
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
-        await addPupilScreening(pupil, { comment: 'Created by interest confirmation job' });
+    }
+}
+
+// Add a pending pupil screening to every pupil that needs one
+async function addPupilScreenings() {
+    // find all pupils that do not have a valid screening
+    const pupils = await prisma.pupil.findMany({ where: { pupil_screening: { none: { invalidated: false } } } });
+    for (const pupil of pupils) {
+        try {
+            await addPupilScreening(pupil, { comment: 'Added by interest confirmation job' });
+        } catch (e) {
+            logger.info(`Not adding pupil screening to pupil ${pupil.id}`);
+        }
     }
 }
 
 export async function runInterestConfirmations() {
+    await addPupilScreenings();
+
     for (const pool of pools) {
         if (pool.confirmInterest) {
             await sendConfirmationRequests(pool);
