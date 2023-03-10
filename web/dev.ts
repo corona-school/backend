@@ -1329,10 +1329,6 @@ export async function setupDevDB() {
     pticr2.reminderSentDate = new Date(Date.now() - 6.912e8); // minus 8 days in ms
     pticrs.push(pticr2);
 
-    // const pticr3 = new PupilTutoringInterestConfirmationRequest(p5, 'interest-confirmation-token-P5');
-    // pticr3.reminderSentDate = new Date(Date.now() - 2*6.912e8); // minus 16 days in ms
-    // pticrs.push(pticr3);
-
     for (let i = 0; i < pticrs.length; i++) {
         await entityManager.save(pticrs[i]);
         console.log('Inserted Pupil Tutoring Interest Request ' + i);
