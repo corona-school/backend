@@ -37,12 +37,12 @@ interface PupilScreeningUpdate {
 export async function updatePupilScreening(pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
     const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
     if (screening === null) {
-        logger.error('cannot find pupil with', { id: pupilScreeningId });
+        logger.error(`cannot find PupilScreening(${pupilScreeningId})`);
         throw new NotFoundError('pupil screening not found');
     }
 
     await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
-    logger.debug('successfully updated pupil', { pupilScreeningId, screeningUpdate });
+    logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate });
 
     if (screeningUpdate.status === PupilScreeningStatus.success || screeningUpdate.status === PupilScreeningStatus.rejection) {
         await Notification.actionTaken(screening.pupil, 'pupil_screening_update', {});
