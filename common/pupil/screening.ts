@@ -44,7 +44,18 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
     await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
     logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate });
 
-    if (screeningUpdate.status === PupilScreeningStatus.success || screeningUpdate.status === PupilScreeningStatus.rejection) {
-        await Notification.actionTaken(screening.pupil, 'pupil_screening_update', {});
+    // We only want to send notifications when the status got updated.
+    // Otherwise, we might spam the user while updating the comment.
+    if (screening.status === screeningUpdate.status) {
+        return;
+    }
+
+    switch (screeningUpdate.status) {
+        case PupilScreeningStatus.rejection:
+            await Notification.actionTaken(screening.pupil, 'pupil_screening_rejected', {});
+            break;
+        case PupilScreeningStatus.success:
+            await Notification.actionTaken(screening.pupil, 'pupil_screening_succeeded', {});
+            break;
     }
 }
