@@ -75,11 +75,11 @@ export class PupilUpdateInput {
 
 @InputType()
 export class PupilScreeningUpdateInput {
-    @Field(() => PupilScreeningStatus)
-    status: PupilScreeningStatus;
+    @Field(() => PupilScreeningStatus, { nullable: true })
+    status?: PupilScreeningStatus;
 
-    @Field(() => String)
-    comment: string;
+    @Field(() => String, { nullable: true })
+    comment?: string;
 }
 
 export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {

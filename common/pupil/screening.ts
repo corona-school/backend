@@ -30,8 +30,8 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
 }
 
 interface PupilScreeningUpdate {
-    status: PupilScreeningStatus;
-    comment: string;
+    status?: PupilScreeningStatus;
+    comment?: string;
 }
 
 export async function updatePupilScreening(pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
