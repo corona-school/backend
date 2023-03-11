@@ -1,12 +1,13 @@
-import { pupil as Pupil, pupil_screening_status_enum } from '@prisma/client';
+import { pupil as Pupil, pupil_screening_status_enum as PupilScreeningStatus } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getLogger } from 'log4js';
 import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
+import { NotFoundError } from '@prisma/client/runtime';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
-    status?: pupil_screening_status_enum;
+    status?: PupilScreeningStatus;
     comment?: string;
     invalidated?: boolean;
 }
@@ -26,4 +27,20 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     await Notification.actionTaken(pupil, 'pupil_screening_add', {});
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
+}
+
+interface PupilScreeningUpdate {
+    status: PupilScreeningStatus;
+    comment: string;
+}
+
+export async function updatePupilScreening(pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
+    const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId } });
+    if (screening === null) {
+        logger.error('cannot find pupil with', { id: pupilScreeningId });
+        throw new NotFoundError('pupil screening not found');
+    }
+
+    await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
+    logger.debug('successfully updated pupil', { pupilScreeningId, screeningUpdate });
 }
