@@ -38,6 +38,9 @@ const _notificationActions = {
     pupil_screening_add: {
         description: 'Pupil / Screening was added',
     },
+    pupil_screening_update: {
+        description: 'Pupil / Screening was updated',
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
     },
