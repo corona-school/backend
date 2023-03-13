@@ -38,6 +38,12 @@ const _notificationActions = {
     pupil_screening_add: {
         description: 'Pupil / Screening was added',
     },
+    pupil_screening_rejected: {
+        description: 'Pupil / Screening was rejected',
+    },
+    pupil_screening_succeeded: {
+        description: 'Pupil / Screening was successful',
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
     },

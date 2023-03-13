@@ -1,3 +1,7 @@
+// This has to be the first line in the project, so that the logger is configured before all the imports are executed.
+// Otherwise, we might initialize new loggers within the imports, which will not be configured properly and so not working.
+import('./setupLogger');
+
 import express from 'express';
 import http from 'http';
 import bodyParser from 'body-parser';
@@ -15,7 +19,7 @@ import * as registrationController from './controllers/registrationController';
 import * as mentoringController from './controllers/mentoringController';
 import * as expertController from './controllers/expertController';
 import * as interestConfirmationController from './controllers/interestConfirmationController';
-import { configure, connectLogger, getLogger } from 'log4js';
+import { connectLogger, getLogger } from 'log4js';
 import { createConnection, getConnection } from 'typeorm';
 import { authCheckFactory, screenerAuthCheck } from './middleware/auth';
 import { setupDevDB } from './dev';
@@ -36,22 +40,6 @@ import cookieParser from 'cookie-parser';
 import { WebSocketService } from '../common/websocket';
 
 // Logger setup
-try {
-    configure({
-        appenders: {
-            stderr: { type: 'stderr' },
-        },
-        categories: {
-            default: {
-                appenders: ['stderr'],
-                level: isCommandArg('--debug') ? 'debug' : 'info',
-            }
-        },
-    });
-} catch (e) {
-    console.warn("Couldn't setup logger", e);
-}
-
 const logger = getLogger();
 const accessLogger = getLogger('access');
 logger.debug('Debug logging enabled');
