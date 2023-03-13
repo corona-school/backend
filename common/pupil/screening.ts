@@ -36,5 +36,5 @@ export async function invalidatePupilScreening(screeningId: number) {
     }
 
     await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
-    logger.info(`Invalidated pupil screening ${screeningId} for pupil ${screening.pupilId}`);
+    logger.info(`Invalidated PupilScreening (${screeningId}) for Pupil (${screening.pupilId})`);
 }
