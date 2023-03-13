@@ -1,4 +1,4 @@
-import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap, FindManyStudentResolver } from './generated';
+import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap, FindManyStudentResolver, FindManyPupil_screeningResolver } from './generated';
 import { buildSchemaSync } from 'type-graphql';
 import {
     FindManyMatchResolver,
@@ -62,6 +62,7 @@ import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screenin
 import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
+import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -156,6 +157,10 @@ const schema = buildSchemaSync({
 
         /* Instructor Screenings */
         ExtendedFieldsInstructorScreeningResolver,
+
+        /* Pupil Screenings */
+        FindManyPupil_screeningResolver,
+        ExtendedFieldsPupil_screeningResolver,
 
         /* Screeners */
         FindManyScreenerResolver,
