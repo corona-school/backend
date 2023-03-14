@@ -40,14 +40,14 @@ class PublicSubcourseCreateInput {
 
 @InputType()
 class PublicSubcourseEditInput {
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    minGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxParticipants!: number;
-    @TypeGraphQL.Field((_type) => Boolean)
-    joinAfterStart!: boolean;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    minGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxParticipants?: number;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    joinAfterStart?: boolean;
 }
 
 @InputType()
