@@ -26,6 +26,7 @@ import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
+import { invalidatePupilScreening } from '../../common/pupil/screening';
 
 @InputType()
 export class PupilUpdateInput {
@@ -211,6 +212,13 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN)
     async pupilUpdateScreening(@Arg('pupilScreeningId') pupilScreeningId: number, @Arg('data') data: PupilScreeningUpdateInput): Promise<boolean> {
         await updatePupilScreening(pupilScreeningId, data);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
+        await invalidatePupilScreening(pupilScreeningId);
         return true;
     }
 }

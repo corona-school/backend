@@ -59,3 +59,14 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
             break;
     }
 }
+
+export async function invalidatePupilScreening(screeningId: number) {
+    const screening = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: screeningId } });
+
+    if (screening.invalidated) {
+        throw new RedundantError(`Pupil screening ${screeningId} is already invalidated`);
+    }
+
+    await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
+    logger.info(`Invalidated PupilScreening (${screeningId}) for Pupil (${screening.pupilId})`);
+}
