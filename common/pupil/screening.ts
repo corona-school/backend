@@ -1,12 +1,13 @@
-import { getLogger } from 'log4js';
+import { pupil as Pupil, pupil_screening_status_enum as PupilScreeningStatus } from '@prisma/client';
 import { prisma } from '../prisma';
-import { PrerequisiteError, RedundantError } from '../util/error';
-import { pupil as Pupil, pupil_screening_status_enum } from '@prisma/client';
+import { getLogger } from 'log4js';
 import * as Notification from '../notification';
+import { PrerequisiteError, RedundantError } from '../util/error';
+import { NotFoundError } from '@prisma/client/runtime';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
-    status?: pupil_screening_status_enum;
+    status?: PupilScreeningStatus;
     comment?: string;
     invalidated?: boolean;
 }
@@ -28,6 +29,37 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }
 
+interface PupilScreeningUpdate {
+    status?: PupilScreeningStatus;
+    comment?: string;
+}
+
+export async function updatePupilScreening(pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
+    const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
+    if (screening === null) {
+        logger.error(`cannot find PupilScreening(${pupilScreeningId})`);
+        throw new NotFoundError('pupil screening not found');
+    }
+
+    await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
+    logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate });
+
+    // We only want to send notifications when the status got updated.
+    // Otherwise, we might spam the user while updating the comment.
+    if (screening.status === screeningUpdate.status) {
+        return;
+    }
+
+    switch (screeningUpdate.status) {
+        case PupilScreeningStatus.rejection:
+            await Notification.actionTaken(screening.pupil, 'pupil_screening_rejected', {});
+            break;
+        case PupilScreeningStatus.success:
+            await Notification.actionTaken(screening.pupil, 'pupil_screening_succeeded', {});
+            break;
+    }
+}
+
 export async function invalidatePupilScreening(screeningId: number) {
     const screening = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: screeningId } });
 
@@ -36,7 +68,7 @@ export async function invalidatePupilScreening(screeningId: number) {
     }
 
     await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
-    logger.info(`Invalidated pupil screening ${screeningId} for pupil ${screening.pupilId}`);
+    logger.info(`Invalidated PupilScreening (${screeningId}) for Pupil (${screening.pupilId})`);
 }
 
 // Use this whenever you want to invalidate a pupil's screenings. A pupil should only have one valid screening at most; but we go sure that all are invalidated.

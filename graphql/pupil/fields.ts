@@ -55,7 +55,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Subcourse])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     async subcoursesWaitingList(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
