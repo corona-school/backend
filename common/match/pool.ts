@@ -11,6 +11,7 @@ import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user';
+import { addPupilScreening } from '../pupil/screening';
 
 const logger = getLogger('MatchingPool');
 
@@ -34,6 +35,7 @@ export interface MatchPool<Toggle extends string = string> {
         readonly minPupils: number;
     };
     readonly confirmInterest?: boolean;
+    readonly needsScreening?: boolean;
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -163,7 +165,14 @@ const _pools = [
     {
         name: 'lern-fair-now',
         confirmInterest: true,
-        toggles: ['skip-interest-confirmation', 'confirmation-pending', 'confirmation-unknown', 'screening-pending', 'screening-unknown'],
+        toggles: [
+            'skip-interest-confirmation',
+            'confirmation-pending',
+            'confirmation-unknown',
+            'pupil-screening-success',
+            'pupil-screening-pending',
+            'pupil-screening-unknown',
+        ],
         pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
@@ -172,7 +181,15 @@ const _pools = [
                 registrationSource: { notIn: ['plus'] },
             };
 
-            if (!toggles.includes('skip-interest-confirmation') && !toggles.includes('confirmation-pending') && !toggles.includes('confirmation-unknown')) {
+            // If: Interest confirmation is required
+            if (
+                !toggles.includes('skip-interest-confirmation') &&
+                !toggles.includes('confirmation-pending') &&
+                !toggles.includes('confirmation-unknown') &&
+                !toggles.includes('pupil-screening-success') &&
+                !toggles.includes('pupil-screening-pending') &&
+                !toggles.includes('pupil-screening-unknown')
+            ) {
                 query.OR = [
                     { registrationSource: 'cooperation' },
                     { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
@@ -193,7 +210,28 @@ const _pools = [
                 };
             }
 
-            if (toggles.includes('screening-pending')) {
+            if (toggles.includes('pupil-screening-success')) {
+                query.pupil_screening = {
+                    some: {
+                        invalidated: false,
+                        status: 'success',
+                    },
+                };
+            }
+
+            if (toggles.includes('pupil-screening-pending')) {
+                query.pupil_screening = {
+                    some: {
+                        invalidated: false,
+                        status: 'pending',
+                    },
+                };
+            }
+
+            if (toggles.includes('pupil-screening-unknown')) {
+                query.pupil_screening = {
+                    none: { invalidated: false },
+                };
             }
 
             return query;
@@ -210,71 +248,47 @@ const _pools = [
     },
     {
         name: 'lern-fair-plus',
-        toggles: ['allow-unverified'],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
-            isPupil: true,
-            openMatchRequestCount: { gt: 0 },
-            subjects: { not: '[]' },
-            registrationSource: { equals: 'plus' },
-        }),
+        toggles: ['allow-unverified', 'pupil-screening-success', 'pupil-screening-pending', 'pupil-screening-unknown'],
+        pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
+            const query: Prisma.pupilWhereInput = {
+                isPupil: true,
+                openMatchRequestCount: { gt: 0 },
+                subjects: { not: '[]' },
+                registrationSource: { equals: 'plus' },
+            };
+
+            if (toggles.includes('pupil-screening-success')) {
+                query.pupil_screening = {
+                    some: {
+                        invalidated: false,
+                        status: 'success',
+                    },
+                };
+            }
+
+            if (toggles.includes('pupil-screening-pending')) {
+                query.pupil_screening = {
+                    some: {
+                        invalidated: false,
+                        status: 'pending',
+                    },
+                };
+            }
+
+            if (toggles.includes('pupil-screening-unknown')) {
+                query.pupil_screening = {
+                    none: { invalidated: false },
+                };
+            }
+
+            return query;
+        },
         studentsToMatch: (toggles): Prisma.studentWhereInput => ({
             isStudent: true,
             openMatchRequestCount: { gt: 0 },
             subjects: { not: '[]' },
             screening: { success: true },
             registrationSource: { equals: 'plus' },
-        }),
-        createMatch,
-        settings: { balancingCoefficients },
-    },
-    {
-        // Pupils with valid screenings, with registration source LF Plus
-        name: 'screened-lf-plus',
-        toggles: [],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
-            isPupil: true,
-            pupil_screening: {
-                some: {
-                    invalidated: false,
-                    status: 'success',
-                },
-            },
-            subjects: { not: '[]' },
-            registrationSource: { equals: 'plus' },
-            openMatchRequestCount: { gt: 0 },
-        }),
-        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
-            isStudent: true,
-            openMatchRequestCount: { gt: 0 },
-            subjects: { not: '[]' },
-            screening: { success: true },
-            registrationSource: { equals: 'plus' },
-        }),
-        createMatch,
-        settings: { balancingCoefficients },
-    },
-    {
-        // Pupils with valid screenings, with registration source other than LF Plus
-        name: 'screened-other',
-        toggles: ['screening-pending', 'screening-unknown'],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
-            isPupil: true,
-            pupil_screening: {
-                some: {
-                    invalidated: false,
-                    status: 'success',
-                },
-            },
-            subjects: { not: '[]' },
-            registrationSource: { notIn: ['plus'] },
-            openMatchRequestCount: { gt: 0 },
-        }),
-        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
-            isStudent: true,
-            openMatchRequestCount: { gt: 0 },
-            subjects: { not: '[]' },
-            screening: { success: true },
-            registrationSource: { notIn: ['plus'] },
         }),
         createMatch,
         settings: { balancingCoefficients },
@@ -560,7 +574,7 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     return [...subjects];
 }
 
-export async function getPupilsToRequestInterest(pool: MatchPool): Promise<Pupil[]> {
+export async function getPupilsToContactNext(pool: MatchPool, toggle: 'confirmation-unknown' | 'pupil-screening-unknown'): Promise<Pupil[]> {
     let toSend = await confirmationRequestsToSend(pool);
     if (toSend <= 0) {
         return [];
@@ -569,7 +583,7 @@ export async function getPupilsToRequestInterest(pool: MatchPool): Promise<Pupil
     const offered = await offeredSubjects(pool);
     const result: Pupil[] = [];
 
-    const pupilsToRequest = await getPupils(pool, ['confirmation-unknown'], toSend * 5);
+    const pupilsToRequest = await getPupils(pool, [toggle], toSend * 5);
     for (const pupil of pupilsToRequest) {
         // Skip pupils who only want subjects that are not offered at the moment
         const subjects = JSON.parse(pupil.subjects).map((it) => it.name);
@@ -589,9 +603,16 @@ export async function getPupilsToRequestInterest(pool: MatchPool): Promise<Pupil
 }
 
 export async function sendConfirmationRequests(pool: MatchPool) {
-    const pupils = await getPupilsToRequestInterest(pool);
+    const pupils = await getPupilsToContactNext(pool, 'confirmation-unknown');
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
+    }
+}
+
+export async function addPupilScreenings(pool: MatchPool) {
+    const pupils = await getPupilsToContactNext(pool, 'pupil-screening-unknown');
+    for (const pupil of pupils) {
+        await addPupilScreening(pupil);
     }
 }
 
@@ -599,6 +620,9 @@ export async function runInterestConfirmations() {
     for (const pool of pools) {
         if (pool.confirmInterest) {
             await sendConfirmationRequests(pool);
+        }
+        if (pool.needsScreening) {
+            await addPupilScreenings(pool);
         }
     }
 

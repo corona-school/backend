@@ -229,12 +229,6 @@ const _notificationActions = {
             student: sampleUser,
         },
     },
-    'tutee_matching_lern-fair-plus': {
-        description: 'Tutee / Lern-Fair Plus Match success',
-        sampleContext: {
-            student: sampleUser,
-        },
-    },
     'tutee_matching_TEST-DO-NOT-USE': DEPRECATED,
 
     tutor_matching_success: {

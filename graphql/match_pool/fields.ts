@@ -11,7 +11,7 @@ import {
     getPoolStatistics,
     MatchPoolStatistics,
     confirmationRequestsToSend,
-    getPupilsToRequestInterest,
+    getPupilsToContactNext,
     getInterestConfirmationRate,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
@@ -142,7 +142,7 @@ export class FieldsMatchPoolResolver {
             return [];
         }
 
-        return await getPupilsToRequestInterest(matchPool);
+        return await getPupilsToContactNext(matchPool, 'confirmation-unknown');
     }
 
     @Query((returns) => Float)
