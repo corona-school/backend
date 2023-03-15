@@ -189,34 +189,37 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
     await sendTemplateMail(mail, participant.email);
 }
 
-async function getCourseStartDate(subcourseId: number) {
-    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourseId }, orderBy: { start: 'asc' }, take: 1 });
-    if (!lectures.length) {
-        return;
-    }
+async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey?: string }, subcourse: Prisma.subcourse) {
+    const { start } = await getFirstLecture(subcourse);
 
-    let firstLecture = lectures[0].start;
-    for (let i = 1; i < lectures.length; i++) {
-        if (lectures[i].start < firstLecture) {
-            firstLecture = lectures[i].start;
-        }
-    }
+    const date = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'long', year: 'numeric' });
+    const day = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', weekday: 'long' });
+    const time = start.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: 'numeric', minute: 'numeric' });
 
-    return firstLecture;
+    return {
+        course: {
+            name: course.name,
+            description: course.description,
+            image: course.imageKey ? accessURLForKey(course.imageKey) : '',
+        },
+        subcourse: {
+            url: `https://app.lern-fair.de/single-course/${subcourse.id}`,
+        },
+        firstLecture: {
+            date,
+            time,
+            day,
+        },
+    };
 }
 
 export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
-    const courseStartDate = await getCourseStartDate(subcourse.id);
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
     const courseSubject = course.subject;
     const grades = [];
-
-    if (!courseStartDate) {
-        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
-    }
 
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
@@ -250,17 +253,10 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         return actionId === 'available_places_on_subcourse' ? isPromotionValid(publishedAt, capacity, alreadyPromoted) : true;
     }
 
+    const context = await getNotificationContextForSubcourse(course, subcourse);
+
     async function notify(pupil: Prisma.pupil): Promise<void> {
-        await Notification.actionTaken(pupil, actionId, {
-            pupil,
-            courseTitle: course.name,
-            courseDescription: course.description,
-            courseDate: moment(courseStartDate).format('DD.MM.YYYY'),
-            courseName: course.name,
-            courseTime: moment(courseStartDate).format('HH:mm'),
-            courseImageURL: accessURLForKey(course.imageKey),
-            courseURL: `https://app.lern-fair.de/single-course/${subcourse.id}`,
-        });
+        await Notification.actionTaken(pupil, actionId, context);
     }
 
     if (canNotify(actionId, publishedAt, courseCapacity, alreadyPromoted)) {
