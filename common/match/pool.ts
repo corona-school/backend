@@ -163,7 +163,7 @@ const _pools = [
     {
         name: 'lern-fair-now',
         confirmInterest: true,
-        toggles: ['skip-interest-confirmation', 'confirmation-pending', 'confirmation-unknown'],
+        toggles: ['skip-interest-confirmation', 'confirmation-pending', 'confirmation-unknown', 'screening-pending', 'screening-unknown'],
         pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
@@ -193,6 +193,9 @@ const _pools = [
                 };
             }
 
+            if (toggles.includes('screening-pending')) {
+            }
+
             return query;
         },
         studentsToMatch: (toggles): Prisma.studentWhereInput => ({
@@ -220,6 +223,58 @@ const _pools = [
             subjects: { not: '[]' },
             screening: { success: true },
             registrationSource: { equals: 'plus' },
+        }),
+        createMatch,
+        settings: { balancingCoefficients },
+    },
+    {
+        // Pupils with valid screenings, with registration source LF Plus
+        name: 'screened-lf-plus',
+        toggles: [],
+        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
+            isPupil: true,
+            pupil_screening: {
+                some: {
+                    invalidated: false,
+                    status: 'success',
+                },
+            },
+            subjects: { not: '[]' },
+            registrationSource: { equals: 'plus' },
+            openMatchRequestCount: { gt: 0 },
+        }),
+        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
+            isStudent: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: '[]' },
+            screening: { success: true },
+            registrationSource: { equals: 'plus' },
+        }),
+        createMatch,
+        settings: { balancingCoefficients },
+    },
+    {
+        // Pupils with valid screenings, with registration source other than LF Plus
+        name: 'screened-other',
+        toggles: ['screening-pending', 'screening-unknown'],
+        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
+            isPupil: true,
+            pupil_screening: {
+                some: {
+                    invalidated: false,
+                    status: 'success',
+                },
+            },
+            subjects: { not: '[]' },
+            registrationSource: { notIn: ['plus'] },
+            openMatchRequestCount: { gt: 0 },
+        }),
+        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
+            isStudent: true,
+            openMatchRequestCount: { gt: 0 },
+            subjects: { not: '[]' },
+            screening: { success: true },
+            registrationSource: { notIn: ['plus'] },
         }),
         createMatch,
         settings: { balancingCoefficients },
