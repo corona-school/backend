@@ -7,11 +7,11 @@ import { diff, hash } from './diff';
 const logger = getLogger();
 const collectionId = process.env.WEBFLOW_COLLECTION_ID;
 
-interface Subject extends WebflowMetadata {
+interface CourseDTO extends WebflowMetadata {
     outline: string;
 }
 
-function subjectsFactory(data: any): Subject {
+function courseDTOFactory(data: any): CourseDTO {
     // TODO: check if data exist
     return {
         _id: data._id,
@@ -24,8 +24,8 @@ function subjectsFactory(data: any): Subject {
     };
 }
 
-function courseToSubject(course: Course): Subject {
-    const subject: Subject = {
+function courseToDTO(course: Course): CourseDTO {
+    const courseDTO: CourseDTO = {
         _id: '',
         _archived: false,
         _draft: false,
@@ -34,15 +34,15 @@ function courseToSubject(course: Course): Subject {
         slug: '',
         outline: course.outline,
     };
-    subject.slug = hash(subject);
-    return subject;
+    courseDTO.slug = hash(course);
+    return courseDTO;
 }
 
 export default async function execute(manager: EntityManager): Promise<void> {
-    const webflowSubjects = await getCollectionItems<Subject>(collectionId, subjectsFactory);
-    const dbSubjects = (await manager.find(Course, {})).map(courseToSubject);
+    const webflowCourses = await getCollectionItems<CourseDTO>(collectionId, courseDTOFactory);
+    const dbCourses = (await manager.find(Course, {})).map(courseToDTO);
 
-    const result = diff(webflowSubjects, dbSubjects);
+    const result = diff(webflowCourses, dbCourses);
 
     const changedIds: string[] = [];
     for (const row of result.new) {
