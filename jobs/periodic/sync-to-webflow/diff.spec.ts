@@ -19,11 +19,11 @@ function newTestObj(id: number, data: string): TestData {
         _id: randomString(),
         _archived: randomBool(),
         _draft: randomBool(),
-        hash: '',
+        slug: '',
         databaseid: id,
         data: data,
     };
-    res.hash = hash(res);
+    res.slug = hash(res);
     return res;
 }
 
@@ -35,7 +35,6 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
-        expect(result.update).toStrictEqual([]);
     });
     it('should notice a change in data', () => {
         const left: TestData[] = [newTestObj(1, 'foo')];
@@ -44,7 +43,6 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
-        expect(result.update).toStrictEqual(right);
     });
     it('should create new object as id was not found', () => {
         const newObj = newTestObj(2, 'foo');
@@ -54,7 +52,6 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([]);
-        expect(result.update).toStrictEqual([]);
     });
     it('should should remove missing object', () => {
         const oldObj = newTestObj(2, 'foo');
@@ -64,7 +61,6 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([oldObj]);
-        expect(result.update).toStrictEqual([]);
     });
     it('should notice a diff in id even if the hash is the same', () => {
         const oldObj = newTestObj(1, 'foo');
@@ -78,6 +74,5 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([oldObj]);
-        expect(result.update).toStrictEqual([]);
     });
 });

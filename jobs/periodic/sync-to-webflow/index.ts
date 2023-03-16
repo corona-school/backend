@@ -1,14 +1,14 @@
 import { Course } from '../../../common/entity/Course';
 import { EntityManager } from 'typeorm';
 import { getLogger } from '../../utils/logging';
-import { createNewItem, deleteItems, getCollectionItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash } from './diff';
 
 const logger = getLogger();
 const collectionId = process.env.WEBFLOW_COLLECTION_ID;
 
 interface Subject extends WebflowMetadata {
-    name: string;
+    outline: string;
 }
 
 function subjectsFactory(data: any): Subject {
@@ -18,8 +18,9 @@ function subjectsFactory(data: any): Subject {
         _archived: data._archived,
         _draft: data._draft,
         name: data.name,
+        slug: data.slug,
         databaseid: data.databaseid,
-        hash: data.hash,
+        outline: data.outline,
     };
 }
 
@@ -30,9 +31,10 @@ function courseToSubject(course: Course): Subject {
         _draft: false,
         name: course.name,
         databaseid: course.id,
-        hash: '',
+        slug: '',
+        outline: course.outline,
     };
-    subject.hash = hash(subject);
+    subject.slug = hash(subject);
     return subject;
 }
 
@@ -50,6 +52,8 @@ export default async function execute(manager: EntityManager): Promise<void> {
 
     const outdatedIds = result.outdated.map((row) => row._id);
     await deleteItems(collectionId, outdatedIds);
+
+    await publishItems(collectionId, changedIds);
 
     console.log(JSON.stringify(result, null, 4));
     logger.info('done', changedIds);

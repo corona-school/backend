@@ -1,10 +1,13 @@
 import { join } from 'path';
 
 export interface WebflowMetadata {
-    _id: string;
-    _archived: boolean;
-    _draft: boolean;
-    hash: string;
+    _id?: string;
+    _archived?: boolean;
+    _draft?: boolean;
+    name?: string;
+    // The slug is a unique value that should never be changed because it cannot be reused.
+    // Said that we are using it to store the hash, which should always match the actual data stored in the item.
+    slug?: string;
     databaseid?: number;
 }
 
@@ -12,7 +15,7 @@ export const emptyMetadata: WebflowMetadata = {
     _id: '',
     _archived: false,
     _draft: false,
-    hash: '',
+    slug: '',
 };
 
 export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
@@ -35,9 +38,14 @@ export async function deleteItems(collectionId: string, itemIds: string[]) {
     await request({ path: `collections/${collectionId}/items`, method: 'DELETE', data: body });
 }
 
+export async function publishItems(collectionId: string, itemIds: string[]) {
+    const body = { itemIds: itemIds };
+    await request({ path: `collections/${collectionId}/items/publish`, method: 'PUT', data: body });
+}
+
 interface Request {
     path: string;
-    method: 'GET' | 'POST' | 'DELETE';
+    method: 'GET' | 'POST' | 'DELETE' | 'PUT';
     data?: any;
 }
 
