@@ -1,8 +1,17 @@
 import { join } from 'path';
 
 export interface WebflowMetadata {
+    _id: string;
     _archived: boolean;
+    hash: string;
+    databaseId?: number;
 }
+
+export const emptyMetadata: WebflowMetadata = {
+    _id: '',
+    _archived: false,
+    hash: '',
+};
 
 export async function getCollectionItems<T>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
     const data = await request({ path: `collections/${collectionID}/items`, method: 'GET' });
