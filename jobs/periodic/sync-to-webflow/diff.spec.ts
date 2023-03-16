@@ -18,8 +18,9 @@ function newTestObj(id: number, data: string): TestData {
     const res: TestData = {
         _id: randomString(),
         _archived: randomBool(),
+        _draft: randomBool(),
         hash: '',
-        databaseId: id,
+        databaseid: id,
         data: data,
     };
     res.hash = hash(res);
@@ -68,7 +69,7 @@ describe('diff', () => {
     it('should notice a diff in id even if the hash is the same', () => {
         const oldObj = newTestObj(1, 'foo');
         const newObj = structuredClone(oldObj) as TestData;
-        newObj.databaseId = 2;
+        newObj.databaseid = 2;
 
         const left: TestData[] = [oldObj];
         const right: TestData[] = [newObj];
