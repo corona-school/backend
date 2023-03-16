@@ -40,14 +40,14 @@ class PublicSubcourseCreateInput {
 
 @InputType()
 class PublicSubcourseEditInput {
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    minGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxParticipants!: number;
-    @TypeGraphQL.Field((_type) => Boolean)
-    joinAfterStart!: boolean;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    minGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxParticipants?: number;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    joinAfterStart?: boolean;
 }
 
 @InputType()
@@ -156,12 +156,21 @@ export class MutateSubcourseResolver {
         if (hasSubcourseFinished(subcourse)) {
             throw new ForbiddenError('Cannot edit subcourse that has already finished');
         }
-        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-        if (data.maxParticipants < participantCount) {
-            throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+
+        const isMaxParticipantsChanged: boolean = Boolean(data.maxParticipants);
+
+        if (isMaxParticipantsChanged) {
+            const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+            if (data.maxParticipants < participantCount) {
+                throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+            }
         }
+
         const result = await prisma.subcourse.update({ data: { ...data }, where: { id: subcourseId } });
-        await fillSubcourse(result);
+
+        if (isMaxParticipantsChanged) {
+            await fillSubcourse(result);
+        }
         return result;
     }
 
