@@ -41,8 +41,8 @@ describe('diff', () => {
         const right: TestData[] = [newTestObj(1, 'foobar')];
         const result = diff(left, right);
 
-        expect(result.new).toStrictEqual([]);
-        expect(result.outdated).toStrictEqual([]);
+        expect(result.new).toStrictEqual(right);
+        expect(result.outdated).toStrictEqual(left);
     });
     it('should create new object as id was not found', () => {
         const newObj = newTestObj(2, 'foo');
