@@ -9,7 +9,7 @@ export function hash<T extends WebflowMetadata>(data: T): string {
 function mapToDBId<T extends WebflowMetadata>(data: T[]): { [key: number]: T } {
     const res = {};
     for (const row of data) {
-        res[row.databaseId] = row;
+        res[row.databaseid] = row;
     }
     return res;
 }

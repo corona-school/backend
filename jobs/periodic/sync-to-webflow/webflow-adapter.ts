@@ -3,37 +3,62 @@ import { join } from 'path';
 export interface WebflowMetadata {
     _id: string;
     _archived: boolean;
+    _draft: boolean;
     hash: string;
-    databaseId?: number;
+    databaseid?: number;
 }
 
 export const emptyMetadata: WebflowMetadata = {
     _id: '',
     _archived: false,
+    _draft: false,
     hash: '',
 };
 
-export async function getCollectionItems<T>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
+export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
     const data = await request({ path: `collections/${collectionID}/items`, method: 'GET' });
-    return data.map(factory);
+    // TODO: we should check if .items exists
+    return data.items.map(factory);
+}
+
+export async function createNewItem<T extends WebflowMetadata>(collectionID: string, data: T): Promise<string> {
+    // We have to remove the _id field for new items, otherwise we would try to set an empty id, which is not permitted.
+    const body = { fields: structuredClone(data) as WebflowMetadata };
+    delete body.fields._id;
+
+    const response = await request({ path: `collections/${collectionID}/items`, method: 'POST', data: body });
+    return response._id;
+}
+
+export async function deleteItems(collectionId: string, itemIds: string[]) {
+    const body = { itemIds: itemIds };
+    await request({ path: `collections/${collectionId}/items`, method: 'DELETE', data: body });
 }
 
 interface Request {
     path: string;
-    method: 'GET';
+    method: 'GET' | 'POST' | 'DELETE';
+    data?: any;
 }
 
-async function request(req: Request): Promise<any[]> {
+async function request(req: Request): Promise<any> {
     const url = join(process.env.WEBFLOW_API_BASE_URL, req.path);
     const token = process.env.WEBFLOW_API_KEY;
 
-    const res = await fetch(url, {
+    const options: RequestInit = {
         method: req.method,
         headers: {
             accept: 'application/json',
             authorization: `Bearer ${token}`,
         },
-    });
-    const json = await res.json();
-    return json.items || [];
+    };
+
+    if (req.data) {
+        options.body = JSON.stringify(req.data);
+        options.headers['Content-Type'] = 'application/json';
+    }
+
+    // TODO: catch API errors
+    const res = await fetch(url, options);
+    return res.json();
 }
