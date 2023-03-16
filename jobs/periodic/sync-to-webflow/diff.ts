@@ -28,7 +28,7 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
             continue;
         }
         if (leftMap[dbId].hash != rightMap[dbId].hash) {
-            entriesToUpdate.push(leftMap[dbId]);
+            entriesToUpdate.push(rightMap[dbId]);
         }
     }
 
