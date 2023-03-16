@@ -5,5 +5,11 @@ import { getLogger } from '../../utils/logging';
 const logger = getLogger();
 
 export default async function execute(manager: EntityManager): Promise<void> {
-    await syncCourses(manager, logger);
+    try {
+        logger.info('Run Webflow sync');
+        await syncCourses(manager, logger);
+        logger.info('Finished Webflow sync');
+    } catch (e) {
+        logger.error('Failed to sync Webflow data', e);
+    }
 }

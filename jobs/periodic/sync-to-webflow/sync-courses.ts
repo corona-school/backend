@@ -38,6 +38,7 @@ function courseToDTO(course: Course): CourseDTO {
 }
 
 export default async function syncCourses(manager: EntityManager, logger: Logger): Promise<void> {
+    logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<CourseDTO>(collectionId, courseDTOFactory);
     const dbCourses = (await manager.find(Course, {})).map(courseToDTO);
 
@@ -54,6 +55,5 @@ export default async function syncCourses(manager: EntityManager, logger: Logger
 
     await publishItems(collectionId, changedIds);
 
-    console.log(JSON.stringify(result, null, 4));
-    logger.info('done', changedIds);
+    logger.info('finished course sync', { newItems: result.new.length, deletedItems: result.outdated.length });
 }
