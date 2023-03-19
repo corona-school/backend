@@ -9,7 +9,7 @@ test("Admin set Email of Pupil", async () => {
     const otherEmail = `TEST+${randomBytes(5).toString("base64")}@lern-fair.de`;
 
     await adminClient.request(
-        `mutation PupilChangeEmail { pupilUpdate(pupilId: ${pupil.id} data: { email: "${otherEmail}" })}`
+        `mutation PupilChangeEmail { pupilUpdate(pupilId: ${pupil.pupil.id} data: { email: "${otherEmail}" })}`
     );
 
     const { me: { pupil: { email: updatedEmail } } } = await client.request(`query { me { pupil { email }}}`);
@@ -19,7 +19,7 @@ test("Admin set Email of Pupil", async () => {
 
 
     await adminClient.request(
-        `mutation PupilRevertEmailChange { pupilUpdate(pupilId: ${pupil.id} data: { email: "${pupil.email}" })}`
+        `mutation PupilRevertEmailChange { pupilUpdate(pupilId: ${pupil.pupil.id} data: { email: "${pupil.email}" })}`
     );
 });
 
@@ -30,7 +30,7 @@ test("Admin set Email of Student", async () => {
     const otherEmail = `TEST+${randomBytes(5).toString("base64")}@lern-fair.de`;
 
     await adminClient.request(
-        `mutation StudentChangeEmail { studentUpdate(studentId: ${student.id} data: { email: "${otherEmail}" })}`
+        `mutation StudentChangeEmail { studentUpdate(studentId: ${student.student.id} data: { email: "${otherEmail}" })}`
     );
 
     const { me: { student: { email: updatedEmail } } } = await client.request(`query { me { student { email }}}`);
@@ -38,6 +38,6 @@ test("Admin set Email of Student", async () => {
 
 
     await adminClient.request(
-        `mutation StudentRevertEmailChange { studentUpdate(studentId: ${student.id} data: { email: "${student.email}" })}`
+        `mutation StudentRevertEmailChange { studentUpdate(studentId: ${student.student.id} data: { email: "${student.email}" })}`
     );
 });
