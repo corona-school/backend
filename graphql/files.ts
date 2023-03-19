@@ -34,7 +34,7 @@ import { v4 as uuid } from 'uuid';
 import { getLogger } from 'log4js';
 
 const FILE_STORAGE_DURATION = 10 * 60 * 1000; // After 10 Minutes, files are removed from the store
-const FILE_STORAGE_MAX_SIZE = 20; // Prevent file storage from growing infinitely, potentially leading to OOM
+const FILE_STORAGE_MAX_SIZE = 50; // Prevent file storage from growing infinitely, potentially leading to OOM
 
 const log = getLogger('GraphQL Files');
 
