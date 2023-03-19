@@ -27,6 +27,7 @@ import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
+import { ValidateEmail } from '../validators';
 
 @InputType()
 export class PupilUpdateInput {
@@ -37,6 +38,7 @@ export class PupilUpdateInput {
     lastname?: string;
 
     @Field((type) => String, { nullable: true })
+    @ValidateEmail()
     email?: string;
 
     @Field((type) => Int, { nullable: true })
