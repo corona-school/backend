@@ -34,6 +34,8 @@ class MatchPool {
     automatic?: MatchPoolAutomatic;
     @Field({ nullable: true })
     confirmInterest?: boolean;
+    @Field({ nullable: true })
+    needsScreening?: boolean;
     @Field((type) => [String])
     toggles: string[];
 }
@@ -143,6 +145,16 @@ export class FieldsMatchPoolResolver {
         }
 
         return await getPupilsToContactNext(matchPool, 'confirmation-unknown');
+    }
+
+    @FieldResolver((returns) => [Pupil])
+    @Authorized(Role.ADMIN)
+    async pupilsToScreen(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.needsScreening) {
+            return [];
+        }
+
+        return await getPupilsToContactNext(matchPool, 'pupil-screening-unknown');
     }
 
     @Query((returns) => Float)

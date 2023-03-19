@@ -188,7 +188,7 @@ const _pools = [
                 !toggles.includes('confirmation-unknown') &&
                 !toggles.includes('pupil-screening-success') &&
                 !toggles.includes('pupil-screening-pending') &&
-                !toggles.includes('pupil-screening-unknown')
+                !toggles.includes('pupil-screening-unkown')
             ) {
                 query.OR = [
                     { registrationSource: 'cooperation' },
@@ -554,7 +554,7 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
     const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
     // If the interest confirmation rate is 10%, we need to ask 100 pupils to get 10 confirmations
-    const confirmationsNeeded = Math.floor(openOffers / (await getInterestConfirmationRate()));
+    const confirmationsNeeded = Math.floor(openOffers / ((await getInterestConfirmationRate()) || 1));
 
     const confirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, confirmationsNeeded - confirmationsPending);
