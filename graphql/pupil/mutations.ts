@@ -38,7 +38,7 @@ export class PupilUpdateInput {
     lastname?: string;
 
     @Field((type) => String, { nullable: true })
-    @ValidateEmail()
+    // @ValidateEmail()
     email?: string;
 
     @Field((type) => Int, { nullable: true })
