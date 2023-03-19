@@ -230,5 +230,6 @@ export class MutateCourseResolver {
         });
 
         logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
+        return tag;
     }
 }
