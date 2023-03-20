@@ -20,7 +20,9 @@ export const emptyMetadata: WebflowMetadata = {
 
 export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
     const data = await request({ path: `collections/${collectionID}/items`, method: 'GET' });
-    // TODO: we should check if .items exists
+    if (!data.items) {
+        throw new Error('Response did not include any items');
+    }
     return data.items.map(factory);
 }
 
@@ -66,7 +68,9 @@ async function request(req: Request): Promise<any> {
         options.headers['Content-Type'] = 'application/json';
     }
 
-    // TODO: catch API errors
     const res = await fetch(url, options);
+    if (res.status < 100 || res.status >= 300) {
+        throw new Error(`API returned invalid status ${res.status}`);
+    }
     return res.json();
 }
