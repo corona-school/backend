@@ -67,7 +67,7 @@ export const executeJob = async (job) => {
             break;
         }
         case 'syncToWebflow':
-            syncToWebflow(getManager());
+            syncToWebflow();
             break;
         default: {
             throw new Error(`Did not find job ${job}`);
