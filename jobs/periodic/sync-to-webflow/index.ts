@@ -1,13 +1,12 @@
-import { EntityManager } from 'typeorm';
 import syncCourses from './sync-courses';
 import { getLogger } from '../../utils/logging';
 
 const logger = getLogger();
 
-export default async function execute(manager: EntityManager): Promise<void> {
+export default async function execute(): Promise<void> {
     try {
         logger.info('Run Webflow sync');
-        await syncCourses(manager, logger);
+        await syncCourses(logger);
         logger.info('Finished Webflow sync');
     } catch (e) {
         logger.error('Failed to sync Webflow data', e);
