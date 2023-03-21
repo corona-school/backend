@@ -8,6 +8,7 @@ import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './ut
 import { getLogger } from 'log4js';
 import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool, MatchPool } from './pool';
+import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 
 const logger = getLogger('Match');
 
@@ -46,6 +47,8 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
             openMatchRequestCount: { decrement: 1 },
         },
     });
+
+    await invalidateAllScreeningsOfPupil(pupil.id);
 
     const callURL = getJitsiTutoringLink(match);
     const matchSubjects = getOverlappingSubjects(pupil, student)
