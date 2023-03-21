@@ -86,11 +86,12 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
         assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
         assert(root, 'root value must be bound to determine access');
-        assert(context.user.pupilId, 'User must be a pupil');
-        const pupil = await getPupil(context.user.pupilId);
-        const success = await isParticipant(root, pupil);
-        if (success) {
-            return true;
+        if (context.user.pupilId) {
+            const pupil = await getPupil(context.user.pupilId);
+            const success = await isParticipant(root, pupil);
+            if (success) {
+                return true;
+            }
         }
     }
 

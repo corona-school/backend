@@ -86,7 +86,7 @@ export const pupilOne = test("Register Pupil", async () => {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
 
-    return { client, pupil };
+    return { client, pupil: pupil as { firstname: string, lastname: string, email: string, pupil: { id: number } } };
 });
 
 export const studentOne = test("Register Student", async () => {
@@ -148,7 +148,7 @@ export const studentOne = test("Register Student", async () => {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     student.email = student.email.toUpperCase();
 
-    return { client, student };
+    return { client, student: student as { firstname: string, lastname: string, email: string, student: { id: number; }} };
 });
 
 export const instructorOne = test("Register Instructor", async () => {

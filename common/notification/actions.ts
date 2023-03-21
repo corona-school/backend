@@ -13,6 +13,21 @@ export interface NotificationAction {
 }
 
 const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
+const sampleCourse = {
+    course: {
+        name: 'Apollo',
+        description: "That's one small step for a man, one giant leap for mankind.",
+        image: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Moon.jpg',
+    },
+    subcourse: {
+        url: `https://app.lern-fair.de/single-course/1`,
+    },
+    firstLecture: {
+        date: '20. Juli 1969',
+        time: '19:17',
+        day: 'Sonntag',
+    },
+};
 
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
@@ -158,22 +173,12 @@ const _notificationActions = {
         },
     },
     instructor_subcourse_published: {
-        description: 'Instructor / Subcourse published',
-        sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Subkurs',
-            },
-        },
+        description: 'Pupil / New course was published',
+        sampleContext: sampleCourse,
     },
     available_places_on_subcourse: {
-        description: 'Instructor / Available places on subcourse',
-        sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Subkurs',
-            },
-        },
+        description: 'Pupil / Available places on subcourse',
+        sampleContext: sampleCourse,
     },
     student_certificate_sign: {
         description: 'Student / Tutoring Certificate was signed',
