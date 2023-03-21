@@ -72,6 +72,11 @@ export class ExtendedFieldsSubcourseResolver {
     ) {
         // All filters need to match
         const filters = [IS_PUBLIC_SUBCOURSE()];
+        const pupilId = context.user!.pupilId!;
+
+        const pupil = await prisma.pupil.findUnique({
+            where: { id: pupilId },
+        });
 
         if (search) {
             filters.push({
@@ -79,12 +84,19 @@ export class ExtendedFieldsSubcourseResolver {
             });
         }
 
+        // if one lecture > new Date() ✅
+        // if pupils grade in grade range between subcourse.minGrade and subcourse.maxGrade ✅
+        // if pupil != subcourse.isParticipant ✅
+        // if maxParticipants != participantsCount
         if (onlyJoinable) {
             filters.push({
                 OR: [
                     { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
                     { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
                 ],
+                AND: [{ minGrade: { gte: Number(pupil.grade) }, maxGrade: { lte: Number(pupil.grade) } }],
+                subcourse_participants_pupil: { none: { pupilId: pupilId } },
+                subcourse_waiting_list_pupil: { none: { pupilId: pupilId } },
             });
         }
 
@@ -95,8 +107,8 @@ export class ExtendedFieldsSubcourseResolver {
                 });
             } else if (isSessionPupil(context)) {
                 filters.push({
-                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
-                    subcourse_waiting_list_pupil: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_participants_pupil: { none: { pupilId: pupilId } },
+                    subcourse_waiting_list_pupil: { none: { pupilId: pupilId } },
                 });
             } /* else ignore */
         }
