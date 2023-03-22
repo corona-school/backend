@@ -1,4 +1,7 @@
+import { getLogger } from '../../utils/logging';
 import { join } from 'path';
+
+const logger = getLogger();
 
 export interface WebflowMetadata {
     _id?: string;
@@ -8,7 +11,7 @@ export interface WebflowMetadata {
     // The slug is a unique value that should never be changed because it cannot be reused.
     // Said that we are using it to store the hash, which should always match the actual data stored in the item.
     slug?: string;
-    databaseid?: number;
+    databaseid?: string; // We are using a string to be safe for any case.
 }
 
 export const emptyMetadata: WebflowMetadata = {
@@ -70,7 +73,9 @@ async function request(req: Request): Promise<any> {
 
     const res = await fetch(url, options);
     if (res.status < 100 || res.status >= 300) {
-        throw new Error(`API returned invalid status ${res.status}`);
+        const data = await res.json();
+        logger.error('webflow api request failed', { status: res.status, data });
+        throw new Error(`API returned invalid status ${res.status}: `);
     }
     return res.json();
 }

@@ -3,46 +3,52 @@ import { diff, hash } from './diff';
 import { Logger } from 'log4js';
 import { prisma } from '../../../common/prisma';
 import { course_coursestate_enum as courseState, Subcourse, Subcourse_instructors_student as SubcourseInstructorsStudent } from '../../../graphql/generated';
+import moment, { Moment } from 'moment';
+
+// This is needed so that the weekday will be translated properly.
+moment.locale('de');
 
 const collectionId = process.env.WEBFLOW_COLLECTION_ID;
 
 interface CourseDTO extends WebflowMetadata {
     description: string;
-    host: string;
-    'short-description': string;
+    instructor: string;
+    aboutinstructor: string;
+    subheading: string;
 
-    'start-date': string;
-    wochentag: string; // reference
-    kursdauer: string; // reference
-    repetitions: number;
-    time: string; // maybe Date? was smth like 16:00;
-    termine: string; // all appointments
+    startingdate: string;
+    weekday: string;
+    courseduration: string; // like "45 min"
+    lessoncount: number;
+    time: string; // like 16:00 Uhr
+    appointments: string;
 
-    'course-type': string; // reference
-    'link-to-course': string;
-    'max-participants': number;
-    'actual-participants': number;
-    'subject-2': string; // reference
+    category: string;
+    link: string;
+    maxparticipants: number;
+    actualparticipants: number;
+    subject: string;
 
-    vorkenntnisse: boolean;
-    'min-grade': number;
-    'max-grade': number;
-    altergruppe: string; // reference
+    mingrade: number;
+    maxgrade: number;
+    priorknowledge: boolean;
+    agegroup: string;
+    level: string;
 
-    'bild-copyright-info': string;
+    imagecopyrightinfo: string;
     thumbnail: {
-        fileId: string; // reference
+        fileId: string; // TODO check if needed
         url: string;
-        alt: string | null;
+        alt: string;
     };
-    'hero-image': {
-        fileId: string; // reference
+    image: {
+        fileId: string; // TODO check if needed
         url: string;
-        alt: string | null;
+        alt: string;
     };
 }
 
-function courseDTOFactory(data: any): CourseDTO {
+function courseDTOFactory(data: any): WebflowMetadata {
     // TODO: has to be implemented
     return data;
 }
@@ -52,45 +58,76 @@ function generateHost(instructors: SubcourseInstructorsStudent[]): string {
     return names.join(', ');
 }
 
+function getStartDate(subcourse: Subcourse): Moment | null {
+    let earliestDate: Moment | null = null;
+    for (const lecture of subcourse.lecture) {
+        const startDate = moment(lecture.start);
+        if (earliestDate == null || startDate.isBefore(earliestDate)) {
+            earliestDate = moment(lecture.start);
+        }
+    }
+    return earliestDate;
+}
+
+function getCouseDuration(subcourse: Subcourse): number {
+    let duration = 0;
+    for (const lecture of subcourse.lecture) {
+        duration += lecture.duration;
+    }
+    return duration;
+}
+
+function listAppointments(subcourse: Subcourse): string {
+    let appointments = [];
+    for (const lecture of subcourse.lecture) {
+        const startDate = moment(lecture.start);
+        appointments.push(startDate.format('dddd, DD. MMMM YYYY, HH:mm [Uhr]'));
+    }
+    return appointments.join('\n');
+}
+
 function courseToDTO(subcourse: Subcourse): CourseDTO {
+    const startDate: Moment = getStartDate(subcourse) || moment();
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
 
         name: subcourse.course.name,
         // TODO add databaseid field ot cms
-        databaseid: subcourse.id,
+        databaseid: `${subcourse.id}`, // We are using a string to be safe for any case.
 
         description: subcourse.course.description,
-        host: generateHost(subcourse.subcourse_instructors_student),
-        'short-description': subcourse.course.outline,
+        instructor: generateHost(subcourse.subcourse_instructors_student),
+        aboutinstructor: '', // TODO
+        subheading: subcourse.course.outline,
 
-        'start-date': '', // TODO: Einfach der Tag der ersten "Lecture"?
-        wochentag: '', // TODO Wird noch gebraucht?
-        kursdauer: '', // TODO on lecture level
-        repetitions: subcourse.lecture.length,
-        time: '', // maybe Date? was smth like 16:00;
-        termine: '', // all appointments
+        startingdate: startDate.toISOString(),
+        weekday: startDate.format('dddd'),
+        courseduration: `${getCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
+        lessoncount: subcourse.lecture.length,
+        time: startDate.format('HH:mm'),
+        appointments: listAppointments(subcourse),
 
-        'course-type': subcourse.course.category, // TODO reference
-        'link-to-course': '', // TODO Wird noch gebraucht?
-        'max-participants': subcourse.maxParticipants,
-        'actual-participants': subcourse.subcourse_participants_pupil.length,
-        'subject-2': subcourse.course.subject, // TODO reference
+        category: subcourse.course.category, // TODO reference
+        link: '', // TODO Wird noch gebraucht?
+        maxparticipants: subcourse.maxParticipants,
+        actualparticipants: subcourse.subcourse_participants_pupil.length,
+        subject: subcourse.course.subject, // TODO reference
 
-        vorkenntnisse: false, // TODO Ich kann die Daten nicht finden
-        'min-grade': subcourse.minGrade,
-        'max-grade': subcourse.maxGrade,
-        altergruppe: '', // TODO Wir haben die Daten nicht
+        mingrade: subcourse.minGrade,
+        maxgrade: subcourse.maxGrade,
+        priorknowledge: false, // TODO Ich kann die Daten nicht finden
+        agegroup: '', // TODO Wir haben die Daten nicht
+        level: '', // TODO
 
-        'bild-copyright-info': subcourse.course.imageKey,
+        imagecopyrightinfo: subcourse.course.imageKey,
         thumbnail: {
-            fileId: '', // reference
-            url: '',
+            fileId: 'testId', // reference
+            url: subcourse.course.imageKey,
             alt: '',
         },
-        'hero-image': {
-            fileId: '', // reference
-            url: '',
+        image: {
+            fileId: 'testId', // reference
+            url: subcourse.course.imageKey,
             alt: '',
         },
     };
@@ -100,7 +137,7 @@ function courseToDTO(subcourse: Subcourse): CourseDTO {
 
 export default async function syncCourses(logger: Logger): Promise<void> {
     logger.info('Start course sync');
-    const webflowCourses = await getCollectionItems<CourseDTO>(collectionId, courseDTOFactory);
+    const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
     const subCourses = await prisma.subcourse.findMany({
         where: { course: { courseState: courseState.allowed } },
         include: {
@@ -110,20 +147,26 @@ export default async function syncCourses(logger: Logger): Promise<void> {
             lecture: true,
         },
     });
-    const dbCourses = subCourses.map(courseToDTO);
+    const dbCourses = subCourses.filter((course) => course.lecture.length > 0).map(courseToDTO);
 
     const result = diff(webflowCourses, dbCourses);
+    logger.debug('Webflow course diff', { result });
 
-    const changedIds: string[] = [];
-    for (const row of result.new) {
-        const newId = await createNewItem(collectionId, row);
-        changedIds.push(newId);
+    if (result.new.length) {
+        const changedIds: string[] = [];
+        for (const row of result.new) {
+            const newId = await createNewItem(collectionId, row);
+            changedIds.push(newId);
+        }
+        logger.info('publish new items', { itemIds: changedIds });
+        await publishItems(collectionId, changedIds);
     }
 
-    const outdatedIds = result.outdated.map((row) => row._id);
-    await deleteItems(collectionId, outdatedIds);
-
-    await publishItems(collectionId, changedIds);
+    if (result.outdated.length > 0) {
+        const outdatedIds = result.outdated.map((row) => row._id);
+        logger.info('delete outdated items', { itemIds: outdatedIds });
+        await deleteItems(collectionId, outdatedIds);
+    }
 
     logger.info('finished course sync', { newItems: result.new.length, deletedItems: result.outdated.length });
 }
