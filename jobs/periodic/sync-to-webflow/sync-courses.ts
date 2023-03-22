@@ -37,23 +37,24 @@ interface CourseDTO extends WebflowMetadata {
 
     imagecopyrightinfo: string;
     thumbnail: {
-        fileId: string; // TODO check if needed
+        fileId: string;
         url: string;
         alt: string;
     };
     image: {
-        fileId: string; // TODO check if needed
+        fileId: string;
         url: string;
         alt: string;
     };
 }
 
 function courseDTOFactory(data: any): WebflowMetadata {
-    // TODO: has to be implemented
+    // This is just some syntactic sugar to convert the api data to an internal interface.
+    // Late on we could implement some checks here, to verify the data.
     return data;
 }
 
-function generateHost(instructors: SubcourseInstructorsStudent[]): string {
+function generateInstructor(instructors: SubcourseInstructorsStudent[]): string {
     const names = instructors.map((instructor) => `${instructor.student.firstname} ${instructor.student.lastname}`);
     return names.join(', ');
 }
@@ -92,11 +93,10 @@ function courseToDTO(subcourse: Subcourse): CourseDTO {
         ...emptyMetadata,
 
         name: subcourse.course.name,
-        // TODO add databaseid field ot cms
         databaseid: `${subcourse.id}`, // We are using a string to be safe for any case.
 
         description: subcourse.course.description,
-        instructor: generateHost(subcourse.subcourse_instructors_student),
+        instructor: generateInstructor(subcourse.subcourse_instructors_student),
         aboutinstructor: '', // TODO
         subheading: subcourse.course.outline,
 
@@ -107,26 +107,26 @@ function courseToDTO(subcourse: Subcourse): CourseDTO {
         time: startDate.format('HH:mm'),
         appointments: listAppointments(subcourse),
 
-        category: subcourse.course.category, // TODO reference
+        category: subcourse.course.category,
         link: '', // TODO Wird noch gebraucht?
         maxparticipants: subcourse.maxParticipants,
         actualparticipants: subcourse.subcourse_participants_pupil.length,
-        subject: subcourse.course.subject, // TODO reference
+        subject: subcourse.course.subject,
 
         mingrade: subcourse.minGrade,
         maxgrade: subcourse.maxGrade,
-        priorknowledge: false, // TODO Ich kann die Daten nicht finden
-        agegroup: '', // TODO Wir haben die Daten nicht
+        priorknowledge: false, // TODO No data in DB
+        agegroup: '', // TODO No data in DB
         level: '', // TODO
 
         imagecopyrightinfo: subcourse.course.imageKey,
         thumbnail: {
-            fileId: 'testId', // reference
+            fileId: 'placeholder', // not needed
             url: subcourse.course.imageKey,
             alt: '',
         },
         image: {
-            fileId: 'testId', // reference
+            fileId: 'placeholder', // not needed
             url: subcourse.course.imageKey,
             alt: '',
         },
