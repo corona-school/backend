@@ -73,7 +73,7 @@ export class NotificationExtendedFieldsResolver {
         description:
             "The message translation will be rendered in the user's language with a concrete notification context to produce the message the user sees",
     })
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED)
     async messageTranslations(@Root() notification: Notification) {
         return await prisma.message_translation.findMany({
             where: { notificationId: notification.id },
