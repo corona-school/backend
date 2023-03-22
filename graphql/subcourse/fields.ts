@@ -89,9 +89,13 @@ export class ExtendedFieldsSubcourseResolver {
             });
             if (isSessionPupil(context)) {
                 const pupil = await getSessionPupil(context);
-                filters.push({
-                    AND: [{ minGrade: { lte: gradeAsInt(pupil.grade) }, maxGrade: { gte: gradeAsInt(pupil.grade) } }],
-                });
+                const pupilGrade = gradeAsInt(pupil.grade);
+                if (pupilGrade) {
+                    filters.push({
+                        AND: [{ minGrade: { lte: pupilGrade }, maxGrade: { gte: pupilGrade } }],
+                        // AND: [{ OR: [{ minGrade: { lte: pupilGrade } }, { minGrade: null }] }, { OR: [{ maxGrade: { gte: pupilGrade } }, { maxGrade: null }] }],
+                    });
+                }
             }
         }
 
