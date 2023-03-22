@@ -93,7 +93,6 @@ export class ExtendedFieldsSubcourseResolver {
                 if (pupilGrade) {
                     filters.push({
                         AND: [{ minGrade: { lte: pupilGrade }, maxGrade: { gte: pupilGrade } }],
-                        // AND: [{ OR: [{ minGrade: { lte: pupilGrade } }, { minGrade: null }] }, { OR: [{ maxGrade: { gte: pupilGrade } }, { maxGrade: null }] }],
                     });
                 }
             }
