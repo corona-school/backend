@@ -115,7 +115,6 @@ export class ExtendedFieldsSubcourseResolver {
             orderBy: { updatedAt: 'desc' },
         });
 
-        // if maxParticipants != participantsCount ✅
         if (onlyJoinable) {
             courses = (await Promise.all(courses.map(async (it) => [it, (await getCourseCapacity(it)) < 1] as [subcourse, boolean])))
                 .filter(([, notFull]) => notFull)
