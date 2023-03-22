@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, subcourse } from '@prisma/client';
 import { canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
@@ -14,6 +14,7 @@ import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors } from '../../common/courses/contact';
 import { Deprecated, getCourse } from '../util';
+import { gradeAsInt } from '../../common/util/gradestrings';
 
 @ObjectType()
 class Participant {
@@ -72,11 +73,6 @@ export class ExtendedFieldsSubcourseResolver {
     ) {
         // All filters need to match
         const filters = [IS_PUBLIC_SUBCOURSE()];
-        const pupilId = context.user!.pupilId!;
-
-        const pupil = await prisma.pupil.findUnique({
-            where: { id: pupilId },
-        });
 
         if (search) {
             filters.push({
@@ -84,20 +80,19 @@ export class ExtendedFieldsSubcourseResolver {
             });
         }
 
-        // if one lecture > new Date() ✅
-        // if pupils grade in grade range between subcourse.minGrade and subcourse.maxGrade ✅
-        // if pupil != subcourse.isParticipant ✅
-        // if maxParticipants != participantsCount
         if (onlyJoinable) {
             filters.push({
                 OR: [
                     { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
                     { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
                 ],
-                AND: [{ minGrade: { gte: Number(pupil.grade) }, maxGrade: { lte: Number(pupil.grade) } }],
-                subcourse_participants_pupil: { none: { pupilId: pupilId } },
-                subcourse_waiting_list_pupil: { none: { pupilId: pupilId } },
             });
+            if (isSessionPupil(context)) {
+                const pupil = await getSessionPupil(context);
+                filters.push({
+                    AND: [{ minGrade: { lte: gradeAsInt(pupil.grade) }, maxGrade: { gte: gradeAsInt(pupil.grade) } }],
+                });
+            }
         }
 
         if (excludeKnown) {
@@ -107,18 +102,27 @@ export class ExtendedFieldsSubcourseResolver {
                 });
             } else if (isSessionPupil(context)) {
                 filters.push({
-                    subcourse_participants_pupil: { none: { pupilId: pupilId } },
-                    subcourse_waiting_list_pupil: { none: { pupilId: pupilId } },
+                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_waiting_list_pupil: { none: { pupilId: context.user!.pupilId! } },
                 });
             } /* else ignore */
         }
 
-        return await prisma.subcourse.findMany({
+        let courses = await prisma.subcourse.findMany({
             where: { AND: filters },
             take,
             skip,
             orderBy: { updatedAt: 'desc' },
         });
+
+        // if maxParticipants != participantsCount ✅
+        if (onlyJoinable) {
+            courses = (await Promise.all(courses.map(async (it) => [it, (await getCourseCapacity(it)) < 1] as [subcourse, boolean])))
+                .filter(([, notFull]) => notFull)
+                .map(([course]) => course);
+        }
+
+        return courses;
     }
 
     @Query((returns) => Subcourse, { nullable: true })
