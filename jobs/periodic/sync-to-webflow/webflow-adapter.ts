@@ -2,6 +2,7 @@ import { getLogger } from '../../utils/logging';
 import { join } from 'path';
 
 const logger = getLogger();
+const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
 
 export interface WebflowMetadata {
     _id?: string;
@@ -43,9 +44,13 @@ export async function deleteItems(collectionId: string, itemIds: string[]) {
     await request({ path: `collections/${collectionId}/items`, method: 'DELETE', data: body });
 }
 
-export async function publishItems(collectionId: string, itemIds: string[]) {
-    const body = { itemIds: itemIds };
-    await request({ path: `collections/${collectionId}/items/publish`, method: 'PUT', data: body });
+export function publishItems(collectionId: string, itemIds: string[]) {
+    const requests = [];
+    for (let i = 0; i < itemIds.length; i += WEBFLOW_MAX_PUBLISH_ITEMS) {
+        const chunk = itemIds.slice(i, i + WEBFLOW_MAX_PUBLISH_ITEMS);
+        requests.push(request({ path: `collections/${collectionId}/items/publish`, method: 'PUT', data: { itemIds: chunk } }));
+    }
+    return Promise.all(requests);
 }
 
 interface Request {
