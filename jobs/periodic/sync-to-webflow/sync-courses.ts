@@ -19,7 +19,7 @@ type WebflowSubcourse = Prisma.subcourseGetPayload<{
 // This is needed so that the weekday will be translated properly.
 moment.locale('de');
 
-const collectionId = process.env.WEBFLOW_COLLECTION_ID;
+const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
 interface CourseDTO extends WebflowMetadata {
