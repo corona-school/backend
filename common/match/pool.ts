@@ -574,8 +574,12 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     return [...subjects];
 }
 
-export async function getPupilsToContactNext(pool: MatchPool, toggle: 'confirmation-unknown' | 'pupil-screening-unknown'): Promise<Pupil[]> {
-    let toSend = await confirmationRequestsToSend(pool);
+export async function getPupilsToContactNext(
+    pool: MatchPool,
+    toggle: 'confirmation-unknown' | 'pupil-screening-unknown',
+    toSendCount?: number
+): Promise<Pupil[]> {
+    let toSend = toSendCount || (await confirmationRequestsToSend(pool));
     if (toSend <= 0) {
         return [];
     }
@@ -609,8 +613,8 @@ export async function sendConfirmationRequests(pool: MatchPool) {
     }
 }
 
-export async function addPupilScreenings(pool: MatchPool) {
-    const pupils = await getPupilsToContactNext(pool, 'pupil-screening-unknown');
+export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
+    const pupils = await getPupilsToContactNext(pool, 'pupil-screening-unknown', toSendCount);
     for (const pupil of pupils) {
         await addPupilScreening(pupil);
     }
