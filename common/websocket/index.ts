@@ -3,6 +3,7 @@ import { getLogger } from 'log4js';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as createUuid } from 'uuid';
 import { getUserForSession, GraphQLUser } from '../user/session';
+import { setInterval } from 'timers';
 
 type UserId = string;
 type ConnectionId = string;
@@ -15,9 +16,12 @@ enum CloseCodes {
 interface ExtendedWebsocket extends WebSocket {
     connectionId: ConnectionId;
     userId: UserId;
+    isAlive: boolean;
 }
 
-type ConnectedUsers = Map<UserId, Map<ConnectionId, ExtendedWebsocket>>;
+type Connections = Map<ConnectionId, ExtendedWebsocket>;
+
+type ConnectedUsers = Map<UserId, Connections>;
 
 export type Message = {
     concreteNotificationId: number;
@@ -120,6 +124,28 @@ class WebSocketService {
         return this.connectedUsers.has(userId);
     }
 
+    private getAllClients(): ExtendedWebsocket[] {
+        let clients: ExtendedWebsocket[] = [];
+        for (let [_, connections] of this.connectedUsers) {
+            clients = [...clients, ...Array.from(connections.values())];
+        }
+        return clients;
+    }
+
+    private pingClients(): void {
+        const allClients = this.getAllClients();
+        allClients.forEach(function each(client) {
+            if (!client.isAlive) {
+                log.info(`Terminating websocket cient with ConnectionId(${client.connectionId}) of User UserId(${client.userId})}`);
+                client.terminate();
+                return;
+            }
+            client.isAlive = false;
+            log.debug(`Pinging client with ConnectionId(${client.connectionId}) of User UserId(${client.userId})}`);
+            client.ping();
+        });
+    }
+
     /**
      * initializes the events and handlers for the websocket server
      */
@@ -142,6 +168,7 @@ class WebSocketService {
                 // create client
                 const connectionId = createUuid();
                 ws['connectionId'] = connectionId;
+                ws['isAlive'] = true;
                 this.addConnection(userId, ws);
                 log.info(`Connected websocket client with userId: ${userId} and connectionId: ${connectionId}`);
                 this.logConnections();
@@ -153,12 +180,20 @@ class WebSocketService {
                 }
                 ws.close(CloseCodes.SERVER_ERROR, err?.message ?? 'Internal server error while operating');
             }
+
+            ws.on('pong', () => {
+                log.debug(`Received pong from ConnectionId(${ws.connectionId}) of user UserId(${ws.userId})}`);
+                ws.isAlive = true;
+            });
+
             ws.on('close', () => {
                 this.removeConnection(ws.userId, ws.connectionId);
                 log.info(`Closing connection with id: ${ws.connectionId}`);
                 this.logConnections();
             });
         });
+
+        setInterval(() => this.pingClients(), 30_000);
     }
 }
 
