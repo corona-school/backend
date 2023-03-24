@@ -2,9 +2,19 @@ import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishI
 import { diff, hash } from './diff';
 import { Logger } from 'log4js';
 import { prisma } from '../../../common/prisma';
-import { course_coursestate_enum as courseState, Subcourse, Subcourse_instructors_student as SubcourseInstructorsStudent } from '../../../graphql/generated';
 import moment, { Moment } from 'moment';
 import { accessURLForKey } from '../../../common/file-bucket';
+import { IS_PUBLIC_SUBCOURSE } from '../../../graphql/subcourse/fields';
+import { Prisma } from '@prisma/client';
+
+type WebflowSubcourse = Prisma.subcourseGetPayload<{
+    include: {
+        course: true;
+        subcourse_instructors_student: { include: { student: true } };
+        subcourse_participants_pupil: true;
+        lecture: true;
+    };
+}>;
 
 // This is needed so that the weekday will be translated properly.
 moment.locale('de');
@@ -45,12 +55,12 @@ function courseDTOFactory(data: any): WebflowMetadata {
     return data;
 }
 
-function generateInstructor(instructors: SubcourseInstructorsStudent[]): string {
-    const names = instructors.map((instructor) => `${instructor.student.firstname} ${instructor.student.lastname}`);
+function generateInstructor(subcourse: WebflowSubcourse): string {
+    const names = subcourse.subcourse_instructors_student.map((instructor) => `${instructor.student.firstname} ${instructor.student.lastname}`);
     return names.join(', ');
 }
 
-function getStartDate(subcourse: Subcourse): Moment | null {
+function getStartDate(subcourse: WebflowSubcourse): Moment | null {
     let earliestDate: Moment | null = null;
     for (const lecture of subcourse.lecture) {
         const startDate = moment(lecture.start);
@@ -61,7 +71,8 @@ function getStartDate(subcourse: Subcourse): Moment | null {
     return earliestDate;
 }
 
-function getCouseDuration(subcourse: Subcourse): number {
+// TODO create type with lectures
+function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
     let duration = 0;
     for (const lecture of subcourse.lecture) {
         duration += lecture.duration;
@@ -69,7 +80,7 @@ function getCouseDuration(subcourse: Subcourse): number {
     return duration;
 }
 
-function listAppointments(subcourse: Subcourse): string {
+function listLectureStartDates(subcourse: WebflowSubcourse): string {
     let appointments = [];
     for (const lecture of subcourse.lecture) {
         const startDate = moment(lecture.start);
@@ -78,7 +89,7 @@ function listAppointments(subcourse: Subcourse): string {
     return appointments.join('\n');
 }
 
-function courseToDTO(subcourse: Subcourse): CourseDTO {
+function courseToDTO(subcourse: WebflowSubcourse): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
@@ -87,14 +98,14 @@ function courseToDTO(subcourse: Subcourse): CourseDTO {
         databaseid: `${subcourse.id}`, // We are using a string to be safe for any case.
 
         description: subcourse.course.description,
-        instructor: generateInstructor(subcourse.subcourse_instructors_student),
+        instructor: generateInstructor(subcourse),
 
         startingdate: startDate.toISOString(),
         weekday: startDate.format('dddd'),
-        courseduration: `${getCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
+        courseduration: `${getTotalCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
         lecturecount: subcourse.lecture.length,
         time: startDate.format('HH:mm'),
-        appointments: listAppointments(subcourse),
+        appointments: listLectureStartDates(subcourse),
 
         category: subcourse.course.category,
         link: `${appBaseUrl}/${subcourse.id}`,
@@ -119,7 +130,7 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
     const subCourses = await prisma.subcourse.findMany({
-        where: { course: { courseState: courseState.allowed } },
+        where: IS_PUBLIC_SUBCOURSE(),
         include: {
             course: true,
             subcourse_instructors_student: { include: { student: true } },
