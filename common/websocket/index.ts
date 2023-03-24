@@ -3,8 +3,6 @@ import { getLogger } from 'log4js';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as createUuid } from 'uuid';
 import { getUserForSession, GraphQLUser } from '../user/session';
-import { setInterval } from 'timers';
-
 type UserId = string;
 type ConnectionId = string;
 
