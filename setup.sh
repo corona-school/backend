@@ -26,8 +26,9 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   # We could dynamically retrieve the key like this:
   # ssh-keyscan -v -H -t  rsa github.com  >> ~/.ssh/known_hosts
   # But as long as Github does not change it's key, it is more secure to just pin it here statically
-  # That prevent's MitM attacks between AWS and Github (yeah, very likely that those attackers would target corona school)
-  echo '|1|nJBTgCBhxtu/n/+UpWS7ttBoiys=|rQxqxeiZRNiTSzHMhbR8HrfoBS4= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
+  # That prevent's MitM attacks between AWS and Github (yeah, very likely that those attackers would target Lern-Fair)
+  # (also see https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/)
+  echo '|1|Q/XxfRqMgNOOfi+O3F5QrU1jEZQ=|/7mdLiGbwbUOEChYuMm8GmH1UQ4= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=' >> ~/.ssh/known_hosts
   cat ~/.ssh/known_hosts
 
 
