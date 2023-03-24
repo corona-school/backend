@@ -31,7 +31,7 @@ import { PupilTutoringInterestConfirmationRequest } from '../common/entity/Pupil
 import { CourseGuest } from '../common/entity/CourseGuest';
 import { RemissionRequest } from '../common/entity/RemissionRequest';
 import { CertificateOfConduct } from '../common/entity/CertificateOfConduct';
-import { getNotifications, importNotifications } from '../common/notification/notification';
+import { getNotifications, importMessageTranslations, importNotifications } from '../common/notification/notification';
 import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
@@ -1358,6 +1358,7 @@ export async function setupDevDB() {
     console.log('Inserted remission request');
 
     await importNotificationsFromProd();
+    await importMessagesTranslationsFromProd();
 }
 
 function sha512(input: string): string {
@@ -1404,4 +1405,40 @@ async function importNotificationsFromProd() {
 
     await importNotifications(prodNotifications.data.notifications, false, true);
     console.log(`Imported notifications from PROD`, prodNotifications.data.notifications);
+}
+
+async function importMessagesTranslationsFromProd() {
+    const prodMessageTranslations = await (
+        await fetch(PROD_URL, {
+            body: JSON.stringify({
+                query: `
+                    query {
+                        notifications {
+                            messageTranslations {
+                                template
+                                id
+                                notificationId
+                                navigateTo
+                            }
+                        }
+                    }
+                `,
+                variables: {},
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+    ).json();
+
+    let messageTranslations = [];
+
+    prodMessageTranslations.data.notifications.forEach((t) => {
+        if (t.messageTranslations.length > 0) {
+            messageTranslations = [...messageTranslations, ...t.messageTranslations];
+        }
+    });
+
+    importMessageTranslations(messageTranslations);
 }

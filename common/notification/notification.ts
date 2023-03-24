@@ -2,12 +2,23 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Context, Notification, NotificationID } from './types';
+import { Context, Notification, NotificationID, NotificationMessage } from './types';
 import { NotificationRecipient } from '../entity/Notification';
 import { Prisma } from '@prisma/client';
 import { getLogger } from 'log4js';
 import { hookExists } from './hook';
 import { getNotificationActions } from './actions';
+import { MessageTemplateType } from '../../graphql/types/notificationMessage';
+
+type MessageTranslationFromDb = {
+    template: {
+        body: string;
+        headline: string;
+    };
+    id: number;
+    notificationId: number;
+    navigateTo: string;
+};
 
 type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
@@ -301,6 +312,59 @@ function diff(prev: any, curr: any, depth = 0) {
     }
 
     return result;
+}
+
+export async function importMessageTranslations(messageTranslations: MessageTranslationFromDb[], overwrite = false) {
+    messageTranslations.sort((a, b) => a.id - b.id);
+    if (process.env.ENV !== 'dev' && overwrite) {
+        throw new Error('Cannot overwrite productive configuration');
+    }
+    let log = `Import Log ${new Date().toLocaleString('en-US')}\n`;
+
+    try {
+        await prisma.$transaction(async (prisma) => {
+            if (overwrite) {
+                const removed = await prisma.message_translation.deleteMany({});
+                log += `Through Overwrite ${removed.count} existing MessageTranslations were removed\n`;
+            }
+            const untouched = await prisma.message_translation.count({
+                where: { id: { notIn: messageTranslations.map((it) => it.id) } },
+            });
+
+            log += `${untouched} existing MessageTranslations will not be modified\n`;
+
+            for await (const translation of messageTranslations) {
+                const templateExists = await prisma.message_translation.findFirst({ where: { id: translation.id } });
+
+                if (templateExists) {
+                    const { id, ...update } = translation;
+                    await prisma.message_translation.update({
+                        data: update,
+                        where: { id: id },
+                    });
+
+                    log += `Updated MessageTranslation(${translation.id})\n`;
+                    log += diff(templateExists, translation, 1);
+                } else {
+                    const result = await prisma.message_translation.create({
+                        data: translation,
+                    });
+
+                    log += `Created MessageTranslation(${translation.id})\n`;
+                    log += diff({}, translation, 1);
+                }
+            }
+        });
+    } catch (error) {
+        log += `An Error occured:\n`;
+        log += `${error.message}\n`;
+        log += `${error.stack}\n`;
+        log += `Change was rolled back and not actually applied\n`;
+        throw new Error(log);
+    }
+
+    logger.info(log);
+    return log;
 }
 
 class TestRollbackError extends Error {}
