@@ -333,7 +333,7 @@ export async function importMessageTranslations(messageTranslations: MessageTran
 
             log += `${untouched} existing MessageTranslations will not be modified\n`;
 
-            for await (const translation of messageTranslations) {
+            for (const translation of messageTranslations) {
                 const templateExists = await prisma.message_translation.findFirst({ where: { id: translation.id } });
 
                 if (templateExists) {
