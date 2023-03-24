@@ -1432,13 +1432,8 @@ async function importMessagesTranslationsFromProd() {
         })
     ).json();
 
-    let messageTranslations = [];
+    const messageTranslations = prodMessageTranslations.data.notifications.reduce((acc: any[], cur: any) => [...acc, ...cur.messageTranslations], []);
 
-    prodMessageTranslations.data.notifications.forEach((t) => {
-        if (t.messageTranslations.length > 0) {
-            messageTranslations = [...messageTranslations, ...t.messageTranslations];
-        }
-    });
 
-    importMessageTranslations(messageTranslations);
+    await importMessageTranslations(messageTranslations);
 }

@@ -148,10 +148,10 @@ export async function create(notification: Prisma.notificationCreateInput) {
    If overwrite is set, all existing notifications will be dropped and the passed notifications will be recreated exactly as they are.
    Unless apply is set, the transaction is rolled back and no import is actually done. This is an extra safety net to not break the notification system
 */
-export async function importNotifications(notifications: Notification[], overwrite = false, apply = false): Promise<string | never> {
+export async function importNotifications(notifications: Notification[], dropBeforeSync = false, apply = false): Promise<string | never> {
     notifications.sort((a, b) => a.id - b.id);
 
-    if (process.env.ENV !== 'dev' && overwrite) {
+    if (process.env.ENV !== 'dev' && dropBeforeSync) {
         throw new Error('Cannot overwrite productive configuration');
     }
 
@@ -159,7 +159,7 @@ export async function importNotifications(notifications: Notification[], overwri
 
     try {
         await prisma.$transaction(async (prisma) => {
-            if (overwrite) {
+            if (dropBeforeSync) {
                 const removed = await prisma.notification.deleteMany({});
                 log += `Through Overwrite ${removed.count} existing Notifications were removed\n`;
             }
@@ -314,16 +314,16 @@ function diff(prev: any, curr: any, depth = 0) {
     return result;
 }
 
-export async function importMessageTranslations(messageTranslations: MessageTranslationFromDb[], overwrite = false) {
+export async function importMessageTranslations(messageTranslations: MessageTranslationFromDb[], dropBeforeSync = false) {
     messageTranslations.sort((a, b) => a.id - b.id);
-    if (process.env.ENV !== 'dev' && overwrite) {
+    if (process.env.ENV !== 'dev' && dropBeforeSync) {
         throw new Error('Cannot overwrite productive configuration');
     }
     let log = `Import Log ${new Date().toLocaleString('en-US')}\n`;
 
     try {
         await prisma.$transaction(async (prisma) => {
-            if (overwrite) {
+            if (dropBeforeSync) {
                 const removed = await prisma.message_translation.deleteMany({});
                 log += `Through Overwrite ${removed.count} existing MessageTranslations were removed\n`;
             }
@@ -346,7 +346,7 @@ export async function importMessageTranslations(messageTranslations: MessageTran
                     log += `Updated MessageTranslation(${translation.id})\n`;
                     log += diff(templateExists, translation, 1);
                 } else {
-                    const result = await prisma.message_translation.create({
+                    await prisma.message_translation.create({
                         data: translation,
                     });
 
