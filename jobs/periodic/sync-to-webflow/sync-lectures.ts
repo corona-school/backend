@@ -1,10 +1,9 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash } from './diff';
 import { Logger } from 'log4js';
-import { prisma } from '../../../common/prisma';
 import moment from 'moment';
-import { course_coursestate_enum as CourseState, lecture } from '@prisma/client';
-import { randomString } from '../../../utils/helpers';
+import { lecture } from '@prisma/client';
+import { getWebflowSubcourses } from './queries';
 
 // This is needed so that the weekday will be translated properly.
 moment.locale('de');
@@ -26,29 +25,21 @@ function lectureToDTO(lecture: lecture): LectureDTO {
     const start = moment(lecture.start);
     const lectureDto: LectureDTO = {
         ...emptyMetadata,
-        name: randomString(),
         databaseid: `${lecture.id}`,
         start: start.toISOString(),
         duration: `${lecture.duration} min.`,
     };
     lectureDto.slug = hash(lectureDto);
+    // Lectures don't have any names, so to prevent collisions we are just using the hash, which should be unique.
+    lectureDto.name = lectureDto.slug;
     return lectureDto;
 }
 
 export default async function syncLectures(logger: Logger): Promise<void> {
     logger.info('Start course sync');
     const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
-    const subCourses = await prisma.subcourse.findMany({
-        where: { course: { courseState: CourseState.allowed } },
-        include: {
-            course: true,
-            subcourse_instructors_student: { include: { student: true } },
-            subcourse_participants_pupil: true,
-            lecture: true,
-        },
-    });
+    const subCourses = await getWebflowSubcourses();
     const dbLectures = subCourses
-        .filter((course) => course.lecture.length > 0)
         .map((course) => course.lecture)
         .flat()
         .map(lectureToDTO);

@@ -1,20 +1,9 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash } from './diff';
 import { Logger } from 'log4js';
-import { prisma } from '../../../common/prisma';
 import moment, { Moment } from 'moment';
 import { accessURLForKey } from '../../../common/file-bucket';
-import { IS_PUBLIC_SUBCOURSE } from '../../../graphql/subcourse/fields';
-import { Prisma } from '@prisma/client';
-
-type WebflowSubcourse = Prisma.subcourseGetPayload<{
-    include: {
-        course: true;
-        subcourse_instructors_student: { include: { student: true } };
-        subcourse_participants_pupil: true;
-        lecture: true;
-    };
-}>;
+import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 
 // This is needed so that the weekday will be translated properly.
 moment.locale('de');
@@ -129,16 +118,8 @@ function courseToDTO(subcourse: WebflowSubcourse): CourseDTO {
 export default async function syncCourses(logger: Logger): Promise<void> {
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
-    const subCourses = await prisma.subcourse.findMany({
-        where: IS_PUBLIC_SUBCOURSE(),
-        include: {
-            course: true,
-            subcourse_instructors_student: { include: { student: true } },
-            subcourse_participants_pupil: true,
-            lecture: true,
-        },
-    });
-    const dbCourses = subCourses.filter((course) => course.lecture.length > 0).map(courseToDTO);
+    const subCourses = await getWebflowSubcourses();
+    const dbCourses = subCourses.map(courseToDTO);
 
     const result = diff(webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });

@@ -22,7 +22,11 @@ export const emptyMetadata: WebflowMetadata = {
     slug: '',
 };
 
+// Helper functions to communicate to the Webflow API
+// https://developers.webflow.com/reference/get-authorized-user
+
 export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
+    // TODO: implement pagination
     const data = await request({ path: `collections/${collectionID}/items`, method: 'GET' });
     if (!data.items) {
         throw new Error('Response did not include any items');
@@ -41,10 +45,12 @@ export async function createNewItem<T extends WebflowMetadata>(collectionID: str
 
 export async function deleteItems(collectionId: string, itemIds: string[]) {
     const body = { itemIds: itemIds };
-    await request({ path: `collections/${collectionId}/items`, method: 'DELETE', data: body });
+    // ?live=true says that they should be automatically unpublished from the website
+    await request({ path: `collections/${collectionId}/items?live=true`, method: 'DELETE', data: body });
 }
 
 export function publishItems(collectionId: string, itemIds: string[]) {
+    // TODO: fetch all items, filter for not published, publish
     const requests = [];
     for (let i = 0; i < itemIds.length; i += WEBFLOW_MAX_PUBLISH_ITEMS) {
         const chunk = itemIds.slice(i, i + WEBFLOW_MAX_PUBLISH_ITEMS);
