@@ -10,7 +10,7 @@ import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
-import { Role } from './roles';
+import { Role } from '../common/user/roles';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 

@@ -1,5 +1,4 @@
 import { prisma } from '../../../common/prisma';
-import { Role } from '../../../common/user/roles';
 import { IS_PUBLIC_SUBCOURSE } from '../../../graphql/subcourse/fields';
 import { Prisma } from '@prisma/client';
 
