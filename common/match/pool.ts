@@ -188,7 +188,7 @@ const _pools = [
                 !toggles.includes('confirmation-unknown') &&
                 !toggles.includes('pupil-screening-success') &&
                 !toggles.includes('pupil-screening-pending') &&
-                !toggles.includes('pupil-screening-unkown')
+                !toggles.includes('pupil-screening-unknown')
             ) {
                 query.OR = [
                     { registrationSource: 'cooperation' },
