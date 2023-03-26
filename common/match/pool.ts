@@ -581,8 +581,7 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     return [...subjects];
 }
 
-export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[], toSendCount?: number): Promise<Pupil[]> {
-    let toSend = toSendCount || (await confirmationRequestsToSend(pool));
+export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[], toSend: number): Promise<Pupil[]> {
     if (toSend <= 0) {
         return [];
     }
@@ -610,13 +609,19 @@ export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[],
 }
 
 export async function sendConfirmationRequests(pool: MatchPool) {
-    const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown']);
+    const toSend = await confirmationRequestsToSend(pool);
+    const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSend);
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
     }
 }
 
 export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
+    if (!toSendCount) {
+        // TODO: Implement heuristics once we have enough data
+        throw new Error(`No heuristic yet to calculate the number of pupil screenings to send`);
+    }
+
     const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSendCount);
     for (const pupil of pupils) {
         await addPupilScreening(pupil);
