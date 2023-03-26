@@ -599,6 +599,3 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
-
-// Ensure hooks are always loaded - also in the Jobs Dyno
-import './hooks';
