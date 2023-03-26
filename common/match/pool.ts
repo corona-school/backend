@@ -538,11 +538,15 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
     if (pool.toggles.includes('confirmation-pending')) {
-        backlog +=
-            ((await getPupilCount(pool, ['confirmation-pending'])) +
-                (await getPupilCount(pool, ['confirmation-pending'])) +
-                (await getPupilCount(pool, ['confirmation-unknown']))) *
-            (await getInterestConfirmationRate());
+        const futureConfirmations = pool.confirmInterest ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const pendingConfirmations = await getPupilCount(pool, ['confirmation-pending']);
+        backlog += (futureConfirmations + pendingConfirmations) * (await getInterestConfirmationRate());
+    }
+
+    if (pool.toggles.includes('pupil-screening-pending')) {
+        const futureScreenings = pool.needsScreening ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const pendingScreenings = await getPupilCount(pool, ['pupil-screening-pending']);
+        backlog += (futureScreenings + pendingScreenings) * 1; // TODO: Calculate Screening success rate once we have enough data
     }
 
     return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
