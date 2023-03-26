@@ -313,7 +313,7 @@ const _pools = [
         settings: { balancingCoefficients },
     },
 ] as const;
-const pools: Readonly<MatchPool[]> = _pools;
+export const pools: Readonly<MatchPool[]> = _pools;
 export type ConcreteMatchPool = typeof _pools[number];
 
 /* ---------------------- MATCHING RUNS ----------------------------- */
