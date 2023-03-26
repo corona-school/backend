@@ -138,6 +138,10 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         where: { id: pupil.id },
     });
 
+    if (pupil.registrationSource !== 'plus' && registrationSource === 'plus') {
+        Notification.actionTaken(pupil, 'pupil_joined_plus', {});
+    }
+
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForPupil(res));
 
