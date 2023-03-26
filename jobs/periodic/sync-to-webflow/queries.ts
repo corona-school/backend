@@ -11,8 +11,8 @@ export type WebflowSubcourse = Prisma.subcourseGetPayload<{
     };
 }>;
 
-export const getWebflowSubcourses = (): Promise<WebflowSubcourse[]> =>
-    prisma.subcourse.findMany({
+export const getWebflowSubcourses = async (): Promise<WebflowSubcourse[]> => {
+    const courses = await prisma.subcourse.findMany({
         where: IS_PUBLIC_SUBCOURSE(),
         include: {
             course: true,
@@ -21,3 +21,5 @@ export const getWebflowSubcourses = (): Promise<WebflowSubcourse[]> =>
             lecture: true,
         },
     });
+    return courses.filter((course) => course.lecture.length > 0);
+};

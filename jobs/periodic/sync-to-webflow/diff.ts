@@ -42,3 +42,13 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
 
     return { new: newEntries, outdated: outdatedEntries };
 }
+
+export type DBIdMap = { [key: number]: string };
+
+export function mapDBIdToId(items: WebflowMetadata[]): DBIdMap {
+    const result: DBIdMap = {};
+    for (const item of items) {
+        result[item.databaseid] = item._id;
+    }
+    return result;
+}

@@ -10,12 +10,12 @@ moment.locale('de');
 
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 
-interface LectureDTO extends WebflowMetadata {
+export interface LectureDTO extends WebflowMetadata {
     start: string; // ISO Date String
     duration: string;
 }
 
-function lectureDTOFactory(data: any): WebflowMetadata {
+export function lectureDTOFactory(data: any): WebflowMetadata {
     // This is just some syntactic sugar to convert the api data to an internal interface.
     // Late on we could implement some checks here, to verify the data.
     return data;

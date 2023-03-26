@@ -1,14 +1,16 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
-import { diff, hash } from './diff';
+import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
 import { Logger } from 'log4js';
 import moment, { Moment } from 'moment';
 import { accessURLForKey } from '../../../common/file-bucket';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
+import { lectureDTOFactory } from './sync-lectures';
 
 // This is needed so that the weekday will be translated properly.
 moment.locale('de');
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
+const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
 interface CourseDTO extends WebflowMetadata {
@@ -30,6 +32,8 @@ interface CourseDTO extends WebflowMetadata {
 
     mingrade: number;
     maxgrade: number;
+
+    lectures: string[];
 
     image: {
         fileId: string;
@@ -78,7 +82,21 @@ function listLectureStartDates(subcourse: WebflowSubcourse): string {
     return appointments.join('\n');
 }
 
-function courseToDTO(subcourse: WebflowSubcourse): CourseDTO {
+function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): string[] {
+    const result = [];
+
+    for (const lecture of subcourse.lecture) {
+        if (lectureIds[lecture.id]) {
+            result.push(lectureIds[lecture.id]);
+        } else {
+            logger.error('Cannot find lecture in webflow.', { lectureId: lecture.id, courseId: subcourse.id });
+        }
+    }
+
+    return result;
+}
+
+function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
@@ -105,6 +123,8 @@ function courseToDTO(subcourse: WebflowSubcourse): CourseDTO {
         mingrade: subcourse.minGrade,
         maxgrade: subcourse.maxGrade,
 
+        lectures: mapLecturesToCourse(logger, subcourse, lectureIds),
+
         image: {
             fileId: 'placeholder', // not needed
             url: accessURLForKey(subcourse.course.imageKey),
@@ -118,8 +138,11 @@ function courseToDTO(subcourse: WebflowSubcourse): CourseDTO {
 export default async function syncCourses(logger: Logger): Promise<void> {
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
+    const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
+    const lectureDBIdMap = mapDBIdToId(webflowLectures);
+
     const subCourses = await getWebflowSubcourses();
-    const dbCourses = subCourses.map(courseToDTO);
+    const dbCourses = subCourses.map((course) => courseToDTO(logger, course, lectureDBIdMap));
 
     const result = diff(webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });
