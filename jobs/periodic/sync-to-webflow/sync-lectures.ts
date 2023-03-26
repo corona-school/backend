@@ -48,13 +48,9 @@ export default async function syncLectures(logger: Logger): Promise<void> {
     logger.debug('Webflow course diff', { result });
 
     if (result.new.length) {
-        const changedIds: string[] = [];
         for (const row of result.new) {
-            const newId = await createNewItem(lectureCollectionId, row);
-            changedIds.push(newId);
+            await createNewItem(lectureCollectionId, row);
         }
-        logger.info('publish new items', { itemIds: changedIds });
-        await publishItems(lectureCollectionId, changedIds);
     }
 
     if (result.outdated.length > 0) {
@@ -62,6 +58,9 @@ export default async function syncLectures(logger: Logger): Promise<void> {
         logger.info('delete outdated items', { itemIds: outdatedIds });
         await deleteItems(lectureCollectionId, outdatedIds);
     }
+
+    const publishedItems = await publishItems(lectureCollectionId);
+    logger.info('publish new items', { itemIds: publishedItems });
 
     logger.info('finished course sync', { newItems: result.new.length, deletedItems: result.outdated.length });
 }

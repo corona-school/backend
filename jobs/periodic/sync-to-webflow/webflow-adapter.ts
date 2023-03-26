@@ -1,5 +1,6 @@
 import { getLogger } from '../../utils/logging';
 import { join } from 'path';
+import moment from 'moment';
 
 const logger = getLogger();
 const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
@@ -13,6 +14,8 @@ export interface WebflowMetadata {
     // Said that we are using it to store the hash, which should always match the actual data stored in the item.
     slug?: string;
     databaseid?: string; // We are using a string to be safe for any case.
+    'updated-on'?: string;
+    'published-on'?: string;
 }
 
 export const emptyMetadata: WebflowMetadata = {
@@ -20,7 +23,13 @@ export const emptyMetadata: WebflowMetadata = {
     _archived: false,
     _draft: false,
     slug: '',
+    'updated-on': '',
+    'published-on': '',
 };
+
+function basicMetaFactory(data: any): WebflowMetadata {
+    return data;
+}
 
 // Helper functions to communicate to the Webflow API
 // https://developers.webflow.com/reference/get-authorized-user
@@ -46,17 +55,27 @@ export async function createNewItem<T extends WebflowMetadata>(collectionID: str
 export async function deleteItems(collectionId: string, itemIds: string[]) {
     const body = { itemIds: itemIds };
     // ?live=true says that they should be automatically unpublished from the website
-    await request({ path: `collections/${collectionId}/items?live=true`, method: 'DELETE', data: body });
+    await request({ path: `collections/${collectionId}/items?live=false`, method: 'DELETE', data: body });
 }
 
-export function publishItems(collectionId: string, itemIds: string[]) {
-    // TODO: fetch all items, filter for not published, publish
+export async function publishItems(collectionId: string) {
+    const items = await getCollectionItems(collectionId, basicMetaFactory);
+    const itemIds = items
+        .filter((item) => {
+            const updated = moment(item['updated-on']);
+            const published = moment(item['published-on']);
+            // Published on is null if the item is new. If there was an update updated-by is after published-by.
+            return item['published-on'] === null || updated.isAfter(published);
+        })
+        .map((item) => item._id);
+
     const requests = [];
     for (let i = 0; i < itemIds.length; i += WEBFLOW_MAX_PUBLISH_ITEMS) {
         const chunk = itemIds.slice(i, i + WEBFLOW_MAX_PUBLISH_ITEMS);
         requests.push(request({ path: `collections/${collectionId}/items/publish`, method: 'PUT', data: { itemIds: chunk } }));
     }
-    return Promise.all(requests);
+    await Promise.all(requests);
+    return itemIds;
 }
 
 interface Request {
