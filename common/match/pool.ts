@@ -574,11 +574,7 @@ async function offeredSubjects(pool: MatchPool): Promise<string[]> {
     return [...subjects];
 }
 
-export async function getPupilsToContactNext(
-    pool: MatchPool,
-    toggle: 'confirmation-unknown' | 'pupil-screening-unknown',
-    toSendCount?: number
-): Promise<Pupil[]> {
+export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[], toSendCount?: number): Promise<Pupil[]> {
     let toSend = toSendCount || (await confirmationRequestsToSend(pool));
     if (toSend <= 0) {
         return [];
@@ -587,7 +583,7 @@ export async function getPupilsToContactNext(
     const offered = await offeredSubjects(pool);
     const result: Pupil[] = [];
 
-    const pupilsToRequest = await getPupils(pool, [toggle], toSend * 5);
+    const pupilsToRequest = await getPupils(pool, toggles, toSend * 5);
     for (const pupil of pupilsToRequest) {
         // Skip pupils who only want subjects that are not offered at the moment
         const subjects = JSON.parse(pupil.subjects).map((it) => it.name);
@@ -607,14 +603,14 @@ export async function getPupilsToContactNext(
 }
 
 export async function sendConfirmationRequests(pool: MatchPool) {
-    const pupils = await getPupilsToContactNext(pool, 'confirmation-unknown');
+    const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown']);
     for (const pupil of pupils) {
         await requestInterestConfirmation(pupil);
     }
 }
 
 export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
-    const pupils = await getPupilsToContactNext(pool, 'pupil-screening-unknown', toSendCount);
+    const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSendCount);
     for (const pupil of pupils) {
         await addPupilScreening(pupil);
     }
