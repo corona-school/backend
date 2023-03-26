@@ -54,7 +54,6 @@ export async function createNewItem<T extends WebflowMetadata>(collectionID: str
 
 export async function deleteItems(collectionId: string, itemIds: string[]) {
     const body = { itemIds: itemIds };
-    // ?live=true says that they should be automatically unpublished from the website
     await request({ path: `collections/${collectionId}/items?live=false`, method: 'DELETE', data: body });
 }
 

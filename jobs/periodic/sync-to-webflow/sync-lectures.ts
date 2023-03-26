@@ -45,12 +45,10 @@ export default async function syncLectures(logger: Logger): Promise<void> {
         .map(lectureToDTO);
 
     const result = diff(webflowLectures, dbLectures);
-    logger.debug('Webflow course diff', { result });
+    logger.debug('Webflow lecture diff', { result });
 
-    if (result.new.length) {
-        for (const row of result.new) {
-            await createNewItem(lectureCollectionId, row);
-        }
+    for (const row of result.new) {
+        await createNewItem(lectureCollectionId, row);
     }
 
     if (result.outdated.length > 0) {

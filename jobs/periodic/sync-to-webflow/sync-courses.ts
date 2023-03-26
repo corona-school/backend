@@ -64,7 +64,6 @@ function getStartDate(subcourse: WebflowSubcourse): Moment | null {
     return earliestDate;
 }
 
-// TODO create type with lectures
 function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
     let duration = 0;
     for (const lecture of subcourse.lecture) {
@@ -147,10 +146,8 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     const result = diff(webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });
 
-    if (result.new.length) {
-        for (const row of result.new) {
-            await createNewItem(collectionId, row);
-        }
+    for (const row of result.new) {
+        await createNewItem(collectionId, row);
     }
 
     if (result.outdated.length > 0) {
