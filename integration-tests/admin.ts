@@ -41,3 +41,13 @@ test("Admin set Email of Student", async () => {
         `mutation StudentRevertEmailChange { studentUpdate(studentId: ${student.student.id} data: { email: "${student.email}" })}`
     );
 });
+
+test("Admin Pupil to Plus", async () => {
+    const { pupil } = await pupilOne;
+
+    await adminClient.request(`
+      mutation PupilToPlus {
+        pupilUpdate(pupilId: ${pupil.pupil.id} data: { registrationSource: plus })
+      }
+    `);
+});
