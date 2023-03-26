@@ -164,7 +164,7 @@ const balancingCoefficients = {
 const _pools = [
     {
         name: 'lern-fair-now',
-        confirmInterest: true,
+        confirmInterest: false,
         toggles: [
             'skip-interest-confirmation',
             'confirmation-pending',
@@ -173,6 +173,7 @@ const _pools = [
             'pupil-screening-pending',
             'pupil-screening-unknown',
         ],
+
         pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,

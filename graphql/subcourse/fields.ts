@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, subcourse } from '@prisma/client';
 import { canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
@@ -14,6 +14,7 @@ import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors } from '../../common/courses/contact';
 import { Deprecated, getCourse } from '../util';
+import { gradeAsInt } from '../../common/util/gradestrings';
 
 @ObjectType()
 class Participant {
@@ -86,6 +87,15 @@ export class ExtendedFieldsSubcourseResolver {
                     { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
                 ],
             });
+            if (isSessionPupil(context)) {
+                const pupil = await getSessionPupil(context);
+                const pupilGrade = gradeAsInt(pupil.grade);
+                if (pupilGrade) {
+                    filters.push({
+                        AND: [{ minGrade: { lte: pupilGrade }, maxGrade: { gte: pupilGrade } }],
+                    });
+                }
+            }
         }
 
         if (excludeKnown) {
@@ -101,12 +111,20 @@ export class ExtendedFieldsSubcourseResolver {
             } /* else ignore */
         }
 
-        return await prisma.subcourse.findMany({
+        let courses = await prisma.subcourse.findMany({
             where: { AND: filters },
             take,
             skip,
             orderBy: { updatedAt: 'desc' },
         });
+
+        if (onlyJoinable) {
+            courses = (await Promise.all(courses.map(async (it) => [it, (await getCourseCapacity(it)) < 1] as [subcourse, boolean])))
+                .filter(([, notFull]) => notFull)
+                .map(([course]) => course);
+        }
+
+        return courses;
     }
 
     @Query((returns) => Subcourse, { nullable: true })
