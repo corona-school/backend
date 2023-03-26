@@ -62,6 +62,9 @@ const _notificationActions = {
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
     },
+    pupil_joined_plus: {
+        description: 'Pupil / Joined Lern-Fair Plus',
+    },
     tutor_screening_invitation: {
         description: 'Tutor / Was invited for screening',
     },
