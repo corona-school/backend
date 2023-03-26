@@ -39,6 +39,9 @@ import { fileRouter } from './controllers/fileController';
 import cookieParser from 'cookie-parser';
 import { WebSocketService } from '../common/websocket';
 
+// Ensure Notification hooks are always loaded
+import './../common/notification/hooks';
+
 // Logger setup
 const logger = getLogger();
 const accessLogger = getLogger('access');
