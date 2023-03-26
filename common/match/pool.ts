@@ -17,7 +17,9 @@ const logger = getLogger('MatchingPool');
 
 /* A MatchPool is a Set of students and a Set of pupils,
     which can then be matched to a Set of matches */
-export interface MatchPool<Toggle extends string = string> {
+
+type Toggle = InterestConfirmationToggle | PupilScreeningToggle | 'allow-unverified';
+export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
@@ -58,7 +60,7 @@ const getViableUsers = (toggles: string[]) => {
     return viableUsers;
 };
 
-export async function getStudents(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
+export async function getStudents(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string) {
     const where = { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) };
 
     return await prisma.student.findMany({
@@ -69,7 +71,7 @@ export async function getStudents(pool: MatchPool, toggles: string[], take?: num
     });
 }
 
-export async function getPupils(pool: MatchPool, toggles: string[], take?: number, skip?: number, search?: string) {
+export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string) {
     const where = { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) };
 
     return await prisma.pupil.findMany({
@@ -80,13 +82,13 @@ export async function getPupils(pool: MatchPool, toggles: string[], take?: numbe
     });
 }
 
-export async function getStudentCount(pool: MatchPool, toggles: string[]) {
+export async function getStudentCount(pool: MatchPool, toggles: Toggle[]) {
     return await prisma.student.count({
         where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
     });
 }
 
-export async function getStudentOfferCount(pool: MatchPool, toggles: string[]) {
+export async function getStudentOfferCount(pool: MatchPool, toggles: Toggle[]) {
     return (
         await prisma.student.aggregate({
             _sum: { openMatchRequestCount: true },
@@ -95,13 +97,13 @@ export async function getStudentOfferCount(pool: MatchPool, toggles: string[]) {
     )._sum.openMatchRequestCount;
 }
 
-export async function getPupilCount(pool: MatchPool, toggles: string[]) {
+export async function getPupilCount(pool: MatchPool, toggles: Toggle[]) {
     return await prisma.pupil.count({
         where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
     });
 }
 
-export async function getPupilDemandCount(pool: MatchPool, toggles: string[]) {
+export async function getPupilDemandCount(pool: MatchPool, toggles: Toggle[]) {
     return (
         await prisma.pupil.aggregate({
             _sum: { openMatchRequestCount: true },
@@ -304,7 +306,7 @@ const _pools = [
         settings: { balancingCoefficients },
     },
 ] as const;
-export const pools: Readonly<MatchPool[]> = _pools;
+const pools: Readonly<MatchPool[]> = _pools;
 export type ConcreteMatchPool = typeof _pools[number];
 
 /* ---------------------- MATCHING RUNS ----------------------------- */
@@ -313,17 +315,22 @@ export async function getPoolRuns(pool: MatchPool) {
     return await prisma.match_pool_run.findMany({ where: { matchingPool: pool.name } });
 }
 
-export async function runMatching(poolName: string, apply: boolean, toggles: string[]) {
+export function validatePoolToggles<T>(pool: MatchPool, toggles: string[]): Toggle[] {
+    const invalidToggles = toggles.filter((it) => !pool.toggles.includes(it as Toggle));
+    if (invalidToggles.length > 0) {
+        throw new Error(`Unknown toggles ${invalidToggles} for pool '${pool.name}'`);
+    }
+
+    return toggles as Toggle[];
+}
+
+export async function runMatching(poolName: string, apply: boolean, _toggles: string[]) {
     const pool = pools.find((it) => it.name === poolName);
     if (!pool) {
         throw new Error(`Unknown Pool '${poolName}'`);
     }
 
-    const invalidToggles = toggles.filter((it) => !pool.toggles.includes(it));
-    if (invalidToggles.length > 0) {
-        throw new Error(`Unknown toggles ${invalidToggles} for pool '${pool.name}'`);
-    }
-
+    const toggles = validatePoolToggles(pool, _toggles);
     logger.info(`MatchingPool(${pool.name}) started matching (apply: ${apply}, toggles: ${toggles})`);
 
     const timing = { preparation: 0, matching: 0, commit: 0 };
@@ -523,9 +530,11 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // as they were not yet asked for an interest confirmation
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
-    if (pool.toggles.includes('skip-interest-confirmation')) {
+    if (pool.toggles.includes('confirmation-pending')) {
         backlog +=
-            ((await getPupilCount(pool, ['confirmation-pending'])) + (await getPupilCount(pool, ['confirmation-unknown']))) *
+            ((await getPupilCount(pool, ['confirmation-pending'])) +
+                (await getPupilCount(pool, ['confirmation-pending'])) +
+                (await getPupilCount(pool, ['confirmation-unknown']))) *
             (await getInterestConfirmationRate());
     }
 
