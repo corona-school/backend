@@ -152,6 +152,70 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
     };
 }
 
+const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
+type InterestConfirmationToggle = typeof INTEREST_CONFIRMATION_TOGGLES[number];
+
+function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: string[] | InterestConfirmationToggle[]) {
+    if (+toggles.includes('confirmation-success') + +toggles.includes('confirmation-pending') + +toggles.includes('confirmation-unknown') > 1) {
+        throw new Error(`Only one confirmation- toggle may be present!`);
+    }
+
+    if (toggles.includes('confirmation-success')) {
+        query.OR = [
+            // Historically we allowed pupils of cooperating schools to bypass interest confirmation
+            { registrationSource: 'cooperation' },
+            { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
+        ];
+    }
+
+    if (toggles.includes('confirmation-pending')) {
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+        // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
+        query.pupil_tutoring_interest_confirmation_request = { some: { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false } };
+    }
+
+    if (toggles.includes('confirmation-unknown')) {
+        query.pupil_tutoring_interest_confirmation_request = {
+            none: { invalidated: false },
+        };
+    }
+}
+
+const PUPIL_SCREENING_TOGGLES = ['pupil-screening-unknown', 'pupil-screening-success', 'pupil-screening-pending'] as const;
+type PupilScreeningToggle = typeof PUPIL_SCREENING_TOGGLES[number];
+
+function addPupilScreeningFilter(query: Prisma.pupilWhereInput, toggles: string[] | PupilScreeningToggle[]) {
+    if (+toggles.includes('pupil-screening-success') + +toggles.includes('pupil-screening-pending') + +toggles.includes('pupil-screening-unknown') > 1) {
+        throw new Error(`Only one screening- toggle may be present!`);
+    }
+
+    if (toggles.includes('pupil-screening-success')) {
+        query.pupil_screening = {
+            some: {
+                invalidated: false,
+                status: 'success',
+            },
+        };
+    }
+
+    if (toggles.includes('pupil-screening-pending')) {
+        query.pupil_screening = {
+            some: {
+                invalidated: false,
+                status: 'pending',
+            },
+        };
+    }
+
+    if (toggles.includes('pupil-screening-unknown')) {
+        query.pupil_screening = {
+            none: { invalidated: false },
+        };
+    }
+}
+
 /* ---------------------- POOLS ----------------------------------- */
 
 const balancingCoefficients = {
@@ -165,16 +229,9 @@ const _pools = [
     {
         name: 'lern-fair-now',
         confirmInterest: false,
-        toggles: [
-            'skip-interest-confirmation',
-            'confirmation-pending',
-            'confirmation-unknown',
-            'pupil-screening-success',
-            'pupil-screening-pending',
-            'pupil-screening-unknown',
-        ],
+        toggles: [...INTEREST_CONFIRMATION_TOGGLES, ...PUPIL_SCREENING_TOGGLES],
 
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
+        pupilsToMatch: (toggles: (InterestConfirmationToggle | PupilScreeningToggle)[]): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
                 openMatchRequestCount: { gt: 0 },
@@ -182,58 +239,13 @@ const _pools = [
                 registrationSource: { notIn: ['plus'] },
             };
 
-            // If: Interest confirmation is required
-            if (
-                !toggles.includes('skip-interest-confirmation') &&
-                !toggles.includes('confirmation-pending') &&
-                !toggles.includes('confirmation-unknown') &&
-                !toggles.includes('pupil-screening-success') &&
-                !toggles.includes('pupil-screening-pending') &&
-                !toggles.includes('pupil-screening-unknown')
-            ) {
-                query.OR = [
-                    { registrationSource: 'cooperation' },
-                    { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
-                ];
+            if (toggles.length === 0) {
+                // TODO: Switch to pupil-screening-success somewhen
+                toggles = ['confirmation-success'];
             }
 
-            if (toggles.includes('confirmation-pending')) {
-                const twoWeeksAgo = new Date();
-                twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-                // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-                query.pupil_tutoring_interest_confirmation_request = { some: { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false } };
-            }
-
-            if (toggles.includes('confirmation-unknown')) {
-                query.pupil_tutoring_interest_confirmation_request = {
-                    none: { invalidated: false },
-                };
-            }
-
-            if (toggles.includes('pupil-screening-success')) {
-                query.pupil_screening = {
-                    some: {
-                        invalidated: false,
-                        status: 'success',
-                    },
-                };
-            }
-
-            if (toggles.includes('pupil-screening-pending')) {
-                query.pupil_screening = {
-                    some: {
-                        invalidated: false,
-                        status: 'pending',
-                    },
-                };
-            }
-
-            if (toggles.includes('pupil-screening-unknown')) {
-                query.pupil_screening = {
-                    none: { invalidated: false },
-                };
-            }
+            addInterestConfirmationFilter(query, toggles);
+            addPupilScreeningFilter(query, toggles);
 
             return query;
         },
@@ -249,8 +261,8 @@ const _pools = [
     },
     {
         name: 'lern-fair-plus',
-        toggles: ['allow-unverified', 'pupil-screening-success', 'pupil-screening-pending', 'pupil-screening-unknown'],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => {
+        toggles: ['allow-unverified', ...PUPIL_SCREENING_TOGGLES],
+        pupilsToMatch: (toggles: PupilScreeningToggle[]): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
                 openMatchRequestCount: { gt: 0 },
@@ -258,29 +270,7 @@ const _pools = [
                 registrationSource: { equals: 'plus' },
             };
 
-            if (toggles.includes('pupil-screening-success')) {
-                query.pupil_screening = {
-                    some: {
-                        invalidated: false,
-                        status: 'success',
-                    },
-                };
-            }
-
-            if (toggles.includes('pupil-screening-pending')) {
-                query.pupil_screening = {
-                    some: {
-                        invalidated: false,
-                        status: 'pending',
-                    },
-                };
-            }
-
-            if (toggles.includes('pupil-screening-unknown')) {
-                query.pupil_screening = {
-                    none: { invalidated: false },
-                };
-            }
+            addPupilScreeningFilter(query, toggles);
 
             return query;
         },
