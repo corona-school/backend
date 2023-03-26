@@ -12,6 +12,7 @@ import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfi
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user';
 import { addPupilScreening } from '../pupil/screening';
+import assert from 'assert';
 
 const logger = getLogger('MatchingPool');
 
@@ -163,11 +164,7 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
     }
 
     if (toggles.includes('confirmation-success')) {
-        query.OR = [
-            // Historically we allowed pupils of cooperating schools to bypass interest confirmation
-            { registrationSource: 'cooperation' },
-            { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
-        ];
+        query.OR = [{ pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } }];
     }
 
     if (toggles.includes('confirmation-pending')) {
@@ -241,13 +238,19 @@ const _pools = [
                 registrationSource: { notIn: ['plus'] },
             };
 
-            if (toggles.length === 0) {
-                // TODO: Switch to pupil-screening-success somewhen
-                toggles = ['confirmation-success'];
-            }
-
             addInterestConfirmationFilter(query, toggles);
             addPupilScreeningFilter(query, toggles);
+
+            if (toggles.length === 0) {
+                // As we slowly move from pupil screening to interest confirmations, by default take those pupils that have either the one or the other
+                query.OR = [
+                    { pupil_screening: { some: { status: 'success', invalidated: false } } },
+                    { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
+                ];
+
+                assert(!query.pupil_screening, 'expected no pupil_screening filter to be present');
+                assert(!query.pupil_tutoring_interest_confirmation_request, 'expected no interest confirmation filter to be present');
+            }
 
             return query;
         },
@@ -271,6 +274,10 @@ const _pools = [
                 subjects: { not: '[]' },
                 registrationSource: { equals: 'plus' },
             };
+
+            if (toggles.length === 0) {
+                toggles = ['pupil-screening-success'];
+            }
 
             addPupilScreeningFilter(query, toggles);
 
