@@ -164,7 +164,7 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
     }
 
     if (toggles.includes('confirmation-success')) {
-        query.OR = [{ pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } }];
+        query.pupil_tutoring_interest_confirmation_request = { some: { status: 'confirmed', invalidated: false } };
     }
 
     if (toggles.includes('confirmation-pending')) {
