@@ -336,7 +336,7 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ) {
-        const subcourse = await getSubcourse(subcourseId);
+        let subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const pupil = await getPupil(pupilId);
 
@@ -350,7 +350,7 @@ export class MutateSubcourseResolver {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (participantCount >= subcourse.maxParticipants) {
             // Course is full, create one single place for the pupil
-            await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } } });
+            subcourse = await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } }, include: { lecture: true } });
         }
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
