@@ -6,9 +6,6 @@ import { accessURLForKey } from '../../../common/file-bucket';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { lectureDTOFactory } from './sync-lectures';
 
-// This is needed so that the weekday will be translated properly.
-moment.locale('de');
-
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
@@ -75,7 +72,7 @@ function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
 function listLectureStartDates(subcourse: WebflowSubcourse): string {
     let appointments = [];
     for (const lecture of subcourse.lecture) {
-        const startDate = moment(lecture.start);
+        const startDate = moment(lecture.start).locale('de');
         appointments.push(startDate.format('dddd, DD. MMMM YYYY, HH:mm [Uhr]'));
     }
     return appointments.join('\n');
@@ -97,6 +94,8 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
 
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
+    // make sure that the weekday can be properly translated
+    startDate.locale('de');
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
 

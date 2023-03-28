@@ -5,9 +5,6 @@ import moment from 'moment';
 import { lecture } from '@prisma/client';
 import { getWebflowSubcourses } from './queries';
 
-// This is needed so that the weekday will be translated properly.
-moment.locale('de');
-
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 
 export interface LectureDTO extends WebflowMetadata {
@@ -22,7 +19,7 @@ export function lectureDTOFactory(data: any): WebflowMetadata {
 }
 
 function lectureToDTO(lecture: lecture): LectureDTO {
-    const start = moment(lecture.start);
+    const start = moment(lecture.start).locale('de');
     const lectureDto: LectureDTO = {
         ...emptyMetadata,
         databaseid: `${lecture.id}`,
