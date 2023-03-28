@@ -2,7 +2,7 @@ import syncCourses from './sync-courses';
 import { getLogger } from '../../utils/logging';
 import syncLectures from './sync-lectures';
 
-const logger = getLogger();
+const logger = getLogger('WebflowAPISync');
 
 function validateEnvVars() {
     if (!process.env.WEBFLOW_API_BASE_URL) {

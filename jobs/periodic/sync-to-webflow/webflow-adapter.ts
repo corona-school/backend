@@ -2,7 +2,7 @@ import { getLogger } from '../../utils/logging';
 import { join } from 'path';
 import moment from 'moment';
 
-const logger = getLogger();
+const logger = getLogger('WebflowApiAdapter');
 const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
 
 export interface WebflowMetadata {
