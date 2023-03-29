@@ -230,6 +230,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'projectFields'
             | 'aboutMe'
             | 'schooltype'
+            | 'state'
         >({
             matchReason: everyone,
             authToken: nobody,
@@ -250,7 +251,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             registrationSource: adminOrOwner,
             school: adminOrOwner,
             schoolId: adminOrOwner,
-            state: adminOrOwner,
+            // state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
             lastTimeCheckedNotifications: adminOrOwner,
@@ -285,7 +286,17 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
+            | 'id'
+            | 'firstname'
+            | 'lastname'
+            | 'active'
+            | 'isStudent'
+            | 'isInstructor'
+            | 'isProjectCoach'
+            | 'isUniversityStudent'
+            | 'languages'
+            | 'aboutMe'
+            | 'state'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -298,7 +309,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,
             firstMatchRequest: adminOrOwner,
-            state: adminOrOwner,
+            // state: adminOrOwner,
             university: adminOrOwner,
             module: adminOrOwner,
             moduleHours: adminOrOwner,
