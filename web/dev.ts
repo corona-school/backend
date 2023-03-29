@@ -1016,7 +1016,7 @@ export async function setupDevDB() {
             lecture.instructor = s1;
             lectures.push(lecture);
 
-            currentLecture += 15 * 60 * 1000;
+            currentLecture += 60 * 60 * 1000;
         }
     }
 

@@ -44,7 +44,7 @@ class OtherParticipant {
     aboutMe: string;
 }
 
-function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
+export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
     return {
         published: { equals: true },
         cancelled: { equals: false },
