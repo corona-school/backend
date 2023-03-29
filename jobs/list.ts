@@ -41,5 +41,5 @@ export const allJobs: CSCronJob[] = [
     // { cronTime: '00 00 02 * * *', jobFunction: redactInactiveAccounts },
     { cronTime: '00 00 01 * * *', jobFunction: dropOldNotificationContexts },
     // Synch DB data to webflow CMS
-    // { cronTime: '00 */15 * * * *', jobFunction: syncToWebflow },
+    { cronTime: '00 */15 * * * *', jobFunction: syncToWebflow },
 ];
