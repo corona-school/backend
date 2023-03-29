@@ -20,6 +20,11 @@ function validateEnvVars() {
 }
 
 export default async function execute(): Promise<void> {
+    // As we don't have a dev/staging webflow instance, we should only execute the job in production
+    if (process.env.ENV !== 'production') {
+        logger.info('Skipping webflow sync in non production environments');
+        return;
+    }
     try {
         logger.info('Run Webflow sync');
         validateEnvVars();
