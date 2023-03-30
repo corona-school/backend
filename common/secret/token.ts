@@ -78,13 +78,14 @@ export async function requestToken(
     redirectTo?: string,
     newEmail?: string
 ) {
-    let token: string;
+    newEmail = validateEmail(newEmail);
 
-    if (action === 'user-email-change') {
-        token = await createSecretEmailToken(user, validateEmail(newEmail));
+    if (action !== 'user-email-change' && newEmail != undefined) {
+        throw new Error('Email may only be changed with the user-email-change token request');
     }
 
-    token = await createSecretEmailToken(user);
+    const token = await createSecretEmailToken(user, newEmail);
+
     const person = await getUserTypeORM(user.userID);
 
     if (redirectTo) {
