@@ -1,5 +1,5 @@
 import { SecretType } from '../entity/Secret';
-import { getUser, getUserTypeORM, User } from '../user';
+import { getUser, getUserTypeORM, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
@@ -152,20 +152,7 @@ export async function loginToken(token: string): Promise<User | never> {
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
         }
         if (secret.description) {
-            const user = await getUser(secret.userId, /* active */ true);
-            const email = secret.description;
-            if (user.studentId) {
-                await prisma.student.update({
-                    where: { id: user.studentId },
-                    data: { email: validateEmail(email) },
-                });
-            }
-            if (user.pupilId) {
-                await prisma.pupil.update({
-                    where: { id: user.pupilId },
-                    data: { email: validateEmail(email) },
-                });
-            }
+            updateUser(secret.userId, secret.description);
         }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });

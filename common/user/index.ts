@@ -10,6 +10,7 @@ import { getManager } from 'typeorm';
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
+import { validateEmail } from '../../graphql/validators';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -265,4 +266,20 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
     }
 
     throw new Error(`Unknown User(${user.userID})`);
+}
+
+export async function updateUser(userId: string, email?: string, update?: Partial<User>) {
+    const user = await getUser(userId, /* active */ true);
+    if (user.studentId) {
+        await prisma.student.update({
+            where: { id: user.studentId },
+            data: { email: validateEmail(email) },
+        });
+    }
+    if (user.pupilId) {
+        await prisma.pupil.update({
+            where: { id: user.pupilId },
+            data: { email: validateEmail(email) },
+        });
+    }
 }
