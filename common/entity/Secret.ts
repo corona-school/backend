@@ -36,6 +36,7 @@ export class Secret {
     @Column({ nullable: true })
     lastUsed?: Date;
 
+    // for EMAIL_TOKEN the description is used for new email
     @Column({ nullable: true })
     description: string;
 }

@@ -6,6 +6,7 @@ import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
 import { isDev, USER_APP_DOMAIN } from '../util/environment';
+import { validateEmail } from '../../graphql/validators';
 
 const logger = getLogger('Token');
 
@@ -71,8 +72,19 @@ export async function _createFixedToken(user: User, token: string): Promise<void
 
 // Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
 // Also a redirectTo URL is provided which is passed through to the frontend
-export async function requestToken(user: User, action: 'user-verify-email' | 'user-authenticate' | 'user-password-reset', redirectTo?: string) {
-    const token = await createSecretEmailToken(user);
+export async function requestToken(
+    user: User,
+    action: 'user-verify-email' | 'user-authenticate' | 'user-password-reset' | 'user-email-change',
+    redirectTo?: string,
+    newEmail?: string
+) {
+    let token: string;
+
+    if (action === 'user-email-change') {
+        token = await createSecretEmailToken(user, validateEmail(newEmail));
+    }
+
+    token = await createSecretEmailToken(user);
     const person = await getUserTypeORM(user.userID);
 
     if (redirectTo) {
@@ -90,7 +102,7 @@ export async function requestToken(user: User, action: 'user-verify-email' | 'us
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
-export async function createSecretEmailToken(user: User) {
+export async function createSecretEmailToken(user: User, newEmail?: string) {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -101,6 +113,7 @@ export async function createSecretEmailToken(user: User) {
             secret: hash,
             expiresAt: null,
             lastUsed: null,
+            description: newEmail,
         },
     });
 
@@ -136,6 +149,22 @@ export async function loginToken(token: string): Promise<User | never> {
         } else {
             await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
+        }
+        if (secret.description) {
+            const user = await getUser(secret.userId, /* active */ true);
+            const email = secret.description;
+            if (user.studentId) {
+                await prisma.student.update({
+                    where: { id: user.studentId },
+                    data: { email: validateEmail(email) },
+                });
+            }
+            if (user.pupilId) {
+                await prisma.pupil.update({
+                    where: { id: user.pupilId },
+                    data: { email: validateEmail(email) },
+                });
+            }
         }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
