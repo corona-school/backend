@@ -1021,6 +1021,18 @@ export async function setupDevDB() {
 
     subcourses.push(subcourse11);
 
+    // course to test subcourse suggestions
+    const subcourse12 = new Subcourse();
+    subcourse12.course = course10;
+    subcourse12.joinAfterStart = true;
+    subcourse12.minGrade = 3;
+    subcourse12.maxGrade = 5;
+    subcourse12.instructors = [s1];
+    subcourse12.maxParticipants = 20;
+    subcourse12.published = true;
+
+    subcourses.push(subcourse12);
+
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
         console.log('Inserted SubCourse.');
@@ -1122,7 +1134,13 @@ export async function setupDevDB() {
     lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
 
-    lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13);
+    const lecture14: Lecture = new Lecture();
+    lecture14.subcourse = subcourse12;
+    lecture14.duration = 30;
+    lecture14.start = new Date(year, month, date + 10, 20, 0, 0, 0);
+    lecture14.instructor = s1;
+
+    lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13, lecture14);
 
     for (const lecture of lectures) {
         await entityManager.save(Lecture, lecture);
