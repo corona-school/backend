@@ -1,8 +1,9 @@
-import { adminClient, createUserClient, defaultClient, test } from "./base";
-import { pupilOne } from "./user";
-import * as assert from "assert";
+import { adminClient, createUserClient, defaultClient, test } from './base';
+import { pupilOne } from './user';
+import assert from 'assert';
+import { assertUserReceivedNotification, createMockNotification } from './notification';
 
-test("Token Login", async () => {
+test('Token Login', async () => {
     const { client } = await pupilOne;
 
     // Create a new Token
@@ -41,19 +42,19 @@ test("Token Login", async () => {
     assert.equal(secretsSwapped.me.secrets.length, 1);
 });
 
-export const pupilOneWithPassword = test("Password Login", async () => {
+export const pupilOneWithPassword = test('Password Login', async () => {
     const { client, pupil } = await pupilOne;
-    const password = "test123";
+    const password = 'test123';
 
     // Before the user has a password, email login is proposed:
     const emailLoginProposed = await defaultClient.request(`mutation EmailLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
-    assert.strictEqual(emailLoginProposed.userDetermineLoginOptions, "email");
+    assert.strictEqual(emailLoginProposed.userDetermineLoginOptions, 'email');
 
     await client.request(`mutation CreatePassword { passwordCreate(password: "test123")}`);
 
     // Now password login is proposed for the user:
     const passwordLoginProposed = await defaultClient.request(`mutation PasswordLoginProposed { userDetermineLoginOptions(email: "${pupil.email}") }`);
-    assert.strictEqual(passwordLoginProposed.userDetermineLoginOptions, "password");
+    assert.strictEqual(passwordLoginProposed.userDetermineLoginOptions, 'password');
 
     await client.request(`mutation Logout { logout }`);
 
@@ -70,8 +71,11 @@ export const pupilOneWithPassword = test("Password Login", async () => {
     return { client, pupil, password };
 });
 
-test("Token Request", async () => {
-    const { client, pupil: { email } } = await pupilOne;
+test('Token Request', async () => {
+    const {
+        client,
+        pupil: { email },
+    } = await pupilOne;
 
     // With invalid email shall fail
     await client.requestShallFail(`mutation RequestTokenInvalidEmail { tokenRequest(email: "test+wrong@lern-fair.de") }`);
@@ -81,7 +85,9 @@ test("Token Request", async () => {
     await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset")}`);
     await client.requestShallFail(`mutation RequestTokenInvalidAction { tokenRequest(email: "${email}", action: "what-the-heck")}`);
 
-    await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`);
+    await client.request(
+        `mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`
+    );
 
     // Production only:
     // await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
@@ -89,11 +95,46 @@ test("Token Request", async () => {
     // NOTE: We cannot further test integration here, as we cannot access the emails that might have been sent to the user
 });
 
-test("Admin Login", async () => {
+test('Admin Login', async () => {
     const { client: pupilClient } = await pupilOne;
     const unauthenticatedClient = createUserClient();
 
     await unauthenticatedClient.requestShallFail(`query { pupils(take: 1) { id } }`);
     await pupilClient.requestShallFail(`query { pupils(take: 1) { id } }`);
     await adminClient.request(`query { pupils(take: 1) { id } }`);
+});
+
+test('Change Email', async () => {
+    const {
+        client,
+        pupil: {
+            pupil: { id },
+        },
+    } = await pupilOne;
+    const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
+
+    await client.requestShallFail(`mutation MeEmailChange { meEmailChange(email: "test+wrong@lern-fair.de")}`);
+    await client.request(`mutation MeEmailChange { meEmailChange(email: 'test+newmail@lern-fair.de')}`);
+
+    const { context } = await assertUserReceivedNotification(changedEmailNotification, `pupil/${id}`);
+    const token = context.token as string;
+    assert(token, "Token mus be present in ChangeEmailNotification's context");
+
+    const otherDeviceClient = createUserClient();
+    await otherDeviceClient.request(`mutation LoginWithEmailToken { loginToken(token: "${token}")}`);
+
+    const {
+        me: {
+            pupil: { id: id1 },
+        },
+    } = await otherDeviceClient.request(`
+        query CheckLoggedIn {
+            me {
+                pupil {
+                    id
+                    email
+                }
+            }
+        }
+    `);
 });
