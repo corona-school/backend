@@ -1,7 +1,8 @@
 import { adminClient, defaultClient, test } from './base';
-import { instructorOne, pupilOne } from './user';
+import { pupilOne, pupilUpdated } from './user';
 import * as assert from 'assert';
 import { screenedInstructorOne } from './screening';
+import { CourseState } from '../common/entity/Course';
 
 const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
@@ -182,35 +183,37 @@ test('Search further instructors', async () => {
 });
 
 test('Public Course Suggestions', async () => {
-    const { client } = await pupilOne;
+    const { client, pupil } = await pupilOne;
+    // const { pupilsGrade } = await pupilUpdated;
 
-    // firstLecture > now
-    // published = true
-    // cancelled = false
-    // courseState = 'allowed
-    // minGrade <= client.gradeAsInt
-    // maxGrade >= client.gradeAsInt
-    // isParticipant = false
-    // participantsCount < maxParticipants
-
-    const { subcourse } = await client.request(`
-    query GetAllSubcourses {
-        subcoursesPublic(take: 20, excludeKnown: true, onlyJoinable: true ) {
+    const { subcoursesPublic } = await client.request(`
+    query PublicSubcourseSuggestions {
+        subcoursesPublic(take: 20, excludeKnown: true, onlyJoinable: true )
+        {
             id
-            cancelled
             published
-            isParticipant
+            cancelled
             minGrade
             maxGrade
-            maxParticipants
+            isParticipant
             participantsCount
-            firstLecture {
-                start
-            }
+            maxParticipants
             course {
                 courseState
             }
         }
-    }
-    `);
+    }`);
+
+    assert.ok(
+        subcoursesPublic.some(
+            (subcourse) =>
+                subcourse.published &&
+                !subcourse.cancelled &&
+                subcourse.course.courseState === CourseState.ALLOWED &&
+                // subcourse.minGrade <= pupilsGrade &&
+                // subcourse.maxGrade >= pupilsGrade &&
+                !subcourse.isParticipant &&
+                subcourse.participantsCount < subcourse.maxParticipants
+        )
+    );
 });
