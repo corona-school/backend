@@ -142,6 +142,8 @@ export async function create(notification: Prisma.notificationCreateInput) {
     logger.info(`Notification(${result.id}) created\n`);
 
     invalidateCache();
+
+    return result;
 }
 
 /* Imports Changes to the Notification System
