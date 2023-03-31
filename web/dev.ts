@@ -1408,8 +1408,10 @@ export async function setupDevDB() {
     await entityManager.save(remissionRequest);
     console.log('Inserted remission request');
 
-    await importNotificationsFromProd();
-    await importMessagesTranslationsFromProd();
+    if (!process.env.SKIP_NOTIFICATION_IMPORT) {
+        await importNotificationsFromProd();
+        await importMessagesTranslationsFromProd();
+    }
 }
 
 function sha512(input: string): string {
