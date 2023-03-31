@@ -654,12 +654,28 @@ export async function setupDevDB() {
         intercultural: 'Interkulturelles',
     };
 
+    const focusTagNamesMap = {
+        genz: 'GenZ',
+        socialmedia: 'Social Media',
+    };
+
     const clubTagMap = Object.fromEntries(
         Object.entries(clubTagNamesMap).map(([identifier, name]) => {
             const t = new CourseTag();
             t.name = name;
             t.identifier = identifier;
             t.category = 'club';
+
+            return [identifier, t];
+        })
+    );
+
+    const focusTagMap = Object.fromEntries(
+        Object.entries(focusTagNamesMap).map(([identifier, name]) => {
+            const t = new CourseTag();
+            t.name = name;
+            t.identifier = identifier;
+            t.category = 'focus';
 
             return [identifier, t];
         })
@@ -676,6 +692,11 @@ export async function setupDevDB() {
 
     const clubTags = Object.values(clubTagMap);
     tags.push(...clubTags);
+
+    const genz = focusTagMap['genz'];
+
+    const focusTags = Object.values(focusTagMap);
+    tags.push(...focusTags);
 
     const preparation = (t = new CourseTag());
     t.name = 'Prüfungsvorbereitung';
@@ -847,6 +868,18 @@ export async function setupDevDB() {
     course9.courseState = CourseState.ALLOWED;
 
     courses.push(course9);
+
+    let course10 = new Course();
+    course10.instructors = [s1];
+    course10.name = 'Gen Z';
+    course10.outline = 'Was die Gen Z von der Arbeitswelt erwartet!';
+    course10.description = 'Du gehörst zur Gen Z und möchtest mehr über die Arbeitswelt erfahren?';
+    course10.category = CourseCategory.FOCUS;
+    course10.tags = [genz];
+    course10.subcourses = [];
+    course10.courseState = CourseState.ALLOWED;
+
+    courses.push(course10);
 
     for (const course of courses) {
         await entityManager.save(Course, course);
@@ -1433,7 +1466,6 @@ async function importMessagesTranslationsFromProd() {
     ).json();
 
     const messageTranslations = prodMessageTranslations.data.notifications.reduce((acc: any[], cur: any) => [...acc, ...cur.messageTranslations], []);
-
 
     await importMessageTranslations(messageTranslations);
 }
