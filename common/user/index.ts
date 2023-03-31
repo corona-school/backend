@@ -268,7 +268,7 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
     throw new Error(`Unknown User(${user.userID})`);
 }
 
-export async function updateUser(userId: string, email?: string, update?: Partial<User>) {
+export async function updateUser(userId: string, email: string) {
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
         await prisma.student.update({

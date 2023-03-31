@@ -181,8 +181,7 @@ test('Change Email', async () => {
     } = await pupilOne;
     const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
 
-    await client.requestShallFail(`mutation MeEmailChange { meEmailChange(email: "test+wrong@lern-fair.de")}`);
-    await client.request(`mutation MeEmailChange { meEmailChange(email: 'test+newmail@lern-fair.de')}`);
+    await client.request(`mutation MeEmailChange { meEmailChange(email: "test+newmail@lern-fair.de")}`);
 
     const { context } = await assertUserReceivedNotification(changedEmailNotification, `pupil/${id}`);
     const token = context.token as string;
@@ -193,7 +192,7 @@ test('Change Email', async () => {
 
     const {
         me: {
-            pupil: { id: id1 },
+            pupil: { id: id1, email: newMail },
         },
     } = await otherDeviceClient.request(`
         query CheckLoggedIn {
@@ -205,4 +204,6 @@ test('Change Email', async () => {
             }
         }
     `);
+
+    assert.strictEqual(newMail, 'test+newmail@lern-fair.de', 'Should be the new email');
 });
