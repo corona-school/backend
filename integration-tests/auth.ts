@@ -1,7 +1,7 @@
 import { adminClient, createUserClient, defaultClient, test } from './base';
 import { pupilOne } from './user';
 import assert from 'assert';
-import { assertUserReceivedNotification, createMockNotification } from './notification';
+import { assertUserReceivedNotification, createMockNotification } from './notifications';
 
 test('Token Login', async () => {
     const { client } = await pupilOne;
@@ -11,7 +11,7 @@ test('Token Login', async () => {
     const { tokenCreate: token } = await client.request(`mutation CreateToken { tokenCreate }`);
 
     const secretsUnused = await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
-    assert.equal(secretsUnused.me.secrets[0].lastUsed, null);
+    assert.equal(secretsUnused.me.secrets.filter((it) => it.type === 'TOKEN')[0].lastUsed, null);
 
     // Token can be used to log in
 
@@ -22,11 +22,11 @@ test('Token Login', async () => {
     await client.request(`mutation LoginWithToken { loginToken(token: "${token}")}`);
 
     const secretsUsed = await client.request(`query RetrieveSecrets { me { secrets { id type createdAt lastUsed }}}`);
-    assert.notEqual(secretsUsed.me.secrets[0].lastUsed, null);
+    assert.notEqual(secretsUsed.me.secrets.filter((it) => it.type === 'TOKEN')[0].lastUsed, null);
 
     // Token can be revoked
 
-    await client.request(`mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets[0].id})}`);
+    await client.request(`mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets.filter((it) => it.type === 'TOKEN')[0].id})}`);
 
     const { tokenCreate: token2 } = await client.request(`mutation CreateTokenTwo { tokenCreate }`);
 
@@ -39,7 +39,7 @@ test('Token Login', async () => {
     await client.request(`mutation LoginWithTwo { loginToken(token: "${token2}")}`);
 
     const secretsSwapped = await client.request(`query RetrieveSecrets { me { secrets { type createdAt lastUsed }}}`);
-    assert.equal(secretsSwapped.me.secrets.length, 1);
+    assert.equal(secretsSwapped.me.secrets.length, secretsUsed.me.secrets.length);
 });
 
 export const pupilOneWithPassword = test('Password Login', async () => {
@@ -74,25 +74,93 @@ export const pupilOneWithPassword = test('Password Login', async () => {
 test('Token Request', async () => {
     const {
         client,
-        pupil: { email },
+        pupil: {
+            email,
+            pupil: { id },
+        },
     } = await pupilOne;
 
+    const loginNotification = await createMockNotification('user-authenticate', 'LoginNotification');
     // With invalid email shall fail
     await client.requestShallFail(`mutation RequestTokenInvalidEmail { tokenRequest(email: "test+wrong@lern-fair.de") }`);
 
     await client.request(`mutation RequestToken { tokenRequest(email: "${email}")}`);
 
-    await client.request(`mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset")}`);
+    const { context } = await assertUserReceivedNotification(loginNotification, `pupil/${id}`);
+    const token = context.token as string;
+    assert(token, "Token must be present in LoginNotification's context");
+
+    await client.request(
+        `mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`
+    );
+    const otherDeviceClient = createUserClient();
+    await otherDeviceClient.request(`mutation LoginWithEmailToken { loginToken(token: "${token}")}`);
+
+    const {
+        me: {
+            pupil: { id: id1 },
+        },
+    } = await otherDeviceClient.request(`
+        query CheckLoggedIn {
+            me { pupil { id } }
+        }
+    `);
+
+    assert(id === id1, 'Expected login to be in the same account');
+
+    // The Email Token can be used multiple times, as users might mess up between their email program and their browser
+    const otherDeviceClient2 = createUserClient();
+    await otherDeviceClient2.request(`mutation LoginWithEmailToken { loginToken(token: "${token}")}`);
+
+    const {
+        me: {
+            pupil: { id: id2 },
+        },
+    } = await otherDeviceClient.request(`
+        query CheckLoggedIn {
+            me { pupil { id } }
+        }
+    `);
+
+    assert(id === id2, 'Expected login to be in the same account');
+
+    // Production only:
+    // await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
+});
+
+test('Token Request Password Reset', async () => {
+    const {
+        client,
+        pupil: {
+            email,
+            pupil: { id },
+        },
+    } = await pupilOne;
+
+    const passwordResetNotification = await createMockNotification('user-password-reset', 'PasswordResetNotification');
+
     await client.requestShallFail(`mutation RequestTokenInvalidAction { tokenRequest(email: "${email}", action: "what-the-heck")}`);
 
     await client.request(
         `mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`
     );
 
-    // Production only:
-    // await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
+    const { context } = await assertUserReceivedNotification(passwordResetNotification, `pupil/${id}`);
+    const token = context.token as string;
+    assert(token, "Token must be present in PasswordResetNotification's context");
 
-    // NOTE: We cannot further test integration here, as we cannot access the emails that might have been sent to the user
+    const otherDeviceClient = createUserClient();
+    await otherDeviceClient.request(`mutation LoginWithEmailToken { loginToken(token: "${token}")}`);
+
+    const {
+        me: {
+            pupil: { id: id1 },
+        },
+    } = await otherDeviceClient.request(`
+        query CheckLoggedIn {
+            me { pupil { id } }
+        }
+    `);
 });
 
 test('Admin Login', async () => {
