@@ -58,6 +58,13 @@ export async function deleteItems(collectionId: string, itemIds: string[]) {
     await request({ path: `collections/${collectionId}/items?live=false`, method: 'DELETE', data: body });
 }
 
+export async function patchItem<T extends WebflowMetadata>(collectionId: string, item: T) {
+    const itemId = item._id;
+    const body = { fields: structuredClone(item) as WebflowMetadata };
+    delete body.fields._id;
+    await request({ path: `collections/${collectionId}/items/${itemId}`, method: 'PATCH', data: body });
+}
+
 export async function publishItems(collectionId: string) {
     const items = await getCollectionItems(collectionId, basicMetaFactory);
     const itemIds = items
@@ -80,7 +87,7 @@ export async function publishItems(collectionId: string) {
 
 interface Request {
     path: string;
-    method: 'GET' | 'POST' | 'DELETE' | 'PUT';
+    method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH';
     data?: any;
 }
 

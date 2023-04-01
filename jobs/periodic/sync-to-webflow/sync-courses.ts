@@ -1,4 +1,4 @@
-import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
 import { Logger } from 'log4js';
 import moment, { Moment } from 'moment';
@@ -147,6 +147,10 @@ export default async function syncCourses(logger: Logger): Promise<void> {
 
     for (const row of result.new) {
         await createNewItem(collectionId, row);
+    }
+
+    for (const row of result.changed) {
+        await patchItem(collectionId, row);
     }
 
     if (result.outdated.length > 0) {
