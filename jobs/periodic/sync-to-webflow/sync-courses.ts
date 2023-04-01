@@ -100,7 +100,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         ...emptyMetadata,
 
         name: subcourse.course.name,
-        databaseid: `${subcourse.id}`, // We are using a string to be safe for any case.
+        slug: `${subcourse.id}`, // We are using a string to be safe for any case.
 
         description: subcourse.course.description,
         instructor: generateInstructor(subcourse),
@@ -129,7 +129,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
             alt: '',
         },
     };
-    courseDTO.slug = hash(courseDTO);
+    courseDTO.hash = hash(courseDTO);
     return courseDTO;
 }
 

@@ -28,7 +28,7 @@ export default async function execute(): Promise<void> {
     try {
         logger.info('Run Webflow sync');
         validateEnvVars();
-        await syncLectures(logger);
+        // await syncLectures(logger);
         await syncCourses(logger);
         logger.info('Finished Webflow sync');
     } catch (e) {

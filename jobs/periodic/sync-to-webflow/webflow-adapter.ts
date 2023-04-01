@@ -11,9 +11,9 @@ export interface WebflowMetadata {
     _draft?: boolean;
     name?: string;
     // The slug is a unique value that should never be changed because it cannot be reused.
-    // Said that we are using it to store the hash, which should always match the actual data stored in the item.
+    // Said that we are using it to store the database id, which should always match the actual data stored in the item.
     slug?: string;
-    databaseid?: string; // We are using a string to be safe for any case.
+    hash?: string;
     'updated-on'?: string;
     'published-on'?: string;
 }
@@ -23,6 +23,7 @@ export const emptyMetadata: WebflowMetadata = {
     _archived: false,
     _draft: false,
     slug: '',
+    hash: '',
     'updated-on': '',
     'published-on': '',
 };
