@@ -268,18 +268,24 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
     throw new Error(`Unknown User(${user.userID})`);
 }
 
-export async function updateUser(userId: string, email: string) {
+export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
-        await prisma.student.update({
-            where: { id: user.studentId },
-            data: { email: validateEmail(email) },
-        });
+        return userForStudent(
+            (await prisma.student.update({
+                where: { id: user.studentId },
+                data: { email: validateEmail(email) },
+                select: userSelection,
+            })) as Student
+        );
     }
     if (user.pupilId) {
-        await prisma.pupil.update({
-            where: { id: user.pupilId },
-            data: { email: validateEmail(email) },
-        });
+        return userForPupil(
+            (await prisma.pupil.update({
+                where: { id: user.pupilId },
+                data: { email: validateEmail(email) },
+                select: userSelection,
+            })) as Pupil
+        );
     }
 }

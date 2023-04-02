@@ -136,7 +136,7 @@ export async function loginToken(token: string): Promise<User | never> {
         throw new Error(`Invalid Token`);
     }
 
-    const user = await getUser(secret.userId, /* active */ true);
+    let user = await getUser(secret.userId, /* active */ true);
 
     if (secret.type === SecretType.EMAIL_TOKEN) {
         if (!secret.expiresAt) {
@@ -151,8 +151,12 @@ export async function loginToken(token: string): Promise<User | never> {
             await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
         }
+
         if (secret.description) {
-            updateUser(secret.userId, secret.description);
+            // For EMAIL_TOKEN secrets, the description field is used to store the email the token was sent to
+            // Thus if a token was sent to a different email than the users email, we assume that the user wants to change their email:
+            const newEmail = secret.description;
+            user = await updateUser(secret.userId, { email: newEmail });
         }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });

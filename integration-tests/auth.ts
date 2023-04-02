@@ -189,11 +189,13 @@ test('Change Email', async () => {
 
     const {
         me: {
+            email: newMeEmail,
             pupil: { id: id1, email: newMail },
         },
     } = await otherDeviceClient.request(`
         query CheckLoggedIn {
             me {
+                email
                 pupil {
                     id
                     email
@@ -202,6 +204,7 @@ test('Change Email', async () => {
         }
     `);
 
+    assert.strictEqual(newMeEmail, 'test+newmail@lern-fair.de', 'Should be the new email');
     assert.strictEqual(newMail, 'test+newmail@lern-fair.de', 'Should be the new email');
     assert.strictEqual(id, id1, "Changed email of the correct user");
 });
