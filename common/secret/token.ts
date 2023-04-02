@@ -7,6 +7,7 @@ import * as Notification from '../notification';
 import { getLogger } from 'log4js';
 import { isDev, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
+import { Email } from '../notification/types';
 
 const logger = getLogger('Token');
 
@@ -99,10 +100,11 @@ export async function requestToken(
         redirectTo = Buffer.from(redirectTo, 'utf-8').toString('base64');
     }
 
-    await Notification.actionTaken(person, action, { token, redirectTo: redirectTo ?? '' });
+    await Notification.actionTaken(person, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
+// If newEmail ist set, the token MUST be sent to that new email
 export async function createSecretEmailToken(user: User, newEmail?: string) {
     const token = uuid();
     const hash = hashToken(token);
@@ -118,7 +120,7 @@ export async function createSecretEmailToken(user: User, newEmail?: string) {
         },
     });
 
-    logger.info(`Created a new email token Secret(${result.id}) for User(${user.userID})`);
+    logger.info(`Created a new email token Secret(${result.id}) for User(${user.userID}) with email change ${newEmail ?? '-'}`);
 
     return token;
 }
@@ -157,6 +159,7 @@ export async function loginToken(token: string): Promise<User | never> {
             // Thus if a token was sent to a different email than the users email, we assume that the user wants to change their email:
             const newEmail = secret.description;
             user = await updateUser(secret.userId, { email: newEmail });
+            logger.info(`User(${user.userID}) changed their email to ${newEmail} via email token login`);
         }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
