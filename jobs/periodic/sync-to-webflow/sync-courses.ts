@@ -7,6 +7,7 @@ import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { lectureDTOFactory } from './sync-lectures';
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
+const courseDefaultImage = process.env.WEBFLOW_COURSE_DEFAULT_IMAGE;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
@@ -96,6 +97,8 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
     const startDate: Moment = getStartDate(subcourse) || moment();
     // make sure that the weekday can be properly translated
     startDate.locale('de');
+
+    const image = subcourse.course.imageKey ? accessURLForKey(subcourse.course.imageKey) : courseDefaultImage;
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
 
@@ -125,7 +128,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
 
         image: {
             fileId: 'placeholder', // not needed
-            url: accessURLForKey(subcourse.course.imageKey),
+            url: image,
             alt: '',
         },
     };
