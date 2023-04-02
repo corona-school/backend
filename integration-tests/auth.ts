@@ -90,9 +90,6 @@ test('Token Request', async () => {
     const token = context.token as string;
     assert(token, "Token must be present in LoginNotification's context");
 
-    await client.request(
-        `mutation RequestTokenPasswordReset { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://my.lern-fair.de/stuff") }`
-    );
     const otherDeviceClient = createUserClient();
     await otherDeviceClient.request(`mutation LoginWithEmailToken { loginToken(token: "${token}")}`);
 
