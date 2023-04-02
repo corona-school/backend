@@ -34,14 +34,16 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
+        expect(result.changed).toStrictEqual([]);
     });
     it('should notice a change in data', () => {
-        const left: TestData[] = [newTestObj(1, 'foo')];
-        const right: TestData[] = [newTestObj(1, 'foobar')];
-        const result = diff(left, right);
+        const left: TestData = newTestObj(1, 'foo');
+        const right: TestData = newTestObj(1, 'foobar');
+        const result = diff([left], [right]);
 
-        expect(result.new).toStrictEqual(right);
-        expect(result.outdated).toStrictEqual(left);
+        expect(result.new).toStrictEqual([]);
+        expect(result.outdated).toStrictEqual([]);
+        expect(result.changed).toStrictEqual([{ ...right, _id: left._id }]);
     });
     it('should create new object as id was not found', () => {
         const newObj = newTestObj(2, 'foo');
@@ -51,6 +53,7 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([]);
+        expect(result.changed).toStrictEqual([]);
     });
     it('should should remove missing object', () => {
         const oldObj = newTestObj(2, 'foo');
@@ -60,6 +63,7 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([oldObj]);
+        expect(result.changed).toStrictEqual([]);
     });
     it('should notice a diff in id even if the hash is the same', () => {
         const oldObj = newTestObj(1, 'foo');
@@ -73,5 +77,6 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([oldObj]);
+        expect(result.changed).toStrictEqual([]);
     });
 });
