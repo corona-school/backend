@@ -29,6 +29,6 @@ export async function transformCoachToHelper(coach: Student, manager: EntityMana
         subjects: projectFields.map(projectFieldToSubject)
     };
 }
-export async function transformCoachesToHelpers(coaches: Student[], manager: EntityManager): Promise<Helper[]> {
+export function transformCoachesToHelpers(coaches: Student[], manager: EntityManager): Promise<Helper[]> {
     return Promise.all(coaches.map(c => transformCoachToHelper(c, manager)));
 }

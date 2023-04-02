@@ -3,7 +3,7 @@ import { Pupil } from "../../../../entity/Pupil";
 import { InvalidEmailDomains } from "../../invalid-email-domains";
 
 ///Returns true whether the project coachee is allowed to get a project match
-export async function coacheeIsAllowedToGetProjectMatch(manager: EntityManager, coachee: Pupil) {
+export function coacheeIsAllowedToGetProjectMatch(manager: EntityManager, coachee: Pupil) {
     //basic criteria every coachee that want's a match, must fulfill
     return coachee.active && coachee.verification == null && coachee.isProjectCoachee && coachee.openProjectMatchRequestCount > 0;
 }

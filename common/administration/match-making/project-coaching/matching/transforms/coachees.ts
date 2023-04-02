@@ -26,6 +26,6 @@ export async function transformCoacheeToHelper(coachee: Pupil, manager: EntityMa
         matchingPriority: 0 //consistent for project coaching matching, for now
     };
 }
-export async function transformCoacheesToHelpees(coachees: Pupil[], manager: EntityManager): Promise<Helpee[]> {
+export function transformCoacheesToHelpees(coachees: Pupil[], manager: EntityManager): Promise<Helpee[]> {
     return Promise.all(coachees.map(c => transformCoacheeToHelper(c, manager)));
 }

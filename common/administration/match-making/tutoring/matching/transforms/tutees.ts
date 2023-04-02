@@ -20,6 +20,6 @@ export async function transformTuteeToHelpee(tutee: Pupil, manager: EntityManage
         matchingPriority: tutee.matchingPriority
     };
 }
-export async function transformTuteesToHelpees(tutees: Pupil[], manager: EntityManager): Promise<Helpee[]> {
+export function transformTuteesToHelpees(tutees: Pupil[], manager: EntityManager): Promise<Helpee[]> {
     return Promise.all(tutees.map(c => transformTuteeToHelpee(c, manager)));
 }

@@ -27,6 +27,6 @@ export async function transformTutorToHelper(tutor: Student, manager: EntityMana
         subjects: tutor.getSubjectsFormatted().map(formattedSubjectToSubjectWithGradeRestriction)
     };
 }
-export async function transformTutorsToHelpers(tutors: Student[], manager: EntityManager): Promise<Helper[]> {
+export function transformTutorsToHelpers(tutors: Student[], manager: EntityManager): Promise<Helper[]> {
     return Promise.all(tutors.map(c => transformTutorToHelper(c, manager)));
 }
