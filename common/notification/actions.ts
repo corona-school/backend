@@ -288,12 +288,31 @@ const _notificationActions = {
 
     'user-verify-email': {
         description: 'User / Verify E-Mail',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
     'user-authenticate': {
         description: 'User / Login',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
     'user-password-reset': {
         description: 'User / Reset Password',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
+    },
+    'user-email-change': {
+        description: 'User / Change Email',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
 
     user_authenticate: DEPRECATED,

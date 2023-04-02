@@ -1,11 +1,12 @@
 import { SecretType } from '../entity/Secret';
-import { getUser, getUserTypeORM, User } from '../user';
+import { getUser, getUserTypeORM, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
 import { isDev, USER_APP_DOMAIN } from '../util/environment';
+import { validateEmail } from '../../graphql/validators';
 
 const logger = getLogger('Token');
 
@@ -71,8 +72,20 @@ export async function _createFixedToken(user: User, token: string): Promise<void
 
 // Sends the token to the user via E-Mail using one of the supported Notification actions (to distinguish the user messaging around the token login)
 // Also a redirectTo URL is provided which is passed through to the frontend
-export async function requestToken(user: User, action: 'user-verify-email' | 'user-authenticate' | 'user-password-reset', redirectTo?: string) {
-    const token = await createSecretEmailToken(user);
+export async function requestToken(
+    user: User,
+    action: 'user-verify-email' | 'user-authenticate' | 'user-password-reset' | 'user-email-change',
+    redirectTo?: string,
+    newEmail?: string
+) {
+    newEmail = validateEmail(newEmail);
+
+    if (action !== 'user-email-change' && newEmail != undefined) {
+        throw new Error('Email may only be changed with the user-email-change token request');
+    }
+
+    const token = await createSecretEmailToken(user, newEmail);
+
     const person = await getUserTypeORM(user.userID);
 
     if (redirectTo) {
@@ -90,7 +103,7 @@ export async function requestToken(user: User, action: 'user-verify-email' | 'us
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
-export async function createSecretEmailToken(user: User) {
+export async function createSecretEmailToken(user: User, newEmail?: string) {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -101,6 +114,7 @@ export async function createSecretEmailToken(user: User) {
             secret: hash,
             expiresAt: null,
             lastUsed: null,
+            description: newEmail,
         },
     });
 
@@ -122,7 +136,7 @@ export async function loginToken(token: string): Promise<User | never> {
         throw new Error(`Invalid Token`);
     }
 
-    const user = await getUser(secret.userId, /* active */ true);
+    let user = await getUser(secret.userId, /* active */ true);
 
     if (secret.type === SecretType.EMAIL_TOKEN) {
         if (!secret.expiresAt) {
@@ -136,6 +150,13 @@ export async function loginToken(token: string): Promise<User | never> {
         } else {
             await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
+        }
+
+        if (secret.description) {
+            // For EMAIL_TOKEN secrets, the description field is used to store the email the token was sent to
+            // Thus if a token was sent to a different email than the users email, we assume that the user wants to change their email:
+            const newEmail = secret.description;
+            user = await updateUser(secret.userId, { email: newEmail });
         }
     } else {
         await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
