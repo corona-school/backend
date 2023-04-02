@@ -41,7 +41,7 @@ export class MutateSecretResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meEmailChange(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
+    async meChangeEmail(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
         const user = await getSessionUser(context);
         requestToken(user, 'user-email-change', '/start', email);
         return true;

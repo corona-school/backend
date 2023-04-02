@@ -178,7 +178,7 @@ test('Change Email', async () => {
     } = await pupilOne;
     const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
 
-    await client.request(`mutation MeEmailChange { meEmailChange(email: "test+newmail@lern-fair.de")}`);
+    await client.request(`mutation MeChangeEmail { meChangeEmail(email: "test+newmail@lern-fair.de")}`);
 
     const { context } = await assertUserReceivedNotification(changedEmailNotification, `pupil/${id}`);
     const token = context.token as string;
