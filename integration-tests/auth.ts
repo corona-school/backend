@@ -203,4 +203,5 @@ test('Change Email', async () => {
     `);
 
     assert.strictEqual(newMail, 'test+newmail@lern-fair.de', 'Should be the new email');
+    assert.strictEqual(id, id1, "Changed email of the correct user");
 });
