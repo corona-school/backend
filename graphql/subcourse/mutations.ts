@@ -11,7 +11,7 @@ import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
-import { canPublish } from '../../common/courses/states';
+import { canPublish, subcourseOver } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
@@ -152,7 +152,7 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
-        if (hasSubcourseFinished(subcourse)) {
+        if (subcourse.published && subcourseOver(subcourse)) {
             throw new ForbiddenError('Cannot edit subcourse that has already finished');
         }
 
