@@ -292,7 +292,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         let currentDate = new Date();
-        if (+lecture.start < +currentDate) {
+        if (subcourse.published && +lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
         } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
