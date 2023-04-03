@@ -89,7 +89,7 @@ export class MutateNotificationResolver {
         @Arg('body') body: string,
         @Arg('navigateTo') navigateTo: string
     ) {
-        const notification = await Notification.getNotification(notificationId);
+        const notification = await Notification.getNotification(notificationId, /* allowDeactivated */ true);
         await setMessageTranslation({ notification, language, body, headline, navigateTo });
 
         return true;
