@@ -93,6 +93,14 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
     return result;
 }
 
+// The description is a WYSIWYG editor that translates the information into HTML code, so we should do the same.
+function parseDescription(description: string): string {
+    // Replace new lines with <br> tags
+    let newDescription = description.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    // Wrap the description into a <p> tag, because webflow would do the same
+    return `<p>${newDescription}</p>`;
+}
+
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
     // make sure that the weekday can be properly translated
@@ -105,7 +113,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         name: subcourse.course.name,
         slug: `${subcourse.id}`, // We are using a string to be safe for any case.
 
-        description: subcourse.course.description,
+        description: parseDescription(subcourse.course.description),
         instructor: generateInstructor(subcourse),
 
         startingdate: startDate.toISOString(),
