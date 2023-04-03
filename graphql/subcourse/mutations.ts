@@ -20,7 +20,6 @@ import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
-import { hasSubcourseFinished } from '../course/util';
 
 const logger = getLogger('MutateCourseResolver');
 
