@@ -101,17 +101,15 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
     return student;
 }
 
-export async function becomeInstructor(student: Student, data: BecomeInstructorData) {
+export async function becomeInstructor(student: Student, data?: BecomeInstructorData) {
     if (student.isInstructor) {
         throw new RedundantError(`Student is already instructor`);
     }
 
-    const { message } = data;
-
     await prisma.student.update({
         data: {
             isInstructor: true,
-            msg: message,
+            msg: data ? data.message : '',
             lastSentInstructorScreeningInvitationDate: new Date(),
         },
         where: { id: student.id },
@@ -123,20 +121,18 @@ export async function becomeInstructor(student: Student, data: BecomeInstructorD
     }
 }
 
-export async function becomeTutor(student: Student, data: BecomeTutorData) {
+export async function becomeTutor(student: Student, data?: BecomeTutorData) {
     if (student.isStudent) {
         throw new RedundantError(`Student is already tutor`);
     }
-
-    const { languages, subjects, supportsInDaZ } = data;
 
     await prisma.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 0,
-            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
-            languages,
-            supportsInDaZ,
+            subjects: data ? JSON.stringify(data.subjects.map(toStudentSubjectDatabaseFormat)) : null,
+            languages: data ? data.languages : [],
+            supportsInDaZ: data ? data.supportsInDaZ : false,
         },
         where: { id: student.id },
     });

@@ -160,14 +160,14 @@ class BecomeInstructorInput implements BecomeInstructorData {
 
 @InputType()
 class BecomeTutorInput implements BecomeTutorData {
-    @Field((type) => [Subject])
-    subjects: Subject[];
+    @Field((type) => [Subject], { nullable: true })
+    subjects?: Subject[];
 
-    @Field((type) => [Language])
-    languages: Language[];
+    @Field((type) => [Language], { nullable: true })
+    languages?: Language[];
 
-    @Field((type) => Boolean)
-    supportsInDaZ: boolean;
+    @Field((type) => Boolean, { nullable: true })
+    supportsInDaZ?: boolean;
 }
 
 @InputType()
