@@ -7,16 +7,24 @@ import { Student as TypeORMStudent } from '../entity/Student';
 import * as Notification from '../notification';
 import { prisma } from '../prisma';
 import { getLogger } from 'log4js';
-import { subcourseOver } from './states';
+import { subcourseOverGracePeriod } from './states';
 
 const logger = getLogger('CourseContact');
+
+export async function canContactParticipants(subcourse: Subcourse): Promise<Decision> {
+    if (await subcourseOverGracePeriod(subcourse)) {
+        return { allowed: false, reason: 'course-ended' };
+    }
+
+    return { allowed: true };
+}
 
 export async function canContactInstructors(course: Course, subcourse: Subcourse): Promise<Decision> {
     if (!course.allowContact) {
         return { allowed: false, reason: 'contact-not-allowed' };
     }
 
-    if (await subcourseOver(subcourse)) {
+    if (await subcourseOverGracePeriod(subcourse)) {
         return { allowed: false, reason: 'course-ended' };
     }
 
@@ -71,7 +79,7 @@ export async function contactParticipants(
     files: File[],
     participants: number[]
 ) {
-    if (await subcourseOver(subcourse)) {
+    if (await subcourseOverGracePeriod(subcourse)) {
         throw new Error(`Cannot contact participants as the course is over`);
     }
 
