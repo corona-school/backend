@@ -114,11 +114,6 @@ export async function becomeInstructor(student: Student, data?: BecomeInstructor
         },
         where: { id: student.id },
     });
-
-    const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
-    if (!wasInstructorScreened) {
-        await sendFirstInstructorScreeningInvitationMail(student);
-    }
 }
 
 export async function becomeTutor(student: Student, data?: BecomeTutorData) {
