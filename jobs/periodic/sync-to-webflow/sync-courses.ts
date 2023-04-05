@@ -26,6 +26,7 @@ interface CourseDTO extends WebflowMetadata {
     link: string;
     maxparticipants: number;
     participantscount: number;
+    openslots: number;
     subject: string;
 
     mingrade: number;
@@ -127,6 +128,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         link: `${appBaseUrl}/${subcourse.id}`,
         maxparticipants: subcourse.maxParticipants,
         participantscount: subcourse.subcourse_participants_pupil.length,
+        openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
         subject: subcourse.course.subject,
 
         mingrade: subcourse.minGrade,
