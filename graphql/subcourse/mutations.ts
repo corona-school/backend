@@ -11,7 +11,7 @@ import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
-import { canPublish } from '../../common/courses/states';
+import { canPublish, subcourseOver } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
@@ -20,7 +20,6 @@ import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
-import { hasSubcourseFinished } from '../course/util';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -153,7 +152,7 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
-        if (hasSubcourseFinished(subcourse)) {
+        if (subcourse.published && subcourseOver(subcourse)) {
             throw new ForbiddenError('Cannot edit subcourse that has already finished');
         }
 
@@ -293,7 +292,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         let currentDate = new Date();
-        if (+lecture.start < +currentDate) {
+        if (subcourse.published && +lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
         } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
