@@ -9,11 +9,13 @@ import { getSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getStudent } from '../util';
+import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { courseImageKey } from '../../web/controllers/courseController/course-images';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 import { course_schooltype_enum, course_subject_enum } from '../generated';
+import { ForbiddenError } from '../error';
+import { subcourseOver } from '../../common/courses/states';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -24,7 +26,7 @@ class PublicCourseCreateInput {
     @TypeGraphQL.Field((_type) => String)
     description!: string;
     @TypeGraphQL.Field((_type) => course_category_enum)
-    category!: 'revision' | 'club' | 'coaching';
+    category!: course_category_enum;
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
 
@@ -88,6 +90,10 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
+        const subcourses = await getSubcoursesForCourse(courseId, true);
+        if (course.courseState === 'allowed' && subcourses.every((subcourse) => subcourse.published && subcourseOver(subcourse))) {
+            throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
+        }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
         return result;
@@ -224,5 +230,6 @@ export class MutateCourseResolver {
         });
 
         logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
+        return tag;
     }
 }

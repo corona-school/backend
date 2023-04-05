@@ -15,6 +15,7 @@ import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from '../ut
 import { LearningGermanSince } from '../daz/learningGermanSince';
 import { Language } from '../daz/language';
 import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
+import { PupilScreening } from './PupilScreening';
 
 @Entity()
 export class Pupil extends Person {
@@ -216,6 +217,9 @@ export class Pupil extends Person {
 
     @Column({ default: '', nullable: false })
     matchReason: string;
+
+    @OneToMany(() => PupilScreening, (screening) => screening.pupil)
+    screenings: PupilScreening[];
 
     gradeAsNumber(): number | null {
         if (this.grade == null) {

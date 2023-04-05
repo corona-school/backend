@@ -6,6 +6,7 @@ import {
     Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation,
     Participation_certificate as ParticipationCertificate,
     Match,
+    Pupil_screening as PupilScreening,
 } from '../generated';
 import { Arg, Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -54,7 +55,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Subcourse])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     async subcoursesWaitingList(@Root() pupil: Pupil) {
         return await prisma.subcourse.findMany({
@@ -139,5 +140,13 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
+    }
+
+    @FieldResolver((type) => [PupilScreening])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async screenings(@Root() pupil: Required<Pupil>) {
+        return await prisma.pupil_screening.findMany({
+            where: { pupilId: pupil.id },
+        });
     }
 }

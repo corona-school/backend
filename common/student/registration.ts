@@ -24,6 +24,7 @@ import { logTransaction } from '../transactionlog/log';
 import { setProjectFields } from './update';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toStudentSubjectDatabaseFormat } from '../util/subjectsutils';
+import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
 
 export interface RegisterStudentData {
     firstname: string;
@@ -69,6 +70,9 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
+    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
+    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
+
     const student = await prismaInstance.student.create({
         data: {
             email: data.email.toLowerCase(),
@@ -86,6 +90,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
             verification: uuidv4(),
 
             openMatchRequestCount: 0,
+            notificationPreferences: data.newsletter ? enabledNewsletter : disabledNewsletter,
         },
     });
 

@@ -4,6 +4,7 @@ import { getLogger } from 'log4js';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
 import { RedundantError } from '../util/error';
+import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 
 const logger = getLogger('Match');
 
@@ -77,6 +78,8 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
             openMatchRequestCount: { decrement: 1 },
         },
     });
+
+    await invalidateAllScreeningsOfPupil(pupil.id);
 
     logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
 }

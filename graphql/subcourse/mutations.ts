@@ -10,14 +10,12 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getStudent, getSubcourse } from '../util';
-import { canPublish } from '../../common/courses/states';
+import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
+import { canPublish, subcourseOver } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
-import { getManager } from 'typeorm';
-import { CourseGuest as TypeORMCourseGuest } from '../../common/entity/CourseGuest';
 import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
@@ -41,14 +39,14 @@ class PublicSubcourseCreateInput {
 
 @InputType()
 class PublicSubcourseEditInput {
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    minGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxGrade!: number;
-    @TypeGraphQL.Field((_type) => TypeGraphQL.Int)
-    maxParticipants!: number;
-    @TypeGraphQL.Field((_type) => Boolean)
-    joinAfterStart!: boolean;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    minGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxGrade?: number;
+    @TypeGraphQL.Field((_type) => TypeGraphQL.Int, { nullable: true })
+    maxParticipants?: number;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    joinAfterStart?: boolean;
 }
 
 @InputType()
@@ -152,14 +150,26 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('subcourse') data: PublicSubcourseEditInput
     ): Promise<GraphQLModel.Subcourse> {
-        const subcourse = await getSubcourse(subcourseId);
+        const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
-        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-        if (data.maxParticipants < participantCount) {
-            throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+        if (subcourse.published && subcourseOver(subcourse)) {
+            throw new ForbiddenError('Cannot edit subcourse that has already finished');
         }
+
+        const isMaxParticipantsChanged: boolean = Boolean(data.maxParticipants);
+
+        if (isMaxParticipantsChanged) {
+            const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+            if (data.maxParticipants < participantCount) {
+                throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+            }
+        }
+
         const result = await prisma.subcourse.update({ data: { ...data }, where: { id: subcourseId } });
-        await fillSubcourse(result);
+
+        if (isMaxParticipantsChanged) {
+            await fillSubcourse(result);
+        }
         return result;
     }
 
@@ -282,7 +292,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         let currentDate = new Date();
-        if (+lecture.start < +currentDate) {
+        if (subcourse.published && +lecture.start < +currentDate) {
             throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
         } /* else if (subcourse.published) {
             throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
@@ -315,6 +325,36 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseJoinFromWaitinglist(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ) {
+        let subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        const pupil = await getPupil(pupilId);
+
+        const isOnWaitingList = (await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
+        if (!isOnWaitingList) {
+            throw new PrerequisiteError(
+                `Pupil(${pupil.id}) is not on the waitinglist of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`
+            );
+        }
+
+        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCount >= subcourse.maxParticipants) {
+            // Course is full, create one single place for the pupil
+            subcourse = await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } }, include: { lecture: true } });
+        }
+
+        // Joining the subcourse will automatically remove the pupil from the waitinglist
+        await joinSubcourse(subcourse, pupil, true);
+
         return true;
     }
 

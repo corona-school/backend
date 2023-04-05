@@ -20,6 +20,7 @@ import { Address } from 'address-rfc2821';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toPupilSubjectDatabaseFormat } from '../util/subjectsutils';
+import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
 
 export interface RegisterPupilData {
     firstname: string;
@@ -71,6 +72,9 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
         throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
     }
 
+    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
+    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
+
     const verification = uuidv4();
 
     const pupil = await prismaInstance.pupil.create({
@@ -100,6 +104,8 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
 
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,
+
+            notificationPreferences: data.newsletter ? enabledNewsletter : disabledNewsletter,
         },
     });
 

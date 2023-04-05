@@ -30,6 +30,7 @@ import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
+import { ValidateEmail } from '../validators';
 
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
@@ -106,6 +107,7 @@ export class StudentUpdateInput {
     lastname?: string;
 
     @Field((type) => String, { nullable: true })
+    @ValidateEmail()
     email?: string;
 
     @Field((type) => [Subject], { nullable: true })

@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
+import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, ObjectType, Field, Int } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
@@ -7,16 +7,17 @@ import * as Notification from '../../common/notification';
 import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
     PrismaClient,
     pupil as Pupil,
-    pupil_languages_enum as Language,
     pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
+    pupil_languages_enum as Language,
+    pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
@@ -28,6 +29,9 @@ import { MaxLength } from 'class-validator';
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
+import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
+import { invalidatePupilScreening } from '../../common/pupil/screening';
+import { ValidateEmail } from '../validators';
 
 @InputType()
 export class PupilUpdateInput {
@@ -38,6 +42,7 @@ export class PupilUpdateInput {
     lastname?: string;
 
     @Field((type) => String, { nullable: true })
+    @ValidateEmail()
     email?: string;
 
     @Field((type) => Int, { nullable: true })
@@ -73,6 +78,15 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
+}
+
+@InputType()
+export class PupilScreeningUpdateInput {
+    @Field(() => PupilScreeningStatus, { nullable: true })
+    status?: PupilScreeningStatus;
+
+    @Field(() => String, { nullable: true })
+    comment?: string;
 }
 
 @InputType()
@@ -162,6 +176,10 @@ export async function updatePupil(
         },
         where: { id: pupil.id },
     });
+
+    if (pupil.registrationSource !== 'plus' && registrationSource === 'plus') {
+        Notification.actionTaken(pupil, 'pupil_joined_plus', {});
+    }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForPupil(res));
@@ -281,5 +299,28 @@ export class MutatePupilResolver {
             results.push({ email: entry.email, ...res });
         }
         return results;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
+        const pupil = await getPupil(pupilId);
+        await addPupilScreening(pupil);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilUpdateScreening(@Arg('pupilScreeningId') pupilScreeningId: number, @Arg('data') data: PupilScreeningUpdateInput): Promise<boolean> {
+        await updatePupilScreening(pupilScreeningId, data);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
+        await invalidatePupilScreening(pupilScreeningId);
+        return true;
     }
 }

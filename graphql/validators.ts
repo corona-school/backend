@@ -51,7 +51,11 @@ export function validate(argValue: any, argType: Function) {
 // -------- Validators ---------------------------------------------------
 // ---------- Email -----------------------------
 
-export function validateEmail(email: string) {
+export function validateEmail(email?: string) {
+    if (email === undefined) {
+        return undefined;
+    }
+
     // Validate E-Mail
 
     if (!isEmail(email)) {

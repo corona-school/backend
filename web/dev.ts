@@ -31,7 +31,7 @@ import { PupilTutoringInterestConfirmationRequest } from '../common/entity/Pupil
 import { CourseGuest } from '../common/entity/CourseGuest';
 import { RemissionRequest } from '../common/entity/RemissionRequest';
 import { CertificateOfConduct } from '../common/entity/CertificateOfConduct';
-import { getNotifications, importNotifications } from '../common/notification/notification';
+import { getNotifications, importMessageTranslations, importNotifications } from '../common/notification/notification';
 import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
@@ -1016,7 +1016,7 @@ export async function setupDevDB() {
             lecture.instructor = s1;
             lectures.push(lecture);
 
-            currentLecture += 15 * 60 * 1000;
+            currentLecture += 60 * 60 * 1000;
         }
     }
 
@@ -1357,7 +1357,10 @@ export async function setupDevDB() {
     await entityManager.save(remissionRequest);
     console.log('Inserted remission request');
 
-    await importNotificationsFromProd();
+    if (!process.env.SKIP_NOTIFICATION_IMPORT) {
+        await importNotificationsFromProd();
+        await importMessagesTranslationsFromProd();
+    }
 }
 
 function sha512(input: string): string {
@@ -1404,4 +1407,35 @@ async function importNotificationsFromProd() {
 
     await importNotifications(prodNotifications.data.notifications, false, true);
     console.log(`Imported notifications from PROD`, prodNotifications.data.notifications);
+}
+
+async function importMessagesTranslationsFromProd() {
+    const prodMessageTranslations = await (
+        await fetch(PROD_URL, {
+            body: JSON.stringify({
+                query: `
+                    query {
+                        notifications {
+                            messageTranslations {
+                                template
+                                id
+                                notificationId
+                                navigateTo
+                            }
+                        }
+                    }
+                `,
+                variables: {},
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+    ).json();
+
+    const messageTranslations = prodMessageTranslations.data.notifications.reduce((acc: any[], cur: any) => [...acc, ...cur.messageTranslations], []);
+
+
+    await importMessageTranslations(messageTranslations);
 }

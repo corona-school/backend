@@ -50,6 +50,7 @@ jobs:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
           ADMIN_AUTH_TOKEN: admintoken
           ENV: dev
+          SKIP_NOTIFICATION_IMPORT: "true"
       - run: npm run integration-tests
         env:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
@@ -80,3 +81,4 @@ jobs:
         run: npx prisma generate
 
       - run: npm run linter
+      - run: npm test

@@ -11,8 +11,9 @@ import {
     getPoolStatistics,
     MatchPoolStatistics,
     confirmationRequestsToSend,
-    getPupilsToRequestInterest,
+    getPupilsToContactNext,
     getInterestConfirmationRate,
+    validatePoolToggles,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -34,6 +35,8 @@ class MatchPool {
     automatic?: MatchPoolAutomatic;
     @Field({ nullable: true })
     confirmInterest?: boolean;
+    @Field({ nullable: true })
+    needsScreening?: boolean;
     @Field((type) => [String])
     toggles: string[];
 }
@@ -86,7 +89,7 @@ export class FieldsMatchPoolResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getStudents(matchPool, toggles ?? [], take, skip, search);
+        return await getStudents(matchPool, validatePoolToggles(matchPool, toggles ?? []), take, skip, search);
     }
 
     @FieldResolver((returns) => [Pupil])
@@ -98,19 +101,19 @@ export class FieldsMatchPoolResolver {
         @Arg('take', { nullable: true }) take?: number,
         @Arg('search', { nullable: true }) search?: string
     ) {
-        return await getPupils(matchPool, toggles ?? [], take, skip, search);
+        return await getPupils(matchPool, validatePoolToggles(matchPool, toggles ?? []), take, skip, search);
     }
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.UNAUTHENTICATED)
     async studentsToMatchCount(@Root() matchPool: MatchPoolType, @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[]) {
-        return await getStudentCount(matchPool, toggles ?? []);
+        return await getStudentCount(matchPool, validatePoolToggles(matchPool, toggles ?? []));
     }
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.UNAUTHENTICATED)
     async pupilsToMatchCount(@Root() matchPool: MatchPoolType, @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[]) {
-        return await getPupilCount(matchPool, toggles ?? []);
+        return await getPupilCount(matchPool, validatePoolToggles(matchPool, toggles ?? []));
     }
 
     @FieldResolver((returns) => [MatchPoolRun])
@@ -142,7 +145,17 @@ export class FieldsMatchPoolResolver {
             return [];
         }
 
-        return await getPupilsToRequestInterest(matchPool);
+        return await getPupilsToContactNext(matchPool, ['confirmation-unknown', 'pupil-screening-unknown'], await confirmationRequestsToSend(matchPool));
+    }
+
+    @FieldResolver((returns) => [Pupil])
+    @Authorized(Role.ADMIN)
+    async pupilsToScreen(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.needsScreening) {
+            return [];
+        }
+
+        return await getPupilsToContactNext(matchPool, ['confirmation-unknown', 'pupil-screening-unknown'], 1000);
     }
 
     @Query((returns) => Float)

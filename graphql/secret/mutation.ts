@@ -1,13 +1,13 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, loginToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
 import { GraphQLContext } from '../context';
-import { getSessionUser } from '../authentication';
+import { getSessionUser, loginAsUser } from '../authentication';
 import { Role } from '../authorizations';
 import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from 'log4js';
-import { UserInputError } from 'apollo-server-express';
+import { AuthenticationError, UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateSecretResolver');
@@ -36,6 +36,14 @@ export class MutateSecretResolver {
     @Authorized(Role.USER)
     async passwordCreate(@Ctx() context: GraphQLContext, @Arg('password') password: string) {
         await createPassword(getSessionUser(context), password);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async meChangeEmail(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
+        const user = await getSessionUser(context);
+        requestToken(user, 'user-email-change', '/start', email);
         return true;
     }
 

@@ -31,3 +31,19 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
 
     return { allowed: true };
 }
+
+export async function subcourseOver(subcourse: Subcourse) {
+    const lastLecture = await prisma.lecture.findFirst({
+        where: { subcourseId: subcourse.id },
+        orderBy: { start: 'desc' },
+    });
+
+    if (!lastLecture) {
+        return false;
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return lastLecture.start < thirtyDaysAgo;
+}

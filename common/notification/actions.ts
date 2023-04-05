@@ -13,6 +13,21 @@ export interface NotificationAction {
 }
 
 const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
+const sampleCourse = {
+    course: {
+        name: 'Apollo',
+        description: "That's one small step for a man, one giant leap for mankind.",
+        image: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Moon.jpg',
+    },
+    subcourse: {
+        url: `https://app.lern-fair.de/single-course/1`,
+    },
+    firstLecture: {
+        date: '20. Juli 1969',
+        time: '19:17',
+        day: 'Sonntag',
+    },
+};
 
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
@@ -35,8 +50,20 @@ const _notificationActions = {
     user_registration_verified_email: {
         description: 'User / E-Mail verified',
     },
+    pupil_screening_add: {
+        description: 'Pupil / Screening was added',
+    },
+    pupil_screening_rejected: {
+        description: 'Pupil / Screening was rejected',
+    },
+    pupil_screening_succeeded: {
+        description: 'Pupil / Screening was successful',
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
+    },
+    pupil_joined_plus: {
+        description: 'Pupil / Joined Lern-Fair Plus',
     },
     tutor_screening_invitation: {
         description: 'Tutor / Was invited for screening',
@@ -149,22 +176,12 @@ const _notificationActions = {
         },
     },
     instructor_subcourse_published: {
-        description: 'Instructor / Subcourse published',
-        sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Subkurs',
-            },
-        },
+        description: 'Pupil / New course was published',
+        sampleContext: sampleCourse,
     },
     available_places_on_subcourse: {
-        description: 'Instructor / Available places on subcourse',
-        sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Subkurs',
-            },
-        },
+        description: 'Pupil / Available places on subcourse',
+        sampleContext: sampleCourse,
     },
     student_certificate_sign: {
         description: 'Student / Tutoring Certificate was signed',
@@ -271,12 +288,31 @@ const _notificationActions = {
 
     'user-verify-email': {
         description: 'User / Verify E-Mail',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
     'user-authenticate': {
         description: 'User / Login',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
     'user-password-reset': {
         description: 'User / Reset Password',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
+    },
+    'user-email-change': {
+        description: 'User / Change Email',
+        sampleContext: {
+            token: 'token',
+            redirectTo: '/start',
+        },
     },
 
     user_authenticate: DEPRECATED,

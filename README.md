@@ -36,11 +36,12 @@ stored in `.certificate-version`.
 
 #### Command line arguments
 
-The following command line arguments are available:
+The following command line arguments are available (i.e. run `npm run web -- --noPDF --debug`):
 
 | Argument | Description                                                                        |
 |----------|------------------------------------------------------------------------------------|
 | \--noPDF | Skips Puppeteer and PDF initialization, which is handy for speeding up development |
+| \--debug | Sets the log level to debug which prints out tons of information                   |
 
 ### Docs
 

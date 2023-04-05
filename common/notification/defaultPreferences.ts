@@ -1,6 +1,6 @@
 type EmailChannel = { email: boolean };
 export type Preferences = { [category: Categories]: EmailChannel };
-type Categories = typeof categories[number];
+type Categories = (typeof categories)[number];
 
 // These are always enabled for all users
 export const ENABLED_NOTIFICATIONS: Preferences = {
@@ -10,6 +10,34 @@ export const ENABLED_NOTIFICATIONS: Preferences = {
     course: { email: true },
     certificate: { email: true },
     legacy: { email: true },
+};
+
+export const ENABLED_NEWSLETTER: Preferences = {
+    chat: { email: true },
+    survey: { email: true },
+    appointment: { email: true },
+    advice: { email: true },
+    suggestion: { email: true },
+    announcement: { email: true },
+    call: { email: true },
+    news: { email: true },
+    event: { email: true },
+    request: { email: true },
+    alternative: { email: true },
+};
+
+export const DISABLED_NEWSLETTER: Preferences = {
+    chat: { email: true },
+    survey: { email: true },
+    appointment: { email: true },
+    advice: { email: true },
+    suggestion: { email: true },
+    announcement: { email: true },
+    call: { email: true },
+    news: { email: false },
+    event: { email: false },
+    request: { email: false },
+    alternative: { email: false },
 };
 
 // These are taken until the user changes their preferences in the settings
