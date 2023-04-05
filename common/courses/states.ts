@@ -6,6 +6,7 @@ import { getCourse } from '../../graphql/util';
 import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
+import { getLastLecture } from './lectures';
 
 const logger = getLogger('Course States');
 
@@ -23,10 +24,7 @@ export async function hasStarted(subcourse: Subcourse) {
 
 
 export async function subcourseOverGracePeriod(subcourse: Subcourse) {
-    const lastLecture = await prisma.lecture.findFirst({
-        where: { subcourseId: subcourse.id },
-        orderBy: { start: 'desc' },
-    });
+    const lastLecture = await getLastLecture(subcourse);
 
     if (!lastLecture) {
         return false;
@@ -39,10 +37,7 @@ export async function subcourseOverGracePeriod(subcourse: Subcourse) {
 }
 
 export async function subcourseOver(subcourse: Subcourse) {
-    const lastLecture = await prisma.lecture.findFirst({
-        where: { subcourseId: subcourse.id },
-        orderBy: { start: 'desc' },
-    });
+    const lastLecture = await getLastLecture(subcourse);
 
     if (!lastLecture) {
         return false;
