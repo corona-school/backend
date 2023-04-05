@@ -108,7 +108,7 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
-    sendSubcourseCancelNotifications(course, subcourse);
+    await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 }
 
