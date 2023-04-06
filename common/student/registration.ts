@@ -125,9 +125,9 @@ export async function becomeTutor(student: Student, data?: BecomeTutorData) {
         data: {
             isStudent: true,
             openMatchRequestCount: 0,
-            subjects: data ? JSON.stringify(data.subjects.map(toStudentSubjectDatabaseFormat)) : null,
-            languages: data ? data.languages : [],
-            supportsInDaZ: data ? data.supportsInDaZ : false,
+            subjects: data ? JSON.stringify(data.subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
+            languages: data ? data.languages : undefined,
+            supportsInDaZ: data ? data.supportsInDaZ : undefined,
         },
         where: { id: student.id },
     });
