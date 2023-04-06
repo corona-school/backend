@@ -8,9 +8,9 @@ addLayout('json', function () {
     };
 });
 
-let appenders = ['outJson'];
-if (process.env.ENV === 'dev') {
-    appenders = ['out'];
+let appenders = ['out'];
+if (process.env.LOG_FORMAT === 'json') {
+    appenders = ['outJson'];
 }
 
 configure({
