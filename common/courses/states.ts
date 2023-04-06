@@ -35,7 +35,7 @@ export async function subcourseOverGracePeriod(subcourse: Subcourse) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    return lastLecture.start + lastLecture.duration * 6000 < thirtyDaysAgo;
+    return +lastLecture.start + lastLecture.duration * 6000 < +thirtyDaysAgo;
 }
 
 export async function subcourseOver(subcourse: Subcourse) {
@@ -46,7 +46,7 @@ export async function subcourseOver(subcourse: Subcourse) {
     }
 
     const now = new Date();
-    return lastLecture.start + lastLecture.duration * 6000 < now;
+    return +lastLecture.start + lastLecture.duration * 6000 < +now;
 }
 
 /* ------------------ Subcourse Publish ------------- */
