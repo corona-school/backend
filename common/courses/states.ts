@@ -22,7 +22,9 @@ export async function hasStarted(subcourse: Subcourse) {
     return startedLectures === 0;
 }
 
-
+// After the course ended, participants might want to send feedback to the instructor or ask followup questions,
+// instructors might want to send some final results or promote a next course. Thus certain course interactions are
+// allowed for a 'grace period'
 export async function subcourseOverGracePeriod(subcourse: Subcourse) {
     const lastLecture = await getLastLecture(subcourse);
 
@@ -33,7 +35,7 @@ export async function subcourseOverGracePeriod(subcourse: Subcourse) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    return lastLecture.start < thirtyDaysAgo;
+    return lastLecture.start + lastLecture.duration * 6000 < thirtyDaysAgo;
 }
 
 export async function subcourseOver(subcourse: Subcourse) {
@@ -44,7 +46,7 @@ export async function subcourseOver(subcourse: Subcourse) {
     }
 
     const now = new Date();
-    return lastLecture.start < now;
+    return lastLecture.start + lastLecture.duration * 6000 < now;
 }
 
 /* ------------------ Subcourse Publish ------------- */
