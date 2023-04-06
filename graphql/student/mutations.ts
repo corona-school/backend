@@ -222,10 +222,10 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
         }
 
         await prisma.$transaction(async (tx) => {
-            let student;
+            let student = existingAccount;
             if (!!register) {
                 //registration data was provided
-                if (!!existingAccount) {
+                if (!!student) {
                     log.info(`Account with email ${email} already exists, updating account with registration data instead... Student(${existingAccount.id})`);
                     // updating existing account with new registration data:
                     student = await updateStudent(ctx, existingAccount, { ...register, projectFields: undefined, languages: undefined }, tx); // languages are added in next step (becomeTutor)
@@ -233,9 +233,6 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
                     student = await registerStudent(register, true, tx);
                     log.info(`Registered account with email ${email}. Student(${student.id})`);
                 }
-            } else {
-                // don't register; use existing account data
-                student = existingAccount;
             }
 
             if (!!activate && !student.isStudent) {
@@ -351,6 +348,7 @@ export class MutateStudentResolver {
                 results.filter((s) => s.success).length
             }`
         );
+        log.info(results);
         return results;
     }
 
