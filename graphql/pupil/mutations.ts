@@ -32,6 +32,9 @@ import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { ValidateEmail } from '../validators';
+import { getLogger } from 'log4js';
+
+const log = getLogger(`PupilMutation`);
 
 @InputType()
 export class PupilUpdateInput {
@@ -208,21 +211,21 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
             if (register != null) {
                 if (existingAccount) {
                     // if account already exists, overwrite relevant data with new plus data
-                    log.info(`Account with email ${email} already exists, updating account with registration data instead...`);
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${existingAccount.id})`);
                     pupil = await updatePupil(ctx, existingAccount, { ...register, projectFields: undefined }, tx);
                 } else {
                     pupil = await registerPupil(register, true, tx);
-                    log.info(`Registered account with email ${email}`);
+                    log.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
                 }
             } else {
                 pupil = existingAccount;
             }
             if (activate && pupil?.isPupil) {
-                log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead...`);
+                log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
                 await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
             } else if (activate) {
                 await becomeTutee(pupil, activate, tx);
-                log.info(`Made account with email ${email} a tutee`);
+                log.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
             }
         });
     } catch (e) {
@@ -293,11 +296,17 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
         const { entries } = data;
+        log.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
         const results = [];
         for (const entry of entries) {
             const res = await pupilRegisterPlus(entry, context);
             results.push({ email: entry.email, ...res });
         }
+        log.info(
+            `pupilRegisterPlusMany has finished. Count of successful pupils handled: ${results.filter((p) => p.success).length}. Failed count: ${
+                results.filter((p) => p.success).length
+            }`
+        );
         return results;
     }
 

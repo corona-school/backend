@@ -58,13 +58,13 @@ export class ScreeningInput {
 @ObjectType()
 class StudentRegisterPlusManyOutput {
     @Field((_type) => String, { nullable: true })
-    email: string;
+    email?: string;
 
     @Field((_type) => Boolean, { nullable: false })
-    success: boolean;
+    success?: boolean;
 
     @Field((_type) => String, { nullable: true })
-    reason: string;
+    reason?: string;
 }
 
 @InputType()
@@ -73,18 +73,18 @@ class StudentRegisterPlusInput {
     email: string;
 
     @Field((type) => RegisterStudentInput, { nullable: true })
-    register: RegisterStudentInput;
+    register?: RegisterStudentInput;
 
     @Field((type) => BecomeTutorInput, { nullable: true })
-    activate: BecomeTutorInput;
+    activate?: BecomeTutorInput;
 
     @Field((type) => ScreeningInput, { nullable: true })
-    screen: ScreeningInput;
+    screen?: ScreeningInput;
 }
 
 @InputType()
 class StudentRegisterPlusManyInput {
-    @Field((type) => [StudentRegisterPlusInput], { nullable: true })
+    @Field((type) => [StudentRegisterPlusInput])
     entries: StudentRegisterPlusInput[];
 }
 
@@ -211,7 +211,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
     const screener = await getSessionScreener(ctx);
 
     try {
-        if (register && register.email !== email) {
+        if (!!register && register.email !== email) {
             throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
         }
 
@@ -226,12 +226,12 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
             if (!!register) {
                 //registration data was provided
                 if (!!existingAccount) {
-                    log.info(`Account with email ${email} already exists, updating account with registration data instead...`);
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Student(${existingAccount.id})`);
                     // updating existing account with new registration data:
                     student = await updateStudent(ctx, existingAccount, { ...register, projectFields: undefined, languages: undefined }, tx); // languages are added in next step (becomeTutor)
                 } else {
                     student = await registerStudent(register, true, tx);
-                    log.info(`Registered account with email ${email}`);
+                    log.info(`Registered account with email ${email}. Student(${student.id})`);
                 }
             } else {
                 // don't register; use existing account data
@@ -241,10 +241,10 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
             if (!!activate && !student.isStudent) {
                 // activation data was provided; student isn't a tutor yet
                 student = await becomeTutor(student, activate, tx, true);
-                log.info(`Made account with email ${email} a tutor`);
+                log.info(`Made account with email ${email} a tutor. Student(${student.id})`);
             } else if (!!activate) {
                 // activation data was provided but student already is a tutor
-                log.info(`Account with email ${email} is already a tutor, updating student with activation data...`);
+                log.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
                 // update existing account with new activation data:
                 student = await updateStudent(ctx, student, { ...activate, projectFields: undefined }, tx);
             }
@@ -254,11 +254,11 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
                 let canRequest = await canStudentRequestMatch(student);
                 if (!canRequest.allowed && canRequest.reason === 'not-screened') {
                     await addTutorScreening(screener, student, screen, tx, true);
-                    log.info(`Screened account with email ${email}`);
+                    log.info(`Screened account with email ${email}. Student(${student.id})`);
                 } else if (!canRequest.allowed) {
-                    throw new PrerequisiteError(`Screening error: ${canRequest.reason}`);
+                    throw new PrerequisiteError(`Screening error: ${canRequest.reason}. Student(${student.id})`);
                 } else {
-                    log.info(`Account with email ${email} is already screened`);
+                    log.info(`Account with email ${email} is already screened. Student(${student.id})`);
                 }
             }
         });
@@ -340,11 +340,17 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
         const { entries } = data;
+        log.info(`Starting studentRegisterPlusMany, received ${entries.length} students`);
         const results = [];
         for (const entry of entries) {
             const res = await studentRegisterPlus(entry, context);
             results.push({ email: entry.email, ...res });
         }
+        log.info(
+            `studentRegisterPlusMany has finished. Count of successful students handled: ${results.filter((s) => s.success).length}. Failed count: ${
+                results.filter((s) => s.success).length
+            }`
+        );
         return results;
     }
 
