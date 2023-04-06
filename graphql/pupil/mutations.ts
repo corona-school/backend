@@ -95,10 +95,10 @@ class PupilRegisterPlusInput {
     email: string;
 
     @Field((type) => RegisterPupilInput, { nullable: true })
-    register: RegisterPupilInput;
+    register?: RegisterPupilInput;
 
     @Field((type) => BecomeTuteeInput, { nullable: true })
-    activate: BecomeTuteeInput;
+    activate?: BecomeTuteeInput;
 }
 
 @ObjectType()
