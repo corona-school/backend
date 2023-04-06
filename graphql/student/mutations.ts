@@ -114,7 +114,7 @@ export class StudentUpdateInput {
     subjects?: Subject[];
 
     @Field((type) => [ProjectFieldWithGradeInput], { nullable: true })
-    projectFields: ProjectFieldWithGradeInput[];
+    projectFields?: ProjectFieldWithGradeInput[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -133,7 +133,7 @@ export class StudentUpdateInput {
     notificationPreferences?: NotificationPreferences;
 
     @Field((type) => [Language], { nullable: true })
-    languages: Language[];
+    languages?: Language[];
 
     @Field((type) => String, { nullable: true })
     university?: string;
@@ -233,7 +233,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
                 if (!!student) {
                     log.info(`Account with email ${email} already exists, updating account with registration data instead... Student(${student.id})`);
                     // updating existing account with new registration data:
-                    student = await updateStudent(ctx, student, { ...register, projectFields: undefined, languages: undefined }, tx); // languages are added in next step (becomeTutor)
+                    student = await updateStudent(ctx, student, { ...register }, tx); // languages are added in next step (becomeTutor)
                 } else {
                     student = await registerStudent(register, true, tx);
                     log.info(`Registered account with email ${email}. Student(${student.id})`);
@@ -248,7 +248,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
                 // activation data was provided but student already is a tutor
                 log.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
                 // update existing account with new activation data:
-                student = await updateStudent(ctx, student, { ...activate, projectFields: undefined }, tx);
+                student = await updateStudent(ctx, student, { ...activate }, tx);
             }
 
             if (!!screen) {
