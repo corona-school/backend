@@ -212,8 +212,12 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
 
     try {
         email = validateEmail(email);
-        if (!!register && register.email !== email) {
-            throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+
+        if (!!register) {
+            register.email = validateEmail(register.email);
+            if (register.email !== email) {
+                throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+            }
         }
 
         const existingAccount = await prisma.student.findUnique({ where: { email } });
