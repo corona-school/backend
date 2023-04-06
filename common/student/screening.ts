@@ -16,8 +16,6 @@ interface ScreeningInput {
 }
 
 const logger = getLogger('Student Screening');
-const entityManager = getManager();
-const transactionLog = getTransactionLog();
 
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
     await prisma.instructor_screening.create({
@@ -75,6 +73,9 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 }
 
 export async function cancelCoCReminders(student: Student) {
+    const entityManager = getManager();
+    const transactionLog = getTransactionLog();
+
     const notificationIDs = (
         await prisma.notification.findMany({
             where: { onActions: { has: 'coc_reminder' } },
