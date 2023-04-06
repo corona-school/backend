@@ -3,7 +3,8 @@ import { configure, addLayout } from 'log4js';
 
 addLayout('json', function () {
     return function (logEvent) {
-        return JSON.stringify(logEvent);
+        const message = logEvent.data.shift();
+        return JSON.stringify({ ...logEvent, message });
     };
 });
 
