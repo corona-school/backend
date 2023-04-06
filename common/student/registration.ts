@@ -137,7 +137,7 @@ export async function becomeTutor(
 
     const { languages, subjects, supportsInDaZ } = data;
 
-    let res = await prismaInstance.student.update({
+    const res = await prismaInstance.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 0,
