@@ -2,20 +2,22 @@ import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent } from '../../common/student/activation';
-import { deleteStudentMatchRequest, createStudentMatchRequest } from '../../common/match/request';
-import { isElevated, getSessionStudent, getSessionScreener, updateSessionUser } from '../authentication';
+import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
+import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
-import { ProjectFieldWithGradeData } from '../../common/student/registration';
+import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
-    student as Student,
-    pupil_registrationsource_enum as RegistrationSource,
     pupil_projectfields_enum as ProjectField,
+    pupil_registrationsource_enum as RegistrationSource,
+    student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    PrismaClient,
+    Prisma,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
@@ -28,9 +30,10 @@ import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
-import { ValidateEmail } from '../validators';
+import { validateEmail, ValidateEmail } from '../validators';
 
 const log = getLogger(`StudentMutation`);
+import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -52,6 +55,39 @@ export class ScreeningInput {
     knowsCoronaSchoolFrom?: string | undefined;
 }
 
+@ObjectType()
+class StudentRegisterPlusManyOutput {
+    @Field((_type) => String, { nullable: true })
+    email?: string;
+
+    @Field((_type) => Boolean, { nullable: false })
+    success?: boolean;
+
+    @Field((_type) => String, { nullable: true })
+    reason?: string;
+}
+
+@InputType()
+class StudentRegisterPlusInput {
+    @Field((type) => String) // required to identify student even when registration is not desired
+    email: string;
+
+    @Field((type) => RegisterStudentInput, { nullable: true })
+    register?: RegisterStudentInput;
+
+    @Field((type) => BecomeTutorInput, { nullable: true })
+    activate?: BecomeTutorInput;
+
+    @Field((type) => ScreeningInput, { nullable: true })
+    screen?: ScreeningInput;
+}
+
+@InputType()
+class StudentRegisterPlusManyInput {
+    @Field((type) => [StudentRegisterPlusInput])
+    entries: StudentRegisterPlusInput[];
+}
+
 @InputType()
 export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field((type) => ProjectField)
@@ -61,6 +97,7 @@ export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
     @Field((type) => Int, { nullable: true })
     max: number;
 }
+
 @InputType()
 export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
@@ -77,7 +114,7 @@ export class StudentUpdateInput {
     subjects?: Subject[];
 
     @Field((type) => [ProjectFieldWithGradeInput], { nullable: true })
-    projectFields: ProjectFieldWithGradeInput[];
+    projectFields?: ProjectFieldWithGradeInput[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -90,19 +127,24 @@ export class StudentUpdateInput {
     aboutMe?: string;
 
     @Field((type) => Date, { nullable: true })
-    lastTimeCheckedNotifications: Date;
+    lastTimeCheckedNotifications?: Date;
 
     @Field((type) => NotificationPreferences, { nullable: true })
     notificationPreferences?: NotificationPreferences;
 
     @Field((type) => [Language], { nullable: true })
-    languages: Language[];
+    languages?: Language[];
 
     @Field((type) => String, { nullable: true })
-    university: string;
+    university?: string;
 }
 
-export async function updateStudent(context: GraphQLContext, student: Student, update: StudentUpdateInput) {
+export async function updateStudent(
+    context: GraphQLContext,
+    student: Student,
+    update: StudentUpdateInput,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
+) {
     const log = logInContext('Student', context);
     let {
         firstname,
@@ -139,7 +181,7 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
         await setProjectFields(student, projectFields);
     }
 
-    const res = await prisma.student.update({
+    const res = await prismaInstance.student.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -160,7 +202,75 @@ export async function updateStudent(context: GraphQLContext, student: Student, u
     await updateSessionUser(context, userForStudent(res));
 
     log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
+    return res;
 }
+
+async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
+    const log = logInContext('Student', ctx);
+    let { email, register, activate, screen } = data;
+    const screener = await getSessionScreener(ctx);
+
+    try {
+        email = validateEmail(email);
+
+        if (!!register) {
+            register.email = validateEmail(register.email);
+            if (register.email !== email) {
+                throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+            }
+        }
+
+        const existingAccount = await prisma.student.findUnique({ where: { email } });
+
+        if (!register && !existingAccount) {
+            throw new PrerequisiteError(`Account with email ${email} doesn't exist and no registration data was provided`);
+        }
+
+        await prisma.$transaction(async (tx) => {
+            let student = existingAccount;
+            if (!!register) {
+                //registration data was provided
+                if (!!student) {
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Student(${student.id})`);
+                    // updating existing account with new registration data:
+                    student = await updateStudent(ctx, student, { ...register }, tx); // languages are added in next step (becomeTutor)
+                } else {
+                    student = await registerStudent(register, true, tx);
+                    log.info(`Registered account with email ${email}. Student(${student.id})`);
+                }
+            }
+
+            if (!!activate && !student.isStudent) {
+                // activation data was provided; student isn't a tutor yet
+                student = await becomeTutor(student, activate, tx, true);
+                log.info(`Made account with email ${email} a tutor. Student(${student.id})`);
+            } else if (!!activate) {
+                // activation data was provided but student already is a tutor
+                log.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
+                // update existing account with new activation data:
+                student = await updateStudent(ctx, student, { ...activate }, tx);
+            }
+
+            if (!!screen) {
+                // screening data was provided
+                let canRequest = await canStudentRequestMatch(student);
+                if (!canRequest.allowed && canRequest.reason === 'not-screened') {
+                    await addTutorScreening(screener, student, screen, tx, true);
+                    log.info(`Screened account with email ${email}. Student(${student.id})`);
+                } else if (!canRequest.allowed) {
+                    throw new PrerequisiteError(`Screening error: ${canRequest.reason}. Student(${student.id})`);
+                } else {
+                    log.info(`Account with email ${email} is already screened. Student(${student.id})`);
+                }
+            }
+        });
+    } catch (e) {
+        log.error(`Error while registering student ${email}, skipping this one`, e);
+        return { success: false, reason: e.publicMessage || e.toString() };
+    }
+    return { success: true, reason: '' };
+}
+
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation((returns) => Boolean)
@@ -226,6 +336,25 @@ export class MutateStudentResolver {
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
         return true;
+    }
+
+    @Mutation((returns) => [StudentRegisterPlusManyOutput])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
+        const { entries } = data;
+        log.info(`Starting studentRegisterPlusMany, received ${entries.length} students`);
+        const results = [];
+        for (const entry of entries) {
+            const res = await studentRegisterPlus(entry, context);
+            results.push({ email: entry.email, ...res });
+        }
+        log.info(
+            `studentRegisterPlusMany has finished. Count of successful students handled: ${results.filter((s) => s.success).length}. Failed count: ${
+                results.filter((s) => s.success).length
+            }`
+        );
+        log.info(results);
+        return results;
     }
 
     @Mutation((returns) => String)

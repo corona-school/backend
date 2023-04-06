@@ -156,7 +156,7 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
 }
 
 const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
-type InterestConfirmationToggle = typeof INTEREST_CONFIRMATION_TOGGLES[number];
+type InterestConfirmationToggle = (typeof INTEREST_CONFIRMATION_TOGGLES)[number];
 
 function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: string[] | InterestConfirmationToggle[]) {
     if (+toggles.includes('confirmation-success') + +toggles.includes('confirmation-pending') + +toggles.includes('confirmation-unknown') > 1) {
@@ -183,7 +183,7 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
 }
 
 const PUPIL_SCREENING_TOGGLES = ['pupil-screening-unknown', 'pupil-screening-success', 'pupil-screening-pending'] as const;
-type PupilScreeningToggle = typeof PUPIL_SCREENING_TOGGLES[number];
+type PupilScreeningToggle = (typeof PUPIL_SCREENING_TOGGLES)[number];
 
 function addPupilScreeningFilter(query: Prisma.pupilWhereInput, toggles: string[] | PupilScreeningToggle[]) {
     if (+toggles.includes('pupil-screening-success') + +toggles.includes('pupil-screening-pending') + +toggles.includes('pupil-screening-unknown') > 1) {
@@ -314,7 +314,7 @@ const _pools = [
     },
 ] as const;
 export const pools: Readonly<MatchPool[]> = _pools;
-export type ConcreteMatchPool = typeof _pools[number];
+export type ConcreteMatchPool = (typeof _pools)[number];
 
 /* ---------------------- MATCHING RUNS ----------------------------- */
 

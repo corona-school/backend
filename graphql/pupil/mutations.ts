@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
+import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, ObjectType, Field, Int } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
@@ -10,13 +10,15 @@ import { GraphQLContext } from '../context';
 import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
+    Prisma,
+    PrismaClient,
     pupil as Pupil,
-    pupil_registrationsource_enum as RegistrationSource,
     pupil_projectfields_enum as ProjectField,
-    pupil_state_enum as State,
+    pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
+    pupil_state_enum as State,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -24,10 +26,15 @@ import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
+import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
+import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
-import { ValidateEmail } from '../validators';
+import { validateEmail, ValidateEmail } from '../validators';
+import { getLogger } from 'log4js';
+
+const log = getLogger(`PupilMutation`);
 
 @InputType()
 export class PupilUpdateInput {
@@ -85,7 +92,42 @@ export class PupilScreeningUpdateInput {
     comment?: string;
 }
 
-export async function updatePupil(context: GraphQLContext, pupil: Pupil, update: PupilUpdateInput) {
+@InputType()
+class PupilRegisterPlusInput {
+    @Field(() => String) // required to identify pupil even when registration is not desired
+    email: string;
+
+    @Field((type) => RegisterPupilInput, { nullable: true })
+    register?: RegisterPupilInput;
+
+    @Field((type) => BecomeTuteeInput, { nullable: true })
+    activate?: BecomeTuteeInput;
+}
+
+@ObjectType()
+class PupilRegisterPlusManyOutput {
+    @Field((_type) => String, { nullable: true })
+    email?: string;
+
+    @Field((_type) => Boolean, { nullable: false })
+    success: boolean;
+
+    @Field((_type) => String, { nullable: false })
+    reason: string;
+}
+
+@InputType()
+class PupilRegisterPlusManyInput {
+    @Field((type) => [PupilRegisterPlusInput])
+    entries: PupilRegisterPlusInput[];
+}
+
+export async function updatePupil(
+    context: GraphQLContext,
+    pupil: Pupil,
+    update: PupilUpdateInput,
+    prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
+) {
     const log = logInContext('Pupil', context);
 
     const {
@@ -117,7 +159,7 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
-    const res = await prisma.pupil.update({
+    const res = await prismaInstance.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
             lastname: ensureNoNull(lastname),
@@ -146,6 +188,53 @@ export async function updatePupil(context: GraphQLContext, pupil: Pupil, update:
     await updateSessionUser(context, userForPupil(res));
 
     log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
+    return res;
+}
+
+async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
+    const log = logInContext('Pupil', ctx);
+    let { email, register, activate } = data;
+
+    try {
+        email = validateEmail(email);
+        if (!!register) {
+            register.email = validateEmail(register.email);
+            if (register.email !== email) {
+                throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
+            }
+        }
+
+        const existingAccount = await prisma.pupil.findUnique({ where: { email } });
+
+        if (!register && !existingAccount) {
+            throw new PrerequisiteError(`Account with email ${email} doesn't exist and no registration data was provided`);
+        }
+
+        await prisma.$transaction(async (tx) => {
+            let pupil = existingAccount;
+            if (!!register) {
+                if (!!pupil) {
+                    // if account already exists, overwrite relevant data with new plus data
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
+                    pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
+                } else {
+                    pupil = await registerPupil(register, true, tx);
+                    log.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
+                }
+            }
+            if (activate && pupil?.isPupil) {
+                log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
+                await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
+            } else if (activate) {
+                await becomeTutee(pupil, activate, tx);
+                log.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
+            }
+        });
+    } catch (e) {
+        log.error(`Error while registering pupil ${email}, skipping this one`, e);
+        return { success: false, reason: e.publicMessage || e.toString() };
+    }
+    return { success: true, reason: '' };
 }
 
 @Resolver((of) => GraphQLModel.Pupil)
@@ -203,6 +292,24 @@ export class MutatePupilResolver {
         await deletePupilMatchRequest(pupil);
 
         return true;
+    }
+
+    @Mutation((returns) => [PupilRegisterPlusManyOutput])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
+        const { entries } = data;
+        log.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
+        const results = [];
+        for (const entry of entries) {
+            const res = await pupilRegisterPlus(entry, context);
+            results.push({ email: entry.email, ...res });
+        }
+        log.info(
+            `pupilRegisterPlusMany has finished. Count of successful pupils handled: ${results.filter((p) => p.success).length}. Failed count: ${
+                results.filter((p) => p.success).length
+            }`
+        );
+        return results;
     }
 
     @Mutation(() => Boolean)

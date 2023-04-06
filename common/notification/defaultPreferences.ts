@@ -1,6 +1,6 @@
 type EmailChannel = { email: boolean };
 export type Preferences = { [category: Categories]: EmailChannel };
-type Categories = typeof categories[number];
+type Categories = (typeof categories)[number];
 
 // These are always enabled for all users
 export const ENABLED_NOTIFICATIONS: Preferences = {
