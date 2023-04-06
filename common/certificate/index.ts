@@ -25,7 +25,7 @@ export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4}
 
 // supported certificate languages:
 export const LANGUAGES = ['de', 'en'] as const;
-export type Language = typeof LANGUAGES[number];
+export type Language = (typeof LANGUAGES)[number];
 export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
@@ -111,7 +111,8 @@ export async function getCertificatePDF(certificateId: string, _requestor: Stude
 }
 
 export interface ICertificateCreationParams {
-    endDate: number;
+    startDate?: Date;
+    endDate: Date;
     subjects: string;
     hoursPerWeek: number;
     hoursTotal: number;
@@ -138,6 +139,13 @@ export async function issueCertificateRequest(
     });
 }
 
+export async function createCertificateLEGACY(
+    _requestor: Student | PrismaStudent,
+    matchId: string,
+    params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
+) {
+    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
+}
 /* Students can create certificates, which pupils can then sign */
 export async function createCertificate(
     _requestor: Student | PrismaStudent,
@@ -162,8 +170,8 @@ export async function createCertificate(
     pc.hoursPerWeek = params.hoursPerWeek;
     pc.hoursTotal = params.hoursTotal;
     pc.medium = params.medium;
-    pc.startDate = match.createdAt;
-    pc.endDate = moment(params.endDate, 'X').toDate();
+    pc.startDate = params.startDate ?? match.createdAt;
+    pc.endDate = params.endDate;
     pc.ongoingLessons = params.ongoingLessons;
     pc.state = params.state;
 
@@ -203,8 +211,8 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
         SCHUELERFAECHER: certificate.subjects.split(','),
         SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek,
-        SCHUELERGESAMT: certificate.hoursTotal,
+        SCHUELERPROWOCHE: certificate.hoursPerWeek.toFixed(2),
+        SCHUELERGESAMT: certificate.hoursTotal.toFixed(2),
         MEDIUM: certificate.medium,
         SCREENINGDATUM: screeningDate ? moment(screeningDate).format('D.M.YYYY') : '[UNBEKANNTES DATUM]',
         ONGOING: certificate.ongoingLessons,

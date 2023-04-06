@@ -44,9 +44,9 @@ class NotificationInput {
 
 @Resolver((of) => GraphQLModel.Notification)
 export class MutateNotificationResolver {
-    @Mutation((returns) => Boolean)
+    @Mutation((returns) => GraphQLModel.Notification)
     @Authorized(Role.ADMIN)
-    async notificationCreate(@Arg('notification') notification: NotificationCreateInput): Promise<boolean> {
+    async notificationCreate(@Arg('notification') notification: NotificationCreateInput): Promise<GraphQLModel.Notification> {
         if (
             notification.sample_context &&
             (typeof notification.sample_context !== 'object' || Object.values(notification.sample_context).some((it) => typeof it !== 'string'))
@@ -54,8 +54,8 @@ export class MutateNotificationResolver {
             throw new Error(`Sample context must be an object with string values`);
         }
 
-        await Notification.create(notification);
-        return true;
+        const result = await Notification.create(notification);
+        return result;
     }
 
     @Mutation((returns) => Boolean)
@@ -89,7 +89,7 @@ export class MutateNotificationResolver {
         @Arg('body') body: string,
         @Arg('navigateTo') navigateTo: string
     ) {
-        const notification = await Notification.getNotification(notificationId);
+        const notification = await Notification.getNotification(notificationId, /* allowDeactivated */ true);
         await setMessageTranslation({ notification, language, body, headline, navigateTo });
 
         return true;

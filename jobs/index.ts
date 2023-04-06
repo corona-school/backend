@@ -7,6 +7,9 @@ import { configureGracefulShutdown } from "./shutdown";
 import { executeJob } from "./manualExecution";
 import { createConnection } from "typeorm";
 
+// Ensure Notification hooks are always loaded
+import './../common/notification/hooks';
+
 //SETUP: logger
 setupLogging();
 const log = getLogger();

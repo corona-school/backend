@@ -7,31 +7,16 @@ import { Student as TypeORMStudent } from '../entity/Student';
 import * as Notification from '../notification';
 import { prisma } from '../prisma';
 import { getLogger } from 'log4js';
+import { subcourseOver } from './states';
 
 const logger = getLogger('CourseContact');
-
-async function courseOver(subcourse: Subcourse) {
-    const lastLecture = await prisma.lecture.findFirst({
-        where: { subcourseId: subcourse.id },
-        orderBy: { start: 'desc' },
-    });
-
-    if (!lastLecture) {
-        return false;
-    }
-
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-    return lastLecture.start < twoWeeksAgo;
-}
 
 export async function canContactInstructors(course: Course, subcourse: Subcourse): Promise<Decision> {
     if (!course.allowContact) {
         return { allowed: false, reason: 'contact-not-allowed' };
     }
 
-    if (await courseOver(subcourse)) {
+    if (await subcourseOver(subcourse)) {
         return { allowed: false, reason: 'course-ended' };
     }
 
@@ -67,6 +52,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
                     messageTitle: title,
                     messageBody: body,
                     participantMail: pupil.email,
+                    replyToAddress: pupil.email as any,
                 },
                 attachmentGroup
             );
@@ -85,7 +71,7 @@ export async function contactParticipants(
     files: File[],
     participants: number[]
 ) {
-    if (await courseOver(subcourse)) {
+    if (await subcourseOver(subcourse)) {
         throw new Error(`Cannot contact participants as the course is over`);
     }
 
@@ -112,6 +98,7 @@ export async function contactParticipants(
                     messageTitle: title,
                     messageBody: body,
                     instructorMail: student.email,
+                    replyToAddress: student.email as any,
                 },
                 attachmentGroup
             );

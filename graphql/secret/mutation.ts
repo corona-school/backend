@@ -1,13 +1,13 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, loginToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
 import { GraphQLContext } from '../context';
-import { getSessionUser } from '../authentication';
+import { getSessionUser, loginAsUser } from '../authentication';
 import { Role } from '../authorizations';
 import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from 'log4js';
-import { UserInputError } from 'apollo-server-express';
+import { AuthenticationError, UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateSecretResolver');
@@ -22,13 +22,13 @@ export class MutateSecretResolver {
 
     @Mutation((returns) => String)
     @Authorized(Role.ADMIN)
-    async tokenCreateAdmin(@Arg('userId') userId: string) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
+    async tokenCreateAdmin(@Arg('userId') userId: string, @Arg('description', { nullable: true }) description?: string) {
+        const inOneWeek = new Date();
+        inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
-        const token = await createToken(user, /* expiresAt */ tomorrow, 'Support One-Day Access');
-        logger.info(`Admin created a one-day login token for User(${userId})`);
+        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`);
+        logger.info(`Admin created a login token for User(${userId})`);
         return token;
     }
 
@@ -36,6 +36,14 @@ export class MutateSecretResolver {
     @Authorized(Role.USER)
     async passwordCreate(@Ctx() context: GraphQLContext, @Arg('password') password: string) {
         await createPassword(getSessionUser(context), password);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async meChangeEmail(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
+        const user = await getSessionUser(context);
+        requestToken(user, 'user-email-change', '/start', email);
         return true;
     }
 

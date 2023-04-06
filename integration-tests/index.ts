@@ -17,6 +17,7 @@ import "./auth";
 import "./settings";
 import "./course";
 import "./appoinment";
+import "./admin";
 
 /* Account Deactivation - Independent, but needs to be last */
 import "./deactivation";

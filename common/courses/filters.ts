@@ -28,3 +28,16 @@ export function excludePastSubcourses(): Prisma.subcourseWhereInput {
         },
     };
 }
+
+export function onlyPastSubcourses(): Prisma.subcourseWhereInput {
+    const prevDay = new Date();
+    prevDay.setDate(prevDay.getDate() - 1);
+
+    return {
+        lecture: {
+            every: {
+                start: { lte: prevDay },
+            },
+        },
+    };
+}

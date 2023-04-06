@@ -36,6 +36,15 @@ export class Secret {
     @Column({ nullable: true })
     lastUsed?: Date;
 
+    // The description depends on the type of the Secret:
+    // - PASSWORD: currently unused
+    // - TOKEN: Describes the reason the token was issued, i.e. if it was issued by Support or on which device the token was issued
+    // - EMAIL_TOKEN the email to which the token was sent
+    //   - if not set, the user logs in via the email in their account and was not yet authenticated,
+    //       when they use the token we verify the email and log them in
+    //   - if set, the user requests to be logged in with a new email. When they log in using the token, we update the email in their profile and also verify it
+    //      => this MUST only be used by authenticated users, otherwise accounts could be taken over!
+
     @Column({ nullable: true })
     description: string;
 }

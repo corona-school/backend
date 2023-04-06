@@ -1,6 +1,6 @@
-import { Student, Pupil, Screener } from '../generated';
-import { Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root, Int, Mutation, Arg } from 'type-graphql';
-import { getStudents, getPupils, getStudentCount, getPupilCount, MatchPool as MatchPoolType, pools, runMatching } from '../../common/match/pool';
+import { Pupil, Student } from '../generated';
+import { Arg, Authorized, Field, Mutation, ObjectType, Resolver } from 'type-graphql';
+import { addPupilScreenings as commonAddPupilScreenings, pools, runMatching } from '../../common/match/pool';
 import { Role } from '../authorizations';
 
 @ObjectType()
@@ -28,6 +28,7 @@ class MatchingSubjectNameStats {
     @Field((type) => MatchingSubjectStats)
     stats: MatchingSubjectStats;
 }
+
 @ObjectType()
 class MatchingStats {
     @Field({ nullable: true })
@@ -65,6 +66,7 @@ class MatchingTiming {
     @Field()
     commit: number;
 }
+
 @ObjectType()
 class MatchPoolRunResult {
     @Field((type) => [TemporaryMatch])
@@ -81,5 +83,16 @@ export class MutateMatchPoolResolver {
     @Authorized(Role.ADMIN)
     async matchPoolRun(@Arg('name') name: string, @Arg('apply') apply: boolean, @Arg('toggles', (_type) => [String], { nullable: true }) toggles?: string[]) {
         return await runMatching(name, apply, toggles ?? []);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async addPupilScreenings(@Arg('matchPool') poolName: string, @Arg('toSendCount') toSendCount: number) {
+        const pool = pools.find((it) => it.name === poolName);
+        if (!pool) {
+            throw new Error(`Unknown Pool '${poolName}'`);
+        }
+        await commonAddPupilScreenings(pool, toSendCount);
+        return true;
     }
 }

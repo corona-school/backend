@@ -15,6 +15,7 @@ import {
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
     lecture_appointmenttype_enum as AppointmentType,
+    pupil_screening_status_enum as PupilScreeningStatus,
 } from '@prisma/client';
 import { MentoringCategory } from '../../common/mentoring/categories';
 import { LoginOption } from '../../common/secret';
@@ -86,3 +87,5 @@ registerEnumType(MentoringCategory, {
 registerEnumType(LoginOption, { name: 'LoginOption' });
 
 registerEnumType(AppointmentType, { name: 'AppointmentType' });
+
+registerEnumType(PupilScreeningStatus, { name: 'PupilScreeningStatus' });

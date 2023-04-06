@@ -16,6 +16,7 @@ import { LearningGermanSince } from '../daz/learningGermanSince';
 import { Language } from '../daz/language';
 import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
 import { Lecture as Appointment } from './Lecture';
+import { PupilScreening } from './PupilScreening';
 
 @Entity()
 export class Pupil extends Person {
@@ -225,6 +226,9 @@ export class Pupil extends Person {
         inverseJoinColumn: { name: 'appointmentId', referencedColumnName: 'id' },
     })
     appointments: Appointment[];
+
+    @OneToMany(() => PupilScreening, (screening) => screening.pupil)
+    screenings: PupilScreening[];
 
     gradeAsNumber(): number | null {
         if (this.grade == null) {

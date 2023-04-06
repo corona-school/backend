@@ -15,7 +15,7 @@ import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID } from './actions';
 import { Channels } from '../../graphql/types/preferences';
-import { ALL_PREFERENCES } from '../../notifications/defaultPreferences';
+import { ALL_PREFERENCES } from './defaultPreferences';
 import { getMessageForNotification } from './messages';
 import { TranslationLanguage } from '../entity/MessageTranslation';
 import { renderTemplate } from '../../utils/helpers';
@@ -599,6 +599,3 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
-
-// Ensure hooks are always loaded - also in the Jobs Dyno
-import './hooks';

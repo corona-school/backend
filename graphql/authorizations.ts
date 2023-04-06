@@ -10,8 +10,9 @@ import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
-import { Role } from './roles';
 import { isAppointmentParticipant } from '../common/appointment/participants';
+import { Role } from '../common/user/roles';
+import { isDev } from '../common/util/environment';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -87,11 +88,12 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
         assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
         assert(root, 'root value must be bound to determine access');
-        assert(context.user.pupilId, 'User must be a pupil');
-        const pupil = await getPupil(context.user.pupilId);
-        const success = await isParticipant(root, pupil);
-        if (success) {
-            return true;
+        if (context.user.pupilId) {
+            const pupil = await getPupil(context.user.pupilId);
+            const success = await isParticipant(root, pupil);
+            if (success) {
+                return true;
+            }
         }
     }
     if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
@@ -112,6 +114,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
+const onlyAdmin = [Authorized(Role.ADMIN)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
@@ -179,6 +182,15 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         // School data is public knowledge and can be queried by everyone
         schools: everyone,
     },
+    Important_information: {
+        createOneImportant_information: adminOrOwner,
+        deleteOneImportant_information: adminOrOwner,
+        updateOneImportant_information: adminOrOwner,
+        createManyImportant_information: adminOrOwner,
+        deleteManyImportant_information: adminOrOwner,
+        updateManyImportant_information: adminOrOwner,
+        important_informations: everyone,
+    },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Subcourse_waiting_list_pupil: allAdmin,
@@ -201,6 +213,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
     Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
+    Pupil_screening: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -229,6 +242,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'projectFields'
             | 'aboutMe'
             | 'schooltype'
+            | 'state'
         >({
             matchReason: everyone,
             authToken: nobody,
@@ -249,7 +263,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             registrationSource: adminOrOwner,
             school: adminOrOwner,
             schoolId: adminOrOwner,
-            state: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
             lastTimeCheckedNotifications: adminOrOwner,
@@ -264,6 +277,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             isRedacted: nobody,
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
+            pupil_screening: adminOrOwner,
 
             // these are associations which are wrongly in the TypeGraphQL generation
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
@@ -284,7 +298,17 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isProjectCoach' | 'isUniversityStudent' | 'languages' | 'aboutMe'
+            | 'id'
+            | 'firstname'
+            | 'lastname'
+            | 'active'
+            | 'isStudent'
+            | 'isInstructor'
+            | 'isProjectCoach'
+            | 'isUniversityStudent'
+            | 'languages'
+            | 'aboutMe'
+            | 'state'
         >({
             authToken: nobody,
             authTokenSent: adminOrOwner,
@@ -297,7 +321,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwner,
             firstMatchRequest: adminOrOwner,
-            state: adminOrOwner,
             university: adminOrOwner,
             module: adminOrOwner,
             moduleHours: adminOrOwner,
@@ -445,10 +468,15 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             attachmentGroupId: nobody,
             // The context might contain sensitivie information of other users for which we do not know whether the user should access those
             // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
-            context: nobody,
-            contextID: nobody,
+            context: isDev ? onlyAdmin : nobody,
+            contextID: isDev ? onlyAdmin : nobody,
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
-            error: nobody,
+            error: onlyAdmin,
         }),
+    },
+    Pupil_screening: {
+        fields: {
+            comment: onlyAdmin,
+        },
     },
 };
