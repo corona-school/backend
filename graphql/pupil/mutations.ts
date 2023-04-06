@@ -107,7 +107,7 @@ class PupilRegisterPlusInput {
 @ObjectType()
 class PupilRegisterPlusManyOutput {
     @Field((_type) => String, { nullable: true })
-    email: string;
+    email?: string;
 
     @Field((_type) => Boolean, { nullable: false })
     success: boolean;
@@ -118,7 +118,7 @@ class PupilRegisterPlusManyOutput {
 
 @InputType()
 class PupilRegisterPlusManyInput {
-    @Field((type) => [PupilRegisterPlusInput], { nullable: true })
+    @Field((type) => [PupilRegisterPlusInput])
     entries: PupilRegisterPlusInput[];
 }
 
