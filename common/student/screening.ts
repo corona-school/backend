@@ -5,6 +5,9 @@ import { getLogger } from 'log4js';
 import { createRemissionRequest } from '../remission-request';
 import { getUserIdTypeORM } from '../user';
 import { cancelNotification } from '../notification';
+import { getTransactionLog } from '../transactionlog';
+import CoCCancelledEvent from '../transactionlog/types/CoCCancelledEvent';
+import { getManager } from 'typeorm';
 
 interface ScreeningInput {
     success: boolean;
@@ -13,6 +16,8 @@ interface ScreeningInput {
 }
 
 const logger = getLogger('Student Screening');
+const entityManager = getManager();
+const transactionLog = getTransactionLog();
 
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
     await prisma.instructor_screening.create({
@@ -89,4 +94,5 @@ export async function cancelCoCReminders(student: Student) {
         await cancelNotification(notif);
     }
     await prisma.remission_request.delete({ where: { studentId: student.id } });
+    await transactionLog.log(new CoCCancelledEvent(student));
 }

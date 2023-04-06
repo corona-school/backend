@@ -28,11 +28,8 @@ import { getLogger } from 'log4js';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { ValidateEmail } from '../validators';
-import CertificateCancelledEvent from '../../common/transactionlog/types/CertificateCancelledEvent';
-import { getTransactionLog } from '../../common/transactionlog';
-
+import CoCCancelledEvent from '../../common/transactionlog/types/CoCCancelledEvent';
 const log = getLogger(`StudentMutation`);
-const transactionLog = getTransactionLog();
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -264,7 +261,6 @@ export class MutateStudentResolver {
         const student = await getStudent(studentId);
         await cancelCoCReminders(student);
 
-        await transactionLog.log(new CertificateCancelledEvent(student));
         log.info(`Cancelled CoC reminder for Student(${studentId})`);
         return true;
     }

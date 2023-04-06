@@ -14,7 +14,7 @@ enum LogType {
     UPDATE_STUDENT_DESCRIPTION = 'updateStudentDescription',
     CREATED_COURSE = 'createdCourse',
     CERTIFICATE_REQUEST = 'certificateRequest',
-    CERTIFICATE_CANCEL = 'certificateCancel',
+    COC_CANCEL = 'cocCancel',
     CANCELLED_COURSE = 'cancelledCourse',
     CANCELLED_SUBCOURSE = 'cancelledSubcourse',
     CREATED_COURSE_ATTENDANCE_LOG = 'createdCourseAttendanceLog',
