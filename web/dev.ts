@@ -654,12 +654,28 @@ export async function setupDevDB() {
         intercultural: 'Interkulturelles',
     };
 
+    const focusTagNamesMap = {
+        genz: 'GenZ',
+        socialmedia: 'Social Media',
+    };
+
     const clubTagMap = Object.fromEntries(
         Object.entries(clubTagNamesMap).map(([identifier, name]) => {
             const t = new CourseTag();
             t.name = name;
             t.identifier = identifier;
             t.category = 'club';
+
+            return [identifier, t];
+        })
+    );
+
+    const focusTagMap = Object.fromEntries(
+        Object.entries(focusTagNamesMap).map(([identifier, name]) => {
+            const t = new CourseTag();
+            t.name = name;
+            t.identifier = identifier;
+            t.category = 'focus';
 
             return [identifier, t];
         })
@@ -676,6 +692,11 @@ export async function setupDevDB() {
 
     const clubTags = Object.values(clubTagMap);
     tags.push(...clubTags);
+
+    const genz = focusTagMap['genz'];
+
+    const focusTags = Object.values(focusTagMap);
+    tags.push(...focusTags);
 
     const preparation = (t = new CourseTag());
     t.name = 'Prüfungsvorbereitung';
@@ -848,6 +869,18 @@ export async function setupDevDB() {
 
     courses.push(course9);
 
+    let course10 = new Course();
+    course10.instructors = [s1];
+    course10.name = 'Gen Z';
+    course10.outline = 'Was die Gen Z von der Arbeitswelt erwartet!';
+    course10.description = 'Du gehörst zur Gen Z und möchtest mehr über die Arbeitswelt erfahren?';
+    course10.category = CourseCategory.FOCUS;
+    course10.tags = [genz];
+    course10.subcourses = [];
+    course10.courseState = CourseState.ALLOWED;
+
+    courses.push(course10);
+
     for (const course of courses) {
         await entityManager.save(Course, course);
 
@@ -988,6 +1021,18 @@ export async function setupDevDB() {
 
     subcourses.push(subcourse11);
 
+    // course to test subcourse suggestions
+    const subcourse12 = new Subcourse();
+    subcourse12.course = course10;
+    subcourse12.joinAfterStart = true;
+    subcourse12.minGrade = 3;
+    subcourse12.maxGrade = 5;
+    subcourse12.instructors = [s1];
+    subcourse12.maxParticipants = 20;
+    subcourse12.published = true;
+
+    subcourses.push(subcourse12);
+
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
         console.log('Inserted SubCourse.');
@@ -1089,7 +1134,13 @@ export async function setupDevDB() {
     lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
 
-    lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13);
+    const lecture14: Lecture = new Lecture();
+    lecture14.subcourse = subcourse12;
+    lecture14.duration = 30;
+    lecture14.start = new Date(year, month, date + 10, 20, 0, 0, 0);
+    lecture14.instructor = s1;
+
+    lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13, lecture14);
 
     for (const lecture of lectures) {
         await entityManager.save(Lecture, lecture);
@@ -1435,7 +1486,6 @@ async function importMessagesTranslationsFromProd() {
     ).json();
 
     const messageTranslations = prodMessageTranslations.data.notifications.reduce((acc: any[], cur: any) => [...acc, ...cur.messageTranslations], []);
-
 
     await importMessageTranslations(messageTranslations);
 }
