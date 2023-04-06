@@ -28,7 +28,6 @@ import { getLogger } from 'log4js';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { ValidateEmail } from '../validators';
-import CoCCancelledEvent from '../../common/transactionlog/types/CoCCancelledEvent';
 const log = getLogger(`StudentMutation`);
 
 @InputType('Instructor_screeningCreateInput', {
