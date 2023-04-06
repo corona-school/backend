@@ -1,13 +1,16 @@
-import { adminClient, defaultClient, test } from "./base";
-import { instructorOne } from "./user";
-import * as assert from "assert";
-import { screenedInstructorOne } from "./screening";
+import { adminClient, defaultClient, test } from './base';
+import { pupilOne, pupilUpdated } from './user';
+import * as assert from 'assert';
+import { screenedInstructorOne } from './screening';
+import { CourseState } from '../common/entity/Course';
 
-const courseOne = test("Create Course One", async () => {
+const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
-    const { courseCreate: { id: courseId, isInstructor, courseState } } = await client.request(`
-        mutation CreateCourse { 
-            courseCreate(course:{ 
+    const {
+        courseCreate: { id: courseId, isInstructor, courseState },
+    } = await client.request(`
+        mutation CreateCourse {
+            courseCreate(course:{
             name: "Wie schreibe ich Integrationstests"
             outline: "Am besten gar nicht, ist viel zu viel Arbeit"
             description: "Why should I test if my users can do that for me in production?"
@@ -15,7 +18,7 @@ const courseOne = test("Create Course One", async () => {
             allowContact: true
             subject: Informatik
             schooltype: gymnasium
-        }) { 
+        }) {
             id
             isInstructor
             courseState
@@ -24,15 +27,19 @@ const courseOne = test("Create Course One", async () => {
     `);
 
     assert.ok(isInstructor);
-    assert.strictEqual(courseState, "created");
+    assert.strictEqual(courseState, 'created');
 
     await client.request(`mutation SubmitCourse { courseSubmit(courseId: ${courseId}) }`);
 
-    const { me: { student: { coursesInstructing }}} = await client.request(`
+    const {
+        me: {
+            student: { coursesInstructing },
+        },
+    } = await client.request(`
         query GetCoursesInstructing {
-            me { 
-                student { 
-                    coursesInstructing { 
+            me {
+                student {
+                    coursesInstructing {
                         id
                         courseState
                     }
@@ -41,19 +48,23 @@ const courseOne = test("Create Course One", async () => {
         }
     `);
 
-    assert.ok(coursesInstructing.some(it => it.id === courseId && it.courseState === "submitted"));
+    assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
 
     await adminClient.request(`
-        mutation AllowCourse { 
+        mutation AllowCourse {
             courseAllow(courseId: ${courseId} screeningComment: "Kreative Kursbeschreibung!")
         }
     `);
 
-    const { me: { student: { coursesInstructing: coursesInstructing2 }}} = await client.request(`
+    const {
+        me: {
+            student: { coursesInstructing: coursesInstructing2 },
+        },
+    } = await client.request(`
         query GetCoursesInstructing {
-            me { 
-                student { 
-                    coursesInstructing { 
+            me {
+                student {
+                    coursesInstructing {
                         id
                         courseState
                     }
@@ -62,19 +73,21 @@ const courseOne = test("Create Course One", async () => {
         }
     `);
 
-    assert.ok(coursesInstructing2.some(it => it.id === courseId && it.courseState === "allowed"));
+    assert.ok(coursesInstructing2.some((it) => it.id === courseId && it.courseState === 'allowed'));
 
     return { courseId };
 });
 
-const subcourseOne = test("Create Subcourse", async () => {
+const subcourseOne = test('Create Subcourse', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
 
     const { client } = await screenedInstructorOne;
     const { courseId } = await courseOne;
 
-    const { subcourseCreate: { id: subcourseId } } = await client.request(`
+    const {
+        subcourseCreate: { id: subcourseId },
+    } = await client.request(`
         mutation CreateSubcourse {
             subcourseCreate(courseId: ${courseId} subcourse: {
                 minGrade: 5
@@ -93,17 +106,21 @@ const subcourseOne = test("Create Subcourse", async () => {
     `);
 
     // Does not yet appear in public subcourses
-    assert.ok(!subcoursesPublic.some(it => it.id === subcourseId));
+    assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
 
     await client.request(`
         mutation PublishSubcourse { subcoursePublish(subcourseId: ${subcourseId})}
     `);
 
-    const { me: { student: { subcoursesInstructing } } } = await client.request(`
+    const {
+        me: {
+            student: { subcoursesInstructing },
+        },
+    } = await client.request(`
         query GetCoursesInstructing {
-            me { 
-                student { 
-                    subcoursesInstructing { 
+            me {
+                student {
+                    subcoursesInstructing {
                         id
                         course { id name description courseState }
                         published
@@ -114,7 +131,7 @@ const subcourseOne = test("Create Subcourse", async () => {
         }
     `);
 
-    const subcourse = subcoursesInstructing.find(it => it.id === subcourseId);
+    const subcourse = subcoursesInstructing.find((it) => it.id === subcourseId);
     assert.ok(subcourse);
     assert.ok(subcourse.course.id === courseId);
     assert.ok(subcourse.published);
@@ -128,11 +145,9 @@ const subcourseOne = test("Create Subcourse", async () => {
 
     // Now appears in public subcourses
     assert.ok(subcoursesPublicAfter.some(it => it.id === subcourseId)); */
-
 });
 
-
-test("Admin set subcourse meetingURL and join", async () => {
+test('Admin set subcourse meetingURL and join', async () => {
     await adminClient.request(`
         mutation SetURL {
             subcourseSetMeetingURL(subcourseId: 1, meetingURL: "https://example.com")
@@ -145,10 +160,10 @@ test("Admin set subcourse meetingURL and join", async () => {
         }
     `);
 
-    assert.strictEqual(meetingURL.subcourseJoinMeeting, "https://example.com");
+    assert.strictEqual(meetingURL.subcourseJoinMeeting, 'https://example.com');
 });
 
-test("Search further instructors", async() => {
+test('Search further instructors', async () => {
     const { client } = await screenedInstructorOne;
 
     // Partial searches yield no result to not leak infos
@@ -160,9 +175,45 @@ test("Search further instructors", async() => {
 
     const fullNameSearch = await client.request(`query { otherInstructors(search: "melanie meiers", take: 100, skip: 0) { firstname lastname }}`);
     assert.equal(fullNameSearch.otherInstructors.length, 1);
-    assert.equal(fullNameSearch.otherInstructors[0].firstname, "Melanie");
+    assert.equal(fullNameSearch.otherInstructors[0].firstname, 'Melanie');
 
     const fullEmailSearch = await client.request(`query { otherInstructors(search: "test+dev+s2@lern-fair.de", take: 100, skip: 0) { firstname lastname }}`);
     assert.equal(fullEmailSearch.otherInstructors.length, 1);
-    assert.equal(fullEmailSearch.otherInstructors[0].firstname, "Melanie");
+    assert.equal(fullEmailSearch.otherInstructors[0].firstname, 'Melanie');
+});
+
+test('Public Course Suggestions', async () => {
+    const { client, pupil } = await pupilOne;
+    // const { pupilsGrade } = await pupilUpdated;
+
+    const { subcoursesPublic } = await client.request(`
+    query PublicSubcourseSuggestions {
+        subcoursesPublic(take: 20, excludeKnown: true, onlyJoinable: true )
+        {
+            id
+            published
+            cancelled
+            minGrade
+            maxGrade
+            isParticipant
+            participantsCount
+            maxParticipants
+            course {
+                courseState
+            }
+        }
+    }`);
+
+    assert.ok(
+        subcoursesPublic.some(
+            (subcourse) =>
+                subcourse.published &&
+                !subcourse.cancelled &&
+                subcourse.course.courseState === CourseState.ALLOWED &&
+                // subcourse.minGrade <= pupilsGrade &&
+                // subcourse.maxGrade >= pupilsGrade &&
+                !subcourse.isParticipant &&
+                subcourse.participantsCount < subcourse.maxParticipants
+        )
+    );
 });

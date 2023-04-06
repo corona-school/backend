@@ -160,14 +160,14 @@ class BecomeInstructorInput implements BecomeInstructorData {
 
 @InputType()
 export class BecomeTutorInput implements BecomeTutorData {
-    @Field((type) => [Subject])
-    subjects: Subject[];
+    @Field((type) => [Subject], { nullable: true })
+    subjects?: Subject[];
 
-    @Field((type) => [Language])
-    languages: Language[];
+    @Field((type) => [Language], { nullable: true })
+    languages?: Language[];
 
-    @Field((type) => Boolean)
-    supportsInDaZ: boolean;
+    @Field((type) => Boolean, { nullable: true })
+    supportsInDaZ?: boolean;
 }
 
 @InputType()
@@ -363,7 +363,7 @@ export class MutateMeResolver {
     @Authorized(Role.STUDENT)
     async meBecomeInstructor(
         @Ctx() context: GraphQLContext,
-        @Arg('data') data: BecomeInstructorInput,
+        @Arg('data', { nullable: true }) data: BecomeInstructorInput,
         @Arg('studentId', { nullable: true }) studentId: number
     ) {
         const student = await getSessionStudent(context, studentId);
@@ -379,7 +379,11 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.STUDENT, Role.ADMIN)
-    async meBecomeTutor(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeTutorInput, @Arg('studentId', { nullable: true }) studentId: number) {
+    async meBecomeTutor(
+        @Ctx() context: GraphQLContext,
+        @Arg('data', { nullable: true }) data: BecomeTutorInput,
+        @Arg('studentId', { nullable: true }) studentId: number
+    ) {
         const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 

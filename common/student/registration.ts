@@ -103,31 +103,24 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
     return student;
 }
 
-export async function becomeInstructor(student: Student, data: BecomeInstructorData) {
+export async function becomeInstructor(student: Student, data?: BecomeInstructorData) {
     if (student.isInstructor) {
         throw new RedundantError(`Student is already instructor`);
     }
 
-    const { message } = data;
-
     await prisma.student.update({
         data: {
             isInstructor: true,
-            msg: message,
+            msg: data ? data.message : '',
             lastSentInstructorScreeningInvitationDate: new Date(),
         },
         where: { id: student.id },
     });
-
-    const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
-    if (!wasInstructorScreened) {
-        await sendFirstInstructorScreeningInvitationMail(student);
-    }
 }
 
 export async function becomeTutor(
     student: Student,
-    data: BecomeTutorData,
+    data?: BecomeTutorData,
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
     batchMode = false
 ) {
@@ -135,15 +128,13 @@ export async function becomeTutor(
         throw new RedundantError(`Student is already tutor`);
     }
 
-    const { languages, subjects, supportsInDaZ } = data;
-
     const res = await prismaInstance.student.update({
         data: {
             isStudent: true,
             openMatchRequestCount: 0,
-            subjects: JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)),
-            languages,
-            supportsInDaZ,
+            subjects: data ? JSON.stringify(data.subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
+            languages: data ? data.languages : undefined,
+            supportsInDaZ: data ? data.supportsInDaZ : undefined,
         },
         where: { id: student.id },
     });
