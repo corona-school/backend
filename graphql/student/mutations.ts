@@ -7,7 +7,7 @@ import { isElevated, getSessionStudent, getSessionScreener, updateSessionUser } 
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Mutation, Resolver, InputType, Field, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
+import { addInstructorScreening, addTutorScreening, cancelCoCReminders, scheduleCoCReminders } from '../../common/student/screening';
 import { ProjectFieldWithGradeData } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
@@ -25,12 +25,14 @@ import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { getLogger } from 'log4js';
-import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { ValidateEmail } from '../validators';
+import CertificateCancelledEvent from '../../common/transactionlog/types/CertificateCancelledEvent';
+import { getTransactionLog } from '../../common/transactionlog';
 
 const log = getLogger(`StudentMutation`);
+const transactionLog = getTransactionLog();
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -245,5 +247,25 @@ export class MutateStudentResolver {
             size: pdf.length,
         });
         return getFileURL(file);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentScheduleCoCReminder(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        await scheduleCoCReminders(student, true);
+        log.info(`Scheduled CoC reminder for Student(${studentId})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentCancelCoCReminder(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        await cancelCoCReminders(student);
+
+        await transactionLog.log(new CertificateCancelledEvent(student));
+        log.info(`Cancelled CoC reminder for Student(${studentId})`);
+        return true;
     }
 }

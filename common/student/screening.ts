@@ -3,6 +3,8 @@ import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from 'log4js';
 import { createRemissionRequest } from '../remission-request';
+import { getUserIdTypeORM } from '../user';
+import { cancelNotification } from '../notification';
 
 interface ScreeningInput {
     success: boolean;
@@ -22,6 +24,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
     });
 
     if (screening.success) {
+        await scheduleCoCReminders(student);
         await Notification.actionTaken(student, 'instructor_screening_success', {});
     } else {
         await Notification.actionTaken(student, 'instructor_screening_rejection', {});
@@ -40,7 +43,7 @@ export async function addTutorScreening(screener: Screener, student: Student, sc
     });
 
     if (screening.success) {
-        await ScheduleCoCReminders(student);
+        await scheduleCoCReminders(student);
         await Notification.actionTaken(student, 'tutor_screening_success', {});
     } else {
         await Notification.actionTaken(student, 'tutor_screening_rejection', {});
@@ -49,8 +52,8 @@ export async function addTutorScreening(screener: Screener, student: Student, sc
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
 }
 
-export async function ScheduleCoCReminders(student: Student) {
-    if (student.createdAt < new Date('2022-01-01')) {
+export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false) {
+    if (student.createdAt < new Date('2022-01-01') && !ignoreAccCreationDate) {
         return;
     }
 
@@ -64,4 +67,26 @@ export async function ScheduleCoCReminders(student: Student) {
 
     await createRemissionRequest(student);
     await Notification.actionTaken(student, 'coc_reminder', {});
+}
+
+export async function cancelCoCReminders(student: Student) {
+    const notificationIDs = (
+        await prisma.notification.findMany({
+            where: { onActions: { has: 'coc_reminder' } },
+            select: {
+                id: true,
+            },
+        })
+    ).map((n) => n.id);
+
+    const concreteNotificationsToCancel = await prisma.concrete_notification.findMany({
+        where: {
+            userId: getUserIdTypeORM(student),
+            notificationID: { in: notificationIDs },
+        },
+    });
+    for (const notif of concreteNotificationsToCancel) {
+        await cancelNotification(notif);
+    }
+    await prisma.remission_request.delete({ where: { studentId: student.id } });
 }
