@@ -31,7 +31,7 @@ import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
-import { ValidateEmail } from '../validators';
+import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from 'log4js';
 
 const log = getLogger(`PupilMutation`);
@@ -193,7 +193,8 @@ export async function updatePupil(
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Pupil', ctx);
-    const { email, register, activate } = data;
+    let { email, register, activate } = data;
+    email = validateEmail(email);
 
     try {
         if (register && register.email !== email) {
@@ -207,18 +208,16 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
         }
 
         await prisma.$transaction(async (tx) => {
-            let pupil;
-            if (register != null) {
-                if (existingAccount) {
+            let pupil = existingAccount;
+            if (!!register) {
+                if (!!pupil) {
                     // if account already exists, overwrite relevant data with new plus data
-                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${existingAccount.id})`);
-                    pupil = await updatePupil(ctx, existingAccount, { ...register, projectFields: undefined }, tx);
+                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
+                    pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
                 } else {
                     pupil = await registerPupil(register, true, tx);
                     log.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
                 }
-            } else {
-                pupil = existingAccount;
             }
             if (activate && pupil?.isPupil) {
                 log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);

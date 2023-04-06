@@ -30,7 +30,7 @@ import { getLogger } from 'log4js';
 import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
-import { ValidateEmail } from '../validators';
+import { validateEmail, ValidateEmail } from '../validators';
 
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
@@ -207,7 +207,8 @@ export async function updateStudent(
 
 async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Student', ctx);
-    const { email, register, activate, screen } = data;
+    let { email, register, activate, screen } = data;
+    email = validateEmail(email);
     const screener = await getSessionScreener(ctx);
 
     try {
