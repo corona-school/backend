@@ -22,13 +22,13 @@ function lectureToDTO(lecture: lecture): LectureDTO {
     const start = moment(lecture.start).locale('de');
     const lectureDto: LectureDTO = {
         ...emptyMetadata,
-        databaseid: `${lecture.id}`,
+        slug: `${lecture.id}`,
         start: start.toISOString(),
         duration: `${lecture.duration} min.`,
     };
-    lectureDto.slug = hash(lectureDto);
+    lectureDto.hash = hash(lectureDto);
     // Lectures don't have any names, so to prevent collisions we are just using the hash, which should be unique.
-    lectureDto.name = lectureDto.slug;
+    lectureDto.name = lectureDto.hash;
     return lectureDto;
 }
 

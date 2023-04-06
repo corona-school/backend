@@ -17,6 +17,9 @@ function validateEnvVars() {
     if (!process.env.WEBFLOW_LECTURE_COLLECTION_ID) {
         throw new Error('WEBFLOW_LECTURE_COLLECTION_ID env var has to be set');
     }
+    if (!process.env.WEBFLOW_COURSE_DEFAULT_IMAGE) {
+        throw new Error('WEBFLOW_COURSE_DEFAULT_IMAGE env var has to be set');
+    }
 }
 
 export default async function execute(): Promise<void> {

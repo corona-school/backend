@@ -14,8 +14,8 @@ import { courseImageKey } from '../../web/controllers/courseController/course-im
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 import { course_schooltype_enum, course_subject_enum } from '../generated';
-import { hasSubcourseFinished } from './util';
 import { ForbiddenError } from '../error';
+import { subcourseOver } from '../../common/courses/states';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -91,8 +91,8 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         const subcourses = await getSubcoursesForCourse(courseId, true);
-        if (subcourses.every((subcourse) => !subcourse.lecture.length || hasSubcourseFinished(subcourse))) {
-            throw new ForbiddenError('Cannot edit course that has already finished');
+        if (course.courseState === 'allowed' && subcourses.every((subcourse) => subcourse.published && subcourseOver(subcourse))) {
+            throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);

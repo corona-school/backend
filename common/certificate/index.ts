@@ -25,7 +25,7 @@ export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4}
 
 // supported certificate languages:
 export const LANGUAGES = ['de', 'en'] as const;
-export type Language = typeof LANGUAGES[number];
+export type Language = (typeof LANGUAGES)[number];
 export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
@@ -211,8 +211,8 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
         SCHUELERFAECHER: certificate.subjects.split(','),
         SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek,
-        SCHUELERGESAMT: certificate.hoursTotal,
+        SCHUELERPROWOCHE: certificate.hoursPerWeek.toFixed(2),
+        SCHUELERGESAMT: certificate.hoursTotal.toFixed(2),
         MEDIUM: certificate.medium,
         SCREENINGDATUM: screeningDate ? moment(screeningDate).format('D.M.YYYY') : '[UNBEKANNTES DATUM]',
         ONGOING: certificate.ongoingLessons,

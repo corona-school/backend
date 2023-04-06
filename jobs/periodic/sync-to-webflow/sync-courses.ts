@@ -1,4 +1,4 @@
-import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
 import { Logger } from 'log4js';
 import moment, { Moment } from 'moment';
@@ -7,6 +7,7 @@ import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { lectureDTOFactory } from './sync-lectures';
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
+const courseDefaultImage = process.env.WEBFLOW_COURSE_DEFAULT_IMAGE;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
@@ -25,6 +26,7 @@ interface CourseDTO extends WebflowMetadata {
     link: string;
     maxparticipants: number;
     participantscount: number;
+    openslots: number;
     subject: string;
 
     mingrade: number;
@@ -92,17 +94,27 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
     return result;
 }
 
+// The description is a WYSIWYG editor that translates the information into HTML code, so we should do the same.
+function parseDescription(description: string): string {
+    // Replace new lines with <br> tags
+    let newDescription = description.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    // Wrap the description into a <p> tag, because webflow would do the same
+    return `<p>${newDescription}</p>`;
+}
+
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
     // make sure that the weekday can be properly translated
     startDate.locale('de');
+
+    const image = subcourse.course.imageKey ? accessURLForKey(subcourse.course.imageKey) : courseDefaultImage;
     const courseDTO: CourseDTO = {
         ...emptyMetadata,
 
         name: subcourse.course.name,
-        databaseid: `${subcourse.id}`, // We are using a string to be safe for any case.
+        slug: `${subcourse.id}`, // We are using a string to be safe for any case.
 
-        description: subcourse.course.description,
+        description: parseDescription(subcourse.course.description),
         instructor: generateInstructor(subcourse),
 
         startingdate: startDate.toISOString(),
@@ -116,6 +128,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         link: `${appBaseUrl}/${subcourse.id}`,
         maxparticipants: subcourse.maxParticipants,
         participantscount: subcourse.subcourse_participants_pupil.length,
+        openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
         subject: subcourse.course.subject,
 
         mingrade: subcourse.minGrade,
@@ -125,11 +138,11 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
 
         image: {
             fileId: 'placeholder', // not needed
-            url: accessURLForKey(subcourse.course.imageKey),
+            url: image,
             alt: '',
         },
     };
-    courseDTO.slug = hash(courseDTO);
+    courseDTO.hash = hash(courseDTO);
     return courseDTO;
 }
 
@@ -147,6 +160,10 @@ export default async function syncCourses(logger: Logger): Promise<void> {
 
     for (const row of result.new) {
         await createNewItem(collectionId, row);
+    }
+
+    for (const row of result.changed) {
+        await patchItem(collectionId, row);
     }
 
     if (result.outdated.length > 0) {

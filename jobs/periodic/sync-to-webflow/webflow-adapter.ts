@@ -11,9 +11,9 @@ export interface WebflowMetadata {
     _draft?: boolean;
     name?: string;
     // The slug is a unique value that should never be changed because it cannot be reused.
-    // Said that we are using it to store the hash, which should always match the actual data stored in the item.
+    // Said that we are using it to store the database id, which should always match the actual data stored in the item.
     slug?: string;
-    databaseid?: string; // We are using a string to be safe for any case.
+    hash?: string;
     'updated-on'?: string;
     'published-on'?: string;
 }
@@ -23,6 +23,7 @@ export const emptyMetadata: WebflowMetadata = {
     _archived: false,
     _draft: false,
     slug: '',
+    hash: '',
     'updated-on': '',
     'published-on': '',
 };
@@ -57,6 +58,13 @@ export async function deleteItems(collectionId: string, itemIds: string[]) {
     await request({ path: `collections/${collectionId}/items?live=false`, method: 'DELETE', data: body });
 }
 
+export async function patchItem<T extends WebflowMetadata>(collectionId: string, item: T) {
+    const itemId = item._id;
+    const body = { fields: structuredClone(item) as WebflowMetadata };
+    delete body.fields._id;
+    await request({ path: `collections/${collectionId}/items/${itemId}`, method: 'PATCH', data: body });
+}
+
 export async function publishItems(collectionId: string) {
     const items = await getCollectionItems(collectionId, basicMetaFactory);
     const itemIds = items
@@ -79,7 +87,7 @@ export async function publishItems(collectionId: string) {
 
 interface Request {
     path: string;
-    method: 'GET' | 'POST' | 'DELETE' | 'PUT';
+    method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH';
     data?: any;
 }
 
