@@ -208,10 +208,10 @@ export async function updateStudent(
 async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Student', ctx);
     let { email, register, activate, screen } = data;
-    email = validateEmail(email);
     const screener = await getSessionScreener(ctx);
 
     try {
+        email = validateEmail(email);
         if (!!register && register.email !== email) {
             throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
         }

@@ -194,9 +194,9 @@ export async function updatePupil(
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
     const log = logInContext('Pupil', ctx);
     let { email, register, activate } = data;
-    email = validateEmail(email);
 
     try {
+        email = validateEmail(email);
         if (register && register.email !== email) {
             throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
         }
