@@ -5,11 +5,16 @@ import { toPublicToken } from './authentication';
 import { Role } from './authorizations';
 import { GraphQLContext } from './context';
 import { isUnexpectedError } from './error';
+import { v4 as uuidv4 } from 'uuid';
 
 export const GraphQLLogger: any = {
     requestDidStart(requestContext: GraphQLRequestContext) {
         const startTime = Date.now();
         const logger = logInContext(`GraphQL Processing`, requestContext.context as GraphQLContext);
+
+        // This will make sure that all the following logs will have the same uid field.
+        const uid = uuidv4();
+        logger.addContext('uid', uid);
 
         let query = requestContext.request.query;
 
@@ -24,9 +29,10 @@ export const GraphQLLogger: any = {
             didEncounterErrors(requestContext: GraphQLRequestContext) {
                 const unexpected = requestContext.errors.some(isUnexpectedError);
                 if (unexpected) {
-                    logger.info(`Expected Errors occurred:\n`, ...requestContext.errors.map((it) => `  - ${it.name} (${it.message})`));
+                    logger.info(`Expected Errors occurred`, ...requestContext.errors.map((it) => `  - ${it.name} (${it.message})`));
                 } else {
                     const errorLogger = logInContext(`GraphQL Error`, requestContext.context as GraphQLContext);
+                    errorLogger.addContext('uid', uid);
                     errorLogger.error(`Unexpected Errors occurred:`, ...requestContext.errors);
                 }
             },
@@ -36,7 +42,7 @@ export const GraphQLLogger: any = {
                         requestContext.metrics.responseCacheHit ? 'hit' : 'missed'
                     }`
                 );
-                logger.info(`Finished processing after ${Date.now() - startTime}ms`);
+                logger.info(`Finished processing`, { duration: Date.now() - startTime });
 
                 if (isDev) {
                     logger.debug(`Responding with`, requestContext.response.data);
@@ -60,7 +66,7 @@ export function logInContext(name: string, context: GraphQLContext) {
     }
 
     const logger = getLogger(name);
-    logger.addContext('session', sessionID);
+    logger.addContext('sessionID', sessionID);
 
     return logger;
 }
