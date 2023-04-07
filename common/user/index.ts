@@ -191,56 +191,6 @@ export async function getPupil(user: User): Promise<Pupil | never> {
     return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 }
 
-// Enriches a Prisma Query with a filter to search users
-// where: { AND: [originalWhere, userSearch("hello")]}
-
-export function userSearch(search?: string): PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput {
-    if (!search) {
-        return {};
-    }
-
-    // Unfortunately Prisma's fuzzy search capabilities are quite limited
-    // c.f. https://github.com/prisma/prisma/issues/7986
-    // Thus the following is non-fuzzy
-
-    if (!search.includes(' ')) {
-        // Only one word entered, could be email, firstname or lastname
-        return {
-            OR: [
-                { email: { contains: search, mode: 'insensitive' } },
-                { firstname: { contains: search, mode: 'insensitive' } },
-                { lastname: { contains: search, mode: 'insensitive' } },
-            ],
-        };
-    } else {
-        // Multiple words entered, probably name
-        // We ignore middle names as they could be part of either first or lastname in the db
-        const firstWord = search.slice(0, search.indexOf(' '));
-        const lastWord = search.slice(search.lastIndexOf(' ') + 1);
-
-        return {
-            firstname: { contains: firstWord, mode: 'insensitive' },
-            lastname: { contains: lastWord, mode: 'insensitive' },
-        };
-    }
-}
-
-// Enriches a Prisma Query with a filter to find users based on exact matches
-// This should be used in cases where users are only allowed to see other users 'they know'
-export function strictUserSearch(search?: string): PrismaTypes.pupilWhereInput | PrismaTypes.studentWhereInput {
-    return {
-        OR: [
-            { email: { equals: search, mode: 'insensitive' } },
-            {
-                AND: [
-                    { firstname: { equals: search.slice(0, search.indexOf(' ')), mode: 'insensitive' } },
-                    { lastname: { equals: search.slice(search.indexOf(' ') + 1), mode: 'insensitive' } },
-                ],
-            },
-        ],
-    };
-}
-
 type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
 
 export async function queryUser<Select extends UserSelect>(user: User, select: Select) {
