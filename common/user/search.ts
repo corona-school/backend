@@ -1,8 +1,6 @@
-import { User } from ".";
+import { User, userForPupil, userForStudent, userForScreener } from ".";
 import { Prisma } from '@prisma/client';
 import { prisma } from "../prisma";
-import { userForPupil } from ".";
-import { userForStudent } from ".";
 
 // Enriches a Prisma Query with a filter to search users
 // where: { AND: [originalWhere, userSearch("hello")]}
@@ -70,7 +68,7 @@ export async function findUsers(search: string, only?: "student" | "pupil" | "sc
 
         if (!only || only === "screener") {
             const screeners = await prisma.screener.findMany({ where, take: 100 });
-            result.push(...screeners.map(userForPupil));
+            result.push(...screeners.map(userForScreener));
         }
     }
 
