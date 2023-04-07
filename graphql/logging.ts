@@ -59,5 +59,8 @@ export function logInContext(name: string, context: GraphQLContext) {
         sessionID = 'ADMIN';
     }
 
-    return getLogger(`${name} [${sessionID}]`);
+    const logger = getLogger(name);
+    logger.addContext('session', sessionID);
+
+    return logger;
 }
