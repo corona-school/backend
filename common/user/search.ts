@@ -7,7 +7,7 @@ import { userForStudent } from ".";
 // Enriches a Prisma Query with a filter to search users
 // where: { AND: [originalWhere, userSearch("hello")]}
 
-export function userSearch(search?: string): Prisma.pupilWhereInput | Prisma.studentWhereInput | Prisma.screenerWhereInput {
+export function userSearch(search?: string): Prisma.pupilWhereInput & Prisma.studentWhereInput & Prisma.screenerWhereInput {
     if (!search) {
         return {};
     }
@@ -40,7 +40,7 @@ export function userSearch(search?: string): Prisma.pupilWhereInput | Prisma.stu
 
 // Enriches a Prisma Query with a filter to find users based on exact matches
 // This should be used in cases where users are only allowed to see other users 'they know'
-export function strictUserSearch(search?: string): Prisma.pupilWhereInput | Prisma.studentWhereInput | Prisma.screenerWhereInput {
+export function strictUserSearch(search?: string): Prisma.pupilWhereInput & Prisma.studentWhereInput & Prisma.screenerWhereInput {
     return {
         OR: [
             { email: { equals: search, mode: 'insensitive' } },
@@ -57,7 +57,7 @@ export function strictUserSearch(search?: string): Prisma.pupilWhereInput | Pris
 export async function findUsers(search: string, only?: "student" | "pupil" | "screener") {
     const result: User[] = [];
 
-    async function find(where: Prisma.studentWhereInput | Prisma.pupilWhereInput | Prisma.screenerWhereInput) {
+    async function find(where: Prisma.studentWhereInput & Prisma.pupilWhereInput & Prisma.screenerWhereInput) {
         if (!only || only === "pupil") {
             const pupils = await prisma.pupil.findMany({ where, take: 100 });
             result.push(...pupils.map(userForPupil));
