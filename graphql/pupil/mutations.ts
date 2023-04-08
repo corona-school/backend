@@ -32,7 +32,7 @@ import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 
 const log = getLogger(`PupilMutation`);
 

@@ -2,7 +2,7 @@ import { Message, WebSocketService } from '../../websocket';
 import { AttachmentGroup } from '../../attachments';
 import { Channel, Context, Notification } from '../types';
 import { User } from '../../user';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../logger/logger';
 
 const logger = getLogger('Notification InApp');
 

@@ -3,7 +3,7 @@ import { Course } from '../../entity/Course';
 import { prisma } from '../../prisma';
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from '../index';
 import moment from 'moment-timezone';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../logger/logger';
 import { Student } from '../../entity/Student';
 import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';

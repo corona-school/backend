@@ -1,7 +1,3 @@
-// This has to be the first line in the project, so that the logger is configured before all the imports are executed.
-// Otherwise, we might initialize new loggers within the imports, which will not be configured properly and so not working.
-import('./setupLogger');
-
 import express from 'express';
 import http from 'http';
 import bodyParser from 'body-parser';
@@ -19,7 +15,8 @@ import * as registrationController from './controllers/registrationController';
 import * as mentoringController from './controllers/mentoringController';
 import * as expertController from './controllers/expertController';
 import * as interestConfirmationController from './controllers/interestConfirmationController';
-import { connectLogger, getLogger } from 'log4js';
+import { connectLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
 import { authCheckFactory, screenerAuthCheck } from './middleware/auth';
 import { setupDevDB } from './dev';
@@ -71,7 +68,7 @@ createConnection()
     .then(setupPDFGenerationEnvironment)
     .then(async () => {
         logger.info('Database connected');
-        app.use(connectLogger(accessLogger, { level: 'auto' }));
+        app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
 
         // Express setup
         app.use(bodyParser.json());

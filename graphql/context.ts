@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '../common/prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import basicAuth from 'basic-auth';
 import * as crypto from 'crypto';
 import { getUserForSession, GraphQLUser, loginAsUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';

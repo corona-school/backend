@@ -1,4 +1,4 @@
-import { getLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import { createMethodDecorator } from 'type-graphql';
 import { Role } from './authorizations';
 import { GraphQLContext } from './context';
@@ -43,7 +43,7 @@ export function RateLimit(name: string, max: number, interval: number /* in ms *
 }
 
 export function rateLimitSummary() {
-    let summary = "";
+    let summary = '';
     for (const [rateLimit, countPerIP] of Object.entries(rateLimiters)) {
         summary += `${rateLimit}:\n`;
         for (const [ip, count] of countPerIP.entries()) {

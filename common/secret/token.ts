@@ -4,7 +4,7 @@ import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { isDev, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';

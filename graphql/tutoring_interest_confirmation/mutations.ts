@@ -9,7 +9,7 @@ import { RedundantError } from '../../common/util/error';
 import { UserInputError } from '../error';
 import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
 import { requestInterestConfirmation } from '../../common/match/interest';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 
 const logger = getLogger('MutateTutoringInterest');
 

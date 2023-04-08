@@ -1,5 +1,5 @@
 import Holidays from "date-holidays";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import moment from "moment-timezone";
 
 const logger = getLogger();

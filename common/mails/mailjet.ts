@@ -1,5 +1,5 @@
 import { mailjetSmtp } from './config';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import * as mailjet from './mailjetTypes';
 
 const logger = getLogger();

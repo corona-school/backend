@@ -1,6 +1,6 @@
 import { pupil as Pupil, pupil_screening_status_enum as PupilScreeningStatus } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { NotFoundError } from '@prisma/client/runtime';

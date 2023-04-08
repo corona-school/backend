@@ -1,7 +1,7 @@
 import { subcourse as Subcourse } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { getCourse } from '../../graphql/util';
 import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
@@ -114,11 +114,10 @@ export async function cancelSubcourse(subcourse: Subcourse) {
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 }
 
-
 /* --------------- Modify Subcourse ------------------- */
 
 export async function canEditSubcourse(subcourse: Subcourse): Promise<Decision> {
-    if (subcourse.published && await subcourseOver(subcourse)) {
+    if (subcourse.published && (await subcourseOver(subcourse))) {
         return { allowed: false, reason: 'course-ended' };
     }
 

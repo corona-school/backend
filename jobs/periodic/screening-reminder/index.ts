@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { remindAllThatShouldBeRemindedNow } from "./controller";
 
 const logger = getLogger();

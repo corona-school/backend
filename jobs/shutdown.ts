@@ -1,4 +1,4 @@
-import { getLogger } from "log4js";
+import { getLogger } from '../common/logger/logger';
 
 const logger = getLogger();
 

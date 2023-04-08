@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../../common/logger/logger';
 import {getManager, In} from 'typeorm';
 import { ScreeningStatus, Student } from '../../../common/entity/Student';
 import { CourseParticipationCertificate } from '../../../common/entity/CourseParticipationCertificate';
@@ -209,13 +209,13 @@ async function getCourses(student: Student | undefined,
 
     if (instructorId != undefined && authenticatedStudent && student.wix_id != instructorId) {
         logger.warn(`User (ID: ${student.wix_id}) tried to filter by instructor id ${instructorId}`);
-        logger.debug(student, fields, states, instructorId);
+        logger.debug(student, { fields, states, instructorId });
         return 403;
     }
 
     if (participantId != undefined && authenticatedPupil && pupil.wix_id != participantId) {
         logger.warn(`User (ID: ${pupil.wix_id}) tried to filter by participant id ${participantId}`);
-        logger.debug(pupil, fields, participantId);
+        logger.debug(pupil, { fields, participantId });
         return 403;
     }
 
@@ -226,14 +226,14 @@ async function getCourses(student: Student | undefined,
             return 401;
         } else if (instructorId == undefined) {
             logger.warn(`User (ID: ${student.wix_id}) tried to filter by states ${states.join(',')} without specifying an instructor id`);
-            logger.debug(student, fields, states, instructorId);
+            logger.debug(student, { fields, states, instructorId });
             return 403;
         }
     }
 
     if (states.length == 0) {
         logger.warn("Request for /courses while filtering with states=(empty). This would never return any results");
-        logger.debug(student, fields, states, instructorId);
+        logger.debug(student, { fields, states, instructorId });
         return 400;
     }
 
@@ -301,7 +301,7 @@ async function getAPICourses(student: Student | undefined,
                 break;
             default:
                 logger.warn("Unknown state: " + states[i]);
-                logger.debug(student, fields, states, instructorId);
+                logger.debug(student, { fields, states, instructorId });
                 return 400;
         }
         stateFilters.push(state);
@@ -2317,7 +2317,7 @@ async function joinSubcourse(pupil: Pupil, courseId: number, subcourseId: number
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
         logger.warn("Unauthorized pupil tried to join course");
-        logger.debug(pupil, userId);
+        logger.debug(pupil, { userId });
         return 403;
     }
 
@@ -2460,7 +2460,7 @@ async function joinWaitingList(pupil: Pupil, courseId: number, subcourseId: numb
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
         logger.warn("Unauthorized pupil tried to join course waiting list");
-        logger.debug(pupil, userId);
+        logger.debug(pupil, { userId });
         return 403;
     }
 
@@ -2582,7 +2582,7 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
         logger.warn("Unauthorized pupil tried to leave course");
-        logger.debug(pupil, userId);
+        logger.debug(pupil, { userId });
         return 403;
     }
 
@@ -2604,7 +2604,7 @@ async function leaveSubcourse(pupil: Pupil, courseId: number, subcourseId: numbe
             }
             if (index == undefined) {
                 logger.warn("Pupil tried to leave subcourse he didn't join");
-                logger.debug(subcourse, userId);
+                logger.debug(subcourse, { userId });
                 status = 400;
                 return;
             }
@@ -2693,7 +2693,7 @@ async function leaveWaitingList(pupil: Pupil, courseId: number, subcourseId: num
     // Check authorization
     if (!pupil.isParticipant || pupil.wix_id != userId) {
         logger.warn("Unauthorized pupil tried to leave course's waitinglist");
-        logger.debug(pupil, userId);
+        logger.debug(pupil, { userId });
         return 403;
     }
 

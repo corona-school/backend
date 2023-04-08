@@ -6,7 +6,7 @@ import { Pupil as TypeORMPupil } from '../entity/Pupil';
 import { Student as TypeORMStudent } from '../entity/Student';
 import * as Notification from '../notification';
 import { prisma } from '../prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { subcourseOverGracePeriod } from './states';
 
 const logger = getLogger('CourseContact');

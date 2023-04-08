@@ -1,7 +1,7 @@
 import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
 import { getFile } from '../files';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';

@@ -1,4 +1,4 @@
-import { getLogger } from 'log4js';
+import { getLogger } from '../../../common/logger/logger';
 import { prisma } from '../../../common/prisma';
 import moment from 'moment';
 import { deleteAttachment } from '../../../common/attachments';

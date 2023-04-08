@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../../common/logger/logger';
 import { Student } from '../../../common/entity/Student';
 import {
     ApiContactMentor

@@ -26,7 +26,7 @@ import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
@@ -353,7 +353,7 @@ export class MutateStudentResolver {
                 results.filter((s) => s.success).length
             }`
         );
-        log.info(results);
+        log.info('register plus many results', { results: JSON.stringify(results, null, 4) });
         return results;
     }
 

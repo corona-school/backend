@@ -1,5 +1,5 @@
 import syncCourses from './sync-courses';
-import { getLogger } from '../../utils/logging';
+import { getLogger } from '../../../common/logger/logger';
 import syncLectures from './sync-lectures';
 
 const logger = getLogger('WebflowAPISync');

@@ -7,7 +7,7 @@ import {
     bbb_meeting as BBBMeeting,
 } from '@prisma/client';
 import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { MentoringCategory } from '../mentoring/categories';
 import { prisma } from '../prisma';
 

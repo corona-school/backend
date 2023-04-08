@@ -1,4 +1,4 @@
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { EntityManager, getConnection, getManager, ObjectType } from "typeorm";
 import { Request, Response } from "express";
 import {
@@ -1065,7 +1065,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
 
                 await entityManager.transaction(async em => {
                     for (const course of courses) {
-                        logger.debug("Iterating through courses:", "Current course name:", course.name, "Instructors:", course.instructors, "Length of array:", course.instructors.length);
+                        logger.debug("Iterating through courses:", { courseName: course.name, instructors: course.instructors, instructorCount: course.instructors.length });
                         if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
                             continue;
                         }
