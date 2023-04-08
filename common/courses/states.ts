@@ -7,6 +7,7 @@ import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
+import moment from 'moment';
 
 const logger = getLogger('Course States');
 
@@ -32,10 +33,9 @@ export async function subcourseOverGracePeriod(subcourse: Subcourse) {
         return false;
     }
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = moment().subtract(30, 'days');
 
-    return +lastLecture.start + lastLecture.duration * 6000 < +thirtyDaysAgo;
+    return moment(lastLecture.start).add(lastLecture.duration, 'minutes').isBefore(thirtyDaysAgo);
 }
 
 export async function subcourseOver(subcourse: Subcourse) {
@@ -45,8 +45,8 @@ export async function subcourseOver(subcourse: Subcourse) {
         return false;
     }
 
-    const now = new Date();
-    return +lastLecture.start + lastLecture.duration * 6000 < +now;
+    const now = moment();
+    return moment(lastLecture.start).add(lastLecture.duration, 'minutes').isBefore(now);
 }
 
 /* ------------------ Subcourse Publish ------------- */
@@ -62,8 +62,8 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
         return { allowed: false, reason: 'no-lectures' };
     }
 
-    let currentDate = new Date();
-    const pastLectures = lectures.filter((lecture) => +lecture.start < +currentDate);
+    let currentDate = moment();
+    const pastLectures = lectures.filter((lecture) => moment(lecture.start).isBefore(currentDate));
     if (pastLectures.length !== 0) {
         return { allowed: false, reason: 'past-lectures' };
     }

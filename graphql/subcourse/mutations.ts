@@ -20,6 +20,7 @@ import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
+import moment from 'moment';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -249,8 +250,8 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let currentDate = new Date();
-        if (+lecture.start < +currentDate) {
+        let currentDate = moment();
+        if (moment(lecture.start).isBefore(currentDate)) {
             throw new UserInputError(`Lecture of subcourse (${subcourseId}) must happen in the future.`);
         }
 
@@ -265,12 +266,18 @@ export class MutateSubcourseResolver {
         const lecture = await getLecture(lectureId);
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        let currentDate = new Date();
-        if (subcourse.published && +lecture.start < +currentDate) {
-            throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } /* else if (subcourse.published) {
-            throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        } */
+
+        if (subcourse.published) {
+            let currentDate = moment();
+            if (moment(lecture.start).isBefore(currentDate)) {
+                throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
+            }
+            const lectureCount = await prisma.lecture.count({ where: { subcourseId: subcourse.id }});
+            if (lectureCount <= 1) {
+                throw new ForbiddenError(`Last Lecture(${lecture.id}) of published Subcourse(${subcourse.id}) cannot be deleted`);
+            }
+        }
+
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
