@@ -90,9 +90,18 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        const subcourses = await getSubcoursesForCourse(courseId, true);
-        if (course.courseState === 'allowed' && subcourses.every((subcourse) => subcourse.published && subcourseOver(subcourse))) {
-            throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
+
+        if (course.courseState === 'allowed') {
+           let editableSubcourse = false;
+           for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
+             if (!subcourse.published || !(await subcourseOver(subcourse))) {
+                editableSubcourse = true;
+             }
+           }
+
+           if (!editableSubcourse) {
+                throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
+           }
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
