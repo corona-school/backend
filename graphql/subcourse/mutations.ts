@@ -266,12 +266,18 @@ export class MutateSubcourseResolver {
         const lecture = await getLecture(lectureId);
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        let currentDate = moment();
-        if (subcourse.published && moment(lecture.start).isBefore(currentDate)) {
-            throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } /* else if (subcourse.published) {
-            throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        } */
+        
+        if (subcourse.published) {
+            let currentDate = moment();
+            if (moment(lecture.start).isBefore(currentDate)) {
+                throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
+            }
+            const lectureCount = await prisma.lecture.count({ where: { subcourseId: subcourse.id }});
+            if (lectureCount <= 1) {
+                throw new ForbiddenError(`Last Lecture(${lecture.id}) of published Subcourse(${subcourse.id}) cannot be deleted`);
+            }
+        }
+
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;
