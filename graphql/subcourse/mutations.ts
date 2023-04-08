@@ -266,7 +266,7 @@ export class MutateSubcourseResolver {
         const lecture = await getLecture(lectureId);
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        
+
         if (subcourse.published) {
             let currentDate = moment();
             if (moment(lecture.start).isBefore(currentDate)) {
