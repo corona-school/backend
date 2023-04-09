@@ -59,7 +59,7 @@ async function acquireLock<T>(subcourse: Subcourse, pupil: Pupil, transaction: (
 interface withId {
     id: number;
 }
-export async function isParticipant(subcourse: withId, pupil: withId) {
+export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
     return (
         (await prisma.subcourse_participants_pupil.count({
             where: { pupilId: pupil.id, subcourseId: subcourse.id },

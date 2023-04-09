@@ -95,8 +95,14 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [Lecture], { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitedQuery()
-    async appointments(@Root() user: User, @Arg('take', { nullable: true }) take?: number, @Arg('skip', { nullable: true }) skip?: number): Promise<Lecture[]> {
-        const appointments = await getAppointmentsForUser(user, take, skip);
+    async appointments(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('cursor', { nullable: true }) cursor?: number,
+        @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
+    ): Promise<Lecture[]> {
+        const appointments = await getAppointmentsForUser(user, take, skip, cursor, direction);
         return appointments as unknown as Lecture[];
     }
 

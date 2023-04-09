@@ -29,8 +29,6 @@ export function isAppointmentParticipant(lecture: Lecture, user: User): boolean 
                 },
             });
         }
-        default:
-            throw new Error(`Cannot determine participation for user type: ${userType}`);
     }
 }
 

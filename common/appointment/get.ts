@@ -3,7 +3,13 @@ import { getUserType, User } from '../user';
 import { prisma } from '../prisma';
 import { AttendanceStatus } from '../entity/AppointmentAttendee';
 
-export const getAppointmentsForUser = async (user: User, take?: number, skip?: number): Promise<Appointment[]> => {
+export const getAppointmentsForUser = async (
+    user: User,
+    take?: number,
+    skip?: number,
+    cursor?: number,
+    direction?: 'last' | 'next'
+): Promise<Appointment[]> => {
     const userType = getUserType(user);
     let appointmentIds: number[] = [];
     switch (userType) {
@@ -21,9 +27,59 @@ export const getAppointmentsForUser = async (user: User, take?: number, skip?: n
     }
     appointmentIds = removeDuplicateIds(appointmentIds);
 
-    const appointments = await getAppointmentsByIdList(appointmentIds, take, skip);
+    let appointments;
+
+    if (!direction && !cursor) {
+        return await getAppointmentsByIdList(appointmentIds, take, skip);
+    }
+
+    if (!direction || !cursor) {
+        throw Error('Cursor or direction not specified for cursor based pagination');
+    }
+
+    if (direction === 'next' && cursor) {
+        appointments = await getNextAppointmentsByIdList(appointmentIds, take, cursor);
+    }
+
+    if (direction === 'last' && cursor) {
+        appointments = await getLastAppointmentsByIdList(appointmentIds, take, cursor);
+    }
 
     return appointments;
+};
+
+const getNextAppointmentsByIdList = async (appointmentIds: number[], take: number, cursor: number) => {
+    return (await prisma.lecture.findMany({
+        where: {
+            AND: {
+                id: {
+                    in: appointmentIds,
+                },
+                isCanceled: false,
+            },
+        },
+        orderBy: [{ start: 'asc' }],
+        take,
+        skip: 1, // Skipping the cursor object
+        cursor: { id: cursor },
+    })) as unknown as Appointment[];
+};
+const getLastAppointmentsByIdList = async (appointmentIds: number[], take: number, cursor: number) => {
+    const appointments = (await prisma.lecture.findMany({
+        where: {
+            AND: {
+                id: {
+                    in: appointmentIds,
+                },
+                isCanceled: false,
+            },
+        },
+        orderBy: [{ start: 'desc' }],
+        take,
+        skip: 1, // Skipping the cursor object
+        cursor: { id: cursor },
+    })) as unknown as Appointment[];
+    return appointments.reverse();
 };
 
 const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Promise<Appointment[]> => {
@@ -34,6 +90,7 @@ const getAppointmentsByIdList = async (appointmentIds: number[], take, skip): Pr
                     in: appointmentIds,
                 },
                 isCanceled: false,
+                start: { gte: new Date().toISOString() },
             },
         },
         orderBy: [{ start: 'asc' }],
