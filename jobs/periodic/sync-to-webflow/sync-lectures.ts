@@ -1,6 +1,6 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash } from './diff';
-import { Logger } from 'log4js';
+import { Logger } from '../../../common/logger/logger';
 import moment from 'moment';
 import { lecture } from '@prisma/client';
 import { getWebflowSubcourses } from './queries';

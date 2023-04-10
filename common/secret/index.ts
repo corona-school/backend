@@ -1,7 +1,7 @@
 import { User } from '../user';
 import { secret as Secret } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { SecretType } from '../entity/Secret';
 
 export * from './password';

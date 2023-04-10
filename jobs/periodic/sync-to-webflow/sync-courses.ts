@@ -1,6 +1,6 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
-import { Logger } from 'log4js';
+import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
 import { accessURLForKey } from '../../../common/file-bucket';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';

@@ -6,7 +6,7 @@ import { getSessionUser, loginAsUser } from '../authentication';
 import { Role } from '../authorizations';
 import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { AuthenticationError, UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 

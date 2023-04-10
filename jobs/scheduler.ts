@@ -1,6 +1,6 @@
 import cron from "cron";
 import {Mutex} from 'async-mutex';
-import { getLogger } from "log4js";
+import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, EntityManager } from "typeorm";
 import { CSCronJob } from "./types";
 import { invalidateActiveTransactionLog } from "../common/transactionlog";

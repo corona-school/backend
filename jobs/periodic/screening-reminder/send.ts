@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm";
 import { Student } from "../../../common/entity/Student";
 import { sendInstructorScreeningReminderToStudent, sendJufoAlumniScreeningReminderToStudent, sendTutorScreeningReminderToStudent } from "../../../common/administration/screening/reminder";
 import mailjet from "../../../common/mails/mailjet";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 
 const logger = getLogger();
 

@@ -1,7 +1,7 @@
 import { Channel, Context, Notification } from '../types';
 import * as mailjet from '../../mails/mailjetTypes';
 import { mailjetSmtp } from '../../mails/config';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../../common/logger/logger';
 import { assert } from 'console';
 import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';

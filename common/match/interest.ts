@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { prisma } from '../prisma';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import assert from 'assert';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 
 const REMIND_AFTER = 7; /* days */
 const REMOVE_AFTER = 14; /* days */
@@ -12,9 +12,10 @@ const REMOVE_AFTER = 14; /* days */
 const log = getLogger('InterestConfirmation');
 
 export async function requestInterestConfirmation(pupil: Pupil) {
-    const existingInterestConfirmation = await prisma.pupil_tutoring_interest_confirmation_request.count({
-        where: { pupilId: pupil.id, invalidated: false }
-    }) > 0;
+    const existingInterestConfirmation =
+        (await prisma.pupil_tutoring_interest_confirmation_request.count({
+            where: { pupilId: pupil.id, invalidated: false },
+        })) > 0;
     if (existingInterestConfirmation) {
         throw new Error(`Pupil(${pupil.id}) already has an interest confirmation, do not request new one`);
     }

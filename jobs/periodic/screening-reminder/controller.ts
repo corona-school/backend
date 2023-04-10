@@ -1,7 +1,7 @@
 import { getStudentsToRemindAtDate } from "./remindees";
 import { EntityManager } from "typeorm";
 import { shouldRemindAtDate } from "./timecontrol";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { sendToStudents } from "./send";
 
 const logger = getLogger();

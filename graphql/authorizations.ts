@@ -5,7 +5,7 @@ import { UNAUTHENTICATED_USER } from './authentication';
 import { AuthChecker } from 'type-graphql';
 import { GraphQLContext } from './context';
 import assert from 'assert';
-import { getLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
@@ -78,7 +78,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
 
         const isOwner = await ownershipCheck(context.user, root);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, context.user, root);
+        authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
 
         if (isOwner) {
             return true;

@@ -1,6 +1,6 @@
 import {prisma} from "../../../common/prisma";
 import moment from "moment";
-import {getLogger} from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import {ConcreteNotificationState} from "../../../common/notification/types";
 
 const DELETE_AFTER = 30 * 3; // in days

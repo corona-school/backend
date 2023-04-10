@@ -1,7 +1,7 @@
 import { student as Student, screener as Screener, Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from '../prisma';
 import * as Notification from '../notification';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
 
 interface ScreeningInput {

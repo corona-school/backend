@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import multer from "multer";
 import { File, FileID, getFile, addFile } from "../../../graphql/files";
 

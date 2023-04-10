@@ -7,7 +7,7 @@ import { getAllStudents, getStudentByEmail, ScreeningStatus, Student } from "../
 import { getTransactionLog } from "../../../common/transactionlog";
 import AccessedByScreenerEvent from "../../../common/transactionlog/types/AccessedByScreenerEvent";
 import UpdatedByScreenerEvent from "../../../common/transactionlog/types/UpdatedByScreenerEvent";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { Course, CourseCategory, CourseState } from "../../../common/entity/Course";
 import { ApiCourseUpdate } from "../../../common/dto/ApiCourseUpdate";
 import { Subcourse } from "../../../common/entity/Subcourse";

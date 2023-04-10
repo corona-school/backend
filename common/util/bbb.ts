@@ -1,5 +1,5 @@
 import { hashToken } from './hashing';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { Parser } from 'xml2js';
 import { Pupil } from '../entity/Pupil';
 import { CourseAttendanceLog } from '../entity/CourseAttendanceLog';
@@ -59,7 +59,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         bbbMeeting.attendeePW = attendeePW;
         await entityManager.save(BBBMeeting, bbbMeeting);
         await transactionLog.log(new CreateBBBMeetingEvent(user, bbbMeeting));
-        logger.info('Successfully saved new bbb meeting with id ', bbbMeeting.meetingID);
+        logger.info('Successfully saved new bbb meeting with id ', { bbbMeetingId: bbbMeeting.meetingID });
         return bbbMeeting;
     } catch (e) {
         logger.error("Can't save new bbb meeting: " + e.message);
@@ -314,7 +314,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                 // Update log
                 await entityManager.save(CourseAttendanceLog, logToUpdate);
                 await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, logToUpdate));
-                logger.info('Successfully updated log with id: ', logToUpdate.id);
+                logger.info('Successfully updated log with id: ', { logId: logToUpdate.id });
             } else {
                 try {
                     // Create new log
@@ -325,7 +325,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     await entityManager.save(CourseAttendanceLog, courseAttendanceLog);
                     courseAttendanceLog.ip = '';
                     await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
-                    logger.info('Successfully saved new Course Attendance to lecture with id ', activeLecture.id);
+                    logger.info('Successfully saved new Course Attendance to lecture with id ', { lectureId: activeLecture.id });
                 } catch (e) {
                     logger.error("Can't save new course attendance: " + e.message);
                     logger.debug(courseAttendanceLog, e);
