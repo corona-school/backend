@@ -55,6 +55,9 @@ test("Admin Pupil to Plus", async () => {
 test("Admin Search Users", async () => {
     const { pupil } = await pupilOne;
     const { student } = await studentOne;
+    // As in other places, the search ignores case differences in emails:
+    const pupilEmail = pupil.email.toLowerCase();
+    const studentEmail = student.email.toLowerCase();
 
     const { usersSearch: searchPupilInStudents } = await adminClient.request(`
         query SearchPupilInStudents {
@@ -74,7 +77,7 @@ test("Admin Search Users", async () => {
         }
     `);
     assert.strictEqual(searchPupilByFirstname.length, 1);
-    assert.strictEqual(searchPupilByFirstname[0].email, pupil.email);
+    assert.strictEqual(searchPupilByFirstname[0].email, pupilEmail);
 
     const { usersSearch: searchPupilByLastname } = await adminClient.request(`
         query SearchPupilByLastname {
@@ -84,7 +87,7 @@ test("Admin Search Users", async () => {
         }
     `);
     assert.strictEqual(searchPupilByLastname.length, 1);
-    assert.strictEqual(searchPupilByLastname[0].email, pupil.email);
+    assert.strictEqual(searchPupilByLastname[0].email, pupilEmail);
 
     const { usersSearch: searchPupilByFullName } = await adminClient.request(`
         query SearchPupilByFullName {
@@ -94,7 +97,7 @@ test("Admin Search Users", async () => {
         }
     `);
     assert.strictEqual(searchPupilByFullName.length, 1);
-    assert.strictEqual(searchPupilByFullName[0].email, pupil.email);
+    assert.strictEqual(searchPupilByFullName[0].email, pupilEmail);
 
     const { usersSearch: searchPupilByEmail } = await adminClient.request(`
         query SearchPupilByEmail {
@@ -104,7 +107,7 @@ test("Admin Search Users", async () => {
         }
     `);
     assert.strictEqual(searchPupilByEmail.length, 1);
-    assert.strictEqual(searchPupilByEmail[0].email, pupil.email);
+    assert.strictEqual(searchPupilByEmail[0].email, pupilEmail);
 
     const { usersSearch: searchUsersByPartialEmail } = await adminClient.request(`
         query SearchUsersByPartialEmail {
@@ -114,8 +117,8 @@ test("Admin Search Users", async () => {
         }
     `);
 
-    assert(searchUsersByPartialEmail.some(it => it.email === pupil.email));
-    assert(searchUsersByPartialEmail.some(it => it.email === student.email));
+    assert(searchUsersByPartialEmail.some(it => it.email === pupilEmail));
+    assert(searchUsersByPartialEmail.some(it => it.email === studentEmail));
 
     const { usersSearch: searchStudentsByPartialEmail } = await adminClient.request(`
         query SearchStudentsByPartialEmail {
@@ -125,8 +128,8 @@ test("Admin Search Users", async () => {
         }
     `);
 
-    assert(!searchStudentsByPartialEmail.some(it => it.email === pupil.email));
-    assert(searchStudentsByPartialEmail.some(it => it.email === student.email));
+    assert(!searchStudentsByPartialEmail.some(it => it.email === pupilEmail));
+    assert(searchStudentsByPartialEmail.some(it => it.email === studentEmail));
 
     const { usersSearch: searchUsersByPartialName } = await adminClient.request(`
         query SearchUsersByPartialName {
@@ -136,6 +139,6 @@ test("Admin Search Users", async () => {
         }
     `);
 
-    assert(searchUsersByPartialName.some(it => it.email === pupil.email));
-    assert(searchUsersByPartialName.some(it => it.email === student.email));
+    assert(searchUsersByPartialName.some(it => it.email === pupilEmail));
+    assert(searchUsersByPartialName.some(it => it.email === studentEmail));
 });
