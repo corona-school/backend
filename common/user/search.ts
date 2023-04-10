@@ -87,4 +87,4 @@ export async function findUsers(search: string, only?: "student" | "pupil" | "sc
     await find(userSearch(search));
 
     return result;
-} 
+}
