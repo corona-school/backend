@@ -1,5 +1,5 @@
-import { User, userForPupil, userForStudent, userForScreener } from ".";
-import { Prisma } from '@prisma/client';
+import { User, userForPupil, userForStudent, userForScreener, userSelection } from ".";
+import { Prisma, student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
 import { prisma } from "../prisma";
 
 // Enriches a Prisma Query with a filter to search users
@@ -60,17 +60,17 @@ export async function findUsers(search: string, only?: "student" | "pupil" | "sc
 
     async function find(where: Prisma.studentWhereInput & Prisma.pupilWhereInput & Prisma.screenerWhereInput) {
         if (!only || only === "pupil") {
-            const pupils = await prisma.pupil.findMany({ where, take: 20 });
+            const pupils = await prisma.pupil.findMany({ where, take: 20, select: userSelection }) as Pupil[];
             result.push(...pupils.map(userForPupil));
         }
 
         if (!only || only === "student") {
-            const students = await prisma.student.findMany({ where, take: 20 });
+            const students = await prisma.student.findMany({ where, take: 20, select: userSelection }) as Student[];
             result.push(...students.map(userForStudent));
         }
 
         if (!only || only === "screener") {
-            const screeners = await prisma.screener.findMany({ where, take: 20 });
+            const screeners = await prisma.screener.findMany({ where, take: 20, select: userSelection }) as Screener[];
             result.push(...screeners.map(userForScreener));
         }
     }

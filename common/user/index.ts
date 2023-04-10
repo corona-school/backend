@@ -82,7 +82,7 @@ export type User = {
     screenerId?: number;
 };
 
-const userSelection = { id: true, firstname: true, lastname: true, email: true };
+export const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
     const validTypes = ['student', 'pupil', 'screener'];
