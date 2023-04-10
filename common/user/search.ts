@@ -60,17 +60,17 @@ export async function findUsers(search: string, only?: "student" | "pupil" | "sc
 
     async function find(where: Prisma.studentWhereInput & Prisma.pupilWhereInput & Prisma.screenerWhereInput) {
         if (!only || only === "pupil") {
-            const pupils = await prisma.pupil.findMany({ where, take: 100 });
+            const pupils = await prisma.pupil.findMany({ where, take: 20 });
             result.push(...pupils.map(userForPupil));
         }
 
         if (!only || only === "student") {
-            const students = await prisma.student.findMany({ where, take: 100 });
+            const students = await prisma.student.findMany({ where, take: 20 });
             result.push(...students.map(userForStudent));
         }
 
         if (!only || only === "screener") {
-            const screeners = await prisma.screener.findMany({ where, take: 100 });
+            const screeners = await prisma.screener.findMany({ where, take: 20 });
             result.push(...screeners.map(userForScreener));
         }
     }
