@@ -17,6 +17,7 @@ export function userSearch(search?: string): Prisma.pupilWhereInput & Prisma.stu
     if (!search.includes(' ')) {
         // Only one word entered, could be email, firstname or lastname
         return {
+            isRedacted: false,
             OR: [
                 { email: { contains: search, mode: 'insensitive' } },
                 { firstname: { contains: search, mode: 'insensitive' } },
@@ -30,6 +31,7 @@ export function userSearch(search?: string): Prisma.pupilWhereInput & Prisma.stu
         const lastWord = search.slice(search.lastIndexOf(' ') + 1);
 
         return {
+            isRedacted: false,
             firstname: { contains: firstWord, mode: 'insensitive' },
             lastname: { contains: lastWord, mode: 'insensitive' },
         };
@@ -40,6 +42,7 @@ export function userSearch(search?: string): Prisma.pupilWhereInput & Prisma.stu
 // This should be used in cases where users are only allowed to see other users 'they know'
 export function strictUserSearch(search?: string): Prisma.pupilWhereInput & Prisma.studentWhereInput & Prisma.screenerWhereInput {
     return {
+        isRedacted: false,
         OR: [
             { email: { equals: search, mode: 'insensitive' } },
             {
