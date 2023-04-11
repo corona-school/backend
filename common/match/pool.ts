@@ -10,7 +10,7 @@ import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
-import { userSearch } from '../user';
+import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
 
