@@ -42,7 +42,7 @@ export const GraphQLLogger: any = {
                         requestContext.metrics.responseCacheHit ? 'hit' : 'missed'
                     }`
                 );
-                logger.info(`Finished processing`, { duration: Date.now() - startTime });
+                logger.info(`Finished processing`, { duration: Date.now() - startTime, query });
 
                 if (isDev) {
                     logger.debug(`Responding with`, requestContext.response.data);
