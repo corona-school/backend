@@ -1,6 +1,6 @@
 import { apiKey, apiUrl } from "./config";
 import https from "https";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 
 const logger = getLogger();
 
@@ -26,12 +26,12 @@ export async function httpsGet(url: string) {
                 }
             });
             res.on("error", (err) => {
-                logger.warn("https connection error: ", err.message);
+                logger.warn("https connection error: ", { error: err });
                 logger.debug(err);
             });
         }).on("error", (e) => {
             //due to async nature of https.get, we need to add a way for async error handling...
-            logger.warn("https connection error: ", e.message);
+            logger.warn("https connection error: ", { error: e });
             logger.debug(e);
             reject(e);
         });

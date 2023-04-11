@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../../common/logger/logger';
 import { getManager } from 'typeorm';
 import { InterestConfirmationStatus } from '../../../common/entity/PupilTutoringInterestConfirmationRequest';
 import { changeStatus } from '../../../common/interest-confirmation/tutoring/persistence/change-status';

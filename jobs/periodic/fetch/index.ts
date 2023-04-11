@@ -4,7 +4,7 @@ import { ApiPupil, ApiResponse, ApiStudent } from "./api";
 import { Pupil } from "../../../common/entity/Pupil";
 import { getConnection, getManager } from "typeorm";
 import { generateToken, sendVerificationMail } from "./utils/verification";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { getTransactionLog } from "../../../common/transactionlog";
 import FetchedFromWixEvent from "../../../common/transactionlog/types/FetchedFromWixEvent";
 import VerificationRequestEvent from "../../../common/transactionlog/types/VerificationRequestEvent";

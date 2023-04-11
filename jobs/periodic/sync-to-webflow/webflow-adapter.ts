@@ -1,4 +1,4 @@
-import { getLogger } from '../../utils/logging';
+import { getLogger } from '../../../common/logger/logger';
 import { join } from 'path';
 import moment from 'moment';
 

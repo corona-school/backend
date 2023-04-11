@@ -3,7 +3,7 @@ import { Course } from '../../entity/Course';
 import { prisma } from '../../prisma';
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from '../index';
 import moment from 'moment-timezone';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../logger/logger';
 import { Student } from '../../entity/Student';
 import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';
@@ -18,7 +18,7 @@ import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
 import { getCourseCapacity } from '../../courses/participants';
 
-const logger = getLogger();
+const logger = getLogger('Course Notification');
 
 const dropCourseRelations = (course: Course | Prisma.course) => ({
     ...course,
@@ -213,6 +213,26 @@ async function getNotificationContextForSubcourse(course: { name: string; descri
     };
 }
 
+const getDaysDifference = (date: Date): number => {
+    const today = new Date().getTime();
+    const published = new Date(date).getTime();
+    const diffInMs = today - published;
+    if (!diffInMs) {
+        return;
+    }
+    const diffInSec = diffInMs / 1000;
+    const diffInMin = diffInSec / 60;
+    const diffInHours = diffInMin / 60;
+    const diffInDays = diffInHours / 24;
+
+    return diffInDays;
+};
+
+const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
+    const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
+    return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
+};
+
 export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
@@ -229,45 +249,21 @@ export async function sendPupilCourseSuggestion(course: Course | Prisma.course, 
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
-    const getDaysDifference = (date: Date): number => {
-        const today = new Date().getTime();
-        const published = new Date(date).getTime();
-        const diffInMs = today - published;
-        if (!diffInMs) {
-            return;
-        }
-        const diffInSec = diffInMs / 1000;
-        const diffInMin = diffInSec / 60;
-        const diffInHours = diffInMin / 60;
-        const diffInDays = diffInHours / 24;
-
-        return diffInDays;
-    };
-
-    const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
-        const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
-        return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
-    };
-
-    function canNotify(actionId: string, publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean {
-        return actionId === 'available_places_on_subcourse' ? isPromotionValid(publishedAt, capacity, alreadyPromoted) : true;
-    }
-
     const context = await getNotificationContextForSubcourse(course, subcourse);
 
-    async function notify(pupil: Prisma.pupil): Promise<void> {
-        await Notification.actionTaken(pupil, actionId, context);
+    if (actionId === 'available_places_on_subcourse' && !isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+        throw new Error(`Cannot send course promotion for Subcourse(${subcourse.id})`);
     }
 
-    if (canNotify(actionId, publishedAt, courseCapacity, alreadyPromoted)) {
-        for (let pupil of pupils) {
-            const subjects = parseSubjectString(pupil.subjects);
-            const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-            if (!courseSubject || isPupilsSubject) {
-                notify(pupil);
-            }
+    let sentCount = 0;
+    for (let pupil of pupils) {
+        const subjects = parseSubjectString(pupil.subjects);
+        const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
+        if (!courseSubject || isPupilsSubject) {
+            await Notification.actionTaken(pupil, actionId, context);
+            sentCount += 1;
         }
-    } else {
-        throw new Error(`Cannot send course suggestion mail for subcourse with ID ${subcourse.id}, because the course data is not valid.`);
     }
+
+    logger.info(`Sent ${sentCount} notifications to promote Subcourse(${subcourse.id})`);
 }

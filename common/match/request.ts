@@ -1,6 +1,6 @@
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { RegistrationSource } from '../entity/Person';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
 import { RedundantError } from '../util/error';

@@ -1,5 +1,5 @@
 import { prisma } from "../../../common/prisma";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 
 const DELETE_AFTER = 7; // in days
 const logger = getLogger();

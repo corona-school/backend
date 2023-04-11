@@ -1,5 +1,5 @@
 import { Prisma, subcourse } from '@prisma/client';
-import { canPublish } from '../../common/courses/states';
+import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
 import { CourseState } from '../../common/entity/Course';
@@ -12,7 +12,7 @@ import { GraphQLContext } from '../context';
 import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
-import { canContactInstructors } from '../../common/courses/contact';
+import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
 import { Deprecated, getCourse } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
 
@@ -439,10 +439,28 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canCancel(@Root() subcourse: Required<Subcourse>) {
+        return await canCancel(subcourse);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canEdit(@Root() subcourse: Required<Subcourse>) {
+        return await canEditSubcourse(subcourse);
+    }
+
+    @FieldResolver((returns) => Decision)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
         const course = await getCourse(subcourse.courseId);
         return await canContactInstructors(course, subcourse);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    async canContactParticipants(@Root() subcourse: Required<Subcourse>) {
+        return await canContactParticipants(subcourse);
     }
 
     @FieldResolver((returns) => Number)

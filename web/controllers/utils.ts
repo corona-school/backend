@@ -1,5 +1,5 @@
 import {Division, Expertise} from "../../common/entity/Mentor";
-import {getLogger} from "log4js";
+import { getLogger } from '../../common/logger/logger';
 import {ApiSubject} from "./format";
 import {checkSubject} from "./userController/format";
 import { Person } from "../../common/entity/Person";

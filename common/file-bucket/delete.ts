@@ -1,4 +1,4 @@
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { s3 } from './s3';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 

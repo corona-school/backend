@@ -1,4 +1,4 @@
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { deactivateStudent } from '../student/activation';
 import { getStudent } from '../../graphql/util';

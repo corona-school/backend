@@ -58,7 +58,7 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 
 @InputType()
-class RegisterStudentInput implements RegisterStudentData {
+export class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -88,7 +88,7 @@ class RegisterStudentInput implements RegisterStudentData {
 }
 
 @InputType()
-class RegisterPupilInput implements RegisterPupilData {
+export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -159,7 +159,7 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 @InputType()
-class BecomeTutorInput implements BecomeTutorData {
+export class BecomeTutorInput implements BecomeTutorData {
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
 
@@ -202,7 +202,7 @@ class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
 }
 
 @InputType()
-class BecomeTuteeInput implements BecomeTuteeData {
+export class BecomeTuteeInput implements BecomeTuteeData {
     @Field((type) => [Subject])
     subjects: Subject[];
 

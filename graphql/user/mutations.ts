@@ -9,7 +9,7 @@ import { GraphQLContext } from '../context';
 import { toPublicToken } from '../authentication';
 import mailjet from '../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../common/mails/config';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';

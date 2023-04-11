@@ -5,7 +5,7 @@ import { prisma } from '../prisma';
 import { Context, Notification, NotificationID, NotificationMessage } from './types';
 import { NotificationRecipient } from '../entity/Notification';
 import { Prisma } from '@prisma/client';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { hookExists } from './hook';
 import { getNotificationActions } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';

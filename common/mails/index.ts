@@ -1,7 +1,7 @@
 import { mailjet as mailjetTemplates, TemplateMail } from './templates';
 import mailjet from './mailjet';
 
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 
 const logger = getLogger();
 
@@ -28,7 +28,7 @@ async function sendTemplateMail(templateMail: TemplateMail, recipient: string, r
             })
         );
 
-        logger.info('E-Mail (type ' + templateMail.type + ') was sent to ' + recipient, JSON.stringify(result));
+        logger.info('E-Mail (type ' + templateMail.type + ') was sent to ' + recipient, { result: JSON.stringify(result) });
         return result;
     } catch (e) {
         logger.warn('Unable to send mail (type ' + templateMail.type + ') to ' + recipient + ': Status code ' + e.statusCode);

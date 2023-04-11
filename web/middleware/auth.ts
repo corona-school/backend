@@ -3,7 +3,7 @@ import { getManager } from "typeorm";
 import { Student } from "../../common/entity/Student";
 import { Pupil } from "../../common/entity/Pupil";
 import { hashToken } from "../../common/util/hashing";
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
