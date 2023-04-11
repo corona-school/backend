@@ -234,6 +234,9 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
 };
 
 export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
+    // TODO: Reenable once we stabilized course promotions
+    return;
+
     const minGrade = subcourse.minGrade;
     const maxGrade = subcourse.maxGrade;
     const courseCapacity = await getCourseCapacity(subcourse);
