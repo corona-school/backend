@@ -1,7 +1,7 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from '../authentication';
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { prisma } from '../../common/prisma';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { setProjectFields } from '../../common/student/update';
@@ -369,11 +369,11 @@ export class MutateMeResolver {
         const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
-        const updatedStudent = await becomeInstructor(student, data);
+        await becomeInstructor(student, data);
         log.info(`Student(${student.id}) requested to become an instructor`);
 
         // User gets the WANNABE_INSTRUCTOR role
-        await evaluateStudentRoles(updatedStudent, context);
+        await updateSessionUser(context, userForStudent(student));
 
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
@@ -390,11 +390,10 @@ export class MutateMeResolver {
         const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
-        const updatedStudent = await becomeTutor(student, data);
-        log.info(`Student(${student.id}) requested to become a tutor`);
+        await becomeTutor(student, data);
 
         // User gets the WANNABE_TUTOR role
-        await evaluateStudentRoles(updatedStudent, context);
+        await updateSessionUser(context, userForStudent(student));
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 
