@@ -206,8 +206,7 @@ export class MutateAppointmentResolver {
                 await Notification.actionTaken(student, 'participant_appointment_decline', {
                     appointment,
                     course,
-                    user,
-                    redirectTo: '',
+                    participant: user,
                 });
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
@@ -216,8 +215,7 @@ export class MutateAppointmentResolver {
                 const student = await getStudent(organizer.studentId);
                 await Notification.actionTaken(student, 'participant_appointment_decline', {
                     appointment,
-                    user,
-                    redirectTo: '/appointments',
+                    participant: user,
                 });
             }
         } else {

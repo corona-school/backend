@@ -327,7 +327,7 @@ const _notificationActions = {
         sampleContext: {
             appointment: sampleAppointment,
             course: sampleCourse,
-            user: sampleUser,
+            participant: sampleUser,
             redirectTo: `/appointments/${sampleAppointment.id}`,
         },
     },
