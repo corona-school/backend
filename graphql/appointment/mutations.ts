@@ -15,11 +15,12 @@ import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture } from '../../graphql/util';
+import { getLecture, getStudent } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
-import { lecture_appointmenttype_enum } from '@prisma/client';
+import { course, lecture_appointmenttype_enum, subcourse } from '@prisma/client';
 import { getUserType } from '../../common/user';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -161,36 +162,65 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const { user } = context;
+        logger.info(`appointmentId: ${appointmentId}`);
         const appointment = await getLecture(appointmentId);
+        logger.info(`appointment: ${JSON.stringify(appointment)}`);
         await hasAccess(context, 'Lecture', appointment);
-        const userType = getUserType(context.user);
+        const userType = getUserType(user);
 
         switch (userType) {
             case 'pupil': {
                 await prisma.appointment_participant_pupil.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_pupilId: { appointmentId, pupilId: context.user.pupilId } },
+                    where: { appointmentId_pupilId: { appointmentId, pupilId: user.pupilId } },
                 });
                 break;
             }
             case 'student': {
                 await prisma.appointment_participant_student.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_studentId: { appointmentId, studentId: context.user.studentId } },
+                    where: { appointmentId_studentId: { appointmentId, studentId: user.studentId } },
                 });
                 break;
             }
             case 'screener': {
                 await prisma.appointment_participant_screener.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_screenerId: { appointmentId, screenerId: context.user.screenerId } },
+                    where: { appointmentId_screenerId: { appointmentId, screenerId: user.screenerId } },
                 });
                 break;
             }
             default:
                 throw new Error(`Cannot decline appointment with user type: ${userType}`);
         }
-        // * Send notification here
+
+        const appointmentType = appointment.appointmentType;
+        const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
+
+        if (appointmentType === lecture_appointmenttype_enum.group) {
+            const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
+            const course = await prisma.course.findFirst({ where: { id: subCourse.courseId } });
+            for await (const organizer of organizers) {
+                const student = await getStudent(organizer.studentId);
+                await Notification.actionTaken(student, 'participant_appointment_decline', {
+                    course,
+                    user,
+                });
+            }
+        } else if (appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
+            for await (const organizer of organizers) {
+                const student = await getStudent(organizer.studentId);
+                await Notification.actionTaken(student, 'participant_appointment_decline', {
+                    appointment,
+                    user,
+                });
+            }
+        } else {
+            logger.error(`Couldn't send notification to organizer of Appointment (id: ${appointment.id})`);
+        }
+
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
 
         return true;

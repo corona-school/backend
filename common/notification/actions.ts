@@ -314,6 +314,9 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
+    participant_appointment_decline: {
+        description: 'Participant / Appointment Declined',
+    },
 
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
