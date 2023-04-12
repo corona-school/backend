@@ -369,8 +369,11 @@ export class MutateMeResolver {
         const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
-        await becomeInstructor(student, data);
+        const updatedStudent = await becomeInstructor(student, data);
         log.info(`Student(${student.id}) requested to become an instructor`);
+
+        // User gets the WANNABE_INSTRUCTOR role
+        await evaluateStudentRoles(updatedStudent, context);
 
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
@@ -387,9 +390,11 @@ export class MutateMeResolver {
         const student = await getSessionStudent(context, studentId);
         const log = logInContext('Me', context);
 
-        await becomeTutor(student, data);
-
+        const updatedStudent = await becomeTutor(student, data);
         log.info(`Student(${student.id}) requested to become a tutor`);
+
+        // User gets the WANNABE_TUTOR role
+        await evaluateStudentRoles(updatedStudent, context);
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 
