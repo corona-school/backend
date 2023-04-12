@@ -28,6 +28,7 @@ const sampleCourse = {
         day: 'Sonntag',
     },
 };
+const sampleAppointment = {};
 
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
@@ -312,6 +313,16 @@ const _notificationActions = {
         sampleContext: {
             token: 'token',
             redirectTo: '/start',
+        },
+    },
+    'organizer-appointment-cancel': {
+        description: 'Organizer / Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            organizers: sampleUser.firstname,
+            declinedOrganizer: sampleUser,
+            course: sampleCourse,
+            // redirectTo: 'organizer-appointment-cancel'
         },
     },
 

@@ -15,11 +15,12 @@ import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture } from '../../graphql/util';
+import { getLecture, getPupil, getStudent } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
 import { lecture_appointmenttype_enum } from '@prisma/client';
 import { getUserType } from '../../common/user';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -203,6 +204,48 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
         await prisma.lecture.update({ data: { isCanceled: true }, where: { id: appointment.id } });
         // * Send notification here
+        const foundOrganizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
+        logger.info(`foundOrganizers: ${JSON.stringify(foundOrganizers)}`);
+        const firstOrganizer = await getStudent(foundOrganizers[0].studentId);
+        let organizersString = firstOrganizer.firstname;
+        logger.info(`first organizers Name: ${organizersString}`);
+        for (let index = 1; index < foundOrganizers.length; index++) {
+            const organizer = await getStudent(foundOrganizers[index].studentId);
+            organizersString += `, ${organizer.firstname}`;
+        }
+
+        logger.info(`Appointment Type: ${appointment.appointmentType}`);
+        logger.info(`ORGANIZER: ${organizersString}`);
+        if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
+            const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
+            const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
+            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id } });
+
+            for await (const participant of participants) {
+                const pupil = await getPupil(participant.pupilId);
+                await Notification.actionTaken(pupil, 'organizer-appointment-cancel', {
+                    appointment: appointment,
+                    organizers: organizersString,
+                    declinedOrganizer: context.user,
+                    course,
+                });
+            }
+        } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
+            logger.info(`MATCH: ${JSON.stringify(match)}`);
+            const participant = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
+            logger.info(`PARTICIPANT: ${JSON.stringify(participant)}`);
+            const pupil = await getPupil(participant.id);
+            logger.info(`PUPIL: ${JSON.stringify(pupil)}`);
+            await Notification.actionTaken(pupil, 'organizer-appointment-cancel', {
+                appointment: appointment,
+                organizers: organizersString,
+                declinedOrganizer: context.user,
+            });
+        } else {
+            logger.error(`Couldn't send notification to pupils of Appointment (id: ${appointment.id})`);
+        }
+
         logger.info(`Appointment (id: ${appointment.id}) was cancelled`);
         return true;
     }
