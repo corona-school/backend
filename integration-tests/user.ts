@@ -105,6 +105,8 @@ export const pupilOne = test('Register Pupil', async () => {
 
 export const studentOne = test('Register Student', async () => {
     await setup;
+    const mockEmailVerification = await createMockVerification;
+
 
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
@@ -138,9 +140,31 @@ export const studentOne = test('Register Student', async () => {
         }
     `);
 
+    const { me: student, myRoles: rolesAfterRegistration } = await client.request(`
+        query GetBasics {
+            me {
+                firstname
+                lastname
+                email
+                student { id }
+            }
+            myRoles
+        }
+    `);
+    assert.deepStrictEqual(rolesAfterRegistration, ['UNAUTHENTICATED', 'USER']);
+
+    await client.request(`mutation RequestVerifyToken { tokenRequest(email: "TEST+${userRandom}@lern-fair.de", action: "user-verify-email")}`);
+
+    const {
+        context: { token },
+    } = await assertUserReceivedNotification(mockEmailVerification, `student/${student.student.id}`);
+    assert(token, 'User received email verification token');
+
+    await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
+
+
     const { myRoles: rolesBefore } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
-    assert(rolesBefore.includes('STUDENT'));
-    assert(!rolesBefore.includes('WANNABE_TUTOR'));
+    assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
 
     await client.request(`
         mutation BecomeTutor {
@@ -153,19 +177,9 @@ export const studentOne = test('Register Student', async () => {
     `);
 
     const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
-    assert(rolesAfter.includes('WANNABE_TUTOR'));
+    assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_TUTOR']);
+    // Not yet TUTOR as not yet screened
 
-
-    const { me: student } = await client.request(`
-        query GetBasics {
-            me {
-                firstname
-                lastname
-                email
-                student { id }
-            }
-        }
-    `);
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     student.email = student.email.toUpperCase();
@@ -209,21 +223,6 @@ export const instructorOne = test('Register Instructor', async () => {
         }
     `);
 
-    const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeInstructor { myRoles }`);
-    assert(rolesBefore.includes('STUDENT'));
-    assert(!rolesBefore.includes('WANNABE_INSTRUCTOR'));
-
-    await client.request(`
-        mutation BecomeInstructor {
-            meBecomeInstructor(data: {
-                message: ""
-            })
-        }
-    `);
-
-
-    const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeInstructor { myRoles }`);
-    assert(rolesAfter.includes('WANNABE_INSTRUCTOR'));
 
     const { me: instructor } = await client.request(`
         query GetBasics {
@@ -242,10 +241,23 @@ export const instructorOne = test('Register Instructor', async () => {
         context: { token },
     } = await assertUserReceivedNotification(mockEmailVerification, `student/${instructor.student.id}`);
     assert(token, 'User received email verification token');
+
     await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
 
-    const { myRoles } = await client.request(`query GetRoles { myRoles }`);
-    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_INSTRUCTOR']);
+    const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeInstructor { myRoles }`);
+    assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
+
+    await client.request(`
+        mutation BecomeInstructor {
+            meBecomeInstructor(data: {
+                message: ""
+            })
+        }
+    `);
+
+
+    const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeInstructor { myRoles }`);
+    assert.deepStrictEqual(rolesAfter, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_INSTRUCTOR']);
     // Not yet INSTRUCTOR as not yet screened
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
