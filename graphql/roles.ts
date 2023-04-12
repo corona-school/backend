@@ -63,13 +63,13 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
     }
 
     if (student.isStudent || student.isProjectCoach) {
-        context.user.roles.push(Role.WANNABE_TUTOR);
-
         // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
         const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             context.user.roles.push(Role.TUTOR);
+        } else {
+            context.user.roles.push(Role.WANNABE_TUTOR);
         }
     }
 
@@ -82,13 +82,13 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
     }
 
     if (student.isInstructor) {
-        context.user.roles.push(Role.WANNABE_INSTRUCTOR);
-
         // the user wants to be a course instructor, let's check if they were screened and are authorized to do so
         const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasInstructorScreened) {
             logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
             context.user.roles.push(Role.INSTRUCTOR);
+        } else {
+            context.user.roles.push(Role.WANNABE_INSTRUCTOR);
         }
     }
 }
