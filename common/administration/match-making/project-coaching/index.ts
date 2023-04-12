@@ -1,12 +1,11 @@
-import { EntityManager } from "typeorm";
-import { createMatching } from "./matching";
-import { saveMatchingToDB } from "./matches/save";
-import { validateMatching } from "./matching/validate";
-import { coacheesToMatch } from "./people/coachees";
-import { coachesToMatch } from "./people/coaches";
-import { notifyMatches } from "./matches/notify";
-import { getLogger } from "../../../../jobs/utils/logging";
-
+import { EntityManager } from 'typeorm';
+import { createMatching } from './matching';
+import { saveMatchingToDB } from './matches/save';
+import { validateMatching } from './matching/validate';
+import { coacheesToMatch } from './people/coachees';
+import { coachesToMatch } from './people/coaches';
+import { notifyMatches } from './matches/notify';
+import { getLogger } from '../../../../common/logger/logger';
 
 const logger = getLogger();
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { ApiAddCooperationTutee, ApiAddMentor, ApiAddTutee, ApiAddTutor, ApiSchoolInfo } from "./format";
 import { getManager } from "typeorm";
 import { getTransactionLog } from "../../../common/transactionlog";

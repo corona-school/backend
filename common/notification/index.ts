@@ -4,7 +4,7 @@ import { Concrete_notification as ConcreteNotificationPrisma } from '../../graph
 import { prisma } from '../prisma';
 import { getNotification, getNotifications } from './notification';
 import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';

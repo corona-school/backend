@@ -1,6 +1,6 @@
-import { getLogger } from "log4js";
 import { EntityManager } from "typeorm";
 import { remindNextPupils } from "../../../common/interest-confirmation/tutoring";
+import { getLogger } from '../../../common/logger/logger';
 
 const logger = getLogger();
 

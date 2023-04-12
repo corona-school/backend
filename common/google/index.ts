@@ -1,4 +1,4 @@
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { material } from '../mentoring/material';
 import { google, calendar_v3 as googleCalendar } from 'googleapis';
 

@@ -6,7 +6,7 @@ import { assert } from 'console';
 import { Deprecated, getPupil, getScreener, getStudent } from './util';
 import { prisma } from '../common/prisma';
 import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing';
-import { getLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
 import { logInContext } from './logging';
 import { getUser, User, userForPupil, userForScreener, userForStudent } from '../common/user';

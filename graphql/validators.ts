@@ -56,6 +56,8 @@ export function validateEmail(email?: string) {
         return undefined;
     }
 
+    email = email.trim(); // remove whitespace
+
     // Validate E-Mail
 
     if (!isEmail(email)) {

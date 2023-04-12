@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { getLogger, Logger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import mailjet from "../../../common/mails/mailjet";
 import { Match } from "../../../common/entity/Match";
 import { sendFeedbackRequestStudent, sendFeedbackRequestPupil } from "../../../common/mails/feedback-request";

@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {Student} from "../../../common/entity/Student";
-import {getLogger} from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import {Pupil} from "../../../common/entity/Pupil";
 import {ApiContactExpert, ApiGetExpert, ApiGetExpertiseTag, ApiPutExpert} from "./format";
 import {getTransactionLog} from "../../../common/transactionlog";

@@ -2,7 +2,7 @@ import { pupil } from '@prisma/client';
 import { hashToken } from '../util/hashing';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../prisma';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 
 const logger = getLogger('Pupil Token Auth');
 

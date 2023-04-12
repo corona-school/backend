@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { prisma } from '../prisma';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import assert from 'assert';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 
 const REMIND_AFTER = 7; /* days */
 const REMOVE_AFTER = 14; /* days */

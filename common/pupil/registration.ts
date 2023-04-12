@@ -12,6 +12,8 @@ import {
     pupil_languages_enum as Language,
     pupil_learninggermansince_enum,
     pupil_schooltype_enum as SchoolType,
+    Prisma,
+    PrismaClient,
 } from '@prisma/client';
 import { Subject } from '../entity/Student';
 import { Address } from 'address-rfc2821';
@@ -53,13 +55,13 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false) {
+export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
     if (data.schoolId != undefined) {
-        const school = await prisma.school.findUnique({ where: { id: data.schoolId } });
+        const school = await prismaInstance.school.findUnique({ where: { id: data.schoolId } });
         if (!school) {
             throw new Error(`Invalid School ID '${data.schoolId}'`);
         }
@@ -75,7 +77,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
 
     const verification = uuidv4();
 
-    const pupil = await prisma.pupil.create({
+    const pupil = await prismaInstance.pupil.create({
         data: {
             email: data.email.toLowerCase(),
             firstname: data.firstname,
@@ -136,12 +138,12 @@ export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoac
     return updatedPupil;
 }
 
-export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData) {
+export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (pupil.isPupil) {
         throw new RedundantError(`Pupil is already tutee`);
     }
 
-    const updatedPupil = await prisma.pupil.update({
+    const updatedPupil = await prismaInstance.pupil.update({
         data: {
             isPupil: true,
             isParticipant: true,

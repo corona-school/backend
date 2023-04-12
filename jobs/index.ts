@@ -1,5 +1,5 @@
 import moment from "moment-timezone";
-import { setup as setupLogging, getLogger } from "./utils/logging";
+import { getLogger } from "../common/logger/logger";
 import { scheduleJobs } from "./scheduler";
 import * as scheduler from "./scheduler";
 import { allJobs } from "./list";
@@ -11,7 +11,6 @@ import { createConnection } from "typeorm";
 import './../common/notification/hooks';
 
 //SETUP: logger
-setupLogging();
 const log = getLogger();
 log.info("Backend started");
 

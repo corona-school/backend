@@ -6,7 +6,7 @@ import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
