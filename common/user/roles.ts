@@ -15,10 +15,16 @@ export enum Role {
     /* No one should have access */
     NOBODY = 'NOBODY',
 
-    /* User is a student, requested to be a tutor and was successfully screened (E-Mail also verified) */
+    /* User is a student, requested to be a tutor (E-Mail also verified) and is a 'wannabe tutor' ... */
+    WANNABE_TUTOR = 'WANNABE_TUTOR',
+    // ... until they were successfully screened  */
     TUTOR = 'TUTOR',
-    /* User is a student, requested to be a course instructor and was successfully "instructor screened" (E-Mail also verified) */
+
+    /* User is a student, requested to be a course instructor (E-Mail also verified) and is a 'wannabe instructor' ... */
+    WANNABE_INSTRUCTOR = 'WANNABE_INSTRUCTOR',
+    // ... until they were successfully "instructor screened"  */
     INSTRUCTOR = 'INSTRUCTOR',
+
     /* User is a student, requested to be a project coach and was successfully screened (E-Mail also verified) */
     PROJECT_COACH = 'PROJECT_COACH',
 
