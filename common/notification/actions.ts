@@ -29,6 +29,14 @@ const sampleCourse = {
     },
 };
 
+const sampleAppointment = {
+    id: 1,
+    start: '2025-12-12T23:59:59.000Z',
+    duration: 90,
+    title: 'Chapter 1',
+    description: 'First chapter of great history.',
+};
+
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
 };
@@ -317,10 +325,10 @@ const _notificationActions = {
     participant_appointment_decline: {
         description: 'Participant / Appointment Declined',
         sampleContext: {
-            appointment: {},
-            course: {},
-            user: {},
-            redirectTo: '/appointments',
+            appointment: sampleAppointment,
+            course: sampleCourse,
+            user: sampleUser,
+            redirectTo: `/appointments/${sampleAppointment.id}`,
         },
     },
 
