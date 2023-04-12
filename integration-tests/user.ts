@@ -151,7 +151,7 @@ export const studentOne = test('Register Student', async () => {
             myRoles
         }
     `);
-    assert.deepStrictEqual(rolesAfterRegistration, ['UNAUTHENTICATED', 'USER']);
+    assert.deepStrictEqual(rolesAfterRegistration, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
 
     await client.request(`mutation RequestVerifyToken { tokenRequest(email: "TEST+${userRandom}@lern-fair.de", action: "user-verify-email")}`);
 
