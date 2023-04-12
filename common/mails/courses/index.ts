@@ -17,6 +17,7 @@ import { accessURLForKey } from '../../file-bucket';
 import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
 import { getCourseCapacity } from '../../courses/participants';
+import { getCourseImageURL } from '../../courses/util';
 
 const logger = getLogger('Course Notification');
 
@@ -189,7 +190,7 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
     await sendTemplateMail(mail, participant.email);
 }
 
-async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey?: string }, subcourse: Prisma.subcourse) {
+async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
     const { start } = await getFirstLecture(subcourse);
 
     const date = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'long', year: 'numeric' });
@@ -200,7 +201,7 @@ async function getNotificationContextForSubcourse(course: { name: string; descri
         course: {
             name: course.name,
             description: course.description,
-            image: course.imageKey ? accessURLForKey(course.imageKey) : '',
+            image: getCourseImageURL(course),
         },
         subcourse: {
             url: `https://app.lern-fair.de/single-course/${subcourse.id}`,

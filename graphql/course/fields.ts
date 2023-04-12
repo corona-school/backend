@@ -5,6 +5,7 @@ import { Role } from '../authorizations';
 import { accessURLForKey } from '../../common/file-bucket/s3';
 import { GraphQLContext } from '../context';
 import { getSessionStudent } from '../authentication';
+import { getCourseImageURL } from '../../common/courses/util';
 
 @Resolver((of) => Course)
 export class ExtendedFieldsCourseResolver {
@@ -21,11 +22,7 @@ export class ExtendedFieldsCourseResolver {
     @FieldResolver((returns) => String, { nullable: true })
     @Authorized(Role.UNAUTHENTICATED)
     image(@Root() course: Course) {
-        if (!course.imageKey) {
-            return null;
-        }
-
-        return accessURLForKey(course.imageKey);
+        return getCourseImageURL(course);
     }
 
     @FieldResolver((returns) => [CourseTag])
