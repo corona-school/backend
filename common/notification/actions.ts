@@ -316,6 +316,12 @@ const _notificationActions = {
     },
     participant_appointment_decline: {
         description: 'Participant / Appointment Declined',
+        sampleContext: {
+            appointment: {},
+            course: {},
+            user: {},
+            redirectTo: '/appointments',
+        },
     },
 
     user_authenticate: DEPRECATED,
