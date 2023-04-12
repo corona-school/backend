@@ -163,7 +163,7 @@ export const studentOne = test('Register Student', async () => {
     await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
 
 
-    const { myRoles: rolesBefore } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
+    const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeTutor { myRoles }`);
     assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
 
     await client.request(`
@@ -177,7 +177,7 @@ export const studentOne = test('Register Student', async () => {
     `);
 
     const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
-    assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_TUTOR']);
+    assert.deepStrictEqual(rolesAfter, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_TUTOR']);
     // Not yet TUTOR as not yet screened
 
 
