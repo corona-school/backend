@@ -210,7 +210,6 @@ export class MutateAppointmentResolver {
                 });
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
-            const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
             for await (const organizer of organizers) {
                 const student = await getStudent(organizer.studentId);
                 await Notification.actionTaken(student, 'participant_appointment_decline', {
