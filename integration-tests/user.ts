@@ -138,6 +138,10 @@ export const studentOne = test('Register Student', async () => {
         }
     `);
 
+    const { myRoles: rolesBefore } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
+    assert(rolesBefore.includes('STUDENT'));
+    assert(!rolesBefore.includes('WANNABE_TUTOR'));
+
     await client.request(`
         mutation BecomeTutor {
             meBecomeTutor(data: {
@@ -147,6 +151,10 @@ export const studentOne = test('Register Student', async () => {
             })
         }
     `);
+
+    const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
+    assert(rolesAfter.includes('WANNABE_TUTOR'));
+
 
     const { me: student } = await client.request(`
         query GetBasics {
@@ -201,6 +209,10 @@ export const instructorOne = test('Register Instructor', async () => {
         }
     `);
 
+    const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeInstructor { myRoles }`);
+    assert(rolesBefore.includes('STUDENT'));
+    assert(!rolesBefore.includes('WANNABE_INSTRUCTOR'));
+
     await client.request(`
         mutation BecomeInstructor {
             meBecomeInstructor(data: {
@@ -208,6 +220,10 @@ export const instructorOne = test('Register Instructor', async () => {
             })
         }
     `);
+
+
+    const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeInstructor { myRoles }`);
+    assert(rolesAfter.includes('WANNABE_INSTRUCTOR'));
 
     const { me: instructor } = await client.request(`
         query GetBasics {
@@ -229,7 +245,7 @@ export const instructorOne = test('Register Instructor', async () => {
     await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
 
     const { myRoles } = await client.request(`query GetRoles { myRoles }`);
-    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
+    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_INSTRUCTOR']);
     // Not yet INSTRUCTOR as not yet screened
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
