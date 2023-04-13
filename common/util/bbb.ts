@@ -62,7 +62,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         logger.info('Successfully saved new bbb meeting with id ', { bbbMeetingId: bbbMeeting.meetingID });
         return bbbMeeting;
     } catch (e) {
-        logger.error("Can't save new bbb meeting: " + e.message);
+        logger.error("Can't save new bbb meeting: ", e);
         logger.debug(bbbMeeting, e);
     }
 }
@@ -327,7 +327,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     await transactionLog.log(new CreateCourseAttendanceLogEvent(pupil, courseAttendanceLog));
                     logger.info('Successfully saved new Course Attendance to lecture with id ', { lectureId: activeLecture.id });
                 } catch (e) {
-                    logger.error("Can't save new course attendance: " + e.message);
+                    logger.error("Can't save new course attendance:", e);
                     logger.debug(courseAttendanceLog, e);
                 }
             }
