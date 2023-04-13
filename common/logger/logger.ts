@@ -11,7 +11,7 @@ addLayout('json', function () {
         delete logEvent.context['error'];
 
         // These tags will be used to identify the logs in datadog later on
-        const tags = { env: process.env.ENV, version: process.env.VERSION || 'latest' };
+        const tags = { env: process.env.ENV, version: process.env.HEROKU_RELEASE_VERSION || 'latest' };
 
         return JSON.stringify({ ...logEvent, message, data, error, tags, service: process.env.SERVICE_NAME });
     };
