@@ -108,7 +108,7 @@ export async function becomeInstructor(student: Student, data?: BecomeInstructor
         throw new RedundantError(`Student is already instructor`);
     }
 
-    await prisma.student.update({
+    return await prisma.student.update({
         data: {
             isInstructor: true,
             msg: data ? data.message : '',
