@@ -56,8 +56,18 @@ export class Logger {
         this.logger.warn(message, args);
     }
 
-    error(message: string, args: LogData = {}): void {
-        this.logger.error(message, args);
+    error(message: string): void;
+    error(message: string, args: LogData): void;
+    error(message: string, err: Error): void;
+    error(message: string, err: Error = null, args: LogData = {}): void {
+        // In order to use the datadog error tracking feature, we have to attach the error details to the root of the log message.
+        // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.
+        // https://docs.datadoghq.com/logs/error_tracking/backend/?tab=serilog#nodejs
+        if (!err) {
+            this.logger.addContext('error', { message: err.message, stack: err.stack });
+        }
+        this.logger.error(message, { ...args });
+        this.logger.removeContext('error');
     }
 
     fatal(message: string, args: LogData = {}): void {
