@@ -22,7 +22,7 @@ async function getStudentsAfter(date: Date): Promise<Student[]> {
     try {
         resp = await safeApiQuery(queryUrl);
     } catch (e) {
-        logger.error("Can't connect to student api: ", e.message);
+        logger.error("Can't connect to student api: ", e);
         logger.debug(e);
     }
 
@@ -50,7 +50,7 @@ async function getStudentsAfter(date: Date): Promise<Student[]> {
 
         return students;
     } catch (e) {
-        logger.error("Unexpected format of student api response: ", e.message);
+        logger.error("Unexpected format of student api response: ", e);
         logger.debug(e);
     }
 
@@ -64,7 +64,7 @@ async function getPupilsAfter(date: Date): Promise<Pupil[]> {
     try {
         resp = await safeApiQuery(queryUrl);
     } catch (e) {
-        logger.error("Can't connect to pupil api: ", e.message);
+        logger.error("Can't connect to pupil api: ", e);
         logger.debug(e);
     }
 
@@ -89,7 +89,7 @@ async function getPupilsAfter(date: Date): Promise<Pupil[]> {
 
         return pupils;
     } catch (e) {
-        logger.error("Unexpected format of pupil api response: ", e.message);
+        logger.error("Unexpected format of pupil api response: ", e);
         logger.debug(e);
     }
 
@@ -203,7 +203,7 @@ async function initModule() {
 
         init = true;
     } catch (e) {
-        logger.error("Can't initialize fetch module: ", e.message);
+        logger.error("Can't initialize fetch module: ", e);
         logger.debug(e);
     }
 }

@@ -29,7 +29,7 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {
-        logger.error("Can't send verification mail: ", { error: e });
+        logger.error("Can't send verification mail: ", e);
         logger.debug(e);
     }
 }
