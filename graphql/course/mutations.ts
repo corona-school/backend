@@ -16,6 +16,7 @@ import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 import { course_schooltype_enum, course_subject_enum } from '../generated';
 import { ForbiddenError } from '../error';
 import { subcourseOver } from '../../common/courses/states';
+import { CourseState } from '../../common/entity/Course';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -199,8 +200,17 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await getCourse(courseId);
-        await prisma.course.update({ data: { screeningComment, courseState: 'allowed' }, where: { id: courseId } });
-        logger.info(`Admin allowed (approved) course ${courseId} with screening comment: ${screeningComment}`);
+        await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: courseId } });
+        logger.info(`Admin allowed (approved) Course(${courseId}) with screening comment: ${screeningComment}`, { courseId });
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async courseDeny(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
+        await getCourse(courseId);
+        await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: courseId } });
+        logger.info(`Admin denied Course${courseId}) with screening comment: ${screeningComment}`, { courseId });
         return true;
     }
 
