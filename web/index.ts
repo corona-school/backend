@@ -8,7 +8,6 @@ import * as userController from './controllers/userController';
 import * as tokenController from './controllers/tokenController';
 import * as matchController from './controllers/matchController';
 import * as projectMatchController from './controllers/projectMatchController';
-import * as screeningController from './controllers/screeningController';
 import * as certificateController from './controllers/certificateController';
 import * as courseController from './controllers/courseController';
 import * as registrationController from './controllers/registrationController';
@@ -88,7 +87,6 @@ createConnection()
         configureUserAPI();
         configureTokenAPI();
         configureCourseAPI();
-        configureScreenerAPI();
         configureCoursesAPI();
         configureRegistrationAPI();
         configureMentoringAPI();
@@ -274,24 +272,6 @@ createConnection()
             registrationRouter.post('/checkEmail', checkEmailRateLimit, registrationController.checkEmail);
             registrationRouter.get('/schools/:state?', registrationController.getSchoolsHandler);
             app.use('/api/register', registrationRouter);
-        }
-
-        function configureScreenerAPI() {
-            const screenerApiRouter = express.Router();
-            screenerApiRouter.use(screenerAuthCheck);
-            screenerApiRouter.get('/student', screeningController.getStudents);
-            screenerApiRouter.get('/student/:email', screeningController.getStudentByMailHandler);
-            screenerApiRouter.put('/student/:email', screeningController.updateStudentByMailHandler);
-            screenerApiRouter.get('/screener/:email/:includepassword', screeningController.getScreenerByMailHandler);
-            screenerApiRouter.post('/screener/', screeningController.addScreenerHandler);
-            screenerApiRouter.put('/screener/:email', screeningController.updateScreenerByMailHandler);
-            screenerApiRouter.get('/courses', screeningController.getCourses);
-            screenerApiRouter.get('/courses/tags', screeningController.getCourseTags);
-            screenerApiRouter.post('/courses/tags/create', screeningController.postCreateCourseTag);
-            screenerApiRouter.post('/course/:id/update', screeningController.updateCourse);
-            screenerApiRouter.get('/instructors', screeningController.getInstructors);
-
-            app.use('/api/screening', screenerApiRouter);
         }
 
         function configureParticipationCertificateAPI() {
