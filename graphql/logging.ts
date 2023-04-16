@@ -28,7 +28,7 @@ export const GraphQLLogger: any = {
             // Actually GraphQLRequestListener, but we're on v2 and not on v3
             didEncounterErrors(requestContext: GraphQLRequestContext) {
                 const unexpected = requestContext.errors.some(isUnexpectedError);
-                if (unexpected) {
+                if (!unexpected) {
                     logger.info(`Expected Errors occurred`, { errors: requestContext.errors.map((it) => `  - ${it.name} (${it.message})`) });
                 } else {
                     const errorLogger = logInContext(`GraphQL Error`, requestContext.context as GraphQLContext);
