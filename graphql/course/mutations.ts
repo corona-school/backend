@@ -10,13 +10,13 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
-import { courseImageKey } from '../../web/controllers/courseController/course-images';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
 import { course_schooltype_enum, course_subject_enum } from '../generated';
 import { ForbiddenError } from '../error';
 import { subcourseOver } from '../../common/courses/states';
 import { CourseState } from '../../common/entity/Course';
+import { getCourseImageKey } from '../../common/courses/util';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -150,7 +150,7 @@ export class MutateCourseResolver {
             throw new UserInputError(`File must be image/jpeg, was '${file.mimetype}' instead`);
         }
 
-        const imageKey = courseImageKey(course.id, file.mimetype);
+        const imageKey = getCourseImageKey(course, file.mimetype);
         await putFile(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
 
         await prisma.course.update({
