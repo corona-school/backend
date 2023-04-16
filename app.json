@@ -27,7 +27,7 @@
                 "MAILJET_LIVE": "0"
             },
             "addons": [
-                "heroku-postgresql:hobby-dev"
+                "heroku-postgresql:mini"
             ]
         }
     },
