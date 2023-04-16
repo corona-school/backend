@@ -134,19 +134,3 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
         }
     };
 }
-
-export async function screenerAuthCheck(req: Request, res: Response, next) {
-    if (req.method == "OPTIONS") {
-        next();
-    }
-
-    const token = req.get("Token");
-    if (token != undefined) {
-        if (token === process.env.SCREENER_AUTH_TOKEN) {
-            return next();
-        }
-    }
-    res.status(403).send("Invalid token specified.")
-        .end();
-    return;
-}
