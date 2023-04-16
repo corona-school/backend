@@ -17,7 +17,7 @@ import * as interestConfirmationController from './controllers/interestConfirmat
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
-import { authCheckFactory, screenerAuthCheck } from './middleware/auth';
+import { authCheckFactory } from './middleware/auth';
 import { setupDevDB } from './dev';
 import favicon from 'express-favicon';
 import { allStateCooperationSubdomains } from '../common/entity/State';
