@@ -5,11 +5,13 @@ import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
 import { LimitEstimated } from '../../graphql/complexity';
 import { prisma } from '../../common/prisma';
-import { getUserType } from '../../common/user';
+import { getUserIdTypeORM, getUserType } from '../../common/user';
 import { Deprecated } from '../../graphql/util';
 
 @ObjectType()
 class AppointmentParticipant {
+    @Field((_type) => String, { nullable: true })
+    userId: string;
     @Field((_type) => Int, { nullable: true })
     id: number;
     @Field((_type) => String, { nullable: true })
@@ -26,6 +28,8 @@ class AppointmentParticipant {
 
 @ObjectType()
 class Organizer {
+    @Field((_type) => String, { nullable: true })
+    userId: string;
     @Field((_type) => Int)
     id: number;
     @Field((_type) => String)
@@ -101,9 +105,10 @@ export class ExtendedFieldsLectureResolver {
                     id: true,
                     firstname: true,
                     lastname: true,
+                    isPupil: true,
                 },
             })
-        ).map((p) => ({ ...p, isPupil: true }));
+        ).map((p) => ({ ...p, isPupil: true, userId: getUserIdTypeORM(p) }));
         const participantStudents = (
             await prisma.student.findMany({
                 where: {
@@ -119,9 +124,10 @@ export class ExtendedFieldsLectureResolver {
                     id: true,
                     firstname: true,
                     lastname: true,
+                    isStudent: true,
                 },
             })
-        ).map((p) => ({ ...p, isStudent: true }));
+        ).map((p) => ({ ...p, isStudent: true, userId: getUserIdTypeORM(p) }));
         const participantScreener = (
             await prisma.screener.findMany({
                 where: {
@@ -163,9 +169,10 @@ export class ExtendedFieldsLectureResolver {
                     id: true,
                     firstname: true,
                     lastname: true,
+                    isStudent: true,
                 },
             })
-        ).map((p) => ({ ...p, isStudent: true }));
+        ).map((p) => ({ ...p, isStudent: true, userId: getUserIdTypeORM(p) }));
     }
     @FieldResolver((returns) => [AppointmentParticipant])
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
@@ -181,7 +188,7 @@ export class ExtendedFieldsLectureResolver {
                     pupil: true,
                 },
             })
-        ).map((p) => ({ ...p.pupil, isPupil: true }));
+        ).map((p) => ({ ...p.pupil, isPupil: true, userId: getUserIdTypeORM(p.pupil) }));
 
         const declinedStudents = (
             await prisma.appointment_participant_student.findMany({
@@ -193,7 +200,7 @@ export class ExtendedFieldsLectureResolver {
                     student: true,
                 },
             })
-        ).map((p) => ({ ...p.student, isStudent: true }));
+        ).map((p) => ({ ...p.student, isStudent: true, userId: getUserIdTypeORM(p.student) }));
 
         const declinedScreeners = (
             await prisma.appointment_participant_screener.findMany({
