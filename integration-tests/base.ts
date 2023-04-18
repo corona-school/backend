@@ -3,7 +3,7 @@ import { GraphQLClient } from "graphql-request";
 
 /* -------------- Configuration ------------------- */
 
-const APP = "corona-school-backend-dev";
+const APP = "lernfair-backend-dev";
 const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
 const ADMIN_TOKEN = process.env.ADMIN_AUTH_TOKEN;
 
