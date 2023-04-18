@@ -247,7 +247,7 @@ export class MutateStudentResolver {
 
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN)
-    async studentScheduleCoCReminder(@Arg('studentId') studentId: number) {
+    async studentRequestCoC(@Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
         await scheduleCoCReminders(student, true);
         log.info(`Scheduled CoC reminder for Student(${studentId})`);
@@ -256,7 +256,7 @@ export class MutateStudentResolver {
 
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN)
-    async studentCancelCoCReminder(@Arg('studentId') studentId: number) {
+    async studentCancelCoC(@Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
         await cancelCoCReminders(student);
 

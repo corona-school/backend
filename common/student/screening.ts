@@ -73,27 +73,8 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 }
 
 export async function cancelCoCReminders(student: Student) {
-    const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
-    const notificationIDs = (
-        await prisma.notification.findMany({
-            where: { onActions: { has: 'coc_reminder' } },
-            select: {
-                id: true,
-            },
-        })
-    ).map((n) => n.id);
-
-    const concreteNotificationsToCancel = await prisma.concrete_notification.findMany({
-        where: {
-            userId: getUserIdTypeORM(student),
-            notificationID: { in: notificationIDs },
-        },
-    });
-    for (const notif of concreteNotificationsToCancel) {
-        await cancelNotification(notif);
-    }
-    await prisma.remission_request.delete({ where: { studentId: student.id } });
+    await Notification.actionTaken(student, 'coc_cancelled', {});
     await transactionLog.log(new CoCCancelledEvent(student));
 }

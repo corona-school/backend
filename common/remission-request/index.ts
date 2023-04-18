@@ -1,5 +1,5 @@
 import { Student as TypeORMStudent } from '../entity/Student';
-import { student as PrismaStudent } from '@prisma/client';
+import { student, student as PrismaStudent } from '@prisma/client';
 import { prisma } from '../prisma';
 import { randomBytes } from 'crypto';
 import { getLogger } from 'log4js';
@@ -105,4 +105,9 @@ export async function createRemissionRequestVerificationPage(remissionRequestUUI
         NAMESTUDENT: name,
         DATUM: remissionRequest.createdAt.toLocaleDateString('de-DE'),
     });
+}
+
+export async function cancelRemissionRequest(student: student) {
+    logger.info(`Cancelled remission request for Student(${student.id})`);
+    await prisma.remission_request.delete({ where: { studentId: student.id } });
 }
