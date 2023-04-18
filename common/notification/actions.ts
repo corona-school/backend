@@ -315,15 +315,14 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    'organizer-appointment-cancel': {
-        description: 'Organizer / Appointment Cancelled',
-        sampleContext: {
-            appointment: sampleAppointment,
-            organizers: sampleUser.firstname,
-            declinedOrganizer: sampleUser,
-            course: sampleCourse,
-            // redirectTo: 'organizer-appointment-cancel'
-        },
+    'student-cancel-appointment-group': {
+        appointment: sampleAppointment,
+        pupil: sampleUser,
+        course: sampleCourse,
+    },
+    'student-cancel-appointment-match': {
+        appointment: sampleAppointment,
+        pupil: sampleUser,
     },
 
     user_authenticate: DEPRECATED,

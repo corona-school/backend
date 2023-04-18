@@ -205,17 +205,13 @@ export class MutateAppointmentResolver {
         await prisma.lecture.update({ data: { isCanceled: true }, where: { id: appointment.id } });
         // * Send notification here
         const foundOrganizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
-        logger.info(`foundOrganizers: ${JSON.stringify(foundOrganizers)}`);
         const firstOrganizer = await getStudent(foundOrganizers[0].studentId);
         let organizersString = firstOrganizer.firstname;
-        logger.info(`first organizers Name: ${organizersString}`);
         for (let index = 1; index < foundOrganizers.length; index++) {
             const organizer = await getStudent(foundOrganizers[index].studentId);
             organizersString += `, ${organizer.firstname}`;
         }
 
-        logger.info(`Appointment Type: ${appointment.appointmentType}`);
-        logger.info(`ORGANIZER: ${organizersString}`);
         if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
             const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
             const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
@@ -223,8 +219,13 @@ export class MutateAppointmentResolver {
 
             for await (const participant of participants) {
                 const pupil = await getPupil(participant.pupilId);
-                await Notification.actionTaken(pupil, 'organizer-appointment-cancel', {
-                    appointment: appointment,
+                await Notification.actionTaken(pupil, 'student-cancel-appointment-group', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                    },
                     organizers: organizersString,
                     declinedOrganizer: context.user,
                     course,
@@ -232,13 +233,15 @@ export class MutateAppointmentResolver {
             }
         } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
             const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
-            logger.info(`MATCH: ${JSON.stringify(match)}`);
             const participant = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
-            logger.info(`PARTICIPANT: ${JSON.stringify(participant)}`);
             const pupil = await getPupil(participant.id);
-            logger.info(`PUPIL: ${JSON.stringify(pupil)}`);
-            await Notification.actionTaken(pupil, 'organizer-appointment-cancel', {
-                appointment: appointment,
+            await Notification.actionTaken(pupil, 'student-cancel-appointment-match', {
+                appointment: {
+                    ...appointment,
+                    day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
+                    date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                },
                 organizers: organizersString,
                 declinedOrganizer: context.user,
             });
