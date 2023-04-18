@@ -203,9 +203,10 @@ export class MutateAppointmentResolver {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
         await prisma.lecture.update({ data: { isCanceled: true }, where: { id: appointment.id } });
-        // * Send notification here
+
         const foundOrganizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
         const firstOrganizer = await getStudent(foundOrganizers[0].studentId);
+        const language = 'de-DE';
 
         if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
             const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
@@ -217,9 +218,9 @@ export class MutateAppointmentResolver {
                 await Notification.actionTaken(pupil, 'student-cancel-appointment-group', {
                     appointment: {
                         ...appointment,
-                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
-                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                     },
                     student: firstOrganizer,
                     user: context.user,
@@ -233,9 +234,9 @@ export class MutateAppointmentResolver {
             await Notification.actionTaken(pupil, 'student-cancel-appointment-match', {
                 appointment: {
                     ...appointment,
-                    day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
-                    date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                    time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                    day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                    date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                 },
                 student: firstOrganizer,
                 user: context.user,

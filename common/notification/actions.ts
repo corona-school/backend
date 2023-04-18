@@ -316,15 +316,21 @@ const _notificationActions = {
         },
     },
     'student-cancel-appointment-group': {
-        appointment: sampleAppointment,
-        student: sampleUser,
-        user: sampleUser,
-        course: sampleCourse,
+        description: 'Student / Group Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
     },
     'student-cancel-appointment-match': {
-        appointment: sampleAppointment,
-        student: sampleUser,
-        user: sampleUser,
+        description: 'Student / Match Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+        },
     },
 
     user_authenticate: DEPRECATED,
