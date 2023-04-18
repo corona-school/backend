@@ -104,7 +104,15 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     }
 }
 
-type CourseDecision = 'not-participant' | 'no-lectures' | 'subcourse-full' | 'grade-to-low' | 'grade-to-high' | 'already-started' | 'already-participant';
+type CourseDecision =
+    | 'not-participant'
+    | 'no-lectures'
+    | 'subcourse-full'
+    | 'grade-to-low'
+    | 'grade-to-high'
+    | 'already-started'
+    | 'already-participant'
+    | 'already-on-waitinglist';
 
 export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     if (!pupil.isParticipant) {
@@ -146,6 +154,9 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     }
     if ((await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0) {
         return { allowed: false, reason: 'already-participant' };
+    }
+    if ((await prisma.subcourse_waiting_list_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0) {
+        return { allowed: false, reason: 'already-on-waitinglist' };
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
