@@ -271,6 +271,9 @@ const _notificationActions = {
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
     },
+    coc_cancelled: {
+        description: 'Student / Certificate of Conduct Cancelled',
+    },
 
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',

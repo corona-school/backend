@@ -3,6 +3,8 @@ import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
+import { getTransactionLog } from '../transactionlog';
+import CoCCancelledEvent from '../transactionlog/types/CoCCancelledEvent';
 
 interface ScreeningInput {
     success: boolean;
@@ -22,6 +24,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
     });
 
     if (screening.success) {
+        await scheduleCoCReminders(student);
         await Notification.actionTaken(student, 'instructor_screening_success', {});
     } else {
         await Notification.actionTaken(student, 'instructor_screening_rejection', {});
@@ -47,7 +50,7 @@ export async function addTutorScreening(
 
     if (!batchMode) {
         if (screening.success) {
-            await ScheduleCoCReminders(student);
+            await scheduleCoCReminders(student);
             await Notification.actionTaken(student, 'tutor_screening_success', {});
         } else {
             await Notification.actionTaken(student, 'tutor_screening_rejection', {});
@@ -57,8 +60,8 @@ export async function addTutorScreening(
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
 }
 
-export async function ScheduleCoCReminders(student: Student) {
-    if (student.createdAt < new Date('2022-01-01')) {
+export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false) {
+    if (student.createdAt < new Date('2022-01-01') && !ignoreAccCreationDate) {
         return;
     }
 
@@ -72,4 +75,11 @@ export async function ScheduleCoCReminders(student: Student) {
 
     await createRemissionRequest(student);
     await Notification.actionTaken(student, 'coc_reminder', {});
+}
+
+export async function cancelCoCReminders(student: Student) {
+    const transactionLog = getTransactionLog();
+
+    await Notification.actionTaken(student, 'coc_cancelled', {});
+    await transactionLog.log(new CoCCancelledEvent(student));
 }

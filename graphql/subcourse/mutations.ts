@@ -272,7 +272,7 @@ export class MutateSubcourseResolver {
             if (moment(lecture.start).isBefore(currentDate)) {
                 throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
             }
-            const lectureCount = await prisma.lecture.count({ where: { subcourseId: subcourse.id }});
+            const lectureCount = await prisma.lecture.count({ where: { subcourseId: subcourse.id } });
             if (lectureCount <= 1) {
                 throw new ForbiddenError(`Last Lecture(${lecture.id}) of published Subcourse(${subcourse.id}) cannot be deleted`);
             }

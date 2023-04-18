@@ -93,16 +93,16 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
 
         if (course.courseState === 'allowed') {
-           let editableSubcourse = false;
-           for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
-             if (!subcourse.published || !(await subcourseOver(subcourse))) {
-                editableSubcourse = true;
-             }
-           }
+            let editableSubcourse = false;
+            for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
+                if (!subcourse.published || !(await subcourseOver(subcourse))) {
+                    editableSubcourse = true;
+                }
+            }
 
-           if (!editableSubcourse) {
+            if (!editableSubcourse) {
                 throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
-           }
+            }
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);

@@ -7,7 +7,7 @@ import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } 
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { addInstructorScreening, addTutorScreening } from '../../common/student/screening';
+import { addInstructorScreening, addTutorScreening, cancelCoCReminders, scheduleCoCReminders } from '../../common/student/screening';
 import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
@@ -27,11 +27,9 @@ import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { getLogger } from '../../common/logger/logger';
-import { getManager } from 'typeorm';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
-
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 
@@ -374,5 +372,24 @@ export class MutateStudentResolver {
             size: pdf.length,
         });
         return getFileURL(file);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentRequestCoC(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        await scheduleCoCReminders(student, true);
+        log.info(`Scheduled CoC reminder for Student(${studentId})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentCancelCoC(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        await cancelCoCReminders(student);
+
+        log.info(`Cancelled CoC reminder for Student(${studentId})`);
+        return true;
     }
 }
