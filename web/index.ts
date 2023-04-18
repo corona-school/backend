@@ -107,6 +107,7 @@ createConnection()
                     ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
                     'https://user-app-dev.herokuapp.com',
                     /^https:\/\/lernfair-user-app-[\-a-z0-9]+.herokuapp.com$/,
+                    'https://lern.retool.com'
                 ];
             } else {
                 origins = [
@@ -117,6 +118,7 @@ createConnection()
                     'https://my.lern-fair.de',
                     'https://app.lern-fair.de',
                     ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
+                    'https://lern.retool.com'
                 ];
             }
 
