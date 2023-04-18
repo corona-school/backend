@@ -30,11 +30,10 @@ const sampleCourse = {
 };
 
 const sampleAppointment = {
-    id: 1,
-    start: '2025-12-12T23:59:59.000Z',
-    duration: 90,
+    day: 'Sonntag',
+    date: '20. Juli 1969',
+    time: '19:17',
     title: 'Chapter 1',
-    description: 'First chapter of great history.',
 };
 
 const DEPRECATED = {
@@ -322,13 +321,19 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    participant_appointment_decline: {
-        description: 'Participant / Appointment Declined',
+    'pupil-decline-appointment-group': {
+        description: 'Pupil / Group Appointment Declined',
         sampleContext: {
             appointment: sampleAppointment,
+            pupil: sampleUser,
             course: sampleCourse,
-            participant: sampleUser,
-            redirectTo: `/appointments/${sampleAppointment.id}`,
+        },
+    },
+    'pupil-decline-appointment-match': {
+        description: 'Pupil / Match Appointment Declined',
+        sampleContext: {
+            appointment: sampleAppointment,
+            pupil: sampleUser,
         },
     },
 

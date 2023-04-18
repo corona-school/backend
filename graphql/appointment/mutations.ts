@@ -197,24 +197,35 @@ export class MutateAppointmentResolver {
 
         const appointmentType = appointment.appointmentType;
         const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
+        const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 
         if (appointmentType === lecture_appointmenttype_enum.group) {
             const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
             const course = await prisma.course.findFirst({ where: { id: subCourse.courseId } });
             for await (const organizer of organizers) {
                 const student = await getStudent(organizer.studentId);
-                await Notification.actionTaken(student, 'participant_appointment_decline', {
-                    appointment,
+                await Notification.actionTaken(student, 'pupil-decline-appointment-group', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    pupil,
                     course,
-                    participant: user,
                 });
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
             for await (const organizer of organizers) {
                 const student = await getStudent(organizer.studentId);
-                await Notification.actionTaken(student, 'participant_appointment_decline', {
-                    appointment,
-                    participant: user,
+                await Notification.actionTaken(student, 'pupil-decline-appointment-match', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    pupil,
                 });
             }
         } else {
