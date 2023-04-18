@@ -317,12 +317,14 @@ const _notificationActions = {
     },
     'student-cancel-appointment-group': {
         appointment: sampleAppointment,
-        pupil: sampleUser,
+        student: sampleUser,
+        user: sampleUser,
         course: sampleCourse,
     },
     'student-cancel-appointment-match': {
         appointment: sampleAppointment,
-        pupil: sampleUser,
+        student: sampleUser,
+        user: sampleUser,
     },
 
     user_authenticate: DEPRECATED,

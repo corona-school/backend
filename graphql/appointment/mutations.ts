@@ -206,11 +206,6 @@ export class MutateAppointmentResolver {
         // * Send notification here
         const foundOrganizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
         const firstOrganizer = await getStudent(foundOrganizers[0].studentId);
-        let organizersString = firstOrganizer.firstname;
-        for (let index = 1; index < foundOrganizers.length; index++) {
-            const organizer = await getStudent(foundOrganizers[index].studentId);
-            organizersString += `, ${organizer.firstname}`;
-        }
 
         if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
             const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
@@ -226,8 +221,8 @@ export class MutateAppointmentResolver {
                         date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
                         time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
                     },
-                    organizers: organizersString,
-                    declinedOrganizer: context.user,
+                    student: firstOrganizer,
+                    user: context.user,
                     course,
                 });
             }
@@ -242,8 +237,8 @@ export class MutateAppointmentResolver {
                     date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
                     time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
                 },
-                organizers: organizersString,
-                declinedOrganizer: context.user,
+                student: firstOrganizer,
+                user: context.user,
             });
         } else {
             logger.error(`Couldn't send notification to pupils of Appointment (id: ${appointment.id})`);
