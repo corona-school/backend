@@ -195,6 +195,7 @@ export class MutateAppointmentResolver {
                 throw new Error(`Cannot decline appointment with user type: ${userType}`);
         }
 
+        const language = 'de-DE';
         const appointmentType = appointment.appointmentType;
         const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
         const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
@@ -207,9 +208,9 @@ export class MutateAppointmentResolver {
                 await Notification.actionTaken(student, 'pupil-decline-appointment-group', {
                     appointment: {
                         ...appointment,
-                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
-                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                     },
                     pupil,
                     course,
@@ -221,9 +222,9 @@ export class MutateAppointmentResolver {
                 await Notification.actionTaken(student, 'pupil-decline-appointment-match', {
                     appointment: {
                         ...appointment,
-                        day: appointment.start.toLocaleString('de-DE', { weekday: 'long' }),
-                        date: `${appointment.start.toLocaleString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                        time: `${appointment.start.toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                     },
                     pupil,
                 });
