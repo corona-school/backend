@@ -1,7 +1,7 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser } from '../authentication';
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { prisma } from '../../common/prisma';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { setProjectFields } from '../../common/student/update';
@@ -58,7 +58,7 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 
 @InputType()
-class RegisterStudentInput implements RegisterStudentData {
+export class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -88,7 +88,7 @@ class RegisterStudentInput implements RegisterStudentData {
 }
 
 @InputType()
-class RegisterPupilInput implements RegisterPupilData {
+export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -159,7 +159,7 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 @InputType()
-class BecomeTutorInput implements BecomeTutorData {
+export class BecomeTutorInput implements BecomeTutorData {
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
 
@@ -202,7 +202,7 @@ class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
 }
 
 @InputType()
-class BecomeTuteeInput implements BecomeTuteeData {
+export class BecomeTuteeInput implements BecomeTuteeData {
     @Field((type) => [Subject])
     subjects: Subject[];
 
@@ -372,6 +372,9 @@ export class MutateMeResolver {
         await becomeInstructor(student, data);
         log.info(`Student(${student.id}) requested to become an instructor`);
 
+        // User gets the WANNABE_INSTRUCTOR role
+        await updateSessionUser(context, userForStudent(student));
+
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
         return true;
@@ -389,7 +392,8 @@ export class MutateMeResolver {
 
         await becomeTutor(student, data);
 
-        log.info(`Student(${student.id}) requested to become a tutor`);
+        // User gets the WANNABE_TUTOR role
+        await updateSessionUser(context, userForStudent(student));
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 

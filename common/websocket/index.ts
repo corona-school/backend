@@ -1,5 +1,5 @@
 import { Server } from 'http';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as createUuid } from 'uuid';
 import { getUserForSession, GraphQLUser } from '../user/session';
@@ -84,7 +84,7 @@ class WebSocketService {
         this.getConnectedUsers().forEach((connection, userid) => (connections[userid] = [...connection.keys()]));
 
         log.debug(`Connected user ids: ${[...this.getConnectedUsers().keys()]}`);
-        log.debug('Websocket connections: ', JSON.stringify(connections));
+        log.debug('Websocket connections: ', { connections: JSON.stringify(connections) });
     }
 
     /**

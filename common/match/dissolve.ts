@@ -1,6 +1,6 @@
 import { match as Match, pupil as Pupil, student as Student } from '@prisma/client';
 import { sendTemplateMail, mailjetTemplates } from '../mails';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { isStudent, isPupil } from '../user';
 import { logTransaction } from '../transactionlog/log';

@@ -2,7 +2,7 @@ import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prism
 import { sendParticipantRegistrationConfirmationMail } from '../mails/courses';
 import { getTransactionLog } from '../transactionlog';
 import ParticipantJoinedCourseEvent from '../transactionlog/types/ParticipantJoinedCourseEvent';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import ParticipantLeftCourseEvent from '../transactionlog/types/ParticipantLeftCourseEvent';
 import moment from 'moment';

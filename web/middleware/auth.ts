@@ -3,7 +3,7 @@ import { getManager } from "typeorm";
 import { Student } from "../../common/entity/Student";
 import { Pupil } from "../../common/entity/Pupil";
 import { hashToken } from "../../common/util/hashing";
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { Expertise, Mentor } from "../../common/entity/Mentor";
 
 const logger = getLogger();
@@ -133,20 +133,4 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
             logger.error("Error in auth check: " + e.message);
         }
     };
-}
-
-export async function screenerAuthCheck(req: Request, res: Response, next) {
-    if (req.method == "OPTIONS") {
-        next();
-    }
-
-    const token = req.get("Token");
-    if (token != undefined) {
-        if (token === process.env.SCREENER_AUTH_TOKEN) {
-            return next();
-        }
-    }
-    res.status(403).send("Invalid token specified.")
-        .end();
-    return;
 }

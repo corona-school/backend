@@ -6,7 +6,7 @@ import { deactivateStudent } from '../../common/student/activation';
 import { getStudent } from '../util';
 import * as CertificateOfConduct from '../../common/certificate-of-conduct/certificateOfConduct';
 import { updateCertificateOfConduct } from '../../common/student';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 const logger = getLogger('Certificate of Conduct');
 
 @Resolver((of) => GraphQLModel.Certificate_of_conduct)

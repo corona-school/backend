@@ -2,7 +2,7 @@ import { Student as TypeORMStudent } from '../entity/Student';
 import { student, student as PrismaStudent } from '@prisma/client';
 import { prisma } from '../prisma';
 import { randomBytes } from 'crypto';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import EJS from 'ejs';
 import { existsSync, readFileSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';

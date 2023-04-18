@@ -1,6 +1,6 @@
 import cron from "cron";
 import {Mutex} from 'async-mutex';
-import { getLogger } from "log4js";
+import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, EntityManager } from "typeorm";
 import { CSCronJob } from "./types";
 import { invalidateActiveTransactionLog } from "../common/transactionlog";
@@ -47,7 +47,7 @@ function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectio
             //execute the job with the manager
             await job(manager);
         } catch (e) {
-            logger.error(`Can't execute job: ${job.name} due to error with message: ${e.message}`);
+            logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
             logger.debug(e);
         }
 

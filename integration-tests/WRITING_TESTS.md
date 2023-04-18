@@ -7,7 +7,7 @@
 To run integration tests locally, ensure that the environment variables `ADMIN_AUTH_TOKEN` and `INTEGRATION_TARGET` are set correctly in your `.env` (i.e. take them over from `.env.example`) and `SKIP_NOTIFICATION_IMPORT` is also set. Then start the Backend with `npm run web:nopdf` and run the integration tests with `npm run integration-tests:local`, or copy and paste these into a shell:
 ```
 SKIP_NOTIFICATION_IMPORT=true ADMIN_AUTH_TOKEN=admin npm run web
-NTEGRATION_TARGET=http://localhost:5000/apollo ADMIN_AUTH_TOKEN=admin npm run integration-tests
+INTEGRATION_TARGET=http://localhost:5000/apollo ADMIN_AUTH_TOKEN=admin npm run integration-tests
 ```
 
 To write a new integration test, add a new Typescript file to `/integration-tests` and import it from `index.ts`.

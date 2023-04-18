@@ -1,5 +1,5 @@
 import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
@@ -11,7 +11,7 @@ import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
-import { canPublish, subcourseOver } from '../../common/courses/states';
+import { canPublish, cancelSubcourse, editSubcourse, publishSubcourse, subcourseOverGracePeriod } from '../../common/courses/states';
 import { getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
@@ -20,6 +20,7 @@ import { getFile } from '../files';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
+import moment from 'moment';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -118,18 +119,10 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
-        const course = await getCourse(subcourse.courseId);
 
         await hasAccess(context, 'Subcourse', subcourse);
 
-        const can = await canPublish(subcourse);
-        if (!can.allowed) {
-            throw new Error(`Cannot Publish Subcourse(${subcourseId}), reason: ${can.reason}`);
-        }
-        await sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
-
-        await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourseId } });
-        logger.info(`Subcourse (${subcourseId}) was published`);
+        await publishSubcourse(subcourse);
         return true;
     }
 
@@ -152,25 +145,8 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
-        if (subcourse.published && subcourseOver(subcourse)) {
-            throw new ForbiddenError('Cannot edit subcourse that has already finished');
-        }
 
-        const isMaxParticipantsChanged: boolean = Boolean(data.maxParticipants);
-
-        if (isMaxParticipantsChanged) {
-            const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-            if (data.maxParticipants < participantCount) {
-                throw new ForbiddenError(`Decreasing the number of max participants below the current number of participants is not allowed`);
-            }
-        }
-
-        const result = await prisma.subcourse.update({ data: { ...data }, where: { id: subcourseId } });
-
-        if (isMaxParticipantsChanged) {
-            await fillSubcourse(result);
-        }
-        return result;
+        return await editSubcourse(subcourse, data);
     }
 
     @Mutation((returns) => Boolean)
@@ -178,10 +154,9 @@ export class MutateSubcourseResolver {
     async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
-        const course = await getCourse(subcourse.courseId);
-        sendSubcourseCancelNotifications(course, subcourse);
-        logger.info(`Subcourse (${subcourse.id}) was cancelled`);
+
+        await cancelSubcourse(subcourse);
+
         return true;
     }
 
@@ -275,8 +250,8 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        let currentDate = new Date();
-        if (+lecture.start < +currentDate) {
+        let currentDate = moment();
+        if (moment(lecture.start).isBefore(currentDate)) {
             throw new UserInputError(`Lecture of subcourse (${subcourseId}) must happen in the future.`);
         }
 
@@ -291,12 +266,18 @@ export class MutateSubcourseResolver {
         const lecture = await getLecture(lectureId);
         const subcourse = await getSubcourse(lecture.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        let currentDate = new Date();
-        if (subcourse.published && +lecture.start < +currentDate) {
-            throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
-        } /* else if (subcourse.published) {
-            throw new ForbiddenError(`Lecture (${lecture.id}) of a published subcourse (${subcourse.id}) can't be deleted`);
-        } */
+
+        if (subcourse.published) {
+            let currentDate = moment();
+            if (moment(lecture.start).isBefore(currentDate)) {
+                throw new ForbiddenError(`Past lecture (${lecture.id}) of subcourse (${subcourse.id}) can't be deleted.`);
+            }
+            const lectureCount = await prisma.lecture.count({ where: { subcourseId: subcourse.id } });
+            if (lectureCount <= 1) {
+                throw new ForbiddenError(`Last Lecture(${lecture.id}) of published Subcourse(${subcourse.id}) cannot be deleted`);
+            }
+        }
+
         await prisma.lecture.delete({ where: { id: lecture.id } });
         logger.info(`Lecture (${lecture.id}) was deleted`);
         return true;

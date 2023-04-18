@@ -68,6 +68,8 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             context.user.roles.push(Role.TUTOR);
+        } else {
+            context.user.roles.push(Role.WANNABE_TUTOR);
         }
     }
 
@@ -85,6 +87,8 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
         if (wasInstructorScreened) {
             logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
             context.user.roles.push(Role.INSTRUCTOR);
+        } else {
+            context.user.roles.push(Role.WANNABE_INSTRUCTOR);
         }
     }
 }

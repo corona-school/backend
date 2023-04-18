@@ -5,7 +5,7 @@ import { mailjetTemplates, sendTemplateMail } from '../mails';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool, MatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';

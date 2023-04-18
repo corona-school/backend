@@ -1,4 +1,4 @@
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { Request, Response } from "express";
 import { getManager } from "typeorm";
 import { Person } from "../../../common/entity/Person";

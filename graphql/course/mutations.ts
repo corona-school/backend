@@ -1,7 +1,7 @@
 import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
 import { getFile } from '../files';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -16,6 +16,7 @@ import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 import { course_schooltype_enum, course_subject_enum } from '../generated';
 import { ForbiddenError } from '../error';
 import { subcourseOver } from '../../common/courses/states';
+import { CourseState } from '../../common/entity/Course';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -90,9 +91,18 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        const subcourses = await getSubcoursesForCourse(courseId, true);
-        if (course.courseState === 'allowed' && subcourses.every((subcourse) => subcourse.published && subcourseOver(subcourse))) {
-            throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
+
+        if (course.courseState === 'allowed') {
+            let editableSubcourse = false;
+            for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
+                if (!subcourse.published || !(await subcourseOver(subcourse))) {
+                    editableSubcourse = true;
+                }
+            }
+
+            if (!editableSubcourse) {
+                throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
+            }
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
@@ -190,8 +200,17 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await getCourse(courseId);
-        await prisma.course.update({ data: { screeningComment, courseState: 'allowed' }, where: { id: courseId } });
-        logger.info(`Admin allowed (approved) course ${courseId} with screening comment: ${screeningComment}`);
+        await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: courseId } });
+        logger.info(`Admin allowed (approved) Course(${courseId}) with screening comment: ${screeningComment}`, { courseId });
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async courseDeny(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
+        await getCourse(courseId);
+        await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: courseId } });
+        logger.info(`Admin denied Course${courseId}) with screening comment: ${screeningComment}`, { courseId });
         return true;
     }
 

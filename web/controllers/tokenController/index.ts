@@ -1,4 +1,4 @@
-import { getLogger } from "log4js";
+import { getLogger } from '../../../common/logger/logger';
 import { Request, Response } from "express";
 import { getManager } from "typeorm";
 import { Person } from "../../../common/entity/Person";
@@ -197,7 +197,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                         status = 400;
                     }
 
-                    logger.info("Sending new auth token to user", person.id);
+                    logger.info("Sending new auth token to user", { personID: person.id });
 
                     // Generate a new UUID
                     const uuid = uuidv4();
@@ -205,7 +205,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     person.authTokenSent = new Date();
                     person.authTokenUsed = false;
 
-                    logger.info("Generated and sending UUID " + uuid + " to " + person.email);
+                    logger.info("Generated and sending UUID " + uuid + " to " + person.email, { mail: person.email, uuid });
                     await sendLoginTokenMail(person, uuid, req.query.redirectTo as string);
 
 
@@ -214,12 +214,12 @@ export async function getNewTokenHandler(req: Request, res: Response) {
                     await transactionLog.log(new VerifiedEvent(person));
                 } else {
                     // rate limited
-                    logger.info("Not sending auth token: rate limit time not passed yet", person.authTokenSent);
+                    logger.info("Not sending auth token: rate limit time not passed yet", { authTokenSent: person.authTokenSent });
                     status = 403;
                 }
             } else {
                 // email not found
-                logger.info("Not sending auth token: email/person not found", email);
+                logger.info("Not sending auth token: email/person not found", { mail: email });
                 status = 404;
             }
         } else {
@@ -227,8 +227,7 @@ export async function getNewTokenHandler(req: Request, res: Response) {
             status = 400;
         }
     } catch (e) {
-        logger.error("Failed to send or safe new auth token: ", e.message);
-        logger.debug(e);
+        logger.error("Failed to send or safe new auth token: ", { error: e });
         status = 500;
     }
 
@@ -274,7 +273,6 @@ export async function sendLoginTokenMail(person: Pupil | Student, token: string,
             dashboardURL
         });
     } catch (e) {
-        logger.error("Can't send login token mail: ", e.message);
-        logger.debug(e);
+        logger.error("Can't send login token mail: ", { error: e });
     }
 }

@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { getLogger } from "log4js";
+import { getLogger } from '../../../../../common/logger/logger';
 import { sendTemplateMail, mailjetTemplates } from "../../../../../common/mails";
 import { Person } from "../../../../../common/entity/Person";
 
@@ -13,7 +13,7 @@ export function generateToken(): string {
         .toString("base64")
         .replace(/\//g, "-")
         .replace(/\+/g, "_");
-    logger.debug("Generated token: ", token);
+    logger.debug("Generated token: ", { token });
     return token;
 }
 
@@ -29,7 +29,7 @@ export async function sendVerificationMail(person: Person, redirectTo?: string) 
         });
         await sendTemplateMail(mail, person.email);
     } catch (e) {
-        logger.error("Can't send verification mail: ", e.message);
+        logger.error("Can't send verification mail: ", e);
         logger.debug(e);
     }
 }

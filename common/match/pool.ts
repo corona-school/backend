@@ -6,11 +6,11 @@ import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
-import { getLogger } from 'log4js';
+import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
-import { userSearch } from '../user';
+import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
 
@@ -156,7 +156,7 @@ function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): Subjec
 }
 
 const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
-type InterestConfirmationToggle = typeof INTEREST_CONFIRMATION_TOGGLES[number];
+type InterestConfirmationToggle = (typeof INTEREST_CONFIRMATION_TOGGLES)[number];
 
 function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: string[] | InterestConfirmationToggle[]) {
     if (+toggles.includes('confirmation-success') + +toggles.includes('confirmation-pending') + +toggles.includes('confirmation-unknown') > 1) {
@@ -183,7 +183,7 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
 }
 
 const PUPIL_SCREENING_TOGGLES = ['pupil-screening-unknown', 'pupil-screening-success', 'pupil-screening-pending'] as const;
-type PupilScreeningToggle = typeof PUPIL_SCREENING_TOGGLES[number];
+type PupilScreeningToggle = (typeof PUPIL_SCREENING_TOGGLES)[number];
 
 function addPupilScreeningFilter(query: Prisma.pupilWhereInput, toggles: string[] | PupilScreeningToggle[]) {
     if (+toggles.includes('pupil-screening-success') + +toggles.includes('pupil-screening-pending') + +toggles.includes('pupil-screening-unknown') > 1) {
@@ -314,7 +314,7 @@ const _pools = [
     },
 ] as const;
 export const pools: Readonly<MatchPool[]> = _pools;
-export type ConcreteMatchPool = typeof _pools[number];
+export type ConcreteMatchPool = (typeof _pools)[number];
 
 /* ---------------------- MATCHING RUNS ----------------------------- */
 

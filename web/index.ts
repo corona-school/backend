@@ -1,7 +1,3 @@
-// This has to be the first line in the project, so that the logger is configured before all the imports are executed.
-// Otherwise, we might initialize new loggers within the imports, which will not be configured properly and so not working.
-import('./setupLogger');
-
 import express from 'express';
 import http from 'http';
 import bodyParser from 'body-parser';
@@ -12,16 +8,16 @@ import * as userController from './controllers/userController';
 import * as tokenController from './controllers/tokenController';
 import * as matchController from './controllers/matchController';
 import * as projectMatchController from './controllers/projectMatchController';
-import * as screeningController from './controllers/screeningController';
 import * as certificateController from './controllers/certificateController';
 import * as courseController from './controllers/courseController';
 import * as registrationController from './controllers/registrationController';
 import * as mentoringController from './controllers/mentoringController';
 import * as expertController from './controllers/expertController';
 import * as interestConfirmationController from './controllers/interestConfirmationController';
-import { connectLogger, getLogger } from 'log4js';
+import { connectLogger } from 'log4js';
+import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
-import { authCheckFactory, screenerAuthCheck } from './middleware/auth';
+import { authCheckFactory } from './middleware/auth';
 import { setupDevDB } from './dev';
 import favicon from 'express-favicon';
 import { allStateCooperationSubdomains } from '../common/entity/State';
@@ -71,7 +67,7 @@ createConnection()
     .then(setupPDFGenerationEnvironment)
     .then(async () => {
         logger.info('Database connected');
-        app.use(connectLogger(accessLogger, { level: 'auto' }));
+        app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
 
         // Express setup
         app.use(bodyParser.json());
@@ -91,7 +87,6 @@ createConnection()
         configureUserAPI();
         configureTokenAPI();
         configureCourseAPI();
-        configureScreenerAPI();
         configureCoursesAPI();
         configureRegistrationAPI();
         configureMentoringAPI();
@@ -277,24 +272,6 @@ createConnection()
             registrationRouter.post('/checkEmail', checkEmailRateLimit, registrationController.checkEmail);
             registrationRouter.get('/schools/:state?', registrationController.getSchoolsHandler);
             app.use('/api/register', registrationRouter);
-        }
-
-        function configureScreenerAPI() {
-            const screenerApiRouter = express.Router();
-            screenerApiRouter.use(screenerAuthCheck);
-            screenerApiRouter.get('/student', screeningController.getStudents);
-            screenerApiRouter.get('/student/:email', screeningController.getStudentByMailHandler);
-            screenerApiRouter.put('/student/:email', screeningController.updateStudentByMailHandler);
-            screenerApiRouter.get('/screener/:email/:includepassword', screeningController.getScreenerByMailHandler);
-            screenerApiRouter.post('/screener/', screeningController.addScreenerHandler);
-            screenerApiRouter.put('/screener/:email', screeningController.updateScreenerByMailHandler);
-            screenerApiRouter.get('/courses', screeningController.getCourses);
-            screenerApiRouter.get('/courses/tags', screeningController.getCourseTags);
-            screenerApiRouter.post('/courses/tags/create', screeningController.postCreateCourseTag);
-            screenerApiRouter.post('/course/:id/update', screeningController.updateCourse);
-            screenerApiRouter.get('/instructors', screeningController.getInstructors);
-
-            app.use('/api/screening', screenerApiRouter);
         }
 
         function configureParticipationCertificateAPI() {

@@ -4,7 +4,7 @@ import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-grap
 import { prisma } from '../../common/prisma';
 import { createToken } from '../../common/secret';
 import { userForScreener } from '../../common/user';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 import { getScreener } from '../util';
 import { ValidateEmail } from '../validators';
 
