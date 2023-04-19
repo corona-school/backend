@@ -8,7 +8,7 @@ export abstract class MessageTemplateType implements TranslationTemplate {
     headline: string;
     @Field((_type) => String)
     body: string;
-    @Field((_type) => String)
+    @Field((_type) => String, { nullable: true })
     modalText?: string;
 }
 
@@ -18,7 +18,7 @@ export abstract class NotificationMessageType implements NotificationMessage {
     headline: string;
     @Field((_type) => String)
     body: string;
-    @Field((_type) => String)
+    @Field((_type) => String, { nullable: true })
     modalText?: string;
     @Field((_type) => String)
     type: NotificationType;
