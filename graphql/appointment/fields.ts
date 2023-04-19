@@ -7,6 +7,7 @@ import { LimitEstimated } from '../../graphql/complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserType } from '../../common/user';
 import { Deprecated } from '../../graphql/util';
+import { lecture_appointmenttype_enum } from '@prisma/client';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -245,5 +246,62 @@ export class ExtendedFieldsLectureResolver {
             return await prisma.lecture.count({ where: { matchId: appointment.matchId } });
         }
         throw new Error('Cannot determine total of loose appointment');
+    }
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER)
+    async displayName(@Ctx() context: GraphQLContext, @Root() appointment: Appointment): Promise<string> {
+        switch (appointment.appointmentType) {
+            case lecture_appointmenttype_enum.match: {
+                let isOrganizer;
+
+                if (!isElevated(context) && !isSessionStudent(context)) {
+                    isOrganizer = false;
+                } else {
+                    isOrganizer =
+                        (await prisma.appointment_organizer.count({ where: { appointmentId: appointment.id, studentId: context.user.studentId } })) > 0;
+                }
+
+                if (isOrganizer) {
+                    const participant = await prisma.pupil.findFirst({
+                        where: {
+                            appointment_participant_pupil: {
+                                some: {
+                                    appointmentId: appointment.id,
+                                },
+                            },
+                        },
+                        select: {
+                            firstname: true,
+                            lastname: true,
+                        },
+                    });
+
+                    return `${participant.firstname} ${participant.lastname}`;
+                } else {
+                    const organizers = await prisma.student.findFirst({
+                        where: {
+                            appointment_organizer: {
+                                some: {
+                                    appointmentId: appointment.id,
+                                },
+                            },
+                        },
+
+                        select: {
+                            firstname: true,
+                            lastname: true,
+                        },
+                    });
+                    return `${organizers.firstname} ${organizers.lastname}`;
+                }
+            }
+            case lecture_appointmenttype_enum.group: {
+                const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId } });
+                const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
+                return course.name;
+            }
+            default:
+                return appointment.title;
+        }
     }
 }
