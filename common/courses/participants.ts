@@ -152,11 +152,8 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
         return { allowed: false, reason: 'already-started' };
     }
-    if ((await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0) {
+    if (isParticipant(subcourse, pupil)) {
         return { allowed: false, reason: 'already-participant' };
-    }
-    if ((await prisma.subcourse_waiting_list_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0) {
-        return { allowed: false, reason: 'already-on-waitinglist' };
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
