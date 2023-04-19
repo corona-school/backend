@@ -222,14 +222,18 @@ export async function getMessage(
         return null;
     }
 
-    const { type, headline, body, navigateTo } = message;
-
-    return {
+    const { type, headline, body, modalText, navigateTo } = message;
+    const result = {
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
         navigateTo,
     };
+
+    if (modalText) {
+        return { ...result, modalText: renderTemplate(modalText, context) };
+    }
+    return result;
 }
 
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities

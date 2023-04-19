@@ -29,13 +29,17 @@ export async function getMessageForNotification(
         return null;
     }
 
-    const { headline, body } = translation.template;
+    const { headline, body, modalText } = translation.template;
 
     if (!body || !headline) {
         return null;
     }
 
-    return { body, headline, navigateTo: translation.navigateTo, type: notification.type as NotificationType };
+    if (!modalText) {
+        return { body, headline, navigateTo: translation.navigateTo, type: notification.type as NotificationType };
+    }
+
+    return { body, headline, modalText, navigateTo: translation.navigateTo, type: notification.type as NotificationType };
 }
 
 export async function setMessageTranslation({
@@ -43,12 +47,14 @@ export async function setMessageTranslation({
     language,
     body,
     headline,
+    modalText,
     navigateTo,
 }: {
     notification: Notification;
     language: MessageTranslationLanguage;
     body: string;
     headline: string;
+    modalText?: string;
     navigateTo?: string;
 }): Promise<void> {
     const sampleContext = getSampleContext(notification);
@@ -84,13 +90,21 @@ export async function setMessageTranslation({
         abortWithError(error, 'headline', headline);
     }
 
+    if (modalText) {
+        try {
+            renderTemplate(modalText, sampleContext, true);
+        } catch (error) {
+            abortWithError(error, 'modalText', modalText);
+        }
+    }
+
     // Atomically swap the template for this (notification, language)
     await prisma.$transaction([
         // eslint-disable-next-line lernfair-lint/prisma-laziness
         prisma.message_translation.deleteMany({ where: { language, notificationId: notification.id } }),
         // eslint-disable-next-line lernfair-lint/prisma-laziness
         prisma.message_translation.create({
-            data: { language, notificationId: notification.id, template: { body, headline }, navigateTo },
+            data: { language, notificationId: notification.id, template: { body, headline, modalText }, navigateTo },
         }),
     ]);
 }

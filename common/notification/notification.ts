@@ -14,6 +14,7 @@ type MessageTranslationFromDb = {
     template: {
         body: string;
         headline: string;
+        modalText?: string;
     };
     id: number;
     notificationId: number;

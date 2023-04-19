@@ -86,6 +86,7 @@ type Template = string;
 export interface TranslationTemplate {
     headline: Template;
     body: Template;
+    modalText?: Template;
 }
 
 export interface NotificationMessage extends TranslationTemplate {
