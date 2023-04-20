@@ -84,7 +84,17 @@ export class MutateUserResolver {
         section('LOGS', 1);
         result += logs.join('\n');
 
-        logger.info(`An issue was reported from the frontend: \n` + result);
+        const logger = getLogger('IssueReporter');
+        logger.addContext('issureTag', issueTag);
+        logger.addContext('userAgent', userAgent);
+
+        logs.map((log) => logger.info(log));
+        const err: Error = {
+            name: 'IssueReporter',
+            stack: errorStack,
+            message: errorMessage,
+        };
+        logger.error(errorMessage, err);
 
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
