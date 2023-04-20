@@ -8,6 +8,7 @@ import {
     ManyToMany,
     ManyToOne,
     OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
@@ -16,6 +17,7 @@ import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
 import moment from 'moment';
+import { WaitingListEnrollment } from './WaitingListEnrollment';
 
 @Entity()
 export class Subcourse {
@@ -45,6 +47,9 @@ export class Subcourse {
     })
     @JoinTable()
     waitingList: Pupil[];
+
+    @OneToMany(() => WaitingListEnrollment, (enrollment) => enrollment.course)
+    waitingListEnrollments: WaitingListEnrollment[];
 
     @OneToMany((type) => Lecture, (lecture) => lecture.subcourse, {
         eager: true,
