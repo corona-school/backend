@@ -663,12 +663,12 @@ model pupil_screening {
 }
 
 model waiting_list_enrollment {
-  id        Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
-  createdAt DateTime   @default(now()) @db.Timestamp(6)
-  pupilId   Int?
-  courseId  Int?
-  subcourse subcourse? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_9e2dc1ebf5da98479063d50aaa0")
-  pupil     pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
+  id          Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  pupilId     Int?
+  subcourseId Int?
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4c3bda70e61547bcdb61e85a110")
+  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
 }
 
 enum course_category_enum {

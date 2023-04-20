@@ -320,7 +320,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         const pupil = await getPupil(pupilId);
 
-        const isOnWaitingList = (await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
+        const isOnWaitingList = (await prisma.waiting_list_enrollment.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
         if (!isOnWaitingList) {
             throw new PrerequisiteError(
                 `Pupil(${pupil.id}) is not on the waitinglist of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`

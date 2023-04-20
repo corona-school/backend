@@ -203,6 +203,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Secret: { _all: nobody },
     Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
     Pupil_screening: allAdmin,
+    Waiting_list_enrollment: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -265,7 +266,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             wix_creation_date: nobody,
             isRedacted: nobody,
             // these have cleaner variants in the data model:
-            subjects: nobody, // -> subjectsFormatted
+            subjects: nobody,
             pupil_screening: adminOrOwner,
 
             // these are associations which are wrongly in the TypeGraphQL generation
@@ -279,6 +280,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             match: nobody,
             _count: nobody,
+            waiting_list_enrollment: nobody,
         }),
     },
 
@@ -387,6 +389,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
+            waiting_list_enrollment: adminOrOwner,
         }),
     },
     Course: {

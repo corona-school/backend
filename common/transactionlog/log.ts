@@ -29,6 +29,7 @@ type LogData<Type extends LogType> = {
     updateStudentDescription: never;
     createdCourse: { id: number };
     certificateRequest: { uuid: string };
+    cocCancel: {};
     cancelledCourse: { id: number };
     cancelledSubcourse: { id: number };
     createdCourseAttendanceLog: { courseAttendanceLog: CourseAttendanceLog };

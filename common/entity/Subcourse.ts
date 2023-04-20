@@ -48,7 +48,7 @@ export class Subcourse {
     @JoinTable()
     waitingList: Pupil[];
 
-    @OneToMany(() => WaitingListEnrollment, (enrollment) => enrollment.course)
+    @OneToMany(() => WaitingListEnrollment, (enrollment) => enrollment.subcourse)
     waitingListEnrollments: WaitingListEnrollment[];
 
     @OneToMany((type) => Lecture, (lecture) => lecture.subcourse, {
