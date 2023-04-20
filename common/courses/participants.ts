@@ -96,6 +96,13 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
         },
     });
 
+    const queueEnrollmentDeletions = await prisma.waiting_list_enrollment.deleteMany({
+        where: {
+            pupilId: pupil.id,
+            subcourse: subcourse.id,
+        },
+    });
+
     if (waitingListDeletion.count === 1) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
         await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });

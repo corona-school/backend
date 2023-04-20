@@ -14,5 +14,5 @@ export class WaitingListEnrollment {
     pupil: Pupil;
 
     @ManyToOne(() => Subcourse, (subcourse) => subcourse.waitingListEnrollments)
-    course: Subcourse;
+    subcourse: Subcourse;
 }

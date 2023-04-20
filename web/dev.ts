@@ -910,7 +910,8 @@ export async function setupDevDB() {
     subcourse2.instructors = [s1];
     subcourse2.maxParticipants = 10;
     subcourse2.published = true;
-    subcourse2.participants = pupils;
+    subcourse2.participants = pupils.slice(0, pupils.length - 2);
+    subcourse2.waitingList = pupils.slice(-2);
 
     subcourses.push(subcourse2);
 

@@ -393,6 +393,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+  waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -554,6 +555,7 @@ model subcourse {
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
+  waiting_list_enrollment          waiting_list_enrollment[]
 }
 
 model subcourse_instructors_student {
@@ -660,6 +662,15 @@ model pupil_screening {
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 }
 
+model waiting_list_enrollment {
+  id        Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
+  createdAt DateTime   @default(now()) @db.Timestamp(6)
+  pupilId   Int?
+  courseId  Int?
+  subcourse subcourse? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_9e2dc1ebf5da98479063d50aaa0")
+  pupil     pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
+}
+
 enum course_category_enum {
   language
   focus
@@ -698,6 +709,7 @@ enum log_logtype_enum {
   updateStudentDescription
   createdCourse
   certificateRequest
+  cocCancel
   cancelledCourse
   cancelledSubcourse
   createdCourseAttendanceLog
