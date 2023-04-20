@@ -104,7 +104,15 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     }
 }
 
-type CourseDecision = 'not-participant' | 'no-lectures' | 'subcourse-full' | 'grade-to-low' | 'grade-to-high' | 'already-started';
+type CourseDecision =
+    | 'not-participant'
+    | 'no-lectures'
+    | 'subcourse-full'
+    | 'grade-to-low'
+    | 'grade-to-high'
+    | 'already-started'
+    | 'already-participant'
+    | 'already-on-waitinglist';
 
 export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     if (!pupil.isParticipant) {
@@ -143,6 +151,9 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     }
     if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
         return { allowed: false, reason: 'already-started' };
+    }
+    if (isParticipant(subcourse, pupil)) {
+        return { allowed: false, reason: 'already-participant' };
     }
 
     const pupilGrade = gradeAsInt(pupil.grade);
