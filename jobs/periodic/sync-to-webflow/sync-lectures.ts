@@ -36,6 +36,8 @@ function lectureToDTO(lecture: lecture): LectureDTO {
 }
 
 export default async function syncLectures(logger: Logger): Promise<void> {
+    logger.addContext('CMSCollection', 'Lectures');
+
     logger.info('Start lecture sync');
     const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
     const subCourses = await getWebflowSubcourses();
@@ -47,9 +49,12 @@ export default async function syncLectures(logger: Logger): Promise<void> {
     const result = diff(webflowLectures, dbLectures);
     logger.debug('Webflow lecture diff', { result });
 
+    const newIds: string[] = [];
     for (const row of result.new) {
-        await createNewItem(lectureCollectionId, row);
+        const newId = await createNewItem(lectureCollectionId, row);
+        newIds.push(newId);
     }
+    logger.info('created new items', { itemIds: newIds });
 
     if (result.outdated.length > 0) {
         const outdatedIds = result.outdated.map((row) => row._id);
