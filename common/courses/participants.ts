@@ -66,7 +66,7 @@ export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
 
 export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
     return (
-        (await prisma.subcourse_waiting_list_pupil.count({
+        (await prisma.waiting_list_enrollment.count({
             where: { pupilId: pupil.id, subcourseId: subcourse.id },
         })) > 0
     );
@@ -78,9 +78,6 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
     }
 
     try {
-        // await prisma.subcourse_waiting_list_pupil.create({
-        //     data: { pupilId: pupil.id, subcourseId: subcourse.id },
-        // });
         await prisma.waiting_list_enrollment.create({
             data: {
                 subcourseId: subcourse.id,
@@ -95,13 +92,6 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
 }
 
 export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil, force = true) {
-    // const waitingListDeletion = await prisma.subcourse_waiting_list_pupil.deleteMany({
-    //     where: {
-    //         pupilId: pupil.id,
-    //         subcourseId: subcourse.id,
-    //     },
-    // });
-
     const queueEnrollmentDeletions = await prisma.waiting_list_enrollment.deleteMany({
         where: {
             pupilId: pupil.id,

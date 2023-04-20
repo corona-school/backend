@@ -62,7 +62,7 @@ export class ExtendFieldsPupilResolver {
             where: {
                 AND: [
                     {
-                        subcourse_waiting_list_pupil: {
+                        waiting_list_enrollment: {
                             some: {
                                 pupilId: pupil.id,
                             },

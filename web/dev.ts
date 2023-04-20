@@ -35,6 +35,7 @@ import { getNotifications, importMessageTranslations, importNotifications } from
 import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
+import { WaitingListEnrollment } from '../common/entity/WaitingListEnrollment';
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -903,6 +904,7 @@ export async function setupDevDB() {
     subcourses.push(subcourse1);
 
     const subcourse2 = new Subcourse();
+
     subcourse2.course = course2;
     subcourse2.joinAfterStart = true;
     subcourse2.minGrade = 3;
@@ -912,6 +914,16 @@ export async function setupDevDB() {
     subcourse2.published = true;
     subcourse2.participants = pupils.slice(0, pupils.length - 2);
     subcourse2.waitingList = pupils.slice(-2);
+
+    const waitingListEnrollment1 = new WaitingListEnrollment();
+    waitingListEnrollment1.subcourse = subcourse2;
+    waitingListEnrollment1.pupil = pupils[1];
+
+    const waitingListEnrollment2 = new WaitingListEnrollment();
+    waitingListEnrollment2.subcourse = subcourse2;
+    waitingListEnrollment2.pupil = pupils[2];
+
+    subcourse2.waitingListEnrollments = [waitingListEnrollment1, waitingListEnrollment2];
 
     subcourses.push(subcourse2);
 
@@ -1038,6 +1050,9 @@ export async function setupDevDB() {
         await entityManager.save(Subcourse, subcourse);
         console.log('Inserted SubCourse.');
     }
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
+    console.log('Inserted WaitingListEnrollments.');
 
     // lectures
 
