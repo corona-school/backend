@@ -9,12 +9,10 @@ import { GraphQLContext } from '../context';
 import { toPublicToken } from '../authentication';
 import mailjet from '../../common/mails/mailjet';
 import { DEFAULTSENDERS } from '../../common/mails/config';
-import { getLogger } from '../../common/logger/logger';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
-
-const logger = getLogger('MutateUser');
+import { logInContext } from '../logging';
 
 @InputType()
 class SupportMessage {
@@ -84,7 +82,18 @@ export class MutateUserResolver {
         section('LOGS', 1);
         result += logs.join('\n');
 
-        logger.info(`An issue was reported from the frontend: \n` + result);
+        const logger = logInContext('IssueReporter', context);
+        logger.addContext('issureTag', issueTag);
+        logger.addContext('userAgent', userAgent);
+        logger.addContext('userID', context.user.userID);
+
+        logs.map((log) => logger.info(log));
+        const err: Error = {
+            name: 'IssueReporter',
+            stack: errorStack,
+            message: errorMessage,
+        };
+        logger.error(errorMessage, err);
 
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');

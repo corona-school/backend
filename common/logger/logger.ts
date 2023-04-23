@@ -67,6 +67,7 @@ export class Logger {
     error(message: string): void;
     error(message: string, err: Error): void;
     error(message: string, args: LogData): void;
+    error(message: string, err: Error, args: LogData): void;
     error(message: string, err: Error = null, args: LogData = {}): void {
         // In order to use the datadog error tracking feature, we have to attach the error details to the root of the log message.
         // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.
