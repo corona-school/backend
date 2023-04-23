@@ -152,7 +152,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
         return { allowed: false, reason: 'already-started' };
     }
-    if (isParticipant(subcourse, pupil)) {
+    if (await isParticipant(subcourse, pupil)) {
         return { allowed: false, reason: 'already-participant' };
     }
 

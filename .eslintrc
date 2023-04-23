@@ -4,11 +4,7 @@
         "ecmaVersion": 6,
         "sourceType": "module"
     },
-    "plugins": [
-        "@typescript-eslint",
-        "lernfair-lint",
-        "import"
-    ],
+    "plugins": ["@typescript-eslint", "lernfair-lint", "import"],
     "settings": {
         "import/parsers": {
             "@typescript-eslint/parser": [".ts"]
@@ -20,17 +16,23 @@
     },
     "rules": {
         "block-scoped-var": "error",
-        "camelcase": ["warn", {"allow": ["wix_id", "wix_creation_date"]}],
+        "camelcase": ["warn", { "allow": ["wix_id", "wix_creation_date"] }],
         "comma-dangle": "off",
         "indent": "off",
-        "keyword-spacing": ["error", {
-            "after": true
-        }],
-        "key-spacing": ["error", {
-            "mode": "strict",
-            "beforeColon": false,
-            "afterColon": true
-        }],
+        "keyword-spacing": [
+            "error",
+            {
+                "after": true
+            }
+        ],
+        "key-spacing": [
+            "error",
+            {
+                "mode": "strict",
+                "beforeColon": false,
+                "afterColon": true
+            }
+        ],
         "no-debugger": "error",
         "no-duplicate-case": "error",
         "no-eval": "error",
@@ -47,14 +49,14 @@
         "space-before-blocks": ["error", "always"],
         "block-spacing": ["error", "always"],
         "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-        "max-statements-per-line": ["error", {"max": 1}],
+        "max-statements-per-line": ["error", { "max": 1 }],
         "newline-per-chained-call": "off",
         "lernfair-lint/graphql-authorized": "error",
         "lernfair-lint/graphql-deferred-auth": "error",
         "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
-        "require-await": "warn",
+        "require-await": "error",
         "import/no-cycle": ["warn"]
     }
 }
