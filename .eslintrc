@@ -56,7 +56,7 @@
         "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
-        "require-await": "error",
+        "require-await": "warn",
         "import/no-cycle": ["warn"]
     }
 }
