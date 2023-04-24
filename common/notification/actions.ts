@@ -314,7 +314,38 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-
+    'student-add-appointment-group': {
+        description: 'Student / Group Appointment Added',
+        sampleContext: {
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    'student-add-appointments-group': {
+        description: 'Student / Group Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    'student-add-appointment-match': {
+        description: 'Student / Match Appointment Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
+    'student-add-appointments-match': {
+        description: 'Student / Match Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,

@@ -15,11 +15,13 @@ import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture } from '../../graphql/util';
+import { getCourse, getLecture, getMatch, getStudent, getSubcourse } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
 import { lecture_appointmenttype_enum } from '@prisma/client';
 import { getUserType } from '../../common/user';
+import * as Notification from '../../common/notification';
+import { getPupil } from '../../graphql/util';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -85,6 +87,20 @@ export class MutateAppointmentResolver {
         await hasAccessMatch(context, appointment.matchId);
 
         await createMatchAppointment(appointment);
+
+        // send notification
+        if (!context.user) {
+            logger.error(`Could not send notification for: 'match appointment created' due to missing user`);
+        }
+        const student = await getStudent(context.user.studentId);
+        const match = await getMatch(appointment.matchId);
+        const pupil = await getPupil(match.id);
+
+        await Notification.actionTaken(pupil, 'student-add-appointment-match', {
+            student,
+            user: pupil,
+            matchId: appointment.matchId,
+        });
         return true;
     }
 
@@ -99,6 +115,20 @@ export class MutateAppointmentResolver {
     ) {
         await hasAccessMatch(context, matchId);
         createMatchAppointments(matchId, appointments);
+
+        // send notification
+        if (!context.user) {
+            logger.error(`Could not send notification for: 'match appointments created' due to missing user`);
+        }
+        const student = await getStudent(context.user.studentId);
+        const match = await getMatch(matchId);
+        const pupil = await getPupil(match.pupilId);
+
+        await Notification.actionTaken(pupil, 'student-add-appointments-match', {
+            student,
+            user: pupil,
+            matchId: matchId,
+        });
         return true;
     }
 
@@ -109,6 +139,24 @@ export class MutateAppointmentResolver {
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         await hasAccessSubcourse(context, appointment.subcourseId);
         await createGroupAppointment(appointment);
+
+        // send notification
+        if (!context.user) {
+            logger.error(`Could not send notification for: 'group appointment created' due to missing user`);
+        }
+        const student = await getStudent(context.user.studentId);
+        const subcourse = await getSubcourse(appointment.subcourseId);
+        const course = await getCourse(subcourse.courseId);
+        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id } });
+
+        for await (const participant of participants) {
+            const pupil = await getPupil(participant.pupilId);
+            await Notification.actionTaken(pupil, 'student-add-appointment-group', {
+                student: student,
+                user: participant,
+                course,
+            });
+        }
         return true;
     }
 
@@ -124,6 +172,24 @@ export class MutateAppointmentResolver {
         await hasAccessSubcourse(context, subcourseId);
 
         await createGroupAppointments(subcourseId, appointments);
+
+        // send notification
+        if (!context.user) {
+            logger.error(`Could not send notification for: 'group appointments created' due to missing user`);
+        }
+        const student = await getStudent(context.user.studentId);
+        const subcourse = await getSubcourse(subcourseId);
+        const course = await getCourse(subcourse.courseId);
+        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id } });
+
+        for await (const participant of participants) {
+            const pupil = await getPupil(participant.pupilId);
+            await Notification.actionTaken(pupil, 'student-add-appointments-group', {
+                student: student,
+                user: participant,
+                course,
+            });
+        }
         return true;
     }
 
