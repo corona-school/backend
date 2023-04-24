@@ -88,7 +88,7 @@ export async function setMessageTranslation({
         try {
             renderTemplate(navigateTo, sampleContext, true);
         } catch (error) {
-            abortWithError(error, 'navigateTo', headline);
+            abortWithError(error, 'navigateTo', navigateTo);
         }
     }
 

@@ -163,9 +163,7 @@ export class MutateAppointmentResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const { user } = context;
-        logger.info(`appointmentId: ${appointmentId}`);
         const appointment = await getLecture(appointmentId);
-        logger.info(`appointment: ${JSON.stringify(appointment)}`);
         await hasAccess(context, 'Lecture', appointment);
         const userType = getUserType(user);
 
@@ -203,7 +201,7 @@ export class MutateAppointmentResolver {
         if (appointmentType === lecture_appointmenttype_enum.group) {
             const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
             const course = await prisma.course.findFirst({ where: { id: subCourse.courseId } });
-            for await (const organizer of organizers) {
+            for (const organizer of organizers) {
                 const student = await getStudent(organizer.studentId);
                 await Notification.actionTaken(student, 'pupil-decline-appointment-group', {
                     appointment: {
@@ -217,7 +215,7 @@ export class MutateAppointmentResolver {
                 });
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
-            for await (const organizer of organizers) {
+            for (const organizer of organizers) {
                 const student = await getStudent(organizer.studentId);
                 await Notification.actionTaken(student, 'pupil-decline-appointment-match', {
                     appointment: {
@@ -230,7 +228,7 @@ export class MutateAppointmentResolver {
                 });
             }
         } else {
-            logger.error(`Couldn't send notification to organizer of Appointment (id: ${appointment.id})`);
+            logger.error(`Couldn't send notification to organizer of appointment. The appointment-type is neither 'match' nor 'group'`, { appointment });
         }
 
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
