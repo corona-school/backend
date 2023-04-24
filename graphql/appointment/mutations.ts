@@ -242,7 +242,7 @@ export class MutateAppointmentResolver {
                 user: context.user,
             });
         } else {
-            logger.error(`Couldn't send notification to pupils of Appointment (id: ${appointment.id})`);
+            logger.error(`Could not send notification to pupils of appointment. The appointment-type is neither 'match' nor 'group'.`, { appointment });
         }
 
         logger.info(`Appointment (id: ${appointment.id}) was cancelled`);
