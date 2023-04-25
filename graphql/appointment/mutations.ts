@@ -204,13 +204,11 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
         await prisma.lecture.update({ data: { isCanceled: true }, where: { id: appointment.id } });
 
-        const foundOrganizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
-        const firstOrganizer = await getStudent(foundOrganizers[0].studentId);
+        const student = await getStudent(context.user.studentId);
         const language = 'de-DE';
 
         if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
-            const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
-            const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
+            const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id } });
 
             for await (const participant of participants) {
@@ -222,23 +220,21 @@ export class MutateAppointmentResolver {
                         date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
                         time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                     },
-                    student: firstOrganizer,
+                    student,
                     user: context.user,
-                    course,
+                    course: subcourse.course,
                 });
             }
         } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
-            const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
-            const participant = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
-            const pupil = await getPupil(participant.id);
-            await Notification.actionTaken(pupil, 'student-cancel-appointment-match', {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+            await Notification.actionTaken(match.pupil, 'student-cancel-appointment-match', {
                 appointment: {
                     ...appointment,
                     day: appointment.start.toLocaleString(language, { weekday: 'long' }),
                     date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
                     time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                 },
-                student: firstOrganizer,
+                student,
                 user: context.user,
             });
         } else {
