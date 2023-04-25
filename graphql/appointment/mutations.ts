@@ -209,11 +209,10 @@ export class MutateAppointmentResolver {
 
         if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
             const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
-            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id } });
+            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
-            for await (const participant of participants) {
-                const pupil = await getPupil(participant.pupilId);
-                await Notification.actionTaken(pupil, 'student-cancel-appointment-group', {
+            for (const participant of participants) {
+                await Notification.actionTaken(participant.pupil, 'student-cancel-appointment-group', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),
