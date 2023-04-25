@@ -188,15 +188,24 @@ model jufo_verification_transmission {
 }
 
 model lecture {
-  id                    Int                     @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
-  createdAt             DateTime                @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                @default(now()) @db.Timestamp(6)
-  start                 DateTime                @db.Timestamp(6)
+  id                    Int                          @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
+  createdAt             DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                     @default(now()) @db.Timestamp(6)
+  start                 DateTime                     @db.Timestamp(6)
   duration              Int
+  title                 String?
+  description           String?
+  appointmentType       lecture_appointmenttype_enum @default(legacy)
+  isCanceled            Boolean?                     @default(false)
+  organizers            String[]                     @default([])
+  participants          String[]                     @default([])
+  declinedBy            String[]                     @default([])
   instructorId          Int?
   subcourseId           Int?
-  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
-  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
+  matchId               Int?
+  subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
+  student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
+  match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
   course_attendance_log course_attendance_log[]
 }
 
@@ -228,6 +237,7 @@ model match {
   pupilId                  Int?
   pupil                    pupil?            @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
   student                  student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
+  lecture                  lecture[]
 
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
@@ -698,6 +708,7 @@ enum log_logtype_enum {
   updateStudentDescription
   createdCourse
   certificateRequest
+  cocCancel
   cancelledCourse
   cancelledSubcourse
   createdCourseAttendanceLog
@@ -1008,4 +1019,11 @@ enum pupil_screening_status_enum {
   success   @map("1")
   rejection @map("2")
   dispute   @map("3")
+}
+
+enum lecture_appointmenttype_enum {
+  group
+  match
+  internal
+  legacy
 }
