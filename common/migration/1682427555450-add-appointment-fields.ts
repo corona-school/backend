@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class AppointmentsData1682414667095 implements MigrationInterface {
-    name = 'AppointmentsData1682414667095';
+export class addAppointmentFields1682427555450 implements MigrationInterface {
+    name = 'addAppointmentFields1682427555450';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "lecture" ADD "title" text`);
@@ -13,19 +13,11 @@ export class AppointmentsData1682414667095 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "lecture" ADD "participants" text array NOT NULL DEFAULT '{}'`);
         await queryRunner.query(`ALTER TABLE "lecture" ADD "declinedBy" text array NOT NULL DEFAULT '{}'`);
         await queryRunner.query(`ALTER TABLE "lecture" ADD "matchId" integer`);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
-        await queryRunner.query(`ALTER TABLE "mentor" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '"1970-01-01T00:00:00.000Z"'`);
         await queryRunner.query(`ALTER TABLE "lecture" ADD CONSTRAINT "FK_5829da504d003d9aa252856574e" FOREIGN KEY ("matchId") REFERENCES "match"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "lecture" DROP CONSTRAINT "FK_5829da504d003d9aa252856574e"`);
-        await queryRunner.query(`ALTER TABLE "mentor" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '1970-01-01 00:00:00'`);
-        await queryRunner.query(`ALTER TABLE "student" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '1970-01-01 00:00:00'`);
-        await queryRunner.query(`ALTER TABLE "screener" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '1970-01-01 00:00:00'`);
-        await queryRunner.query(`ALTER TABLE "pupil" ALTER COLUMN "lastTimeCheckedNotifications" SET DEFAULT '1970-01-01 00:00:00'`);
         await queryRunner.query(`ALTER TABLE "lecture" DROP COLUMN "matchId"`);
         await queryRunner.query(`ALTER TABLE "lecture" DROP COLUMN "declinedBy"`);
         await queryRunner.query(`ALTER TABLE "lecture" DROP COLUMN "participants"`);
