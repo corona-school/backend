@@ -159,6 +159,19 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
+        const appointment = await getLecture(appointmentToBeUpdated.id);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await prisma.lecture.update({
+            where: { id: appointmentToBeUpdated.id },
+            data: { ...appointmentToBeUpdated },
+        });
+        return true;
+    }
+
+    @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
