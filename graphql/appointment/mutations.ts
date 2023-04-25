@@ -15,12 +15,13 @@ import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture, getStudent } from '../../graphql/util';
+import { getLecture } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
 import { course, lecture_appointmenttype_enum, subcourse } from '@prisma/client';
 import { getUserType } from '../../common/user';
 import * as Notification from '../../common/notification';
+import moment from 'moment';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -47,10 +48,10 @@ const mergeOrganizersWithSessionUserId = (organizers: number[] = [], context: Gr
 class AppointmentUpdateInput {
     @Field(() => Int)
     id: number;
-    @Field(() => String, { nullable: true })
-    title?: string;
-    @Field(() => String, { nullable: true })
-    description?: string;
+    @Field(() => String)
+    title: string;
+    @Field(() => String)
+    description: string;
     @Field(() => Date)
     start: Date;
     @Field(() => Int)
@@ -156,6 +157,25 @@ export class MutateAppointmentResolver {
                 });
             })
         );
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
+        const appointment = await getLecture(appointmentToBeUpdated.id);
+        const currentDate = moment();
+        const isPastAppointment = moment(appointment.start).isBefore(currentDate);
+
+        if (isPastAppointment) {
+            throw new Error(`Cannot update past appointment.`);
+        }
+
+        await hasAccess(context, 'Lecture', appointment);
+        await prisma.lecture.update({
+            where: { id: appointmentToBeUpdated.id },
+            data: { ...appointmentToBeUpdated },
+        });
         return true;
     }
 
