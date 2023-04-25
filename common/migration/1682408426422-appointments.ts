@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class appointments1682408426422 implements MigrationInterface {
-    name = 'appointments1682408426422'
+    name = 'appointments1682408426422';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "lecture" DROP COLUMN "meetingLink"`);
