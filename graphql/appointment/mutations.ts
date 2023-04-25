@@ -89,9 +89,6 @@ export class MutateAppointmentResolver {
         await createMatchAppointment(appointment);
 
         // send notification
-        if (!context.user) {
-            logger.error(`Could not send notification for: 'match appointment created' due to missing user`);
-        }
         const student = await getStudent(context.user.studentId);
         const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
 
@@ -116,9 +113,6 @@ export class MutateAppointmentResolver {
         createMatchAppointments(matchId, appointments);
 
         // send notification
-        if (!context.user) {
-            logger.error(`Could not send notification for: 'match appointments created' due to missing user`);
-        }
         const student = await getStudent(context.user.studentId);
         const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
 
@@ -139,9 +133,6 @@ export class MutateAppointmentResolver {
         await createGroupAppointment(appointment);
 
         // send notification
-        if (!context.user) {
-            logger.error(`Could not send notification for: 'group appointment created' due to missing user`);
-        }
         const student = await getStudent(context.user.studentId);
 
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
@@ -171,9 +162,6 @@ export class MutateAppointmentResolver {
         await createGroupAppointments(subcourseId, appointments);
 
         // send notification
-        if (!context.user) {
-            logger.error(`Could not send notification for: 'group appointments created' due to missing user`);
-        }
         const student = await getStudent(context.user.studentId);
 
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
