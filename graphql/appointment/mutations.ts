@@ -195,15 +195,13 @@ export class MutateAppointmentResolver {
 
         const language = 'de-DE';
         const appointmentType = appointment.appointmentType;
-        const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId } });
+        const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId }, include: { student: true } });
         const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 
         if (appointmentType === lecture_appointmenttype_enum.group) {
-            const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId } });
-            const course = await prisma.course.findFirst({ where: { id: subCourse.courseId } });
+            const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
             for (const organizer of organizers) {
-                const student = await getStudent(organizer.studentId);
-                await Notification.actionTaken(student, 'pupil-decline-appointment-group', {
+                await Notification.actionTaken(organizer.student, 'pupil-decline-appointment-group', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),
@@ -211,13 +209,12 @@ export class MutateAppointmentResolver {
                         time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
                     },
                     pupil,
-                    course,
+                    course: subCourse.course,
                 });
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
             for (const organizer of organizers) {
-                const student = await getStudent(organizer.studentId);
-                await Notification.actionTaken(student, 'pupil-decline-appointment-match', {
+                await Notification.actionTaken(organizer.student, 'pupil-decline-appointment-match', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),
