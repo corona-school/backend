@@ -10,5 +10,8 @@ export async function isAppointmentParticipant(lecture: Lecture, user: User): Pr
                 has: user.userID,
             },
         },
+        select: {
+            id: true,
+        },
     }));
 }

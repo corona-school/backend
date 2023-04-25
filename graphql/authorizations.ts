@@ -100,7 +100,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
         assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
         assert(root, 'root value must be bound to determine access');
-        const success = isAppointmentParticipant(root, context.user);
+        const success = await isAppointmentParticipant(root, context.user);
         if (success) {
             return true;
         }
