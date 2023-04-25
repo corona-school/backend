@@ -12,6 +12,7 @@ import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev } from '../common/util/environment';
+import { isAppointmentParticipant } from '../common/appointments/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -93,6 +94,15 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             if (success) {
                 return true;
             }
+        }
+    }
+
+    if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
+        assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
+        assert(root, 'root value must be bound to determine access');
+        const success = await isAppointmentParticipant(root, context.user);
+        if (success) {
+            return true;
         }
     }
 
@@ -418,30 +428,21 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<
-            Lecture,
-            | 'id'
-            | 'start'
-            | 'duration'
-            | 'createdAt'
-            | 'updatedAt'
-            | 'title'
-            | 'description'
-            | 'appointmentType'
-            | 'isCanceled'
-            | 'declinedBy'
-            | 'participants'
-            | 'organizers'
-        >({
-            course_attendance_log: nobody,
-            subcourseId: nobody,
-            subcourse: nobody,
-            student: nobody,
-            instructorId: nobody,
-            _count: nobody,
-            match: adminOrOwner,
-            matchId: adminOrOwner,
-        }),
+        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled'>(
+            {
+                course_attendance_log: nobody,
+                subcourseId: nobody,
+                subcourse: nobody,
+                student: nobody,
+                instructorId: nobody,
+                _count: nobody,
+                match: adminOrOwner,
+                matchId: adminOrOwner,
+                declinedBy: adminOrOwner,
+                participants: adminOrOwner,
+                organizers: adminOrOwner,
+            }
+        ),
     },
     Participation_certificate: {
         fields: {
