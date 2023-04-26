@@ -154,7 +154,6 @@ export class UserFieldsResolver {
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
-        const appointments = await getAppointmentsForUser(user, take, skip, cursor, direction);
-        return appointments;
+        return getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 }
