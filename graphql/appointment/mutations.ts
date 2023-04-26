@@ -182,36 +182,72 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const { user } = context;
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        const userType = getUserType(context.user);
+        const userType = getUserType(user);
 
         switch (userType) {
             case 'pupil': {
                 await prisma.appointment_participant_pupil.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_pupilId: { appointmentId, pupilId: context.user.pupilId } },
+                    where: { appointmentId_pupilId: { appointmentId, pupilId: user.pupilId } },
                 });
                 break;
             }
             case 'student': {
                 await prisma.appointment_participant_student.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_studentId: { appointmentId, studentId: context.user.studentId } },
+                    where: { appointmentId_studentId: { appointmentId, studentId: user.studentId } },
                 });
                 break;
             }
             case 'screener': {
                 await prisma.appointment_participant_screener.update({
                     data: { status: 'declined' },
-                    where: { appointmentId_screenerId: { appointmentId, screenerId: context.user.screenerId } },
+                    where: { appointmentId_screenerId: { appointmentId, screenerId: user.screenerId } },
                 });
                 break;
             }
             default:
                 throw new Error(`Cannot decline appointment with user type: ${userType}`);
         }
-        // * Send notification here
+
+        const language = 'de-DE';
+        const appointmentType = appointment.appointmentType;
+        const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId }, include: { student: true } });
+        const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
+
+        if (appointmentType === lecture_appointmenttype_enum.group) {
+            const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
+            for (const organizer of organizers) {
+                await Notification.actionTaken(organizer.student, 'pupil_decline_appointment_group', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    pupil,
+                    course: subCourse.course,
+                });
+            }
+        } else if (appointmentType === lecture_appointmenttype_enum.match) {
+            for (const organizer of organizers) {
+                await Notification.actionTaken(organizer.student, 'pupil_decline_appointment_match', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    pupil,
+                });
+            }
+        } else {
+            logger.error(`Couldn't send notification to organizer of appointment. The appointment-type is neither 'match' nor 'group'`, { appointment });
+        }
+
         logger.info(`Appointment (id: ${appointment.id}) was declined by user (${context.user?.userID})`);
 
         return true;

@@ -227,7 +227,7 @@ export async function getMessage(
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
-        navigateTo,
+        navigateTo: renderTemplate(navigateTo, context),
     };
 
     if (modalText) {
