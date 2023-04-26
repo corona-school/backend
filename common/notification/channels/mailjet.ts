@@ -7,6 +7,8 @@ import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
+import { createSecretEmailToken } from '../../secret';
+import moment from 'moment';
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
@@ -46,6 +48,9 @@ export const mailjetChannel: Channel = {
             CustomCampaign = context.campaign ?? `Backend Notification ${notification.id}`;
         }
 
+        // Create a new login token
+        const authToken = await createSecretEmailToken(to, notification.description, moment().add(7, 'days'));
+
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: sender,
@@ -56,7 +61,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID: notification.mailjetTemplateId,
             TemplateLanguage: true,
-            Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '' },
+            Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '', authToken },
             Attachments: context.attachments,
             CustomID: `${concreteID}`,
             TemplateErrorReporting: {

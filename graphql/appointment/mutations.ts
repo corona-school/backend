@@ -12,6 +12,7 @@ import { getLogger } from '../../common/logger/logger';
 import { getUser } from '../../common/user';
 
 const logger = getLogger('MutateAppointmentsResolver');
+
 @InputType()
 class AppointmentUpdateInput {
     @Field(() => Int)
