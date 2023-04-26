@@ -6,7 +6,7 @@ export async function isAppointmentParticipant(lecture: Lecture, user: User): Pr
     return !!(await prisma.lecture.findFirst({
         where: {
             id: lecture.id,
-            participants: {
+            participantIds: {
                 has: user.userID,
             },
         },

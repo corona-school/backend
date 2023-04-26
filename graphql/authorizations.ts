@@ -439,8 +439,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 match: adminOrOwner,
                 matchId: adminOrOwner,
                 declinedBy: adminOrOwner,
-                participants: adminOrOwner,
-                organizers: adminOrOwner,
+                participantIds: adminOrOwner,
+                organizerIds: adminOrOwner,
             }
         ),
     },
