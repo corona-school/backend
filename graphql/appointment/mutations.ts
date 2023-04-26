@@ -70,7 +70,7 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
 
         await prisma.lecture.update({
-            data: { declinedBy: [...appointment.declinedBy, user.userID] },
+             data: { declinedBy: { push: user.userID } },
             where: { id: appointmentId },
         });
 
