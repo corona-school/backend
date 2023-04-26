@@ -1,12 +1,20 @@
 /* eslint-disable camelcase */
-import { getUser } from '../user';
+import { GraphQLUser } from '../user/session';
 import { getAccessToken } from './zoom-authorization';
 
+type ZoomUser = {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    display_name: string;
+    personal_meeting_url: string;
+};
+
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users/';
+const grantType = 'account_credentials';
 
 const createZoomUser = async (email: string, type: number, firstname: string, lastname: string) => {
-    const grantType = 'account_credentials';
-
     try {
         const { access_token } = await getAccessToken('apiKey', 'apiSecret', grantType, 'accountId');
 
@@ -34,36 +42,43 @@ const createZoomUser = async (email: string, type: number, firstname: string, la
     }
 };
 
-async function getZoomUser(userId, apiKey, apiSecret, email) {
-    if (userId) {
-        const response = await fetch(`${zoomUserApiUrl}/${userId}`, {
+async function getZoomUser(user: GraphQLUser): Promise<ZoomUser> {
+    try {
+        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
+            method: 'GET',
             headers: {
-                Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`,
+                Authorization: `Bearer ${access_token}`,
                 'Content-Type': 'application/json',
             },
         });
 
-        const data = await response.json();
-
-        return data;
+        return response.json() as unknown as ZoomUser;
+    } catch (error) {
+        throw new Error(error);
     }
-    const loggedInUser = await getUser(userId);
-    createZoomUser(email, 1, loggedInUser.firstname, loggedInUser.lastname);
 }
 
-async function updateZoomUser(userId, apiKey, apiSecret, updateData) {
-    const response = await fetch(`${zoomUserApiUrl}/${userId}`, {
-        method: 'PATCH',
-        headers: {
-            Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-    });
+async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
+    try {
+        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                first_name: user.firstname,
+                last_name: user.lastname,
+                display_name: `${user.firstname} ${user.lastname}`,
+            }),
+        });
 
-    const data = await response.json();
-
-    return data;
+        return response as unknown as ZoomUser;
+    } catch (error) {
+        throw new Error(error);
+    }
 }
 
 async function deleteZoomUser(userId, apiKey, apiSecret) {
@@ -80,4 +95,4 @@ async function deleteZoomUser(userId, apiKey, apiSecret) {
     }
 }
 
-export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser };
+export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser };
