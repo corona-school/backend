@@ -301,7 +301,7 @@ export class ExtendedFieldsLectureResolver {
                 return course.name;
             }
             default:
-                return appointment.title;
+                return appointment.title || '';
         }
     }
 }
