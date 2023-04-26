@@ -87,6 +87,16 @@ export class MutateAppointmentResolver {
         await hasAccessMatch(context, appointment.matchId);
 
         await createMatchAppointment(appointment);
+
+        // send notification
+        const student = await getStudent(context.user.studentId);
+        const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+
+        await Notification.actionTaken(match.pupil, 'student_add_appointment_match', {
+            student,
+            user: match.pupil,
+            matchId: appointment.matchId,
+        });
         return true;
     }
 
@@ -101,6 +111,16 @@ export class MutateAppointmentResolver {
     ) {
         await hasAccessMatch(context, matchId);
         createMatchAppointments(matchId, appointments);
+
+        // send notification
+        const student = await getStudent(context.user.studentId);
+        const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
+
+        await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {
+            student,
+            user: match.pupil,
+            matchId: matchId,
+        });
         return true;
     }
 
@@ -111,6 +131,20 @@ export class MutateAppointmentResolver {
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         await hasAccessSubcourse(context, appointment.subcourseId);
         await createGroupAppointment(appointment);
+
+        // send notification
+        const student = await getStudent(context.user.studentId);
+
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+
+        for await (const participant of participants) {
+            await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
+                student: student,
+                user: participant,
+                course: subcourse.course,
+            });
+        }
         return true;
     }
 
@@ -126,6 +160,20 @@ export class MutateAppointmentResolver {
         await hasAccessSubcourse(context, subcourseId);
 
         await createGroupAppointments(subcourseId, appointments);
+
+        // send notification
+        const student = await getStudent(context.user.studentId);
+
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+
+        for await (const participant of participants) {
+            await Notification.actionTaken(participant.pupil, 'student_add_appointments_group', {
+                student: student,
+                user: participant,
+                course: subcourse.course,
+            });
+        }
         return true;
     }
 

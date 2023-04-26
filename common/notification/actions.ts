@@ -338,6 +338,38 @@ const _notificationActions = {
             user: sampleUser,
         },
     },
+    student_add_appointment_group: {
+        description: 'Student / Group Appointment Added',
+        sampleContext: {
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_add_appointments_group: {
+        description: 'Student / Group Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_add_appointment_match: {
+        description: 'Student / Match Appointment Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
+    student_add_appointments_match: {
+        description: 'Student / Match Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
     pupil_decline_appointment_group: {
         description: 'Pupil / Group Appointment Declined',
         sampleContext: {
