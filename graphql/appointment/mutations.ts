@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
 import {
@@ -12,7 +12,22 @@ import {
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import { getLecture } from '../util';
+import moment from 'moment';
 
+@InputType()
+class AppointmentUpdateInput {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String)
+    title: string;
+    @Field(() => String)
+    description: string;
+    @Field(() => Date)
+    start: Date;
+    @Field(() => Int)
+    duration: number;
+}
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
@@ -56,6 +71,25 @@ export class MutateAppointmentResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
         await createGroupAppointments(subcourseId, appointments);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
+        const appointment = await getLecture(appointmentToBeUpdated.id);
+        const currentDate = moment();
+        const isPastAppointment = moment(appointment.start).isBefore(currentDate);
+
+        if (isPastAppointment) {
+            throw new Error(`Cannot update past appointment.`);
+        }
+
+        await hasAccess(context, 'Lecture', appointment);
+        await prisma.lecture.update({
+            where: { id: appointmentToBeUpdated.id },
+            data: { ...appointmentToBeUpdated },
+        });
         return true;
     }
 }
