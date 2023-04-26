@@ -12,6 +12,9 @@ import {
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import { getLecture } from '../util';
+import { lecture_appointmenttype_enum } from '../generated';
+import * as Notification from '../../common/notification';
 
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
@@ -56,6 +59,34 @@ export class MutateAppointmentResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
         await createGroupAppointments(subcourseId, appointments);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const { user } = context;
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await prisma.lecture.update({
+            data: { declinedBy: [...appointment.declinedBy, user.userID] },
+            where: { id: appointmentId },
+        });
+
+        return true;
+    }
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await prisma.lecture.update({
+            data: { isCanceled: true },
+            where: { id: appointmentId },
+        });
+
         return true;
     }
 }
