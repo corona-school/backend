@@ -18,7 +18,7 @@ import { prisma } from '../../common/prisma';
 import { getLecture } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
-import { course, lecture_appointmenttype_enum, subcourse } from '@prisma/client';
+import { lecture_appointmenttype_enum } from '@prisma/client';
 import { getUserType } from '../../common/user';
 import * as Notification from '../../common/notification';
 import moment from 'moment';
@@ -221,7 +221,7 @@ export class MutateAppointmentResolver {
         if (appointmentType === lecture_appointmenttype_enum.group) {
             const subCourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
             for (const organizer of organizers) {
-                await Notification.actionTaken(organizer.student, 'pupil-decline-appointment-group', {
+                await Notification.actionTaken(organizer.student, 'pupil_decline_appointment_group', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),
@@ -234,7 +234,7 @@ export class MutateAppointmentResolver {
             }
         } else if (appointmentType === lecture_appointmenttype_enum.match) {
             for (const organizer of organizers) {
-                await Notification.actionTaken(organizer.student, 'pupil-decline-appointment-match', {
+                await Notification.actionTaken(organizer.student, 'pupil_decline_appointment_match', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),

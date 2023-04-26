@@ -321,7 +321,7 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    'pupil-decline-appointment-group': {
+    pupil_decline_appointment_group: {
         description: 'Pupil / Group Appointment Declined',
         sampleContext: {
             appointment: sampleAppointment,
@@ -329,7 +329,7 @@ const _notificationActions = {
             course: sampleCourse,
         },
     },
-    'pupil-decline-appointment-match': {
+    pupil_decline_appointment_match: {
         description: 'Pupil / Match Appointment Declined',
         sampleContext: {
             appointment: sampleAppointment,
