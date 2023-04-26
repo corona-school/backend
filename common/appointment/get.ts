@@ -36,12 +36,12 @@ const getNextAppointmentsByIdList = async (userId: User['userID'], take: number,
             isCanceled: false,
             OR: [
                 {
-                    participants: {
+                    participantIds: {
                         has: userId,
                     },
                 },
                 {
-                    organizers: {
+                    organizerIds: {
                         has: userId,
                     },
                 },
@@ -59,12 +59,12 @@ const getLastAppointmentsByIdList = async (userId: User['userID'], take: number,
             isCanceled: false,
             OR: [
                 {
-                    participants: {
+                    participantIds: {
                         has: userId,
                     },
                 },
                 {
-                    organizers: {
+                    organizerIds: {
                         has: userId,
                     },
                 },
@@ -85,12 +85,12 @@ const getAppointmentsByIdList = async (userId: User['userID'], take, skip): Prom
             start: { gte: new Date().toISOString() },
             OR: [
                 {
-                    participants: {
+                    participantIds: {
                         has: userId,
                     },
                 },
                 {
-                    organizers: {
+                    organizerIds: {
                         has: userId,
                     },
                 },

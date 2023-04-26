@@ -77,14 +77,14 @@ export class Lecture {
         default: [],
         array: true,
     })
-    organizers: User['userID'][];
+    organizerIds: User['userID'][];
 
     @Column({
         type: 'text',
         default: [],
         array: true,
     })
-    participants: User['userID'][];
+    participantIds: User['userID'][];
 
     @Column({
         type: 'text',

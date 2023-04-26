@@ -63,7 +63,7 @@ export class ExtendedFieldsLectureResolver {
         if (!isElevated(context) && !isSessionStudent(context)) {
             return false;
         }
-        const isOrganizer = (await prisma.lecture.count({ where: { id: appointment.id, organizers: { has: context.user.userID } } })) > 0;
+        const isOrganizer = (await prisma.lecture.count({ where: { id: appointment.id, organizerIds: { has: context.user.userID } } })) > 0;
         return isOrganizer;
     }
 
@@ -71,16 +71,16 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() appointment: Appointment) {
         const user = await getUserForSession(context.sessionToken);
-        const isParticipant = (await prisma.lecture.count({ where: { id: appointment.id, participants: { has: user.userID } } })) > 0;
+        const isParticipant = (await prisma.lecture.count({ where: { id: appointment.id, participantIds: { has: user.userID } } })) > 0;
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
-    async appointmentParticipants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+    async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
         const studentIds = [];
         const pupilIds = [];
-        appointment.participants.forEach((userId) => {
+        appointment.participantIds.forEach((userId) => {
             const [type, id] = getUserTypeAndIdForUserId(userId);
             if (type === 'pupil') {
                 pupilIds.push(id);
@@ -130,8 +130,8 @@ export class ExtendedFieldsLectureResolver {
     @FieldResolver((returns) => [Organizer])
     @Authorized(Role.USER)
     @LimitEstimated(5)
-    async appointmentOrganizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        const organizerStudentIds = appointment.organizers.map((userId) => parseInt(userId.split('/')[1]));
+    async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        const organizerStudentIds = appointment.organizerIds.map((userId) => parseInt(userId.split('/')[1]));
         return (
             await prisma.student.findMany({
                 where: {
