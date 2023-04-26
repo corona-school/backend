@@ -15,12 +15,13 @@ import { getSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture } from '../../graphql/util';
+import { getLecture, getStudent } from '../../graphql/util';
 import { getLogger } from 'log4js';
 import { Field, InputType, Int } from 'type-graphql';
 import { lecture_appointmenttype_enum } from '@prisma/client';
 import { getUserType } from '../../common/user';
 import moment from 'moment';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -175,6 +176,29 @@ export class MutateAppointmentResolver {
             where: { id: appointmentToBeUpdated.id },
             data: { ...appointmentToBeUpdated },
         });
+
+        // send notification
+        const student = await getStudent(context.user.studentId);
+        if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
+            const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+            for (const participant of participants) {
+                await Notification.actionTaken(participant.pupil, 'student_update_appointment_group', {
+                    student,
+                    appointment,
+                    course: subcourse.course,
+                });
+            }
+        } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+            await Notification.actionTaken(match.pupil, 'student_update_appointment_match', {
+                student,
+                appointment,
+            });
+        } else {
+            logger.error(`Could not send notification for 'appointment updated'. The appointment type is neither 'group' nor 'match'`, { appointment });
+        }
+
         return true;
     }
 

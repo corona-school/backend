@@ -29,6 +29,10 @@ const sampleCourse = {
     },
 };
 
+const sampleAppointment = {
+    title: 'Chapter 1',
+};
+
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
 };
@@ -312,6 +316,21 @@ const _notificationActions = {
         sampleContext: {
             token: 'token',
             redirectTo: '/start',
+        },
+    },
+    student_update_appointment_group: {
+        description: 'Student / Group Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            appointment: sampleAppointment,
+            course: sampleCourse,
+        },
+    },
+    student_update_appointment_match: {
+        description: 'Student / Match Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            appointment: sampleAppointment,
         },
     },
 
