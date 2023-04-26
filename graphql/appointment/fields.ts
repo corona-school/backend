@@ -6,7 +6,7 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM } from '../../common/user';
+import { getUserIdTypeORM, getUserTypeAndIdForUserId } from '../../common/user';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -77,15 +77,60 @@ export class ExtendedFieldsLectureResolver {
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
-    async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        const participants = [];
-        return participants;
+    async appointmentParticipants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+        const studentIds = [];
+        const pupilIds = [];
+        appointment.participants.forEach((userId) => {
+            const [type, id] = getUserTypeAndIdForUserId(userId);
+            if (type === 'pupil') {
+                pupilIds.push(id);
+            }
+            if (type === 'student') {
+                studentIds.push(id);
+            }
+        });
+        const studentParticipants = (
+            await prisma.student.findMany({
+                where: {
+                    id: {
+                        in: studentIds,
+                    },
+                },
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                    isStudent: true,
+                },
+            })
+        ).map((p) => ({ ...p, isStudent: true, userId: getUserIdTypeORM(p) }));
+
+        const pupilParticipants = (
+            await prisma.pupil.findMany({
+                where: {
+                    id: {
+                        in: pupilIds,
+                    },
+                },
+                take,
+                skip,
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                    isPupil: true,
+                },
+            })
+        ).map((p) => ({ ...p, isPupil: true, userId: getUserIdTypeORM(p) }));
+        return [...studentParticipants, ...pupilParticipants];
     }
 
     @FieldResolver((returns) => [Organizer])
     @Authorized(Role.USER)
     @LimitEstimated(5)
-    async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+    async appointmentOrganizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
         const organizerStudentIds = appointment.organizers.map((userId) => parseInt(userId.split('/')[1]));
         return (
             await prisma.student.findMany({
