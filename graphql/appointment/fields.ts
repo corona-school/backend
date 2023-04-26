@@ -109,7 +109,7 @@ export class ExtendedFieldsLectureResolver {
     // TODO add declinedBy FieldResolver
 
     @FieldResolver((returns) => Int)
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.USER)
     async position(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
             return (
@@ -128,7 +128,7 @@ export class ExtendedFieldsLectureResolver {
         throw new Error('Cannot determine position of loose appointment');
     }
     @FieldResolver((returns) => Int)
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.USER)
     async total(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
             return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId } });

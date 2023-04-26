@@ -1,9 +1,9 @@
-import { lecture_appointmenttype_enum } from '@prisma/client';
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { getStudent, getUserIdTypeORM } from '../user';
+import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
+import { lecture_appointmenttype_enum } from '../../graphql/generated';
 
 @InputType()
 export abstract class AppointmentCreateInputBase {
