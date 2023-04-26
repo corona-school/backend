@@ -1,0 +1,41 @@
+# Update the VARIANT arg in docker-compose.yml to pick a Node version: 10, 12, 14
+ARG VARIANT=14
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
+
+# Use bash, if needed
+SHELL ["/bin/bash", "-c"]
+
+# Update args in docker-compose.yaml to set the UID/GID of the "node" user.
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then groupmod --gid $USER_GID node && usermod --uid $USER_UID --gid $USER_GID node; fi
+
+# PUPPETEER
+# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
+# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer installs, work.
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release wget xdg-utils \
+      --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# C++ 17 support (i.e. install newer gcc version)
+RUN apt-get update && \
+    apt-get install -y build-essential
+
+# Uncomment if you want to install an additional version of node using nvm
+# ARG EXTRA_NODE_VERSION=13
+# RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"
+
+# [Optional] Uncomment if you want to install more global node modules
+# RUN su node -c "npm install -g <your-package-list-here>"
+
+# to make html-pdf work with the latest Debian version (see https://github.com/marcbachmann/node-html-pdf/issues/531)
+RUN cp  /etc/ssl/openssl.cnf /tmp/html-pdf-openssl.cnf && sed -i '/openssl_conf/d' /tmp/html-pdf-openssl.cnf
+ENV OPENSSL_CONF=/tmp/html-pdf-openssl.cnf
+
+# use node user as default, because npm works better with non-root users
+USER node

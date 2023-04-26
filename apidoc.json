@@ -1,0 +1,11 @@
+{
+  "name": "Corona School",
+  "version": "1.1.0",
+  "description": "The endpoints in this API are designed, so that users can manage their data through use of appropriate clients.",
+  "url": "https://api.corona-school.de/api",
+  "template": {
+    "forceLanguage": "en",
+    "withCompare": true,
+    "withGenerator": false
+  }
+}

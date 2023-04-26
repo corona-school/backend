@@ -1,0 +1,42 @@
+{
+    "name": "Corona School Backend",
+    "description": "The backend of Corona School",
+    "keywords": [
+        "coronaschool",
+        "node",
+        "typescript"
+    ],
+    "website": "https://lern-fair.de/",
+    "repository": "https://github.com/corona-school/backend/",
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "hobby"
+        }
+    },
+    "addons": [
+        {
+            "plan": "heroku-postgresql"
+        }
+    ],
+    "environments": {
+        "review": {
+            "env": {
+                "NODE_ENV": "production",
+                "ENV": "dev",
+                "MAILJET_LIVE": "0"
+            },
+            "addons": [
+                "heroku-postgresql:mini"
+            ]
+        }
+    },
+    "buildpacks": [
+        {
+          "url": "jontewks/puppeteer"
+        },
+        {
+          "url": "heroku/nodejs"
+        }
+    ]
+}

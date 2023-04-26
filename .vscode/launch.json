@@ -1,0 +1,55 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Web (Debug)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script", "web:debug"
+            ],
+            "envFile": "${workspaceRoot}/.env",
+            "outputCapture": "std",
+            "timeout": 20000
+        },
+        {
+            "name": "Jobs (Debug)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script", "jobs:debug"
+            ],
+            "port": 9229,
+            "envFile": "${workspaceRoot}/.env",
+            "outputCapture": "std",
+            "timeout": 20000
+        },
+        {
+            "name": "Tests (Debug)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script", "test"
+            ],
+            "envFile": "${workspaceRoot}/.env",
+            "outputCapture": "std"
+        },
+        {
+            "type": "node-terminal",
+            "name": "[TS-Node] Web (Debug)",
+            "request": "launch",
+            "command": "TYPEORM_URL=$DATABASE_URL TYPEORM_CONNECTION=postgres TYPEORM_ENTITIES=common/entity/*.ts ts-node ${workspaceRoot}/web/index.ts",
+            "outputCapture": "std",
+            "envFile": "${workspaceRoot}/.env",
+        }
+    ]
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="./assets/" />
+    <meta charset="UTF-8">
+    <title>[TEST] Corona School Bescheinigung</title>
+</head>
+<body>
+    <h2>Englisches Zertifikat</h2>
+    Name des Studenten: <%= NAMESTUDENT %><br/>
+    Name des Schülers: <%= NAMESCHUELER %><br/>
+    Heutiges Datum: <%= DATUMHEUTE %><br/>
+    Startdatum: <%= SCHUELERSTART %><br/>
+    Enddatum: <%= SCHUELERENDE %><br/>
+    Fächer: <%= SCHUELERFAECHER %><br/>
+    Text Schüler: <%= SCHUELERFREITEXT %><br/>
+    Stunden pro Woche: <%= SCHUELERPROWOCHE %><br/>
+    Stunden gesamt: <%= SCHUELERGESAMT %><br/>
+    Medium: <%= MEDIUM %><br/>
+    Certificate Link: <%= CERTLINK %><br/>
+    Link Text: <%= CERTLINKTEXT %><br/>
+    <% if(ONGOING) { %>
+        Hilfe ging nach Zertifikat weiter
+    <% } %>
+    Ort der Unterschrift: <%= SIGNATURE_LOCATION %><br/>
+    Tag der Unterschrift: <%= SIGNATURE_DATE %>
+    <% if(SIGNATURE_PARENT) { %>
+      Unterschrift Eltern:
+      <img src="<%- SIGNATURE_PARENT %>" />
+    <% } %>
+
+    <% if(SIGNATURE_PUPIL) { %>
+      Unterschrift Schüler:
+      <img src="<%- SIGNATURE_PUPIL %>" />
+    <% } %>
+</body>
+</html>
