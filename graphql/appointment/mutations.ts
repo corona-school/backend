@@ -92,7 +92,7 @@ export class MutateAppointmentResolver {
         const student = await getStudent(context.user.studentId);
         const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
 
-        await Notification.actionTaken(match.pupil, 'student-add-appointment-match', {
+        await Notification.actionTaken(match.pupil, 'student_add_appointment_match', {
             student,
             user: match.pupil,
             matchId: appointment.matchId,
@@ -116,7 +116,7 @@ export class MutateAppointmentResolver {
         const student = await getStudent(context.user.studentId);
         const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
 
-        await Notification.actionTaken(match.pupil, 'student-add-appointments-match', {
+        await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {
             student,
             user: match.pupil,
             matchId: matchId,
@@ -139,7 +139,7 @@ export class MutateAppointmentResolver {
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
         for await (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student-add-appointment-group', {
+            await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
                 student: student,
                 user: participant,
                 course: subcourse.course,
@@ -168,7 +168,7 @@ export class MutateAppointmentResolver {
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
         for await (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student-add-appointments-group', {
+            await Notification.actionTaken(participant.pupil, 'student_add_appointments_group', {
                 student: student,
                 user: participant,
                 course: subcourse.course,

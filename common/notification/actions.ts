@@ -314,7 +314,7 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    'student-add-appointment-group': {
+    student_add_appointment_group: {
         description: 'Student / Group Appointment Added',
         sampleContext: {
             student: sampleUser,
@@ -322,7 +322,7 @@ const _notificationActions = {
             course: sampleCourse,
         },
     },
-    'student-add-appointments-group': {
+    student_add_appointments_group: {
         description: 'Student / Group Appointments Added',
         sampleContext: {
             student: sampleUser,
@@ -330,7 +330,7 @@ const _notificationActions = {
             course: sampleCourse,
         },
     },
-    'student-add-appointment-match': {
+    student_add_appointment_match: {
         description: 'Student / Match Appointment Added',
         sampleContext: {
             student: sampleUser,
@@ -338,7 +338,7 @@ const _notificationActions = {
             matchId: '1',
         },
     },
-    'student-add-appointments-match': {
+    student_add_appointments_match: {
         description: 'Student / Match Appointments Added',
         sampleContext: {
             student: sampleUser,
