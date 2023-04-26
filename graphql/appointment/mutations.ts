@@ -232,7 +232,7 @@ export class MutateAppointmentResolver {
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
             for (const participant of participants) {
-                await Notification.actionTaken(participant.pupil, 'student-cancel-appointment-group', {
+                await Notification.actionTaken(participant.pupil, 'student_cancel_appointment_group', {
                     appointment: {
                         ...appointment,
                         day: appointment.start.toLocaleString(language, { weekday: 'long' }),
@@ -246,7 +246,7 @@ export class MutateAppointmentResolver {
             }
         } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
             const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
-            await Notification.actionTaken(match.pupil, 'student-cancel-appointment-match', {
+            await Notification.actionTaken(match.pupil, 'student_cancel_appointment_match', {
                 appointment: {
                     ...appointment,
                     day: appointment.start.toLocaleString(language, { weekday: 'long' }),

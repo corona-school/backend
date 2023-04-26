@@ -315,7 +315,7 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    'student-cancel-appointment-group': {
+    student_cancel_appointment_group: {
         description: 'Student / Group Appointment Cancelled',
         sampleContext: {
             appointment: sampleAppointment,
@@ -324,7 +324,7 @@ const _notificationActions = {
             course: sampleCourse,
         },
     },
-    'student-cancel-appointment-match': {
+    student_cancel_appointment_match: {
         description: 'Student / Match Appointment Cancelled',
         sampleContext: {
             appointment: sampleAppointment,
