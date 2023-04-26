@@ -197,12 +197,12 @@ model lecture {
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
   isCanceled            Boolean?                     @default(false)
-  organizers            String[]                     @default([])
-  participants          String[]                     @default([])
   declinedBy            String[]                     @default([])
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
+  organizerIds          String[]                     @default([])
+  participantIds        String[]                     @default([])
   subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
   student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")

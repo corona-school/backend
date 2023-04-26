@@ -49,8 +49,8 @@ export const createMatchAppointment = async (appointmentToBeCreated: Appointment
             duration: appointmentToBeCreated.duration,
             matchId: appointmentToBeCreated.matchId,
             appointmentType: lecture_appointmenttype_enum.match,
-            organizers: [studentUserId],
-            participants: [pupilUserId],
+            organizerIds: [studentUserId],
+            participantIds: [pupilUserId],
         },
     });
 };
@@ -72,8 +72,8 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                         duration: appointmentToBeCreated.duration,
                         matchId: appointmentToBeCreated.matchId,
                         appointmentType: lecture_appointmenttype_enum.match,
-                        organizers: [studentUserId],
-                        participants: [pupilUserId],
+                        organizerIds: [studentUserId],
+                        participantIds: [pupilUserId],
                     },
                 })
         )
@@ -101,8 +101,8 @@ export const createGroupAppointment = async (appointmentToBeCreated: Appointment
             duration: appointmentToBeCreated.duration,
             subcourseId: appointmentToBeCreated.subcourseId,
             appointmentType: lecture_appointmenttype_enum.group,
-            organizers: instructors.map((i) => getUserForTypeORM(i.student).userID),
-            participants: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+            organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
+            participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
         },
     });
 };
@@ -122,8 +122,8 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         duration: appointmentToBeCreated.duration,
                         subcourseId: appointmentToBeCreated.subcourseId,
                         appointmentType: 'group',
-                        organizers: instructors.map((i) => getUserForTypeORM(i.student).userID),
-                        participants: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                        organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
+                        participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
                     },
                 })
         )
