@@ -71,6 +71,7 @@ export class MutateAppointmentResolver {
     @AuthorizedDeferred(Role.OWNER)
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
+        await hasAccess(context, 'Lecture', appointment);
         const currentDate = moment();
         const isPastAppointment = moment(appointment.start).isBefore(currentDate);
 
@@ -78,7 +79,6 @@ export class MutateAppointmentResolver {
             throw new Error(`Cannot update past appointment.`);
         }
 
-        await hasAccess(context, 'Lecture', appointment);
         await prisma.lecture.update({
             where: { id: appointmentToBeUpdated.id },
             data: { ...appointmentToBeUpdated },
