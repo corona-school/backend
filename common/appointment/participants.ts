@@ -16,27 +16,21 @@ export async function isAppointmentParticipant(lecture: Lecture, user: User): Pr
     }));
 }
 
-export async function addGroupParticipant(subcourseId: number, pupilId: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
-    await Promise.all(
-        appointments.map(
-            async (a) =>
-                await prisma.lecture.updateMany({
-                    where: { id: a.id },
-                    data: { participantIds: { push: pupilId } },
-                })
-        )
-    );
+export async function addGroupAppointmentsParticipant(subcourseId: number, pupilId: string) {
+    await prisma.lecture.updateMany({
+        where: { subcourseId },
+        data: { participantIds: { push: pupilId } },
+    });
 }
 
-export async function removeGroupParticipant(subcourseId: number, pupilId: string) {
+export async function removeGroupAppointmentsParticipant(subcourseId: number, pupilId: string) {
     const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { hasSome: pupilId }, start: { gte: new Date() } } });
+
     await Promise.all(
         appointments.map(async (a) => {
             const participants = a.participantIds;
             const newParticipants = participants.filter((pId) => pId !== pupilId);
-
-            await prisma.lecture.updateMany({
+            await prisma.lecture.update({
                 where: { id: a.id },
                 data: { participantIds: { set: newParticipants } },
             });
@@ -44,27 +38,20 @@ export async function removeGroupParticipant(subcourseId: number, pupilId: strin
     );
 }
 
-export async function addGroupOrganizer(subcourseId: number, organizerId: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
-    await Promise.all(
-        appointments.map(
-            async (a) =>
-                await prisma.lecture.updateMany({
-                    where: { id: a.id },
-                    data: { organizerIds: { push: organizerId } },
-                })
-        )
-    );
+export async function addGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
+    await prisma.lecture.updateMany({
+        where: { subcourseId },
+        data: { organizerIds: { push: organizerId } },
+    });
 }
 
-export async function removeGroupOrganizer(subcourseId: number, organizerId: string) {
+export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
     const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
     await Promise.all(
         appointments.map(async (a) => {
             const organizers = a.organizerIds;
             const newOrganizers = organizers.filter((oId) => oId !== organizerId);
-
-            await prisma.lecture.updateMany({
+            await prisma.lecture.update({
                 where: { id: a.id },
                 data: { organizerIds: { set: newOrganizers } },
             });
