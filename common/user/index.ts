@@ -239,3 +239,50 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
         );
     }
 }
+
+export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
+    const pupilIds = [];
+    const studentIds = [];
+    userIds.forEach((userId) => {
+        const [type, id] = getUserTypeAndIdForUserId(userId);
+        if (type === 'pupil') {
+            pupilIds.push(id);
+        }
+        if (type === 'student') {
+            studentIds.push(id);
+        }
+    });
+    const students = (
+        await prisma.student.findMany({
+            where: {
+                id: {
+                    in: studentIds,
+                },
+            },
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+            },
+        })
+    ).map((p) => ({ ...p, isStudent: true, userID: getUserIdTypeORM({ ...p, isStudent: true }) }));
+
+    const pupils = (
+        await prisma.pupil.findMany({
+            where: {
+                id: {
+                    in: pupilIds,
+                },
+            },
+
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+            },
+        })
+    ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
+    return [...students, ...pupils];
+}
