@@ -1,14 +1,7 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
-import {
-    AppointmentCreateGroupInput,
-    AppointmentCreateMatchInput,
-    createGroupAppointment,
-    createGroupAppointments,
-    createMatchAppointment,
-    createMatchAppointments,
-} from '../../common/appointment/create';
+import { AppointmentCreateGroupInput, AppointmentCreateMatchInput, createGroupAppointments, createMatchAppointments } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -35,7 +28,7 @@ export class MutateAppointmentResolver {
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
         const match = await prisma.match.findUnique({ where: { id: appointment.matchId } });
         await hasAccess(context, 'Match', match);
-        await createMatchAppointment(appointment);
+        await createMatchAppointments(match.id, [appointment]);
         return true;
     }
 
@@ -57,7 +50,7 @@ export class MutateAppointmentResolver {
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
-        await createGroupAppointment(appointment);
+        await createGroupAppointments(subcourse.id, [appointment]);
         return true;
     }
 
