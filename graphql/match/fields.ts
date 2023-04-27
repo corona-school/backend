@@ -70,6 +70,6 @@ export class ExtendedFieldsMatchResolver {
     @FieldResolver((returns) => [Appointment])
     @Authorized(Role.ADMIN, Role.OWNER)
     async appointments(@Root() match: Match) {
-        return await prisma.lecture.findMany({ where: { matchId: match.id } });
+        return await prisma.lecture.findMany({ where: { matchId: match.id }, orderBy: { start: 'asc' } });
     }
 }
