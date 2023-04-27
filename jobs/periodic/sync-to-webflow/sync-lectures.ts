@@ -1,4 +1,4 @@
-import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, publishItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
 import { diff, hash } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment from 'moment';
@@ -21,7 +21,8 @@ export function lectureDTOFactory(data: any): WebflowMetadata {
 
 function lectureToDTO(lecture: lecture): LectureDTO {
     const start = moment(lecture.start).locale('de');
-    const end = start.add(lecture.duration, 'minutes');
+    // We have to clone the start variable, because .add is mutating the object
+    const end = start.clone().add(lecture.duration, 'minutes');
     const lectureDto: LectureDTO = {
         ...emptyMetadata,
         slug: `${lecture.id}`,
@@ -55,6 +56,11 @@ export default async function syncLectures(logger: Logger): Promise<void> {
         newIds.push(newId);
     }
     logger.info('created new items', { itemIds: newIds });
+
+    for (const row of result.changed) {
+        logger.info('patch item', { itemID: row._id });
+        await patchItem(lectureCollectionId, row);
+    }
 
     if (result.outdated.length > 0) {
         const outdatedIds = result.outdated.map((row) => row._id);
