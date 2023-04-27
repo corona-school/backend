@@ -20,14 +20,14 @@ const sampleUser: GraphQLUser = {
 //     expect(typeof result).toBe('object');
 // });
 
-// test('Get a Zoom user', async () => {
-//     const result = await getZoomUser(sampleUser);
+test('Get a Zoom user', async () => {
+    const result = await getZoomUser(sampleUser);
 
-//     console.log(result);
-//     expect(typeof result).toBe('object');
-// });
-
-test('Delete a Zoom user', async () => {
-    const result = await deleteZoomUser(sampleUser);
-    expect(result.code).toBe(1001);
+    console.log(result);
+    expect(typeof result).toBe('object');
 });
+
+// test('Delete a Zoom user', async () => {
+//     const result = await deleteZoomUser(sampleUser);
+//     expect(result.code).toBe(1001);
+// });
