@@ -131,7 +131,6 @@ test('Decline an appointment as a organizer', async () => {
     assert.ok(declinedBy.includes(`student/${instructor.student.id}`));
 });
 
-// TODO update appointment
 test('Update an appointment', async () => {
     const { client } = await screenedInstructorOne;
     await firstAppointment;
