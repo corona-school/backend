@@ -6,8 +6,6 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getLecture } from '../util';
-import { lecture_appointmenttype_enum } from '../generated';
-import * as Notification from '../../common/notification';
 
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
@@ -63,7 +61,7 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
 
         await prisma.lecture.update({
-             data: { declinedBy: { push: user.userID } },
+            data: { declinedBy: { push: user.userID } },
             where: { id: appointmentId },
         });
 
