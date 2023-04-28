@@ -12,14 +12,14 @@ import moment from 'moment';
 class AppointmentUpdateInput {
     @Field(() => Int)
     id: number;
-    @Field(() => String)
-    title: string;
-    @Field(() => String)
-    description: string;
-    @Field(() => Date)
-    start: Date;
-    @Field(() => Int)
-    duration: number;
+    @Field(() => String, { nullable: true })
+    title?: string;
+    @Field(() => String, { nullable: true })
+    description?: string;
+    @Field(() => Date, { nullable: true })
+    start?: Date;
+    @Field(() => Int, { nullable: true })
+    duration?: number;
 }
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
@@ -73,7 +73,7 @@ export class MutateAppointmentResolver {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
         const currentDate = moment();
-        const isPastAppointment = moment(appointment.start).isBefore(currentDate);
+        const isPastAppointment = moment(appointment.start).add(appointment.duration).isBefore(currentDate);
 
         if (isPastAppointment) {
             throw new Error(`Cannot update past appointment.`);
