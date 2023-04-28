@@ -33,7 +33,7 @@ import { MutateTutoringInterestConfirmationResolver } from './tutoring_interest_
 import { MutateParticipationCertificateResolver } from './certificate/mutations';
 import { ExtendedFieldsParticipationCertificateResolver } from './certificate/fields';
 import { ExtendFieldsStudentResolver } from './student/fields';
-import { ExtendedFieldsLectureResolver } from './lecture/fields';
+import { ExtendedFieldsLectureResolver } from './appointment/fields';
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
@@ -63,6 +63,7 @@ import { MutateScreenerResolver } from './screener/mutations';
 import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
+import { MutateAppointmentResolver } from './appointment/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -165,6 +166,9 @@ const schema = buildSchemaSync({
         /* Screeners */
         FindManyScreenerResolver,
         MutateScreenerResolver,
+
+        /* Appointments */
+        MutateAppointmentResolver,
 
         AdminMutationsResolver,
     ],

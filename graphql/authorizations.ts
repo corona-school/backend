@@ -12,7 +12,7 @@ import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev } from '../common/util/environment';
-import { isAppointmentParticipant } from '../common/appointments/participants';
+import { isAppointmentParticipant } from '../common/appointment/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -439,8 +439,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 match: adminOrOwner,
                 matchId: adminOrOwner,
                 declinedBy: adminOrOwner,
-                participants: adminOrOwner,
-                organizers: adminOrOwner,
+                participantIds: adminOrOwner,
+                organizerIds: adminOrOwner,
             }
         ),
     },
