@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
 import { Lecture as Appointment } from '../generated/models';
 import { Role } from '../../common/user/roles';
 import { AppointmentCreateGroupInput, AppointmentCreateMatchInput, createGroupAppointments, createMatchAppointments } from '../../common/appointment/create';
@@ -6,7 +6,21 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getLecture } from '../util';
+import moment from 'moment';
 
+@InputType()
+class AppointmentUpdateInput {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String, { nullable: true })
+    title?: string;
+    @Field(() => String, { nullable: true })
+    description?: string;
+    @Field(() => Date, { nullable: true })
+    start?: Date;
+    @Field(() => Int, { nullable: true })
+    duration?: number;
+}
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
@@ -54,6 +68,25 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
+        const appointment = await getLecture(appointmentToBeUpdated.id);
+        await hasAccess(context, 'Lecture', appointment);
+        const currentDate = moment();
+        const isPastAppointment = moment(appointment.start).add(appointment.duration).isBefore(currentDate);
+
+        if (isPastAppointment) {
+            throw new Error(`Cannot update past appointment.`);
+        }
+
+        await prisma.lecture.update({
+            where: { id: appointmentToBeUpdated.id },
+            data: { ...appointmentToBeUpdated },
+        });
+        return true;
+    }
+
+    @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const { user } = context;
@@ -67,6 +100,7 @@ export class MutateAppointmentResolver {
 
         return true;
     }
+
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
     async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
