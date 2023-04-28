@@ -85,4 +85,33 @@ export class MutateAppointmentResolver {
         });
         return true;
     }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const { user } = context;
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await prisma.lecture.update({
+            data: { declinedBy: { push: user.userID } },
+            where: { id: appointmentId },
+        });
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await prisma.lecture.update({
+            data: { isCanceled: true },
+            where: { id: appointmentId },
+        });
+
+        return true;
+    }
 }
