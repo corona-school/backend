@@ -42,7 +42,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     return await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
-                await prisma.lecture.create({
+                await prisma.lecture.createMany({
                     data: {
                         title: appointmentToBeCreated.title,
                         description: appointmentToBeCreated.description,
@@ -65,7 +65,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     return await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
-                await prisma.lecture.create({
+                await prisma.lecture.createMany({
                     data: {
                         title: appointmentToBeCreated.title,
                         description: appointmentToBeCreated.description,
