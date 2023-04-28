@@ -27,14 +27,13 @@ type ZoomMeeting = {
     ];
 };
 
-const zoomMeetingUrl = 'https://api.zoom.us/v2/users';
-const grantType = 'account_credentials';
+const zoomUserUrl = 'https://api.zoom.us/v2/users';
 
 const createZoomMeeting = async (user: GraphQLUser) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
 
-        const response = await fetch(`${zoomMeetingUrl}/${user.userID}/meetings`, {
+        const response = await fetch(`${zoomUserUrl}/${user.userID}/meetings`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -47,6 +46,7 @@ const createZoomMeeting = async (user: GraphQLUser) => {
                 start_time: '2023-06-25T07:32:55Z',
                 timezone: 'Europe/Berlin',
                 type: 2,
+                topic: 'LF Zoom Meeting',
             }),
         });
 
@@ -58,8 +58,8 @@ const createZoomMeeting = async (user: GraphQLUser) => {
 
 async function getZoomMeeting(user: GraphQLUser) {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const response = await fetch(`${zoomMeetingUrl}/${user.email}/meetings`, {
+        const { access_token } = await getAccessToken();
+        const response = await fetch(`${zoomUserUrl}/${user.email}/meetings`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -73,10 +73,48 @@ async function getZoomMeeting(user: GraphQLUser) {
     }
 }
 
+const getOneZoomMeeting = async (meetingId: string) => {
+    try {
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `https://api.zoom.us/v2/meetings/${meetingId}`;
+
+        const response = await fetch(constructedUrl, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.json();
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+// ADMIN, higher plan
+const getMeetingDetailReport = async (meetingId: string) => {
+    try {
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `https://api.zoom.us/v2/report/meetings/${meetingId}`;
+
+        const response = await fetch(constructedUrl, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return response.json();
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
 const deleteZoomMeeting = async (meetingId: string) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const constructedUrl = `https://api.zoom.us/v2/${meetingId}?action=delete`;
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `https://api.zoom.us/v2/meetings/${meetingId}`;
 
         const response = await fetch(constructedUrl, {
             method: 'DELETE',
@@ -92,4 +130,4 @@ const deleteZoomMeeting = async (meetingId: string) => {
     }
 };
 
-export { getZoomMeeting, createZoomMeeting, deleteZoomMeeting };
+export { getZoomMeeting, getOneZoomMeeting, getMeetingDetailReport, createZoomMeeting, deleteZoomMeeting };

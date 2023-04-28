@@ -1,6 +1,6 @@
 import { Role } from '../user/roles';
 import { GraphQLUser } from '../user/session';
-import { deleteZoomUser, getZoomUser, createZoomUser } from './zoom-user';
+import { deleteZoomUser, getZoomUser, createZoomUser, updateZoomUser } from './zoom-user';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,6 +8,14 @@ dotenv.config();
 const sampleUser: GraphQLUser = {
     email: process.env.ZOOM_EMAIL,
     firstname: 'random',
+    lastname: 'user',
+    roles: [Role.USER, Role.STUDENT],
+    userID: process.env.ZOOM_USER_ID,
+};
+
+const updatedUser: GraphQLUser = {
+    email: process.env.ZOOM_EMAIL,
+    firstname: 'lernfair',
     lastname: 'user',
     roles: [Role.USER, Role.STUDENT],
     userID: process.env.ZOOM_USER_ID,
@@ -22,6 +30,13 @@ const sampleUser: GraphQLUser = {
 
 test('Get a Zoom user', async () => {
     const result = await getZoomUser(sampleUser);
+
+    console.log(result);
+    expect(typeof result).toBe('object');
+});
+
+test('Update a Zoom user', async () => {
+    const result = await updateZoomUser(updatedUser);
 
     console.log(result);
     expect(typeof result).toBe('object');

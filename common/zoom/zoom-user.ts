@@ -15,11 +15,10 @@ type ZoomUser = {
 };
 
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
-const grantType = 'account_credentials';
 
 const createZoomUser = async (user: GraphQLUser): Promise<ZoomUser> => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
 
         const createdUser = await fetch(zoomUserApiUrl, {
             method: 'POST',
@@ -47,7 +46,7 @@ const createZoomUser = async (user: GraphQLUser): Promise<ZoomUser> => {
 
 async function getZoomUser(user: GraphQLUser): Promise<ZoomUser> {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
         const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
             method: 'GET',
             headers: {
@@ -64,7 +63,7 @@ async function getZoomUser(user: GraphQLUser): Promise<ZoomUser> {
 
 async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
         const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
             method: 'PATCH',
             headers: {
@@ -86,8 +85,8 @@ async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
 
 const deleteZoomUser = async (user: GraphQLUser) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const constructedUrl = `${zoomUserApiUrl}/${user.userID}?action=delete`;
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `${zoomUserApiUrl}/${user.userID}`;
 
         const response = await fetch(constructedUrl, {
             method: 'DELETE',
@@ -95,6 +94,9 @@ const deleteZoomUser = async (user: GraphQLUser) => {
                 Authorization: `Bearer ${access_token}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                action: 'delete',
+            }),
         });
 
         return response.json();
