@@ -2,9 +2,7 @@ import { test } from './base';
 import { screenedInstructorOne } from './screening';
 import { subcourseOne } from './course';
 import assert from 'assert';
-import { pupilOne, pupilUpdated } from './user';
 
-// TODO define appointment titles here
 const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';
 const appointmentTitle3 = 'Group Appointment 3';
@@ -99,54 +97,39 @@ const myAppointments = test('Get my appointments', async () => {
 
     assert.ok(appointments);
     assert.ok(appointments.some((a) => (a.title = appointmentTitle)));
+    return appointments;
 });
 
-const participantAppointments = test('Get participants appointments', async () => {
-    const { client, pupil } = await pupilOne;
-    const { subcourseId } = await subcourseOne;
+test('Cancel an appointment as a organizer', async () => {
+    const { client } = await screenedInstructorOne;
+    await firstAppointment;
 
-    await pupilUpdated;
-    await myAppointments;
+    const appointments = await myAppointments;
+    const appointmentId = appointments[0].id;
 
-    await client.request(`
-    mutation joinSubcourse(
-        subcourseJoin(subcourseId: ${parseInt(subcourseId)})
-    )`);
+    await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);
+    const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
+    const appointmentsWithoutCanceledAppointment = await myAppointments;
 
+    assert.ok(isAppointmentCanceled);
+    assert.ok(appointmentsWithoutCanceledAppointment.some((a) => a.id != appointmentId));
+});
+
+test('Decline an appointment as a organizer', async () => {
+    const { client, instructor } = await screenedInstructorOne;
+
+    await firstAppointment;
+    await moreAppointments;
+
+    const appointments = await myAppointments;
+    const appointmentId = appointments[1].id;
+
+    await client.request(`mutation declineAppointment {appointmentDecline(appointmentId: ${appointmentId})}`);
     const {
-        me: { appointments },
-    } = await client.request(`
-        query myAppointments {
-            me {
-                appointments(take: 3) {
-                    id
-                    title
-                    description
-                    start
-                    duration
-                    appointmentType
-                    displayName
-                    position
-                    total
-                    isCanceled
-                    organizers(skip: 0, take: 5) {
-                        id
-                        firstname
-                        lastname
-                    }
-                    participants(skip: 0, take: 30) {
-                        id
-                        firstname
-                        lastname
-                    }
-                    declinedBy
-                }
-            }
-        }
-    `);
-    assert.ok(appointments.participants.some((p) => (p.id = pupil.pupil.id)));
+        appointment: { declinedBy },
+    } = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){declinedBy}}`);
+
+    assert.ok(declinedBy.includes(`student/${instructor.student.id}`));
 });
 
-// TODO cancel appointment
-
-// TODO declinedBy
+// TODO update appointment
