@@ -103,24 +103,23 @@ const myAppointments = test('Get my appointments', async () => {
 test('Cancel an appointment as a organizer', async () => {
     const { client } = await screenedInstructorOne;
     await firstAppointment;
-
-    const appointments = await myAppointments;
-    const appointmentId = appointments[0].id;
+    const clientAppointments = await myAppointments;
+    const appointmentId = clientAppointments[0].id;
 
     await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);
     const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
-    const appointmentsWithoutCanceledAppointment = await myAppointments;
+    const {
+        me: { appointments },
+    } = await client.request(`query myAppointments { me { appointments(take: 3) { id }}}`);
 
     assert.ok(isAppointmentCanceled);
-    assert.ok(appointmentsWithoutCanceledAppointment.some((a) => a.id != appointmentId));
+    assert.ok(appointments.some((a) => a.id != appointmentId));
 });
 
 test('Decline an appointment as a organizer', async () => {
     const { client, instructor } = await screenedInstructorOne;
-
     await firstAppointment;
     await moreAppointments;
-
     const appointments = await myAppointments;
     const appointmentId = appointments[1].id;
 
@@ -133,3 +132,42 @@ test('Decline an appointment as a organizer', async () => {
 });
 
 // TODO update appointment
+test('Update an appointment', async () => {
+    const { client } = await screenedInstructorOne;
+    await firstAppointment;
+    const clientAppointments = await myAppointments;
+    const appointmentId = clientAppointments[1].id;
+    const nextHour = new Date();
+    nextHour.setHours(new Date().getHours() + 1);
+
+    const updateTitle = 'Updated Title';
+    const resp = await client.request(`mutation updateAppointment { appointmentUpdate (
+        appointmentToBeUpdated: {
+            id: ${appointmentId}
+            title: "${updateTitle}"
+            description: "Description"
+            start: "${nextHour}"
+            duration: 120
+        }
+        )
+    }`);
+
+    const {
+        me: { appointments },
+    } = await client.request(`
+        query myAppointments {
+            me {
+                appointments(take: 10) {
+                    id
+                    title
+                    description
+                    start
+                    duration
+                }
+            }
+        }
+    `);
+
+    console.log('UPDATED APPOINTMENTS', appointments);
+    assert.ok(appointments.some((a) => a.id == appointmentId && a.title == updateTitle));
+});
