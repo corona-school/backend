@@ -65,9 +65,7 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
             return;
         }
 
-        logger.debug(
-            `Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`
-        );
+        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
 
         // prevent sending of now unnecessary notifications
         const dismissed = await prisma.concrete_notification.updateMany({
@@ -85,8 +83,8 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
                 // If it is not specified, it'll apply to all reminders
                 ...(notificationContext.uniqueId
                     ? {
-                            OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
-                        }
+                          OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
+                      }
                     : {}),
             },
         });
@@ -225,7 +223,7 @@ export async function getMessage(
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
-        navigateTo,
+        navigateTo: renderTemplate(navigateTo, context),
     };
 }
 
