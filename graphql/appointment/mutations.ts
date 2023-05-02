@@ -22,7 +22,6 @@ import { lecture_appointmenttype_enum } from '@prisma/client';
 import { getUserType } from '../../common/user';
 import * as Notification from '../../common/notification';
 import moment from 'moment';
-import * as Notification from '../../common/notification';
 
 const language = 'de-DE';
 const logger = getLogger('MutateAppointmentsResolver');
