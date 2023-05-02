@@ -98,6 +98,14 @@ export async function setMessageTranslation({
         }
     }
 
+    if (navigateTo) {
+        try {
+            renderTemplate(navigateTo, sampleContext, true);
+        } catch (error) {
+            abortWithError(error, 'navigateTo', navigateTo);
+        }
+    }
+
     // Atomically swap the template for this (notification, language)
     await prisma.$transaction([
         // eslint-disable-next-line lernfair-lint/prisma-laziness
