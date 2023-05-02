@@ -1,13 +1,16 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
-import { Lecture as Appointment } from '../generated/models';
+import { Lecture as Appointment, lecture_appointmenttype_enum } from '../generated';
 import { Role } from '../../common/user/roles';
 import { AppointmentCreateGroupInput, AppointmentCreateMatchInput, createGroupAppointments, createMatchAppointments } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture } from '../util';
+import { getLecture, getStudent } from '../util';
 import moment from 'moment';
+import * as Notification from '../../common/notification';
+import { getLogger } from '../../common/logger/logger';
 
+const logger = getLogger('MutateAppointmentsResolver');
 @InputType()
 class AppointmentUpdateInput {
     @Field(() => Int)
@@ -111,6 +114,44 @@ export class MutateAppointmentResolver {
             data: { isCanceled: true },
             where: { id: appointmentId },
         });
+
+        // * Send notification here
+
+        const student = await getStudent(context.user.studentId);
+        const language = 'de-DE';
+
+        if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
+            const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
+            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+
+            for (const participant of participants) {
+                await Notification.actionTaken(participant.pupil, 'student_cancel_appointment_group', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    student,
+                    user: context.user,
+                    course: subcourse.course,
+                });
+            }
+        } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+            await Notification.actionTaken(match.pupil, 'student_cancel_appointment_match', {
+                appointment: {
+                    ...appointment,
+                    day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                    date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                },
+                student,
+                user: context.user,
+            });
+        } else {
+            logger.error(`Could not send notification to pupils of appointment. The appointment-type is neither 'match' nor 'group'.`, { appointment });
+        }
 
         return true;
     }

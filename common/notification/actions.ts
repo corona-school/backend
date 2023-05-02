@@ -29,6 +29,13 @@ const sampleCourse = {
     },
 };
 
+const sampleAppointment = {
+    day: 'Sonntag',
+    date: '20. Juli 1969',
+    time: '19:17',
+    title: 'Chapter 1',
+};
+
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
 };
@@ -317,7 +324,23 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-
+    student_cancel_appointment_group: {
+        description: 'Student / Group Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_cancel_appointment_match: {
+        description: 'Student / Match Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+        },
+    },
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,

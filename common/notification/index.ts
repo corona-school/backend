@@ -65,9 +65,7 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
             return;
         }
 
-        logger.debug(
-            `Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`
-        );
+        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
 
         // prevent sending of now unnecessary notifications
         const dismissed = await prisma.concrete_notification.updateMany({
@@ -85,8 +83,8 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
                 // If it is not specified, it'll apply to all reminders
                 ...(notificationContext.uniqueId
                     ? {
-                            OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
-                        }
+                          OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
+                      }
                     : {}),
             },
         });
@@ -219,14 +217,19 @@ export async function getMessage(
         return null;
     }
 
-    const { type, headline, body, navigateTo } = message;
+    const { type, headline, body, modalText, navigateTo } = message;
 
-    return {
+    const result = {
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
-        navigateTo,
+        navigateTo: renderTemplate(navigateTo, context),
     };
+
+    if (modalText) {
+        return { ...result, modalText: renderTemplate(modalText, context) };
+    }
+    return result;
 }
 
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
