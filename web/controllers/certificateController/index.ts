@@ -3,16 +3,31 @@ import { Request, Response } from 'express';
 import { Pupil } from '../../../common/entity/Pupil';
 import { Student } from '../../../common/entity/Student';
 import { assert } from 'console';
-import { createRemissionRequestPDF, createRemissionRequestVerificationPage } from "../../../common/remission-request";
-import { CERTIFICATE_MEDIUMS, CertificateState, ICertificateCreationParams, createCertificate, DefaultLanguage, LANGUAGES, Language, signCertificate, VALID_BASE64, getCertificatePDF, getConfirmationPage, getCertificatesFor, CertificateError, createCertificateLEGACY } from '../../../common/certificate';
+import { createRemissionRequestPDF, createRemissionRequestVerificationPage } from '../../../common/remission-request';
+import {
+    CERTIFICATE_MEDIUMS,
+    CertificateState,
+    ICertificateCreationParams,
+    createCertificate,
+    DefaultLanguage,
+    LANGUAGES,
+    Language,
+    signCertificate,
+    VALID_BASE64,
+    getCertificatePDF,
+    getConfirmationPage,
+    getCertificatesFor,
+    CertificateError,
+    createCertificateLEGACY,
+} from '../../../common/certificate';
+import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
-
 // certificate types
-const CERTIFICATETYPES = ["participation", "remission"] as const;
+const CERTIFICATETYPES = ['participation', 'remission'] as const;
 type CertificateType = (typeof CERTIFICATETYPES)[number];
-const DefaultCertificateType = "participation";
+const DefaultCertificateType = 'participation';
 
 /**
  * @api {POST} /certificate/create getCertificate
@@ -47,67 +62,67 @@ const DefaultCertificateType = "participation";
  */
 export async function createCertificateEndpoint(req: Request, res: Response) {
     try {
-        assert(res.locals.user, "Must be logged in");
+        assert(res.locals.user, 'Must be logged in');
 
         const { pupil, automatic, endDate, subjects, hoursPerWeek, hoursTotal, medium, activities, ongoingLessons } = req.body;
         const requestor = res.locals.user as Student;
 
         if (requestor instanceof Pupil) {
-            return res.status(403).send("Only students may request certificates");
+            return res.status(403).send('Only students may request certificates');
         }
 
         if (!pupil || !endDate || !subjects || hoursPerWeek === undefined || hoursTotal === undefined || !medium || !activities) {
-            return res.status(400).send("Missing parameters");
+            return res.status(400).send('Missing parameters');
         }
 
-        if (automatic !== undefined && typeof automatic !== "boolean") {
-            return res.status(400).send("automatic must be boolean");
+        if (automatic !== undefined && typeof automatic !== 'boolean') {
+            return res.status(400).send('automatic must be boolean');
         }
 
-        if (typeof endDate !== "number") {
-            return res.status(400).send("endDate must be a number");
+        if (typeof endDate !== 'number') {
+            return res.status(400).send('endDate must be a number');
         }
 
-        if (!Array.isArray(subjects) || subjects.some(it => typeof it !== "string")) {
-            return res.status(400).send("subjects must be an array of strings");
+        if (!Array.isArray(subjects) || subjects.some((it) => typeof it !== 'string')) {
+            return res.status(400).send('subjects must be an array of strings');
         }
 
-        if (typeof hoursPerWeek !== "number" || hoursPerWeek < 0) {
-            return res.status(400).send("hoursPerWeek must be a positive number");
+        if (typeof hoursPerWeek !== 'number' || hoursPerWeek < 0) {
+            return res.status(400).send('hoursPerWeek must be a positive number');
         }
 
-        if (typeof hoursTotal !== "number" || hoursTotal < 0) {
-            return res.status(400).send("hoursTotal must be a positive number");
+        if (typeof hoursTotal !== 'number' || hoursTotal < 0) {
+            return res.status(400).send('hoursTotal must be a positive number');
         }
 
         if (!CERTIFICATE_MEDIUMS.includes(medium)) {
             return res.status(400).send(`medium must be one of ${CERTIFICATE_MEDIUMS}`);
         }
 
-        if (!Array.isArray(activities) || activities.some(it => typeof it !== "string")) {
-            return res.status(400).send("categories must be an array of strings");
+        if (!Array.isArray(activities) || activities.some((it) => typeof it !== 'string')) {
+            return res.status(400).send('categories must be an array of strings');
         }
 
-        if (ongoingLessons !== undefined && typeof ongoingLessons !== "boolean") {
-            return res.status(400).send("ongoingLessons must be boolean");
+        if (ongoingLessons !== undefined && typeof ongoingLessons !== 'boolean') {
+            return res.status(400).send('ongoingLessons must be boolean');
         }
 
         let state = automatic ? CertificateState.awaitingApproval : CertificateState.manual;
 
         let params = {
             endDate,
-            subjects: subjects.join(","),
+            subjects: subjects.join(','),
             hoursPerWeek,
             hoursTotal,
             medium,
-            activities: activities.join("\n"),
+            activities: activities.join('\n'),
             ongoingLessons,
-            state
+            state,
         };
 
         // Students may only request for their matches
-
-        const certificate = await createCertificateLEGACY(requestor, pupil, params);
+        const prismaUser = await prisma.student.findUniqueOrThrow({ where: { id: requestor.id } }); // Makeshift solution until we sunset the REST-API
+        const certificate = await createCertificateLEGACY(prismaUser, pupil, params);
 
         return res.json({ uuid: certificate.uuid, automatic });
     } catch (error) {
@@ -115,12 +130,11 @@ export async function createCertificateEndpoint(req: Request, res: Response) {
             return res.status(400).send(error.message);
         }
 
-        logger.error("Unexpected format of express request: " + error.message);
+        logger.error('Unexpected format of express request: ' + error.message);
         logger.debug(req, error);
-        return res.status(500).send("Internal server error");
+        return res.status(500).send('Internal server error');
     }
 }
-
 
 /**
  * @api {GET} /certificate/:certificateId?lang=... getCertificateConfirmation
@@ -150,25 +164,25 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
         const { certificateId } = req.params;
         let { lang } = req.query;
         const requestor = res.locals.user as Student;
-        assert(requestor, "No user set");
+        assert(requestor, 'No user set');
 
         if (lang === undefined) {
             lang = DefaultLanguage;
         }
 
         if (!LANGUAGES.includes(lang as Language)) {
-            return res.status(400).send("Language not known");
+            return res.status(400).send('Language not known');
         }
 
-        if (typeof certificateId !== "string") {
-            return res.status(400).send("Missing parameter certificateId");
+        if (typeof certificateId !== 'string') {
+            return res.status(400).send('Missing parameter certificateId');
         }
-
-        const pdf = await getCertificatePDF(certificateId, requestor, lang as Language);
+        const prismaUser = await prisma.student.findUniqueOrThrow({ where: { id: requestor.id } }); // Makeshift solution until we sunset the REST-API
+        const pdf = await getCertificatePDF(certificateId, prismaUser, lang as Language);
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
-            'Content-Length': pdf.length
+            'Content-Length': pdf.length,
         });
         return res.end(pdf);
     } catch (error) {
@@ -176,8 +190,8 @@ export async function getCertificateEndpoint(req: Request, res: Response) {
             return res.status(400).send(error.message);
         }
 
-        logger.error("Failed to generate certificate confirmation", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Failed to generate certificate confirmation', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }
 
@@ -218,17 +232,17 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
         }
 
         if (!LANGUAGES.includes(lang as Language)) {
-            return res.status(400).send("Language not known");
+            return res.status(400).send('Language not known');
         }
 
         if (!CERTIFICATETYPES.includes(ctype as CertificateType)) {
-            return res.status(400).send("Certificate type not known");
+            return res.status(400).send('Certificate type not known');
         }
 
-        if (typeof certificateId !== "string") {
-            return res.status(400).send("Missing parameter certificateId");
+        if (typeof certificateId !== 'string') {
+            return res.status(400).send('Missing parameter certificateId');
         }
-        if (ctype === "participation") {
+        if (ctype === 'participation') {
             const confirmation = await getConfirmationPage(certificateId, lang as Language);
 
             return res.send(confirmation);
@@ -236,7 +250,7 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             const remissionRequestVerificationPage = await createRemissionRequestVerificationPage(certificateId.toUpperCase());
 
             if (!remissionRequestVerificationPage) {
-                return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+                return res.status(404).send('<h1>Zertifikatslink nicht valide.</h1>');
             }
 
             return res.send(remissionRequestVerificationPage);
@@ -246,11 +260,10 @@ export async function getCertificateConfirmationEndpoint(req: Request, res: Resp
             return res.status(400).send(error.message);
         }
 
-        logger.error("Failed to generate certificate confirmation", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Failed to generate certificate confirmation', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }
-
 
 /**
  * @api {POST} /certificate/:certificateId/sign
@@ -277,37 +290,37 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
     const { signaturePupil, signatureParent, signatureLocation } = req.body;
     const { certificateId } = req.params;
 
-    if (typeof certificateId !== "string") {
-        return res.status(400).send("Missing parameter certificateId");
+    if (typeof certificateId !== 'string') {
+        return res.status(400).send('Missing parameter certificateId');
     }
 
-    if (signaturePupil !== undefined && (typeof signaturePupil !== "string" || !signaturePupil.match(VALID_BASE64))) {
-        return res.status(400).send("Parameter signaturePupil must be a string and valid base64 encoding");
+    if (signaturePupil !== undefined && (typeof signaturePupil !== 'string' || !signaturePupil.match(VALID_BASE64))) {
+        return res.status(400).send('Parameter signaturePupil must be a string and valid base64 encoding');
     }
 
-    if (signatureParent !== undefined && (typeof signatureParent !== "string" || !signatureParent.match(VALID_BASE64))) {
-        return res.status(400).send("Parameter signatureParent must be a string and valid base64 encoding");
+    if (signatureParent !== undefined && (typeof signatureParent !== 'string' || !signatureParent.match(VALID_BASE64))) {
+        return res.status(400).send('Parameter signatureParent must be a string and valid base64 encoding');
     }
 
     if (!signaturePupil && !signatureParent) {
-        return res.status(400).send("Either the parent or the pupil must sign the certificate");
+        return res.status(400).send('Either the parent or the pupil must sign the certificate');
     }
 
-    if (typeof signatureLocation !== "string" || !signatureLocation) {
-        return res.status(400).send("Parameter signatureLocation must be a string");
+    if (typeof signatureLocation !== 'string' || !signatureLocation) {
+        return res.status(400).send('Parameter signatureLocation must be a string');
     }
-
 
     try {
-        await signCertificate(certificateId, signer, signatureParent, signaturePupil, signatureLocation);
-        return res.send("Certificate signed");
+        const prismaUser = await prisma.pupil.findUniqueOrThrow({ where: { id: signer.id } }); // Makeshift solution until we sunset the REST-API
+        await signCertificate(certificateId, prismaUser, signatureParent, signaturePupil, signatureLocation);
+        return res.send('Certificate signed');
     } catch (error) {
         if (error instanceof CertificateError) {
             return res.status(400).send(error.message);
         }
 
-        logger.error("Failed to sign certificate", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Failed to sign certificate', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }
 
@@ -335,15 +348,14 @@ export async function signCertificateEndpoint(req: Request, res: Response) {
  * @returns {Response}
  */
 export async function getCertificatesEndpoint(req: Request, res: Response) {
-    assert(res.locals.user, "No user set");
-
+    assert(res.locals.user, 'No user set');
 
     try {
         const certificates = await getCertificatesFor(res.locals.user);
         return res.json({ certificates });
     } catch (error) {
-        logger.error("Retrieving certificates for user failed with", error);
-        return res.status(500).send("Internal Server error");
+        logger.error('Retrieving certificates for user failed with', error);
+        return res.status(500).send('Internal Server error');
     }
 }
 
@@ -372,17 +384,17 @@ export async function getRemissionRequestEndpoint(req: Request, res: Response) {
         const pdf = await createRemissionRequestPDF(student);
 
         if (pdf === undefined) {
-            return res.status(404).send("Could not find a remission request for this user.");
+            return res.status(404).send('Could not find a remission request for this user.');
         }
 
         res.writeHead(200, {
             'Content-Type': 'application/pdf',
-            'Content-Length': pdf.length
+            'Content-Length': pdf.length,
         });
 
         return res.end(pdf);
     } catch (error) {
-        logger.error("Generating remission request failed with: ", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Generating remission request failed with: ', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }

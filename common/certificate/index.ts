@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
 import moment from 'moment';
@@ -9,13 +9,10 @@ import EJS from 'ejs';
 import { mailjetTemplates, sendTemplateMail } from '../mails';
 import { createAutoLoginLink } from '../../web/controllers/utils';
 import * as Notification from '../notification';
-import { Pupil } from '../entity/Pupil';
-import { Student } from '../entity/Student';
-import { pupil as PrismaPupil, student as PrismaStudent, participation_certificate as PrismaParticipationCertificate } from '@prisma/client';
-import { getManager } from 'typeorm';
-import { Match } from '../entity/Match';
-import { ParticipationCertificate } from '../entity/ParticipationCertificate';
+import { participation_certificate as PrismaParticipationCertificate, Prisma, pupil as PrismaPupil, student as PrismaStudent } from '@prisma/client';
 import assert from 'assert';
+import { prisma } from '../prisma';
+import { Decimal } from '@prisma/client/runtime';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -56,50 +53,57 @@ export interface IExposedCertificate {
 export class CertificateError extends Error {}
 
 /* Pupils can retrieve certificates of their students, students can retrieve theirs */
-export async function getCertificatesFor(user: Pupil | Student) {
-    const entityManager = getManager();
-
-    const certificatesData = await entityManager.find(ParticipationCertificate, {
-        where: user instanceof Pupil ? { pupil: user.id } : { student: user.id },
-        relations: ['student', 'pupil'],
+export async function getCertificatesFor(user: PrismaPupil | PrismaStudent) {
+    const certificatesData = await prisma.participation_certificate.findMany({
+        where: user.hasOwnProperty('isPupil') ? { pupilId: user.id } : { studentId: user.id },
+        include: { student: true, pupil: true },
     });
 
     return certificatesData.map((cert) => exposeCertificate(cert, /*to*/ user));
 }
 
 /* Students can download their certificates as PDF */
-export async function getCertificatePDF(certificateId: string, _requestor: Student | PrismaStudent, lang: Language): Promise<Buffer> {
-    const entityManager = getManager();
-
-    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
+export async function getCertificatePDF(certificateId: string, _requester: PrismaStudent, lang: Language): Promise<Buffer> {
+    const requester = await prisma.student.findUniqueOrThrow({ where: { id: _requester.id } });
 
     /* Retrieve the certificate and also get the signature columns that are usually hidden for performance reasons */
-    const certificate = await entityManager.findOne(
-        ParticipationCertificate,
-        { uuid: certificateId.toUpperCase(), student: requestor },
-        {
-            relations: ['student', 'pupil'],
-            /* Unfortunately there is no "*" option which would also select the signatures. The query builder also does not cover this case */
-            select: [
-                'uuid',
-                'categories',
-                'certificateDate',
-                'endDate',
-                'hoursPerWeek',
-                'hoursTotal',
-                'id',
-                'medium',
-                'ongoingLessons',
-                'signatureParent',
-                'signaturePupil',
-                'signatureDate',
-                'signatureLocation',
-                'startDate',
-                'state',
-                'subjects',
-            ],
-        }
-    );
+    const certificate = await prisma.participation_certificate.findFirstOrThrow({
+        where: {
+            uuid: certificateId.toUpperCase(),
+            studentId: requester.id,
+        },
+        include: {
+            student: true,
+            pupil: true,
+        },
+    });
+
+    // const certificate = await entityManager.findOne(
+    //     ParticipationCertificate,
+    //     { uuid: certificateId.toUpperCase(), student: requestor },
+    //     {
+    //         relations: ['student', 'pupil'],
+    //         /* Unfortunately there is no "*" option which would also select the signatures. The query builder also does not cover this case */
+    //         select: [
+    //             'uuid',
+    //             'categories',
+    //             'certificateDate',
+    //             'endDate',
+    //             'hoursPerWeek',
+    //             'hoursTotal',
+    //             'id',
+    //             'medium',
+    //             'ongoingLessons',
+    //             'signatureParent',
+    //             'signaturePupil',
+    //             'signatureDate',
+    //             'signatureLocation',
+    //             'startDate',
+    //             'state',
+    //             'subjects',
+    //         ],
+    //     }
+    // );
 
     if (!certificate) {
         throw new CertificateError('Certificate not found');
@@ -122,9 +126,7 @@ export interface ICertificateCreationParams {
     state: CertificateState.manual | CertificateState.awaitingApproval;
 }
 
-export async function issueCertificateRequest(
-    pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
-) {
+export async function issueCertificateRequest(pc: PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent }) {
     const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
     const mail = mailjetTemplates.CERTIFICATEREQUEST({
         certificateLink,
@@ -140,61 +142,80 @@ export async function issueCertificateRequest(
 }
 
 export async function createCertificateLEGACY(
-    _requestor: Student | PrismaStudent,
+    _requestor: PrismaStudent,
     matchId: string,
     params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
 ) {
-    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
+    return await createCertificate(_requestor, matchId, {
+        ...params,
+        endDate: params.endDate && moment(params.endDate, 'X').toDate(),
+    });
 }
+
 /* Students can create certificates, which pupils can then sign */
 export async function createCertificate(
-    _requestor: Student | PrismaStudent,
+    _requestor: PrismaStudent,
     matchId: string,
     params: ICertificateCreationParams
-): Promise<ParticipationCertificate> {
-    const entityManager = getManager();
+): Promise<PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent }> {
     const transactionLog = getTransactionLog();
 
-    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
+    const requestor = await prisma.student.findUniqueOrThrow({ where: { id: _requestor.id } });
 
-    const match = await entityManager.findOne(Match, { uuid: matchId, student: requestor });
+    const match = await prisma.match.findFirst({ where: { uuid: matchId, studentId: requestor.id } });
     if (!match) {
         throw new CertificateError(`No Match found with id '${matchId}'`);
     }
 
-    let pc = new ParticipationCertificate();
-    pc.pupil = match.pupil;
-    pc.student = requestor;
-    pc.subjects = params.subjects;
-    pc.categories = params.activities;
-    pc.hoursPerWeek = params.hoursPerWeek;
-    pc.hoursTotal = params.hoursTotal;
-    pc.medium = params.medium;
-    pc.startDate = params.startDate ?? match.createdAt;
-    pc.endDate = params.endDate;
-    pc.ongoingLessons = params.ongoingLessons;
-    pc.state = params.state;
+    let pc: Omit<PrismaParticipationCertificate, 'id'> = {
+        categories: params.activities,
+        certificateDate: undefined,
+        endDate: params.endDate,
+        hoursPerWeek: new Decimal(params.hoursPerWeek),
+        hoursTotal: new Decimal(params.hoursTotal),
+        medium: params.medium,
+        ongoingLessons: params.ongoingLessons,
+        pupilId: match.pupilId,
+        signatureDate: undefined,
+        signatureLocation: '',
+        signatureParent: undefined,
+        signaturePupil: undefined,
+        startDate: params.startDate ?? match.createdAt,
+        state: params.state,
+        studentId: requestor.id,
+        subjects: params.subjects,
+        uuid: undefined,
+    };
 
     do {
         pc.uuid = randomBytes(5).toString('hex').toUpperCase();
-    } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
+    } while (await prisma.participation_certificate.findUnique({ where: { uuid: pc.uuid } }));
 
-    await entityManager.save(ParticipationCertificate, pc);
+    const resPc = await prisma.participation_certificate.create({ data: pc, include: { pupil: true, student: true } });
     await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
 
     if (params.state === 'awaiting-approval') {
-        await issueCertificateRequest(pc);
+        await issueCertificateRequest(resPc);
     }
 
-    return pc;
+    return resPc;
 }
 
 /* Everybody who sees a certificate can verify it's authenticity through a public endpoint, which shows the confirmation page */
 export async function getConfirmationPage(certificateId: string, lang: Language) {
-    const entityManager = getManager();
-
-    const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ['student', 'pupil'] });
-
+    const certificate = await prisma.participation_certificate.findUnique({
+        where: {
+            uuid: certificateId.toUpperCase(),
+        },
+        include: {
+            student: {
+                include: {
+                    screening: true,
+                },
+            },
+            pupil: true,
+        },
+    });
     if (!certificate) {
         throw new CertificateError(`Certificate not found`);
     }
@@ -222,7 +243,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
 /* Pupils can sign certificates for their students through a webinterface */
 export async function signCertificate(
     certificateId: string,
-    _signer: Pupil | PrismaPupil,
+    _signer: PrismaPupil,
     signatureParent: string | undefined,
     signaturePupil: string | undefined,
     signatureLocation: string
@@ -232,15 +253,21 @@ export async function signCertificate(
     assert(!signatureParent || signatureParent.match(VALID_BASE64), 'Parent Signature is valid Base 64');
     assert(signatureLocation, 'Singature location must be set');
 
-    const entityManager = getManager();
-
-    const signer = await entityManager.findOneOrFail(Pupil, { id: _signer.id });
-
-    const certificate = await entityManager.findOne(
-        ParticipationCertificate,
-        { pupil: signer, uuid: certificateId.toUpperCase() },
-        { relations: ['student', 'pupil'] }
-    );
+    const signer = await prisma.pupil.findUniqueOrThrow({
+        where: {
+            id: _signer.id,
+        },
+    });
+    const certificate = await prisma.participation_certificate.findFirst({
+        where: {
+            pupilId: signer.id,
+            uuid: certificateId.toUpperCase(),
+        },
+        include: {
+            pupil: true,
+            student: true,
+        },
+    });
 
     if (!certificate) {
         throw new CertificateError('Missing certificateID or the pupil is not allowed to sign this certificate');
@@ -254,19 +281,26 @@ export async function signCertificate(
         throw new CertificateError('Certificate cannot be signed as it is a manual one');
     }
 
+    let updateData: Prisma.participation_certificateUncheckedUpdateInput = {};
+
     if (signatureParent) {
-        certificate.signatureParent = Buffer.from(signatureParent, 'utf-8');
+        updateData.signatureParent = Buffer.from(signatureParent, 'utf-8');
     }
 
     if (signaturePupil) {
-        certificate.signaturePupil = Buffer.from(signaturePupil, 'utf-8');
+        updateData.signaturePupil = Buffer.from(signaturePupil, 'utf-8');
     }
 
-    certificate.signatureDate = new Date();
-    certificate.signatureLocation = signatureLocation;
-    certificate.state = 'approved';
+    updateData.signatureDate = new Date();
+    updateData.signatureLocation = signatureLocation;
+    updateData.state = 'approved';
 
-    await getManager().save(ParticipationCertificate, certificate);
+    await prisma.participation_certificate.update({
+        where: {
+            uuid: certificate.uuid,
+        },
+        data: updateData,
+    });
 
     const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
 
@@ -320,7 +354,10 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
 }
 
 /* Map the certificate data to something the frontend can work with while keeping user data secret */
-function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCertificate, to: Student | Pupil): IExposedCertificate {
+function exposeCertificate(
+    { student, pupil, state, ...cert }: PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent },
+    to: PrismaPupil | PrismaStudent
+): IExposedCertificate {
     return {
         ...cert,
         // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
@@ -328,14 +365,20 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
         pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
         student: { firstname: student.firstname, lastname: student.lastname },
         state: state as CertificateState,
+        hoursPerWeek: cert.hoursPerWeek.toNumber(),
+        hoursTotal: cert.hoursTotal.toNumber(),
     };
 }
 
-function getCertificateLink(certificate: ParticipationCertificate, lang: Language) {
+function getCertificateLink(certificate: PrismaParticipationCertificate, lang: Language) {
     return 'http://verify.corona-school.de/' + certificate.uuid + '?lang=' + lang;
 }
 
-async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
+async function createPDFBinary(
+    certificate: PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent },
+    link: string,
+    lang: Language
+): Promise<Buffer> {
     const { student, pupil } = certificate;
 
     const template = loadTemplate('certificateTemplate', lang);

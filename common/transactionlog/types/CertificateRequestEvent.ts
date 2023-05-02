@@ -1,6 +1,6 @@
-import LogUserEvent from "./LogUserEvent";
-import LogType from "./LogType";
-import { Student } from "../../entity/Student";
+import LogUserEvent from './LogUserEvent';
+import LogType from './LogType';
+import { student as Student } from '@prisma/client';
 
 export default class CertificateRequestEvent extends LogUserEvent {
     constructor(student: Student, matchuuid: string) {

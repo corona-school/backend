@@ -1,8 +1,5 @@
-import { match as Match } from '@prisma/client';
-import { prisma } from '../prisma';
 import { actionTakenAt } from './index';
-import { NotificationContext, BulkAction } from './types';
-import { getMatchHash } from '../match/util';
+import { BulkAction } from './types';
 import { getUserIdTypeORM } from '../user';
 
 interface BulkRun {
