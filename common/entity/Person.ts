@@ -77,6 +77,12 @@ export abstract class Person {
 
     @Column({ nullable: true, type: 'json' })
     notificationPreferences: any;
+
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+    })
+    lastLogin?: Date;
 }
 
 export enum RegistrationSource {
