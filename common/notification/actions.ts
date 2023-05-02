@@ -30,7 +30,13 @@ const sampleCourse = {
 };
 
 const sampleAppointment = {
+    day: 'Sonntag',
+    date: '20. Juli 1969',
+    time: '19:17',
     title: 'Chapter 1',
+    previousDay: 'Monday',
+    previousDate: '19. Juli 1969',
+    previousTime: '19:17',
 };
 
 const DEPRECATED = {
@@ -318,18 +324,20 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    student_update_appointment_group: {
+    pupil_change_appointment_group: {
         description: 'Student / Group Appointment Updated',
         sampleContext: {
-            student: sampleUser,
+            user: sampleUser,
+            pupil: sampleUser,
             appointment: sampleAppointment,
             course: sampleCourse,
         },
     },
-    student_update_appointment_match: {
+    pupil_change_appointment_match: {
         description: 'Student / Match Appointment Updated',
         sampleContext: {
-            student: sampleUser,
+            user: sampleUser,
+            pupil: sampleUser,
             appointment: sampleAppointment,
         },
     },

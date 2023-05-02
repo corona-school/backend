@@ -23,6 +23,7 @@ import { getUserType } from '../../common/user';
 import moment from 'moment';
 import * as Notification from '../../common/notification';
 
+const language = 'de-DE';
 const logger = getLogger('MutateAppointmentsResolver');
 
 const getOrganizersStudentId = (context: GraphQLContext) => {
@@ -183,17 +184,29 @@ export class MutateAppointmentResolver {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             for (const participant of participants) {
-                await Notification.actionTaken(participant.pupil, 'student_update_appointment_group', {
-                    student,
-                    appointment,
+                await Notification.actionTaken(participant.pupil, 'pupil_change_appointment_group', {
+                    user: student,
+                    pupil: participant.pupil,
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
                     course: subcourse.course,
                 });
             }
         } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
             const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
-            await Notification.actionTaken(match.pupil, 'student_update_appointment_match', {
-                student,
-                appointment,
+            await Notification.actionTaken(match.pupil, 'pupil_change_appointment_match', {
+                user: student,
+                pupil: match.pupil,
+                appointment: {
+                    ...appointment,
+                    day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                    date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                },
             });
         } else {
             logger.error(`Could not send notification for 'appointment updated'. The appointment type is neither 'group' nor 'match'`, { appointment });
