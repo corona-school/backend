@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-enum MeetingRole {
+export enum MeetingRole {
     PARTICIPANT = 0,
     HOST = 1,
 }
