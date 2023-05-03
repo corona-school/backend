@@ -346,6 +346,22 @@ const _notificationActions = {
             appointment: sampleAppointment,
         },
     },
+    pupil_decline_appointment_group: {
+        description: 'Pupil / Group Appointment Declined',
+        sampleContext: {
+            appointment: sampleAppointment,
+            pupil: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    pupil_decline_appointment_match: {
+        description: 'Pupil / Match Appointment Declined',
+        sampleContext: {
+            appointment: sampleAppointment,
+            pupil: sampleUser,
+        },
+    },
+
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,
