@@ -95,7 +95,6 @@ export class MutateAppointmentResolver {
         }
         // send notification if date has changed
         const student = await getStudent(context.user.studentId);
-        logger.info(`STUDENTHERE: ${JSON.stringify(student)}`);
         const updatedAppointment = await getLecture(appointmentToBeUpdated.id);
         if (updatedAppointment.appointmentType === lecture_appointmenttype_enum.group) {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
