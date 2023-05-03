@@ -428,21 +428,21 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled'>(
-            {
-                course_attendance_log: nobody,
-                subcourseId: nobody,
-                subcourse: nobody,
-                student: nobody,
-                instructorId: nobody,
-                _count: nobody,
-                match: adminOrOwner,
-                matchId: adminOrOwner,
-                declinedBy: adminOrOwner,
-                participantIds: adminOrOwner,
-                organizerIds: adminOrOwner,
-            }
-        ),
+        fields: withPublicFields<
+            Lecture,
+            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'declinedBy'
+        >({
+            course_attendance_log: nobody,
+            subcourseId: nobody,
+            subcourse: nobody,
+            student: nobody,
+            instructorId: nobody,
+            _count: nobody,
+            match: adminOrOwner,
+            matchId: adminOrOwner,
+            participantIds: adminOrOwner,
+            organizerIds: adminOrOwner,
+        }),
     },
     Participation_certificate: {
         fields: {
