@@ -1,4 +1,4 @@
-import { Authorized, Ctx, Query, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
@@ -25,11 +25,19 @@ export class FieldMeResolver {
     }
 
     // TODO generateMeetingSDKJWT to join meeting
+    // * pass role
     @Query((returns) => String)
     @Authorized(Role.USER)
-    zoomSDKJWT(@Ctx() context: GraphQLContext) {
-        const sdkKey = generateMeetingSDKJWT(87975266869, MeetingRole.PARTICIPANT);
-        return sdkKey;
+    zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('role') role: number) {
+        if (role === 1) {
+            // Host role = 1
+            const sdkKeyHost = generateMeetingSDKJWT(87975266869, MeetingRole.HOST);
+            return sdkKeyHost;
+        } else if (role === 0) {
+            // Participant role = 0
+            const sdkKey = generateMeetingSDKJWT(87975266869, MeetingRole.PARTICIPANT);
+            return sdkKey;
+        }
     }
 
     @Query((returns) => String)
