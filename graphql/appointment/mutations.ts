@@ -89,34 +89,50 @@ export class MutateAppointmentResolver {
             data: { ...appointmentToBeUpdated },
         });
 
-        // send notification
+        // check if date is the same
+        if (appointment.start.toISOString() === appointmentToBeUpdated.start.toISOString()) {
+            return true;
+        }
+        // send notification if date has changed
         const student = await getStudent(context.user.studentId);
-        if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
-            const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+        logger.info(`STUDENTHERE: ${JSON.stringify(student)}`);
+        const updatedAppointment = await getLecture(appointmentToBeUpdated.id);
+        if (updatedAppointment.appointmentType === lecture_appointmenttype_enum.group) {
+            const subcourse = await prisma.subcourse.findUnique({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             for (const participant of participants) {
                 await Notification.actionTaken(participant.pupil, 'pupil_change_appointment_group', {
-                    user: student,
+                    student: student,
                     pupil: participant.pupil,
                     appointment: {
-                        ...appointment,
-                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
-                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                        ...updatedAppointment,
+                        day: updatedAppointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${updatedAppointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${updatedAppointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                        original: {
+                            day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                            date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                            time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                        },
                     },
                     course: subcourse.course,
                 });
             }
-        } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
-            const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+        } else if (updatedAppointment.appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: updatedAppointment.matchId }, include: { pupil: true } });
             await Notification.actionTaken(match.pupil, 'pupil_change_appointment_match', {
-                user: student,
+                student: student,
                 pupil: match.pupil,
                 appointment: {
-                    ...appointment,
-                    day: appointment.start.toLocaleString(language, { weekday: 'long' }),
-                    date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
-                    time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    ...updatedAppointment,
+                    day: updatedAppointment.start.toLocaleString(language, { weekday: 'long' }),
+                    date: `${updatedAppointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${updatedAppointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    original: {
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
                 },
             });
         } else {
