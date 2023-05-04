@@ -4,7 +4,7 @@ import * as assert from 'assert';
 import { screenedInstructorOne } from './screening';
 import { CourseState } from '../common/entity/Course';
 
-const courseOne = void test('Create Course One', async () => {
+const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
     const {
         courseCreate: { id: courseId, isInstructor, courseState },
@@ -78,7 +78,7 @@ const courseOne = void test('Create Course One', async () => {
     return { courseId };
 });
 
-const subcourseOne = void test('Create Subcourse', async () => {
+void test('Create Subcourse', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
 
