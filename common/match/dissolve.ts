@@ -9,10 +9,12 @@ import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { getMatchHash } from './util';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Match');
 
 export async function dissolveMatch(match: Match, dissolveReason: number, dissolver: Pupil | Student | null) {
+    //TODO: Delete Zoom meeting
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
@@ -22,8 +24,11 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         data: {
             dissolved: true,
             dissolveReason,
+            // matchId: '',
         },
     });
+
+    // await deleteZoomMeeting(match.meetingId);
 
     await logTransaction('matchDissolve', dissolver, {
         matchId: match.id,

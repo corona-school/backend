@@ -4,6 +4,9 @@ import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
+import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import dontenv from 'dotenv';
+import { createZoomUser } from '../zoom/zoom-user';
 
 @InputType()
 export abstract class AppointmentCreateInputBase {
@@ -39,6 +42,16 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = getUserIdTypeORM(student);
     const pupilUserId = getUserIdTypeORM(pupil);
+    // CHECK STUDENT HAS A ZOOM ACCOUNT AND IF NOT CREATE ONE
+    // if (student.zoomUserId || student.zoomUserId === '') {
+    //     const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
+    // }
+    const appointmentsNumber = appointmentsToBeCreated.length;
+    const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
+    const newDate = new Date(lastDate.setHours(24, 0, 0, 0));
+    const newVideoChat = await createZoomMeeting(process.env.ZOOM_USER_ID, appointmentsToBeCreated[0].start, appointmentsNumber > 1 && newDate);
+    console.log('!_!_!_!_!_!_ THIS IS THE VIDEO CHAT INFO _!_!_!_!_!_!_!');
+    console.log(newVideoChat);
     return await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>

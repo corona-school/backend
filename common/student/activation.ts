@@ -5,8 +5,12 @@ import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
 import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
+import { getZoomUser } from '../zoom/zoom-user';
+import { deleteZoomUser } from '../zoom/zoom-user';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
+    //TODO: Delete Zoom meeting
     if (!student.active) {
         throw new Error('Student was already deactivated');
     }
@@ -29,6 +33,7 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
 
     for (const match of matches) {
         await dissolveMatch(match, 0, student);
+        // match.meetingId && await deleteZoomMeeting(match.meetingId);
     }
 
     let projectMatches = await prisma.project_match.findMany({
@@ -40,6 +45,7 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
 
     for (const match of projectMatches) {
         await dissolveProjectMatch(match, 0, student);
+        // match.meetingId && await deleteZoomMeeting(match.meetingId);
     }
 
     //Delete course records for the student.
@@ -89,6 +95,13 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
             });
             // TODO Notify participants
         }
+        // courses[i].meetingId && await deleteZoomMeeting(courses[i].meetingId);
+    }
+
+    const zoomUser = await getZoomUser(student.email);
+
+    if (zoomUser) {
+        await deleteZoomUser(process.env.ZOOM_USER_ID);
     }
 
     const updatedStudent = await prisma.student.update({

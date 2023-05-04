@@ -21,9 +21,10 @@ type ZAKResponse = {
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 const grantType = 'account_credentials';
 
-const createZoomUser = async (user: GraphQLUser): Promise<ZoomUser> => {
+const createZoomUser = async (studentMail, studentFirstname, studentLastname): Promise<ZoomUser> => {
+    //TODO: Let Inactive ZoomUsers be deleted automatically
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
 
         const createdUser = await fetch(zoomUserApiUrl, {
             method: 'POST',
@@ -34,11 +35,11 @@ const createZoomUser = async (user: GraphQLUser): Promise<ZoomUser> => {
             body: JSON.stringify({
                 action: 'custCreate',
                 user_info: {
-                    email: user.email,
+                    email: studentMail,
                     type: 1,
-                    first_name: user.firstname,
-                    last_name: user.lastname,
-                    display_name: `${user.firstname} ${user.lastname}`,
+                    first_name: studentFirstname,
+                    last_name: studentLastname,
+                    display_name: `${studentFirstname} ${studentLastname}`,
                 },
             }),
         });
@@ -49,10 +50,10 @@ const createZoomUser = async (user: GraphQLUser): Promise<ZoomUser> => {
     }
 };
 
-async function getZoomUser(user: GraphQLUser): Promise<ZoomUser> {
+async function getZoomUser(email: string): Promise<ZoomUser> {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
+        const { access_token } = await getAccessToken();
+        const response = await fetch(`${zoomUserApiUrl}/${email}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -68,7 +69,7 @@ async function getZoomUser(user: GraphQLUser): Promise<ZoomUser> {
 
 async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
         const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
             method: 'PATCH',
             headers: {
@@ -89,7 +90,7 @@ async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
 }
 
 async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
-    const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+    const { access_token } = await getAccessToken();
     const response = await fetch(`${zoomUserApiUrl}/${userEmail}/token?type=zak`, {
         method: 'GET',
         headers: {
@@ -100,10 +101,10 @@ async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
     return response.json();
 }
 
-const deleteZoomUser = async (user: GraphQLUser) => {
+const deleteZoomUser = async (zoomUserId: string) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const constructedUrl = `${zoomUserApiUrl}/${user.userID}?action=delete`;
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
 
         const response = await fetch(constructedUrl, {
             method: 'DELETE',

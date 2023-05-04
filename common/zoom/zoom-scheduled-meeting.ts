@@ -27,14 +27,15 @@ type ZoomMeeting = {
     ];
 };
 
-const zoomMeetingUrl = 'https://api.zoom.us/v2/users';
+const zoomUsersUrl = 'https://api.zoom.us/v2/users';
+const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const grantType = 'account_credentials';
 
-const createZoomMeeting = async (user: GraphQLUser) => {
+const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTime?: Date) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
+        const { access_token } = await getAccessToken();
 
-        const response = await fetch(`${zoomMeetingUrl}/${user.userID}/meetings`, {
+        const response = await fetch(`${zoomUsersUrl}/${zoomUserId}/meetings`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -44,9 +45,13 @@ const createZoomMeeting = async (user: GraphQLUser) => {
                 agenda: 'My Meeting',
                 default_password: false,
                 duration: 60,
-                start_time: '2023-06-25T07:32:55Z',
+                start_time: startTime,
                 timezone: 'Europe/Berlin',
                 type: 2,
+                recurrence: endDateTime && {
+                    end_date_time: endDateTime,
+                    type: 2,
+                },
             }),
         });
 
@@ -56,10 +61,27 @@ const createZoomMeeting = async (user: GraphQLUser) => {
     }
 };
 
-async function getZoomMeeting(user: GraphQLUser) {
+async function getZoomMeeting(meetingId: string) {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const response = await fetch(`${zoomMeetingUrl}/${user.email}/meetings`, {
+        const { access_token } = await getAccessToken();
+        const response = await fetch(`${zoomMeetingUrl}/${meetingId}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return response.json() as unknown as ZoomMeeting;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
+async function getUsersZoomMeetings(email: string) {
+    try {
+        const { access_token } = await getAccessToken();
+        const response = await fetch(`${zoomUsersUrl}/${email}/meetings`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -75,8 +97,8 @@ async function getZoomMeeting(user: GraphQLUser) {
 
 const deleteZoomMeeting = async (meetingId: string) => {
     try {
-        const { access_token } = await getAccessToken(process.env.ZOOM_API_KEY, process.env.ZOOM_API_SECRET, grantType, process.env.ZOOM_ACCOUNT_ID);
-        const constructedUrl = `https://api.zoom.us/v2/${meetingId}?action=delete`;
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `${zoomMeetingUrl}/${meetingId}?action=delete`;
 
         const response = await fetch(constructedUrl, {
             method: 'DELETE',
@@ -92,4 +114,4 @@ const deleteZoomMeeting = async (meetingId: string) => {
     }
 };
 
-export { getZoomMeeting, createZoomMeeting, deleteZoomMeeting };
+export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting };

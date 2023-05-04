@@ -14,7 +14,7 @@ const sampleUser: GraphQLUser = {
 };
 
 test('Get Zoom Meeting', async () => {
-    const result = await getZoomMeeting(sampleUser);
+    const result = await getZoomMeeting('86417976537');
     console.log(result);
     expect(typeof result).toBe('object');
 });
@@ -26,7 +26,7 @@ test('Get Zoom Meeting', async () => {
 // });
 
 // test('Delete Zoom Meeting', async () => {
-//     const result = await deleteZoomMeeting('SdjJvxp1RTCnWCJgW/6dYw==');
+//     const result = await deleteZoomMeeting('86417976537');
 //     console.log(result);
 //     expect(typeof result).toBe('object');
 // });

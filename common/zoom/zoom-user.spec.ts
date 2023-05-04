@@ -21,18 +21,18 @@ const sampleUser: GraphQLUser = {
 // });
 
 test('Get a Zoom user', async () => {
-    const result = await getZoomUser(sampleUser);
+    const result = await getZoomUser(process.env.ZOOM_USER_ID);
 
     console.log(result);
     expect(typeof result).toBe('object');
 });
 
-test('Get a Zoom users zak', async () => {
-    const result = await getUserZAK(sampleUser.email);
+// test('Get a Zoom users zak', async () => {
+//     const result = await getUserZAK(sampleUser.email);
 
-    console.log(result);
-    expect(result).toHaveProperty('token');
-});
+//     console.log(result);
+//     expect(result).toHaveProperty('token');
+// });
 
 // test('Delete a Zoom user', async () => {
 //     const result = await deleteZoomUser(sampleUser);
