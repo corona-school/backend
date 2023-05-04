@@ -147,6 +147,8 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
 }
 
 export default async function syncCourses(logger: Logger): Promise<void> {
+    logger.addContext('CMSCollection', 'Group Courses');
+
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
     const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
@@ -158,9 +160,12 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     const result = diff(webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });
 
+    const newIds: string[] = [];
     for (const row of result.new) {
-        await createNewItem(collectionId, row);
+        const newId = await createNewItem(collectionId, row);
+        newIds.push(newId);
     }
+    logger.info('created new items', { itemIds: newIds });
 
     for (const row of result.changed) {
         await patchItem(collectionId, row);

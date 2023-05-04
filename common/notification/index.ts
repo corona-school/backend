@@ -54,80 +54,75 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
         return;
     }
 
-    // Delivering notifications can be async while answering the API request continues
-    (async function fireAndForget() {
-        const startTime = Date.now();
-        try {
-            logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
-            const notifications = await getNotifications();
-            const relevantNotifications = notifications.get(actionId);
+    const startTime = Date.now();
+    try {
+        logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
+        const notifications = await getNotifications();
+        const relevantNotifications = notifications.get(actionId);
 
-            if (!relevantNotifications) {
-                logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
-                return;
-            }
-
-            logger.debug(
-                `Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`
-            );
-
-            // prevent sending of now unnecessary notifications
-            const dismissed = await prisma.concrete_notification.updateMany({
-                data: {
-                    state: ConcreteNotificationState.ACTION_TAKEN,
-                    sentAt: new Date(),
-                },
-                where: {
-                    notificationID: {
-                        in: relevantNotifications.toCancel.map((it) => it.id),
-                    },
-                    state: ConcreteNotificationState.DELAYED,
-                    userId: getUserIdTypeORM(user),
-                    // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
-                    // If it is not specified, it'll apply to all reminders
-                    ...(notificationContext.uniqueId
-                        ? {
-                              OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
-                          }
-                        : {}),
-                },
-            });
-
-            logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
-
-            const reminders = relevantNotifications.toSend.filter((it) => it.delay);
-            const directSends = relevantNotifications.toSend.filter((it) => !it.delay);
-
-            logger.debug(`Notification.actionTaken found reminders ${reminders.map((it) => it.id)} and directSends ${directSends.map((it) => it.id)}`);
-
-            // Trigger notifications that are supposed to be directly sent on this action
-            for (const directSend of directSends) {
-                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
-                await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
-            }
-
-            // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
-            if (reminders.length) {
-                const remindersCreated = await prisma.concrete_notification.createMany({
-                    data: reminders.map((it) => ({
-                        notificationID: it.id,
-                        state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
-                        userId: getUserIdTypeORM(user),
-                        contextID: notificationContext.uniqueId,
-                        context: notificationContext,
-                        attachmentGroupId: attachments?.attachmentGroupId,
-                    })),
-                });
-
-                logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
-            }
-        } catch (e) {
-            logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
+        if (!relevantNotifications) {
+            logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
+            return;
         }
 
-        logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
-    })();
+        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
+
+        // prevent sending of now unnecessary notifications
+        const dismissed = await prisma.concrete_notification.updateMany({
+            data: {
+                state: ConcreteNotificationState.ACTION_TAKEN,
+                sentAt: new Date(),
+            },
+            where: {
+                notificationID: {
+                    in: relevantNotifications.toCancel.map((it) => it.id),
+                },
+                state: ConcreteNotificationState.DELAYED,
+                userId: getUserIdTypeORM(user),
+                // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
+                // If it is not specified, it'll apply to all reminders
+                ...(notificationContext.uniqueId
+                    ? {
+                          OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
+                      }
+                    : {}),
+            },
+        });
+
+        logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+
+        const reminders = relevantNotifications.toSend.filter((it) => it.delay);
+        const directSends = relevantNotifications.toSend.filter((it) => !it.delay);
+
+        logger.debug(`Notification.actionTaken found reminders ${reminders.map((it) => it.id)} and directSends ${directSends.map((it) => it.id)}`);
+
+        // Trigger notifications that are supposed to be directly sent on this action
+        for (const directSend of directSends) {
+            const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
+            await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
+        }
+
+        // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
+        if (reminders.length) {
+            const remindersCreated = await prisma.concrete_notification.createMany({
+                data: reminders.map((it) => ({
+                    notificationID: it.id,
+                    state: ConcreteNotificationState.DELAYED,
+                    sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
+                    userId: getUserIdTypeORM(user),
+                    contextID: notificationContext.uniqueId,
+                    context: notificationContext,
+                    attachmentGroupId: attachments?.attachmentGroupId,
+                })),
+            });
+
+            logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
+        }
+    } catch (e) {
+        logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
+    }
+
+    logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
 }
 
 export async function checkReminders() {
@@ -228,7 +223,7 @@ export async function getMessage(
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
-        navigateTo,
+        navigateTo: renderTemplate(navigateTo, context),
     };
 }
 
