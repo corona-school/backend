@@ -21,6 +21,9 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
     const appointments = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            NOT: {
+                declinedBy: { has: userId },
+            },
             OR: [
                 {
                     participantIds: {
@@ -49,6 +52,9 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
     return await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            NOT: {
+                declinedBy: { has: userId },
+            },
             start: { gte: new Date().toISOString() },
             OR: [
                 {
