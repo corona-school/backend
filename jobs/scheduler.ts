@@ -81,5 +81,5 @@ export async function unscheduleAllJobs() {
 }
 
 export async function shutdownConnection() {
-    void jobConnection?.close();
+    await jobConnection?.close();
 }

@@ -181,7 +181,7 @@ export async function updatePupil(
     });
 
     if (pupil.registrationSource !== 'plus' && registrationSource === 'plus') {
-        void Notification.actionTaken(pupil, 'pupil_joined_plus', {});
+        await Notification.actionTaken(pupil, 'pupil_joined_plus', {});
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session

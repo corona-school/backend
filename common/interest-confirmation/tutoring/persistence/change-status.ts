@@ -30,5 +30,5 @@ export async function changeStatus(token: string, status: InterestConfirmationSt
 
     //transaction log
     const transactionLog = getTransactionLog();
-    void transactionLog.log(new PupilInterestConfirmationRequestStatusChangeEvent(confirmationRequest, previousStatus));
+    await transactionLog.log(new PupilInterestConfirmationRequestStatusChangeEvent(confirmationRequest, previousStatus));
 }

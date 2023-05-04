@@ -88,7 +88,7 @@ void createConnection()
         configureRegistrationAPI();
         configureMentoringAPI();
         configureExpertAPI();
-        void configureApolloServer();
+        await configureApolloServer();
         configurePupilInterestConfirmationAPI();
         configureFileAPI();
         const server = await deployServer();

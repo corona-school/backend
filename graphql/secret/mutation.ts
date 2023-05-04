@@ -43,7 +43,7 @@ export class MutateSecretResolver {
     @Authorized(Role.USER)
     async meChangeEmail(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
         const user = await getSessionUser(context);
-        void requestToken(user, 'user-email-change', '/start', email);
+        await requestToken(user, 'user-email-change', '/start', email);
         return true;
     }
 

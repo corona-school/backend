@@ -19,7 +19,7 @@ import { runInterestConfirmations } from '../common/match/pool';
 export const executeJob = async (job) => {
     switch (job) {
         case 'screeningReminderJob': {
-            void screeningReminderJob(getManager());
+            await screeningReminderJob(getManager());
             break;
         }
         case 'courseReminderJob': {
