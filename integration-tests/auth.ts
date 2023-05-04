@@ -42,7 +42,7 @@ void test('Token Login', async () => {
     assert.equal(secretsSwapped.me.secrets.length, secretsUsed.me.secrets.length);
 });
 
-export const pupilOneWithPassword = void test('Password Login', async () => {
+export const pupilOneWithPassword = test('Password Login', async () => {
     const { client, pupil } = await pupilOne;
     const password = 'test123';
 
