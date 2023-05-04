@@ -191,7 +191,7 @@ export class ExtendedFieldsSubcourseResolver {
             where: { id: subcourse.courseId },
         });
     }
-
+    @Deprecated('Use appointments instead')
     @FieldResolver((returns) => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(10)
@@ -467,5 +467,17 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async capacity(@Root() subcourse: Required<Subcourse>) {
         return getCourseCapacity(subcourse);
+    }
+
+    @FieldResolver((returns) => [Lecture])
+    @Authorized(Role.UNAUTHENTICATED)
+    async appointments(@Root() subcourse: Subcourse) {
+        return await prisma.lecture.findMany({
+            where: {
+                subcourseId: subcourse.id,
+                isCanceled: false,
+            },
+            orderBy: { start: 'asc' },
+        });
     }
 }

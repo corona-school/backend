@@ -6,7 +6,7 @@ import { User } from '../common/user';
 
 /* ResolverModelNames is a union type of all Model classes, ResolverModel can then be used to refer to a class named as such */
 export type ResolverModelNames = keyof typeof models;
-export type ResolverModel<Name extends ResolverModelNames> = typeof models[Name]['prototype'];
+export type ResolverModel<Name extends ResolverModelNames> = (typeof models)[Name]['prototype'];
 
 /* If a user owns an entity, he has the Role.OWNER on that entity */
 export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, entity: ResolverModel<Name>) => boolean | Promise<boolean> } & {
@@ -29,6 +29,13 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         }
         const instructor = await prisma.subcourse_instructors_student.findFirst({ where: { subcourseId: subcourse.id, studentId: user.studentId } });
         return !!instructor;
+    },
+    Lecture: async (user, lecture) => {
+        if (!user.studentId) {
+            return false;
+        }
+        const isOrganizer = (await prisma.lecture.count({ where: { id: lecture.id, organizerIds: { has: user.userID } } })) > 0;
+        return isOrganizer;
     },
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,

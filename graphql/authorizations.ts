@@ -12,6 +12,7 @@ import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev } from '../common/util/environment';
+import { isAppointmentParticipant } from '../common/appointment/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -93,6 +94,15 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             if (success) {
                 return true;
             }
+        }
+    }
+
+    if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
+        assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
+        assert(root, 'root value must be bound to determine access');
+        const success = await isAppointmentParticipant(root, context.user);
+        if (success) {
+            return true;
         }
     }
 
@@ -418,13 +428,20 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt'>({
+        fields: withPublicFields<
+            Lecture,
+            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'declinedBy'
+        >({
             course_attendance_log: nobody,
             subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
             instructorId: nobody,
             _count: nobody,
+            match: adminOrOwner,
+            matchId: adminOrOwner,
+            participantIds: adminOrOwner,
+            organizerIds: adminOrOwner,
         }),
     },
     Participation_certificate: {
