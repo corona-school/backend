@@ -125,7 +125,7 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
     }
 
     if (!noSession) {
-        userSessions.set(context.sessionToken, context.user);
+        void userSessions.set(context.sessionToken, context.user);
         logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     }
 }

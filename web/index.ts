@@ -62,7 +62,7 @@ async function setupPDFGenerationEnvironment() {
 }
 
 // Database connection
-createConnection()
+void createConnection()
     .then(setupPDFGenerationEnvironment)
     .then(async () => {
         logger.info('Database connected');
@@ -88,7 +88,7 @@ createConnection()
         configureRegistrationAPI();
         configureMentoringAPI();
         configureExpertAPI();
-        configureApolloServer();
+        void configureApolloServer();
         configurePupilInterestConfirmationAPI();
         configureFileAPI();
         const server = await deployServer();
@@ -104,7 +104,7 @@ createConnection()
                     ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
                     'https://user-app-dev.herokuapp.com',
                     /^https:\/\/lernfair-user-app-[\-a-z0-9]+.herokuapp.com$/,
-                    'https://lern.retool.com'
+                    'https://lern.retool.com',
                 ];
             } else {
                 origins = [
@@ -115,7 +115,7 @@ createConnection()
                     'https://my.lern-fair.de',
                     'https://app.lern-fair.de',
                     ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
-                    'https://lern.retool.com'
+                    'https://lern.retool.com',
                 ];
             }
 
@@ -200,7 +200,7 @@ createConnection()
                 if (!req.subdomains.includes('verify')) {
                     return next();
                 }
-                certificateController.getCertificateConfirmationEndpoint(req, res);
+                void certificateController.getCertificateConfirmationEndpoint(req, res);
             });
             participationCertificateRouter.use((req, res, next) => {
                 if (req.subdomains.includes('verify')) {

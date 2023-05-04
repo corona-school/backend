@@ -3,7 +3,7 @@ import { pupilOne } from './user';
 import assert from 'assert';
 import { assertUserReceivedNotification, createMockNotification } from './notifications';
 
-test('Token Login', async () => {
+void test('Token Login', async () => {
     const { client } = await pupilOne;
 
     // Create a new Token
@@ -42,7 +42,7 @@ test('Token Login', async () => {
     assert.equal(secretsSwapped.me.secrets.length, secretsUsed.me.secrets.length);
 });
 
-export const pupilOneWithPassword = test('Password Login', async () => {
+export const pupilOneWithPassword = void test('Password Login', async () => {
     const { client, pupil } = await pupilOne;
     const password = 'test123';
 
@@ -71,7 +71,7 @@ export const pupilOneWithPassword = test('Password Login', async () => {
     return { client, pupil, password };
 });
 
-test('Token Request', async () => {
+void test('Token Request', async () => {
     const {
         client,
         pupil: {
@@ -125,7 +125,7 @@ test('Token Request', async () => {
     // await client.requestShallFail(`mutation RequestPhishingToken { tokenRequest(email: "${email}", action: "user-password-reset", redirectTo: "https://phishing.example.com")}`);
 });
 
-test('Token Request Password Reset', async () => {
+void test('Token Request Password Reset', async () => {
     const {
         client,
         pupil: {
@@ -160,7 +160,7 @@ test('Token Request Password Reset', async () => {
     `);
 });
 
-test('Admin Login', async () => {
+void test('Admin Login', async () => {
     const { client: pupilClient } = await pupilOne;
     const unauthenticatedClient = createUserClient();
 
@@ -169,7 +169,7 @@ test('Admin Login', async () => {
     await adminClient.request(`query { pupils(take: 1) { id } }`);
 });
 
-test('Change Email', async () => {
+void test('Change Email', async () => {
     const {
         client,
         pupil: {
@@ -206,5 +206,5 @@ test('Change Email', async () => {
 
     assert.strictEqual(newMeEmail, 'test+newmail@lern-fair.de', 'Should be the new email');
     assert.strictEqual(newMail, 'test+newmail@lern-fair.de', 'Should be the new email');
-    assert.strictEqual(id, id1, "Changed email of the correct user");
+    assert.strictEqual(id, id1, 'Changed email of the correct user');
 });

@@ -19,55 +19,55 @@ import { runInterestConfirmations } from '../common/match/pool';
 export const executeJob = async (job) => {
     switch (job) {
         case 'screeningReminderJob': {
-            screeningReminderJob(getManager());
+            void screeningReminderJob(getManager());
             break;
         }
         case 'courseReminderJob': {
-            courseReminderJob(getManager());
+            void courseReminderJob(getManager());
             break;
         }
         case 'feedbackRequestJob': {
-            feedbackRequestJob(getManager());
+            void feedbackRequestJob(getManager());
             break;
         }
         case 'matchFollowUpJob': {
-            matchFollowUpJob(getManager());
+            void matchFollowUpJob(getManager());
             break;
         }
         case 'jufoVerificationInfo': {
-            jufoVerificationInfo(getManager());
+            void jufoVerificationInfo(getManager());
             break;
         }
         case 'projectMatchMaking': {
-            projectMatchMaking(getManager());
+            void projectMatchMaking(getManager());
             break;
         }
         case 'tutoringMatchMaking': {
-            tutoringMatchMaking(getManager());
+            void tutoringMatchMaking(getManager());
             break;
         }
         case 'InterestConfirmation': {
-            runInterestConfirmations();
+            void runInterestConfirmations();
             break;
         }
         case 'Notification': {
-            Notification.checkReminders();
+            void Notification.checkReminders();
             break;
         }
         case 'redactInactiveAccounts': {
-            redactInactiveAccounts();
+            void redactInactiveAccounts();
             break;
         }
         case 'dropOldNotificationContexts': {
-            dropOldNotificationContexts();
+            void dropOldNotificationContexts();
             break;
         }
         case 'anonymiseAttendanceLog': {
-            anonymiseAttendanceLog();
+            void anonymiseAttendanceLog();
             break;
         }
         case 'syncToWebflow':
-            syncToWebflow();
+            void syncToWebflow();
             break;
         default: {
             throw new Error(`Did not find job ${job}`);

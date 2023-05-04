@@ -59,6 +59,7 @@
         "lernfair-lint/prisma-laziness": "error",
         "require-await": "warn",
         "import/no-cycle": ["warn"],
-        "@typescript-eslint/no-floating-promises": ["error"]
+        "@typescript-eslint/no-floating-promises": ["error"],
+        "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }]
     }
 }
