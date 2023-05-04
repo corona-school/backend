@@ -1,5 +1,4 @@
 import {
-    log as Log,
     log_logtype_enum as LogType,
     pupil as Pupil,
     student as Student,
@@ -29,7 +28,7 @@ type LogData<Type extends LogType> = {
     updateStudentDescription: never;
     createdCourse: { id: number };
     certificateRequest: { uuid: string };
-    cocCancel: {};
+    cocCancel: { studentId: number };
     cancelledCourse: { id: number };
     cancelledSubcourse: { id: number };
     createdCourseAttendanceLog: { courseAttendanceLog: CourseAttendanceLog };
