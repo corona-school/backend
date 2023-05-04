@@ -96,7 +96,7 @@ const myAppointments = test('Get my appointments', async () => {
     `);
 
     assert.ok(appointments);
-    assert.ok(appointments.some((a) => (a.title = appointmentTitle)));
+    assert.ok(appointments.some((a) => a.title === appointmentTitle));
     return appointments;
 });
 
