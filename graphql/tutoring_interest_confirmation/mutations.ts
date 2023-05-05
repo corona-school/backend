@@ -34,7 +34,7 @@ async function changeStatus(token: string, status: InterestConfirmationStatus) {
     });
 
     const pupil = await getPupil(confirmation.pupilId);
-    logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
+    await logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
         changeDate: Date.now(),
         previousStatus: InterestConfirmationStatus.PENDING,
         newStatus: status,
@@ -73,7 +73,7 @@ export class MutateTutoringInterestConfirmationResolver {
             data: { token: generateToken(), pupilId, status, invalidated: false },
         });
 
-        logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
+        void logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
             changeDate: Date.now(),
             previousStatus: InterestConfirmationStatus.PENDING,
             newStatus: status,
