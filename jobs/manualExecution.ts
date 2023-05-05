@@ -23,51 +23,51 @@ export const executeJob = async (job) => {
             break;
         }
         case 'courseReminderJob': {
-            void courseReminderJob(getManager());
+            await courseReminderJob(getManager());
             break;
         }
         case 'feedbackRequestJob': {
-            void feedbackRequestJob(getManager());
+            await feedbackRequestJob(getManager());
             break;
         }
         case 'matchFollowUpJob': {
-            void matchFollowUpJob(getManager());
+            await matchFollowUpJob(getManager());
             break;
         }
         case 'jufoVerificationInfo': {
-            void jufoVerificationInfo(getManager());
+            await jufoVerificationInfo(getManager());
             break;
         }
         case 'projectMatchMaking': {
-            void projectMatchMaking(getManager());
+            await projectMatchMaking(getManager());
             break;
         }
         case 'tutoringMatchMaking': {
-            void tutoringMatchMaking(getManager());
+            await tutoringMatchMaking(getManager());
             break;
         }
         case 'InterestConfirmation': {
-            void runInterestConfirmations();
+            await runInterestConfirmations();
             break;
         }
         case 'Notification': {
-            void Notification.checkReminders();
+            await Notification.checkReminders();
             break;
         }
         case 'redactInactiveAccounts': {
-            void redactInactiveAccounts();
+            await redactInactiveAccounts();
             break;
         }
         case 'dropOldNotificationContexts': {
-            void dropOldNotificationContexts();
+            await dropOldNotificationContexts();
             break;
         }
         case 'anonymiseAttendanceLog': {
-            void anonymiseAttendanceLog();
+            await anonymiseAttendanceLog();
             break;
         }
         case 'syncToWebflow':
-            void syncToWebflow();
+            await syncToWebflow();
             break;
         default: {
             throw new Error(`Did not find job ${job}`);
