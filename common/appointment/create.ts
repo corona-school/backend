@@ -36,31 +36,20 @@ export abstract class AppointmentCreateGroupInput extends AppointmentCreateInput
     appointmentType: 'group';
 }
 
-const isAppointmentOneWeekLater = (datestring: Date) => {
+export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
     const now = moment.now();
-    const start = moment(datestring);
+    const start = moment(appointmentDate);
     const diffDays = start.diff(now, 'days');
-    if (diffDays >= 6) {
-        return true;
-    }
-    return false;
+    return diffDays >= 6 ? true : false;
 };
 
-const isAppointmentFiveMinutesLater = (datestring: Date) => {
+export const isAppointmentFiveMinutesLater = (appointmentDate: Date) => {
     const now = moment.now();
-    const start = moment(datestring);
-    const same = start.isSame(now, 'date');
-    const after = start.isAfter(now);
-    if (same) {
-        const diff = start.diff(now, 'minutes');
-        if (diff >= 5) {
-            return true;
-        }
-    } else if (after) {
-        return true;
-    }
-
-    return false;
+    const start = moment(appointmentDate);
+    const fiveMinutesFromNow = moment().add(5, 'minutes');
+    const isSameDayAndFiveMinLater = start.isSame(now, 'day') && start.isAfter(fiveMinutesFromNow);
+    const afterToday = start.isAfter(now, 'day');
+    return isSameDayAndFiveMinLater || afterToday;
 };
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
@@ -70,22 +59,18 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
 
     return await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
-            if (isAppointmentFiveMinutesLater(appointmentToBeCreated.start)) {
-                await prisma.lecture.create({
-                    data: {
-                        title: appointmentToBeCreated.title,
-                        description: appointmentToBeCreated.description,
-                        start: appointmentToBeCreated.start,
-                        duration: appointmentToBeCreated.duration,
-                        matchId: appointmentToBeCreated.matchId,
-                        appointmentType: lecture_appointmenttype_enum.match,
-                        organizerIds: [studentUserId],
-                        participantIds: [pupilUserId],
-                    },
-                });
-            } else {
-                throw new Error('Appointment can not be created if start time is less than five minutes.');
-            }
+            await prisma.lecture.create({
+                data: {
+                    title: appointmentToBeCreated.title,
+                    description: appointmentToBeCreated.description,
+                    start: appointmentToBeCreated.start,
+                    duration: appointmentToBeCreated.duration,
+                    matchId: appointmentToBeCreated.matchId,
+                    appointmentType: lecture_appointmenttype_enum.match,
+                    organizerIds: [studentUserId],
+                    participantIds: [pupilUserId],
+                },
+            });
         })
     );
 };
@@ -94,24 +79,21 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
+
     return await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
-            if (isAppointmentOneWeekLater(appointmentToBeCreated.start)) {
-                await prisma.lecture.create({
-                    data: {
-                        title: appointmentToBeCreated.title,
-                        description: appointmentToBeCreated.description,
-                        start: appointmentToBeCreated.start,
-                        duration: appointmentToBeCreated.duration,
-                        subcourseId: appointmentToBeCreated.subcourseId,
-                        appointmentType: lecture_appointmenttype_enum.group,
-                        organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
-                        participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
-                    },
-                });
-            } else {
-                throw new Error('Appointment can not be created, because start is not one week later.');
-            }
+            await prisma.lecture.create({
+                data: {
+                    title: appointmentToBeCreated.title,
+                    description: appointmentToBeCreated.description,
+                    start: appointmentToBeCreated.start,
+                    duration: appointmentToBeCreated.duration,
+                    subcourseId: appointmentToBeCreated.subcourseId,
+                    appointmentType: lecture_appointmenttype_enum.group,
+                    organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
+                    participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                },
+            });
         })
     );
 };

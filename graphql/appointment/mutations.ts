@@ -1,7 +1,14 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
 import { Lecture as Appointment, lecture_appointmenttype_enum } from '../generated';
 import { Role } from '../../common/user/roles';
-import { AppointmentCreateGroupInput, AppointmentCreateMatchInput, createGroupAppointments, createMatchAppointments } from '../../common/appointment/create';
+import {
+    AppointmentCreateGroupInput,
+    AppointmentCreateMatchInput,
+    createGroupAppointments,
+    createMatchAppointments,
+    isAppointmentFiveMinutesLater,
+    isAppointmentOneWeekLater,
+} from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -45,7 +52,12 @@ export class MutateAppointmentResolver {
     ) {
         const match = await prisma.match.findUnique({ where: { id: matchId } });
         await hasAccess(context, 'Match', match);
-        await createMatchAppointments(matchId, appointments);
+        if (isAppointmentFiveMinutesLater(appointments[0].start)) {
+            await createMatchAppointments(matchId, appointments);
+        } else {
+            throw new Error('Appointment can not be created if start time is less than five minutes.');
+        }
+
         return true;
     }
 
@@ -67,7 +79,11 @@ export class MutateAppointmentResolver {
     ) {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
-        await createGroupAppointments(subcourseId, appointments);
+        if (isAppointmentOneWeekLater(appointments[0].start)) {
+            await createGroupAppointments(subcourseId, appointments);
+        } else {
+            throw new Error('Appointment can not be created, because start is not one week later.');
+        }
         return true;
     }
 
