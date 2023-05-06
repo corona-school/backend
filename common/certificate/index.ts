@@ -139,19 +139,8 @@ export async function issueCertificateRequest(
     });
 }
 
-export async function createCertificateLEGACY(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
-) {
-    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
-}
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: ICertificateCreationParams
-): Promise<ParticipationCertificate> {
+export async function createCertificate(_requestor: PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
