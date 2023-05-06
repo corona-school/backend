@@ -49,7 +49,7 @@ export const mailjetChannel: Channel = {
         }
 
         // Create a new login token
-        const authToken = await createSecretEmailToken(to, notification.description, moment().add(7, 'days'));
+        const authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
 
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
