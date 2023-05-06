@@ -166,7 +166,7 @@ void createConnection()
         function configureCertificateAPI() {
             const certificateRouter = express.Router();
             certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
-            
+
             app.use('/api/certificate', certificateRouter);
 
             // TODO Find better solution
