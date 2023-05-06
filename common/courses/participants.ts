@@ -1,18 +1,15 @@
 import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prisma/client';
-import { sendParticipantRegistrationConfirmationMail } from '../mails/courses';
-import { getTransactionLog } from '../transactionlog';
-import ParticipantJoinedCourseEvent from '../transactionlog/types/ParticipantJoinedCourseEvent';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import ParticipantLeftCourseEvent from '../transactionlog/types/ParticipantLeftCourseEvent';
 import moment from 'moment';
 import { sendTemplateMail, mailjetTemplates } from '../mails';
 import * as Notification from '../notification';
-import { hasStarted } from './states';
 import { logTransaction } from '../transactionlog/log';
-import { TooLateError, RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
+import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
 import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
+import { createSecretEmailToken } from '../secret';
+import { userForPupil } from '../user';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -224,6 +221,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
             const courseStart = moment(firstLecture[0].start);
+            const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
 
             /* TODO: Deprecate usage of old mailjet templates */
             const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
@@ -232,7 +230,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
                 courseId: String(course.id),
                 firstLectureDate: courseStart.format('DD.MM.YYYY'),
                 firstLectureTime: courseStart.format('HH:mm'),
-                authToken: pupil.authToken,
+                authToken,
             });
 
             await sendTemplateMail(mail, pupil.email);
