@@ -12,6 +12,7 @@ export class ExtendedFieldsMessageTranslationResolver {
     async sampleMessage(@Root() messageTranslation: MessageTranslation): Promise<NotificationMessageType> {
         const notification = await getNotification(messageTranslation.notificationId);
         const sampleContext = await getSampleContext(notification);
+        console.log('MT', messageTranslation.template);
         const result = {
             body: renderTemplate((messageTranslation.template as any).body, sampleContext),
             headline: renderTemplate((messageTranslation.template as any).headline, sampleContext),
@@ -21,6 +22,7 @@ export class ExtendedFieldsMessageTranslationResolver {
         if (messageTranslation.navigateTo) {
             return { ...result, navigateTo: renderTemplate((messageTranslation.navigateTo as any).navigateTo, sampleContext) };
         }
+        console.log('RES', result);
         return result;
     }
 }
