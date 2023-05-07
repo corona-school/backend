@@ -19,7 +19,7 @@ export class ExtendedFieldsMessageTranslationResolver {
             navigateTo: messageTranslation.navigateTo,
         };
         if (messageTranslation.navigateTo) {
-            return { ...result, navigateTo: renderTemplate((messageTranslation.navigateTo as any).navigateTo, sampleContext) };
+            return { ...result, navigateTo: renderTemplate(messageTranslation.navigateTo, sampleContext) };
         }
         return result;
     }
