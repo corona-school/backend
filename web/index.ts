@@ -5,7 +5,6 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import cors from 'cors';
 import * as userController from './controllers/userController';
-import * as tokenController from './controllers/tokenController';
 import * as matchController from './controllers/matchController';
 import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
@@ -84,7 +83,6 @@ void createConnection()
             configureCertificateAPI();
         }
         configureUserAPI();
-        configureTokenAPI();
         configureRegistrationAPI();
         configureMentoringAPI();
         configureExpertAPI();
@@ -154,13 +152,6 @@ void createConnection()
             userApiRouter.post('/:id/role/projectCoach', userController.postUserRoleProjectCoachHandler);
             userApiRouter.post('/:id/role/projectCoachee', userController.postUserRoleProjectCoacheeHandler);
             app.use('/api/user', userApiRouter);
-        }
-
-        function configureTokenAPI() {
-            const tokenApiRouter = express.Router();
-            tokenApiRouter.post('/', tokenController.verifyTokenHandler);
-            tokenApiRouter.get('/', tokenController.getNewTokenHandler);
-            app.use('/api/token', tokenApiRouter);
         }
 
         function configureCertificateAPI() {
