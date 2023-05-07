@@ -64,6 +64,7 @@ import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
 import { MutateAppointmentResolver } from './appointment/mutations';
+import { getCurrentTransaction } from '../common/session';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -185,4 +186,18 @@ export const apolloServer = new ApolloServer({
     introspection: true,
     debug: isDev,
     formatError,
+    formatResponse(response, requestContext) {
+        const transaction = getCurrentTransaction();
+
+        if (!response.extensions) {
+            response.extensions = {};
+        }
+
+        response.extensions['Transaction'] = {
+            sessionID: transaction.session?.sessionID ?? '?',
+            transactionID: transaction.transactionID,
+        };
+
+        return response;
+    },
 });
