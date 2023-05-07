@@ -41,7 +41,6 @@ import {
     registerPupil,
     RegisterPupilData,
 } from '../../common/pupil/registration';
-import { logInContext } from '../logging';
 import '../types/enums';
 import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
@@ -56,6 +55,7 @@ import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
+import { getLogger } from '../../common/logger/logger';
 
 @InputType()
 export class RegisterStudentInput implements RegisterStudentData {
@@ -225,6 +225,8 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
+const logger = getLogger('Me');
+
 @Resolver((of) => UserType)
 export class MutateMeResolver {
     @Mutation((returns) => Student)
@@ -242,8 +244,7 @@ export class MutateMeResolver {
         }
 
         const student = await registerStudent(data, noEmail);
-        const log = logInContext('Me', context);
-        log.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
+        logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
         if (!byAdmin) {
             await loginAsUser(userForStudent(student), context);
@@ -268,8 +269,7 @@ export class MutateMeResolver {
         }
 
         const pupil = await registerPupil(data, noEmail);
-        const log = logInContext('Me', context);
-        log.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
+        logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
         if (!byAdmin) {
             await loginAsUser(userForPupil(pupil), context);
@@ -285,8 +285,6 @@ export class MutateMeResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async meUpdate(@Ctx() context: GraphQLContext, @Arg('update') update: MeUpdateInput) {
-        const log = logInContext('Me', context);
-
         const { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, pupil, student } = update;
 
         if (isSessionPupil(context)) {
@@ -318,13 +316,11 @@ export class MutateMeResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
-        const log = logInContext('Me', context);
-
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await deactivatePupil(pupil, reason);
             await evaluatePupilRoles(updatedPupil, context);
-            log.info(`Pupil(${pupil.id}) deactivated their account`);
+            logger.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
         }
@@ -333,7 +329,7 @@ export class MutateMeResolver {
             const student = await getSessionStudent(context);
             const updatedStudent = await deactivateStudent(student, false, reason);
             await evaluateStudentRoles(updatedStudent, context);
-            log.info(`Student(${student.id}) deactivated their account`);
+            logger.info(`Student(${student.id}) deactivated their account`);
             return true;
         }
 
@@ -343,13 +339,11 @@ export class MutateMeResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async meActivate(@Ctx() context: GraphQLContext) {
-        const log = logInContext('Me', context);
-
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await activatePupil(pupil);
             await evaluatePupilRoles(updatedPupil, context);
-            log.info(`Pupil(${pupil.id}) reactivated their account`);
+            logger.info(`Pupil(${pupil.id}) reactivated their account`);
 
             return true;
         }
@@ -367,10 +361,9 @@ export class MutateMeResolver {
         @Arg('studentId', { nullable: true }) studentId: number
     ) {
         const student = await getSessionStudent(context, studentId);
-        const log = logInContext('Me', context);
 
         await becomeInstructor(student, data);
-        log.info(`Student(${student.id}) requested to become an instructor`);
+        logger.info(`Student(${student.id}) requested to become an instructor`);
 
         // User gets the WANNABE_INSTRUCTOR role
         await updateSessionUser(context, userForStudent(student));
@@ -388,7 +381,6 @@ export class MutateMeResolver {
         @Arg('studentId', { nullable: true }) studentId: number
     ) {
         const student = await getSessionStudent(context, studentId);
-        const log = logInContext('Me', context);
 
         await becomeTutor(student, data);
 
@@ -404,11 +396,10 @@ export class MutateMeResolver {
     @Authorized(Role.STUDENT, Role.ADMIN)
     async meBecomeProjectCoach(@Ctx() context: GraphQLContext, data: BecomeProjectCoachInput, @Arg('studentId', { nullable: true }) studentId: number) {
         const student = await getSessionStudent(context, studentId);
-        const log = logInContext('Me', context);
 
         await becomeProjectCoach(student, data);
 
-        log.info(`Student(${student.id}) requested to become a project coach`);
+        logger.info(`Student(${student.id}) requested to become a project coach`);
 
         // After successful screening and re authentication, the user will receive the PROJECT_COACH role
 
@@ -423,13 +414,12 @@ export class MutateMeResolver {
         @Arg('pupilId', { nullable: true }) pupilId: number
     ) {
         const pupil = await getSessionPupil(context, pupilId);
-        const log = logInContext('Me', context);
 
         const updatedPupil = await becomeProjectCoachee(pupil, data);
         await evaluatePupilRoles(updatedPupil, context);
         // The user should now have the PROJECT_COACHEE role
 
-        log.info(`Pupil(${pupil.id}) upgraded their account to a PROJECT_COACHEE`);
+        logger.info(`Pupil(${pupil.id}) upgraded their account to a PROJECT_COACHEE`);
 
         return true;
     }
@@ -440,13 +430,12 @@ export class MutateMeResolver {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         const pupil = await getSessionPupil(context, pupilId);
-        const log = logInContext('Me', context);
         const updatedPupil = await becomeTutee(pupil, data);
         if (!byAdmin) {
             await evaluatePupilRoles(updatedPupil, context);
         }
 
-        log.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
+        logger.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
 
         return true;
     }
@@ -455,12 +444,11 @@ export class MutateMeResolver {
     @Authorized(Role.PUPIL, Role.ADMIN)
     async meBecomeStatePupil(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeStatePupilInput, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
-        const log = logInContext('Me', context);
 
         const updatedPupil = await becomeStatePupil(pupil, data);
         await evaluatePupilRoles(updatedPupil, context);
 
-        log.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
+        logger.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
 
         return true;
     }
@@ -469,12 +457,11 @@ export class MutateMeResolver {
     @Authorized(Role.PUPIL, Role.ADMIN)
     async meBecomeParticipant(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
-        const log = logInContext('Me', context);
 
         const updatedPupil = await becomeParticipant(pupil);
         await evaluatePupilRoles(updatedPupil, context);
 
-        log.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);
+        logger.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);
 
         return true;
     }

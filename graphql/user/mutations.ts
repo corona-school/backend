@@ -12,7 +12,7 @@ import { DEFAULTSENDERS } from '../../common/mails/config';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
-import { logInContext } from '../logging';
+import { getLogger } from '../../common/logger/logger';
 
 @InputType()
 class SupportMessage {
@@ -24,6 +24,8 @@ class SupportMessage {
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
 }
+
+const logger = getLogger('User Mutations');
 
 @Resolver((of) => UserType)
 export class MutateUserResolver {
@@ -82,7 +84,6 @@ export class MutateUserResolver {
         section('LOGS', 1);
         result += logs.join('\n');
 
-        const logger = logInContext('IssueReporter', context);
         logger.addContext('issureTag', issueTag);
         logger.addContext('userAgent', userAgent);
         logger.addContext('userID', context.user.userID);
