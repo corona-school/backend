@@ -16,6 +16,8 @@ import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '../entity/ParticipationCertificate';
 import assert from 'assert';
+import { createSecretEmailToken } from '../secret';
+import { userForPupil, userForStudent } from '../user';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -125,7 +127,8 @@ export interface ICertificateCreationParams {
 export async function issueCertificateRequest(
     pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
 ) {
-    const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
+    const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
+    const certificateLink = createAutoLoginLink(authToken, `/settings?sign=${pc.uuid}`);
     const mail = mailjetTemplates.CERTIFICATEREQUEST({
         certificateLink,
         pupilFirstname: pc.pupil.firstname,
@@ -259,7 +262,8 @@ export async function signCertificate(
 
     const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
 
-    const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
+    const authToken = await createSecretEmailToken(userForStudent(certificate.student));
+    const certificateLink = createAutoLoginLink(authToken, `/settings`);
     const mail = mailjetTemplates.CERTIFICATESIGNED(
         {
             certificateLink,

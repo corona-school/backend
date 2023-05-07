@@ -1,20 +1,27 @@
-import { Request, Response } from "express";
-import { getManager } from "typeorm";
-import { Student } from "../../common/entity/Student";
-import { Pupil } from "../../common/entity/Pupil";
-import { hashToken } from "../../common/util/hashing";
+import { Request, Response } from 'express';
+import { getManager } from 'typeorm';
+import { Student } from '../../common/entity/Student';
+import { Pupil } from '../../common/entity/Pupil';
+import { hashToken } from '../../common/util/hashing';
 import { getLogger } from '../../common/logger/logger';
-import { Expertise, Mentor } from "../../common/entity/Mentor";
+import { Expertise, Mentor } from '../../common/entity/Mentor';
 
 const logger = getLogger();
 
-export function authCheckFactory(optional = false, useQueryParams = false, loadEagerRelations = true, studentDefaultRelations = [], pupilDefaultRelations = []) {
+// TODO: refactor method to use EMAIL_TOKEN secret
+export function authCheckFactory(
+    optional = false,
+    useQueryParams = false,
+    loadEagerRelations = true,
+    studentDefaultRelations = [],
+    pupilDefaultRelations = []
+) {
     return async function (req: Request, res: Response, next) {
-        if (req.method == "OPTIONS") {
+        if (req.method == 'OPTIONS') {
             next();
         }
 
-        let token: any = req.get("Token");
+        let token: any = req.get('Token');
         if (useQueryParams) {
             token = req.query.Token;
         }
@@ -29,23 +36,22 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                 where: [
                     {
                         authToken: hashToken(token),
-                        active: true
+                        active: true,
                     },
                     {
                         authToken: token,
-                        active: true
-                    }
+                        active: true,
+                    },
                 ],
                 relations: studentDefaultRelations,
-                loadEagerRelations
+                loadEagerRelations,
             });
 
             if (student instanceof Student) {
-                student.authTokenUsed = true;
                 await entityManager.save(student);
 
                 res.locals.user = student;
-                res.locals.userType = "student";
+                res.locals.userType = 'student';
                 return next();
             }
 
@@ -54,22 +60,21 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                 where: [
                     {
                         authToken: hashToken(token),
-                        active: true
+                        active: true,
                     },
                     {
                         authToken: token,
-                        active: true
-                    }
+                        active: true,
+                    },
                 ],
                 relations: pupilDefaultRelations,
-                loadEagerRelations
+                loadEagerRelations,
             });
             if (pupil instanceof Pupil) {
-                pupil.authTokenUsed = true;
                 await entityManager.save(pupil);
 
                 res.locals.user = pupil;
-                res.locals.userType = "pupil";
+                res.locals.userType = 'pupil';
                 return next();
             }
 
@@ -78,29 +83,27 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                 where: [
                     {
                         authToken: hashToken(token),
-                        active: true
+                        active: true,
                     },
                     {
                         authToken: token,
-                        active: true
-                    }
+                        active: true,
+                    },
                 ],
-                loadEagerRelations
+                loadEagerRelations,
             });
             if (mentor instanceof Mentor) {
-                mentor.authTokenUsed = true;
-
                 // TODO: Workaround to prevent adding wrong " " to enums with spaces through TypeORM.
                 // Enum expertise contains values with spaces. Division not.
                 // See https://github.com/corona-school/backend/issues/138
 
                 let convertedExpertises: Expertise[] = [];
                 if (mentor.expertise.length > 0) {
-                    const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]);
+                    const expertiseValues: string[] = Object.keys(Expertise).map((key) => Expertise[key]);
                     for (let expertise of mentor.expertise) {
-                        let replacedString = expertise.toString().replace(/"/g, "");
+                        let replacedString = expertise.toString().replace(/"/g, '');
                         if (expertiseValues.indexOf(replacedString) > -1) {
-                            const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === replacedString);
+                            const expertiseKey = Object.keys(Expertise).filter((x) => Expertise[x] === replacedString);
                             convertedExpertises.push(Expertise[expertiseKey[0]]);
                         } else {
                             logger.warn("Expertise '" + expertise.toString() + "' is not a correct expertise");
@@ -108,8 +111,7 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                     }
                     if (mentor.expertise.length != convertedExpertises.length) {
                         logger.warn("Some expertises couldn't be saved.");
-                        res.status(500).send("Error while saving updates.")
-                            .end();
+                        res.status(500).send('Error while saving updates.').end();
                     } else {
                         mentor.expertise = convertedExpertises;
                     }
@@ -118,19 +120,18 @@ export function authCheckFactory(optional = false, useQueryParams = false, loadE
                 await entityManager.save(mentor);
 
                 res.locals.user = mentor;
-                res.locals.userType = "mentor";
+                res.locals.userType = 'mentor';
                 return next();
             }
 
             if (optional) {
                 return next();
             } else {
-                res.status(403).send("Invalid token specified.")
-                    .end();
+                res.status(403).send('Invalid token specified.').end();
             }
         } catch (e) {
             logger.debug(e);
-            logger.error("Error in auth check: " + e.message);
+            logger.error('Error in auth check: ' + e.message);
         }
     };
 }
