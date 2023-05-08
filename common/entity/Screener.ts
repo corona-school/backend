@@ -100,9 +100,6 @@ export const defaultScreener = init(async function getDefaultScreenerEntry() {
             updatedAt: new Date(),
             verification: null,
             verifiedAt: new Date(),
-            authToken: null,
-            authTokenUsed: null,
-            authTokenSent: null,
         },
     });
 });

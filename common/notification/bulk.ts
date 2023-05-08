@@ -31,7 +31,7 @@ export async function runBulkAction(name: string, apply: boolean) {
     const bulkRun: BulkRun = { name, count: entities.length, progress: 0, apply, notificationCount: {}, errors: [], startedAt: new Date().toISOString() };
     bulkRuns.push(bulkRun);
 
-    (async function fireAndForget() {
+    void (async function fireAndForget() {
         for (const entity of entities) {
             try {
                 const user = await bulkAction.getUser(entity);

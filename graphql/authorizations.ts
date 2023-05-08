@@ -121,6 +121,7 @@ const onlyAdmin = [Authorized(Role.ADMIN)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
+const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
@@ -244,9 +245,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'state'
         >({
             matchReason: everyone,
-            authToken: nobody,
-            authTokenSent: adminOrOwner,
-            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
             verification: nobody,
@@ -308,10 +306,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'aboutMe'
             | 'state'
         >({
-            authToken: nobody,
-            authTokenSent: adminOrOwner,
-            authTokenUsed: adminOrOwner,
-
             email: adminOrOwner,
             phone: adminOrOwner,
             verification: nobody,
@@ -428,21 +422,21 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<
-            Lecture,
-            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'declinedBy'
-        >({
-            course_attendance_log: nobody,
-            subcourseId: nobody,
-            subcourse: nobody,
-            student: nobody,
-            instructorId: nobody,
-            _count: nobody,
-            match: adminOrOwner,
-            matchId: adminOrOwner,
-            participantIds: adminOrOwner,
-            organizerIds: adminOrOwner,
-        }),
+        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled'>(
+            {
+                course_attendance_log: nobody,
+                subcourseId: nobody,
+                subcourse: nobody,
+                student: nobody,
+                instructorId: nobody,
+                _count: nobody,
+                match: adminOrOwner,
+                matchId: adminOrOwner,
+                participantIds: adminOrOwner,
+                organizerIds: adminOrOwner,
+                declinedBy: participantOrOwner,
+            }
+        ),
     },
     Participation_certificate: {
         fields: {

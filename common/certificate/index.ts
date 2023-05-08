@@ -16,6 +16,8 @@ import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '../entity/ParticipationCertificate';
 import assert from 'assert';
+import { createSecretEmailToken } from '../secret';
+import { userForPupil, userForStudent } from '../user';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -125,7 +127,8 @@ export interface ICertificateCreationParams {
 export async function issueCertificateRequest(
     pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
 ) {
-    const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
+    const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
+    const certificateLink = createAutoLoginLink(authToken, `/settings?sign=${pc.uuid}`);
     const mail = mailjetTemplates.CERTIFICATEREQUEST({
         certificateLink,
         pupilFirstname: pc.pupil.firstname,
@@ -139,19 +142,8 @@ export async function issueCertificateRequest(
     });
 }
 
-export async function createCertificateLEGACY(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
-) {
-    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
-}
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: ICertificateCreationParams
-): Promise<ParticipationCertificate> {
+export async function createCertificate(_requestor: PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -270,7 +262,8 @@ export async function signCertificate(
 
     const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
 
-    const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
+    const authToken = await createSecretEmailToken(userForStudent(certificate.student));
+    const certificateLink = createAutoLoginLink(authToken, `/settings`);
     const mail = mailjetTemplates.CERTIFICATESIGNED(
         {
             certificateLink,
