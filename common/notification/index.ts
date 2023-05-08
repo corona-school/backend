@@ -293,7 +293,6 @@ function getContext(notificationContext: NotificationContext, legacyUser: Person
     return {
         ...notificationContext,
         user: { ...legacyUser, fullName: getFullName(legacyUser) },
-        authToken: legacyUser.authToken ?? '',
         USER_APP_DOMAIN,
     };
 }

@@ -20,7 +20,7 @@ const baseUrl = process.env.BBB_BASEURL;
 
 const courseAttendanceLogInterval = 600000;
 const bbbMeetingInfoHandlerTimeout = setInterval(() => {
-    handleBBBMeetingInfos();
+    void handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);
 addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 

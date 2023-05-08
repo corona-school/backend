@@ -9,15 +9,14 @@ import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';
 import { CourseGuest, getCourseGuestLink } from '../../entity/CourseGuest';
 import * as Notification from '../../../common/notification';
-import { getFullName } from '../../user';
+import { getFullName, userForPupil } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
-import { Person } from '../../entity/Person';
-import { accessURLForKey } from '../../file-bucket';
 import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
 import { getCourseCapacity } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
+import { createSecretEmailToken } from '../../secret';
 
 const logger = getLogger('Course Notification');
 
@@ -117,6 +116,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
     }
 
     const firstLectureMoment = moment(firstLecture.start);
+    const authToken = await createSecretEmailToken(userForPupil(participant), undefined, moment().add(7, 'days'));
 
     const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
         participantFirstname: participant.firstname,
@@ -124,7 +124,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
         courseId: String(course.id),
         firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
         firstLectureTime: firstLectureMoment.format('HH:mm'),
-        authToken: participant.authToken,
+        authToken,
     });
 
     await sendTemplateMail(mail, participant.email);

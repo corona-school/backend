@@ -324,21 +324,36 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    student_cancel_appointment_group: {
-        description: 'Student / Group Appointment Cancelled',
+    student_add_appointment_group: {
+        description: 'Student / Group Appointment Added',
         sampleContext: {
-            appointment: sampleAppointment,
             student: sampleUser,
             user: sampleUser,
             course: sampleCourse,
         },
     },
-    student_cancel_appointment_match: {
-        description: 'Student / Match Appointment Cancelled',
+    student_add_appointments_group: {
+        description: 'Student / Group Appointments Added',
         sampleContext: {
-            appointment: sampleAppointment,
             student: sampleUser,
             user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_add_appointment_match: {
+        description: 'Student / Match Appointment Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
+    student_add_appointments_match: {
+        description: 'Student / Match Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
         },
     },
     pupil_decline_appointment_group: {
@@ -356,7 +371,23 @@ const _notificationActions = {
             pupil: sampleUser,
         },
     },
-
+    student_cancel_appointment_group: {
+        description: 'Student / Group Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_cancel_appointment_match: {
+        description: 'Student / Match Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+        },
+    },
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,

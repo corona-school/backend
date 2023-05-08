@@ -1,8 +1,7 @@
-import {Division, Expertise} from "../../common/entity/Mentor";
+import { Division, Expertise } from '../../common/entity/Mentor';
 import { getLogger } from '../../common/logger/logger';
-import {ApiSubject} from "./format";
-import {checkSubject} from "./userController/format";
-import { Person } from "../../common/entity/Person";
+import { ApiSubject } from './format';
+import { checkSubject } from './userController/format';
 
 const logger = getLogger();
 
@@ -10,7 +9,7 @@ export function checkSubjects(subjects: ApiSubject[]) {
     if (subjects.length > 0) {
         for (let i = 0; i < subjects.length; i++) {
             if (!checkSubject(subjects[i].name)) {
-                logger.warn("Subjects contain invalid subject " + subjects[i].name);
+                logger.warn('Subjects contain invalid subject ' + subjects[i].name);
                 return null;
             }
         }
@@ -36,10 +35,10 @@ export function checkDivisions(divisions: string[]) {
 export function checkExpertises(expertises: string[]) {
     let result: Expertise[] = [];
     if (expertises.length > 0) {
-        const expertiseValues: string[] = Object.keys(Expertise).map(key => Expertise[key]);
+        const expertiseValues: string[] = Object.keys(Expertise).map((key) => Expertise[key]);
         for (let expertise of expertises) {
             if (expertiseValues.indexOf(expertise) > -1) {
-                const expertiseKey = Object.keys(Expertise).filter(x => Expertise[x] === expertise);
+                const expertiseKey = Object.keys(Expertise).filter((x) => Expertise[x] === expertise);
                 result.push(Expertise[expertiseKey[0]]);
             } else {
                 logger.warn("Expertise '" + expertise + "' is not a correct expertise");
@@ -52,6 +51,6 @@ export function checkExpertises(expertises: string[]) {
 
 /* Creates a link which logs in as a certain user and then goes to the path in the frontend
    ATTENTION: Exposing this to someone else than the user is not a good idea! */
-export function createAutoLoginLink(user: Person, path: string) {
-    return `https://my.lern-fair.de/login?token=${user.authToken}&path=${encodeURIComponent(path)}`;
+export function createAutoLoginLink(token: string, path: string) {
+    return `https://app.lern-fair.de/login?token=${token}&path=${encodeURIComponent(path)}`;
 }
