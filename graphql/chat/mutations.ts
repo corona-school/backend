@@ -11,25 +11,25 @@ const logger = getLogger('MutateChatResolver');
 export class MutateChatResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async matchChatCreate(@Ctx() context: GraphQLContext) {
+    matchChatCreate(@Ctx() context: GraphQLContext) {
         return true;
     }
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async subcourseChatCreate(@Ctx() context: GraphQLContext) {
+    subcourseChatCreate(@Ctx() context: GraphQLContext) {
         return true;
     }
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async participantChatCreate(@Ctx() context: GraphQLContext) {
+    participantChatCreate(@Ctx() context: GraphQLContext) {
         return true;
     }
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async prospectChatCreate(@Ctx() context: GraphQLContext) {
+    prospectChatCreate(@Ctx() context: GraphQLContext) {
         return true;
     }
 }
