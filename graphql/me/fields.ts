@@ -3,7 +3,19 @@ import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { UserType } from '../types/user';
+import { Field, ObjectType } from 'type-graphql';
 
+@ObjectType()
+class Contact {
+    @Field((_type) => String)
+    userID: string;
+    @Field((_type) => String)
+    talkJsId: string;
+    @Field((_type) => String, { nullable: true })
+    firstname: string;
+    @Field((_type) => String, { nullable: true })
+    lastname: string;
+}
 @Resolver((of) => UserType)
 export class FieldMeResolver {
     @Query((returns) => UserType)
@@ -16,5 +28,17 @@ export class FieldMeResolver {
     @Authorized(Role.USER)
     myRoles(@Ctx() context: GraphQLContext): string[] {
         return context.user?.roles ?? [];
+    }
+
+    @Query((returns) => [String])
+    @Authorized(Role.USER)
+    myContactOptions(@Ctx() context: GraphQLContext): Contact[] {
+        return [];
+    }
+
+    @Query((returns) => [String])
+    @Authorized(Role.USER)
+    myConversations(@Ctx() context: GraphQLContext): any[] {
+        return [];
     }
 }
