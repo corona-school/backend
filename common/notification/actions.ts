@@ -329,21 +329,36 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    pupil_change_appointment_group: {
-        description: 'Student / Group Appointment Updated',
+    student_add_appointment_group: {
+        description: 'Student / Group Appointment Added',
         sampleContext: {
             student: sampleUser,
-            pupil: sampleUser,
-            appointment: sampleAppointment,
+            user: sampleUser,
             course: sampleCourse,
         },
     },
-    pupil_change_appointment_match: {
-        description: 'Student / Match Appointment Updated',
+    student_add_appointments_group: {
+        description: 'Student / Group Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_add_appointment_match: {
+        description: 'Student / Match Appointment Added',
         sampleContext: {
             student: sampleUser,
             pupil: sampleUser,
-            appointment: sampleAppointment,
+            matchId: '1',
+        },
+    },
+    student_add_appointments_match: {
+        description: 'Student / Match Appointments Added',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            matchId: '1',
         },
     },
     pupil_decline_appointment_group: {
@@ -359,6 +374,23 @@ const _notificationActions = {
         sampleContext: {
             appointment: sampleAppointment,
             pupil: sampleUser,
+        },
+    },
+    pupil_change_appointment_group: {
+        description: 'Student / Group Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            appointment: sampleAppointment,
+            course: sampleCourse,
+        },
+    },
+    pupil_change_appointment_match: {
+        description: 'Student / Match Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            appointment: sampleAppointment,
         },
     },
 

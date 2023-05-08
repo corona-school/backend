@@ -44,25 +44,6 @@ export abstract class Person {
     })
     verifiedAt: Date;
 
-    @Index({ unique: true })
-    @Column({
-        nullable: true,
-        default: null,
-    })
-    authToken: string;
-
-    @Column({
-        nullable: false,
-        default: false,
-    })
-    authTokenUsed: boolean;
-
-    @Column({
-        nullable: true,
-        default: null,
-    })
-    authTokenSent: Date;
-
     @Column({
         default: false,
     })

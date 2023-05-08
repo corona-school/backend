@@ -18,9 +18,8 @@ export class ExtendedFieldsMessageTranslationResolver {
             type: notification.type as any,
             navigateTo: messageTranslation.navigateTo,
         };
-
         if (messageTranslation.navigateTo) {
-            return { ...result, navigateTo: renderTemplate((messageTranslation.navigateTo as any).navigateTo, sampleContext) };
+            return { ...result, navigateTo: renderTemplate(messageTranslation.navigateTo, sampleContext) };
         }
         return result;
     }
