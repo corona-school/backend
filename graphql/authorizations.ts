@@ -245,9 +245,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'state'
         >({
             matchReason: everyone,
-            authToken: nobody,
-            authTokenSent: adminOrOwner,
-            authTokenUsed: adminOrOwner,
 
             email: adminOrOwner,
             verification: nobody,
@@ -309,10 +306,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'aboutMe'
             | 'state'
         >({
-            authToken: nobody,
-            authTokenSent: adminOrOwner,
-            authTokenUsed: adminOrOwner,
-
             email: adminOrOwner,
             phone: adminOrOwner,
             verification: nobody,

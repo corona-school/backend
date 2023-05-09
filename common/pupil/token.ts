@@ -1,8 +1,8 @@
 import { pupil } from '@prisma/client';
-import { hashToken } from '../util/hashing';
-import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '../prisma';
+import moment from 'moment';
 import { getLogger } from '../logger/logger';
+import { createSecretEmailToken } from '../secret';
+import { userForPupil } from '../user';
 
 const logger = getLogger('Pupil Token Auth');
 
@@ -15,19 +15,8 @@ export async function refreshToken(pupil: pupil): Promise<string | never> {
         throw new Error('Access Token requested by deactivated user');
     }
 
-    const secretToken = uuidv4();
-    const hashedToken = hashToken(secretToken);
+    const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
+    logger.info(`Created new Auth Token for Pupil`, { pupilID: pupil.id, authToken });
 
-    await prisma.pupil.update({
-        where: { id: pupil.id },
-        data: {
-            authToken: hashedToken,
-            authTokenSent: new Date(),
-            authTokenUsed: false,
-        },
-    });
-
-    logger.info(`Created new Auth Token for Pupil(${pupil.id}) with Hash: "${hashedToken}"`);
-
-    return secretToken;
+    return authToken;
 }

@@ -5,7 +5,6 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import cors from 'cors';
 import * as userController from './controllers/userController';
-import * as tokenController from './controllers/tokenController';
 import * as matchController from './controllers/matchController';
 import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
@@ -62,7 +61,7 @@ async function setupPDFGenerationEnvironment() {
 }
 
 // Database connection
-createConnection()
+void createConnection()
     .then(setupPDFGenerationEnvironment)
     .then(async () => {
         logger.info('Database connected');
@@ -84,11 +83,10 @@ createConnection()
             configureCertificateAPI();
         }
         configureUserAPI();
-        configureTokenAPI();
         configureRegistrationAPI();
         configureMentoringAPI();
         configureExpertAPI();
-        configureApolloServer();
+        await configureApolloServer();
         configurePupilInterestConfirmationAPI();
         configureFileAPI();
         const server = await deployServer();
@@ -104,7 +102,7 @@ createConnection()
                     ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
                     'https://user-app-dev.herokuapp.com',
                     /^https:\/\/lernfair-user-app-[\-a-z0-9]+.herokuapp.com$/,
-                    'https://lern.retool.com'
+                    'https://lern.retool.com',
                 ];
             } else {
                 origins = [
@@ -115,7 +113,7 @@ createConnection()
                     'https://my.lern-fair.de',
                     'https://app.lern-fair.de',
                     ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
-                    'https://lern.retool.com'
+                    'https://lern.retool.com',
                 ];
             }
 
@@ -156,26 +154,14 @@ createConnection()
             app.use('/api/user', userApiRouter);
         }
 
-        function configureTokenAPI() {
-            const tokenApiRouter = express.Router();
-            tokenApiRouter.post('/', tokenController.verifyTokenHandler);
-            tokenApiRouter.get('/', tokenController.getNewTokenHandler);
-            app.use('/api/token', tokenApiRouter);
-        }
-
         function configureCertificateAPI() {
             const certificateRouter = express.Router();
-            certificateRouter.post('/create', authCheckFactory(), certificateController.createCertificateEndpoint);
-            certificateRouter.get('/remissionRequest', authCheckFactory(), certificateController.getRemissionRequestEndpoint);
-            certificateRouter.get('/:certificateId', authCheckFactory(), certificateController.getCertificateEndpoint);
             certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
-            certificateRouter.post('/:certificateId/sign', authCheckFactory(), certificateController.signCertificateEndpoint);
 
             app.use('/api/certificate', certificateRouter);
 
             // TODO Find better solution
             app.use('/api/certificate/:certificateId/public', express.static('./assets/public'));
-            app.get('/api/certificates', authCheckFactory(), certificateController.getCertificatesEndpoint);
         }
 
         function configureRegistrationAPI() {
@@ -200,7 +186,7 @@ createConnection()
                 if (!req.subdomains.includes('verify')) {
                     return next();
                 }
-                certificateController.getCertificateConfirmationEndpoint(req, res);
+                void certificateController.getCertificateConfirmationEndpoint(req, res);
             });
             participationCertificateRouter.use((req, res, next) => {
                 if (req.subdomains.includes('verify')) {

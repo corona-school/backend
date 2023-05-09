@@ -125,7 +125,7 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
     }
 
     if (!noSession) {
-        userSessions.set(context.sessionToken, context.user);
+        await userSessions.set(context.sessionToken, context.user);
         logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     }
 }
@@ -136,74 +136,6 @@ export class AuthenticationResolver {
     @Mutation((returns) => String)
     suggestSessionToken() {
         return suggestToken();
-    }
-
-    @Authorized(Role.UNAUTHENTICATED)
-    @Mutation((returns) => Boolean)
-    @Deprecated('use loginPassword or loginToken instead')
-    async loginLegacy(@Ctx() context: GraphQLContext, @Arg('authToken') authToken: string) {
-        ensureSession(context);
-        const logger = logInContext(`GraphQL Authentication`, context);
-
-        const pupil = await prisma.pupil.findFirst({
-            where: {
-                // This drops support for unhashed tokens as present in the REST authentication
-                authToken: hashToken(authToken),
-                active: true,
-            },
-        });
-
-        if (pupil) {
-            if (!pupil.verifiedAt) {
-                /* Previously there was an extra database field for verifying the E-Mail.
-                   I do not see the purpose of that, as presenting a valid authToken is also proof that the account exists.
-                   This can co-exist with the current "verification" implementation.
-                   TODO: Drop the verification column once we moved to GraphQL on the frontend */
-                logger.info(`Pupil(${pupil.id}) did not verify their e-mail yet, but presented legacy token (thus proved their ownership)`);
-                await prisma.pupil.update({
-                    data: {
-                        verification: null,
-                        verifiedAt: new Date(),
-                    },
-                    where: { id: pupil.id },
-                });
-            }
-
-            await loginAsUser(userForPupil(pupil), context);
-
-            return true;
-        }
-
-        const student = await prisma.student.findFirst({
-            where: {
-                authToken: hashToken(authToken),
-                active: true,
-            },
-        });
-
-        if (student) {
-            if (!student.verifiedAt) {
-                /* Previously there was an extra database field for verifying the E-Mail.
-                   I do not see the purpose of that, as presenting a valid authToken is also proof that the account exists.
-                   This can co-exist with the current "verification" implementation.
-                   TODO: Drop the verification column once we moved to GraphQL on the frontend */
-                logger.info(`Student(${student.id}) did not verify their e-mail yet, but presented legacy token (thus proved their ownership)`);
-                await prisma.student.update({
-                    data: {
-                        verification: null,
-                        verifiedAt: new Date(),
-                    },
-                    where: { id: student.id },
-                });
-            }
-
-            await loginAsUser(userForStudent(student), context);
-
-            return true;
-        }
-
-        logger.warn(`Invalid authToken`);
-        throw new AuthenticationError('Invalid authToken');
     }
 
     @Authorized(Role.UNAUTHENTICATED)

@@ -1,7 +1,7 @@
-import { pupilOneWithPassword } from "./auth";
-import { test } from "./base";
+import { pupilOneWithPassword } from './auth';
+import { test } from './base';
 
-test("Pupil Account Deactivation", async () => {
+void test('Pupil Account Deactivation', async () => {
     const { client, pupil, password } = await pupilOneWithPassword;
 
     await client.request(`mutation { meDeactivate(reason: "Keine Lust mehr auf Integration-Tests")}`);

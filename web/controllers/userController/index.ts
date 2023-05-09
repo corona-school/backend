@@ -1,6 +1,6 @@
 import { getLogger } from '../../../common/logger/logger';
-import { EntityManager, getConnection, getManager, ObjectType } from "typeorm";
-import { Request, Response } from "express";
+import { EntityManager, getConnection, getManager, ObjectType } from 'typeorm';
+import { Request, Response } from 'express';
 import {
     ApiGetUser,
     ApiMatch,
@@ -8,41 +8,42 @@ import {
     ApiPutUser,
     ApiUserRoleInstructor,
     ApiUserRoleProjectCoach,
-    ApiUserRoleProjectCoachee, ApiUserRoleTutor,
+    ApiUserRoleProjectCoachee,
+    ApiUserRoleTutor,
     checkName,
-    checkSubject
-} from "./format";
-import { ScreeningStatus, Student, TeacherModule } from "../../../common/entity/Student";
-import { Pupil } from "../../../common/entity/Pupil";
-import { Person } from "../../../common/entity/Person";
-import { Match } from "../../../common/entity/Match";
-import { dissolveMatch } from "../matchController";
-import { getTransactionLog } from "../../../common/transactionlog";
-import UpdatePersonalEvent from "../../../common/transactionlog/types/UpdatePersonalEvent";
-import UpdateSubjectsEvent from "../../../common/transactionlog/types/UpdateSubjectsEvent";
-import DeActivateEvent from "../../../common/transactionlog/types/DeActivateEvent";
+    checkSubject,
+} from './format';
+import { ScreeningStatus, Student, TeacherModule } from '../../../common/entity/Student';
+import { Pupil } from '../../../common/entity/Pupil';
+import { Person } from '../../../common/entity/Person';
+import { Match } from '../../../common/entity/Match';
+import { dissolveMatch } from '../matchController';
+import { getTransactionLog } from '../../../common/transactionlog';
+import UpdatePersonalEvent from '../../../common/transactionlog/types/UpdatePersonalEvent';
+import UpdateSubjectsEvent from '../../../common/transactionlog/types/UpdateSubjectsEvent';
+import DeActivateEvent from '../../../common/transactionlog/types/DeActivateEvent';
 import {
     sendFirstScreeningInvitationToInstructor,
     sendFirstScreeningInvitationToProjectCoachingJufoAlumni,
-    sendFirstScreeningInvitationToTutor
-} from "../../../common/administration/screening/initial-invitations";
-import { State } from "../../../common/entity/State";
-import { EnumReverseMappings } from "../../../common/util/enumReverseMapping";
-import moment from "moment-timezone";
-import { Mentor } from "../../../common/entity/Mentor";
-import { checkDivisions, checkExpertises, checkSubjects } from "../utils";
-import { ApiSubject } from "../format";
-import { ProjectFieldWithGradeInfoType } from "../../../common/jufo/projectFieldWithGradeInfoType";
-import { TutorJufoParticipationIndication } from "../../../common/jufo/participationIndication";
-import { ProjectMatch } from "../../../common/entity/ProjectMatch";
-import UpdateProjectFieldsEvent from "../../../common/transactionlog/types/UpdateProjectFieldsEvent";
-import { ExpertData } from "../../../common/entity/ExpertData";
-import { getDefaultScreener } from "../../../common/entity/Screener";
-import { Course, CourseState } from "../../../common/entity/Course";
-import CancelCourseEvent from "../../../common/transactionlog/types/CancelCourseEvent";
-import { Subcourse } from "../../../common/entity/Subcourse";
+    sendFirstScreeningInvitationToTutor,
+} from '../../../common/administration/screening/initial-invitations';
+import { State } from '../../../common/entity/State';
+import { EnumReverseMappings } from '../../../common/util/enumReverseMapping';
+import moment from 'moment-timezone';
+import { Mentor } from '../../../common/entity/Mentor';
+import { checkDivisions, checkExpertises, checkSubjects } from '../utils';
+import { ApiSubject } from '../format';
+import { ProjectFieldWithGradeInfoType } from '../../../common/jufo/projectFieldWithGradeInfoType';
+import { TutorJufoParticipationIndication } from '../../../common/jufo/participationIndication';
+import { ProjectMatch } from '../../../common/entity/ProjectMatch';
+import UpdateProjectFieldsEvent from '../../../common/transactionlog/types/UpdateProjectFieldsEvent';
+import { ExpertData } from '../../../common/entity/ExpertData';
+import { getDefaultScreener } from '../../../common/entity/Screener';
+import { Course, CourseState } from '../../../common/entity/Course';
+import CancelCourseEvent from '../../../common/transactionlog/types/CancelCourseEvent';
+import { Subcourse } from '../../../common/entity/Subcourse';
 // import { checkCoDuSubjectRequirements } from "../../../common/util/subjectsutils";
-import * as Notification from "../../../common/notification";
+import * as Notification from '../../../common/notification';
 
 const logger = getLogger();
 
@@ -124,7 +125,7 @@ export async function getHandler(req: Request, res: Response) {
                     status = 403;
                 }
             } catch (e) {
-                logger.warn("Error during GET /user: " + e.message);
+                logger.warn('Error during GET /user: ' + e.message);
                 logger.debug(e);
                 status = 500;
             }
@@ -132,7 +133,7 @@ export async function getHandler(req: Request, res: Response) {
             status = 500;
         }
     } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
+        logger.error('Unexpected format of express request: ' + e.message);
         logger.debug(req, e);
         status = 500;
     }
@@ -171,19 +172,19 @@ export async function putHandler(req: Request, res: Response) {
 
     try {
         let b = req.body;
-        if (typeof b.firstname == "string" &&
-            typeof b.lastname == "string" &&
-            (b.grade == undefined || typeof b.grade == "number") &&
-            (b.matchesRequested == undefined || typeof b.matchesRequested == "number") &&
-            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == "number") &&
-            (b.isCodu == undefined || typeof b.isCodu == "boolean")) {
-            if (req.params.id != undefined &&
-                (res.locals.user instanceof Student || res.locals.user instanceof Pupil)
-            ) {
+        if (
+            typeof b.firstname == 'string' &&
+            typeof b.lastname == 'string' &&
+            (b.grade == undefined || typeof b.grade == 'number') &&
+            (b.matchesRequested == undefined || typeof b.matchesRequested == 'number') &&
+            (b.projectMatchesRequested == undefined || typeof b.projectMatchesRequested == 'number') &&
+            (b.isCodu == undefined || typeof b.isCodu == 'boolean')
+        ) {
+            if (req.params.id != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
                 try {
                     status = await putPersonal(req.params.id, b, res.locals.user);
                 } catch (e) {
-                    logger.warn("Error PUT /user: " + e.message);
+                    logger.warn('Error PUT /user: ' + e.message);
                     logger.debug(e);
                     status = 500;
                 }
@@ -191,11 +192,11 @@ export async function putHandler(req: Request, res: Response) {
                 status = 500;
             }
         } else {
-            console.log("Verification failed");
+            console.log('Verification failed');
             status = 400;
         }
     } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
+        logger.error('Unexpected format of express request: ' + e.message);
         logger.debug(req, e);
         status = 500;
     }
@@ -240,7 +241,7 @@ export async function putSubjectsHandler(req: Request, res: Response) {
         // Check if array is valid
         let subjects = [];
         if (!(b instanceof Array)) {
-            logger.error("Invalid format for subjects: Expected array");
+            logger.error('Invalid format for subjects: Expected array');
             logger.debug(b);
             status = 400;
         } else {
@@ -252,56 +253,54 @@ export async function putSubjectsHandler(req: Request, res: Response) {
             for (let i = 0; i < b.length; i++) {
                 let elem = b[i];
                 if (subjectType == 0) {
-                    if (typeof elem.name == "string" && checkSubject(elem.name)
-                    ) {
+                    if (typeof elem.name == 'string' && checkSubject(elem.name)) {
                         let subject: ApiSubject = {
-                            name: elem.name
+                            name: elem.name,
                         };
                         subjects.push(subject);
                     } else {
-                        logger.error("Invalid format for shortType subjects: Missing or wrongly typed properties in ", elem);
-                        logger.debug("Index " + i, b);
+                        logger.error('Invalid format for shortType subjects: Missing or wrongly typed properties in ', elem);
+                        logger.debug('Index ' + i, b);
                         status = 400;
                         break;
                     }
-                } else if (typeof elem.name == "string" &&
-                    typeof elem.minGrade == "number" &&
-                    typeof elem.maxGrade == "number" &&
+                } else if (
+                    typeof elem.name == 'string' &&
+                    typeof elem.minGrade == 'number' &&
+                    typeof elem.maxGrade == 'number' &&
                     elem.minGrade >= 1 &&
                     elem.minGrade <= 13 &&
                     elem.minGrade <= elem.maxGrade &&
                     elem.maxGrade >= 1 &&
                     elem.maxGrade <= 13 &&
-                    checkSubject(elem.name)) {
-
+                    checkSubject(elem.name)
+                ) {
                     let subject: ApiSubject = {
                         name: elem.name,
                         minGrade: elem.minGrade,
-                        maxGrade: elem.maxGrade
+                        maxGrade: elem.maxGrade,
                     };
                     subjects.push(subject);
-
                 } else {
-                    logger.error("Invalid format for longType subjects: Missing or wrongly typed properties in ", elem);
-                    logger.debug("Index " + i, b);
+                    logger.error('Invalid format for longType subjects: Missing or wrongly typed properties in ', elem);
+                    logger.debug('Index ' + i, b);
                     status = 400;
                     break;
                 }
             }
         }
 
-        if (status < 300 && req.params.id != undefined &&
-            (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
+        if (status < 300 && req.params.id != undefined && (res.locals.user instanceof Pupil || res.locals.user instanceof Student)) {
             try {
                 status = await putSubjects(req.params.id, b, res.locals.user);
             } catch (e) {
-                logger.warn("Error PUT /user/subjects: " + e.message);
+                logger.warn('Error PUT /user/subjects: ' + e.message);
                 logger.debug(e);
                 status = 500;
             }
         }
     } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
+        logger.error('Unexpected format of express request: ' + e.message);
         logger.debug(req, e);
         status = 500;
     }
@@ -343,31 +342,30 @@ export async function putProjectFieldsHandler(req: Request, res: Response) {
     try {
         //check project fields for validity
         const projectFields = req.body as ApiProjectFieldInfo[];
-        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s.name));
+        const unknownProjectField = projectFields.find((s) => !EnumReverseMappings.ProjectField(s.name));
         if (unknownProjectField) {
             status = 400;
             logger.error(`Put user project fields has invalid project field '${JSON.stringify(unknownProjectField)}'`);
         }
 
         //if a student, check that every project field has min and max (or neither of them)
-        if (res.locals.user instanceof Student
-            && !projectFields.every(pf => (pf.min && pf.max && pf.min <= pf.max) || (pf.min == null && pf.max == null))) { //NOTE: 0 is also an invalid value, so using negation operator (!) is ok here.
+        if (res.locals.user instanceof Student && !projectFields.every((pf) => (pf.min && pf.max && pf.min <= pf.max) || (pf.min == null && pf.max == null))) {
+            //NOTE: 0 is also an invalid value, so using negation operator (!) is ok here.
             status = 400;
             logger.error(`Put user project fields has invalid project field grade restriction!`);
         }
 
-        if (status < 300 && req.params.id != undefined &&
-            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
+        if (status < 300 && req.params.id != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
                 status = await putProjectFields(req.params.id, projectFields, res.locals.user);
             } catch (e) {
-                logger.warn("Error PUT /user/projectFields: " + e.message);
+                logger.warn('Error PUT /user/projectFields: ' + e.message);
                 logger.debug(e);
                 status = 500;
             }
         }
     } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
+        logger.error('Unexpected format of express request: ' + e.message);
         logger.debug(req, e);
         status = 500;
     }
@@ -407,32 +405,23 @@ export async function putActiveHandler(req: Request, res: Response) {
     let status = 204;
 
     try {
-        if (req.params.id != undefined &&
-            req.params.active != undefined &&
-            (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
+        if (req.params.id != undefined && req.params.active != undefined && (res.locals.user instanceof Student || res.locals.user instanceof Pupil)) {
             try {
-
                 let active: boolean;
-                if (req.params.active == "true") {
+                if (req.params.active == 'true') {
                     active = true;
-                } else if (req.params.active == "false") {
+                } else if (req.params.active == 'false') {
                     active = false;
                 } else {
-                    logger.warn("Invalid parameter :active for PUT /user/active: " + req.params.active);
+                    logger.warn('Invalid parameter :active for PUT /user/active: ' + req.params.active);
                     status = 400;
                 }
 
                 if (status < 300) {
-                    status = await putActive(
-                        req.params.id,
-                        active,
-                        res.locals.user,
-                        req.body.deactivationReason,
-                        req.body.deactivationFeedback
-                    );
+                    status = await putActive(req.params.id, active, res.locals.user, req.body.deactivationReason, req.body.deactivationFeedback);
                 }
             } catch (e) {
-                logger.warn("Error during GET /user: " + e.message);
+                logger.warn('Error during GET /user: ' + e.message);
                 logger.debug(e);
                 status = 500;
             }
@@ -440,23 +429,22 @@ export async function putActiveHandler(req: Request, res: Response) {
             status = 500;
         }
     } catch (e) {
-        logger.error("Unexpected format of express request: " + e.message);
+        logger.error('Unexpected format of express request: ' + e.message);
         logger.debug(req, e);
         status = 500;
     }
     res.status(status).end();
 }
 
-
 async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser> {
     const entityManager = getManager();
 
     if (person == null) {
-        logger.error("getUser() returned null");
+        logger.error('getUser() returned null');
         return null;
     }
     if (person.wix_id != wix_id) {
-        logger.warn("Person with id " + person.wix_id + " tried to access data from id " + wix_id);
+        logger.warn('Person with id ' + person.wix_id + ' tried to access data from id ' + wix_id);
         return null;
     }
 
@@ -469,7 +457,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
     apiResponse.registrationDate = moment(person.wix_creation_date).unix();
 
     if (person instanceof Student) {
-        apiResponse.type = "student";
+        apiResponse.type = 'student';
         apiResponse.isTutor = person.isStudent;
         apiResponse.isInstructor = person.isInstructor;
         apiResponse.isProjectCoach = person.isProjectCoach;
@@ -483,7 +471,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = convertSubjects(JSON.parse(person.subjects));
-        apiResponse.projectFields = (await person.projectFields).map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf.projectField, min: pf.min, max: pf.max}));
+        apiResponse.projectFields = (await person.projectFields).map((pf) =>
+            Object.assign(new ApiProjectFieldInfo(), { name: pf.projectField, min: pf.min, max: pf.max })
+        );
         apiResponse.university = person.university;
         apiResponse.state = person.state;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
@@ -491,11 +481,11 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.isCodu = person.isCodu;
         let matches = await entityManager.find(Match, {
             student: person,
-            dissolved: false
+            dissolved: false,
         });
         let dissolvedMatches = await entityManager.find(Match, {
             student: person,
-            dissolved: true
+            dissolved: true,
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
@@ -505,7 +495,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
             apiMatch.grade = Number.parseInt(matches[i].pupil.grade);
             apiMatch.subjects = subjectsToStringArray(JSON.parse(matches[i].pupil.subjects));
             apiMatch.uuid = matches[i].uuid;
-            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.jitsilink = 'https://meet.jit.si/CoronaSchool-' + matches[i].uuid;
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
@@ -516,11 +506,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
             apiMatch.lastname = dissolvedMatches[i].pupil.lastname;
             apiMatch.email = dissolvedMatches[i].pupil.email;
             apiMatch.grade = Number.parseInt(dissolvedMatches[i].pupil.grade);
-            apiMatch.subjects = subjectsToStringArray(
-                JSON.parse(dissolvedMatches[i].pupil.subjects)
-            );
+            apiMatch.subjects = subjectsToStringArray(JSON.parse(dissolvedMatches[i].pupil.subjects));
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = 'https://meet.jit.si/CoronaSchool-' + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
@@ -528,9 +516,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
         // Project Coaching Matches
         const projectCoachingMatches = await entityManager.find(ProjectMatch, {
-            student: person
+            student: person,
         });
-        apiResponse.projectMatches = projectCoachingMatches.map(m => {
+        apiResponse.projectMatches = projectCoachingMatches.map((m) => {
             return {
                 dissolved: m.dissolved,
                 firstname: m.pupil.firstname,
@@ -542,27 +530,26 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
                 jitsilink: m.jitsiLink(),
                 date: m.createdAt.getTime(),
                 jufoParticipation: m.pupil.isJufoParticipant,
-                projectMemberCount: m.pupil.projectMemberCount
+                projectMemberCount: m.pupil.projectMemberCount,
             };
         });
 
         const expertData = await entityManager.findOne(ExpertData, {
-            relations: ["expertiseTags"],
-            where: { student: person }
+            relations: ['expertiseTags'],
+            where: { student: person },
         });
         if (expertData) {
             apiResponse.expertData = {
                 id: expertData.id,
                 contactEmail: expertData.contactEmail,
                 description: expertData.description,
-                expertiseTags: expertData.expertiseTags.map(t => t.name),
+                expertiseTags: expertData.expertiseTags.map((t) => t.name),
                 active: expertData.active,
-                allowed: expertData.allowed
+                allowed: expertData.allowed,
             };
         }
-
     } else if (person instanceof Pupil) {
-        apiResponse.type = "pupil";
+        apiResponse.type = 'pupil';
         apiResponse.isPupil = person.isPupil;
         apiResponse.isParticipant = person.isParticipant;
         apiResponse.isProjectCoachee = person.isProjectCoachee;
@@ -573,7 +560,7 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
         apiResponse.projectMatches = [];
         apiResponse.dissolvedMatches = [];
         apiResponse.subjects = toPupilSubjectFormat(convertSubjects(JSON.parse(person.subjects), false)); //if the subjects contain grade information, it should be stripped off
-        apiResponse.projectFields = person.projectFields.map(pf => Object.assign(new ApiProjectFieldInfo(), {name: pf}));
+        apiResponse.projectFields = person.projectFields.map((pf) => Object.assign(new ApiProjectFieldInfo(), { name: pf }));
         apiResponse.state = person.state;
         apiResponse.schoolType = person.schooltype;
         apiResponse.lastUpdatedSettingsViaBlocker = moment(person.lastUpdatedSettingsViaBlocker).unix();
@@ -581,22 +568,20 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
         let matches = await entityManager.find(Match, {
             pupil: person,
-            dissolved: false
+            dissolved: false,
         });
         let dissolvedMatches = await entityManager.find(Match, {
             pupil: person,
-            dissolved: true
+            dissolved: true,
         });
         for (let i = 0; i < matches.length; i++) {
             let apiMatch = new ApiMatch();
             apiMatch.firstname = matches[i].student.firstname;
             apiMatch.lastname = matches[i].student.lastname;
             apiMatch.email = matches[i].student.email;
-            apiMatch.subjects = subjectsToStringArray(
-                JSON.parse(matches[i].student.subjects)
-            );
+            apiMatch.subjects = subjectsToStringArray(JSON.parse(matches[i].student.subjects));
             apiMatch.uuid = matches[i].uuid;
-            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + matches[i].uuid;
+            apiMatch.jitsilink = 'https://meet.jit.si/CoronaSchool-' + matches[i].uuid;
             apiMatch.date = matches[i].createdAt.getTime();
 
             apiResponse.matches.push(apiMatch);
@@ -606,11 +591,9 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
             apiMatch.firstname = dissolvedMatches[i].student.firstname;
             apiMatch.lastname = dissolvedMatches[i].student.lastname;
             apiMatch.email = dissolvedMatches[i].student.email;
-            apiMatch.subjects = subjectsToStringArray(
-                JSON.parse(dissolvedMatches[i].student.subjects)
-            );
+            apiMatch.subjects = subjectsToStringArray(JSON.parse(dissolvedMatches[i].student.subjects));
             apiMatch.uuid = dissolvedMatches[i].uuid;
-            apiMatch.jitsilink = "https://meet.jit.si/CoronaSchool-" + dissolvedMatches[i].uuid;
+            apiMatch.jitsilink = 'https://meet.jit.si/CoronaSchool-' + dissolvedMatches[i].uuid;
             apiMatch.date = dissolvedMatches[i].createdAt.getTime();
 
             apiResponse.dissolvedMatches.push(apiMatch);
@@ -618,28 +601,30 @@ async function get(wix_id: string, person: Pupil | Student): Promise<ApiGetUser>
 
         // Project Coaching Matches
         const projectCoachingMatches = await entityManager.find(ProjectMatch, {
-            pupil: person
+            pupil: person,
         });
-        apiResponse.projectMatches = await Promise.all(projectCoachingMatches.map(async m => {
-            return {
-                dissolved: m.dissolved,
-                firstname: m.student.firstname,
-                lastname: m.student.lastname,
-                email: m.student.email,
-                uuid: m.uuid,
-                projectFields: (await m.student.getProjectFields()).map(p => p.name),
-                jitsilink: m.jitsiLink(),
-                date: m.createdAt.getTime(),
-                jufoParticipation: m.student.wasJufoParticipant
-            };
-        }));
+        apiResponse.projectMatches = await Promise.all(
+            projectCoachingMatches.map(async (m) => {
+                return {
+                    dissolved: m.dissolved,
+                    firstname: m.student.firstname,
+                    lastname: m.student.lastname,
+                    email: m.student.email,
+                    uuid: m.uuid,
+                    projectFields: (await m.student.getProjectFields()).map((p) => p.name),
+                    jitsilink: m.jitsiLink(),
+                    date: m.createdAt.getTime(),
+                    jufoParticipation: m.student.wasJufoParticipant,
+                };
+            })
+        );
     } else {
-        logger.warn("Unknown type of person: " + typeof person);
+        logger.warn('Unknown type of person: ' + typeof person);
         logger.debug(person);
         return null;
     }
 
-    logger.debug("Sending apiResponse ", apiResponse);
+    logger.debug('Sending apiResponse ', apiResponse);
     return apiResponse;
 }
 
@@ -648,11 +633,11 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     const transactionLog = getTransactionLog();
 
     if (person == null) {
-        logger.error("getUser() returned null");
+        logger.error('getUser() returned null');
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
+        logger.warn('Person with id ' + person.wix_id + 'tried to access data from id ' + wix_id);
         return 403;
     }
 
@@ -662,7 +647,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
     person.lastname = req.lastname.trim();
 
     if (!checkName(person.firstname) || !checkName(person.lastname)) {
-        logger.warn("Invalid names: " + person.firstname + " / " + person.lastname);
+        logger.warn('Invalid names: ' + person.firstname + ' / ' + person.lastname);
     }
 
     let type: ObjectType<Person>;
@@ -671,9 +656,16 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // ++++ OPEN MATCH REQUEST COUNT ++++
         // Check if number of requested matches is valid
         let matchCount = await entityManager.count(Match, { student: person, dissolved: false });
-        if (req.matchesRequested > 3 || req.matchesRequested < 0 || !Number.isInteger(req.matchesRequested) || req.matchesRequested + matchCount > 6
-            || (req.matchesRequested > 1 && await person.screeningStatus() != ScreeningStatus.Accepted && await person.instructorScreeningStatus() != ScreeningStatus.Accepted)) {
-            logger.warn("User (with " + matchCount + " matches) wants to set invalid number of matches requested: " + req.matchesRequested);
+        if (
+            req.matchesRequested > 3 ||
+            req.matchesRequested < 0 ||
+            !Number.isInteger(req.matchesRequested) ||
+            req.matchesRequested + matchCount > 6 ||
+            (req.matchesRequested > 1 &&
+                (await person.screeningStatus()) != ScreeningStatus.Accepted &&
+                (await person.instructorScreeningStatus()) != ScreeningStatus.Accepted)
+        ) {
+            logger.warn('User (with ' + matchCount + ' matches) wants to set invalid number of matches requested: ' + req.matchesRequested);
             return 400;
         }
 
@@ -703,8 +695,15 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // Check if number of requested project matches is valid
         if (req.projectMatchesRequested != null) {
             let projectMatchCount = await entityManager.count(ProjectMatch, { student: person, dissolved: false });
-            if (req.projectMatchesRequested > 3 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 6) {
-                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+            if (
+                req.projectMatchesRequested > 3 ||
+                req.projectMatchesRequested < 0 ||
+                !Number.isInteger(req.projectMatchesRequested) ||
+                req.projectMatchesRequested + projectMatchCount > 6
+            ) {
+                logger.warn(
+                    'User (with ' + projectMatchCount + ' matches) wants to set invalid number of project matches requested: ' + req.projectMatchesRequested
+                );
                 return 400;
             }
             person.openProjectMatchRequestCount = req.projectMatchesRequested;
@@ -712,8 +711,8 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         // ++++ DAZ INFORMATION ++++
         if (req.languages) {
-            const languages = req.languages.map(l => EnumReverseMappings.Language(l));
-            if (!languages.every(l => l)) {
+            const languages = req.languages.map((l) => EnumReverseMappings.Language(l));
+            if (!languages.every((l) => l)) {
                 logger.warn(`User wants to set invalid values "${req.languages}" for languages`);
                 return 400;
             }
@@ -730,7 +729,6 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         //     }
         //     person.isCodu = req.isCodu;
         // }
-
     } else if (person instanceof Pupil) {
         type = Pupil;
 
@@ -744,18 +742,22 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
             if (req.matchesRequested > 1) {
                 // NOTE: Admins can enter a larger number into the database
-                logger.warn(`While updating Pupil(${person.id}): Pupils may only have one open match request (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount})`);
+                logger.warn(
+                    `While updating Pupil(${person.id}): Pupils may only have one open match request (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount})`
+                );
                 return 400;
             }
 
             let matchCount = await entityManager.count(Match, {
                 pupil: person,
-                dissolved: false
+                dissolved: false,
             });
 
-            if (req.matchesRequested > person.openMatchRequestCount && (req.matchesRequested + matchCount) > 1) {
+            if (req.matchesRequested > person.openMatchRequestCount && req.matchesRequested + matchCount > 1) {
                 // NOTE: The opposite scenario can happen when an admin manually increased the match request count. The user can then decrease that number
-                logger.warn(`While updating Pupil(${person.id}): Pupils may only request more matches when they do not have a Match already (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount}, actual: ${matchCount})`);
+                logger.warn(
+                    `While updating Pupil(${person.id}): Pupils may only request more matches when they do not have a Match already (requested: ${req.matchesRequested}, current: ${person.openMatchRequestCount}, actual: ${matchCount})`
+                );
                 return 400;
             }
 
@@ -764,9 +766,9 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         // ++++ GRADE ++++
         if (Number.isInteger(req.grade) && req.grade >= 1 && req.grade <= 13) {
-            person.grade = req.grade + ". Klasse";
+            person.grade = req.grade + '. Klasse';
         } else {
-            logger.warn("User who is a pupil wants to set an invalid grade! It is ignored.");
+            logger.warn('User who is a pupil wants to set an invalid grade! It is ignored.');
         }
 
         // ++++ SCHOOL TYPE ++++
@@ -800,8 +802,15 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         // Check if number of requested project matches is valid
         if (req.projectMatchesRequested != null) {
             let projectMatchCount = await entityManager.count(ProjectMatch, { pupil: person, dissolved: false });
-            if (req.projectMatchesRequested > 1 || req.projectMatchesRequested < 0 || !Number.isInteger(req.projectMatchesRequested) || req.projectMatchesRequested + projectMatchCount > 1) {
-                logger.warn("User (with " + projectMatchCount + " matches) wants to set invalid number of project matches requested: " + req.projectMatchesRequested);
+            if (
+                req.projectMatchesRequested > 1 ||
+                req.projectMatchesRequested < 0 ||
+                !Number.isInteger(req.projectMatchesRequested) ||
+                req.projectMatchesRequested + projectMatchCount > 1
+            ) {
+                logger.warn(
+                    'User (with ' + projectMatchCount + ' matches) wants to set invalid number of project matches requested: ' + req.projectMatchesRequested
+                );
                 return 400;
             }
             person.openProjectMatchRequestCount = req.projectMatchesRequested;
@@ -809,8 +818,8 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
 
         // ++++ DAZ INFORMATION +++++
         if (req.languages) {
-            const languages = req.languages.map(l => EnumReverseMappings.Language(l));
-            if (!languages.every(l => l)) {
+            const languages = req.languages.map((l) => EnumReverseMappings.Language(l));
+            if (!languages.every((l) => l)) {
                 logger.warn(`User wants to set invalid values "${req.languages}" for languages`);
                 return 400;
             }
@@ -861,9 +870,8 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         if (req.description) {
             person.description = req.description.trim();
         }
-
     } else {
-        logger.warn("Unknown type of person: " + typeof person);
+        logger.warn('Unknown type of person: ' + typeof person);
         logger.debug(person);
         return 500;
     }
@@ -872,7 +880,7 @@ async function putPersonal(wix_id: string, req: ApiPutUser, person: Pupil | Stud
         await entityManager.save(type, person);
         await transactionLog.log(new UpdatePersonalEvent(person));
         if (person instanceof Student && req.isCodu) {
-            await Notification.actionTaken(person, "codu_student_registration", {});
+            await Notification.actionTaken(person, 'codu_student_registration', {});
         }
         logger.info(`Updated user ${person.firstname} ${person.lastname} (ID ${person.wix_id}, Type ${person?.constructor?.name}`);
         logger.debug(person);
@@ -890,11 +898,11 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
     const transactionLog = getTransactionLog();
 
     if (person == null) {
-        logger.error("getUser() returned null");
+        logger.error('getUser() returned null');
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
+        logger.warn('Person with id ' + person.wix_id + 'tried to access data from id ' + wix_id);
         return 403;
     }
 
@@ -902,21 +910,17 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
 
     let type: ObjectType<Person>;
     if (person instanceof Student) {
-
         type = Student;
         if (!person.isStudent) {
             person.isStudent = true;
         }
-
     } else if (person instanceof Pupil) {
-
         type = Pupil;
         if (!person.isPupil) {
             person.isPupil = true;
         }
-
     } else {
-        logger.error("Unknown type of person: " + typeof person);
+        logger.error('Unknown type of person: ' + typeof person);
         logger.debug(person);
         return 500;
     }
@@ -932,11 +936,9 @@ async function putSubjects(wix_id: string, req: ApiSubject[], person: Pupil | St
 
     try {
         await entityManager.save(type, person);
-        await transactionLog.log(
-            new UpdateSubjectsEvent(person, JSON.parse(oldPerson.subjects))
-        );
+        await transactionLog.log(new UpdateSubjectsEvent(person, JSON.parse(oldPerson.subjects)));
     } catch (e) {
-        logger.error("Can't update " + type.toString() + ": " + e.message);
+        logger.error("Can't update " + type.toString() + ': ' + e.message);
         logger.debug(person, e);
     }
 
@@ -948,11 +950,11 @@ async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], pers
     const transactionLog = getTransactionLog();
 
     if (person == null) {
-        logger.error("getUser() returned null");
+        logger.error('getUser() returned null');
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn("Person with id " + person.wix_id + "tried to access data from id " + wix_id);
+        logger.warn('Person with id ' + person.wix_id + 'tried to access data from id ' + wix_id);
         return 403;
     }
 
@@ -970,37 +972,41 @@ async function putProjectFields(wix_id: string, req: ApiProjectFieldInfo[], pers
         oldProjectFields = await person.getProjectFields();
         await person.setProjectFields(projectFields);
     } else if (person instanceof Pupil) {
-        oldProjectFields = person.projectFields.map(p => ({name: p}));
-        person.projectFields = projectFields.map(pf => pf.name);
+        oldProjectFields = person.projectFields.map((p) => ({ name: p }));
+        person.projectFields = projectFields.map((pf) => pf.name);
     } else {
-        logger.error("Unknown type of person: " + typeof person);
+        logger.error('Unknown type of person: ' + typeof person);
         logger.debug(person);
         return 500;
     }
 
     try {
         await entityManager.save(person);
-        await transactionLog.log(
-            new UpdateProjectFieldsEvent(person, oldProjectFields)
-        );
+        await transactionLog.log(new UpdateProjectFieldsEvent(person, oldProjectFields));
     } catch (e) {
-        logger.error("Can't update " + type.toString() + ": " + e.message);
+        logger.error("Can't update " + type.toString() + ': ' + e.message);
         logger.debug(person, e);
     }
 
     return 204;
 }
 
-async function putActive(wix_id: string, active: boolean, person: Pupil | Student, deactivationReason?: string, deactivationFeedback?: string): Promise<number> {
+async function putActive(
+    wix_id: string,
+    active: boolean,
+    person: Pupil | Student,
+    deactivationReason?: string,
+    deactivationFeedback?: string
+): Promise<number> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
     if (person == null) {
-        logger.error("getUser() returned null");
+        logger.error('getUser() returned null');
         return 500;
     }
     if (person.wix_id != wix_id) {
-        logger.warn("Person with id " + person.wix_id + " tried to access data from id " + wix_id);
+        logger.warn('Person with id ' + person.wix_id + ' tried to access data from id ' + wix_id);
         return 403;
     }
 
@@ -1010,7 +1016,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
     } else if (person instanceof Pupil) {
         type = Pupil;
     } else {
-        logger.error("Unknown type of person: " + typeof person);
+        logger.error('Unknown type of person: ' + typeof person);
         logger.debug(person);
         return 500;
     }
@@ -1021,14 +1027,14 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
     try {
         if (active && !person.active) {
             // Activate if deactivated
-            logger.info("Activating person " + person.firstname + " " + person.lastname);
+            logger.info('Activating person ' + person.firstname + ' ' + person.lastname);
             person.active = true;
 
             await entityManager.save(type, person);
             await transactionLog.log(new DeActivateEvent(person, true));
         } else if (!active && person.active) {
             // Deactivate if active
-            logger.info("Deactivating person " + person.firstname + " " + person.lastname);
+            logger.info('Deactivating person ' + person.firstname + ' ' + person.lastname);
             person.active = false;
             await entityManager.save(type, person);
 
@@ -1037,12 +1043,12 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             if (type == Student) {
                 options = {
                     student: person,
-                    dissolved: false
+                    dissolved: false,
                 };
             } else {
                 options = {
                     pupil: person,
-                    dissolved: false
+                    dissolved: false,
                 };
             }
             let matches = await entityManager.find(Match, options);
@@ -1054,29 +1060,34 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             if (type == Student) {
                 let courses = await getConnection()
                     .getRepository(Course)
-                    .createQueryBuilder("course")
-                    .leftJoinAndSelect("course.instructors", "instructors")
-                    .innerJoin("course.instructors", "instructorsSelect")
-                    .where("instructorsSelect.id = :id", { id: person.id})
-                    .leftJoinAndSelect("course.subcourses", "subcourses")
+                    .createQueryBuilder('course')
+                    .leftJoinAndSelect('course.instructors', 'instructors')
+                    .innerJoin('course.instructors', 'instructorsSelect')
+                    .where('instructorsSelect.id = :id', { id: person.id })
+                    .leftJoinAndSelect('course.subcourses', 'subcourses')
                     .getMany();
 
-                logger.debug("Trying to cancel following courses: ", courses);
+                logger.debug('Trying to cancel following courses: ', courses);
 
-                await entityManager.transaction(async em => {
+                await entityManager.transaction(async (em) => {
                     for (const course of courses) {
-                        logger.debug("Iterating through courses:", { courseName: course.name, instructors: course.instructors, instructorCount: course.instructors.length });
-                        if (!course.instructors.some(i => i.id === person.id)) { // Only proceed if we're part of this course as an instructor
+                        logger.debug('Iterating through courses:', {
+                            courseName: course.name,
+                            instructors: course.instructors,
+                            instructorCount: course.instructors.length,
+                        });
+                        if (!course.instructors.some((i) => i.id === person.id)) {
+                            // Only proceed if we're part of this course as an instructor
                             continue;
                         }
 
                         if (course.instructors.length > 1) {
-                        // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
-                            course.instructors = course.instructors.filter(s => s.id !== person.id);
+                            // Course still has other instructors, only remove our person from those. We don't want to cancel those courses.
+                            course.instructors = course.instructors.filter((s) => s.id !== person.id);
                             await em.save(Course, course);
                             debugRemovedFrom.push(course);
                         } else {
-                        // Our person is the only instructor in the course. Cancel it.
+                            // Our person is the only instructor in the course. Cancel it.
                             for (const subcourse of course.subcourses) {
                                 if (!subcourse.cancelled) {
                                     subcourse.cancelled = true;
@@ -1087,14 +1098,13 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
 
                             course.courseState = CourseState.CANCELLED;
                             await em.save(Course, course);
-                            transactionLog.log(new CancelCourseEvent(person as Student, course));
+                            void transactionLog.log(new CancelCourseEvent(person as Student, course));
                             debugCancelledCourses.push(course);
                         }
-
                     }
                 });
-                logger.info("Courses user was removed from (as an instructor): ", debugRemovedFrom);
-                logger.info("Courses that were cancelled (user was the sole instructor): ", debugCancelledCourses);
+                logger.info('Courses user was removed from (as an instructor): ', debugRemovedFrom);
+                logger.info('Courses that were cancelled (user was the sole instructor): ', debugCancelledCourses);
             }
 
             await Notification.cancelRemindersFor(person);
@@ -1102,7 +1112,7 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
             await transactionLog.log(new DeActivateEvent(person, false, deactivationReason, deactivationFeedback));
         }
     } catch (e) {
-        logger.error("Can't " + (active ? "" : "de") + "activate user: " + e.message);
+        logger.error("Can't " + (active ? '' : 'de') + 'activate user: ' + e.message);
         logger.debug(person);
         logger.debug(e);
         return 500;
@@ -1114,14 +1124,12 @@ async function putActive(wix_id: string, active: boolean, person: Pupil | Studen
 function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): ApiSubject[] {
     let subjects = [];
     for (let i = 0; i < oldSubjects.length; i++) {
-        if (typeof oldSubjects[i] == "string") {
+        if (typeof oldSubjects[i] == 'string') {
             let s: ApiSubject = {
-                name: oldSubjects[i].replace(/[1234567890:]+$/g, "")
+                name: oldSubjects[i].replace(/[1234567890:]+$/g, ''),
             };
             if (longtype) {
-                let matches = oldSubjects[i].match(
-                    /([0-9]{1,2}):([0-9]{1,2})$/
-                );
+                let matches = oldSubjects[i].match(/([0-9]{1,2}):([0-9]{1,2})$/);
                 if (matches instanceof Array && matches.length >= 3) {
                     s.minGrade = +matches[1];
                     s.maxGrade = +matches[2];
@@ -1141,22 +1149,19 @@ function convertSubjects(oldSubjects: Array<any>, longtype: boolean = true): Api
 function subjectsToStringArray(subjects: Array<any>): string[] {
     const stringSubjects = [];
     for (let i = 0; i < subjects.length; i++) {
-        if (typeof subjects[i] == "string") {
-            stringSubjects.push(subjects[i].replace(/[1234567890:]+$/g, ""));
-        } else if (
-            typeof subjects[i] == "object" &&
-            subjects[i].name != undefined
-        ) {
+        if (typeof subjects[i] == 'string') {
+            stringSubjects.push(subjects[i].replace(/[1234567890:]+$/g, ''));
+        } else if (typeof subjects[i] == 'object' && subjects[i].name != undefined) {
             stringSubjects.push(subjects[i].name);
         }
     }
     return stringSubjects;
 }
 
-function toPupilSubjectFormat(subjects: {name: string, minGrade?: number, maxGrade?: number}[]): {name: string}[] {
-    return subjects.map(v => {
+function toPupilSubjectFormat(subjects: { name: string; minGrade?: number; maxGrade?: number }[]): { name: string }[] {
+    return subjects.map((v) => {
         return {
-            name: v.name
+            name: v.name,
         };
     });
 }
@@ -1188,28 +1193,22 @@ function toPupilSubjectFormat(subjects: {name: string, minGrade?: number, maxGra
  */
 export async function postUserRoleInstructorHandler(req: Request, res: Response) {
     let status = 204;
-    if (res.locals.user instanceof Student &&
-        req.params.id != undefined &&
-        typeof req.body.isOfficial == 'boolean' &&
-        typeof req.body.msg == 'string') {
-
+    if (res.locals.user instanceof Student && req.params.id != undefined && typeof req.body.isOfficial == 'boolean' && typeof req.body.msg == 'string') {
         if (req.body.isOfficial) {
-            if (typeof req.body.university !== 'string' ||
-                typeof req.body.module !== 'string' ||
-                typeof req.body.hours !== 'number') {
+            if (typeof req.body.university !== 'string' || typeof req.body.module !== 'string' || typeof req.body.hours !== 'number') {
                 status = 400;
-                logger.error("Tutor registration with isOfficial has incomplete/invalid parameters");
+                logger.error('Tutor registration with isOfficial has incomplete/invalid parameters');
             }
         }
 
         if (status < 300) {
             status = await postUserRoleInstructor(req.params.id, res.locals.user, req.body);
         } else {
-            logger.error("Malformed parameters in optional fields for Instructor role change");
+            logger.error('Malformed parameters in optional fields for Instructor role change');
             status = 400;
         }
     } else {
-        logger.error("Malfored required parameters for Instructor role change");
+        logger.error('Malfored required parameters for Instructor role change');
         status = 400;
     }
 
@@ -1218,12 +1217,12 @@ export async function postUserRoleInstructorHandler(req: Request, res: Response)
 
 async function postUserRoleInstructor(wixId: string, student: Student, apiInstructor: ApiUserRoleInstructor): Promise<number> {
     if (wixId != student.wix_id) {
-        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        logger.warn('Person with id ' + student.wix_id + ' tried to access data from id ' + wixId);
         return 403;
     }
 
     if (student.isInstructor) {
-        logger.warn("Current user is already an instructor");
+        logger.warn('Current user is already an instructor');
         return 400;
     }
 
@@ -1234,89 +1233,89 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
 
     if (apiInstructor.isOfficial) {
         if (apiInstructor.university.length == 0 || apiInstructor.university.length > 100) {
-            logger.warn("apiInstructor.university outside of length restrictions");
+            logger.warn('apiInstructor.university outside of length restrictions');
             return 400;
         }
 
         if (apiInstructor.hours == 0 || apiInstructor.hours > 1000) {
-            logger.warn("apiInstructor.hours outside of size restrictions");
+            logger.warn('apiInstructor.hours outside of size restrictions');
             return 400;
         }
 
         if (apiInstructor.msg.length > 3000) {
-            logger.warn("apiInstructor.msg outside of length restrictions");
+            logger.warn('apiInstructor.msg outside of length restrictions');
             return 400;
         }
 
         switch (apiInstructor.state) {
-            case "bw":
+            case 'bw':
                 student.state = State.BW;
                 break;
-            case "by":
+            case 'by':
                 student.state = State.BY;
                 break;
-            case "be":
+            case 'be':
                 student.state = State.BE;
                 break;
-            case "bb":
+            case 'bb':
                 student.state = State.BB;
                 break;
-            case "hb":
+            case 'hb':
                 student.state = State.HB;
                 break;
-            case "hh":
+            case 'hh':
                 student.state = State.HH;
                 break;
-            case "he":
+            case 'he':
                 student.state = State.HE;
                 break;
-            case "mv":
+            case 'mv':
                 student.state = State.MV;
                 break;
-            case "ni":
+            case 'ni':
                 student.state = State.NI;
                 break;
-            case "nw":
+            case 'nw':
                 student.state = State.NW;
                 break;
-            case "rp":
+            case 'rp':
                 student.state = State.RP;
                 break;
-            case "sl":
+            case 'sl':
                 student.state = State.SL;
                 break;
-            case "sn":
+            case 'sn':
                 student.state = State.SN;
                 break;
-            case "st":
+            case 'st':
                 student.state = State.ST;
                 break;
-            case "sh":
+            case 'sh':
                 student.state = State.SH;
                 break;
-            case "th":
+            case 'th':
                 student.state = State.TH;
                 break;
-            case "other":
+            case 'other':
                 student.state = State.OTHER;
                 break;
             default:
-                logger.error("Invalid value for Instructor role change state: " + apiInstructor.state);
+                logger.error('Invalid value for Instructor role change state: ' + apiInstructor.state);
                 return 400;
         }
 
         switch (apiInstructor.module) {
-            case "internship":
+            case 'internship':
                 student.module = TeacherModule.INTERNSHIP;
                 break;
-            case "seminar":
+            case 'seminar':
                 student.module = TeacherModule.SEMINAR;
                 break;
-            case "other":
+            case 'other':
                 student.module = TeacherModule.OTHER;
                 break;
             default:
-                logger.warn("Tutor registration has invalid string for teacher module " + apiInstructor.module);
+                logger.warn('Tutor registration has invalid string for teacher module ' + apiInstructor.module);
                 return 400;
         }
 
@@ -1326,13 +1325,12 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
     }
 
     try {
-
         // TODO: transaction log
         await entityManager.save(Student, student);
         // Invite to instructor screening
         await sendFirstScreeningInvitationToInstructor(entityManager, student);
     } catch (e) {
-        logger.error("Unable to update student status: " + e.message);
+        logger.error('Unable to update student status: ' + e.message);
         return 500;
     }
     return 204;
@@ -1366,18 +1364,17 @@ async function postUserRoleInstructor(wixId: string, student: Student, apiInstru
 export async function postUserRoleTutorHandler(req: Request, res: Response) {
     let status = 204;
 
-    if (res.locals.user instanceof Student
-        && req.params.id != undefined
-        && req.body.subjects instanceof Array
-        && typeof req.body.supportsInDaz === "boolean"
-        && (!req.body.languages || (req.body.languages instanceof Array && req.body.languages.every(l => typeof l === "string")))) {
-
+    if (
+        res.locals.user instanceof Student &&
+        req.params.id != undefined &&
+        req.body.subjects instanceof Array &&
+        typeof req.body.supportsInDaz === 'boolean' &&
+        (!req.body.languages || (req.body.languages instanceof Array && req.body.languages.every((l) => typeof l === 'string')))
+    ) {
         for (let i = 0; i < req.body.subjects.length; i++) {
             let elem = req.body.subjects[i];
-            if (typeof elem.name !== 'string' ||
-                typeof elem.minGrade !== 'number' ||
-                typeof elem.maxGrade !== 'number') {
-                logger.error("Post user role tutor has malformed subjects.");
+            if (typeof elem.name !== 'string' || typeof elem.minGrade !== 'number' || typeof elem.maxGrade !== 'number') {
+                logger.error('Post user role tutor has malformed subjects.');
                 status = 400;
             }
         }
@@ -1385,9 +1382,8 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
         if (status < 300) {
             status = await postUserRoleTutor(req.params.id, res.locals.user, req.body);
         }
-
     } else {
-        logger.warn("Missing request parameters for roleTutorHandler.");
+        logger.warn('Missing request parameters for roleTutorHandler.');
         status = 400;
     }
 
@@ -1396,17 +1392,17 @@ export async function postUserRoleTutorHandler(req: Request, res: Response) {
 
 async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiUserRoleTutor): Promise<number> {
     if (wixId != student.wix_id) {
-        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        logger.warn('Person with id ' + student.wix_id + ' tried to access data from id ' + wixId);
         return 403;
     }
 
     if (student.isStudent) {
-        logger.warn("Current user is already a tutor");
+        logger.warn('Current user is already a tutor');
         return 400;
     }
 
-    const languages = apiTutor.languages?.map(l => EnumReverseMappings.Language(l)) ?? [];
-    if (!languages.every(l => l)) {
+    const languages = apiTutor.languages?.map((l) => EnumReverseMappings.Language(l)) ?? [];
+    if (!languages.every((l) => l)) {
         logger.warn(`User wants to set invalid values "${apiTutor.languages}" for languages`);
         return 400;
     }
@@ -1424,7 +1420,7 @@ async function postUserRoleTutor(wixId: string, student: Student, apiTutor: ApiU
         // TODO: transaction log
         await entityManager.save(Student, student);
     } catch (e) {
-        logger.error("Unable to update student status: " + e.message);
+        logger.error('Unable to update student status: ' + e.message);
         return 500;
     }
 
@@ -1441,15 +1437,17 @@ async function becomeTutorScreeningHandler(student: Student, entityManager: Enti
         if (projectCoachingScreening && projectCoachingScreening.success) {
             const defualtScreener = await getDefaultScreener(entityManager);
 
-            await student.setTutorScreeningResult({
-                verified: true,
-                comment: `[AUTOMATICALLY GENERATED SECONDARY SCREENING DUE TO VALID PROJECT COACHING SCREENING]`,
-                knowsCoronaSchoolFrom: ""
-            }, defualtScreener);
+            await student.setTutorScreeningResult(
+                {
+                    verified: true,
+                    comment: `[AUTOMATICALLY GENERATED SECONDARY SCREENING DUE TO VALID PROJECT COACHING SCREENING]`,
+                    knowsCoronaSchoolFrom: '',
+                },
+                defualtScreener
+            );
         }
     }
 }
-
 
 /**
  * @api {POST} /user/:id/role/projectcoach postUserRoleProjectCoach
@@ -1479,18 +1477,20 @@ async function becomeTutorScreeningHandler(student: Student, entityManager: Enti
 export async function postUserRoleProjectCoachHandler(req: Request, res: Response) {
     let status = 204;
 
-    if (res.locals.user instanceof Student
-        && req.params.id != undefined
-        && req.body.projectFields instanceof Array
-        && req.body.projectFields.length > 0
-        && (req.body.wasJufoParticipant == null || (typeof req.body.wasJufoParticipant === "string" && EnumReverseMappings.TutorJufoParticipationIndication(req.body.wasJufoParticipant)))
-        && (req.body.isUniversityStudent == null || typeof req.body.isUniversityStudent === "boolean")
-        && (req.body.hasJufoCertificate == null || typeof req.body.hasJufoCertificate === "boolean")
-        && (req.body.jufoPastParticipationInfo == null || typeof req.body.jufoPastParticipationInfo === "string")) {
-
+    if (
+        res.locals.user instanceof Student &&
+        req.params.id != undefined &&
+        req.body.projectFields instanceof Array &&
+        req.body.projectFields.length > 0 &&
+        (req.body.wasJufoParticipant == null ||
+            (typeof req.body.wasJufoParticipant === 'string' && EnumReverseMappings.TutorJufoParticipationIndication(req.body.wasJufoParticipant))) &&
+        (req.body.isUniversityStudent == null || typeof req.body.isUniversityStudent === 'boolean') &&
+        (req.body.hasJufoCertificate == null || typeof req.body.hasJufoCertificate === 'boolean') &&
+        (req.body.jufoPastParticipationInfo == null || typeof req.body.jufoPastParticipationInfo === 'string')
+    ) {
         //check project fields for validity
         const projectFields = req.body.projectFields as ApiProjectFieldInfo[];
-        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s.name));
+        const unknownProjectField = projectFields.find((s) => !EnumReverseMappings.ProjectField(s.name));
         if (unknownProjectField) {
             status = 400;
             logger.error(`Post User Role Project Coach has invalid project field '${JSON.stringify(unknownProjectField)}'`);
@@ -1500,7 +1500,7 @@ export async function postUserRoleProjectCoachHandler(req: Request, res: Respons
             status = await postUserRoleProjectCoach(req.params.id, res.locals.user, req.body);
         }
     } else {
-        logger.warn("Missing request parameters for roleProjectCoach.");
+        logger.warn('Missing request parameters for roleProjectCoach.');
         status = 400;
     }
 
@@ -1509,12 +1509,12 @@ export async function postUserRoleProjectCoachHandler(req: Request, res: Respons
 
 async function postUserRoleProjectCoach(wixId: string, student: Student, info: ApiUserRoleProjectCoach): Promise<number> {
     if (wixId != student.wix_id) {
-        logger.warn("Person with id " + student.wix_id + " tried to access data from id " + wixId);
+        logger.warn('Person with id ' + student.wix_id + ' tried to access data from id ' + wixId);
         return 403;
     }
 
     if (student.isProjectCoach) {
-        logger.warn("Current user already is a project coach");
+        logger.warn('Current user already is a project coach');
         return 400;
     }
 
@@ -1540,7 +1540,9 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
             return 400;
         }
         if (info.hasJufoCertificate === false && !info.jufoPastParticipationInfo) {
-            logger.warn(`User ${student.email} which was a jufo participant and which has no jufo certificate requires other information about her past jufo participation!`);
+            logger.warn(
+                `User ${student.email} which was a jufo participant and which has no jufo certificate requires other information about her past jufo participation!`
+            );
             return 400;
         }
         //if here, the user is no student, no university student, was a past jufo participant and has a jufo certificate or provided some info on his past jufo participation -> that is valid
@@ -1560,13 +1562,20 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
         // TODO: transaction log
         await entityManager.save(Student, student);
     } catch (e) {
-        logger.error("Unable to update student status: " + e.message);
+        logger.error('Unable to update student status: ' + e.message);
         return 500;
     }
 
     //send screening invitations, if necessary (it's necessary only if the person is not a student and not a person registered in a university while being a jufo participant without still having a certificate)
     try {
-        if (!student.isStudent && !(student.isUniversityStudent === false && student.wasJufoParticipant === TutorJufoParticipationIndication.YES && student.hasJufoCertificate === false)) {
+        if (
+            !student.isStudent &&
+            !(
+                student.isUniversityStudent === false &&
+                student.wasJufoParticipant === TutorJufoParticipationIndication.YES &&
+                student.hasJufoCertificate === false
+            )
+        ) {
             if (student.isUniversityStudent) {
                 //send usual tutor screening invitation
                 await sendFirstScreeningInvitationToTutor(entityManager, student);
@@ -1610,19 +1619,20 @@ async function postUserRoleProjectCoach(wixId: string, student: Student, info: A
 export async function postUserRoleProjectCoacheeHandler(req: Request, res: Response) {
     let status = 204;
 
-    if (res.locals.user instanceof Pupil
-        && req.params.id != undefined
-        && req.body.projectFields instanceof Array
-        && typeof req.body.isJufoParticipant === "string"
-        && typeof req.body.projectMemberCount === "number") {
-
+    if (
+        res.locals.user instanceof Pupil &&
+        req.params.id != undefined &&
+        req.body.projectFields instanceof Array &&
+        typeof req.body.isJufoParticipant === 'string' &&
+        typeof req.body.projectMemberCount === 'number'
+    ) {
         //check projectFields for validity
         if (req.body.projectFields.length <= 0) {
             status = 400;
-            logger.error("Post User Role Project Coachee expects projectFields");
+            logger.error('Post User Role Project Coachee expects projectFields');
         }
         const projectFields = req.body.projectFields as string[];
-        const unknownProjectField = projectFields.find(s => !EnumReverseMappings.ProjectField(s));
+        const unknownProjectField = projectFields.find((s) => !EnumReverseMappings.ProjectField(s));
         if (unknownProjectField) {
             status = 400;
             logger.error(`Post User Role Project Coachee has invalid project field ${JSON.stringify(unknownProjectField)}`);
@@ -1645,7 +1655,7 @@ export async function postUserRoleProjectCoacheeHandler(req: Request, res: Respo
             status = await postUserRoleProjectCoachee(req.params.id, res.locals.user, req.body);
         }
     } else {
-        logger.warn("Missing request parameters for roleProjectCoachee.");
+        logger.warn('Missing request parameters for roleProjectCoachee.');
         status = 400;
     }
 
@@ -1654,12 +1664,12 @@ export async function postUserRoleProjectCoacheeHandler(req: Request, res: Respo
 
 async function postUserRoleProjectCoachee(wixId: string, pupil: Pupil, info: ApiUserRoleProjectCoachee): Promise<number> {
     if (wixId != pupil.wix_id) {
-        logger.warn("Person with id " + pupil.wix_id + " tried to access data from id " + wixId);
+        logger.warn('Person with id ' + pupil.wix_id + ' tried to access data from id ' + wixId);
         return 403;
     }
 
     if (pupil.isProjectCoachee) {
-        logger.warn("Current user already is a project coachee");
+        logger.warn('Current user already is a project coachee');
         return 400;
     }
 
@@ -1674,7 +1684,7 @@ async function postUserRoleProjectCoachee(wixId: string, pupil: Pupil, info: Api
         // TODO: transaction log
         await entityManager.save(Pupil, pupil);
     } catch (e) {
-        logger.error("Unable to update pupil status: " + e.message);
+        logger.error('Unable to update pupil status: ' + e.message);
         return 500;
     }
 
