@@ -40,7 +40,7 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
     const now = moment.now();
     const start = moment(appointmentDate);
     const diffDays = start.diff(now, 'days');
-    return diffDays >= 6 ? true : false;
+    return diffDays > 6;
 };
 
 export const isAppointmentFiveMinutesLater = (appointmentDate: Date) => {
