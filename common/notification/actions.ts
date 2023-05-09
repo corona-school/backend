@@ -34,6 +34,11 @@ const sampleAppointment = {
     date: '20. Juli 1969',
     time: '19:17',
     title: 'Chapter 1',
+    original: {
+        day: 'Montag',
+        date: '21. Juli 1969',
+        time: '19:17',
+    },
 };
 
 const DEPRECATED = {
@@ -388,6 +393,24 @@ const _notificationActions = {
             user: sampleUser,
         },
     },
+    pupil_change_appointment_group: {
+        description: 'Student / Group Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            appointment: sampleAppointment,
+            course: sampleCourse,
+        },
+    },
+    pupil_change_appointment_match: {
+        description: 'Student / Match Appointment Updated',
+        sampleContext: {
+            student: sampleUser,
+            pupil: sampleUser,
+            appointment: sampleAppointment,
+        },
+    },
+
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,
