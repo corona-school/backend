@@ -36,7 +36,9 @@ export class MutateChatResolver {
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.USER)
-    async prospectChatCreate(@Ctx() context: GraphQLContext) {
+    async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+        await hasAccess(context, 'Subcourse', subcourse);
         return true;
     }
 }
