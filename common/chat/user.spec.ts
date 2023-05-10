@@ -30,31 +30,26 @@ export const sampleUserC: GraphQLUser = {
     userID: 'pupil/test2',
 };
 
-test('Create User A', async () => {
+test('Create User A, B and C', async () => {
     await createChatUser(sampleUserA);
-    // expect not to throw error?
-});
-
-test('Create User B', async () => {
     await createChatUser(sampleUserB);
-    // expect not to throw error?
-});
-
-test('Create User C', async () => {
     await createChatUser(sampleUserC);
-    // expect not to throw error?
+    // expect not to throw doesn't work with async functions?
 });
 
-// test('Get User A', async () => {
-//     const result = await getChatUser(sampleUserA);
-//     expect(parseUnderscoreToSlash(result.id)).toBe(sampleUserA.userID);
-//     expect(result.email[0]).toBe(sampleUserA.email);
-//     expect(result.name).toBe(`${sampleUserA.firstname} ${sampleUserA.lastname}`);
-// });
+test('Get User A, B and C', async () => {
+    const resultA = await getChatUser(sampleUserA);
+    expect(parseUnderscoreToSlash(resultA.id)).toBe(sampleUserA.userID);
+    expect(resultA.email[0]).toBe(sampleUserA.email);
+    expect(resultA.name).toBe(`${sampleUserA.firstname} ${sampleUserA.lastname}`);
 
-// test('Get User B', async () => {
-//     const result = await getChatUser(sampleUserB);
-//     expect(parseUnderscoreToSlash(result.id)).toBe(sampleUserB.userID);
-//     expect(result.email[0]).toBe(sampleUserB.email);
-//     expect(result.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
-// });
+    const resultB = await getChatUser(sampleUserB);
+    expect(parseUnderscoreToSlash(resultB.id)).toBe(sampleUserB.userID);
+    expect(resultB.email[0]).toBe(sampleUserB.email);
+    expect(resultB.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
+
+    const resultC = await getChatUser(sampleUserB);
+    expect(parseUnderscoreToSlash(resultC.id)).toBe(sampleUserB.userID);
+    expect(resultC.email[0]).toBe(sampleUserB.email);
+    expect(resultC.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
+});
