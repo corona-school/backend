@@ -9,6 +9,7 @@ import { getLogger } from '../../common/logger/logger';
 import { hookExists } from './hook';
 import { getNotificationActions } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
+import { NotificationUpdateInput } from '../../graphql/generated';
 
 type MessageTranslationFromDb = {
     template: {
@@ -97,8 +98,8 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
     invalidateCache();
 }
 
-export async function update(id: NotificationID, values: Partial<Omit<Notification, 'active'>>) {
-    if (values.hookID && !hookExists(values.hookID)) {
+export async function update(id: NotificationID, values: Partial<Omit<NotificationUpdateInput, 'active'>>) {
+    if (values.hookID && !hookExists(values.hookID.set)) {
         throw new Error(`Invalid HookID`);
     }
 
