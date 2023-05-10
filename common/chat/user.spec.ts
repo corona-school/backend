@@ -1,28 +1,47 @@
 import { Role } from '../user/roles';
 import { GraphQLUser } from '../user/session';
-import { TalkJsUser, getAppInfo } from './user';
+import { parseUnderscoreToSlash } from './helper';
+import { TalkJsUser, createChatUser, getAppInfo, getChatUser } from './user';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const sampleUserA: GraphQLUser = {
-    firstname: 'Bob',
-    email: 'jennifer.falkenstein@typedigital.de',
+    firstname: 'Leon',
+    lastname: 'Musterstudent',
+    email: 'leon.musterstudent@test.de',
     roles: [Role.STUDENT],
-    userID: '',
-    lastname: 'the Student',
+    userID: 'student/test',
 };
 
 const sampleUserB: GraphQLUser = {
-    firstname: 'Jenny',
-    email: 'jennifer.falkenstein@typedigital.de',
+    firstname: 'Max',
+    lastname: 'Musterschüler',
+    email: 'max.musterschüler@test.de',
     roles: [Role.PUPIL],
-    userID: '',
-    lastname: 'the Pupil',
+    userID: 'pupil/test',
 };
 
-test('Get App Info', async () => {
-    const result = await getAppInfo();
-    console.log(result);
-    expect(typeof result).toBe('object');
+test('Create User A', async () => {
+    await createChatUser(sampleUserA);
+    // expect not to throw error?
+});
+
+test('Create User B', async () => {
+    await createChatUser(sampleUserB);
+    // expect not to throw error?
+});
+
+test('Get User A', async () => {
+    const result = await getChatUser(sampleUserA);
+    expect(parseUnderscoreToSlash(result.id)).toBe(sampleUserA.userID);
+    expect(result.email[0]).toBe(sampleUserA.email);
+    expect(result.name).toBe(`${sampleUserA.firstname} ${sampleUserA.lastname}`);
+});
+
+test('Get User B', async () => {
+    const result = await getChatUser(sampleUserB);
+    expect(parseUnderscoreToSlash(result.id)).toBe(sampleUserB.userID);
+    expect(result.email[0]).toBe(sampleUserB.email);
+    expect(result.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
 });

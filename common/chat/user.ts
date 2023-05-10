@@ -1,18 +1,31 @@
 /* eslint-disable camelcase */
 import { GraphQLUser } from '../user/session';
 import dotenv from 'dotenv';
+import { checkResponseStatus, parseSlashToUnderscore } from './helper';
 
 dotenv.config();
 
+/**
+ * NOTE: `id` ist not the same as `userId`! It's a transformed version, e.g.
+ *
+ * `{ userId: 'student/1' }` <--> `{ id: 'student_1' }`
+ *
+ * Use the helper `parseSlashToUnderscore` and `parseUnderscoreToSlash` to transform the ID to the wanted outcome
+ */
 type TalkJsUser = {
+    id: string;
     name: string;
-    email: Array<string>;
     welcomeMessage?: string;
     photoUrl?: string;
+    headerPhotoUrl?: string;
     role?: string;
-    phone?: Array<string>;
-    custom?: Map<string, string>;
-    pushTokens?: Map<string, true | null> | null;
+    email?: string[] | null;
+    phone?: string[] | null;
+    custom?: { [name: string]: string };
+    availabilityText?: string;
+    locale?: string;
+    createdAt: number;
+    pushTokens: { [token_id: string]: true | null } | null;
 };
 
 const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}/users`;
@@ -34,35 +47,30 @@ const getAppInfo = async (): Promise<any> => {
     }
 };
 
-const createChatUser = async (user: GraphQLUser): Promise<any> => {
+const createChatUser = async (user: GraphQLUser): Promise<void> => {
+    const userId = parseSlashToUnderscore(user.userID);
     try {
-        const createdUser = await fetch(talkjsUserApiUrl, {
-            method: 'POST',
+        const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
+            method: 'PUT',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                action: 'custCreate',
-                user_info: {
-                    email: user.email,
-                    type: 1,
-                    first_name: user.firstname,
-                    last_name: user.lastname,
-                    display_name: `${user.firstname} ${user.lastname}`,
-                },
+                name: `${user.firstname} ${user.lastname}`,
+                email: [user.email],
             }),
         });
-
-        return createdUser.json();
+        await checkResponseStatus(response);
     } catch (error) {
         throw new Error(error);
     }
 };
 
-async function getChatUser(user: GraphQLUser): Promise<any> {
+async function getChatUser(user: GraphQLUser): Promise<TalkJsUser> {
+    const userId = parseSlashToUnderscore(user.userID);
     try {
-        const response = await fetch(`${talkjsUserApiUrl}/${user.email}`, {
+        const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
@@ -70,6 +78,7 @@ async function getChatUser(user: GraphQLUser): Promise<any> {
             },
         });
 
+        await checkResponseStatus(response);
         return response.json();
     } catch (error) {
         throw new Error(error);
