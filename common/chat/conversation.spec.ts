@@ -6,6 +6,8 @@ import {
     deleteConversation,
     getConversation,
     getLastUnreadConversation,
+    markConversationAsReadOnly,
+    markConversationAsWriteable,
     removeParticipant,
     talkjsConversationApiUrl,
     updateConversation,
@@ -78,6 +80,24 @@ test('Remove Participant', async () => {
     const participants = Object.keys(conversation.participants);
     expect(participants.length).toBe(2);
     expect(participants).not.toContain(parseSlashToUnderscore(sampleUserC.userID));
+});
+
+test('Mark conversation as read-only', async () => {
+    await markConversationAsReadOnly(conversationId);
+    const conversation = await getConversation(conversationId);
+    const participantInfos = Object.values(conversation.participants);
+    for (const info of participantInfos) {
+        expect(info.access).toBe('Read');
+    }
+});
+
+test('Mark conversation as writeable', async () => {
+    await markConversationAsWriteable(conversationId);
+    const conversation = await getConversation(conversationId);
+    const participantInfos = Object.values(conversation.participants);
+    for (const info of participantInfos) {
+        expect(info.access).toBe('ReadWrite');
+    }
 });
 
 test('Delete Conversation', async () => {
