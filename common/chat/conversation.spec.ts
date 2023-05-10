@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { sampleUserA, sampleUserB, sampleUserC } from './user.spec';
 import {
+    ContactReason,
     addParticipant,
     createConversation,
     deleteConversation,
@@ -18,7 +19,7 @@ dotenv.config();
 const conversationId = 'dev-test';
 
 test('Create Conversation between User A and User B', async () => {
-    const conversationId = await createConversation([sampleUserA, sampleUserB], 'Kurs: Mathematik');
+    const conversationId = await createConversation([sampleUserA, sampleUserB], ContactReason.SUBCOURSE, 'Kurs: Mathematik');
     const conversation = await getConversation(conversationId);
     expect(conversationId).toBe(conversation.id);
     expect(conversation.subject).toBe('Kurs: Mathematik');

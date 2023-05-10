@@ -9,6 +9,7 @@ dotenv.config();
 const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}/users`;
 const apiKey = process.env.TALKJS_API_KEY;
 
+// TODO: refactor to user: Pupil | Student
 const createChatUser = async (user: GraphQLUser): Promise<void> => {
     const userId = parseSlashToUnderscore(user.userID);
     try {

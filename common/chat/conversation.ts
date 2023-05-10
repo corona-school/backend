@@ -2,7 +2,7 @@
 import { GraphQLUser } from '../user/session';
 import dotenv from 'dotenv';
 import { checkResponseStatus, parseSlashToUnderscore } from './helper';
-import { CustomData, Message } from 'talkjs/all';
+import { Message } from 'talkjs/all';
 import Talk from 'talkjs';
 
 dotenv.config();
@@ -37,8 +37,24 @@ type Conversation = {
     createdAt: number;
 };
 
-const createConversation = async (participants: Array<GraphQLUser>, subject?: string, photoUrl?: string): Promise<string> => {
-    const conversationId = 'dev-test';
+enum ContactReason {
+    MATCH,
+    SUBCOURSE,
+}
+
+const createConversation = async (participants: Array<GraphQLUser>, conversationType: ContactReason, subject?: string, photoUrl?: string): Promise<string> => {
+    let conversationId;
+    switch (conversationType) {
+        case ContactReason.MATCH:
+            conversationId = createOneOnOneId(participants[0], participants[1]);
+            break;
+        case ContactReason.SUBCOURSE:
+            conversationId = 'dev-test';
+            break;
+        default:
+            throw new Error(`No matching case for conversationType found: ${conversationType}`);
+    }
+
     try {
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'PUT',
@@ -183,7 +199,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'None',
+                    access: 'Read',
                 }),
             });
             await checkResponseStatus(response);
@@ -250,4 +266,5 @@ export {
     deleteConversation,
     talkjsConversationApiUrl,
     Conversation,
+    ContactReason,
 };
