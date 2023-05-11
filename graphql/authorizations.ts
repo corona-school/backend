@@ -437,6 +437,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwner,
                 zoomMeetingId: participantOrOwner,
+                zoomMeetingReport: adminOrOwner,
             }
         ),
     },

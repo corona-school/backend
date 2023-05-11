@@ -116,14 +116,12 @@ const deleteZoomMeeting = async (meetingId: string) => {
 
 const getZoomMeetingReport = async (meetingId: string) => {
     try {
-        const { access_token } = await getAccessToken();
+        const { access_token } = await getAccessToken('report:read:admin');
         const constructedUrl = `${zoomMeetingReportUrl}/${meetingId}`;
 
         const response = await fetch(constructedUrl, {
-            method: 'GET',
             headers: {
                 Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
             },
         });
         return response.json();

@@ -97,5 +97,5 @@ export class Lecture {
     zoomMeetingId: string;
 
     @Column({ nullable: true, type: 'json' })
-    zoomMeetingReport: any;
+    zoomMeetingReport: any | null;
 }
