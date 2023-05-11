@@ -201,7 +201,7 @@ model lecture {
   participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
   zoomMeetingId         String?                      @db.VarChar
-  zoomMeetingReport     String?                      @db.VarChar
+  zoomMeetingReport     Json?                        @db.Json
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?

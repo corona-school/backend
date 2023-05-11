@@ -3,13 +3,9 @@ import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { UserType } from '../types/user';
-import { createZoomUser, getUserZAK, getZoomUser } from '../../common/zoom/zoom-user';
-import { MeetingRole } from '../../common/zoom';
+import { getUserZAK } from '../../common/zoom/zoom-user';
 import { generateMeetingSDKJWT } from '../../common/zoom';
 
-type ZAKResponse = {
-    token: string;
-};
 @Resolver((of) => UserType)
 export class FieldMeResolver {
     @Query((returns) => UserType)
