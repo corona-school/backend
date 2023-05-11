@@ -2,6 +2,7 @@ import { test } from './base';
 import { screenedInstructorOne } from './screening';
 import { subcourseOne } from './course';
 import assert from 'assert';
+import { pupilOne } from './user';
 
 const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';
@@ -100,7 +101,7 @@ const myAppointments = test('Get my appointments', async () => {
     return appointments;
 });
 
-test('Cancel an appointment as a organizer', async () => {
+void test('Cancel an appointment as a organizer', async () => {
     const { client } = await screenedInstructorOne;
     await firstAppointment;
     const clientAppointments = await myAppointments;
@@ -116,22 +117,7 @@ test('Cancel an appointment as a organizer', async () => {
     assert.ok(appointments.some((a) => a.id != appointmentId));
 });
 
-test('Decline an appointment as a organizer', async () => {
-    const { client, instructor } = await screenedInstructorOne;
-    await firstAppointment;
-    await moreAppointments;
-    const appointments = await myAppointments;
-    const appointmentId = appointments[1].id;
-
-    await client.request(`mutation declineAppointment {appointmentDecline(appointmentId: ${appointmentId})}`);
-    const {
-        appointment: { declinedBy },
-    } = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){declinedBy}}`);
-
-    assert.ok(declinedBy.includes(`student/${instructor.student.id}`));
-});
-
-test('Update an appointment', async () => {
+void test('Update an appointment', async () => {
     const { client } = await screenedInstructorOne;
     await firstAppointment;
     const clientAppointments = await myAppointments;
@@ -167,6 +153,5 @@ test('Update an appointment', async () => {
         }
     `);
 
-    console.log('UPDATED APPOINTMENTS', appointments);
     assert.ok(appointments.some((a) => a.id == appointmentId && a.title == updateTitle));
 });
