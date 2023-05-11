@@ -1,6 +1,3 @@
-/* eslint-disable camelcase */
-import { String } from 'lodash';
-import { GraphQLUser } from '../user/session';
 import { getAccessToken } from './zoom-authorization';
 
 type ZoomMeeting = {
@@ -49,6 +46,8 @@ const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTim
                 start_time: startTime,
                 timezone: 'Europe/Berlin',
                 type: 2,
+                muteUpponEntry: true,
+                waitingRoom: true,
                 recurrence: endDateTime && {
                     end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
                     type: 2,

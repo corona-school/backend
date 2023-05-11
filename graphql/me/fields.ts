@@ -32,18 +32,12 @@ export class FieldMeResolver {
         const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
         return sdkKey;
     }
-    // TODO: ZAK Problem
+
     @Query((returns) => String)
     @Authorized(Role.USER)
     async zoomZAK(@Ctx() context: GraphQLContext) {
         const { user } = context;
-        const zoomUser = await getZoomUser(user.email);
-        if (zoomUser.email) {
-            const userZak = await getUserZAK(user.email);
-            return userZak.token;
-        }
-        const newZoomUser = await createZoomUser(user.email, user.firstname, user.lastname);
-        const userZak = await getUserZAK(newZoomUser.email);
-        return userZak.token;
+        const userZak = await getUserZAK(user.email);
+        return userZak.token || '';
     }
 }
