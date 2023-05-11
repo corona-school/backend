@@ -3,14 +3,14 @@ import { gql } from 'graphql-request';
 import { randomBytes } from 'crypto';
 import assert from 'assert';
 
-const setup = test("Setup Configuration", async () => {
+const setup = test('Setup Configuration', async () => {
     // Ensure Rate Limits are deterministic when running the tests multiple times
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
 });
 
-test("Plus student batch registration", async () => {
+void test('Plus student batch registration', async () => {
     await setup;
-    const userRandom = () => randomBytes(5).toString("base64");
+    const userRandom = () => randomBytes(5).toString('base64');
 
     const res = await adminClient.request(gql`
         mutation registermany {
@@ -99,9 +99,9 @@ test("Plus student batch registration", async () => {
     assert.strictEqual(res.studentRegisterPlusMany[6].success, false);
 });
 
-test("Plus pupil batch registration", async () => {
+void test('Plus pupil batch registration', async () => {
     await setup;
-    const userRandom = () => randomBytes(5).toString("base64");
+    const userRandom = () => randomBytes(5).toString('base64');
 
     const res = await adminClient.request(gql`
         mutation registermany {

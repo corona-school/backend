@@ -8,6 +8,7 @@ import { getLogger } from '../logger/logger';
 import { isDev, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
+import { Moment } from 'moment';
 
 const logger = getLogger('Token');
 
@@ -105,7 +106,8 @@ export async function requestToken(
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
 // If newEmail ist set, the token MUST be sent to that new email
-export async function createSecretEmailToken(user: User, newEmail?: string) {
+// TODO: we should create a dedicated field for newEmail
+export async function createSecretEmailToken(user: User, newEmail?: string, expiresAt?: Moment): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -114,7 +116,7 @@ export async function createSecretEmailToken(user: User, newEmail?: string) {
             type: SecretType.EMAIL_TOKEN,
             userId: user.userID,
             secret: hash,
-            expiresAt: null,
+            expiresAt: expiresAt?.toDate(),
             lastUsed: null,
             description: newEmail,
         },
