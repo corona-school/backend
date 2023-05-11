@@ -23,6 +23,10 @@ const grantType = 'account_credentials';
 
 const createZoomUser = async (studentMail, studentFirstname, studentLastname): Promise<ZoomUser> => {
     //TODO: Let Inactive ZoomUsers be deleted automatically
+    const zoomUser = await getZoomUser(studentMail);
+    if (zoomUser) {
+        return zoomUser;
+    }
     try {
         const { access_token } = await getAccessToken();
 
@@ -67,19 +71,19 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
     }
 }
 
-async function updateZoomUser(user: GraphQLUser): Promise<ZoomUser> {
+async function updateZoomUser(email?: string, firstname?: string, lastname?: string): Promise<ZoomUser> {
     try {
         const { access_token } = await getAccessToken();
-        const response = await fetch(`${zoomUserApiUrl}/${user.email}`, {
+        const response = await fetch(`${zoomUserApiUrl}/${email}`, {
             method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${access_token}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                first_name: user.firstname,
-                last_name: user.lastname,
-                display_name: `${user.firstname} ${user.lastname}`,
+                first_name: firstname,
+                last_name: lastname,
+                display_name: `${firstname} ${lastname}`,
             }),
         });
 

@@ -3,10 +3,11 @@ import { prisma } from '../prisma';
 import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
-import { lecture_appointmenttype_enum } from '../../graphql/generated';
+import { Student, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import dontenv from 'dotenv';
 import { createZoomUser } from '../zoom/zoom-user';
+import { student } from '@prisma/client';
 
 @InputType()
 export abstract class AppointmentCreateInputBase {
@@ -42,16 +43,9 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = getUserIdTypeORM(student);
     const pupilUserId = getUserIdTypeORM(pupil);
-    // CHECK STUDENT HAS A ZOOM ACCOUNT AND IF NOT CREATE ONE
-    // if (student.zoomUserId || student.zoomUserId === '') {
-    //     const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
-    // }
-    const appointmentsNumber = appointmentsToBeCreated.length;
-    const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
-    const newDate = new Date(lastDate.setHours(24, 0, 0, 0));
-    const newVideoChat = await createZoomMeeting(process.env.ZOOM_USER_ID, appointmentsToBeCreated[0].start, appointmentsNumber > 1 && newDate);
-    console.log('!_!_!_!_!_!_ THIS IS THE VIDEO CHAT INFO _!_!_!_!_!_!_!');
-    console.log(newVideoChat);
+
+    const videoChat = await createZoomMeetingHelper(student, appointmentsToBeCreated);
+
     return await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
@@ -65,6 +59,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                         appointmentType: lecture_appointmenttype_enum.match,
                         organizerIds: [studentUserId],
                         participantIds: [pupilUserId],
+                        zoomMeetingId: videoChat.id.toString(),
                     },
                 })
         )
@@ -75,6 +70,9 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
+
+    const videoChat = await createZoomMeetingHelper(instructors[0].student, appointmentsToBeCreated);
+
     return await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
@@ -88,8 +86,33 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         appointmentType: lecture_appointmenttype_enum.group,
                         organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
                         participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                        zoomMeetingId: videoChat.id.toString(),
                     },
                 })
         )
     );
+};
+
+const createZoomMeetingHelper = async (student: student, appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]) => {
+    try {
+        const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
+        await prisma.student.update({
+            where: {
+                id: student.id,
+            },
+            data: {
+                zoomUserId: studentZoomUser.id,
+            },
+        });
+
+        const appointmentsNumber = appointmentsToBeCreated.length;
+        const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
+        const newVideoChat =
+            appointmentsNumber > 1
+                ? await createZoomMeeting(studentZoomUser.id, appointmentsToBeCreated[0].start, lastDate)
+                : await createZoomMeeting(studentZoomUser.id, appointmentsToBeCreated[0].start);
+        return newVideoChat;
+    } catch (e) {
+        throw new Error(`Error while creating zoom meeting: ${e}`);
+    }
 };

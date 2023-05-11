@@ -366,6 +366,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
+            zoomUserId: nobody,
         }),
     },
     Subcourse: {
@@ -435,6 +436,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwner,
+                zoomMeetingId: participantOrOwner,
             }
         ),
     },

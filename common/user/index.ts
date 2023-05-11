@@ -11,6 +11,7 @@ import { pupil as Pupil, student as Student, screener as Screener } from '@prism
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
+import { updateZoomUser } from '../zoom/zoom-user';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -221,6 +222,7 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
 export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
+        await updateZoomUser((email = validateEmail(email)));
         return userForStudent(
             (await prisma.student.update({
                 where: { id: user.studentId },

@@ -29,6 +29,7 @@ type ZoomMeeting = {
 
 const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
+const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 const grantType = 'account_credentials';
 
 const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTime?: Date) => {
@@ -49,7 +50,7 @@ const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTim
                 timezone: 'Europe/Berlin',
                 type: 2,
                 recurrence: endDateTime && {
-                    end_date_time: endDateTime,
+                    end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
                     type: 2,
                 },
             }),
@@ -114,4 +115,22 @@ const deleteZoomMeeting = async (meetingId: string) => {
     }
 };
 
-export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting };
+const getZoomMeetingReport = async (meetingId: string) => {
+    try {
+        const { access_token } = await getAccessToken();
+        const constructedUrl = `${zoomMeetingReportUrl}/${meetingId}`;
+
+        const response = await fetch(constructedUrl, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.json();
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting, getZoomMeetingReport };

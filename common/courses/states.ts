@@ -8,6 +8,7 @@ import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Course States');
 
@@ -110,6 +111,10 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
+    const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    courseLectures.forEach(async (lecture) => {
+        await deleteZoomMeeting(lecture.zoomMeetingId);
+    });
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 }

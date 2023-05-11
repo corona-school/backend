@@ -13,20 +13,22 @@ const sampleUser: GraphQLUser = {
     userID: process.env.ZOOM_USER_ID,
 };
 
+const date = new Date();
+
 test('Get Zoom Meeting', async () => {
-    const result = await getZoomMeeting('86417976537');
+    const result = await getZoomMeeting('81547879845');
     console.log(result);
     expect(typeof result).toBe('object');
 });
 
 // test('Create Zoom Meeting', async () => {
-//     const result = await createZoomMeeting(sampleUser);
+//     const result = await createZoomMeeting(process.env.ZOOM_USER_ID, date);
 //     console.log(result);
 //     expect(typeof result).toBe('object');
 // });
 
 // test('Delete Zoom Meeting', async () => {
-//     const result = await deleteZoomMeeting('86417976537');
+//     const result = await deleteZoomMeeting('82648035342');
 //     console.log(result);
 //     expect(typeof result).toBe('object');
 // });

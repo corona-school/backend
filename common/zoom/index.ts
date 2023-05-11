@@ -15,7 +15,7 @@ type JWTPayload = {
     tokenExp: number;
 };
 
-function generateMeetingSDKJWT(meetingNumber: number, role: MeetingRole) {
+const generateMeetingSDKJWT = async (meetingNumber: number, role: MeetingRole) => {
     const iat = Math.round(new Date().getTime() / 1000) - 30;
     const exp = iat + 60 * 60 * 2;
 
@@ -31,6 +31,6 @@ function generateMeetingSDKJWT(meetingNumber: number, role: MeetingRole) {
 
     const jwtToken = jwt.sign(payload, process.env.ZOOM_MEETING_SDK_CLIENT_SECRET);
     return jwtToken;
-}
+};
 
 export { generateMeetingSDKJWT };
