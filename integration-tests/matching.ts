@@ -1,14 +1,14 @@
-import { adminClient, defaultClient, test } from "./base";
-import { pupilOne } from "./user";
-import * as assert from "assert";
+import { adminClient, defaultClient, test } from './base';
+import { pupilOne } from './user';
+import * as assert from 'assert';
 
-test("Pupil Request Match", async () => {
+void test('Pupil Request Match', async () => {
     const { client, pupil } = await pupilOne;
 
     const { me: p } = await client.request(`
     query GetOpenMatchRequestCount {
         me {
-            pupil { 
+            pupil {
                 openMatchRequestCount
             }
         }
@@ -27,7 +27,7 @@ test("Pupil Request Match", async () => {
     const { me: p1 } = await client.request(`
         query GetOpenMatchRequestCount {
             me {
-                pupil { 
+                pupil {
                     openMatchRequestCount
                 }
             }
@@ -35,10 +35,9 @@ test("Pupil Request Match", async () => {
     `);
 
     assert.strictEqual(p1.pupil.openMatchRequestCount, 1);
-
 });
 
-test("Anyone Request Matching Statistics", async () => {
+void test('Anyone Request Matching Statistics', async () => {
     await defaultClient.request(`
         query {
             match_pool(name: "lern-fair-now") {

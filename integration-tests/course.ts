@@ -149,7 +149,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
     assert.ok(subcoursesPublicAfter.some(it => it.id === subcourseId)); */
 });
 
-test('Admin set subcourse meetingURL and join', async () => {
+void test('Admin set subcourse meetingURL and join', async () => {
     await adminClient.request(`
         mutation SetURL {
             subcourseSetMeetingURL(subcourseId: 1, meetingURL: "https://example.com")
@@ -165,7 +165,7 @@ test('Admin set subcourse meetingURL and join', async () => {
     assert.strictEqual(meetingURL.subcourseJoinMeeting, 'https://example.com');
 });
 
-test('Search further instructors', async () => {
+void test('Search further instructors', async () => {
     const { client } = await screenedInstructorOne;
 
     // Partial searches yield no result to not leak infos
@@ -184,7 +184,7 @@ test('Search further instructors', async () => {
     assert.equal(fullEmailSearch.otherInstructors[0].firstname, 'Melanie');
 });
 
-test('Public Course Suggestions', async () => {
+void test('Public Course Suggestions', async () => {
     const { client, pupil } = await pupilOne;
     // const { pupilsGrade } = await pupilUpdated;
 

@@ -5,21 +5,20 @@
   This can be run with 'npm run integration-tests', and by default runs against the dev backend.
   A different target can be configured by setting the INTEGRATION_TARGET environment */
 
-import { finalizeTests } from "./base";
-
+import { finalizeTests } from './base';
 
 /* Base Tests - Other tests build on them and they always must run */
-import "./user";
-import "./screening";
+import './user';
+import './screening';
 /* Feature Tests - These are independent and can be disabled */
-import "./matching";
-import "./auth";
-import "./settings";
-import "./course";
-import "./appointments";
-import "./admin";
-import "./registerPlusMany";
+import './matching';
+import './auth';
+import './settings';
+import './course';
+import './appointments';
+import './admin';
+import './registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */
-import "./deactivation";
+import './deactivation';
 
-finalizeTests();
+void finalizeTests();
