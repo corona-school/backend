@@ -17,7 +17,7 @@ export class MessageTranslation {
     @JoinColumn()
     notification: Notification;
 
-    @Column({ type: 'json', nullable: false })
+    @Column({ type: 'json', nullable: true })
     template: TranslationTemplate;
 
     @Column({ type: 'text', nullable: true })

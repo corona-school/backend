@@ -197,7 +197,6 @@ export class MutateAppointmentResolver {
         });
 
         // * Send notification here
-        const language = 'de-DE';
         const appointmentType = appointment.appointmentType;
         // const organizers = await prisma.appointment_organizer.findMany({ where: { appointmentId: appointmentId }, include: { student: true } });
         const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
@@ -249,6 +248,44 @@ export class MutateAppointmentResolver {
             data: { isCanceled: true },
             where: { id: appointmentId },
         });
+
+        // * Send notification here
+
+        const student = await getStudent(context.user.studentId);
+        const language = 'de-DE';
+
+        if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
+            const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
+            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+
+            for (const participant of participants) {
+                await Notification.actionTaken(participant.pupil, 'student_cancel_appointment_group', {
+                    appointment: {
+                        ...appointment,
+                        day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                        date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                        time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                    },
+                    student,
+                    user: context.user,
+                    course: subcourse.course,
+                });
+            }
+        } else if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
+            const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+            await Notification.actionTaken(match.pupil, 'student_cancel_appointment_match', {
+                appointment: {
+                    ...appointment,
+                    day: appointment.start.toLocaleString(language, { weekday: 'long' }),
+                    date: `${appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: `${appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' })}`,
+                },
+                student,
+                user: context.user,
+            });
+        } else {
+            logger.error(`Could not send notification to pupils of appointment. The appointment-type is neither 'match' nor 'group'.`, { appointment });
+        }
 
         return true;
     }
