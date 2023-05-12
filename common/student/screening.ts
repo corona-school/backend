@@ -73,8 +73,8 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
         return;
     }
 
-    await createRemissionRequest(student);
     await cancelCoCReminders(student);
+    await createRemissionRequest(student);
     await Notification.actionTaken(student, 'coc_reminder', {});
 }
 
