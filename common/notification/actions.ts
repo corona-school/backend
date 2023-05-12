@@ -376,6 +376,23 @@ const _notificationActions = {
             pupil: sampleUser,
         },
     },
+    student_cancel_appointment_group: {
+        description: 'Student / Group Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+            course: sampleCourse,
+        },
+    },
+    student_cancel_appointment_match: {
+        description: 'Student / Match Appointment Cancelled',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: sampleUser,
+            user: sampleUser,
+        },
+    },
     pupil_change_appointment_group: {
         description: 'Student / Group Appointment Updated',
         sampleContext: {
