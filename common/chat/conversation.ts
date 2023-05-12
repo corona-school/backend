@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, parseSlashToUnderscore } from './helper';
+import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
 import Talk from 'talkjs';
 import { User } from '../user';
@@ -77,7 +77,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
             },
             body: JSON.stringify({
                 ...conversationInfos,
-                participants: participants.map((participant: User) => parseSlashToUnderscore(participant.userID)),
+                participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
             }),
         });
         await checkResponseStatus(response);
@@ -104,7 +104,7 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
-    const userId = parseSlashToUnderscore(user.userID);
+    const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsApiUrl}/users/${userId}/conversations?unreadsOnly=true`, {
             method: 'GET',
@@ -122,7 +122,7 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
 }
 
 function createOneOnOneId(userA: User, userB: User): string {
-    return Talk.oneOnOneId(parseSlashToUnderscore(userA.userID), parseSlashToUnderscore(userB.userID));
+    return Talk.oneOnOneId(userIdToTalkJsId(userA.userID), userIdToTalkJsId(userB.userID));
 }
 
 /**
@@ -164,7 +164,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
 }
 
 async function addParticipant(user: User, conversationId: string): Promise<void> {
-    const userId = parseSlashToUnderscore(user.userID);
+    const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${userId}`, {
             method: 'PUT',
@@ -180,7 +180,7 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
 }
 
 async function removeParticipant(user: User, conversationId: string): Promise<void> {
-    const userId = parseSlashToUnderscore(user.userID);
+    const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${userId}`, {
             method: 'DELETE',

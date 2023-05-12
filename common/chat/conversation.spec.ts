@@ -13,7 +13,7 @@ import {
     talkjsConversationApiUrl,
     updateConversation,
 } from './conversation';
-import { checkResponseStatus, parseSlashToUnderscore, parseUnderscoreToSlash } from './helper';
+import { checkResponseStatus, userIdToTalkJsId } from './helper';
 
 dotenv.config();
 let conversationId;
@@ -58,7 +58,7 @@ test('Get unread Conversations', async () => {
             body: JSON.stringify([
                 {
                     text: message,
-                    sender: parseSlashToUnderscore(sampleUserA.userID),
+                    sender: userIdToTalkJsId(sampleUserA.userID),
                     type: 'UserMessage',
                 },
             ]),
@@ -79,7 +79,7 @@ test('Add Participant', async () => {
     const conversation = await getConversation(conversationId);
     const participants = Object.keys(conversation.participants);
     expect(participants.length).toBe(3);
-    expect(participants).toContain(parseSlashToUnderscore(sampleUserC.userID));
+    expect(participants).toContain(userIdToTalkJsId(sampleUserC.userID));
 });
 
 test('Remove Participant', async () => {
@@ -87,7 +87,7 @@ test('Remove Participant', async () => {
     const conversation = await getConversation(conversationId);
     const participants = Object.keys(conversation.participants);
     expect(participants.length).toBe(2);
-    expect(participants).not.toContain(parseSlashToUnderscore(sampleUserC.userID));
+    expect(participants).not.toContain(userIdToTalkJsId(sampleUserC.userID));
 });
 
 test('Mark conversation as read-only', async () => {

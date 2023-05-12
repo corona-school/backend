@@ -1,8 +1,9 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
-import { checkResponseStatus, parseSlashToUnderscore } from './helper';
+import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
+import { error } from 'console';
 
 dotenv.config();
 
@@ -10,7 +11,7 @@ const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}
 const apiKey = process.env.TALKJS_API_KEY;
 
 const createChatUser = async (user: User): Promise<void> => {
-    const userId = parseSlashToUnderscore(user.userID);
+    const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
             method: 'PUT',
@@ -31,14 +32,14 @@ const createChatUser = async (user: User): Promise<void> => {
 };
 
 /**
- * NOTE: `id` ist not the same as `userId`! It's a transformed version, e.g.
+ * NOTE: `id` ist not the same as `userId` as TalkJS' id field must not contain slashes! It's a transformed version, e.g.
  *
  * `{ userId: 'student/1' }` <--> `{ id: 'student_1' }`
  *
  * Use the helper `parseSlashToUnderscore` and `parseUnderscoreToSlash` to transform the ID to the wanted outcome
  */
 async function getChatUser(user: User): Promise<TalkJsUser> {
-    const userId = parseSlashToUnderscore(user.userID);
+    const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
             method: 'GET',
@@ -55,4 +56,11 @@ async function getChatUser(user: User): Promise<TalkJsUser> {
     }
 }
 
-export { createChatUser, getChatUser };
+async function getOrCreateChatUser(user: User): Promise<TalkJsUser> {
+    // TODO check if user exists
+    // if not, create new user
+    const chatUser = getChatUser(user);
+    return chatUser;
+}
+
+export { createChatUser, getChatUser, getOrCreateChatUser };
