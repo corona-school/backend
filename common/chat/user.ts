@@ -1,16 +1,15 @@
 /* eslint-disable camelcase */
-import { GraphQLUser } from '../user/session';
 import dotenv from 'dotenv';
 import { checkResponseStatus, parseSlashToUnderscore } from './helper';
-import { User } from 'talkjs/all';
+import { User as TalkJsUser } from 'talkjs/all';
+import { User } from '../user';
 
 dotenv.config();
 
 const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}/users`;
 const apiKey = process.env.TALKJS_API_KEY;
 
-// TODO: refactor to user: Pupil | Student
-const createChatUser = async (user: GraphQLUser): Promise<void> => {
+const createChatUser = async (user: User): Promise<void> => {
     const userId = parseSlashToUnderscore(user.userID);
     try {
         const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
@@ -37,7 +36,7 @@ const createChatUser = async (user: GraphQLUser): Promise<void> => {
  *
  * Use the helper `parseSlashToUnderscore` and `parseUnderscoreToSlash` to transform the ID to the wanted outcome
  */
-async function getChatUser(user: GraphQLUser): Promise<User> {
+async function getChatUser(user: User): Promise<TalkJsUser> {
     const userId = parseSlashToUnderscore(user.userID);
     try {
         const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {

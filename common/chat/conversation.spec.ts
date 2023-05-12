@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { sampleUserA, sampleUserB, sampleUserC } from './user.spec';
 import {
-    ContactReason,
+    ConversationInfos,
     addParticipant,
     createConversation,
     deleteConversation,
@@ -16,10 +16,17 @@ import {
 import { checkResponseStatus, parseSlashToUnderscore, parseUnderscoreToSlash } from './helper';
 
 dotenv.config();
-const conversationId = 'dev-test';
+let conversationId;
+
+const conversationInfos: ConversationInfos = {
+    subject: 'Kurs: Mathematik',
+    custom: {
+        type: 'course',
+    },
+};
 
 test('Create Conversation between User A and User B', async () => {
-    const conversationId = await createConversation([sampleUserA, sampleUserB], ContactReason.SUBCOURSE, 'Kurs: Mathematik');
+    conversationId = await createConversation([sampleUserA, sampleUserB], conversationInfos);
     const conversation = await getConversation(conversationId);
     expect(conversationId).toBe(conversation.id);
     expect(conversation.subject).toBe('Kurs: Mathematik');
@@ -29,11 +36,11 @@ test('Create Conversation between User A and User B', async () => {
 });
 
 test('Update Conversation', async () => {
-    await updateConversation([sampleUserA, sampleUserB], conversationId, 'Kurs: Geschichte');
+    await updateConversation({ ...conversationInfos, subject: 'Kurs: Geschichte', id: conversationId });
     let conversation = await getConversation(conversationId);
     expect(conversation.subject).toBe('Kurs: Geschichte');
 
-    await updateConversation([sampleUserA, sampleUserB], conversationId, 'Kurs: Mathematik');
+    await updateConversation({ ...conversationInfos, subject: 'Kurs: Mathematik', id: conversationId });
     conversation = await getConversation(conversationId);
     expect(conversation.subject).toBe('Kurs: Mathematik');
 });
