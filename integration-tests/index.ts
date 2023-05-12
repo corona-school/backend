@@ -15,6 +15,7 @@ import './matching';
 import './auth';
 import './settings';
 import './course';
+import './appointments';
 import './admin';
 import './registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */
