@@ -107,7 +107,6 @@ export const studentOne = test('Register Student', async () => {
     await setup;
     const mockEmailVerification = await createMockVerification;
 
-
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
 
@@ -162,7 +161,6 @@ export const studentOne = test('Register Student', async () => {
 
     await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
 
-
     const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeTutor { myRoles }`);
     assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
 
@@ -179,7 +177,6 @@ export const studentOne = test('Register Student', async () => {
     const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeTutor { myRoles }`);
     assert.deepStrictEqual(rolesAfter, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_TUTOR']);
     // Not yet TUTOR as not yet screened
-
 
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     student.email = student.email.toUpperCase();
@@ -223,7 +220,6 @@ export const instructorOne = test('Register Instructor', async () => {
         }
     `);
 
-
     const { me: instructor } = await client.request(`
         query GetBasics {
             me {
@@ -255,7 +251,6 @@ export const instructorOne = test('Register Instructor', async () => {
         }
     `);
 
-
     const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeInstructor { myRoles }`);
     assert.deepStrictEqual(rolesAfter, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_INSTRUCTOR']);
     // Not yet INSTRUCTOR as not yet screened
@@ -268,7 +263,7 @@ export const instructorOne = test('Register Instructor', async () => {
 
 export const pupilUpdated = test('Update Pupil', async () => {
     const { client, pupil } = await pupilOne;
-    await adminClient.request(`mutation updatePupil { pupilUpdate( pupilId: ${pupil.pupil.id}, data: { gradeAsInt: 3 } ) }`);
+    await adminClient.request(`mutation updatePupil { pupilUpdate( pupilId: ${pupil.pupil.id}, data: { gradeAsInt: 5 } ) }`);
     const { me } = await client.request(`
     query PupilsGrade {
         me {

@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { Lecture as Appointment } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { User } from '../user';
@@ -49,13 +50,12 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
 };
 
 const getAppointmentsForUserFromNow = async (userId: User['userID'], take: number, skip: number): Promise<Appointment[]> => {
-    return await prisma.lecture.findMany({
+    const appointments = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
             NOT: {
                 declinedBy: { has: userId },
             },
-            start: { gte: new Date().toISOString() },
             OR: [
                 {
                     participantIds: {
@@ -73,4 +73,15 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
         take,
         skip,
     });
+
+    const appointmentsGreaterThanNow = appointments.filter((appointments: Appointment) => {
+        const start = appointments.start;
+        const duration = appointments.duration;
+        const now = new Date();
+        const end = moment(start).add(duration, 'minutes').toDate();
+
+        return end >= now;
+    });
+
+    return appointmentsGreaterThanNow;
 };

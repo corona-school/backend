@@ -1,7 +1,7 @@
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
-import { deactivateStudent } from '../../common/student/activation';
+import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -284,6 +284,14 @@ export class MutateStudentResolver {
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
+        const student = await getStudent(studentId);
+        await reactivateStudent(student, reason);
         return true;
     }
 
