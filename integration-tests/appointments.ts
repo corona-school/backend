@@ -11,14 +11,14 @@ const appointmentTitle3 = 'Group Appointment 3';
 const firstAppointment = test('Create an appointment for a subcourse', async () => {
     const { subcourseId } = await subcourseOne;
     const { client } = await screenedInstructorOne;
-    const nextHour = new Date();
-    nextHour.setHours(new Date().getHours() + 1);
+    const next = new Date();
+    next.setDate(new Date().getDate() + 8);
     const res = await client.request(`
     mutation creategroupAppointments {
         appointmentsGroupCreate(subcourseId: ${parseInt(subcourseId)}, appointments: [
             {
                 title: "${appointmentTitle}"
-                start: "${nextHour.toISOString()}"
+                start: "${next.toISOString()}"
                 duration: 15
                 subcourseId: ${subcourseId}
                 appointmentType: group
@@ -32,7 +32,7 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     const { subcourseId } = await subcourseOne;
     const { client } = await screenedInstructorOne;
     const nextDate = new Date();
-    nextDate.setDate(new Date().getDate() + 2);
+    nextDate.setDate(new Date().getDate() + 10);
     const nextMonth = new Date();
     nextMonth.setMonth(new Date().getMonth() + 1);
 
