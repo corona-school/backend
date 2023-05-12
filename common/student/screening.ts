@@ -65,14 +65,6 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
         return;
     }
 
-    const remissionRequest = await prisma.remission_request.findUnique({
-        where: { studentId: student.id },
-    });
-
-    if (remissionRequest) {
-        return;
-    }
-
     await cancelCoCReminders(student);
     await createRemissionRequest(student);
     await Notification.actionTaken(student, 'coc_reminder', {});
