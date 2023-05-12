@@ -40,26 +40,35 @@ const createChatUser = async (user: User): Promise<void> => {
  */
 async function getChatUser(user: User): Promise<TalkJsUser> {
     const userId = userIdToTalkJsId(user.userID);
+    let response;
     try {
-        const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
+        response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
         });
-
-        await checkResponseStatus(response);
-        return response.json();
     } catch (error) {
         throw new Error(error);
+    }
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
     }
 }
 
 async function getOrCreateChatUser(user: User): Promise<TalkJsUser> {
-    // TODO check if user exists
-    // if not, create new user
-    const chatUser = getChatUser(user);
+    let chatUser: TalkJsUser;
+    chatUser = await getChatUser(user);
+
+    if (chatUser === undefined) {
+        await createChatUser(user);
+        chatUser = await getChatUser(user);
+    }
+
     return chatUser;
 }
 

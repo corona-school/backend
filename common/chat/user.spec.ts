@@ -1,7 +1,5 @@
 import { User } from '../user';
-import { Role } from '../user/roles';
-import { GraphQLUser } from '../user/session';
-import { createSignature, parseUnderscoreToSlash } from './helper';
+import { createChatSignature, parseUnderscoreToSlash } from './helper';
 import { createChatUser, getChatUser, getOrCreateChatUser } from './user';
 import dotenv from 'dotenv';
 
@@ -31,12 +29,20 @@ export const sampleUserC: User = {
     pupilId: 2,
 };
 
-export const sampleUserD: User = {
-    firstname: 'Emma',
+export const sampleUserF: User = {
+    firstname: 'David',
     lastname: 'Musterschüler',
-    email: 'emma.musterschüler@test.de',
-    userID: 'pupil/test3',
-    pupilId: 3,
+    email: 'david.musterschüler@test.de',
+    userID: 'pupil/test5',
+    pupilId: 5,
+};
+
+export const sampleUserG: User = {
+    firstname: 'Julia',
+    lastname: 'Musterschüler',
+    email: 'julia.musterschüler@test.de',
+    userID: 'pupil/test6',
+    pupilId: 6,
 };
 
 test('Create User A, B and C', async () => {
@@ -67,9 +73,9 @@ test('Get User A, B and C', async () => {
 });
 
 test('Get or create User', async () => {
-    const result = await getOrCreateChatUser(sampleUserD);
-});
+    const result = await getOrCreateChatUser(sampleUserF);
+    const resultNew = await getOrCreateChatUser(sampleUserG);
 
-test('Get Signautre for User A', async () => {
-    const signature = await createSignature(sampleUserA);
+    expect(result.name).toBe(`${sampleUserF.firstname} ${sampleUserF.lastname}`);
+    expect(resultNew.name).toBe(`${sampleUserG.firstname} ${sampleUserG.lastname}`);
 });
