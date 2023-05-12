@@ -40,9 +40,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 
-    if (dissolver.email === student.email) {
+    if (dissolver && dissolver.email === student.email) {
         await Notification.actionTaken(pupil, 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
-    } else if (dissolver.email === pupil.email) {
+    } else if (dissolver && dissolver.email === pupil.email) {
         await Notification.actionTaken(student, 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
     }
 }

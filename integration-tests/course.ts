@@ -78,7 +78,7 @@ const courseOne = test('Create Course One', async () => {
     return { courseId };
 });
 
-void test('Create Subcourse', async () => {
+export const subcourseOne = test('Create Subcourse', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
 
@@ -135,6 +135,8 @@ void test('Create Subcourse', async () => {
     assert.ok(subcourse);
     assert.ok(subcourse.course.id === courseId);
     assert.ok(subcourse.published);
+
+    return { subcourseId };
 
     // Different client here as the response is cached ...
     /* const { subcoursesPublic: subcoursesPublicAfter } = await defaultClient.request(`
