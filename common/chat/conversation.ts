@@ -26,7 +26,7 @@ type LastMessage = {
 
 type CustomProps = {
     start?: string;
-    type: 'course' | 'match' | 'announcement';
+    type: 'course' | 'match' | 'announcement' | 'participant' | 'prospect';
     finished?: 'match_dissolved' | 'course_over';
 };
 
@@ -56,6 +56,8 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     const { type } = conversationInfos.custom;
     switch (type) {
         case 'match':
+        case 'participant':
+        case 'prospect':
             conversationId = createOneOnOneId(participants[0], participants[1]);
             break;
         case 'course':

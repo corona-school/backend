@@ -1,3 +1,4 @@
+import { User } from '../user';
 import { Role } from '../user/roles';
 import { GraphQLUser } from '../user/session';
 import { parseUnderscoreToSlash } from './helper';
@@ -6,28 +7,28 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const sampleUserA: GraphQLUser = {
+export const sampleUserA: User = {
     firstname: 'Leon',
     lastname: 'Musterstudent',
     email: 'leon.musterstudent@test.de',
-    roles: [Role.STUDENT],
     userID: 'student/test',
+    studentId: 1,
 };
 
-export const sampleUserB: GraphQLUser = {
+export const sampleUserB: User = {
     firstname: 'Max',
     lastname: 'Musterschüler',
     email: 'max.musterschüler@test.de',
-    roles: [Role.PUPIL],
     userID: 'pupil/test1',
+    pupilId: 1,
 };
 
-export const sampleUserC: GraphQLUser = {
+export const sampleUserC: User = {
     firstname: 'Tim',
     lastname: 'Musterschüler',
     email: 'tim.musterschüler@test.de',
-    roles: [Role.PUPIL],
     userID: 'pupil/test2',
+    pupilId: 2,
 };
 
 test('Create User A, B and C', async () => {
@@ -42,14 +43,17 @@ test('Get User A, B and C', async () => {
     expect(parseUnderscoreToSlash(resultA.id)).toBe(sampleUserA.userID);
     expect(resultA.email[0]).toBe(sampleUserA.email);
     expect(resultA.name).toBe(`${sampleUserA.firstname} ${sampleUserA.lastname}`);
+    expect(resultA.role).toBe('student');
 
     const resultB = await getChatUser(sampleUserB);
     expect(parseUnderscoreToSlash(resultB.id)).toBe(sampleUserB.userID);
     expect(resultB.email[0]).toBe(sampleUserB.email);
     expect(resultB.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
+    expect(resultB.role).toBe('pupil');
 
     const resultC = await getChatUser(sampleUserB);
     expect(parseUnderscoreToSlash(resultC.id)).toBe(sampleUserB.userID);
     expect(resultC.email[0]).toBe(sampleUserB.email);
     expect(resultC.name).toBe(`${sampleUserB.firstname} ${sampleUserB.lastname}`);
+    expect(resultC.role).toBe('pupil');
 });

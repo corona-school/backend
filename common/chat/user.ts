@@ -21,6 +21,7 @@ const createChatUser = async (user: User): Promise<void> => {
             body: JSON.stringify({
                 name: `${user.firstname} ${user.lastname}`,
                 email: [user.email],
+                role: user.studentId ? 'student' : 'pupil',
             }),
         });
         await checkResponseStatus(response);
