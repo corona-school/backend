@@ -109,5 +109,5 @@ export async function createRemissionRequestVerificationPage(remissionRequestUUI
 
 export async function cancelRemissionRequest(student: student) {
     logger.info(`Cancelled remission request for Student(${student.id})`);
-    await prisma.remission_request.delete({ where: { studentId: student.id } });
+    await prisma.remission_request.deleteMany({ where: { studentId: student.id } });
 }
