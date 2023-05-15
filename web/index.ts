@@ -8,7 +8,6 @@ import * as userController from './controllers/userController';
 import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
 import * as registrationController from './controllers/registrationController';
-import * as mentoringController from './controllers/mentoringController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
@@ -81,7 +80,6 @@ void createConnection()
         }
         configureUserAPI();
         configureRegistrationAPI();
-        configureMentoringAPI();
         await configureApolloServer();
         configureFileAPI();
         const server = await deployServer();
@@ -189,16 +187,6 @@ void createConnection()
                 next();
             });
             app.use(participationCertificateRouter);
-        }
-
-        function configureMentoringAPI() {
-            const mentoringRouter = express.Router();
-            mentoringRouter.use(authCheckFactory());
-            mentoringRouter.post('/contact', mentoringController.postContactMentorHandler);
-            mentoringRouter.get('/material', mentoringController.getMaterial);
-            mentoringRouter.get('/feedbackCall', mentoringController.getFeedbackCallData);
-
-            app.use('/api/mentoring', mentoringRouter);
         }
 
         function configureFileAPI() {
