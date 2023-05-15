@@ -96,6 +96,10 @@ export class Lecture {
     @Column({ default: null, nullable: true })
     zoomMeetingId: string;
 
-    @Column({ nullable: true, type: 'json' })
-    zoomMeetingReport: any | null;
+    @Column({
+        type: 'json',
+        default: [],
+        array: true,
+    })
+    zoomMeetingReport: any[];
 }

@@ -201,7 +201,7 @@ model lecture {
   participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
   zoomMeetingId         String?                      @db.VarChar
-  zoomMeetingReport     Json?                        @db.Json
+  zoomMeetingReport     Json[]                       @default([]) @db.Json
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
@@ -634,7 +634,7 @@ model typeorm_metadata {
 
 model message_translation {
   id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
-  template       Json                              @db.Json
+  template       Json?                             @db.Json
   navigateTo     String?
   language       message_translation_language_enum @default(de)
   notificationId Int?
@@ -659,6 +659,42 @@ model pupil_screening {
   comment     String?                     @db.VarChar
   pupilId     Int?
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+}
+
+model appointment_organizer {
+  appointmentId Int
+  status        appointment_organizer_status_enum @default(accepted)
+  studentId     Int
+
+  @@id([appointmentId, studentId], map: "PK_c6be94a37c868a0f1d6dc1dbdcc")
+  @@index([status], map: "IDX_663993228113c003df5ab4325c")
+}
+
+model appointment_participant_pupil {
+  appointmentId Int
+  status        appointment_participant_pupil_status_enum @default(accepted)
+  pupilId       Int
+
+  @@id([appointmentId, pupilId], map: "PK_74833d50008d051feb2f7809786")
+  @@index([status], map: "IDX_318b2ad16817f27bc091d1f564")
+}
+
+model appointment_participant_screener {
+  appointmentId Int
+  status        appointment_participant_screener_status_enum @default(accepted)
+  screenerId    Int
+
+  @@id([appointmentId, screenerId], map: "PK_e62bdfce2c0fd7def5be58fc83e")
+  @@index([status], map: "IDX_228bb5330683338479bc19ed44")
+}
+
+model appointment_participant_student {
+  appointmentId Int
+  status        appointment_participant_student_status_enum @default(accepted)
+  studentId     Int
+
+  @@id([appointmentId, studentId], map: "PK_8441a1bce3bcee8b6e7a81cbafc")
+  @@index([status], map: "IDX_6bbb7bec336dee923853580700")
 }
 
 enum course_category_enum {
@@ -1017,4 +1053,24 @@ enum lecture_appointmenttype_enum {
   match
   internal
   legacy
+}
+
+enum appointment_organizer_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_pupil_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_screener_status_enum {
+  accepted
+  declined
+}
+
+enum appointment_participant_student_status_enum {
+  accepted
+  declined
 }
