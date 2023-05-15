@@ -8,17 +8,14 @@ import * as certificateController from './controllers/certificateController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
-import { authCheckFactory } from './middleware/auth';
 import { setupDevDB } from './dev';
 import favicon from 'express-favicon';
 import { allStateCooperationSubdomains } from '../common/entity/State';
-import multer from 'multer';
 import moment from 'moment-timezone';
 import { closeBrowser, setupBrowser } from 'html-pppdf';
 import { performCleanupActions } from '../common/util/cleanup';
 import 'reflect-metadata'; //leave it here...
 import { apolloServer } from '../graphql';
-import rateLimit from 'express-rate-limit';
 import { getAttachmentUrlEndpoint } from './controllers/attachmentController';
 import { isDev } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
