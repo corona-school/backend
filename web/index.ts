@@ -5,7 +5,6 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import cors from 'cors';
 import * as userController from './controllers/userController';
-import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
 import * as registrationController from './controllers/registrationController';
 import { connectLogger } from 'log4js';
@@ -138,7 +137,6 @@ void createConnection()
             userApiRouter.put('/:id/subjects', userController.putSubjectsHandler);
             userApiRouter.put('/:id/projectFields', userController.putProjectFieldsHandler);
             userApiRouter.put('/:id/active/:active', userController.putActiveHandler);
-            userApiRouter.delete('/:id/projectMatches/:uuid', projectMatchController.deleteHandler);
             userApiRouter.post('/:id/role/instructor', userController.postUserRoleInstructorHandler);
             userApiRouter.post('/:id/role/tutor', userController.postUserRoleTutorHandler);
             userApiRouter.post('/:id/role/projectCoach', userController.postUserRoleProjectCoachHandler);
