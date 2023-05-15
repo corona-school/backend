@@ -117,7 +117,7 @@ const deleteZoomMeeting = async (meetingId: string) => {
 const getZoomMeetingReport = async (meetingId: string) => {
     try {
         const { access_token } = await getAccessToken('report:read:admin');
-        const constructedUrl = `${zoomMeetingReportUrl}/${meetingId}`;
+        const constructedUrl = `${zoomMeetingReportUrl}/${meetingId}/participants`;
 
         const response = await fetch(constructedUrl, {
             headers: {

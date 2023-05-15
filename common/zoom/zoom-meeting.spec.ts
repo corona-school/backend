@@ -13,7 +13,7 @@ const sampleUser: GraphQLUser = {
     userID: process.env.ZOOM_USER_ID,
 };
 
-const pastMeetingId = '82538138011';
+const pastMeetingId = '83625175014';
 
 const date = new Date();
 
@@ -46,21 +46,3 @@ test('Get Zoom Meeting Data', async () => {
     console.log(result);
     expect(typeof result).toBe('object');
 });
-
-// return type of meeting report
-// type MeetingReportType = {
-//     uuid: string,
-//     id: number,
-//     host_id: string,
-//     type: number,
-//     topic: string,
-//     user_name: string,
-//     user_email: string,
-//     start_time: string,
-//     end_time: string,
-//     duration: number,
-//     total_minutes: number,
-//     participants_count: number,
-//     tracking_fields: any[],
-//     dept: string
-// };

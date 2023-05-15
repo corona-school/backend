@@ -11,6 +11,7 @@ import * as Notification from '../../common/notification';
 import { getLogger } from '../../common/logger/logger';
 import { getUser } from '../../common/user';
 import { getZoomMeetingReport } from '../../common/zoom/zoom-scheduled-meeting';
+import { Prisma } from '@prisma/client';
 
 const language = 'de-DE';
 const logger = getLogger('MutateAppointmentsResolver');
@@ -294,11 +295,19 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
     async saveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
-        const appointment = await getLecture(appointmentId);
-        const result = await getZoomMeetingReport(appointment.zoomMeetingId);
-        await prisma.lecture.update({
-            where: { id: appointmentId },
-            data: { ...appointment, zoomMeetingReport: result },
-        });
+        try {
+            const appointment = await getLecture(appointmentId);
+            const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
+            const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+            meetingReports.push(result);
+            await prisma.lecture.update({
+                where: { id: appointmentId },
+                data: { ...appointment, zoomMeetingReport: meetingReports },
+            });
+        } catch (e) {
+            logger.error(e);
+        }
+
+        return true;
     }
 }

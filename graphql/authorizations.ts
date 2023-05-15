@@ -212,8 +212,12 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
-    Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
+    Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
+    Appointment_organizer: allAdmin,
+    Appointment_participant_pupil: allAdmin,
+    Appointment_participant_screener: allAdmin,
+    Appointment_participant_student: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
