@@ -17,7 +17,6 @@ import { ScreeningStatus, Student, TeacherModule } from '../../../common/entity/
 import { Pupil } from '../../../common/entity/Pupil';
 import { Person } from '../../../common/entity/Person';
 import { Match } from '../../../common/entity/Match';
-import { dissolveMatch } from '../matchController';
 import { getTransactionLog } from '../../../common/transactionlog';
 import UpdatePersonalEvent from '../../../common/transactionlog/types/UpdatePersonalEvent';
 import UpdateSubjectsEvent from '../../../common/transactionlog/types/UpdateSubjectsEvent';
@@ -1053,7 +1052,7 @@ async function putActive(
             }
             let matches = await entityManager.find(Match, options);
             for (let i = 0; i < matches.length; i++) {
-                await dissolveMatch(matches[i], 0, person);
+                // await dissolveMatch(matches[i], 0, person);
             }
 
             // Step 2: Cancel all courses if user is student
