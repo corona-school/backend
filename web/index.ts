@@ -10,7 +10,6 @@ import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
 import * as registrationController from './controllers/registrationController';
 import * as mentoringController from './controllers/mentoringController';
-import * as expertController from './controllers/expertController';
 import * as interestConfirmationController from './controllers/interestConfirmationController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
@@ -85,7 +84,6 @@ void createConnection()
         configureUserAPI();
         configureRegistrationAPI();
         configureMentoringAPI();
-        configureExpertAPI();
         await configureApolloServer();
         configurePupilInterestConfirmationAPI();
         configureFileAPI();
@@ -205,17 +203,6 @@ void createConnection()
             mentoringRouter.get('/feedbackCall', mentoringController.getFeedbackCallData);
 
             app.use('/api/mentoring', mentoringRouter);
-        }
-
-        function configureExpertAPI() {
-            const expertRouter = express.Router();
-            expertRouter.use(authCheckFactory());
-            expertRouter.get('/', expertController.getExpertsHandler);
-            expertRouter.post('/:id/contact', expertController.postContactExpertHandler);
-            expertRouter.put('/:id', expertController.putExpertHandler);
-            expertRouter.get('/tags', expertController.getUsedTagsHandler);
-
-            app.use('/api/expert', expertRouter);
         }
 
         function configurePupilInterestConfirmationAPI() {
