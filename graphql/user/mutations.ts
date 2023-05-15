@@ -26,6 +26,7 @@ class SupportMessage {
 }
 
 const logger = getLogger('User Mutations');
+const issueReporterLogger = getLogger('IssueReporter');
 
 @Resolver((of) => UserType)
 export class MutateUserResolver {
@@ -84,17 +85,17 @@ export class MutateUserResolver {
         section('LOGS', 1);
         result += logs.join('\n');
 
-        logger.addContext('issureTag', issueTag);
-        logger.addContext('userAgent', userAgent);
-        logger.addContext('userID', context.user.userID);
+        issueReporterLogger.addContext('issureTag', issueTag);
+        issueReporterLogger.addContext('userAgent', userAgent);
+        issueReporterLogger.addContext('userID', context.user.userID);
 
-        logs.map((log) => logger.info(log));
+        logs.map((log) => issueReporterLogger.info(log));
         const err: Error = {
             name: 'IssueReporter',
             stack: errorStack,
             message: errorMessage,
         };
-        logger.error(errorMessage, err);
+        issueReporterLogger.error(errorMessage, err);
 
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
