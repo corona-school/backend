@@ -225,7 +225,7 @@ class BecomeStatePupilInput implements BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-const logger = getLogger('Me');
+const logger = getLogger('Me Mutations');
 
 @Resolver((of) => UserType)
 export class MutateMeResolver {
