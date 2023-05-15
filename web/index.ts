@@ -14,7 +14,6 @@ import { allStateCooperationSubdomains } from '../common/entity/State';
 import moment from 'moment-timezone';
 import { closeBrowser, setupBrowser } from 'html-pppdf';
 import { performCleanupActions } from '../common/util/cleanup';
-import 'reflect-metadata'; //leave it here...
 import { apolloServer } from '../graphql';
 import { getAttachmentUrlEndpoint } from './controllers/attachmentController';
 import { isDev } from '../common/util/environment';
