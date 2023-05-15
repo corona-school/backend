@@ -4,9 +4,7 @@ import bodyParser from 'body-parser';
 import hpp from 'hpp';
 import helmet from 'helmet';
 import cors from 'cors';
-import * as userController from './controllers/userController';
 import * as certificateController from './controllers/certificateController';
-import * as registrationController from './controllers/registrationController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
@@ -77,8 +75,6 @@ void createConnection()
             configureParticipationCertificateAPI();
             configureCertificateAPI();
         }
-        configureUserAPI();
-        configureRegistrationAPI();
         await configureApolloServer();
         configureFileAPI();
         const server = await deployServer();
@@ -128,21 +124,6 @@ void createConnection()
             app.use('/api/attachments', attachmentApiRouter);
         }
 
-        function configureUserAPI() {
-            const userApiRouter = express.Router();
-            userApiRouter.use(authCheckFactory(false, false, true, [], ['tutoringInterestConfirmationRequest']));
-            userApiRouter.get('/', userController.getSelfHandler);
-            userApiRouter.get('/:id', userController.getHandler);
-            userApiRouter.put('/:id', userController.putHandler);
-            userApiRouter.put('/:id/subjects', userController.putSubjectsHandler);
-            userApiRouter.put('/:id/projectFields', userController.putProjectFieldsHandler);
-            userApiRouter.put('/:id/active/:active', userController.putActiveHandler);
-            userApiRouter.post('/:id/role/instructor', userController.postUserRoleInstructorHandler);
-            userApiRouter.post('/:id/role/tutor', userController.postUserRoleTutorHandler);
-            userApiRouter.post('/:id/role/projectCoach', userController.postUserRoleProjectCoachHandler);
-            userApiRouter.post('/:id/role/projectCoachee', userController.postUserRoleProjectCoacheeHandler);
-            app.use('/api/user', userApiRouter);
-        }
 
         function configureCertificateAPI() {
             const certificateRouter = express.Router();
@@ -152,22 +133,6 @@ void createConnection()
 
             // TODO Find better solution
             app.use('/api/certificate/:certificateId/public', express.static('./assets/public'));
-        }
-
-        function configureRegistrationAPI() {
-            const checkEmailRateLimit = rateLimit({
-                windowMs: 15 * 60 * 1000, // 15 minutes
-                max: 5,
-            });
-
-            const registrationRouter = express.Router();
-            registrationRouter.post('/tutee', registrationController.postTuteeHandler);
-            registrationRouter.post('/tutee/state', registrationController.postStateTuteeHandler);
-            registrationRouter.post('/tutor', registrationController.postTutorHandler);
-            registrationRouter.post('/mentor', registrationController.postMentorHandler);
-            registrationRouter.post('/checkEmail', checkEmailRateLimit, registrationController.checkEmail);
-            registrationRouter.get('/schools/:state?', registrationController.getSchoolsHandler);
-            app.use('/api/register', registrationRouter);
         }
 
         function configureParticipationCertificateAPI() {
