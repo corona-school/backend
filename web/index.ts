@@ -10,7 +10,6 @@ import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
 import * as registrationController from './controllers/registrationController';
 import * as mentoringController from './controllers/mentoringController';
-import * as interestConfirmationController from './controllers/interestConfirmationController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
@@ -85,7 +84,6 @@ void createConnection()
         configureRegistrationAPI();
         configureMentoringAPI();
         await configureApolloServer();
-        configurePupilInterestConfirmationAPI();
         configureFileAPI();
         const server = await deployServer();
         configureGracefulShutdown(server);
@@ -203,13 +201,6 @@ void createConnection()
             mentoringRouter.get('/feedbackCall', mentoringController.getFeedbackCallData);
 
             app.use('/api/mentoring', mentoringRouter);
-        }
-
-        function configurePupilInterestConfirmationAPI() {
-            const router = express.Router();
-            router.post('/status', interestConfirmationController.postInterestConfirmationRequestStatus);
-
-            app.use('/api/interest-confirmation', router);
         }
 
         function configureFileAPI() {
