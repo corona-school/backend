@@ -28,7 +28,7 @@ export class FieldMeResolver {
         return context.user?.roles ?? [];
     }
 
-    @Query((returns) => [String])
+    @Query((returns) => [Contact])
     @Authorized(Role.USER)
     myContactOptions(@Ctx() context: GraphQLContext): Contact[] {
         return [];
