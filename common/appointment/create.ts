@@ -44,12 +44,10 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
 };
 
 export const isAppointmentFiveMinutesLater = (appointmentDate: Date) => {
-    const now = moment.now();
-    const start = moment(appointmentDate);
-    const fiveMinutesFromNow = moment().add(5, 'minutes');
-    const isSameDayAndFiveMinLater = start.isSame(now, 'day') && start.isAfter(fiveMinutesFromNow);
-    const afterToday = start.isAfter(now, 'day');
-    return isSameDayAndFiveMinLater || afterToday;
+    const now = moment();
+    const fiveMinutesLater = moment(now).add(5, 'minutes');
+    const isAfter = moment(appointmentDate).isAfter(fiveMinutesLater);
+    return isAfter;
 };
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
