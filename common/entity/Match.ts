@@ -33,14 +33,17 @@ export class Match {
     @Column()
     uuid: string;
 
-    /*
-     * Possible values:
-     *   0:  The match has been dissolved, because a member deactivated his account
-     */
     @Column({
         default: false,
     })
     dissolved: boolean;
+
+    @Column({
+        default: null,
+        nullable: true,
+        type: 'timestamp',
+    })
+    dissolvedAt?: Date;
 
     @Column({
         default: null,

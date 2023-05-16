@@ -12,7 +12,7 @@ import { DEFAULTSENDERS } from '../../common/mails/config';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
-import { logInContext } from '../logging';
+import { getLogger } from '../../common/logger/logger';
 
 @InputType()
 class SupportMessage {
@@ -24,6 +24,9 @@ class SupportMessage {
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
 }
+
+const logger = getLogger('User Mutations');
+const issueReporterLogger = getLogger('IssueReporter');
 
 @Resolver((of) => UserType)
 export class MutateUserResolver {
@@ -82,18 +85,17 @@ export class MutateUserResolver {
         section('LOGS', 1);
         result += logs.join('\n');
 
-        const logger = logInContext('IssueReporter', context);
-        logger.addContext('issureTag', issueTag);
-        logger.addContext('userAgent', userAgent);
-        logger.addContext('userID', context.user.userID);
+        issueReporterLogger.addContext('issureTag', issueTag);
+        issueReporterLogger.addContext('userAgent', userAgent);
+        issueReporterLogger.addContext('userID', context.user.userID);
 
-        logs.map((log) => logger.info(log));
+        logs.map((log) => issueReporterLogger.info(log));
         const err: Error = {
             name: 'IssueReporter',
             stack: errorStack,
             message: errorMessage,
         };
-        logger.error(errorMessage, err);
+        issueReporterLogger.error(errorMessage, err);
 
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');

@@ -8,7 +8,6 @@ import { prisma } from '../common/prisma';
 import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
-import { logInContext } from './logging';
 import { getUser, User, userForPupil, userForScreener, userForStudent } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
@@ -145,7 +144,6 @@ export class AuthenticationResolver {
         email = validateEmail(email);
 
         ensureSession(context);
-        const logger = logInContext(`GraphQL Authentication`, context);
 
         const screener = await prisma.screener.findFirst({
             where: {
@@ -222,7 +220,6 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
-        const logger = logInContext(`GraphQL Authentication`, context);
 
         if (!context.user) {
             throw new ForbiddenError('User already logged out');
