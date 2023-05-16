@@ -8,6 +8,7 @@ import { AuthenticationError } from 'apollo-server-errors';
 import { Role } from './roles';
 import { loginPassword } from '../common/secret';
 import { Request, Response } from 'express';
+import { attachSession, Session, startTransaction, Transaction } from '../common/session';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -25,7 +26,7 @@ function timingSafeCompare(a: string, b: string) {
     return crypto.timingSafeEqual(bufA, bufB) && aLen === bLen;
 }
 
-export interface GraphQLContext {
+export interface GraphQLContext extends Session {
     user?: GraphQLUser;
     sessionToken?: string;
     prisma: PrismaClient;
@@ -48,6 +49,7 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         user: UNAUTHENTICATED_USER,
         prisma,
         sessionToken: undefined,
+        sessionID: '?',
         ip,
         setCookie: (key, value) => res.cookie(key, value, { secure: true }),
     };
@@ -65,10 +67,12 @@ export default async function injectContext({ req, res }: { req: Request; res: R
             email: 'test@lern-fair.de',
             roles: [Role.ADMIN, Role.UNAUTHENTICATED],
         };
+        context.sessionID = 'ADMIN';
 
         authLogger.info(`Admin authenticated from ${ip}`);
     } else if (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer ')) {
         context.sessionToken = req.headers['authorization'].slice('Bearer '.length);
+        context.sessionID = toPublicToken(context.sessionToken);
 
         if (context.sessionToken.length < 20) {
             throw new AuthenticationError('Session Tokens must have at least 20 characters');
@@ -77,12 +81,13 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         const sessionUser = await getUserForSession(context.sessionToken);
 
         if (!sessionUser) {
-            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
+            authLogger.info(`Unauthenticated Session(${context.sessionID}) started from ${ip}`);
         } else {
             context.user = sessionUser;
         }
     } else if (req.cookies['LERNFAIR_SESSION']) {
         context.sessionToken = req.cookies['LERNFAIR_SESSION'];
+        context.sessionID = toPublicToken(context.sessionToken);
 
         if (context.sessionToken.length < 20) {
             throw new AuthenticationError('Session Tokens must have at least 20 characters');
@@ -91,13 +96,15 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         const sessionUser = await getUserForSession(context.sessionToken);
 
         if (!sessionUser) {
-            authLogger.info(`Unauthenticated Session(${toPublicToken(context.sessionToken)}) started from ${ip}`);
+            authLogger.info(`Unauthenticated Session(${context.sessionID}) started from ${ip}`);
         } else {
             context.user = sessionUser;
         }
     } else {
         authLogger.info(`Unauthenticated access from ${ip}`);
     }
+
+    attachSession(context);
 
     return context;
 }
