@@ -7,10 +7,11 @@ import { GraphQLContext } from './context';
 import { isUnexpectedError } from './error';
 import { v4 as uuidv4 } from 'uuid';
 
+const logger = getLogger('GraphQL Query');
+
 export const GraphQLLogger: any = {
     requestDidStart(requestContext: GraphQLRequestContext) {
         const startTime = Date.now();
-        const logger = logInContext(`GraphQL Processing`, requestContext.context as GraphQLContext);
 
         // This will make sure that all the following logs will have the same uid field.
         const uid = uuidv4();
@@ -31,10 +32,9 @@ export const GraphQLLogger: any = {
                 if (!unexpected) {
                     logger.info(`Expected Errors occurred`, { errors: requestContext.errors.map((it) => `  - ${it.name} (${it.message})`) });
                 } else {
-                    const errorLogger = logInContext(`GraphQL Error`, requestContext.context as GraphQLContext);
-                    errorLogger.addContext('uid', uid);
+                    logger.addContext('uid', uid);
                     for (const err of requestContext.errors) {
-                        errorLogger.error(`Unexpected Errors occurred`, err);
+                        logger.error(`Unexpected Errors occurred`, err);
                     }
                 }
             },
@@ -55,20 +55,3 @@ export const GraphQLLogger: any = {
         return handler;
     },
 };
-
-export function logInContext(name: string, context: GraphQLContext) {
-    let sessionID = 'UNKNOWN';
-    const { sessionToken, user } = context as GraphQLContext;
-    if (sessionToken) {
-        sessionID = toPublicToken(sessionToken);
-    }
-
-    if (user?.roles?.includes(Role.ADMIN)) {
-        sessionID = 'ADMIN';
-    }
-
-    const logger = getLogger(name);
-    logger.addContext('sessionID', sessionID);
-
-    return logger;
-}

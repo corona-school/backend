@@ -69,7 +69,17 @@ export class ExtendedFieldsMatchResolver {
 
     @FieldResolver((returns) => [Appointment])
     @Authorized(Role.ADMIN, Role.OWNER)
-    async appointments(@Root() match: Match) {
-        return await prisma.lecture.findMany({ where: { matchId: match.id }, orderBy: { start: 'asc' } });
+    async appointments(@Ctx() context: GraphQLContext, @Root() match: Match) {
+        const { user } = context;
+        return await prisma.lecture.findMany({
+            where: {
+                matchId: match.id,
+                isCanceled: false,
+                NOT: {
+                    declinedBy: { has: user.userID },
+                },
+            },
+            orderBy: { start: 'asc' },
+        });
     }
 }
