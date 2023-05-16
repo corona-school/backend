@@ -1,4 +1,4 @@
-import { Authorized, Ctx, Query, Resolver } from 'type-graphql';
+import { Authorized, Ctx, FieldResolver, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
@@ -19,7 +19,7 @@ export class FieldMeResolver {
         return context.user?.roles ?? [];
     }
 
-    @Query((returns) => String)
+    @FieldResolver((returns) => String)
     @Authorized(Role.USER)
     async chatSignature(@Ctx() context: GraphQLContext): Promise<string> {
         const { user } = context;
