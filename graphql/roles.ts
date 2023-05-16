@@ -2,14 +2,14 @@ import { pupil as Pupil, student as Student } from '@prisma/client';
 import { User } from '../common/user';
 import { prisma } from '../common/prisma';
 import type { GraphQLContext } from './context';
-import { logInContext } from './logging';
 import { Role } from '../common/user/roles';
+import { getLogger } from '../common/logger/logger';
 
 export { Role } from '../common/user/roles';
 
-export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
-    const logger = logInContext(`GraphQL Authentication`, context);
+const logger = getLogger('Roles');
 
+export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
     context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
@@ -46,8 +46,6 @@ export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) 
 }
 
 export async function evaluateStudentRoles(student: Student, context: GraphQLContext) {
-    const logger = logInContext(`GraphQL Authentication`, context);
-
     context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.STUDENT];
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
@@ -94,8 +92,6 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
 }
 
 export async function evaluateScreenerRoles(user: User, context: GraphQLContext) {
-    const logger = logInContext(`GraphQL Authentication`, context);
-
     context.user.roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
     logger.info(`Screener(${user.screenerId}) was granted SCREENER role`);
 }

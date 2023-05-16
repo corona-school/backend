@@ -35,6 +35,7 @@ import { WebSocketService } from '../common/websocket';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
+import { startTransaction } from '../common/session';
 
 // Logger setup
 const logger = getLogger();
@@ -66,6 +67,11 @@ void createConnection()
     .then(async () => {
         logger.info('Database connected');
         app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
+
+        app.use((req, res, next) => {
+            startTransaction();
+            next();
+        });
 
         // Express setup
         app.use(bodyParser.json());
