@@ -1,6 +1,6 @@
 import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
-import { getFile } from '../files';
+import { getFile, removeFile } from '../files';
 import { getLogger } from '../../common/logger/logger';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
@@ -152,6 +152,7 @@ export class MutateCourseResolver {
 
         const imageKey = getCourseImageKey(course, file.mimetype);
         await putFile(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
+        removeFile(fileId);
 
         await prisma.course.update({
             data: { imageKey },

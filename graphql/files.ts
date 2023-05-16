@@ -72,7 +72,6 @@ export function getFile(fileID: FileID): File {
     if (!file) {
         throw new Error(`Invalid fileID(${fileID})`);
     }
-
     return file;
 }
 
@@ -80,6 +79,11 @@ export const getFiles = (fileIDs: FileID[]) => fileIDs.map(getFile);
 
 export function getFileURL(fileID: FileID): string {
     return `/api/files/download/${fileID}`;
+}
+
+export function removeFile(fileID: FileID) {
+    fileStore.delete(fileID);
+    log.info(`Removed file '${fileID}' from file store`);
 }
 
 export function clearFilestore() {
