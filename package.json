@@ -83,6 +83,7 @@
     "qrcode": "^1.4.4",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.21",
+    "talkjs": "^0.15.9",
     "type-graphql": "^1.1.1",
     "typeorm": "^0.2.29",
     "unique-names-generator": "^4.3.1",

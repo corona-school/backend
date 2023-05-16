@@ -1,8 +1,9 @@
-import { Authorized, Ctx, Query, Resolver } from 'type-graphql';
+import { Authorized, Ctx, FieldResolver, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { UserType } from '../types/user';
+import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
 
 @ObjectType()
@@ -26,6 +27,14 @@ export class FieldMeResolver {
     @Authorized(Role.USER)
     myRoles(@Ctx() context: GraphQLContext): string[] {
         return context.user?.roles ?? [];
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER)
+    async chatSignature(@Ctx() context: GraphQLContext): Promise<string> {
+        const { user } = context;
+        const signature = await createChatSignature(user);
+        return signature;
     }
 
     @Query((returns) => [Contact])
