@@ -7,7 +7,7 @@ const log = getLogger('File API');
 
 const fileUpload = multer({
     limits: {
-        fileSize: 5 * 10 ** 6, // 5mb
+        fileSize: 10 * 10 ** 6, // 10mb
     },
     storage: multer.memoryStorage(),
 });
