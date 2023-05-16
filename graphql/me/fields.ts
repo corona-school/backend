@@ -7,14 +7,12 @@ import { Field, ObjectType } from 'type-graphql';
 
 @ObjectType()
 class Contact {
+    @Field((_type) => UserType)
+    user: UserType;
     @Field((_type) => String)
-    userID: string;
+    contactReason: string;
     @Field((_type) => String)
-    talkJsId: string;
-    @Field((_type) => String, { nullable: true })
-    firstname: string;
-    @Field((_type) => String, { nullable: true })
-    lastname: string;
+    chatId: string;
 }
 @Resolver((of) => UserType)
 export class FieldMeResolver {
