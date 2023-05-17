@@ -1,4 +1,5 @@
 import { getAccessToken } from './zoom-authorization';
+import { ZoomUser } from './zoom-user';
 
 type ZoomMeeting = {
     next_page_token: string;
@@ -27,13 +28,20 @@ type ZoomMeeting = {
 const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
-const grantType = 'account_credentials';
 
-const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTime?: Date) => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, endDateTime?: Date) => {
     try {
         const { access_token } = await getAccessToken();
+        const altHosts: string[] = [];
+        zoomUsers.forEach((user, index) => {
+            if (index !== 0) {
+                altHosts.push(user.email);
+            }
+        });
+        const combinedAlternativeHosts = altHosts.join(';');
+        console.log(combinedAlternativeHosts);
 
-        const response = await fetch(`${zoomUsersUrl}/${zoomUserId}/meetings`, {
+        const response = await fetch(`${zoomUsersUrl}/${zoomUsers[0].id}/meetings`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -48,9 +56,14 @@ const createZoomMeeting = async (zoomUserId: string, startTime: Date, endDateTim
                 type: 2,
                 muteUpponEntry: true,
                 waitingRoom: true,
+                breakOutRoom: true,
                 recurrence: endDateTime && {
                     end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
                     type: 2,
+                },
+                settings: {
+                    alternative_hosts: combinedAlternativeHosts,
+                    alternative_hosts_email_notification: false,
                 },
             }),
         });

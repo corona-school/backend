@@ -18,15 +18,16 @@ type ZAKResponse = {
     token: string;
 };
 
+enum ZoomLicenseType {
+    BASIC = 1,
+    LICENSED = 2,
+    NONE = 99,
+}
+
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 const grantType = 'account_credentials';
 
 const createZoomUser = async (studentMail, studentFirstname, studentLastname): Promise<ZoomUser> => {
-    //TODO: Let Inactive ZoomUsers be deleted automatically
-    const zoomUser = await getZoomUser(studentMail);
-    if (zoomUser) {
-        return zoomUser;
-    }
     try {
         const { access_token } = await getAccessToken();
 
@@ -40,13 +41,17 @@ const createZoomUser = async (studentMail, studentFirstname, studentLastname): P
                 action: 'custCreate',
                 user_info: {
                     email: studentMail,
-                    type: 1,
+                    type: ZoomLicenseType.LICENSED,
                     first_name: studentFirstname,
                     last_name: studentLastname,
                     display_name: `${studentFirstname} ${studentLastname}`,
                 },
             }),
         });
+        if (createdUser.status === 409) {
+            const existingUser = await getZoomUser(studentMail);
+            return existingUser;
+        }
 
         return createdUser.json();
     } catch (error) {
@@ -71,7 +76,7 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
     }
 }
 
-async function updateZoomUser(email?: string, firstname?: string, lastname?: string): Promise<ZoomUser> {
+async function updateZoomUser(email: string, firstname?: string, lastname?: string): Promise<ZoomUser> {
     try {
         const { access_token } = await getAccessToken();
         const response = await fetch(`${zoomUserApiUrl}/${email}`, {
@@ -84,6 +89,7 @@ async function updateZoomUser(email?: string, firstname?: string, lastname?: str
                 first_name: firstname,
                 last_name: lastname,
                 display_name: `${firstname} ${lastname}`,
+                type: ZoomLicenseType.LICENSED,
             }),
         });
 
