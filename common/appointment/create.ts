@@ -97,8 +97,11 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
 const createZoomMeetingHelper = async (students: student[], appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]) => {
     try {
-        const studentZoomUsers = students.map(async (student) => {
+        const studentZoomUsers: ZoomUser[] = [];
+
+        students.forEach(async (student) => {
             const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
+            studentZoomUsers.push(studentZoomUser);
             await prisma.student.update({
                 where: {
                     id: student.id,
