@@ -103,6 +103,16 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
     }
 };
 
+const getOrCreateConversation = async (participants: User[], conversationId: string, conversationInfos: ConversationInfos): Promise<Conversation> => {
+    let conversation: Conversation;
+    conversation = await getConversation(conversationId);
+    if (conversation === undefined) {
+        await createConversation(participants, conversationInfos);
+        conversation = await getConversation(conversationId);
+    }
+    return conversation;
+};
+
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
     const userId = userIdToTalkJsId(user.userID);
     try {
@@ -271,6 +281,7 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getOrCreateConversation,
     deleteConversation,
     talkjsConversationApiUrl,
     Conversation,
