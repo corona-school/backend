@@ -1,12 +1,12 @@
 import { Role } from '../user/roles';
 import { GraphQLUser } from '../user/session';
-import { deleteZoomUser, getZoomUser, createZoomUser, getUserZAK } from './zoom-user';
+import { deleteZoomUser, getZoomUser, createZoomUser, getUserZAK, updateZoomUser } from './zoom-user';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const sampleUser: GraphQLUser = {
-    email: process.env.ZOOM_EMAIL,
+    email: process.env.ZOOM_EMAIL_2,
     firstname: 'random',
     lastname: 'user',
     roles: [Role.USER, Role.STUDENT],
@@ -14,18 +14,18 @@ const sampleUser: GraphQLUser = {
 };
 
 // test('Create a Zoom user', async () => {
-//     const result = await createZoomUser(sampleUser);
+//     const result = await createZoomUser(sampleUser.email, sampleUser.firstname, sampleUser.lastname);
 
 //     console.log(result);
 //     expect(typeof result).toBe('object');
 // });
 
-test('Get a Zoom user', async () => {
-    const result = await getZoomUser(process.env.ZOOM_USER_ID);
+// test('Get a Zoom user', async () => {
+//     const result = await getZoomUser(process.env.ZOOM_EMAIL_2);
 
-    console.log(result);
-    expect(typeof result).toBe('object');
-});
+//     console.log(result);
+//     expect(typeof result).toBe('object');
+// });
 
 // test('Get a Zoom users zak', async () => {
 //     const result = await getUserZAK(sampleUser.email);
@@ -33,6 +33,13 @@ test('Get a Zoom user', async () => {
 //     console.log(result);
 //     expect(result).toHaveProperty('token');
 // });
+
+test('Update a Zoom user', async () => {
+    const result = await updateZoomUser(process.env.ZOOM_EMAIL_2);
+
+    console.log(result);
+    expect(typeof result).toBe('object');
+});
 
 // test('Delete a Zoom user', async () => {
 //     const result = await deleteZoomUser(sampleUser);
