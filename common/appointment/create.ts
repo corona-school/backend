@@ -60,7 +60,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                         appointmentType: lecture_appointmenttype_enum.match,
                         organizerIds: [studentUserId],
                         participantIds: [pupilUserId],
-                        //zoomMeetingId: videoChat.id.toString(),
+                        zoomMeetingId: videoChat.id.toString(),
                     },
                 })
         )
@@ -88,7 +88,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         appointmentType: lecture_appointmenttype_enum.group,
                         organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
                         participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
-                        //zoomMeetingId: videoChat.id.toString(),
+                        zoomMeetingId: videoChat.id.toString(),
                     },
                 })
         )
@@ -97,31 +97,29 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
 const createZoomMeetingHelper = async (students: student[], appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]) => {
     try {
-        const studentZoomUsers: ZoomUser[] = [];
-
-        students.forEach(async (student) => {
-            const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
-            studentZoomUsers.push(studentZoomUser);
-            await prisma.student.update({
-                where: {
-                    id: student.id,
-                },
-                data: {
-                    zoomUserId: studentZoomUser.id,
-                },
-            });
-            return studentZoomUser;
-        });
-        Promise.all(studentZoomUsers).then(async (studentZoomUsers: ZoomUser[]) => {
-            const appointmentsNumber = appointmentsToBeCreated.length;
-            const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
-            const newVideoChat =
-                appointmentsNumber > 1
-                    ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, lastDate)
-                    : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start);
-            return newVideoChat;
-        });
+        const studentZoomUsers = await Promise.all(
+            students.map(async (student) => {
+                const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
+                await prisma.student.update({
+                    where: {
+                        id: student.id,
+                    },
+                    data: {
+                        zoomUserId: studentZoomUser.id,
+                    },
+                });
+                return studentZoomUser;
+            })
+        );
+        const appointmentsNumber = appointmentsToBeCreated.length;
+        const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
+        const newVideoChat =
+            appointmentsNumber > 1
+                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, lastDate)
+                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start);
+        return newVideoChat;
     } catch (e) {
         throw new Error(`Error while creating zoom meeting: ${e}`);
     }
 };
+export { createZoomMeetingHelper };
