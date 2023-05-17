@@ -5,9 +5,10 @@ import { Role } from '../authorizations';
 import { UserType } from '../types/user';
 import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
+import { getMyContacts } from '../../common/chat/contacts';
 
 @ObjectType()
-class Contact {
+export class Contact {
     @Field((_type) => UserType)
     user: UserType;
     @Field((_type) => String)
@@ -39,8 +40,10 @@ export class FieldMeResolver {
 
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
-    myContactOptions(@Ctx() context: GraphQLContext): Contact[] {
-        return [];
+    async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
+        const { user } = context;
+        const myContacts = await getMyContacts(user);
+        return myContacts;
     }
 
     @Query((returns) => [String])
