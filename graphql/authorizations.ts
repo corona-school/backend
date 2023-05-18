@@ -58,6 +58,26 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
     });
 }
 
+export function ImpliesRoleOnResult(role: Role) {
+    assert(
+        entityRoles.some((it) => it.role === role),
+        'Only entity roles can be implied'
+    );
+
+    return createMethodDecorator<GraphQLContext>(async ({ args, root, info, context }, next) => {
+        const result = await next();
+        if (Array.isArray(result)) {
+            for (const it of result) {
+                storeDeterminedEntityRole(context, role, it, true);
+            }
+        } else {
+            storeDeterminedEntityRole(context, role, result, true);
+        }
+
+        return result;
+    });
+}
+
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
     assert(await accessCheck(context, context.deferredRequiredRoles, modelName, value));
