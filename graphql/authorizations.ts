@@ -68,41 +68,32 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         return true;
     }
 
-    /* If the user could access this field if they are owning the entity,
-       we have to compare the user to the root value of this resolver
-       and use the ownership check */
-    if (requiredRoles.includes(Role.OWNER)) {
-        assert(modelName, 'Type must be resolved to determine ownership');
-        assert(root, 'root value must be bound to determine ownership');
+    // If access is not granted by a fixed role of the user, they might have access through an 'entity role',
+    // i.e. they are the owner of the accessed course or a participant in a course
 
-        const ownershipCheck = isOwnedBy[modelName];
-        assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
+    for (const entityRole of entityRoles) {
+        if (requiredRoles.includes(entityRole.role)) {
+            assert(root, 'root value must be bound to determine entity role ' + entityRole.role);
+            assert(modelName, 'Type must be resolved to determine entity role ' + entityRole.role);
 
-        const isOwner = await ownershipCheck(context.user, root);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
-
-        if (isOwner) {
-            return true;
-        }
-    }
-    if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
-        assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
-        assert(root, 'root value must be bound to determine access');
-        if (context.user.pupilId) {
-            const pupil = await getPupil(context.user.pupilId);
-            const success = await isParticipant(root, pupil);
-            if (success) {
+            const previousResult = getPreviouslyDeterminedEntityRole(context, entityRole.role, root);
+            if (previousResult === true) {
+                authLogger.debug('Skipped evaluating role ' + entityRole.role + ' as we know the user has this entity role');
                 return true;
             }
-        }
-    }
 
-    if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
-        assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
-        assert(root, 'root value must be bound to determine access');
-        const success = await isAppointmentParticipant(root, context.user);
-        if (success) {
-            return true;
+            // We already know that the user cannot have this role, continue
+            if (previousResult === false) {
+                authLogger.debug('Skipped evaluating role ' + entityRole.role + ' as we know the user does not have this entity role');
+                continue;
+            }
+
+            const result = await entityRole.hasRole(context, modelName, root);
+            storeDeterminedEntityRole(context, entityRole.role, root, result);
+            // We short circuit here on the first found role that grants access
+            if (result) {
+                return true;
+            }
         }
     }
 
@@ -112,6 +103,74 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
 
     throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
 }
+
+// An Entity Role is a role that a user has on all edges from a specific entity (root)
+interface EntityRole {
+    role: Role;
+    hasRole(context: GraphQLContext, modelName: ResolverModelNames, root: any): Promise<boolean>;
+}
+
+// As we traverse multiple edges from the same entity, we might need to check the same entity roles for the same entity again,
+// as these checks can be costly involving a roundtrip to the db, we cache the evaluated role in the GraphQL context
+
+// undefined -> did not yet checked role
+// true -> user has role on entity
+// false -> user does not have role on entity
+type EvaluatedEntityRoles = { [role in Role]?: boolean };
+type RolesForEntities = Map<any /* root entity */, EvaluatedEntityRoles>;
+
+const EVALUATED_ROLES = Symbol();
+
+function getPreviouslyDeterminedEntityRole(context: GraphQLContext, role: Role, root: any): boolean | null {
+    return (context[EVALUATED_ROLES] as RolesForEntities | undefined)?.get(root)?.[role] ?? null;
+}
+
+function storeDeterminedEntityRole(context: GraphQLContext, role: Role, root: any, hasRole: boolean) {
+    const forEntities = (context[EVALUATED_ROLES] ?? (context[EVALUATED_ROLES] = new Map())) as RolesForEntities;
+    let forEntity = forEntities.get(root);
+    if (!forEntity) {
+        forEntity = {};
+        forEntities.set(root, forEntity);
+    }
+
+    forEntity[role] = hasRole;
+}
+
+const entityRoles: EntityRole[] = [
+    {
+        role: Role.OWNER,
+        async hasRole(context, modelName, root) {
+            const ownershipCheck = isOwnedBy[modelName];
+            assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
+
+            const isOwner = await ownershipCheck(context.user, root);
+            authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
+
+            return isOwner;
+        },
+    },
+
+    {
+        role: Role.SUBCOURSE_PARTICIPANT,
+        async hasRole(context, modelName, root) {
+            assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine subcourse participant role');
+            if (context.user.pupilId) {
+                const pupil = await getPupil(context.user.pupilId);
+                return await isParticipant(root, pupil);
+            }
+
+            return false;
+        },
+    },
+
+    {
+        role: Role.APPOINTMENT_PARTICIPANT,
+        async hasRole(context, modelName, root) {
+            assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
+            return await isAppointmentParticipant(root, context.user);
+        },
+    },
+];
 
 /* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
 
