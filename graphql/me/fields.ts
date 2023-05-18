@@ -1,7 +1,7 @@
 import { Authorized, Ctx, FieldResolver, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Role } from '../authorizations';
+import { Role, hasAccess } from '../authorizations';
 import { UserType } from '../types/user';
 import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
@@ -42,8 +42,7 @@ export class FieldMeResolver {
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
-        const myContacts = await getMyContacts(user);
-        return myContacts;
+        return await getMyContacts(user);
     }
 
     @Query((returns) => [String])
