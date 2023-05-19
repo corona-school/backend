@@ -5,12 +5,12 @@ import { Role, hasAccess } from '../authorizations';
 import { UserType } from '../types/user';
 import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
-import { getMyContacts } from '../../common/chat/contacts';
+import { UserContactType, getMyContacts } from '../../common/chat/contacts';
 
 @ObjectType()
 export class Contact {
     @Field((_type) => UserType)
-    user: Pick<UserType, 'userID' | 'firstname' | 'lastname'>;
+    user: UserContactType;
     @Field((_type) => String)
     contactReason: string;
     @Field((_type) => String)

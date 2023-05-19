@@ -1,12 +1,18 @@
 import assert from 'assert';
 import { Pupil, Student } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { getUser, isPupil, isStudent } from '../user';
+import { isStudent } from '../user';
 import { User, getUserIdTypeORM } from '../user';
 import { getOrCreateConversation } from './conversation';
 
+export type UserContactType = {
+    userID: string;
+    firstname: string;
+    lastname: string;
+};
+
 type Contact = {
-    user: Pick<User, 'userID' | 'firstname' | 'lastname'>;
+    user: UserContactType;
     contactReason: string;
     chatId: string;
 };
