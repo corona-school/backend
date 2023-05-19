@@ -1,16 +1,17 @@
+import assert from 'assert';
 import { Pupil, Student } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { getUser } from '../user';
+import { getUser, isPupil, isStudent } from '../user';
 import { User, getUserIdTypeORM } from '../user';
 import { getOrCreateConversation } from './conversation';
 
 type Contact = {
-    user: User;
+    user: Pick<User, 'userID' | 'firstname' | 'lastname'>;
     contactReason: string;
     chatId: string;
 };
 
-const getContacts = async (user: User) => {
+const getMatchAndSubcourseContacts = async (user: User) => {
     return await prisma.student.findMany({
         where: {
             OR: [
@@ -42,12 +43,13 @@ const getMatchPartners = async (user: User): Promise<Student[] | Pupil[]> => {
         });
     }
 };
-const getSubcourseContact = async (user: User) => {
+const getSubcourseInstructorContacts = async (pupil: User) => {
+    assert(pupil.pupilId, 'Pupil must have an pupilId');
     return await prisma.student.findMany({
         where: {
             subcourse_instructors_student: {
                 some: {
-                    subcourse: { subcourse_participants_pupil: { some: { pupilId: user.pupilId } } },
+                    subcourse: { subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } } },
                 },
             },
         },
@@ -56,38 +58,37 @@ const getSubcourseContact = async (user: User) => {
 
 export const getMyContacts = async (user: User): Promise<Contact[]> => {
     // TODO const conversation = await getOrCreateConversation()
-    // TODO check ownership for querying contacts
-    const matchPartners = await getMatchPartners(user);
-    const subcourseContacts = await getSubcourseContact(user);
     const contactMap: Map<string, Contact> = new Map();
 
-    matchPartners.forEach(async (partner: Student | Pupil) => {
+    const matchPartners = await getMatchPartners(user);
+    matchPartners.forEach((partner: Student | Pupil) => {
         const userId = getUserIdTypeORM(partner);
         contactMap.set(userId, {
             user: {
                 userID: userId,
                 firstname: partner.firstname,
                 lastname: partner.lastname,
-                email: partner.email,
             },
             contactReason: 'match',
             chatId: '',
         });
     });
 
-    subcourseContacts.forEach(async (contact) => {
-        const userId = getUserIdTypeORM(contact);
-        contactMap.set(userId, {
-            user: {
-                userID: userId,
-                firstname: contact.firstname,
-                lastname: contact.lastname,
-                email: contact.email,
-            },
-            contactReason: 'course',
-            chatId: '',
+    if (user.pupilId) {
+        const subcourseContacts = await getSubcourseInstructorContacts(user);
+        subcourseContacts.forEach((contact) => {
+            const userId = getUserIdTypeORM(contact);
+            contactMap.set(userId, {
+                user: {
+                    userID: userId,
+                    firstname: contact.firstname,
+                    lastname: contact.lastname,
+                },
+                contactReason: 'course',
+                chatId: '',
+            });
         });
-    });
+    }
 
     const myContactOptions = Array.from(contactMap.values());
 

@@ -10,7 +10,7 @@ import { getMyContacts } from '../../common/chat/contacts';
 @ObjectType()
 export class Contact {
     @Field((_type) => UserType)
-    user: UserType;
+    user: Pick<UserType, 'userID' | 'firstname' | 'lastname'>;
     @Field((_type) => String)
     contactReason: string;
     @Field((_type) => String)
@@ -42,7 +42,7 @@ export class FieldMeResolver {
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
-        return await getMyContacts(user);
+        return getMyContacts(user);
     }
 
     @Query((returns) => [String])
