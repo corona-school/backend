@@ -17,13 +17,13 @@ import { getAppointmentsForUser } from '../../common/appointment/get';
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.USER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.USER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
