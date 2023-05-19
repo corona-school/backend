@@ -4,28 +4,17 @@ import bodyParser from 'body-parser';
 import hpp from 'hpp';
 import helmet from 'helmet';
 import cors from 'cors';
-import * as userController from './controllers/userController';
-import * as matchController from './controllers/matchController';
-import * as projectMatchController from './controllers/projectMatchController';
 import * as certificateController from './controllers/certificateController';
-import * as registrationController from './controllers/registrationController';
-import * as mentoringController from './controllers/mentoringController';
-import * as expertController from './controllers/expertController';
-import * as interestConfirmationController from './controllers/interestConfirmationController';
 import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
-import { authCheckFactory } from './middleware/auth';
 import { setupDevDB } from './dev';
 import favicon from 'express-favicon';
 import { allStateCooperationSubdomains } from '../common/entity/State';
-import multer from 'multer';
 import moment from 'moment-timezone';
 import { closeBrowser, setupBrowser } from 'html-pppdf';
 import { performCleanupActions } from '../common/util/cleanup';
-import 'reflect-metadata'; //leave it here...
 import { apolloServer } from '../graphql';
-import rateLimit from 'express-rate-limit';
 import { getAttachmentUrlEndpoint } from './controllers/attachmentController';
 import { isDev } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
@@ -88,12 +77,7 @@ void createConnection()
             configureParticipationCertificateAPI();
             configureCertificateAPI();
         }
-        configureUserAPI();
-        configureRegistrationAPI();
-        configureMentoringAPI();
-        configureExpertAPI();
         await configureApolloServer();
-        configurePupilInterestConfirmationAPI();
         configureFileAPI();
         const server = await deployServer();
         configureGracefulShutdown(server);
@@ -142,23 +126,6 @@ void createConnection()
             app.use('/api/attachments', attachmentApiRouter);
         }
 
-        function configureUserAPI() {
-            const userApiRouter = express.Router();
-            userApiRouter.use(authCheckFactory(false, false, true, [], ['tutoringInterestConfirmationRequest']));
-            userApiRouter.get('/', userController.getSelfHandler);
-            userApiRouter.get('/:id', userController.getHandler);
-            userApiRouter.put('/:id', userController.putHandler);
-            userApiRouter.put('/:id/subjects', userController.putSubjectsHandler);
-            userApiRouter.put('/:id/projectFields', userController.putProjectFieldsHandler);
-            userApiRouter.put('/:id/active/:active', userController.putActiveHandler);
-            userApiRouter.delete('/:id/matches/:uuid', matchController.deleteHandler);
-            userApiRouter.delete('/:id/projectMatches/:uuid', projectMatchController.deleteHandler);
-            userApiRouter.post('/:id/role/instructor', userController.postUserRoleInstructorHandler);
-            userApiRouter.post('/:id/role/tutor', userController.postUserRoleTutorHandler);
-            userApiRouter.post('/:id/role/projectCoach', userController.postUserRoleProjectCoachHandler);
-            userApiRouter.post('/:id/role/projectCoachee', userController.postUserRoleProjectCoacheeHandler);
-            app.use('/api/user', userApiRouter);
-        }
 
         function configureCertificateAPI() {
             const certificateRouter = express.Router();
@@ -168,22 +135,6 @@ void createConnection()
 
             // TODO Find better solution
             app.use('/api/certificate/:certificateId/public', express.static('./assets/public'));
-        }
-
-        function configureRegistrationAPI() {
-            const checkEmailRateLimit = rateLimit({
-                windowMs: 15 * 60 * 1000, // 15 minutes
-                max: 5,
-            });
-
-            const registrationRouter = express.Router();
-            registrationRouter.post('/tutee', registrationController.postTuteeHandler);
-            registrationRouter.post('/tutee/state', registrationController.postStateTuteeHandler);
-            registrationRouter.post('/tutor', registrationController.postTutorHandler);
-            registrationRouter.post('/mentor', registrationController.postMentorHandler);
-            registrationRouter.post('/checkEmail', checkEmailRateLimit, registrationController.checkEmail);
-            registrationRouter.get('/schools/:state?', registrationController.getSchoolsHandler);
-            app.use('/api/register', registrationRouter);
         }
 
         function configureParticipationCertificateAPI() {
@@ -201,34 +152,6 @@ void createConnection()
                 next();
             });
             app.use(participationCertificateRouter);
-        }
-
-        function configureMentoringAPI() {
-            const mentoringRouter = express.Router();
-            mentoringRouter.use(authCheckFactory());
-            mentoringRouter.post('/contact', mentoringController.postContactMentorHandler);
-            mentoringRouter.get('/material', mentoringController.getMaterial);
-            mentoringRouter.get('/feedbackCall', mentoringController.getFeedbackCallData);
-
-            app.use('/api/mentoring', mentoringRouter);
-        }
-
-        function configureExpertAPI() {
-            const expertRouter = express.Router();
-            expertRouter.use(authCheckFactory());
-            expertRouter.get('/', expertController.getExpertsHandler);
-            expertRouter.post('/:id/contact', expertController.postContactExpertHandler);
-            expertRouter.put('/:id', expertController.putExpertHandler);
-            expertRouter.get('/tags', expertController.getUsedTagsHandler);
-
-            app.use('/api/expert', expertRouter);
-        }
-
-        function configurePupilInterestConfirmationAPI() {
-            const router = express.Router();
-            router.post('/status', interestConfirmationController.postInterestConfirmationRequestStatus);
-
-            app.use('/api/interest-confirmation', router);
         }
 
         function configureFileAPI() {
