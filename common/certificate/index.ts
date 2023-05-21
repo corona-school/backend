@@ -1,5 +1,4 @@
 import { readFileSync, existsSync } from 'fs';
-import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
 import moment from 'moment';
 import CertificateRequestEvent from '../transactionlog/types/CertificateRequestEvent';
@@ -18,6 +17,7 @@ import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
 import { userForPupil, userForStudent } from '../user';
 import { USER_APP_DOMAIN } from '../util/environment';
+import { generatePDFFromHTML } from '../util/pdf';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -360,7 +360,7 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format('D.M.YYYY'),
     });
 
-    return await generatePDFFromHTMLString(result, {
+    return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
     });
 }

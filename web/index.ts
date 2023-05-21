@@ -1,216 +1,36 @@
-import express from 'express';
-import http from 'http';
-import bodyParser from 'body-parser';
-import hpp from 'hpp';
-import helmet from 'helmet';
-import cors from 'cors';
-import * as certificateController from './controllers/certificateController';
-import { connectLogger } from 'log4js';
 import { getLogger } from '../common/logger/logger';
 import { createConnection, getConnection } from 'typeorm';
 import { setupDevDB } from './dev';
-import favicon from 'express-favicon';
-import { allStateCooperationSubdomains } from '../common/entity/State';
 import moment from 'moment-timezone';
-import { closeBrowser, setupBrowser } from 'html-pppdf';
-import { performCleanupActions } from '../common/util/cleanup';
-import { apolloServer } from '../graphql';
-import { getAttachmentUrlEndpoint } from './controllers/attachmentController';
 import { isDev } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
-import { fileRouter } from './controllers/fileController';
-import cookieParser from 'cookie-parser';
-import { WebSocketService } from '../common/websocket';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
-import { startTransaction } from '../common/session';
 
-// Logger setup
 const logger = getLogger();
-const accessLogger = getLogger('access');
 logger.debug('Debug logging enabled');
 
-//SETUP: moment
 moment.locale('de'); //set global moment date format
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 
-logger.info('Webserver backend started');
-const app = express();
+void (async function main() {
+    logger.info(`Starting the Webserver`);
 
-//SETUP PDF generation environment
-async function setupPDFGenerationEnvironment() {
-    if (isCommandArg('--noPDF')) {
-        logger.info('Skipping browser initialization due to supplied --noPDF arg');
-        return;
+    // -------- Database Connection ---------------
+    await createConnection();
+    logger.info(`Set up Database connection`);
+
+    process.on('beforeExit', async () => {
+        await getConnection()?.close();
+        logger.info(`Closed Database connection`);
+    });
+
+    // -------- Fill DB on Dev -------------------
+    if (isDev && !isCommandArg('--keepDB')) {
+        await setupDevDB();
     }
-    await setupBrowser({
-        args: ['--no-sandbox'], //don't run in a sandbox, cause we have only trusted content and our server do not support a sandbox
-        handleSIGTERM: false, //don't close chrome on sigterm, which heroku sends to all processes
-    });
-}
 
-// Database connection
-void createConnection()
-    .then(setupPDFGenerationEnvironment)
-    .then(async () => {
-        logger.info('Database connected');
-        app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
-
-        app.use((req, res, next) => {
-            startTransaction();
-            next();
-        });
-
-        // Express setup
-        app.use(bodyParser.json());
-        app.use(cookieParser());
-        app.use(favicon('./assets/favicon.ico'));
-        app.use('/public', express.static('./assets/public'));
-
-        addCorsMiddleware();
-        addSecurityMiddleware();
-
-        configureAttachmentAPI();
-
-        if (!isCommandArg('--noPDF')) {
-            configureParticipationCertificateAPI();
-            configureCertificateAPI();
-        }
-        await configureApolloServer();
-        configureFileAPI();
-        const server = await deployServer();
-        configureGracefulShutdown(server);
-
-        function addCorsMiddleware() {
-            let origins;
-
-            const allowedSubdomains = [...allStateCooperationSubdomains, 'jufo', 'partnerschule', 'drehtuer', 'codu'];
-            if (process.env.ENV == 'dev') {
-                origins = [
-                    'http://localhost:3000',
-                    ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
-                    'https://user-app-dev.herokuapp.com',
-                    /^https:\/\/lernfair-user-app-[\-a-z0-9]+.herokuapp.com$/,
-                    'https://lern.retool.com',
-                ];
-            } else {
-                origins = [
-                    'https://dashboard.corona-school.de',
-                    'https://my.corona-school.de',
-                    ...allowedSubdomains.map((d) => `https://${d}.corona-school.de`),
-                    'https://dashboard.lern-fair.de',
-                    'https://my.lern-fair.de',
-                    'https://app.lern-fair.de',
-                    ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
-                    'https://lern.retool.com',
-                ];
-            }
-
-            const options = {
-                origin: origins,
-                methods: ['GET', 'POST', 'DELETE', 'PUT', 'HEAD', 'PATCH'],
-            };
-
-            app.use(cors(options));
-        }
-
-        function addSecurityMiddleware() {
-            app.use(hpp());
-            app.use(helmet());
-        }
-
-        function configureAttachmentAPI() {
-            const attachmentApiRouter = express.Router();
-            attachmentApiRouter.get('/:attachmentId/:filename', getAttachmentUrlEndpoint);
-            app.use('/api/attachments', attachmentApiRouter);
-        }
-
-
-        function configureCertificateAPI() {
-            const certificateRouter = express.Router();
-            certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ certificateController.getCertificateConfirmationEndpoint);
-
-            app.use('/api/certificate', certificateRouter);
-
-            // TODO Find better solution
-            app.use('/api/certificate/:certificateId/public', express.static('./assets/public'));
-        }
-
-        function configureParticipationCertificateAPI() {
-            const participationCertificateRouter = express.Router();
-            participationCertificateRouter.get('/:certificateId', (req, res, next) => {
-                if (!req.subdomains.includes('verify')) {
-                    return next();
-                }
-                void certificateController.getCertificateConfirmationEndpoint(req, res);
-            });
-            participationCertificateRouter.use((req, res, next) => {
-                if (req.subdomains.includes('verify')) {
-                    return res.redirect(`${req.protocol}://${req.hostname.split('.').slice(req.subdomains.length).join('.')}`);
-                }
-                next();
-            });
-            app.use(participationCertificateRouter);
-        }
-
-        function configureFileAPI() {
-            app.use('/api/files', fileRouter);
-        }
-
-        async function configureApolloServer() {
-            await apolloServer.start();
-            apolloServer.applyMiddleware({ app, path: '/apollo' });
-        }
-
-        async function deployServer() {
-            const port = process.env.PORT || 5000;
-            if (isDev && !isCommandArg('--keepDB')) {
-                await setupDevDB();
-            }
-
-            const server = http.createServer(app);
-
-            const ws = WebSocketService.getInstance(server);
-            ws.configure();
-
-            // Start listening
-            return server.listen(port, () => logger.info(`${isDev ? 'DEV-' : ''}Server listening on port ${port}`)); //return server such that it can be used afterwards
-        }
-
-        function configureGracefulShutdown(server: http.Server) {
-            //NOTE: use this to cleanup node's event loop
-            process.on('SIGTERM', async () => {
-                logger.debug('SIGTERM signal received: Starting graceful shutdown procedures...');
-                //Close Server
-                await new Promise<void>((resolve) =>
-                    server.close(() => {
-                        resolve();
-                    })
-                );
-                logger.debug('✅ HTTP server closed!');
-
-                //remove intervals to cleanup, and anything else that have registered as cleanup actions
-                performCleanupActions();
-                logger.debug('✅ All other custom graceful shutdown actions completed!');
-
-                //close puppeteer (because if all connections are finished, it is no longer needed at the moment)
-                //even though this is not the cleanest solution (because it could still lead to some queued callbacks on node's event loop that uses puppeteer for pdf generation), it is called here, because for now all pdf generation is awaited for until a server-route's response was delivered.
-                if (!isCommandArg('--noPDF')) {
-                    await closeBrowser();
-                    logger.debug('✅ Puppeteer gracefully shut down!');
-                }
-                //now, the process will automatically exit if node has no more async operations to perform (i.e. finished sending out all open mails that weren't awaited for etc.)
-            });
-
-            //NOTE: Use the following to perform async actions before exiting. This is called if node's event loop is empty and thus it will only add async operations that, when completed lead to an empty event loop, such that node can exit then.
-            process.on('beforeExit', async () => {
-                console.log('BEFORE EXIT TRIGGERED....');
-                //Close database connection
-                await getConnection()?.close();
-                logger.debug('✅ Default database connection successfully closed!');
-                //Finish...
-                logger.debug('Graceful Shutdown completed 🎉'); //event loop now fully cleaned up
-            });
-        }
-    });
+    // -------- Start Webserver ------------------
+    await import('./server');
+})();

@@ -10,7 +10,6 @@ import CreateCourseAttendanceLogEvent from '../transactionlog/types/CreateCourse
 import { BBBMeeting } from '../entity/BBBMeeting';
 import CreateBBBMeetingEvent from '../transactionlog/types/CreateBBBMeetingEvent';
 import { Student } from '../entity/Student';
-import { addCleanupAction } from './cleanup';
 
 const parser = new Parser();
 const logger = getLogger();
@@ -22,7 +21,6 @@ const courseAttendanceLogInterval = 600000;
 const bbbMeetingInfoHandlerTimeout = setInterval(() => {
     void handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);
-addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
     // Meeting IDs must be at least 2 chars

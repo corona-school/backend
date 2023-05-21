@@ -1,10 +1,16 @@
 import { getLogger } from '../../../common/logger/logger';
-import { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import { createRemissionRequestVerificationPage } from "../../../common/remission-request";
 import { DefaultLanguage, LANGUAGES, Language, getConfirmationPage, CertificateError } from '../../../common/certificate';
 
 const logger = getLogger();
 
+export const certificateRouter = Router();
+certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ getCertificateConfirmationEndpoint);
+
+// Also mount the assets next to the assets relative to the hosted HTML file
+// TODO: Make paths in certificates absolute
+certificateRouter.use('/:certificateId/public', express.static('./assets/public'));
 
 // certificate types
 const CERTIFICATETYPES = ["participation", "remission"] as const;
@@ -35,7 +41,7 @@ const DefaultCertificateType = "participation";
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
+async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
     try {
         const { certificateId } = req.params;
         let { lang, ctype } = req.query;
