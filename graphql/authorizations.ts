@@ -67,7 +67,7 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
 //  as they own the pupil entity, the user is the pupil we depart from, and thus the user is a participant of all subcourses:
 //    Pupil(1)   --[ subcoursesJoined ]  --> Subcourse(123)
 //    Role.OWNER
-// With this decorator, we can mark subcoursesJoined with @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT),
+// With this decorator, we can mark subcoursesJoined with @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT, Role.OWNER),
 //  and all subcourses returned by 'subcoursesJoined' will be marked with the respective role
 // Then when the 'otherParticipants' edge is evaluated on each subcourse, we already know the role and can skip the access check
 //
