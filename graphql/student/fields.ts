@@ -12,7 +12,7 @@ import {
 } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Role } from '../authorizations';
+import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { Subject } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
@@ -71,6 +71,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() student: Required<Student>) {
         return await prisma.match.findMany({
             where: { studentId: student.id },
@@ -142,6 +143,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
         const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
@@ -155,6 +157,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Course])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async coursesInstructing(@Root() student: Student) {
         return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
     }
