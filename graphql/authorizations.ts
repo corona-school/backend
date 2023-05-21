@@ -58,20 +58,49 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
     });
 }
 
-export function ImpliesRoleOnResult(role: Role) {
+// We have a few entity dependent roles, where the role is determined based on the root entity of an edge, i.e.:
+//    Subcourse(123)   --[ otherParticipants ]--> OtherParticipant(1)
+//                       Role.SUBCOURSE_PARTICIPANT
+// Thus when we arrive at the edge, we usually need to query the DB to check if the user is a participant of Subcourse 123
+//
+// However when the user arrived at the Subcourse via the subcoursesJoined edge, we know that they are a participant already,
+//  as they own the pupil entity, the user is the pupil we depart from, and thus the user is a participant of all subcourses:
+//    Pupil(1)   --[ subcoursesJoined ]  --> Subcourse(123)
+//    Role.OWNER
+// With this decorator, we can mark subcoursesJoined with @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT),
+//  and all subcourses returned by 'subcoursesJoined' will be marked with the respective role
+// Then when the 'otherParticipants' edge is evaluated on each subcourse, we already know the role and can skip the access check
+//
+// This is a transparent optimization, so omitting ImpliesRoleOnResult will return the same results (however less fast)
+export function ImpliesRoleOnResult(roleOnResult: Role, roleOnRoot: Role) {
     assert(
-        entityRoles.some((it) => it.role === role),
+        entityRoles.some((it) => it.role === roleOnResult),
+        'Only entity roles can be implied'
+    );
+
+    assert(
+        entityRoles.some((it) => it.role === roleOnRoot),
         'Only entity roles can be implied'
     );
 
     return createMethodDecorator<GraphQLContext>(async ({ args, root, info, context }, next) => {
+        // First evaluate all other decorators and the edge we are decorating:
         const result = await next();
-        if (Array.isArray(result)) {
-            for (const it of result) {
-                storeDeterminedEntityRole(context, role, it, true);
+
+        // Then check if we have the role on root ...
+        const hasRoleOnRoot = getPreviouslyDeterminedEntityRole(context, roleOnRoot, root) === true;
+
+        if (hasRoleOnRoot) {
+            // ... and if yes, store the role on the target:
+            if (Array.isArray(result)) {
+                for (const it of result) {
+                    storeDeterminedEntityRole(context, roleOnResult, it, true);
+                }
+            } else {
+                storeDeterminedEntityRole(context, roleOnResult, result, true);
             }
-        } else {
-            storeDeterminedEntityRole(context, role, result, true);
+
+            authLogger.debug(`Implied Role ` + roleOnResult + ` on result as user has role ` + roleOnRoot + ` on the current entity`);
         }
 
         return result;
@@ -109,6 +138,8 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
             }
 
             const result = await entityRole.hasRole(context, modelName, root);
+            // As the accessCheck is evaluated in parallel on all edges from the same root node, it can happen that we still evaluate the same role multiple times,
+            // and then store the result multiple times:
             storeDeterminedEntityRole(context, entityRole.role, root, result);
             // We short circuit here on the first found role that grants access
             if (result) {
@@ -154,6 +185,7 @@ function storeDeterminedEntityRole(context: GraphQLContext, role: Role, root: an
     }
 
     forEntity[role] = hasRole;
+    authLogger.debug(`Stored role ${role} on entity: ${hasRole}`);
 }
 
 const entityRoles: EntityRole[] = [

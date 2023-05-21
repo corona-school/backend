@@ -34,7 +34,7 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT)
+    @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT, /* if we are */ Role.OWNER)
     async subcoursesJoined(
         @Root() pupil: Required<Pupil>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
@@ -119,7 +119,7 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    @ImpliesRoleOnResult(Role.OWNER)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() pupil: Required<Pupil>) {
         return await prisma.match.findMany({
             where: { pupilId: pupil.id },

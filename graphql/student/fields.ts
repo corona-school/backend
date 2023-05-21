@@ -71,7 +71,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    @ImpliesRoleOnResult(Role.OWNER)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() student: Required<Student>) {
         return await prisma.match.findMany({
             where: { studentId: student.id },
@@ -143,7 +143,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    @ImpliesRoleOnResult(Role.OWNER)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
         const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
@@ -157,7 +157,7 @@ export class ExtendFieldsStudentResolver {
     @FieldResolver((type) => [Course])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    @ImpliesRoleOnResult(Role.OWNER)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async coursesInstructing(@Root() student: Student) {
         return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
     }
