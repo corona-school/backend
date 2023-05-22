@@ -23,6 +23,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         data: {
             dissolved: true,
             dissolveReason,
+            dissolvedAt: new Date(),
         },
     });
     const matchLectures = await prisma.lecture.findMany({
@@ -62,7 +63,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null },
+        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
         where: { id: match.id },
     });
 

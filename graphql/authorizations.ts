@@ -58,6 +58,55 @@ export function AuthorizedDeferred(...requiredRoles: Role[]) {
     });
 }
 
+// We have a few entity dependent roles, where the role is determined based on the root entity of an edge, i.e.:
+//    Subcourse(123)   --[ otherParticipants ]--> OtherParticipant(1)
+//                       Role.SUBCOURSE_PARTICIPANT
+// Thus when we arrive at the edge, we usually need to query the DB to check if the user is a participant of Subcourse 123
+//
+// However when the user arrived at the Subcourse via the subcoursesJoined edge, we know that they are a participant already,
+//  as they own the pupil entity, the user is the pupil we depart from, and thus the user is a participant of all subcourses:
+//    Pupil(1)   --[ subcoursesJoined ]  --> Subcourse(123)
+//    Role.OWNER
+// With this decorator, we can mark subcoursesJoined with @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT, Role.OWNER),
+//  and all subcourses returned by 'subcoursesJoined' will be marked with the respective role
+// Then when the 'otherParticipants' edge is evaluated on each subcourse, we already know the role and can skip the access check
+//
+// This is a transparent optimization, so omitting ImpliesRoleOnResult will return the same results (however less fast)
+export function ImpliesRoleOnResult(roleOnResult: Role, roleOnRoot: Role) {
+    assert(
+        entityRoles.some((it) => it.role === roleOnResult),
+        'Only entity roles can be implied'
+    );
+
+    assert(
+        entityRoles.some((it) => it.role === roleOnRoot),
+        'Only entity roles can be implied'
+    );
+
+    return createMethodDecorator<GraphQLContext>(async ({ args, root, info, context }, next) => {
+        // First evaluate all other decorators and the edge we are decorating:
+        const result = await next();
+
+        // Then check if we have the role on root ...
+        const hasRoleOnRoot = getPreviouslyDeterminedEntityRole(context, roleOnRoot, root) === true;
+
+        if (hasRoleOnRoot) {
+            // ... and if yes, store the role on the target:
+            if (Array.isArray(result)) {
+                for (const it of result) {
+                    storeDeterminedEntityRole(context, roleOnResult, it, true);
+                }
+            } else {
+                storeDeterminedEntityRole(context, roleOnResult, result, true);
+            }
+
+            authLogger.debug(`Implied Role ` + roleOnResult + ` on result as user has role ` + roleOnRoot + ` on the current entity`);
+        }
+
+        return result;
+    });
+}
+
 export async function hasAccess<Name extends ResolverModelNames>(context: GraphQLContext, modelName: Name, value: ResolverModel<Name>): Promise<void | never> {
     assert(context.deferredRequiredRoles, 'hasAccess may only be used in @AuthorizedDeferred methods');
     assert(await accessCheck(context, context.deferredRequiredRoles, modelName, value));
@@ -68,41 +117,34 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         return true;
     }
 
-    /* If the user could access this field if they are owning the entity,
-       we have to compare the user to the root value of this resolver
-       and use the ownership check */
-    if (requiredRoles.includes(Role.OWNER)) {
-        assert(modelName, 'Type must be resolved to determine ownership');
-        assert(root, 'root value must be bound to determine ownership');
+    // If access is not granted by a fixed role of the user, they might have access through an 'entity role',
+    // i.e. they are the owner of the accessed course or a participant in a course
 
-        const ownershipCheck = isOwnedBy[modelName];
-        assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
+    for (const entityRole of entityRoles) {
+        if (requiredRoles.includes(entityRole.role)) {
+            assert(root, 'root value must be bound to determine entity role ' + entityRole.role);
+            assert(modelName, 'Type must be resolved to determine entity role ' + entityRole.role);
 
-        const isOwner = await ownershipCheck(context.user, root);
-        authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
-
-        if (isOwner) {
-            return true;
-        }
-    }
-    if (requiredRoles.includes(Role.SUBCOURSE_PARTICIPANT)) {
-        assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine access to it');
-        assert(root, 'root value must be bound to determine access');
-        if (context.user.pupilId) {
-            const pupil = await getPupil(context.user.pupilId);
-            const success = await isParticipant(root, pupil);
-            if (success) {
+            const previousResult = getPreviouslyDeterminedEntityRole(context, entityRole.role, root);
+            if (previousResult === true) {
+                authLogger.debug('Skipped evaluating role ' + entityRole.role + ' as we know the user has this entity role');
                 return true;
             }
-        }
-    }
 
-    if (requiredRoles.includes(Role.APPOINTMENT_PARTICIPANT)) {
-        assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
-        assert(root, 'root value must be bound to determine access');
-        const success = await isAppointmentParticipant(root, context.user);
-        if (success) {
-            return true;
+            // We already know that the user cannot have this role, continue
+            if (previousResult === false) {
+                authLogger.debug('Skipped evaluating role ' + entityRole.role + ' as we know the user does not have this entity role');
+                continue;
+            }
+
+            const result = await entityRole.hasRole(context, modelName, root);
+            // As the accessCheck is evaluated in parallel on all edges from the same root node, it can happen that we still evaluate the same role multiple times,
+            // and then store the result multiple times:
+            storeDeterminedEntityRole(context, entityRole.role, root, result);
+            // We short circuit here on the first found role that grants access
+            if (result) {
+                return true;
+            }
         }
     }
 
@@ -112,6 +154,75 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
 
     throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
 }
+
+// An Entity Role is a role that a user has on all edges from a specific entity (root)
+interface EntityRole {
+    role: Role;
+    hasRole(context: GraphQLContext, modelName: ResolverModelNames, root: any): Promise<boolean>;
+}
+
+// As we traverse multiple edges from the same entity, we might need to check the same entity roles for the same entity again,
+// as these checks can be costly involving a roundtrip to the db, we cache the evaluated role in the GraphQL context
+
+// undefined -> did not yet checked role
+// true -> user has role on entity
+// false -> user does not have role on entity
+type EvaluatedEntityRoles = { [role in Role]?: boolean };
+type RolesForEntities = Map<any /* root entity */, EvaluatedEntityRoles>;
+
+const EVALUATED_ROLES = Symbol();
+
+function getPreviouslyDeterminedEntityRole(context: GraphQLContext, role: Role, root: any): boolean | null {
+    return (context[EVALUATED_ROLES] as RolesForEntities | undefined)?.get(root)?.[role] ?? null;
+}
+
+function storeDeterminedEntityRole(context: GraphQLContext, role: Role, root: any, hasRole: boolean) {
+    const forEntities = (context[EVALUATED_ROLES] ?? (context[EVALUATED_ROLES] = new Map())) as RolesForEntities;
+    let forEntity = forEntities.get(root);
+    if (!forEntity) {
+        forEntity = {};
+        forEntities.set(root, forEntity);
+    }
+
+    forEntity[role] = hasRole;
+    authLogger.debug(`Stored role ${role} on entity: ${hasRole}`);
+}
+
+const entityRoles: EntityRole[] = [
+    {
+        role: Role.OWNER,
+        async hasRole(context, modelName, root) {
+            const ownershipCheck = isOwnedBy[modelName];
+            assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
+
+            const isOwner = await ownershipCheck(context.user, root);
+            authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
+
+            return isOwner;
+        },
+    },
+
+    {
+        role: Role.SUBCOURSE_PARTICIPANT,
+        async hasRole(context, modelName, root) {
+            assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine subcourse participant role');
+            if (context.user.pupilId) {
+                const pupil = await getPupil(context.user.pupilId);
+                return await isParticipant(root, pupil);
+            }
+
+            return false;
+        },
+    },
+
+    {
+        role: Role.APPOINTMENT_PARTICIPANT,
+        async hasRole(context, modelName, root) {
+            assert(modelName === 'Lecture', `Type must be a Lecture to determine access to it`);
+            return await isAppointmentParticipant(root, context.user);
+        },
+    },
+];
 
 /* ------------------------------ AUTHORIZATION ENHANCEMENTS -------------------------------------------------------- */
 

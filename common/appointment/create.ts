@@ -8,6 +8,7 @@ import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import dontenv from 'dotenv';
 import { ZoomUser, createZoomUser } from '../zoom/zoom-user';
 import { student } from '@prisma/client';
+import moment from 'moment';
 
 @InputType()
 export abstract class AppointmentCreateInputBase {
@@ -38,6 +39,20 @@ export abstract class AppointmentCreateGroupInput extends AppointmentCreateInput
     @Field(() => lecture_appointmenttype_enum)
     appointmentType: 'group';
 }
+
+export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
+    const now = moment.now();
+    const start = moment(appointmentDate);
+    const diffDays = start.diff(now, 'days');
+    return diffDays > 6;
+};
+
+export const isAppointmentFiveMinutesLater = (appointmentDate: Date) => {
+    const now = moment();
+    const fiveMinutesLater = moment(now).add(5, 'minutes');
+    const isAfter = moment(appointmentDate).isAfter(fiveMinutesLater);
+    return isAfter;
+};
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });

@@ -1,5 +1,6 @@
 import { isCommandArg } from '../util/basic';
 import { configure, addLayout, getLogger as getlog4jsLogger, Logger as Log4jsLogger } from 'log4js';
+import { getCurrentTransaction } from '../session';
 
 addLayout('json', function () {
     return function (logEvent) {
@@ -24,7 +25,22 @@ if (process.env.LOG_FORMAT === 'json') {
 
 configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'coloured' } },
+        out: {
+            type: 'stdout',
+            layout: {
+                type: 'pattern',
+                pattern: '%[%x{transaction}%c%] %m%n',
+                tokens: {
+                    transaction: (it) => {
+                        const { sessionID, transactionID } = it.context;
+                        if (transactionID) {
+                            return `[${sessionID ?? '?'}/${transactionID}] `;
+                        }
+                        return '';
+                    },
+                },
+            },
+        },
         outJson: { type: 'stdout', layout: { type: 'json' } },
     },
     categories: {
@@ -44,12 +60,25 @@ export class Logger {
         return this.logger;
     }
 
+    // enriches a log entry with it's context, such as the currently running transaction and session
+    enrich() {
+        const transaction = getCurrentTransaction();
+        if (transaction) {
+            if (transaction.session) {
+                this.logger.addContext('sessionID', transaction.session.sessionID);
+            }
+            this.logger.addContext('transactionID', transaction.transactionID);
+        }
+    }
+
     trace(message: string, args: LogData = {}): void {
+        this.enrich();
         this.logger.trace(message, args);
     }
 
     // TODO switch to string
     debug(message: any, args: LogData = {}): void {
+        this.enrich();
         if (typeof message !== 'string') {
             message = JSON.stringify(message);
         }
@@ -57,10 +86,12 @@ export class Logger {
     }
 
     info(message: string, args: LogData = {}): void {
+        this.enrich();
         this.logger.info(message, args);
     }
 
     warn(message: string, args: LogData = {}): void {
+        this.enrich();
         this.logger.warn(message, args);
     }
 
@@ -69,6 +100,7 @@ export class Logger {
     error(message: string, args: LogData): void;
     error(message: string, err: Error, args: LogData): void;
     error(message: string, err: Error = null, args: LogData = {}): void {
+        this.enrich();
         // In order to use the datadog error tracking feature, we have to attach the error details to the root of the log message.
         // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.
         // https://docs.datadoghq.com/logs/error_tracking/backend/?tab=serilog#nodejs
@@ -80,10 +112,12 @@ export class Logger {
     }
 
     fatal(message: string, args: LogData = {}): void {
+        this.enrich();
         this.logger.fatal(message, args);
     }
 
     mark(message: string, args: LogData = {}): void {
+        this.enrich();
         this.logger.mark(message, args);
     }
 
