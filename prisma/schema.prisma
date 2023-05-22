@@ -223,7 +223,6 @@ model match {
   id                       Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   uuid                     String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved                Boolean           @default(false)
-  dissolvedAt              DateTime?         @db.Timestamp(6)
   dissolveReason           Int?
   proposedTime             DateTime?         @db.Timestamp(6)
   createdAt                DateTime          @default(now()) @db.Timestamp(6)
@@ -662,42 +661,6 @@ model pupil_screening {
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 }
 
-model appointment_organizer {
-  appointmentId Int
-  status        appointment_organizer_status_enum @default(accepted)
-  studentId     Int
-
-  @@id([appointmentId, studentId], map: "PK_c6be94a37c868a0f1d6dc1dbdcc")
-  @@index([status], map: "IDX_663993228113c003df5ab4325c")
-}
-
-model appointment_participant_pupil {
-  appointmentId Int
-  status        appointment_participant_pupil_status_enum @default(accepted)
-  pupilId       Int
-
-  @@id([appointmentId, pupilId], map: "PK_74833d50008d051feb2f7809786")
-  @@index([status], map: "IDX_318b2ad16817f27bc091d1f564")
-}
-
-model appointment_participant_screener {
-  appointmentId Int
-  status        appointment_participant_screener_status_enum @default(accepted)
-  screenerId    Int
-
-  @@id([appointmentId, screenerId], map: "PK_e62bdfce2c0fd7def5be58fc83e")
-  @@index([status], map: "IDX_228bb5330683338479bc19ed44")
-}
-
-model appointment_participant_student {
-  appointmentId Int
-  status        appointment_participant_student_status_enum @default(accepted)
-  studentId     Int
-
-  @@id([appointmentId, studentId], map: "PK_8441a1bce3bcee8b6e7a81cbafc")
-  @@index([status], map: "IDX_6bbb7bec336dee923853580700")
-}
-
 enum course_category_enum {
   language
   focus
@@ -1054,24 +1017,4 @@ enum lecture_appointmenttype_enum {
   match
   internal
   legacy
-}
-
-enum appointment_organizer_status_enum {
-  accepted
-  declined
-}
-
-enum appointment_participant_pupil_status_enum {
-  accepted
-  declined
-}
-
-enum appointment_participant_screener_status_enum {
-  accepted
-  declined
-}
-
-enum appointment_participant_student_status_enum {
-  accepted
-  declined
 }

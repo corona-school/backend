@@ -60,7 +60,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const pupilUserId = getUserIdTypeORM(pupil);
     const hosts = [student];
 
-    const videoChat = await createZoomMeetingHelper(hosts, appointmentsToBeCreated);
+    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated);
 
     return await Promise.all(
         appointmentsToBeCreated.map(
@@ -88,7 +88,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
     const hosts = instructors.map((i) => i.student);
 
-    const videoChat = await createZoomMeetingHelper(hosts, appointmentsToBeCreated);
+    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated);
 
     return await Promise.all(
         appointmentsToBeCreated.map(
@@ -110,19 +110,17 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     );
 };
 
-const createZoomMeetingHelper = async (students: student[], appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]) => {
+const createZoomMeetingForAppointments = async (
+    students: student[],
+    appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]
+) => {
     try {
+        if (appointmentsToBeCreated.length === 0) {
+            return;
+        }
         const studentZoomUsers = await Promise.all(
             students.map(async (student) => {
-                const studentZoomUser = await createZoomUser(student.email, student.firstname, student.lastname);
-                await prisma.student.update({
-                    where: {
-                        id: student.id,
-                    },
-                    data: {
-                        zoomUserId: studentZoomUser.id,
-                    },
-                });
+                const studentZoomUser = await createZoomUser(student);
                 return studentZoomUser;
             })
         );
@@ -137,4 +135,3 @@ const createZoomMeetingHelper = async (students: student[], appointmentsToBeCrea
         throw new Error(`Error while creating zoom meeting: ${e}`);
     }
 };
-export { createZoomMeetingHelper };

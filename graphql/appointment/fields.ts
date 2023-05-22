@@ -150,7 +150,7 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER)
     zoomMeetingId(@Root() appointment: Appointment): string {
         if (!appointment.zoomMeetingId) {
-            return '';
+            return null;
         }
         return appointment.zoomMeetingId;
     }

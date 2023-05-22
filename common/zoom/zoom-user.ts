@@ -1,7 +1,11 @@
 /* eslint-disable camelcase */
-import { GraphQLUser } from '../user/session';
+import { prisma } from '../../common/prisma';
 import { getAccessToken } from './zoom-authorization';
 import dotenv from 'dotenv';
+import { student } from '@prisma/client';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger();
 
 dotenv.config();
 
@@ -25,81 +29,87 @@ enum ZoomLicenseType {
 }
 
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
-const grantType = 'account_credentials';
 
-const createZoomUser = async (studentMail, studentFirstname, studentLastname): Promise<ZoomUser> => {
-    try {
-        const { access_token } = await getAccessToken();
+const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
+    const { access_token } = await getAccessToken();
 
-        const createdUser = await fetch(zoomUserApiUrl, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
+    const createdUser = await fetch(zoomUserApiUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'custCreate',
+            user_info: {
+                email: student.email,
+                type: ZoomLicenseType.LICENSED,
+                first_name: student.firstname,
+                last_name: student.lastname,
+                display_name: `${student.firstname} ${student.lastname}`,
             },
-            body: JSON.stringify({
-                action: 'custCreate',
-                user_info: {
-                    email: studentMail,
-                    type: ZoomLicenseType.LICENSED,
-                    first_name: studentFirstname,
-                    last_name: studentLastname,
-                    display_name: `${studentFirstname} ${studentLastname}`,
-                },
-            }),
-        });
-        if (createdUser.status === 409) {
-            const existingUser = await getZoomUser(studentMail);
-            return existingUser;
-        }
+        }),
+    });
 
-        return createdUser.json();
-    } catch (error) {
-        throw new Error(error);
+    if (createdUser.status === 409) {
+        const existingUser = await getZoomUser(student.email);
+        return existingUser;
     }
+
+    const newUser = await createdUser.json();
+    await prisma.student.update({
+        where: {
+            id: newUser.id,
+        },
+        data: {
+            zoomUserId: newUser.id,
+        },
+    });
+
+    logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
+
+    return newUser;
 };
 
 async function getZoomUser(email: string): Promise<ZoomUser> {
-    try {
-        const { access_token } = await getAccessToken();
-        const response = await fetch(`${zoomUserApiUrl}/${email}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
-            },
-        });
+    const { access_token } = await getAccessToken();
+    const response = await fetch(`${zoomUserApiUrl}/${email}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+    });
 
-        return response.json() as unknown as ZoomUser;
-    } catch (error) {
-        throw new Error(error);
-    }
+    const data = response.json() as unknown as ZoomUser;
+
+    return data;
 }
 
-async function updateZoomUser(email: string, firstname?: string, lastname?: string): Promise<ZoomUser> {
-    try {
-        const { access_token } = await getAccessToken();
-        const response = await fetch(`${zoomUserApiUrl}/${email}`, {
-            method: 'PATCH',
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                first_name: firstname,
-                last_name: lastname,
-                display_name: `${firstname} ${lastname}`,
-                type: ZoomLicenseType.LICENSED,
-            }),
-        });
+async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
+    const { access_token } = await getAccessToken();
+    const response = await fetch(`${zoomUserApiUrl}/${student.email}`, {
+        method: 'PATCH',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            first_name: student.firstname,
+            last_name: student.lastname,
+            display_name: `${student.firstname} ${student.lastname}`,
+            type: ZoomLicenseType.LICENSED,
+        }),
+    });
 
-        return response as unknown as ZoomUser;
-    } catch (error) {
-        throw new Error(error);
-    }
+    const data = response.json() as unknown as ZoomUser;
+    logger.info(`Zoom - Updated Zoom user ${data.id} for student with email ${data.email}`);
+
+    return data;
 }
 
 async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
+    // To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
     const { access_token } = await getAccessToken();
     const response = await fetch(`${zoomUserApiUrl}/${userEmail}/token?type=zak`, {
         method: 'GET',
@@ -112,22 +122,20 @@ async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
 }
 
 const deleteZoomUser = async (zoomUserId: string) => {
-    try {
-        const { access_token } = await getAccessToken();
-        const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
+    const { access_token } = await getAccessToken();
+    const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
 
-        const response = await fetch(constructedUrl, {
-            method: 'DELETE',
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
-            },
-        });
+    const response = await fetch(constructedUrl, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+    });
 
-        return response.json();
-    } catch (error) {
-        throw new Error(error);
-    }
+    logger.info(`Zoom - Deleted Zoom user ${zoomUserId}`);
+
+    return response.json();
 };
 
 export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK };

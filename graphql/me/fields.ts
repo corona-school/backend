@@ -45,6 +45,7 @@ export class FieldMeResolver {
         const { user } = context;
         const userZak = await getUserZAK(user.email);
         return userZak.token || '';
+    }
 
     @FieldResolver((returns) => String)
     @Authorized(Role.USER)

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { access } from 'fs';
 
 dotenv.config();
 
@@ -7,7 +8,15 @@ const apiSecret = process.env.ZOOM_API_SECRET;
 const grantType = 'account_credentials';
 const accountId = process.env.ZOOM_ACCOUNT_ID;
 
+let accessToken: string | null = null;
+
 const getAccessToken = async (scope?: string) => {
+    if (accessToken) {
+        console.log('Returning cached access token');
+        console.log('______!______');
+        return { access_token: accessToken };
+    }
+
     const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
 
     const response = await fetch(zoomOauthApiUrl, {
@@ -18,6 +27,12 @@ const getAccessToken = async (scope?: string) => {
         ...(scope ? { body: JSON.stringify({ scope: [scope] }) } : {}),
     });
     const data = await response.json();
+
+    if (data.access_token) {
+        accessToken = data.access_token;
+        setTimeout(() => (accessToken = null), data.expires_in * 1000);
+    }
+
     return data;
 };
 

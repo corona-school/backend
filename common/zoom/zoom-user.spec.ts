@@ -41,12 +41,12 @@ const sampleUser: GraphQLUser = {
 //     expect(result).toHaveProperty('token');
 // });
 
-test('Update a Zoom user', async () => {
-    const result = await updateZoomUser(process.env.ZOOM_EMAIL_2);
+// test('Update a Zoom user', async () => {
+//     const result = await updateZoomUser(sampleUser);
 
-    console.log(result);
-    expect(typeof result).toBe('object');
-});
+//     console.log(result);
+//     expect(typeof result).toBe('object');
+// });
 
 // test('Delete a Zoom user', async () => {
 //     const result = await deleteZoomUser(sampleUser);

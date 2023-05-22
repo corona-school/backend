@@ -92,7 +92,6 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
             });
             // TODO Notify participants
         }
-        // courses[i].meetingId && await deleteZoomMeeting(courses[i].meetingId);
     }
 
     const zoomUser = await getZoomUser(student.email);

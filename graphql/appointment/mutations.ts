@@ -310,7 +310,7 @@ export class MutateAppointmentResolver {
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async saveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+    async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         try {
             const appointment = await getLecture(appointmentId);
             const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];

@@ -23,7 +23,6 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         data: {
             dissolved: true,
             dissolveReason,
-            dissolvedAt: new Date(),
         },
     });
     const matchLectures = await prisma.lecture.findMany({
@@ -31,9 +30,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
             matchId: match.id,
         },
     });
-    matchLectures.forEach(async (lecture) => {
+    for (const lecture of matchLectures) {
         await deleteZoomMeeting(lecture.zoomMeetingId);
-    });
+    }
 
     await logTransaction('matchDissolve', dissolver, {
         matchId: match.id,
@@ -63,7 +62,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
+        data: { dissolved: false, dissolveReason: null },
         where: { id: match.id },
     });
 
@@ -74,9 +73,9 @@ export async function dissolveProjectMatch(match: Project_match, dissolveReason:
     const matchLectures = await prisma.lecture.findMany({
         where: { matchId: match.id },
     });
-    matchLectures.forEach(async (lecture) => {
+    for (const lecture of matchLectures) {
         await deleteZoomMeeting(lecture.zoomMeetingId);
-    });
+    }
 
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');

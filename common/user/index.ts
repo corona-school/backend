@@ -220,13 +220,14 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
 }
 
 export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
+    const validatedEmail = validateEmail(email);
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
-        await updateZoomUser((email = validateEmail(email)));
+        await updateZoomUser(user);
         return userForStudent(
             (await prisma.student.update({
                 where: { id: user.studentId },
-                data: { email: validateEmail(email) },
+                data: { email: validatedEmail },
                 select: userSelection,
             })) as Student
         );
@@ -235,7 +236,7 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
         return userForPupil(
             (await prisma.pupil.update({
                 where: { id: user.pupilId },
-                data: { email: validateEmail(email) },
+                data: { email: validatedEmail },
                 select: userSelection,
             })) as Pupil
         );
