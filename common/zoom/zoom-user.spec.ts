@@ -13,12 +13,12 @@ const sampleUser: GraphQLUser = {
     userID: process.env.ZOOM_USER_ID,
 };
 
-// test('Create a Zoom user', async () => {
-//     const result = await createZoomUser(sampleUser.email, sampleUser.firstname, sampleUser.lastname);
+test('Create a Zoom user', async () => {
+    const result = await createZoomUser(sampleUser);
 
-//     console.log(result);
-//     expect(typeof result).toBe('object');
-// });
+    console.log(result);
+    expect(typeof result).toBe('object');
+});
 
 // test('Get a Zoom user', async () => {
 //     const result = await getZoomUser(process.env.ZOOM_EMAIL_2);

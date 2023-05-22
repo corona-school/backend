@@ -6,7 +6,7 @@ import { getUserForTypeORM } from '../user';
 import { Student, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import dontenv from 'dotenv';
-import { ZoomUser, createZoomUser } from '../zoom/zoom-user';
+import { ZoomUser, createZoomUser, getZoomUser } from '../zoom/zoom-user';
 import { student } from '@prisma/client';
 import moment from 'moment';
 
@@ -120,6 +120,10 @@ const createZoomMeetingForAppointments = async (
         }
         const studentZoomUsers = await Promise.all(
             students.map(async (student) => {
+                const existingUser = await getZoomUser(student.email);
+                if (existingUser.id) {
+                    return existingUser;
+                }
                 const studentZoomUser = await createZoomUser(student);
                 return studentZoomUser;
             })

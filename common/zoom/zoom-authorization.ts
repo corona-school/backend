@@ -12,8 +12,6 @@ let accessToken: string | null = null;
 
 const getAccessToken = async (scope?: string) => {
     if (accessToken) {
-        console.log('Returning cached access token');
-        console.log('______!______');
         return { access_token: accessToken };
     }
 

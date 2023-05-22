@@ -51,21 +51,7 @@ const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 
         }),
     });
 
-    if (createdUser.status === 409) {
-        const existingUser = await getZoomUser(student.email);
-        return existingUser;
-    }
-
-    const newUser = await createdUser.json();
-    await prisma.student.update({
-        where: {
-            id: newUser.id,
-        },
-        data: {
-            zoomUserId: newUser.id,
-        },
-    });
-
+    const newUser = (await createdUser.json()) as unknown as ZoomUser;
     logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
 
     return newUser;
