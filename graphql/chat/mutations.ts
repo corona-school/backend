@@ -5,7 +5,7 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
+import { ConversationInfos, getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
 import { getUser } from '../../common/user';
 import { getMatchByMatchees } from '../../common/chat/helper';
 
@@ -21,6 +21,11 @@ export class MutateChatResolver {
 
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
 
+        const conversationInfos: ConversationInfos = {
+            custom: {
+                type: 'match',
+            },
+        };
         await hasAccess(context, 'Match', match);
         await Promise.all(
             matchees.map(async (partner) => {
@@ -28,7 +33,7 @@ export class MutateChatResolver {
             })
         );
 
-        await getOrCreateConversation(matchees);
+        await getOrCreateConversation(matchees, conversationInfos);
         return true;
     }
 
