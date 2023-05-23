@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
-import Talk from 'talkjs';
 import { User } from '../user';
+import { createHmac } from 'crypto';
 
 dotenv.config();
 
@@ -88,18 +88,23 @@ const createConversation = async (participants: User[], conversationInfos: Conve
 };
 
 const getConversation = async (conversationId: string): Promise<Conversation> => {
+    let response;
     try {
-        const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
+        response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
         });
-        await checkResponseStatus(response);
-        return response.json();
     } catch (error) {
         throw new Error(error);
+    }
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
     }
 };
 
@@ -109,8 +114,8 @@ const getOrCreateConversation = async (participants: User[], conversationInfos?:
         conversation = await getConversation(conversationId);
     }
     if (!conversationId || conversation === undefined) {
-        await createConversation(participants, conversationInfos);
-        conversation = await getConversation(conversationId);
+        const newConversationId = await createConversation(participants, conversationInfos);
+        conversation = await getConversation(newConversationId);
     }
     return conversation;
 };
@@ -134,7 +139,10 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
 }
 
 function createOneOnOneId(userA: User, userB: User): string {
-    return Talk.oneOnOneId(userIdToTalkJsId(userA.userID), userIdToTalkJsId(userB.userID));
+    const key = process.env.TALKJS_API_KEY;
+    const userIds = JSON.stringify([userA.userID, userB.userID]);
+    const hashedOneToOneId = createHmac('sha256', key).update(userIds).digest('hex');
+    return hashedOneToOneId;
 }
 
 /**
