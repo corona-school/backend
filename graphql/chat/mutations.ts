@@ -17,18 +17,18 @@ export class MutateChatResolver {
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('otherId') otherId: string) {
         // TODO will be done in another PR
         const { user } = context;
-        // const otherUser = await getUser(otherId);
-        // const matchees = [user, otherUser];
+        const otherUser = await getUser(otherId);
+        const matchees = [user, otherUser];
         const matcheeIds = [user.userID, otherId];
 
         const match = await getMatchByMatchees(matcheeIds);
 
         await hasAccess(context, 'Match', match);
-        // matchees.forEach(async (partner) => {
-        //     await getOrCreateChatUser(partner);
-        // });
+        matchees.forEach(async (partner) => {
+            await getOrCreateChatUser(partner);
+        });
 
-        // const matcheeConversation = await getOrCreateConversation(matchees);
+        const matcheeConversation = await getOrCreateConversation(matchees);
 
         // TODO: add conversationId to match
         // const updatedMatch = await prisma.match.update({
