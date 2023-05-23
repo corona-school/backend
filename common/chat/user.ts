@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
-import { error } from 'console';
 
 dotenv.config();
 
@@ -64,7 +63,7 @@ async function getOrCreateChatUser(user: User): Promise<TalkJsUser> {
     let chatUser: TalkJsUser;
     chatUser = await getChatUser(user);
 
-    if (chatUser === undefined) {
+    if (!chatUser) {
         await createChatUser(user);
         chatUser = await getChatUser(user);
     }

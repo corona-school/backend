@@ -6,44 +6,35 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
-import { getUser, getUserTypeAndIdForUserId } from '../../common/user';
-import { getMatchByMatchees, getUserIdsForChatParticipants, getUsersForChatParticipants } from '../../common/chat/helper';
+import { getUser } from '../../common/user';
+import { getMatchByMatchees } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
-@Resolver((of) => GraphQLModel.Match)
+@Resolver()
 export class MutateChatResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('otherId') otherId: string) {
-        // TODO will be done in another PR
+    async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('matcheeUserId') matcheeUserId: string) {
         const { user } = context;
-        // const otherUser = await getUser(otherId);
-        // const matchees = [user, otherUser];
-        const matcheeIds = [user.userID, otherId];
+        const matcheeUser = await getUser(matcheeUserId);
+        const matchees = [user, matcheeUser];
 
-        const match = await getMatchByMatchees(matcheeIds);
+        const match = await getMatchByMatchees([user.userID, matcheeUserId]);
 
         await hasAccess(context, 'Match', match);
-        // matchees.forEach(async (partner) => {
-        //     await getOrCreateChatUser(partner);
-        // });
+        await Promise.all(
+            matchees.map(async (partner) => {
+                await getOrCreateChatUser(partner);
+            })
+        );
 
-        // const matcheeConversation = await getOrCreateConversation(matchees);
-
-        // TODO: add conversationId to match
-        // const updatedMatch = await prisma.match.update({
-        //     where: {id: match.id},
-        //     data: {
-        //         chatId: matcheeConversation.id
-        //     }
-        // })
-
+        await getOrCreateConversation(matchees);
         return true;
     }
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async subcourseChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+    async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
         return true;
@@ -51,16 +42,13 @@ export class MutateChatResolver {
 
     @Mutation(() => String)
     @Authorized(Role.USER)
-    async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantIds', (_type) => [String]) participantIds: string[]) {
-        // TODO will be done in another PR
-        // const [student, pupil] = await getUsersForChatParticipants(participantIds);
-        // console.log('STUD', student, 'PUP', pupil);
-        // process.exit();
-        // const stud = await getOrCreateChatUser(student);
-        // const pup = await getOrCreateChatUser(pupil);
-        // const conversation = await getOrCreateConversation([student, pupil]);
-        // console.log('STUD', stud, 'PUP', pup, conversation.id);
-        // return conversation.id;
+    async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
+        const { user } = context;
+        const participantUser = await getUser(participantUserId);
+        await getOrCreateChatUser(user);
+        await getOrCreateChatUser(participantUser);
+        const conversation = await getOrCreateConversation([user, participantUser]);
+        return conversation.id;
     }
 
     @Mutation(() => Boolean)
