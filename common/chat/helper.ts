@@ -27,58 +27,25 @@ const createChatSignature = async (user: User): Promise<string> => {
     return hash.digest('hex');
 };
 
-const getUserIdsForChatParticipants = (participantIds: string[]): [studentId: number, pupilId: number] => {
-    let studentId;
-    let pupilId;
-
-    participantIds.forEach((participantId) => {
-        const [type, id] = getUserTypeAndIdForUserId(participantId);
-
-        if (type === 'student') {
-            studentId = id;
-        }
-        if (type === 'pupil') {
-            pupilId = id;
-        }
-    });
-
-    return [studentId, pupilId];
-};
-const getUsersForChatParticipants = (participantIds: string[]): [studentId: User, pupilId: User] => {
-    let student: User;
-    let pupil: User;
-
-    participantIds.forEach(async (participantId) => {
-        const [type, id] = getUserTypeAndIdForUserId(participantId);
-
-        if (type === 'student') {
-            student = await getUser(participantId);
-            console.log('STUD', student);
-        }
-        if (type === 'pupil') {
-            pupil = await getUser(participantId);
-            console.log('PUP', pupil);
-        }
-    });
-
-    return [student, pupil];
-};
-
 const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
-    const [studentId, pupilId] = getUserIdsForChatParticipants(matchees);
+    let studentId: number;
+    let pupilId: number;
 
+    await Promise.all(
+        matchees.map(async (matchee) => {
+            const user = await getUser(matchee);
+            if (user.studentId) {
+                studentId = user.studentId;
+            }
+            if (user.pupilId) {
+                pupilId = user.pupilId;
+            }
+        })
+    );
     const match = await prisma.match.findFirstOrThrow({
         where: { AND: [{ studentId: studentId }, { pupilId: pupilId }] },
     });
     return match;
 };
 
-export {
-    userIdToTalkJsId,
-    parseUnderscoreToSlash,
-    checkResponseStatus,
-    createChatSignature,
-    getMatchByMatchees,
-    getUserIdsForChatParticipants,
-    getUsersForChatParticipants,
-};
+export { userIdToTalkJsId, parseUnderscoreToSlash, checkResponseStatus, createChatSignature, getMatchByMatchees };
