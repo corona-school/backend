@@ -103,10 +103,12 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
     }
 };
 
-const getOrCreateConversation = async (participants: User[], conversationId: string, conversationInfos: ConversationInfos): Promise<Conversation> => {
+const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos, conversationId?: string): Promise<Conversation> => {
     let conversation: Conversation;
-    conversation = await getConversation(conversationId);
-    if (conversation === undefined) {
+    if (conversationId) {
+        conversation = await getConversation(conversationId);
+    }
+    if (!conversationId || conversation === undefined) {
         await createConversation(participants, conversationInfos);
         conversation = await getConversation(conversationId);
     }
