@@ -15,19 +15,20 @@ export class MutateChatResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('otherId') otherId: string) {
+        // TODO will be done in another PR
         const { user } = context;
-        const otherUser = await getUser(otherId);
-        const matchees = [user, otherUser];
+        // const otherUser = await getUser(otherId);
+        // const matchees = [user, otherUser];
         const matcheeIds = [user.userID, otherId];
 
         const match = await getMatchByMatchees(matcheeIds);
 
         await hasAccess(context, 'Match', match);
-        matchees.forEach(async (partner) => {
-            await getOrCreateChatUser(partner);
-        });
+        // matchees.forEach(async (partner) => {
+        //     await getOrCreateChatUser(partner);
+        // });
 
-        const matcheeConversation = await getOrCreateConversation(matchees);
+        // const matcheeConversation = await getOrCreateConversation(matchees);
 
         // TODO: add conversationId to match
         // const updatedMatch = await prisma.match.update({
@@ -37,7 +38,7 @@ export class MutateChatResolver {
         //     }
         // })
 
-        return match;
+        return true;
     }
 
     @Mutation(() => Boolean)
@@ -51,14 +52,13 @@ export class MutateChatResolver {
     @Mutation(() => String)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantIds', (_type) => [String]) participantIds: string[]) {
-        const [student, pupil] = await getUsersForChatParticipants(participantIds);
-        console.log('STUD', student, 'PUP', pupil);
-        process.exit();
-
+        // TODO will be done in another PR
+        // const [student, pupil] = await getUsersForChatParticipants(participantIds);
+        // console.log('STUD', student, 'PUP', pupil);
+        // process.exit();
         // const stud = await getOrCreateChatUser(student);
         // const pup = await getOrCreateChatUser(pupil);
         // const conversation = await getOrCreateConversation([student, pupil]);
-
         // console.log('STUD', stud, 'PUP', pup, conversation.id);
         // return conversation.id;
     }
