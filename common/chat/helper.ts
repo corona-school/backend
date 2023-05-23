@@ -33,6 +33,7 @@ const getUserIdsForChatParticipants = (participantIds: string[]): [studentId: nu
 
     participantIds.forEach((participantId) => {
         const [type, id] = getUserTypeAndIdForUserId(participantId);
+
         if (type === 'student') {
             studentId = id;
         }
@@ -49,7 +50,6 @@ const getUsersForChatParticipants = (participantIds: string[]): [studentId: User
 
     participantIds.forEach(async (participantId) => {
         const [type, id] = getUserTypeAndIdForUserId(participantId);
-        console.log('USER TYPE', type, id);
 
         if (type === 'student') {
             student = await getUser(participantId);
@@ -67,11 +67,9 @@ const getUsersForChatParticipants = (participantIds: string[]): [studentId: User
 const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     const [studentId, pupilId] = getUserIdsForChatParticipants(matchees);
 
-    // TODO
     const match = await prisma.match.findFirstOrThrow({
         where: { AND: [{ studentId: studentId }, { pupilId: pupilId }] },
     });
-
     return match;
 };
 

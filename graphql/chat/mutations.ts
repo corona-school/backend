@@ -13,9 +13,8 @@ const logger = getLogger('MutateChatResolver');
 @Resolver((of) => GraphQLModel.Match)
 export class MutateChatResolver {
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.TUTOR, Role.TUTEE)
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('otherId') otherId: string) {
-        // TODO will be done in another PR
         const { user } = context;
         const otherUser = await getUser(otherId);
         const matchees = [user, otherUser];
@@ -23,12 +22,21 @@ export class MutateChatResolver {
 
         const match = await getMatchByMatchees(matcheeIds);
 
+        console.log('-------------------------');
+        console.log(match);
+        console.log('-------------------------');
+
         await hasAccess(context, 'Match', match);
+
         matchees.forEach(async (partner) => {
             await getOrCreateChatUser(partner);
         });
 
         const matcheeConversation = await getOrCreateConversation(matchees);
+
+        console.log('-------------------------');
+        console.log(matcheeConversation);
+        console.log('-------------------------');
 
         // TODO: add conversationId to match
         // const updatedMatch = await prisma.match.update({
@@ -38,7 +46,8 @@ export class MutateChatResolver {
         //     }
         // })
 
-        return true;
+        process.exit();
+        return match;
     }
 
     @Mutation(() => Boolean)
