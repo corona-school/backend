@@ -1,4 +1,7 @@
-import { User } from '../user';
+import { match } from '@prisma/client';
+import { Match } from '../../graphql/generated';
+import { prisma } from '../prisma';
+import { User, getUser, getUserTypeAndIdForUserId } from '../user';
 import { getOrCreateChatUser } from './user';
 
 const userIdToTalkJsId = (userId: string): string => {
@@ -24,4 +27,60 @@ const createChatSignature = async (user: User): Promise<string> => {
     return hash.digest('hex');
 };
 
-export { userIdToTalkJsId, parseUnderscoreToSlash, checkResponseStatus, createChatSignature };
+const getUserIdsForChatParticipants = (participantIds: string[]): [studentId: number, pupilId: number] => {
+    let studentId;
+    let pupilId;
+
+    participantIds.forEach((participantId) => {
+        const [type, id] = getUserTypeAndIdForUserId(participantId);
+        if (type === 'student') {
+            studentId = id;
+        }
+        if (type === 'pupil') {
+            pupilId = id;
+        }
+    });
+
+    return [studentId, pupilId];
+};
+const getUsersForChatParticipants = (participantIds: string[]): [studentId: User, pupilId: User] => {
+    let student: User;
+    let pupil: User;
+
+    participantIds.forEach(async (participantId) => {
+        const [type, id] = getUserTypeAndIdForUserId(participantId);
+        console.log('USER TYPE', type, id);
+
+        if (type === 'student') {
+            student = await getUser(participantId);
+            console.log('STUD', student);
+        }
+        if (type === 'pupil') {
+            pupil = await getUser(participantId);
+            console.log('PUP', pupil);
+        }
+    });
+
+    return [student, pupil];
+};
+
+const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
+    const [studentId, pupilId] = getUserIdsForChatParticipants(matchees);
+
+    // TODO
+    const match = await prisma.match.findFirstOrThrow({
+        where: { AND: [{ studentId: studentId }, { pupilId: pupilId }] },
+    });
+
+    return match;
+};
+
+export {
+    userIdToTalkJsId,
+    parseUnderscoreToSlash,
+    checkResponseStatus,
+    createChatSignature,
+    getMatchByMatchees,
+    getUserIdsForChatParticipants,
+    getUsersForChatParticipants,
+};
