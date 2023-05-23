@@ -5,9 +5,9 @@ import { randomBytes } from 'crypto';
 import { getLogger } from '../../common/logger/logger';
 import EJS from 'ejs';
 import { existsSync, readFileSync } from 'fs';
-import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
 import QRCode from 'qrcode';
+import { generatePDFFromHTML } from '../util/pdf';
 
 const logger = getLogger();
 
@@ -80,7 +80,7 @@ export async function createRemissionRequestPDF(student: { id: number; firstname
     });
 
     const ASSETS = __dirname + '/../../../assets';
-    return await generatePDFFromHTMLString(result, {
+    return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
     });
 }

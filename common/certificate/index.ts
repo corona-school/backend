@@ -1,5 +1,4 @@
 import { readFileSync, existsSync } from 'fs';
-import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
 import moment from 'moment';
 import CertificateRequestEvent from '../transactionlog/types/CertificateRequestEvent';
@@ -7,7 +6,6 @@ import { getTransactionLog } from '../transactionlog';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import { mailjetTemplates, sendTemplateMail } from '../mails';
-import { createAutoLoginLink } from '../../web/controllers/utils';
 import * as Notification from '../notification';
 import { Pupil } from '../entity/Pupil';
 import { Student } from '../entity/Student';
@@ -18,6 +16,8 @@ import { ParticipationCertificate } from '../entity/ParticipationCertificate';
 import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
 import { userForPupil, userForStudent } from '../user';
+import { USER_APP_DOMAIN } from '../util/environment';
+import { generatePDFFromHTML } from '../util/pdf';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -128,7 +128,8 @@ export async function issueCertificateRequest(
     pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
 ) {
     const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
-    const certificateLink = createAutoLoginLink(authToken, `/settings?sign=${pc.uuid}`);
+    // We show an important message on the dashboard, where pupils can sign the certificate:
+    const certificateLink = USER_APP_DOMAIN;
     const mail = mailjetTemplates.CERTIFICATEREQUEST({
         certificateLink,
         pupilFirstname: pc.pupil.firstname,
@@ -263,7 +264,7 @@ export async function signCertificate(
     const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
 
     const authToken = await createSecretEmailToken(userForStudent(certificate.student));
-    const certificateLink = createAutoLoginLink(authToken, `/settings`);
+    const certificateLink = `${USER_APP_DOMAIN}/profile`;
     const mail = mailjetTemplates.CERTIFICATESIGNED(
         {
             certificateLink,
@@ -359,7 +360,7 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format('D.M.YYYY'),
     });
 
-    return await generatePDFFromHTMLString(result, {
+    return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
     });
 }
