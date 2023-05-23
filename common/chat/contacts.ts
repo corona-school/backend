@@ -1,8 +1,9 @@
 import assert from 'assert';
-import { Pupil, Student } from '../../graphql/generated';
+// import { Pupil, Student } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { isStudent } from '../user';
-import { User, getUserIdTypeORM } from '../user';
+import { isPupil, isStudent, userForPupil, userForStudent } from '../user';
+import { pupil as Pupil, student as Student } from '@prisma/client';
+import { User } from '../user';
 import { getOrCreateConversation } from './conversation';
 
 export type UserContactType = {
@@ -62,16 +63,36 @@ const getSubcourseInstructorContacts = async (pupil: User) => {
     });
 };
 
-export const getMyContacts = async (user: User): Promise<Contact[]> => {
-    // TODO const conversation = await getOrCreateConversation()
-    const contactMap: Map<string, Contact> = new Map();
+const getSubcourseParticipantContact = async (student: User) => {
+    assert(student.studentId, 'Pupil must have an pupilId');
+    return await prisma.pupil.findMany({
+        where: {
+            subcourse_participants_pupil: {
+                some: {
+                    subcourse: { subcourse_instructors_student: { some: { studentId: student.studentId } } },
+                },
+            },
+        },
+    });
+};
 
+export const getMyContacts = async (user: User): Promise<Contact[]> => {
+    // TODO get convo id if exists
+    // const conversation = await getOrCreateConversation()
+    const contactMap: Map<string, Contact> = new Map();
     const matchPartners = await getMatchPartners(user);
+
     matchPartners.forEach((partner: Student | Pupil) => {
-        const userId = getUserIdTypeORM(partner);
-        contactMap.set(userId, {
+        let matchee: User;
+        if (isStudent(partner)) {
+            matchee = userForStudent(partner as Student);
+        }
+        if (isPupil(partner)) {
+            matchee = userForPupil(partner as Pupil);
+        }
+        contactMap.set(matchee.userID, {
             user: {
-                userID: userId,
+                userID: matchee.userID,
                 firstname: partner.firstname,
                 lastname: partner.lastname,
             },
@@ -83,10 +104,26 @@ export const getMyContacts = async (user: User): Promise<Contact[]> => {
     if (user.pupilId) {
         const subcourseContacts = await getSubcourseInstructorContacts(user);
         subcourseContacts.forEach((contact) => {
-            const userId = getUserIdTypeORM(contact);
-            contactMap.set(userId, {
+            const student = userForStudent(contact);
+            contactMap.set(student.userID, {
                 user: {
-                    userID: userId,
+                    userID: student.userID,
+                    firstname: contact.firstname,
+                    lastname: contact.lastname,
+                },
+                contactReason: 'course',
+                chatId: '',
+            });
+        });
+    }
+
+    if (user.studentId) {
+        const subcourseContacts = await getSubcourseParticipantContact(user);
+        subcourseContacts.forEach((contact) => {
+            const pupil = userForPupil(contact);
+            contactMap.set(pupil.userID, {
+                user: {
+                    userID: pupil.userID,
                     firstname: contact.firstname,
                     lastname: contact.lastname,
                 },
