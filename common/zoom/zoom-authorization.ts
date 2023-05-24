@@ -1,5 +1,8 @@
 import dotenv from 'dotenv';
 import { access } from 'fs';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger();
 
 dotenv.config();
 
@@ -11,10 +14,10 @@ const accountId = process.env.ZOOM_ACCOUNT_ID;
 let accessToken: string | null = null;
 
 const getAccessToken = async (scope?: string) => {
-    if (accessToken) {
+    if (accessToken && !scope) {
+        logger.info(`Zoom - currently using old access token`);
         return { access_token: accessToken };
     }
-
     const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
 
     const response = await fetch(zoomOauthApiUrl, {
@@ -31,7 +34,8 @@ const getAccessToken = async (scope?: string) => {
         setTimeout(() => (accessToken = null), data.expires_in * 1000);
     }
 
-    return data;
+    logger.info(`Zoom - currently creating new access token`);
+    return { access_token: data.access_token };
 };
 
 export { getAccessToken };

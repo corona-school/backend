@@ -28,12 +28,19 @@ enum ZoomLicenseType {
     NONE = 99,
 }
 
+enum ChatPrivileges {
+    WITH_NOONE = 1,
+    WITH_HOST_AND_COHOST_ONLY = 2,
+    WITH_EVERYONE_PUBLIC = 3,
+    WITH_EVERYONE_PUBLIC_AND_PRIVATE = 4,
+}
+
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 
 const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
     const { access_token } = await getAccessToken();
 
-    const createdUser = await fetch(zoomUserApiUrl, {
+    const response = await fetch(zoomUserApiUrl, {
         method: 'POST',
         headers: {
             Authorization: `Bearer ${access_token}`,
@@ -48,11 +55,30 @@ const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 
                 last_name: student.lastname,
                 display_name: `${student.firstname} ${student.lastname}`,
             },
+            settings: {
+                email_notification: {
+                    cloud_recording_available_reminder: false,
+                    recording_available_reminder_alternative_hosts: false,
+                    recording_available_reminder_schedulers: false,
+                },
+                in_meeting: {
+                    allow_participants_chat_with: ChatPrivileges.WITH_EVERYONE_PUBLIC,
+                },
+                recording: {
+                    local_recording: false,
+                    cloud_recording: false,
+                },
+            },
         }),
     });
 
-    const newUser = (await createdUser.json()) as unknown as ZoomUser;
-    logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
+    const newUser = (await response.json()) as unknown as ZoomUser;
+
+    if (response.status === 201) {
+        logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
+    } else {
+        logger.error(response.statusText);
+    }
 
     return newUser;
 };
@@ -67,8 +93,11 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
         },
     });
 
-    const data = response.json() as unknown as ZoomUser;
+    if (response.status === 404) {
+        return null;
+    }
 
+    const data = response.json() as unknown as ZoomUser;
     return data;
 }
 
@@ -89,7 +118,10 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
     });
 
     const data = response.json() as unknown as ZoomUser;
-    logger.info(`Zoom - Updated Zoom user ${data.id} for student with email ${data.email}`);
+
+    if (response.status === 204) {
+        logger.info(`Zoom - Updated Zoom user ${data.id} for student with email ${data.email}`);
+    }
 
     return data;
 }
@@ -119,9 +151,13 @@ const deleteZoomUser = async (zoomUserId: string) => {
         },
     });
 
-    logger.info(`Zoom - Deleted Zoom user ${zoomUserId}`);
+    if (response.status === 204) {
+        logger.info(`Zoom - Deleted Zoom user ${zoomUserId}`);
+    } else {
+        logger.error(response.statusText);
+    }
 
-    return response.json();
+    return response;
 };
 
 export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK };

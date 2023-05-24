@@ -9,6 +9,9 @@ import dontenv from 'dotenv';
 import { ZoomUser, createZoomUser, getZoomUser } from '../zoom/zoom-user';
 import { student } from '@prisma/client';
 import moment from 'moment';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger();
 
 @InputType()
 export abstract class AppointmentCreateInputBase {
@@ -60,7 +63,8 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const pupilUserId = getUserIdTypeORM(pupil);
     const hosts = [student];
 
-    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated);
+    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated, false);
+    logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId} with ${appointmentsToBeCreated.length} appointments`);
 
     return await Promise.all(
         appointmentsToBeCreated.map(
@@ -88,7 +92,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
     const hosts = instructors.map((i) => i.student);
 
-    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated);
+    const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated, true);
 
     return await Promise.all(
         appointmentsToBeCreated.map(
@@ -112,30 +116,34 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
 const createZoomMeetingForAppointments = async (
     students: student[],
-    appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[]
+    appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[],
+    isCourse: boolean
 ) => {
     try {
         if (appointmentsToBeCreated.length === 0) {
             return;
         }
+        const appointmentsNumber = appointmentsToBeCreated.length;
+        const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
+
         const studentZoomUsers = await Promise.all(
             students.map(async (student) => {
                 const existingUser = await getZoomUser(student.email);
-                if (existingUser.id) {
+                if (existingUser) {
                     return existingUser;
                 }
                 const studentZoomUser = await createZoomUser(student);
                 return studentZoomUser;
             })
         );
-        const appointmentsNumber = appointmentsToBeCreated.length;
-        const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
+
         const newVideoChat =
             appointmentsNumber > 1
-                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, lastDate)
-                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start);
+                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, isCourse, lastDate)
+                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, isCourse);
+
         return newVideoChat;
     } catch (e) {
-        throw new Error(`Error while creating zoom meeting: ${e}`);
+        throw new Error(`Zoom - Error while creating zoom meeting: ${e}`);
     }
 };

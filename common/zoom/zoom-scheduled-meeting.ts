@@ -38,8 +38,9 @@ const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, endDateTime?: Date) => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCourse: boolean, endDateTime?: Date) => {
     const { access_token } = await getAccessToken();
+
     const altHosts: string[] = [];
     zoomUsers.forEach((user, index) => {
         if (index !== 0) {
@@ -61,9 +62,9 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, endDate
             start_time: startTime,
             timezone: 'Europe/Berlin',
             type: RecurrenceMeetingTypes.WEEKLY,
-            muteUpponEntry: true,
-            waitingRoom: true,
-            breakOutRoom: true,
+            mute_upon_entry: true,
+            waiting_room: isCourse ? true : false,
+            breakout_room: isCourse ? true : false,
             recurrence: endDateTime && {
                 end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
                 type: RecurrenceMeetingTypes.WEEKLY,
@@ -76,7 +77,11 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, endDate
     });
 
     const data = await response.json();
-    logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
+    if (response.status === 201) {
+        logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
+    } else {
+        logger.error(`Zoom - ${response.statusText}`);
+    }
 
     return data;
 };
@@ -122,7 +127,11 @@ const deleteZoomMeeting = async (meetingId: string) => {
         },
     });
 
-    logger.info(`Zoom - The Zoom Meeting ${meetingId} was deleted.`);
+    if (response.status === 204) {
+        logger.info(`Zoom - The Zoom Meeting ${meetingId} was deleted.`);
+    } else {
+        logger.error(response.statusText);
+    }
 
     return response.json();
 };
@@ -136,6 +145,13 @@ const getZoomMeetingReport = async (meetingId: string) => {
             Authorization: `Bearer ${access_token}`,
         },
     });
+
+    if (response.status === 200) {
+        logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
+    } else {
+        logger.error(response.statusText);
+    }
+
     return response.json();
 };
 

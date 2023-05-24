@@ -316,6 +316,7 @@ export class MutateAppointmentResolver {
             const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
             const result = await getZoomMeetingReport(appointment.zoomMeetingId);
             meetingReports.push(result);
+
             await prisma.lecture.update({
                 where: { id: appointmentId },
                 data: { ...appointment, zoomMeetingReport: meetingReports },

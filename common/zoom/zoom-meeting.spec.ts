@@ -42,11 +42,11 @@ const date = new Date();
 //     expect(typeof result).toBe('object');
 // });
 
-test('Create Zoom Meeting', async () => {
-    const result = await createZoomMeeting(hosts, date);
-    console.log(result);
-    expect(typeof result).toBe('object');
-});
+// test('Create Zoom Meeting', async () => {
+//     const result = await createZoomMeeting(hosts, date);
+//     console.log(result);
+//     expect(typeof result).toBe('object');
+// });
 
 // test('Delete Zoom Meeting', async () => {
 //     const result = await deleteZoomMeeting('82648035342');

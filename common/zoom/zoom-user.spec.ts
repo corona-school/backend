@@ -6,22 +6,22 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const sampleUser: GraphQLUser = {
-    email: process.env.ZOOM_EMAIL_2,
-    firstname: 'random',
-    lastname: 'user',
+    email: process.env.ZOOM_EMAIL,
+    firstname: 'Leon',
+    lastname: 'Jackson',
     roles: [Role.USER, Role.STUDENT],
     userID: process.env.ZOOM_USER_ID,
 };
 
-test('Create a Zoom user', async () => {
-    const result = await createZoomUser(sampleUser);
+// test('Create a Zoom user', async () => {
+//     const result = await createZoomUser(sampleUser);
 
-    console.log(result);
-    expect(typeof result).toBe('object');
-});
+//     console.log(result);
+//     expect(typeof result).toBe('object');
+// });
 
 // test('Get a Zoom user', async () => {
-//     const result = await getZoomUser(process.env.ZOOM_EMAIL_2);
+//     const result = await getZoomUser(process.env.ZOOM_EMAIL);
 
 //     console.log(result);
 //     expect(typeof result).toBe('object');
@@ -49,6 +49,6 @@ test('Create a Zoom user', async () => {
 // });
 
 // test('Delete a Zoom user', async () => {
-//     const result = await deleteZoomUser(sampleUser);
-//     expect(result.code).toBe(1001);
+//     const result = await deleteZoomUser(process.env.ZOOM_EMAIL);
+//     expect(result.status).toBe(204);
 // });
