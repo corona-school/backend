@@ -20,21 +20,13 @@ export class MutateChatResolver {
         const matchees = [user, matcheeUser];
 
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
+        await hasAccess(context, 'Match', match);
 
         const conversationInfos: ConversationInfos = {
-            subject: '',
-            welcomeMessages: [],
-            photoUrl: '',
             custom: {
                 type: 'match',
             },
         };
-        await hasAccess(context, 'Match', match);
-        await Promise.all(
-            matchees.map(async (partner) => {
-                await getOrCreateChatUser(partner);
-            })
-        );
 
         await getOrCreateConversation(matchees, conversationInfos);
         return true;
@@ -52,17 +44,16 @@ export class MutateChatResolver {
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
+
+        // TODO: check if participant is participant of instructors subcourse
+
         const participantUser = await getUser(participantUserId);
         const conversationInfos: ConversationInfos = {
-            subject: '',
-            welcomeMessages: [],
-            photoUrl: '',
             custom: {
                 type: 'participant',
             },
         };
-        await getOrCreateChatUser(user);
-        await getOrCreateChatUser(participantUser);
+
         const conversation = await getOrCreateConversation([user, participantUser], conversationInfos);
         return conversation.id;
     }

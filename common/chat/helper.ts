@@ -1,7 +1,6 @@
 import { match } from '@prisma/client';
-import { Match } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { User, getUser, getUserTypeAndIdForUserId } from '../user';
+import { User, getUser } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
@@ -61,4 +60,37 @@ const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     return match;
 };
 
-export { userIdToTalkJsId, parseUnderscoreToSlash, checkResponseStatus, createChatSignature, getMatchByMatchees, createOneOnOneId, getConversationId };
+const checkIfSubcourseParticipation = async (studentId: number, pupilId: number): Promise<boolean> => {
+    const result = await prisma.subcourse.findMany({
+        where: {
+            AND: [
+                {
+                    subcourse_instructors_student: {
+                        some: { studentId: studentId },
+                    },
+                },
+                {
+                    subcourse_participants_pupil: {
+                        some: { pupilId: pupilId },
+                    },
+                },
+            ],
+        },
+    });
+
+    if (result.length >= 0) {
+        return true;
+    }
+    return false;
+};
+
+export {
+    userIdToTalkJsId,
+    parseUnderscoreToSlash,
+    checkResponseStatus,
+    createChatSignature,
+    getMatchByMatchees,
+    createOneOnOneId,
+    getConversationId,
+    checkIfSubcourseParticipation,
+};
