@@ -60,6 +60,7 @@
         "require-await": "warn",
         "import/no-cycle": ["warn"],
         "@typescript-eslint/no-floating-promises": ["error"],
-        "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }]
+        "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+        "@typescript-eslint/switch-exhaustiveness-check": "error"
     }
 }

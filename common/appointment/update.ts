@@ -54,6 +54,10 @@ export async function updateAppointment(
                 appointment: getAppointmentForNotification(updatedAppointment, /* original */ appointment),
             });
             break;
+
+        case AppointmentType.internal:
+        case AppointmentType.legacy:
+            break;
     }
 
     logger.info(`Participants of Appointment(${appointment.id}) were notified of the appointment change`);

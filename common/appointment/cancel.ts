@@ -40,5 +40,9 @@ export async function cancelAppointment(user: User, appointment: Appointment) {
             });
 
             break;
+
+        case AppointmentType.internal:
+        case AppointmentType.legacy:
+            break;
     }
 }

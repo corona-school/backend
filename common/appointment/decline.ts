@@ -39,6 +39,10 @@ export async function declineAppointment(user: User, appointment: Appointment) {
                 });
             }
             break;
+
+        case AppointmentType.internal:
+        case AppointmentType.legacy:
+            break;
     }
 
     logger.info(`User(${user.userID}) declined Appointment(${appointment.id})`);
