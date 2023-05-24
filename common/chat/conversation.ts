@@ -69,16 +69,17 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 
     try {
+        const body = JSON.stringify({
+            ...conversationInfos,
+            participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
+        });
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'PUT',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                ...conversationInfos,
-                participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
-            }),
+            body: body,
         });
         await checkResponseStatus(response);
         return conversationId;

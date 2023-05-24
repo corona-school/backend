@@ -10,11 +10,11 @@ import { UserContactType, getMyContacts } from '../../common/chat/contacts';
 @ObjectType()
 export class Contact {
     @Field((_type) => UserType)
-    user: UserContactType;
-    @Field((_type) => String)
-    contactReason: string;
-    @Field((_type) => String)
-    chatId: string;
+    user: UserType;
+    @Field((_type) => [String])
+    contactReasons: string[];
+    @Field((_type) => String, { nullable: true })
+    chatId?: string;
 }
 @Resolver((of) => UserType)
 export class FieldMeResolver {

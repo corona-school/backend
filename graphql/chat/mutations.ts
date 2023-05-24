@@ -22,6 +22,9 @@ export class MutateChatResolver {
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
 
         const conversationInfos: ConversationInfos = {
+            subject: '',
+            // welcomeMessages: [],
+            // photoUrl: '',
             custom: {
                 type: 'match',
             },

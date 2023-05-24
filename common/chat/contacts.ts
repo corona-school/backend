@@ -4,37 +4,22 @@ import { prisma } from '../prisma';
 import { isPupil, isStudent, userForPupil, userForStudent } from '../user';
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { User } from '../user';
-import { getOrCreateConversation } from './conversation';
 
 export type UserContactType = {
     userID: string;
     firstname: string;
     lastname: string;
+    email: string;
 };
 
-type Contact = {
-    user: UserContactType;
-    contactReason: string;
-    chatId: string;
+type UserContactlist = {
+    [userId: string]: {
+        user: UserContactType;
+        contactReasons: string[];
+    };
 };
 
-const getMatchAndSubcourseContacts = async (user: User) => {
-    return await prisma.student.findMany({
-        where: {
-            OR: [
-                { match: { some: { pupilId: user.pupilId } } },
-                {
-                    subcourse_instructors_student: {
-                        some: {
-                            subcourse: { subcourse_participants_pupil: { some: { pupilId: user.pupilId } } },
-                        },
-                    },
-                },
-            ],
-        },
-    });
-};
-const getMatchPartners = async (user: User): Promise<Student[] | Pupil[]> => {
+const getMatchContacts = async (user: User): Promise<Student[] | Pupil[]> => {
     if (user.pupilId) {
         return await prisma.student.findMany({
             where: {
@@ -76,64 +61,81 @@ const getSubcourseParticipantContact = async (student: User) => {
     });
 };
 
-export const getMyContacts = async (user: User): Promise<Contact[]> => {
-    // TODO get convo id if exists
-    // const conversation = await getOrCreateConversation()
-    const contactMap: Map<string, Contact> = new Map();
-    const matchPartners = await getMatchPartners(user);
-
-    matchPartners.forEach((partner: Student | Pupil) => {
-        let matchee: User;
-        if (isStudent(partner)) {
-            matchee = userForStudent(partner as Student);
-        }
-        if (isPupil(partner)) {
-            matchee = userForPupil(partner as Pupil);
-        }
-        contactMap.set(matchee.userID, {
-            user: {
-                userID: matchee.userID,
-                firstname: partner.firstname,
-                lastname: partner.lastname,
-            },
-            contactReason: 'match',
-            chatId: '',
-        });
-    });
+const getMySubcourseContacts = async (user: User): Promise<UserContactlist> => {
+    let subcourseContactsList: UserContactlist = {};
 
     if (user.pupilId) {
         const subcourseContacts = await getSubcourseInstructorContacts(user);
-        subcourseContacts.forEach((contact) => {
-            const student = userForStudent(contact);
-            contactMap.set(student.userID, {
+        for (const subcourseContact of subcourseContacts) {
+            const instructorSubcourseId = userForStudent(subcourseContact).userID;
+            const contactReasons = ['subcourse'];
+
+            subcourseContactsList[instructorSubcourseId] = {
                 user: {
-                    userID: student.userID,
-                    firstname: contact.firstname,
-                    lastname: contact.lastname,
+                    firstname: subcourseContact.firstname,
+                    lastname: subcourseContact.lastname,
+                    userID: instructorSubcourseId,
+                    email: subcourseContact.email,
                 },
-                contactReason: 'course',
-                chatId: '',
-            });
-        });
+                contactReasons: contactReasons,
+            };
+        }
     }
 
     if (user.studentId) {
         const subcourseContacts = await getSubcourseParticipantContact(user);
-        subcourseContacts.forEach((contact) => {
-            const pupil = userForPupil(contact);
-            contactMap.set(pupil.userID, {
+        for (const subcourseContact of subcourseContacts) {
+            const participantSubcourseId = userForPupil(subcourseContact).userID;
+            const contactReasons = ['subcourse'];
+
+            subcourseContactsList[participantSubcourseId] = {
                 user: {
-                    userID: pupil.userID,
-                    firstname: contact.firstname,
-                    lastname: contact.lastname,
+                    firstname: subcourseContact.firstname,
+                    lastname: subcourseContact.lastname,
+                    userID: participantSubcourseId,
+                    email: subcourseContact.email,
                 },
-                contactReason: 'course',
-                chatId: '',
-            });
-        });
+                contactReasons: contactReasons,
+            };
+        }
     }
 
-    const myContactOptions = Array.from(contactMap.values());
+    return subcourseContactsList;
+};
+const getMyMatchContacts = async (user: User): Promise<UserContactlist> => {
+    let matchContactList: UserContactlist = {};
+    const matchContacts = await getMatchContacts(user);
+    for (const matchContact of matchContacts) {
+        let matchee: User;
+        if (isStudent(matchContact)) {
+            matchee = userForStudent(matchContact as Student);
+        }
+        if (isPupil(matchContact)) {
+            matchee = userForPupil(matchContact as Pupil);
+        }
+        const contactReasons = ['match'];
 
-    return myContactOptions;
+        matchContactList[matchee.userID] = {
+            user: { firstname: matchee.firstname, lastname: matchee.lastname, userID: matchee.userID, email: matchee.email },
+            contactReasons: contactReasons,
+        };
+    }
+
+    return matchContactList;
+};
+
+export const getMyContacts = async (user: User) => {
+    const subcourseContacts = await getMySubcourseContacts(user);
+    const matchContacts = await getMyMatchContacts(user);
+
+    for (const contactId in subcourseContacts) {
+        const doubleContact = matchContacts[contactId];
+        if (doubleContact) {
+            subcourseContacts[contactId].contactReasons.push(...doubleContact.contactReasons);
+            delete matchContacts[contactId];
+        }
+    }
+    const myContacts = { ...subcourseContacts, ...matchContacts };
+    const myContactsAsArray = Object.values(myContacts);
+    return myContactsAsArray;
 };
