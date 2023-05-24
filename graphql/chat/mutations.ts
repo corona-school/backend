@@ -53,9 +53,17 @@ export class MutateChatResolver {
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
         const participantUser = await getUser(participantUserId);
+        const conversationInfos: ConversationInfos = {
+            subject: '',
+            // welcomeMessages: [],
+            // photoUrl: '',
+            custom: {
+                type: 'course',
+            },
+        };
         await getOrCreateChatUser(user);
         await getOrCreateChatUser(participantUser);
-        const conversation = await getOrCreateConversation([user, participantUser]);
+        const conversation = await getOrCreateConversation([user, participantUser], conversationInfos);
         return conversation.id;
     }
 
