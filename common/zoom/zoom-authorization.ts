@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { access } from 'fs';
 import { getLogger } from '../../common/logger/logger';
+import zoomRetry from './zoom-retry';
 
 const logger = getLogger();
 
@@ -15,18 +16,23 @@ let accessToken: string | null = null;
 
 const getAccessToken = async (scope?: string) => {
     if (accessToken && !scope) {
-        logger.info(`Zoom - currently using old access token`);
         return { access_token: accessToken };
     }
     const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
+    const zoomAuthHeader = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
 
-    const response = await fetch(zoomOauthApiUrl, {
-        method: 'POST',
-        headers: {
-            Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`,
-        },
-        ...(scope ? { body: JSON.stringify({ scope: [scope] }) } : {}),
-    });
+    const response = await zoomRetry(
+        () =>
+            fetch(zoomOauthApiUrl, {
+                method: 'POST',
+                headers: {
+                    Authorization: zoomAuthHeader,
+                },
+                ...(scope ? { body: JSON.stringify({ scope: [scope] }) } : {}),
+            }),
+        3,
+        1000
+    );
     const data = await response.json();
 
     if (data.access_token) {
@@ -34,7 +40,6 @@ const getAccessToken = async (scope?: string) => {
         setTimeout(() => (accessToken = null), data.expires_in * 1000);
     }
 
-    logger.info(`Zoom - currently creating new access token`);
     return { access_token: data.access_token };
 };
 

@@ -4,6 +4,7 @@ import { getAccessToken } from './zoom-authorization';
 import dotenv from 'dotenv';
 import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
+import zoomRetry from './zoom-retry';
 
 const logger = getLogger();
 
@@ -40,44 +41,49 @@ const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
     const { access_token } = await getAccessToken();
 
-    const response = await fetch(zoomUserApiUrl, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            action: 'custCreate',
-            user_info: {
-                email: student.email,
-                type: ZoomLicenseType.LICENSED,
-                first_name: student.firstname,
-                last_name: student.lastname,
-                display_name: `${student.firstname} ${student.lastname}`,
-            },
-            settings: {
-                email_notification: {
-                    cloud_recording_available_reminder: false,
-                    recording_available_reminder_alternative_hosts: false,
-                    recording_available_reminder_schedulers: false,
+    const response = await zoomRetry(
+        () =>
+            fetch(zoomUserApiUrl, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
                 },
-                in_meeting: {
-                    allow_participants_chat_with: ChatPrivileges.WITH_EVERYONE_PUBLIC,
-                },
-                recording: {
-                    local_recording: false,
-                    cloud_recording: false,
-                },
-            },
-        }),
-    });
+                body: JSON.stringify({
+                    action: 'custCreate',
+                    user_info: {
+                        email: student.email,
+                        type: ZoomLicenseType.LICENSED,
+                        first_name: student.firstname,
+                        last_name: student.lastname,
+                        display_name: `${student.firstname} ${student.lastname}`,
+                    },
+                    settings: {
+                        email_notification: {
+                            cloud_recording_available_reminder: false,
+                            recording_available_reminder_alternative_hosts: false,
+                            recording_available_reminder_schedulers: false,
+                        },
+                        in_meeting: {
+                            allow_participants_chat_with: ChatPrivileges.WITH_EVERYONE_PUBLIC,
+                        },
+                        recording: {
+                            local_recording: false,
+                            cloud_recording: false,
+                        },
+                    },
+                }),
+            }),
+        3,
+        1000
+    );
 
     const newUser = (await response.json()) as unknown as ZoomUser;
 
     if (response.status === 201) {
         logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
     } else {
-        logger.error(response.statusText);
+        logger.error(`Zoom - ${response.statusText}`);
     }
 
     return newUser;
@@ -85,16 +91,26 @@ const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 
 
 async function getZoomUser(email: string): Promise<ZoomUser> {
     const { access_token } = await getAccessToken();
-    const response = await fetch(`${zoomUserApiUrl}/${email}`, {
-        method: 'GET',
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json',
-        },
-    });
+    const response = await zoomRetry(
+        () =>
+            fetch(`${zoomUserApiUrl}/${email}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            }),
+        3,
+        1000
+    );
 
     if (response.status === 404) {
+        logger.error(`Zoom - No Zoom user found for student with email ${email}`);
         return null;
+    } else if (response.status === 200) {
+        logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
+    } else {
+        logger.error(`Zoom - ${response.statusText}`);
     }
 
     const data = response.json() as unknown as ZoomUser;
@@ -103,24 +119,31 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
 
 async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
     const { access_token } = await getAccessToken();
-    const response = await fetch(`${zoomUserApiUrl}/${student.email}`, {
-        method: 'PATCH',
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            first_name: student.firstname,
-            last_name: student.lastname,
-            display_name: `${student.firstname} ${student.lastname}`,
-            type: ZoomLicenseType.LICENSED,
-        }),
-    });
+    const response = await zoomRetry(
+        () =>
+            fetch(`${zoomUserApiUrl}/${student.email}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    first_name: student.firstname,
+                    last_name: student.lastname,
+                    display_name: `${student.firstname} ${student.lastname}`,
+                    type: ZoomLicenseType.LICENSED,
+                }),
+            }),
+        3,
+        1000
+    );
 
     const data = response.json() as unknown as ZoomUser;
 
     if (response.status === 204) {
         logger.info(`Zoom - Updated Zoom user ${data.id} for student with email ${data.email}`);
+    } else {
+        logger.error(`Zoom - ${response.statusText}`);
     }
 
     return data;
@@ -129,13 +152,18 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
 async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
     // To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
     const { access_token } = await getAccessToken();
-    const response = await fetch(`${zoomUserApiUrl}/${userEmail}/token?type=zak`, {
-        method: 'GET',
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json',
-        },
-    });
+    const response = await zoomRetry(
+        () =>
+            fetch(`${zoomUserApiUrl}/${userEmail}/token?type=zak`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            }),
+        3,
+        1000
+    );
     return response.json();
 }
 
@@ -143,18 +171,23 @@ const deleteZoomUser = async (zoomUserId: string) => {
     const { access_token } = await getAccessToken();
     const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
 
-    const response = await fetch(constructedUrl, {
-        method: 'DELETE',
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json',
-        },
-    });
+    const response = await zoomRetry(
+        () =>
+            fetch(constructedUrl, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            }),
+        3,
+        1000
+    );
 
     if (response.status === 204) {
         logger.info(`Zoom - Deleted Zoom user ${zoomUserId}`);
     } else {
-        logger.error(response.statusText);
+        logger.error(`Zoom - ${response.statusText}`);
     }
 
     return response;
