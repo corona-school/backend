@@ -1,10 +1,9 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, userIdToTalkJsId } from './helper';
+import { checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
 import { User } from '../user';
-import { createHmac } from 'crypto';
 
 dotenv.config();
 
@@ -52,11 +51,15 @@ type ConversationInfos = {
 };
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos): Promise<string> => {
-    let conversationId;
+    let conversationId: string;
     const { type } = conversationInfos.custom;
     switch (type) {
         case 'match':
+            conversationId = createOneOnOneId(participants[0], participants[1]);
+            break;
         case 'participant':
+            conversationId = createOneOnOneId(participants[0], participants[1]);
+            break;
         case 'prospect':
             conversationId = createOneOnOneId(participants[0], participants[1]);
             break;
@@ -109,16 +112,16 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
     }
 };
 
-const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos, conversationId?: string): Promise<Conversation> => {
-    let conversation: Conversation;
-    if (conversationId) {
-        conversation = await getConversation(conversationId);
-    }
-    if (!conversationId || conversation === undefined) {
+const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos): Promise<Conversation> => {
+    let newConversation: Conversation;
+    const conversationIdOfParticipants = getConversationId(participants);
+    const participantsConversation = await getConversation(conversationIdOfParticipants);
+    if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos);
-        conversation = await getConversation(newConversationId);
+        newConversation = await getConversation(newConversationId);
     }
-    return conversation;
+
+    return newConversation;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
@@ -138,14 +141,6 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
         throw new Error(error);
     }
 }
-
-function createOneOnOneId(userA: User, userB: User): string {
-    const key = process.env.TALKJS_API_KEY;
-    const userIds = JSON.stringify([userA.userID, userB.userID]);
-    const hashedOneToOneId = createHmac('sha256', key).update(userIds).digest('hex');
-    return hashedOneToOneId;
-}
-
 /**
  * NOTE: PUT merges data with existing data, if any. For example, you cannot remove participants from a conversation by PUTing a list of participants that excludes some existing participants. If you want to remove participants from a conversation, use `removeParticipant`.
  */
@@ -284,7 +279,6 @@ async function sendSystemMessage(message: string, conversationId: string): Promi
 export {
     getLastUnreadConversation,
     createConversation,
-    createOneOnOneId,
     updateConversation,
     removeParticipant,
     addParticipant,

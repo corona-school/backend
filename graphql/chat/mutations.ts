@@ -23,8 +23,8 @@ export class MutateChatResolver {
 
         const conversationInfos: ConversationInfos = {
             subject: '',
-            // welcomeMessages: [],
-            // photoUrl: '',
+            welcomeMessages: [],
+            photoUrl: '',
             custom: {
                 type: 'match',
             },
@@ -55,10 +55,10 @@ export class MutateChatResolver {
         const participantUser = await getUser(participantUserId);
         const conversationInfos: ConversationInfos = {
             subject: '',
-            // welcomeMessages: [],
-            // photoUrl: '',
+            welcomeMessages: [],
+            photoUrl: '',
             custom: {
-                type: 'course',
+                type: 'participant',
             },
         };
         await getOrCreateChatUser(user);
