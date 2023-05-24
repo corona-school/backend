@@ -7,15 +7,6 @@ import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
 import { UserContactType, getMyContacts } from '../../common/chat/contacts';
 
-@ObjectType()
-export class Contact {
-    @Field((_type) => UserType)
-    user: UserType;
-    @Field((_type) => [String])
-    contactReasons: string[];
-    @Field((_type) => String, { nullable: true })
-    chatId?: string;
-}
 @Resolver((of) => UserType)
 export class FieldMeResolver {
     @Query((returns) => UserType)
@@ -36,13 +27,6 @@ export class FieldMeResolver {
         const { user } = context;
         const signature = await createChatSignature(user);
         return signature;
-    }
-
-    @Query((returns) => [Contact])
-    @Authorized(Role.USER)
-    async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
-        const { user } = context;
-        return getMyContacts(user);
     }
 
     @Query((returns) => [String])

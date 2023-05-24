@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
 import { User } from '../user';
+import { getOrCreateChatUser } from './user';
 
 dotenv.config();
 
@@ -64,6 +65,8 @@ const createConversation = async (participants: User[], conversationInfos: Conve
             conversationId = createOneOnOneId(participants[0], participants[1]);
             break;
         case 'course':
+            conversationId = uuidv4();
+            break;
         case 'announcement':
             conversationId = uuidv4();
             break;
@@ -91,19 +94,14 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 };
 
-const getConversation = async (conversationId: string): Promise<Conversation> => {
-    let response;
-    try {
-        response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-        });
-    } catch (error) {
-        throw new Error(error);
-    }
+const getConversation = async (conversationId: string): Promise<Conversation | undefined> => {
+    const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+    });
 
     if (response.status === 200) {
         return await response.json();
@@ -113,15 +111,23 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
 };
 
 const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos): Promise<Conversation> => {
-    let newConversation: Conversation;
+    // TODO check if user exists
+    await Promise.all(
+        participants.map(async (participant) => {
+            await getOrCreateChatUser(participant);
+        })
+    );
     const conversationIdOfParticipants = getConversationId(participants);
+
     const participantsConversation = await getConversation(conversationIdOfParticipants);
+
     if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos);
-        newConversation = await getConversation(newConversationId);
+        const newConversation = await getConversation(newConversationId);
+        return newConversation;
     }
 
-    return newConversation;
+    return participantsConversation;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {

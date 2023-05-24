@@ -1,5 +1,4 @@
 import assert from 'assert';
-// import { Pupil, Student } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { isPupil, isStudent, userForPupil, userForStudent } from '../user';
 import { pupil as Pupil, student as Student } from '@prisma/client';
@@ -47,9 +46,8 @@ const getSubcourseInstructorContacts = async (pupil: User) => {
         },
     });
 };
-
 const getSubcourseParticipantContact = async (student: User) => {
-    assert(student.studentId, 'Pupil must have an pupilId');
+    assert(student.studentId, 'Student must have an studentId');
     return await prisma.pupil.findMany({
         where: {
             subcourse_participants_pupil: {
@@ -60,7 +58,6 @@ const getSubcourseParticipantContact = async (student: User) => {
         },
     });
 };
-
 const getMySubcourseContacts = async (user: User): Promise<UserContactlist> => {
     let subcourseContactsList: UserContactlist = {};
 
@@ -123,7 +120,6 @@ const getMyMatchContacts = async (user: User): Promise<UserContactlist> => {
 
     return matchContactList;
 };
-
 export const getMyContacts = async (user: User) => {
     const subcourseContacts = await getMySubcourseContacts(user);
     const matchContacts = await getMyMatchContacts(user);
