@@ -79,6 +79,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
             ...conversationInfos,
             participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
         });
+
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'PUT',
             headers: {
@@ -122,6 +123,7 @@ const getOrCreateConversation = async (participants: User[], conversationInfos?:
     if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos);
         const newConversation = await getConversation(newConversationId);
+        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
         return newConversation;
     }
 
@@ -259,7 +261,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
@@ -269,10 +271,17 @@ async function sendSystemMessage(message: string, conversationId: string): Promi
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                text: message,
-                type: 'SystemMessage',
-            }),
+            body: JSON.stringify([
+                {
+                    text: message,
+                    type: 'SystemMessage',
+                    ...(type && {
+                        custom: {
+                            type: type,
+                        },
+                    }),
+                },
+            ]),
         });
         await checkResponseStatus(response);
     } catch (error) {

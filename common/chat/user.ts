@@ -21,6 +21,7 @@ const createChatUser = async (user: User): Promise<void> => {
             body: JSON.stringify({
                 name: `${user.firstname} ${user.lastname}`,
                 email: [user.email],
+                welcomeMessage: `Hey, ich bin ${user.firstname} `,
                 role: user.studentId ? 'student' : 'pupil',
             }),
         });
@@ -29,7 +30,6 @@ const createChatUser = async (user: User): Promise<void> => {
         throw new Error(error);
     }
 };
-
 /**
  * NOTE: `id` ist not the same as `userId` as TalkJS' id field must not contain slashes! It's a transformed version, e.g.
  *
