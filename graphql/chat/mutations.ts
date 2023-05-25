@@ -6,8 +6,8 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { ConversationInfos, getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
-import { getUser } from '../../common/user';
-import { getMatchByMatchees } from '../../common/chat/helper';
+import { User, getUser, isStudent } from '../../common/user';
+import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -40,22 +40,24 @@ export class MutateChatResolver {
         return true;
     }
 
-    @Mutation(() => String)
+    @Mutation(() => Boolean)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
-
-        // TODO: check if participant is participant of instructors subcourse
-
         const participantUser = await getUser(participantUserId);
+
+        const allowed = await checkIfSubcourseParticipation([user.userID, participantUserId]);
         const conversationInfos: ConversationInfos = {
             custom: {
                 type: 'participant',
             },
         };
 
-        const conversation = await getOrCreateConversation([user, participantUser], conversationInfos);
-        return conversation.id;
+        if (allowed) {
+            await getOrCreateConversation([user, participantUser], conversationInfos);
+            return true;
+        }
+        return false;
     }
 
     @Mutation(() => Boolean)

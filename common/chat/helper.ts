@@ -60,28 +60,34 @@ const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     return match;
 };
 
-const checkIfSubcourseParticipation = async (studentId: number, pupilId: number): Promise<boolean> => {
+const checkIfSubcourseParticipation = async (participants: string[]): Promise<boolean> => {
+    const participantUser = participants.map(async (participant) => {
+        const user = await getUser(participant);
+        return user;
+    });
+
+    const users = await Promise.all(participantUser);
+    const studentIds = users.filter((user) => user.studentId).map((user) => user.studentId);
+    const pupilIds = users.filter((user) => user.pupilId).map((user) => user.pupilId);
+
     const result = await prisma.subcourse.findMany({
         where: {
             AND: [
                 {
                     subcourse_instructors_student: {
-                        some: { studentId: studentId },
+                        some: { studentId: { in: studentIds } },
                     },
                 },
                 {
                     subcourse_participants_pupil: {
-                        some: { pupilId: pupilId },
+                        some: { pupilId: { in: pupilIds } },
                     },
                 },
             ],
         },
     });
 
-    if (result.length >= 0) {
-        return true;
-    }
-    return false;
+    return result.length > 0;
 };
 
 export {
