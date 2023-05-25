@@ -4,15 +4,15 @@ import { User, getUser } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
+import { createHmac } from 'crypto';
 
 const userIdToTalkJsId = (userId: string): string => {
     return userId.replace('/', '_');
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
-    const crypto = require('crypto');
     const key = process.env.TALKJS_API_KEY;
-    const hash = crypto.createHmac('sha256', key).update(userIdToTalkJsId(userId));
+    const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
     return hash.digest('hex');
 };
 

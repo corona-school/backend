@@ -1,12 +1,11 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Role } from '../../common/user/roles';
-import * as GraphQLModel from '../generated/models';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
-import { User, getUser, isStudent } from '../../common/user';
+import { ConversationInfos, getOrCreateConversation } from '../../common/chat';
+import { getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
@@ -57,7 +56,7 @@ export class MutateChatResolver {
             await getOrCreateConversation([user, participantUser], conversationInfos);
             return true;
         }
-        return false;
+        throw new Error('Participant is not allowed to create conversation.');
     }
 
     @Mutation(() => Boolean)

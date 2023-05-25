@@ -111,14 +111,12 @@ const getConversation = async (conversationId: string): Promise<Conversation | u
 };
 
 const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos): Promise<Conversation> => {
-    // TODO check if user exists
     await Promise.all(
         participants.map(async (participant) => {
             await getOrCreateChatUser(participant);
         })
     );
     const conversationIdOfParticipants = getConversationId(participants);
-
     const participantsConversation = await getConversation(conversationIdOfParticipants);
 
     if (participantsConversation === undefined) {
