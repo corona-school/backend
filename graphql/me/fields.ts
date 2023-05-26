@@ -1,22 +1,14 @@
 import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Role } from '../authorizations';
+import { Role, hasAccess } from '../authorizations';
 import { UserType } from '../types/user';
 import { getUserZAK } from '../../common/zoom/zoom-user';
 import { generateMeetingSDKJWT } from '../../common/zoom';
 import { createChatSignature } from '../../common/chat/helper';
 import { Field, ObjectType } from 'type-graphql';
+import { UserContactType, getMyContacts } from '../../common/chat/contacts';
 
-@ObjectType()
-class Contact {
-    @Field((_type) => UserType)
-    user: UserType;
-    @Field((_type) => String)
-    contactReason: string;
-    @Field((_type) => String)
-    chatId: string;
-}
 @Resolver((of) => UserType)
 export class FieldMeResolver {
     @Query((returns) => UserType)
@@ -53,12 +45,6 @@ export class FieldMeResolver {
         const { user } = context;
         const signature = await createChatSignature(user);
         return signature;
-    }
-
-    @Query((returns) => [Contact])
-    @Authorized(Role.USER)
-    myContactOptions(@Ctx() context: GraphQLContext): Contact[] {
-        return [];
     }
 
     @Query((returns) => [String])

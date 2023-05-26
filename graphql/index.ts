@@ -65,6 +65,7 @@ import { ExtendedFieldsMessageTranslationResolver } from './message_translation/
 import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
 import { MutateAppointmentResolver } from './appointment/mutations';
 import { getCurrentTransaction } from '../common/session';
+import { MutateChatResolver } from './chat/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -170,6 +171,9 @@ const schema = buildSchemaSync({
 
         /* Appointments */
         MutateAppointmentResolver,
+
+        /* Chat */
+        MutateChatResolver,
 
         AdminMutationsResolver,
     ],

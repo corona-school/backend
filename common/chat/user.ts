@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
-import { error } from 'console';
 
 dotenv.config();
 
@@ -22,6 +21,7 @@ const createChatUser = async (user: User): Promise<void> => {
             body: JSON.stringify({
                 name: `${user.firstname} ${user.lastname}`,
                 email: [user.email],
+                welcomeMessage: `Hey, ich bin ${user.firstname} `,
                 role: user.studentId ? 'student' : 'pupil',
             }),
         });
@@ -30,7 +30,6 @@ const createChatUser = async (user: User): Promise<void> => {
         throw new Error(error);
     }
 };
-
 /**
  * NOTE: `id` ist not the same as `userId` as TalkJS' id field must not contain slashes! It's a transformed version, e.g.
  *
@@ -64,7 +63,7 @@ async function getOrCreateChatUser(user: User): Promise<TalkJsUser> {
     let chatUser: TalkJsUser;
     chatUser = await getChatUser(user);
 
-    if (chatUser === undefined) {
+    if (!chatUser) {
         await createChatUser(user);
         chatUser = await getChatUser(user);
     }
