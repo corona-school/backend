@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, userIdToTalkJsId } from './helper';
+import { checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
-import Talk from 'talkjs';
 import { User } from '../user';
+import { getOrCreateChatUser } from './user';
 
 dotenv.config();
 
@@ -52,15 +52,21 @@ type ConversationInfos = {
 };
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos): Promise<string> => {
-    let conversationId;
+    let conversationId: string;
     const { type } = conversationInfos.custom;
     switch (type) {
         case 'match':
+            conversationId = createOneOnOneId(participants[0], participants[1]);
+            break;
         case 'participant':
+            conversationId = createOneOnOneId(participants[0], participants[1]);
+            break;
         case 'prospect':
             conversationId = createOneOnOneId(participants[0], participants[1]);
             break;
         case 'course':
+            conversationId = uuidv4();
+            break;
         case 'announcement':
             conversationId = uuidv4();
             break;
@@ -69,16 +75,18 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 
     try {
+        const body = JSON.stringify({
+            ...conversationInfos,
+            participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
+        });
+
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'PUT',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                ...conversationInfos,
-                participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
-            }),
+            body: body,
         });
         await checkResponseStatus(response);
         return conversationId;
@@ -87,20 +95,39 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 };
 
-const getConversation = async (conversationId: string): Promise<Conversation> => {
-    try {
-        const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        await checkResponseStatus(response);
-        return response.json();
-    } catch (error) {
-        throw new Error(error);
+const getConversation = async (conversationId: string): Promise<Conversation | undefined> => {
+    const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
     }
+};
+
+const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos): Promise<Conversation> => {
+    await Promise.all(
+        participants.map(async (participant) => {
+            await getOrCreateChatUser(participant);
+        })
+    );
+    const conversationIdOfParticipants = getConversationId(participants);
+    const participantsConversation = await getConversation(conversationIdOfParticipants);
+
+    if (participantsConversation === undefined) {
+        const newConversationId = await createConversation(participants, conversationInfos);
+        const newConversation = await getConversation(newConversationId);
+        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        return newConversation;
+    }
+
+    return participantsConversation;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
@@ -120,11 +147,6 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
         throw new Error(error);
     }
 }
-
-function createOneOnOneId(userA: User, userB: User): string {
-    return Talk.oneOnOneId(userIdToTalkJsId(userA.userID), userIdToTalkJsId(userB.userID));
-}
-
 /**
  * NOTE: PUT merges data with existing data, if any. For example, you cannot remove participants from a conversation by PUTing a list of participants that excludes some existing participants. If you want to remove participants from a conversation, use `removeParticipant`.
  */
@@ -239,7 +261,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
@@ -249,10 +271,17 @@ async function sendSystemMessage(message: string, conversationId: string): Promi
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                text: message,
-                type: 'SystemMessage',
-            }),
+            body: JSON.stringify([
+                {
+                    text: message,
+                    type: 'SystemMessage',
+                    ...(type && {
+                        custom: {
+                            type: type,
+                        },
+                    }),
+                },
+            ]),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -263,7 +292,6 @@ async function sendSystemMessage(message: string, conversationId: string): Promi
 export {
     getLastUnreadConversation,
     createConversation,
-    createOneOnOneId,
     updateConversation,
     removeParticipant,
     addParticipant,
@@ -271,6 +299,7 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getOrCreateConversation,
     deleteConversation,
     talkjsConversationApiUrl,
     Conversation,
