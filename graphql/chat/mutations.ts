@@ -5,7 +5,7 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { ConversationInfos, getOrCreateConversation } from '../../common/chat';
-import { getUser } from '../../common/user';
+import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
@@ -31,12 +31,37 @@ export class MutateChatResolver {
         return true;
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
     async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
-        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUnique({
+            where: { id: subcourseId },
+            include: { subcourse_participants_pupil: true, lecture: true, course: true },
+        });
         await hasAccess(context, 'Subcourse', subcourse);
-        return true;
+        const subcourseParticipants = subcourse.subcourse_participants_pupil;
+
+        const conversationInfos: ConversationInfos = {
+            subject: subcourse.course.name,
+            // welcomeMessages: ['Welcome!'],
+            custom: {
+                start: subcourse.lecture[0].start.toISOString(),
+                type: 'course',
+            },
+        };
+        const participants = await Promise.all(
+            subcourseParticipants.map(async (participant) => {
+                const { pupilId } = participant;
+                const user = await getUser(`pupil/${pupilId}`);
+                return user;
+            })
+        );
+
+        participants.push(user);
+
+        const conversation = await getOrCreateConversation(participants, conversationInfos);
+        return conversation.id;
     }
 
     @Mutation(() => Boolean)
