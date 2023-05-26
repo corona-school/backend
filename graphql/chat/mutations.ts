@@ -5,9 +5,9 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { getOrCreateChatUser, getOrCreateConversation } from '../../common/chat';
+import { ConversationInfos, getOrCreateConversation } from '../../common/chat';
 import { getUser } from '../../common/user';
-import { getMatchByMatchees } from '../../common/chat/helper';
+import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -20,15 +20,15 @@ export class MutateChatResolver {
         const matchees = [user, matcheeUser];
 
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
-
         await hasAccess(context, 'Match', match);
-        await Promise.all(
-            matchees.map(async (partner) => {
-                await getOrCreateChatUser(partner);
-            })
-        );
 
-        await getOrCreateConversation(matchees);
+        const conversationInfos: ConversationInfos = {
+            custom: {
+                type: 'match',
+            },
+        };
+
+        await getOrCreateConversation(matchees, conversationInfos);
         return true;
     }
 
@@ -40,15 +40,24 @@ export class MutateChatResolver {
         return true;
     }
 
-    @Mutation(() => String)
+    @Mutation(() => Boolean)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
         const participantUser = await getUser(participantUserId);
-        await getOrCreateChatUser(user);
-        await getOrCreateChatUser(participantUser);
-        const conversation = await getOrCreateConversation([user, participantUser]);
-        return conversation.id;
+
+        const allowed = await checkIfSubcourseParticipation([user.userID, participantUserId]);
+        const conversationInfos: ConversationInfos = {
+            custom: {
+                type: 'participant',
+            },
+        };
+
+        if (allowed) {
+            await getOrCreateConversation([user, participantUser], conversationInfos);
+            return true;
+        }
+        throw new Error('Participant is not allowed to create conversation.');
     }
 
     @Mutation(() => Boolean)

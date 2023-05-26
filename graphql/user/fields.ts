@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
-import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
@@ -13,7 +13,17 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser } from '../../common/appointment/get';
+import { getMyContacts } from '../../common/chat/contacts';
 
+@ObjectType()
+export class Contact {
+    @Field((_type) => UserType)
+    user: UserType;
+    @Field((_type) => [String])
+    contactReasons: string[];
+    @Field((_type) => String, { nullable: true })
+    chatId?: string;
+}
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
@@ -155,5 +165,12 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @Query((returns) => [Contact])
+    @Authorized(Role.USER)
+    async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
+        const { user } = context;
+        return getMyContacts(user);
     }
 }
