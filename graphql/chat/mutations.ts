@@ -4,9 +4,9 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateConversation } from '../../common/chat';
-import { User, getUser } from '../../common/user';
-import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
+import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation } from '../../common/chat';
+import { getUser } from '../../common/user';
+import { checkIfSubcourseParticipation, getMatchByMatchees, getParticipantsForSubcourseGroupChat } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -31,42 +31,6 @@ export class MutateChatResolver {
         return true;
     }
 
-    @Mutation(() => String)
-    @AuthorizedDeferred(Role.OWNER)
-    async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
-        const { user } = context;
-        const subcourse = await prisma.subcourse.findUnique({
-            where: { id: subcourseId },
-            include: { subcourse_participants_pupil: true, lecture: true, course: true },
-        });
-        await hasAccess(context, 'Subcourse', subcourse);
-        const subcourseParticipants = subcourse.subcourse_participants_pupil;
-
-        const conversationInfos: ConversationInfos = {
-            subject: subcourse.course.name,
-            custom: {
-                start: subcourse.lecture[0].start.toISOString(),
-                type: 'course',
-            },
-        };
-        const participants = await Promise.all(
-            subcourseParticipants.map(async (participant) => {
-                const { pupilId } = participant;
-                const user = await getUser(`pupil/${pupilId}`);
-                return user;
-            })
-        );
-
-        participants.push(user);
-
-        const conversation = await getOrCreateConversation(participants, conversationInfos);
-        await prisma.subcourse.update({
-            where: { id: subcourseId },
-            data: { conversationId: conversation.id },
-        });
-        return true;
-    }
-
     @Mutation(() => Boolean)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
@@ -85,6 +49,28 @@ export class MutateChatResolver {
             return true;
         }
         throw new Error('Participant is not allowed to create conversation.');
+    }
+
+    @Mutation(() => String)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUnique({
+            where: { id: subcourseId },
+            include: { subcourse_participants_pupil: true, lecture: true, course: true },
+        });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        const conversationInfos: ConversationInfos = {
+            subject: subcourse.course.name,
+            custom: {
+                start: subcourse.lecture[0].start.toISOString(),
+                type: 'course',
+            },
+        };
+        const participants = await getParticipantsForSubcourseGroupChat(subcourse, user);
+        await getOrCreateGroupConversation(participants, subcourseId, conversationInfos);
+        return true;
     }
 
     @Mutation(() => Boolean)

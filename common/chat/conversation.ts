@@ -5,6 +5,7 @@ import { checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJ
 import { Message } from 'talkjs/all';
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
+import { prisma } from '../prisma';
 
 dotenv.config();
 
@@ -111,12 +112,14 @@ const getConversation = async (conversationId: string): Promise<Conversation | u
     }
 };
 
-const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos): Promise<Conversation> => {
+const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos, subcourseId?: number): Promise<Conversation> => {
+    // * every participants need a talk js user
     await Promise.all(
         participants.map(async (participant) => {
             await getOrCreateChatUser(participant);
         })
     );
+
     const conversationIdOfParticipants = getConversationId(participants);
     const participantsConversation = await getConversation(conversationIdOfParticipants);
 
@@ -128,6 +131,33 @@ const getOrCreateConversation = async (participants: User[], conversationInfos?:
     }
 
     return participantsConversation;
+};
+
+const getOrCreateGroupConversation = async (participants: User[], subcourseId: number, conversationInfos?: ConversationInfos): Promise<Conversation> => {
+    await Promise.all(
+        participants.map(async (participant) => {
+            await getOrCreateChatUser(participant);
+        })
+    );
+
+    const subcourse = await prisma.subcourse.findUniqueOrThrow({
+        where: { id: subcourseId },
+        select: { conversationId: true },
+    });
+
+    if (subcourse.conversationId === null) {
+        const newConversationId = await createConversation(participants, conversationInfos);
+        const newConversation = await getConversation(newConversationId);
+        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        await prisma.subcourse.update({
+            where: { id: subcourseId },
+            data: { conversationId: newConversationId },
+        });
+        return newConversation;
+    }
+
+    const subcourseGroupChat = await getConversation(subcourse.conversationId);
+    return subcourseGroupChat;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
@@ -300,6 +330,7 @@ export {
     sendSystemMessage,
     getConversation,
     getOrCreateConversation,
+    getOrCreateGroupConversation,
     deleteConversation,
     talkjsConversationApiUrl,
     Conversation,

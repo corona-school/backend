@@ -5,6 +5,7 @@ import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
+import { Subcourse } from '../../graphql/generated';
 
 const userIdToTalkJsId = (userId: string): string => {
     return userId.replace('/', '_');
@@ -90,6 +91,21 @@ const checkIfSubcourseParticipation = async (participants: string[]): Promise<bo
     return result.length > 0;
 };
 
+const getParticipantsForSubcourseGroupChat = async (subcourse: Subcourse, instructor: User) => {
+    const subcourseParticipants = subcourse.subcourse_participants_pupil;
+
+    const participants = await Promise.all(
+        subcourseParticipants.map(async (participant) => {
+            const { pupilId } = participant;
+            const user = await getUser(`pupil/${pupilId}`);
+            return user;
+        })
+    );
+    participants.push(instructor);
+
+    return participants;
+};
+
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -99,4 +115,5 @@ export {
     createOneOnOneId,
     getConversationId,
     checkIfSubcourseParticipation,
+    getParticipantsForSubcourseGroupChat,
 };
