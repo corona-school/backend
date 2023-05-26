@@ -550,6 +550,7 @@ model subcourse {
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
   lecture                          lecture[]
+  conversationId                   Int?
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]

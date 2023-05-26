@@ -44,7 +44,6 @@ export class MutateChatResolver {
 
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,
-            // welcomeMessages: ['Welcome!'],
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
                 type: 'course',
@@ -61,6 +60,7 @@ export class MutateChatResolver {
         participants.push(user);
 
         const conversation = await getOrCreateConversation(participants, conversationInfos);
+        // TODO add conversation to subcourse
         return conversation.id;
     }
 
