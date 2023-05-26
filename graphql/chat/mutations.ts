@@ -60,8 +60,11 @@ export class MutateChatResolver {
         participants.push(user);
 
         const conversation = await getOrCreateConversation(participants, conversationInfos);
-        // TODO add conversation to subcourse
-        return conversation.id;
+        await prisma.subcourse.update({
+            where: { id: subcourseId },
+            data: { conversationId: conversation.id },
+        });
+        return true;
     }
 
     @Mutation(() => Boolean)
