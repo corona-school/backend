@@ -1,6 +1,5 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Role } from '../../common/user/roles';
-import * as GraphQLModel from '../generated/models';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
@@ -12,7 +11,7 @@ import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/
 const logger = getLogger('MutateChatResolver');
 @Resolver()
 export class MutateChatResolver {
-    @Mutation(() => Boolean)
+    @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('matcheeUserId') matcheeUserId: string) {
         const { user } = context;
@@ -28,8 +27,8 @@ export class MutateChatResolver {
             },
         };
 
-        await getOrCreateConversation(matchees, conversationInfos);
-        return true;
+        const conversation = await getOrCreateConversation(matchees, conversationInfos);
+        return conversation.id;
     }
 
     @Mutation(() => Boolean)
