@@ -86,6 +86,11 @@ export class Subcourse {
     })
     alreadyPromoted: boolean;
 
+    @Column({
+        nullable: true,
+    })
+    conversationId: string;
+
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
 

@@ -197,12 +197,12 @@ model lecture {
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
   isCanceled            Boolean?                     @default(false)
+  organizerIds          String[]                     @default([])
+  participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
-  organizerIds          String[]                     @default([])
-  participantIds        String[]                     @default([])
   subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
   student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
@@ -546,11 +546,11 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
+  conversationId                   String?                            @db.VarChar
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
   lecture                          lecture[]
-  conversationId                   Int?
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
@@ -633,7 +633,7 @@ model typeorm_metadata {
 
 model message_translation {
   id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
-  template       Json                              @db.Json
+  template       Json?                             @db.Json
   navigateTo     String?
   language       message_translation_language_enum @default(de)
   notificationId Int?
