@@ -5,9 +5,8 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { ConversationInfos, getOrCreateConversation } from '../../common/chat';
-import { getStudent, getUser } from '../../common/user';
+import { getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees } from '../../common/chat/helper';
-import { getMyMatchContacts, getSubcourseInstructorContacts } from '../../common/chat/contacts';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
