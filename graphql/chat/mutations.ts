@@ -11,7 +11,7 @@ import { checkIfSubcourseParticipation, getMatchByMatchees, getParticipantsForSu
 const logger = getLogger('MutateChatResolver');
 @Resolver()
 export class MutateChatResolver {
-    @Mutation(() => Boolean)
+    @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('matcheeUserId') matcheeUserId: string) {
         const { user } = context;
@@ -27,8 +27,8 @@ export class MutateChatResolver {
             },
         };
 
-        await getOrCreateConversation(matchees, conversationInfos);
-        return true;
+        const conversation = await getOrCreateConversation(matchees, conversationInfos);
+        return conversation.id;
     }
 
     @Mutation(() => Boolean)
