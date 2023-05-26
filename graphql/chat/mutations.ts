@@ -69,8 +69,8 @@ export class MutateChatResolver {
             },
         };
         const participants = await getParticipantsForSubcourseGroupChat(subcourse, user);
-        await getOrCreateGroupConversation(participants, subcourseId, conversationInfos);
-        return true;
+        const conversation = await getOrCreateGroupConversation(participants, subcourseId, conversationInfos);
+        return conversation.id;
     }
 
     @Mutation(() => Boolean)
