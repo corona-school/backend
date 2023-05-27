@@ -3,7 +3,7 @@ import { lecture as Appointment } from '@prisma/client';
 const language = 'de-DE';
 
 export function getAppointmentEnd(appointment: Appointment) {
-    const end = appointment.start;
+    const end = new Date(appointment.start);
     end.setMinutes(end.getMinutes() + appointment.duration);
 
     return end;
