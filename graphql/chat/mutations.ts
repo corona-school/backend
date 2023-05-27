@@ -39,7 +39,7 @@ export class MutateChatResolver {
         return true;
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => String)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
@@ -53,8 +53,8 @@ export class MutateChatResolver {
         };
 
         if (allowed) {
-            await getOrCreateConversation([user, participantUser], conversationInfos);
-            return true;
+            const conversation = await getOrCreateConversation([user, participantUser], conversationInfos);
+            return conversation.id;
         }
         throw new Error('Participant is not allowed to create conversation.');
     }
