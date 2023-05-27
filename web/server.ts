@@ -97,7 +97,7 @@ app.get('/:certificateId', (req, res, next) => {
         return next();
     }
 
-    res.redirect(`https://api.lern-fair.de/api/certificate/${req.params.certificateId}/confirm`);
+    res.redirect(`https://api.lern-fair.de/api/certificate/${req.params.certificateId}/confirmation`);
 });
 
 // ------------------------ Serve HTTP & Websocket ------------------------
