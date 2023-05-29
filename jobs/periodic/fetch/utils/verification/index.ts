@@ -18,7 +18,7 @@ export function generateToken(): string {
 }
 
 export async function sendVerificationMail(person: Person, redirectTo?: string) {
-    const verificationUrl = `https://my.corona-school.de/verify?token=${person.verification}&redirectTo=${redirectTo ?? ""}`;
+    const verificationUrl = `https://my.lern-fair.de/verify?token=${person.verification}&redirectTo=${redirectTo ?? ""}`;
 
     console.log("verificationURL", verificationUrl);
 

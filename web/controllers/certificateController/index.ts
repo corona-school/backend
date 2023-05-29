@@ -33,7 +33,7 @@ const DefaultCertificateType = "participation";
  * @apiGroup Certificate
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://api.corona-school.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384/confirmation
+ * curl -k -i -X GET https://api.lern-fair.de/api/certificate/000000001-0000-0000-0701-1b4c4c526384/confirmation
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest

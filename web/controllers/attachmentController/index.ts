@@ -34,7 +34,7 @@ attachmentRouter.get('/:attachmentId/:filename', getAttachmentUrlEndpoint);
  * @apiGroup Attachments
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://api.corona-school.de/api/attachments/000000001-0000-0000-0701-1b4c4c526384/helloworld.png
+ * curl -k -i -X GET https://api.lern-fair.de/api/attachments/000000001-0000-0000-0701-1b4c4c526384/helloworld.png
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
