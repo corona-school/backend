@@ -91,19 +91,27 @@ const checkIfSubcourseParticipation = async (participants: string[]): Promise<bo
     return result.length > 0;
 };
 
-const getParticipantsForSubcourseGroupChat = async (subcourse: Subcourse, instructor: User) => {
+const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     const subcourseParticipants = subcourse.subcourse_participants_pupil;
+    const subcourseInstructors = subcourse.subcourse_instructors_student;
 
-    const participants = await Promise.all(
+    const members = await Promise.all(
         subcourseParticipants.map(async (participant) => {
             const { pupilId } = participant;
             const user = await getUser(`pupil/${pupilId}`);
             return user;
         })
     );
-    participants.push(instructor);
 
-    return participants;
+    await Promise.all(
+        subcourseInstructors.map(async (instructor) => {
+            const { studentId } = instructor;
+            const instructorUser = await getUser(`student/${studentId}`);
+            members.push(instructorUser);
+        })
+    );
+
+    return members;
 };
 
 export {
@@ -115,5 +123,5 @@ export {
     createOneOnOneId,
     getConversationId,
     checkIfSubcourseParticipation,
-    getParticipantsForSubcourseGroupChat,
+    getMembersForSubcourseGroupChat,
 };

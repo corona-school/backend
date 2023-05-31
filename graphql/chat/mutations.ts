@@ -5,8 +5,8 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation } from '../../common/chat';
-import { getUser } from '../../common/user';
-import { checkIfSubcourseParticipation, getMatchByMatchees, getParticipantsForSubcourseGroupChat } from '../../common/chat/helper';
+import { User, getUser } from '../../common/user';
+import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -16,7 +16,7 @@ export class MutateChatResolver {
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('matcheeUserId') matcheeUserId: string) {
         const { user } = context;
         const matcheeUser = await getUser(matcheeUserId);
-        const matchees = [user, matcheeUser];
+        const matchees: [User, User] = [user, matcheeUser];
 
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
         await hasAccess(context, 'Match', match);
@@ -57,7 +57,7 @@ export class MutateChatResolver {
         const { user } = context;
         const subcourse = await prisma.subcourse.findUnique({
             where: { id: subcourseId },
-            include: { subcourse_participants_pupil: true, lecture: true, course: true },
+            include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
         });
         await hasAccess(context, 'Subcourse', subcourse);
 
@@ -68,8 +68,8 @@ export class MutateChatResolver {
                 type: 'course',
             },
         };
-        const participants = await getParticipantsForSubcourseGroupChat(subcourse, user);
-        const conversation = await getOrCreateGroupConversation(participants, subcourseId, conversationInfos);
+        const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
+        const conversation = await getOrCreateGroupConversation(subcourseMembers, subcourseId, conversationInfos);
         return conversation.id;
     }
 

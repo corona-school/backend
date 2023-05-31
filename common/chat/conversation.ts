@@ -112,7 +112,7 @@ const getConversation = async (conversationId: string): Promise<Conversation | u
     }
 };
 
-const getOrCreateConversation = async (participants: User[], conversationInfos?: ConversationInfos, subcourseId?: number): Promise<Conversation> => {
+const getOrCreateConversation = async (participants: [User, User], conversationInfos?: ConversationInfos, subcourseId?: number): Promise<Conversation> => {
     // * every participants need a talk js user
     await Promise.all(
         participants.map(async (participant) => {
