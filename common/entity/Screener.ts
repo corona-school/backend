@@ -94,7 +94,7 @@ export const defaultScreener = init(async function getDefaultScreenerEntry() {
             verified: true,
             id: DEFAULT_SCREENER_NUMBER_ID,
             oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
-            email: 'kontakt@corona-school.de',
+            email: 'kontakt@lern-fair.de',
             active: false,
             createdAt: new Date(),
             updatedAt: new Date(),

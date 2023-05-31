@@ -204,8 +204,8 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
         SCHUELERFAECHER: certificate.subjects.split(','),
         SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek.toFixed(2),
-        SCHUELERGESAMT: certificate.hoursTotal.toFixed(2),
+        SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
+        SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
         MEDIUM: certificate.medium,
         SCREENINGDATUM: screeningDate ? moment(screeningDate).format('D.M.YYYY') : '[UNBEKANNTES DATUM]',
         ONGOING: certificate.ongoingLessons,
@@ -326,7 +326,7 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
 }
 
 function getCertificateLink(certificate: ParticipationCertificate, lang: Language) {
-    return 'http://verify.corona-school.de/' + certificate.uuid + '?lang=' + lang;
+    return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang;
 }
 
 async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
