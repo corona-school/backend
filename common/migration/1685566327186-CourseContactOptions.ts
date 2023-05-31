@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class CourseContactOptions1685566327186 implements MigrationInterface {
-    name = 'CourseContactOptions1685566327186'
+    name = 'CourseContactOptions1685566327186';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "subcourse" ADD "allowChatContactProspects" boolean NOT NULL DEFAULT true`);
