@@ -27,12 +27,10 @@ export async function httpsGet(url: string) {
             });
             res.on("error", (err) => {
                 logger.warn("https connection error: ", { error: err });
-                logger.debug(err);
             });
         }).on("error", (e) => {
             //due to async nature of https.get, we need to add a way for async error handling...
             logger.warn("https connection error: ", { error: e });
-            logger.debug(e);
             reject(e);
         });
     });

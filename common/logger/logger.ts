@@ -76,12 +76,8 @@ export class Logger {
         this.logger.trace(message, args);
     }
 
-    // TODO switch to string
-    debug(message: any, args: LogData = {}): void {
+    debug(message: string, args: LogData = {}): void {
         this.enrich();
-        if (typeof message !== 'string') {
-            message = JSON.stringify(message);
-        }
         this.logger.debug(message, args);
     }
 

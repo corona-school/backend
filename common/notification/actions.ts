@@ -30,14 +30,16 @@ const sampleCourse = {
 };
 
 const sampleAppointment = {
-    day: 'Sonntag',
-    date: '20. Juli 1969',
-    time: '19:17',
+    start_day: 'Sonntag',
+    start_date: '20. Juli 1969',
+    start_time: '19:17',
+    end_time: '20:17',
     title: 'Chapter 1',
     original: {
         day: 'Montag',
-        date: '21. Juli 1969',
-        time: '19:17',
+        start_date: '21. Juli 1969',
+        start_time: '19:17',
+        end_time: '20:17',
     },
 };
 
