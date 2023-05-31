@@ -122,6 +122,8 @@ const getOrCreateConversation = async (participants: [User, User], conversationI
 
     const conversationIdOfParticipants = getConversationId(participants);
     const participantsConversation = await getConversation(conversationIdOfParticipants);
+    const updatedConversation = { id: conversationIdOfParticipants, custom: { type: conversationInfos.custom.type } };
+    await updateConversation(updatedConversation);
 
     if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos);
