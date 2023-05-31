@@ -16,6 +16,7 @@ import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
 import moment from 'moment';
+import { ChatSettings } from '../courses/types';
 
 @Entity()
 export class Subcourse {
@@ -85,6 +86,9 @@ export class Subcourse {
         default: false,
     })
     alreadyPromoted: boolean;
+
+    @Column({ type: 'json', nullable: true })
+    chatSettings: ChatSettings;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
