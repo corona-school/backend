@@ -16,6 +16,7 @@ import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
 import moment from 'moment';
+import { ChatType } from '../chat/types';
 
 @Entity()
 export class Subcourse {
@@ -90,6 +91,14 @@ export class Subcourse {
         nullable: true,
     })
     conversationId: string;
+    @Column({ type: 'boolean', default: true })
+    allowChatContactProspects: boolean;
+
+    @Column({ type: 'boolean', default: true })
+    allowChatContactParticipants: boolean;
+
+    @Column({ type: 'enum', enum: ChatType, enumName: 'chat_type', default: ChatType.NORMAL })
+    groupChatType: ChatType;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);

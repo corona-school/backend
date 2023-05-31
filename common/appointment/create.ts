@@ -37,17 +37,10 @@ export abstract class AppointmentCreateGroupInput extends AppointmentCreateInput
 }
 
 export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
-    const now = moment.now();
-    const start = moment(appointmentDate);
+    const now = moment().startOf('day');
+    const start = moment(appointmentDate).startOf('day');
     const diffDays = start.diff(now, 'days');
     return diffDays > 6;
-};
-
-export const isAppointmentFiveMinutesLater = (appointmentDate: Date) => {
-    const now = moment();
-    const fiveMinutesLater = moment(now).add(5, 'minutes');
-    const isAfter = moment(appointmentDate).isAfter(fiveMinutesLater);
-    return isAfter;
 };
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
