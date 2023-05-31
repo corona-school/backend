@@ -4,7 +4,7 @@ import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import {
-    bulkCreateNotifications,
+    bulkCreateConcreteNotifications,
     cancelDraftedAndDelayed,
     cancelNotification,
     publishDrafted,
@@ -65,7 +65,13 @@ export class MutateConcreteNotificationsResolver {
 
         validateContext(notification, context);
 
-        await bulkCreateNotifications(notification, users, context, skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED, startAt);
+        await bulkCreateConcreteNotifications(
+            notification,
+            users,
+            context,
+            skipDraft ? ConcreteNotificationState.DELAYED : ConcreteNotificationState.DRAFTED,
+            startAt
+        );
 
         return true;
     }

@@ -341,17 +341,13 @@ export function validateContext(notification: Notification, context: Notificatio
 
 // Bulk Concrete Notifications can be created in drafted state
 // Then one can validate and check that all notifications were created correctly before sending them out
-export async function bulkCreateNotifications(
+export async function bulkCreateConcreteNotifications(
     notification: Notification,
     users: User[],
     context: NotificationContext,
     state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED,
     startAt: Date
 ) {
-    if (users.length > 10 && state !== ConcreteNotificationState.DRAFTED) {
-        throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
-    }
-
     const contextIDExists =
         (await prisma.concrete_notification.count({
             where: { contextID: context.uniqueId },
@@ -488,6 +484,21 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
     }
 
     logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
+}
+
+export async function bulkActionTaken(users: User[], actionId: ActionID, notificationContext: NotificationContext) {
+    logger.debug(`Notification.bulkActionTaken context for action '${actionId}'`, notificationContext);
+    const notifications = await getNotifications();
+    const relevantNotifications = notifications.get(actionId);
+
+    if (!relevantNotifications) {
+        logger.debug(`Notification.bulkActionTaken found no notifications for action '${actionId}'`);
+        return;
+    }
+    for (const notification of relevantNotifications.toSend) {
+        assert(!notification.delay, 'Notifications with delay unsupported for bulk actions');
+        bulkCreateConcreteNotifications(notification, users, notificationContext, ConcreteNotificationState.DELAYED, new Date());
+    }
 }
 
 export async function checkReminders() {

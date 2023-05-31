@@ -12,11 +12,11 @@ import * as Notification from '../../../common/notification';
 import { getFullName, userForPupil } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
-import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity } from '../../courses/participants';
+import { getCourseCapacity, isParticipant } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
 import { createSecretEmailToken } from '../../secret';
+import { getCourse } from '../../../graphql/util';
 
 const logger = getLogger('Course Notification');
 
@@ -234,40 +234,64 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
-    // TODO: Reenable once we stabilized course promotions
-    return;
+function shuffleArray<T>(array: T[]): T[] {
+    const shuffledArray = [...array]; // Create a copy of the original array
 
-    const minGrade = subcourse.minGrade;
-    const maxGrade = subcourse.maxGrade;
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+
+    return shuffledArray;
+}
+
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
+    const predictedPupilResponseRate = 10; // in percent
+
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
-    const courseSubject = course.subject;
-    const grades = [];
+    if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+        throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
+    }
 
+    const course = await getCourse(subcourse.courseId);
+    const minGrade = subcourse.minGrade;
+    const maxGrade = subcourse.maxGrade;
+    const grades = [];
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
     }
 
-    const pupils = await prisma.pupil.findMany({
+    let pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades } },
     });
 
-    const context = await getNotificationContextForSubcourse(course, subcourse);
-
-    if (actionId === 'available_places_on_subcourse' && !isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
-        throw new Error(`Cannot send course promotion for Subcourse(${subcourse.id})`);
-    }
-
-    let sentCount = 0;
-    for (let pupil of pupils) {
+    const courseSubject = course.subject;
+    const filteredPupils = pupils.filter((pupil) => {
         const subjects = parseSubjectString(pupil.subjects);
+        const pupilAlreadyParticipant = isParticipant(subcourse, pupil);
         const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-        if (!courseSubject || isPupilsSubject) {
-            await Notification.actionTaken(pupil, actionId, context);
-            sentCount += 1;
-        }
-    }
+        return !courseSubject || (!pupilAlreadyParticipant && isPupilsSubject);
+    });
 
-    logger.info(`Sent ${sentCount} notifications to promote Subcourse(${subcourse.id})`);
+    const shuffledFilteredPupils = shuffleArray(filteredPupils);
+
+    // get random subset of filtered pupils
+    const seatsLeft = subcourse.maxParticipants * courseCapacity;
+    const randomPupilSampleSize = (seatsLeft / predictedPupilResponseRate) * 100;
+    const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
+
+    logger.info(
+        `Filtered ${filteredPupils.length} pupils and reduced that to (${randomFilteredPupilSample.length})
+        for Subcourse(${subcourse}) based on the predicted response rate`
+    );
+
+    const context = await getNotificationContextForSubcourse(course, subcourse);
+    Notification.bulkActionTaken(
+        randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
+        'available_places_on_subcourse',
+        context
+    );
+
+    logger.info(`Sent ${randomFilteredPupilSample.length} notifications to promote Subcourse(${subcourse.id})`);
 }
