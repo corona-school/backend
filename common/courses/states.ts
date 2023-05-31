@@ -3,7 +3,7 @@ import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { getCourse } from '../../graphql/util';
-import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../mails/courses';
+import { sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
