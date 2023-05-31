@@ -61,7 +61,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         return bbbMeeting;
     } catch (e) {
         logger.error("Can't save new bbb meeting: ", e);
-        logger.debug(bbbMeeting, e);
+        logger.debug('with bbb meeting', { bbbMeeting });
     }
 }
 
@@ -294,7 +294,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
 
     if (subcourseId == null) {
         logger.error("Can't save new course attendance: subcourseId is null");
-        logger.debug(courseAttendanceLog);
+        logger.debug('with attendance log', { courseAttendanceLog });
     } else {
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
@@ -326,7 +326,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     logger.info('Successfully saved new Course Attendance to lecture with id ', { lectureId: activeLecture.id });
                 } catch (e) {
                     logger.error("Can't save new course attendance:", e);
-                    logger.debug(courseAttendanceLog, e);
+                    logger.debug('with attendance log', { courseAttendanceLog });
                 }
             }
         } else {

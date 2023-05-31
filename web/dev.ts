@@ -1273,9 +1273,9 @@ export async function setupDevDB() {
     const schools: School[] = [];
 
     const school1 = new School();
-    school1.name = 'Corona School Germany';
-    school1.emailDomain = 'corona-school.de';
-    school1.website = 'https://corona-school.de';
+    school1.name = 'Lern Fair';
+    school1.emailDomain = 'lern-fair.de';
+    school1.website = 'https://lern-fair.de';
     school1.state = State.OTHER;
     school1.schooltype = SchoolType.SONSTIGES;
     school1.activeCooperation = true;
@@ -1401,7 +1401,7 @@ function sha512(input: string): string {
     return hash.update(input).digest('hex');
 }
 
-const PROD_URL = 'https://api.corona-school.de/apollo';
+const PROD_URL = 'https://api.lern-fair.de/apollo';
 
 async function importNotificationsFromProd() {
     const existingNotifications = await getNotifications();
