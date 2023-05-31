@@ -31,7 +31,7 @@ export class MutateChatResolver {
         return conversation.id;
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => String)
     @Authorized(Role.USER)
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
