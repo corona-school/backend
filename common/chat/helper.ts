@@ -1,6 +1,6 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser } from '../user';
+import { User, getUser, userForPupil, userForStudent } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
@@ -97,16 +97,14 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
 
     const members = await Promise.all(
         subcourseParticipants.map(async (participant) => {
-            const { pupilId } = participant;
-            const user = await getUser(`pupil/${pupilId}`);
+            const user = userForPupil(participant);
             return user;
         })
     );
 
     await Promise.all(
         subcourseInstructors.map(async (instructor) => {
-            const { studentId } = instructor;
-            const instructorUser = await getUser(`student/${studentId}`);
+            const instructorUser = userForStudent(instructor);
             members.push(instructorUser);
         })
     );
