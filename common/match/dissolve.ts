@@ -62,7 +62,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null },
+        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
         where: { id: match.id },
     });
 
