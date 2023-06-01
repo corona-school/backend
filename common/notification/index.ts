@@ -488,6 +488,8 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
 
 export async function bulkActionTaken(users: User[], actionId: ActionID, notificationContext: NotificationContext) {
     logger.debug(`Notification.bulkActionTaken context for action '${actionId}'`, notificationContext);
+    const startTime = Date.now();
+
     const notifications = await getNotifications();
     const relevantNotifications = notifications.get(actionId);
 
@@ -495,10 +497,15 @@ export async function bulkActionTaken(users: User[], actionId: ActionID, notific
         logger.debug(`Notification.bulkActionTaken found no notifications for action '${actionId}'`);
         return;
     }
-    for (const notification of relevantNotifications.toSend) {
-        assert(!notification.delay, 'Notifications with delay unsupported for bulk actions');
-        bulkCreateConcreteNotifications(notification, users, notificationContext, ConcreteNotificationState.DELAYED, new Date());
+    try {
+        for (const notification of relevantNotifications.toSend) {
+            assert(!notification.delay, 'Notifications with delay unsupported for bulk actions');
+            await bulkCreateConcreteNotifications(notification, users, notificationContext, ConcreteNotificationState.DELAYED, new Date());
+        }
+    } catch (e) {
+        logger.error(`Failed to perform Notification.bulkActionTaken("${actionId}"): `, e);
     }
+    logger.debug(`Notification.bulkActionTaken took ${Date.now() - startTime}ms`);
 }
 
 export async function checkReminders() {
