@@ -4,9 +4,10 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation } from '../../common/chat';
+import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation, markConversationAsReadOnly } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
+import { ChatType } from '../../common/chat/types';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -33,6 +34,7 @@ export class MutateChatResolver {
 
     @Mutation(() => String)
     @Authorized(Role.USER)
+    // TODO rename participantUserId to memberUserId
     async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
         const { user } = context;
         const participantUser = await getUser(participantUserId);
@@ -53,8 +55,7 @@ export class MutateChatResolver {
 
     @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
-    async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
-        const { user } = context;
+    async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('groupChatType') groupChatType: ChatType) {
         const subcourse = await prisma.subcourse.findUnique({
             where: { id: subcourseId },
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
@@ -65,11 +66,14 @@ export class MutateChatResolver {
             subject: subcourse.course.name,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
-                type: 'course',
+                type: groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'course',
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
         const conversation = await getOrCreateGroupConversation(subcourseMembers, subcourseId, conversationInfos);
+        if (groupChatType === ChatType.ANNOUNCEMENT) {
+            await markConversationAsReadOnly(conversation.id);
+        }
         return conversation.id;
     }
 
