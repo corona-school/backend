@@ -14,7 +14,7 @@ import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/c
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { Student } from '../../common/entity/Student';
 import { getLogger } from '../../common/logger/logger';
-import { sendGuestInvitationMail, sendPupilCourseSuggestion } from '../../common/mails/courses';
+import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
 import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
@@ -562,10 +562,9 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.INSTRUCTOR)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
-        const course = await getCourse(subcourse.courseId);
 
         await hasAccess(context, 'Subcourse', subcourse);
-        await sendPupilCourseSuggestion(course, subcourse, 'available_places_on_subcourse');
+        await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
 
         return true;

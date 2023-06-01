@@ -31,209 +31,6 @@ const OPTIONAL_CHANNELS = [mailjetChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
-/* -------------------------------- Public API exposed to other components ----------------------------------------------------------- */
-
-/* sends one specific notification with a very specific notification context to the user.
-   Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
-export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
-    const notification = await getNotification(id);
-
-    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
-
-    await deliverNotification(concreteNotification, notification, user, notificationContext);
-}
-
-/* Triggers all notification sending, scheduling and unscheduling of the emails for a certain action
-   Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
-   If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
-*/
-
-export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
-    if (!user.active) {
-        logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
-        return;
-    }
-
-    const startTime = Date.now();
-    try {
-        logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
-        const notifications = await getNotifications();
-        const relevantNotifications = notifications.get(actionId);
-
-        if (!relevantNotifications) {
-            logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
-            return;
-        }
-
-        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
-
-        // prevent sending of now unnecessary notifications
-        const dismissed = await prisma.concrete_notification.updateMany({
-            data: {
-                state: ConcreteNotificationState.ACTION_TAKEN,
-                sentAt: new Date(),
-            },
-            where: {
-                notificationID: {
-                    in: relevantNotifications.toCancel.map((it) => it.id),
-                },
-                state: ConcreteNotificationState.DELAYED,
-                userId: getUserIdTypeORM(user),
-                // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
-                // If it is not specified, it'll apply to all reminders
-                ...(notificationContext.uniqueId
-                    ? {
-                          OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
-                      }
-                    : {}),
-            },
-        });
-
-        logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
-
-        const reminders = relevantNotifications.toSend.filter((it) => it.delay);
-        const directSends = relevantNotifications.toSend.filter((it) => !it.delay);
-
-        logger.debug(`Notification.actionTaken found reminders ${reminders.map((it) => it.id)} and directSends ${directSends.map((it) => it.id)}`);
-
-        // Trigger notifications that are supposed to be directly sent on this action
-        for (const directSend of directSends) {
-            const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
-            await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
-        }
-
-        // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
-        if (reminders.length) {
-            const remindersCreated = await prisma.concrete_notification.createMany({
-                data: reminders.map((it) => ({
-                    notificationID: it.id,
-                    state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
-                    userId: getUserIdTypeORM(user),
-                    contextID: notificationContext.uniqueId,
-                    context: notificationContext,
-                    attachmentGroupId: attachments?.attachmentGroupId,
-                })),
-            });
-
-            logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
-        }
-    } catch (e) {
-        logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
-    }
-
-    logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
-}
-
-export async function checkReminders() {
-    logger.debug(`Checking for pending notification reminders`);
-    const start = Date.now();
-
-    const remindersToSend = await prisma.concrete_notification.findMany({
-        where: {
-            state: ConcreteNotificationState.DELAYED,
-            sentAt: { lte: new Date() },
-        },
-    });
-
-    for (const reminder of remindersToSend) {
-        try {
-            logger.debug(`Processing reminder`, reminder);
-
-            if (!reminder.context) {
-                throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
-            }
-
-            let attachmentGroup = null;
-            if (reminder.attachmentGroupId !== null) {
-                attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
-            }
-
-            const notification = await getNotification(reminder.notificationID);
-            const user = await getUserTypeORM(reminder.userId);
-
-            if (!user.active) {
-                throw new Error(`Reminder was found although account is deactivated`);
-            }
-
-            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext, attachmentGroup);
-
-            // For recurring reminders, we simply create another DELAYED concrete notification
-            // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
-            // This ends once the user takes an action of the cancelOnActions
-            if (notification.interval) {
-                logger.debug(
-                    `Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`
-                );
-
-                if (notification.cancelledOnAction.length === 0) {
-                    logger.warn(
-                        `Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`
-                    );
-                }
-
-                const recurringReminder = await prisma.concrete_notification.create({
-                    data: {
-                        notificationID: notification.id,
-                        state: ConcreteNotificationState.DELAYED,
-                        sentAt: new Date(Date.now() + notification.interval /* in hours */ * HOURS_TO_MS),
-                        userId: getUserIdTypeORM(user),
-                        contextID: reminder.contextID,
-                        context: reminder.context,
-                        attachmentGroupId: reminder.attachmentGroupId,
-                    },
-                });
-
-                logger.info(
-                    `Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`
-                );
-            }
-        } catch (error) {
-            logger.error(`Sending Reminder ConcreteNotification(${reminder.id}) failed with error`, error);
-            await prisma.concrete_notification.update({
-                data: {
-                    state: ConcreteNotificationState.ERROR,
-                    error: error.message,
-                },
-                where: { id: reminder.id },
-            });
-        }
-    }
-
-    logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
-}
-
-// Renders a Message for a certain Concrete Notification
-export async function getMessage(
-    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
-    language: TranslationLanguage = TranslationLanguage.DE
-): Promise<NotificationMessageType | null> {
-    const legacyUser = await getUserTypeORM(concreteNotification.userId);
-    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
-
-    const message = await getMessageForNotification(concreteNotification.notificationID, language);
-
-    if (!message) {
-        return null;
-    }
-
-    const { type, headline, body, modalText, navigateTo } = message;
-
-    const result = {
-        type,
-        body: renderTemplate(body, context),
-        headline: renderTemplate(headline, context),
-        navigateTo: renderTemplate(navigateTo, context),
-    };
-
-    if (modalText) {
-        return { ...result, modalText: renderTemplate(modalText, context) };
-    }
-    return result;
-}
-
-// TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
-
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
@@ -544,17 +341,13 @@ export function validateContext(notification: Notification, context: Notificatio
 
 // Bulk Concrete Notifications can be created in drafted state
 // Then one can validate and check that all notifications were created correctly before sending them out
-export async function bulkCreateNotifications(
+export async function bulkCreateConcreteNotifications(
     notification: Notification,
     users: User[],
     context: NotificationContext,
     state: ConcreteNotificationState.DELAYED | ConcreteNotificationState.DRAFTED,
     startAt: Date
 ) {
-    if (users.length > 10 && state !== ConcreteNotificationState.DRAFTED) {
-        throw new Error(`Notifications sent to more than 10 users should use the DRAFTED state`);
-    }
-
     const contextIDExists =
         (await prisma.concrete_notification.count({
             where: { contextID: context.uniqueId },
@@ -598,3 +391,228 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
 }
 
 export * from './hook';
+
+/* -------------------------------- Public API exposed to other components ----------------------------------------------------------- */
+
+/* sends one specific notification with a very specific notification context to the user.
+   Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
+export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
+    const notification = await getNotification(id);
+
+    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
+
+    await deliverNotification(concreteNotification, notification, user, notificationContext);
+}
+
+/* Triggers all notification sending, scheduling and unscheduling of the emails for a certain action
+   Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
+   If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
+*/
+
+export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
+    if (!user.active) {
+        logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
+        return;
+    }
+
+    const startTime = Date.now();
+    try {
+        logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
+        const notifications = await getNotifications();
+        const relevantNotifications = notifications.get(actionId);
+
+        if (!relevantNotifications) {
+            logger.debug(`Notification.actionTaken found no notifications for action '${actionId}'`);
+            return;
+        }
+
+        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
+
+        // prevent sending of now unnecessary notifications
+        const dismissed = await prisma.concrete_notification.updateMany({
+            data: {
+                state: ConcreteNotificationState.ACTION_TAKEN,
+                sentAt: new Date(),
+            },
+            where: {
+                notificationID: {
+                    in: relevantNotifications.toCancel.map((it) => it.id),
+                },
+                state: ConcreteNotificationState.DELAYED,
+                userId: getUserIdTypeORM(user),
+                // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
+                // If it is not specified, it'll apply to all reminders
+                ...(notificationContext.uniqueId
+                    ? {
+                          OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
+                      }
+                    : {}),
+            },
+        });
+
+        logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+
+        const reminders = relevantNotifications.toSend.filter((it) => it.delay);
+        const directSends = relevantNotifications.toSend.filter((it) => !it.delay);
+
+        logger.debug(`Notification.actionTaken found reminders ${reminders.map((it) => it.id)} and directSends ${directSends.map((it) => it.id)}`);
+
+        // Trigger notifications that are supposed to be directly sent on this action
+        for (const directSend of directSends) {
+            const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
+            await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
+        }
+
+        // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
+        if (reminders.length) {
+            const remindersCreated = await prisma.concrete_notification.createMany({
+                data: reminders.map((it) => ({
+                    notificationID: it.id,
+                    state: ConcreteNotificationState.DELAYED,
+                    sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
+                    userId: getUserIdTypeORM(user),
+                    contextID: notificationContext.uniqueId,
+                    context: notificationContext,
+                    attachmentGroupId: attachments?.attachmentGroupId,
+                })),
+            });
+
+            logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
+        }
+    } catch (e) {
+        logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
+    }
+
+    logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
+}
+
+export async function bulkActionTaken(users: User[], actionId: ActionID, notificationContext: NotificationContext) {
+    logger.debug(`Notification.bulkActionTaken context for action '${actionId}'`, notificationContext);
+    const startTime = Date.now();
+
+    const notifications = await getNotifications();
+    const relevantNotifications = notifications.get(actionId);
+
+    if (!relevantNotifications) {
+        logger.debug(`Notification.bulkActionTaken found no notifications for action '${actionId}'`);
+        return;
+    }
+    try {
+        for (const notification of relevantNotifications.toSend) {
+            assert(!notification.delay, 'Notifications with delay unsupported for bulk actions');
+            await bulkCreateConcreteNotifications(notification, users, notificationContext, ConcreteNotificationState.DELAYED, new Date());
+        }
+    } catch (e) {
+        logger.error(`Failed to perform Notification.bulkActionTaken("${actionId}"): `, e);
+    }
+    logger.debug(`Notification.bulkActionTaken took ${Date.now() - startTime}ms`);
+}
+
+export async function checkReminders() {
+    logger.debug(`Checking for pending notification reminders`);
+    const start = Date.now();
+
+    const remindersToSend = await prisma.concrete_notification.findMany({
+        where: {
+            state: ConcreteNotificationState.DELAYED,
+            sentAt: { lte: new Date() },
+        },
+    });
+
+    for (const reminder of remindersToSend) {
+        try {
+            logger.debug(`Processing reminder`, reminder);
+
+            if (!reminder.context) {
+                throw new Error(`Notification(${reminder.id}) was supposed to contain a context when sending out reminders`);
+            }
+
+            let attachmentGroup = null;
+            if (reminder.attachmentGroupId !== null) {
+                attachmentGroup = await getAttachmentGroupByAttachmentGroupId(reminder.attachmentGroupId);
+            }
+
+            const notification = await getNotification(reminder.notificationID);
+            const user = await getUserTypeORM(reminder.userId);
+
+            if (!user.active) {
+                throw new Error(`Reminder was found although account is deactivated`);
+            }
+
+            await deliverNotification(reminder, notification, user, reminder.context as NotificationContext, attachmentGroup);
+
+            // For recurring reminders, we simply create another DELAYED concrete notification
+            // That way, the reminder will be sent again and again (a new concrete notification gets created when the previous one was sent out)
+            // This ends once the user takes an action of the cancelOnActions
+            if (notification.interval) {
+                logger.debug(
+                    `Notification(${notification.id}) has interval set to ${notification.interval}h, thus another reminder gets scheduled to be sent out in the future`
+                );
+
+                if (notification.cancelledOnAction.length === 0) {
+                    logger.warn(
+                        `Notification(${reminder.id}) has an interval set but no cancelOnAction. Thus the user has no way to stop the reminders being sent!`
+                    );
+                }
+
+                const recurringReminder = await prisma.concrete_notification.create({
+                    data: {
+                        notificationID: notification.id,
+                        state: ConcreteNotificationState.DELAYED,
+                        sentAt: new Date(Date.now() + notification.interval /* in hours */ * HOURS_TO_MS),
+                        userId: getUserIdTypeORM(user),
+                        contextID: reminder.contextID,
+                        context: reminder.context,
+                        attachmentGroupId: reminder.attachmentGroupId,
+                    },
+                });
+
+                logger.info(
+                    `Created recurring ConcreteNotification(${recurringReminder.id}) for Notification(${notification.id}) which will be sent at ${recurringReminder.sentAt}`
+                );
+            }
+        } catch (error) {
+            logger.error(`Sending Reminder ConcreteNotification(${reminder.id}) failed with error`, error);
+            await prisma.concrete_notification.update({
+                data: {
+                    state: ConcreteNotificationState.ERROR,
+                    error: error.message,
+                },
+                where: { id: reminder.id },
+            });
+        }
+    }
+
+    logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
+}
+
+// Renders a Message for a certain Concrete Notification
+export async function getMessage(
+    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
+    language: TranslationLanguage = TranslationLanguage.DE
+): Promise<NotificationMessageType | null> {
+    const legacyUser = await getUserTypeORM(concreteNotification.userId);
+    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
+
+    const message = await getMessageForNotification(concreteNotification.notificationID, language);
+
+    if (!message) {
+        return null;
+    }
+
+    const { type, headline, body, modalText, navigateTo } = message;
+
+    const result = {
+        type,
+        body: renderTemplate(body, context),
+        headline: renderTemplate(headline, context),
+        navigateTo: renderTemplate(navigateTo, context),
+    };
+
+    if (modalText) {
+        return { ...result, modalText: renderTemplate(modalText, context) };
+    }
+    return result;
+}
+
+// TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
