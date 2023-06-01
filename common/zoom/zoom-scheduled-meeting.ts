@@ -2,6 +2,7 @@ import { getAccessToken } from './zoom-authorization';
 import { ZoomUser } from './zoom-user';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
+import { isZoomFeatureActive } from '.';
 
 const logger = getLogger();
 
@@ -40,6 +41,13 @@ const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
 const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCourse: boolean, endDateTime?: Date) => {
+    if (!isZoomFeatureActive()) {
+        // return test data if zoom is not active
+        return {
+            id: 123456789,
+        };
+    }
+
     const { access_token } = await getAccessToken();
 
     const altHosts: string[] = [];

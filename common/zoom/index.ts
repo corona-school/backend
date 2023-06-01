@@ -33,4 +33,8 @@ const generateMeetingSDKJWT = async (meetingNumber: number, role: MeetingRole) =
     return jwtToken;
 };
 
-export { generateMeetingSDKJWT };
+function isZoomFeatureActive(): boolean {
+    return JSON.parse(process.env.ZOOM_ACTIVE || 'false');
+}
+
+export { generateMeetingSDKJWT, isZoomFeatureActive };

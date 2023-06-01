@@ -5,10 +5,20 @@ import dotenv from 'dotenv';
 import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
+import { isZoomFeatureActive } from '.';
 
 const logger = getLogger();
 
 dotenv.config();
+
+const dummyUser = {
+    id: '123456789',
+    first_name: 'Max',
+    last_name: 'Mustermann',
+    email: 'max@mustermann.de',
+    display_name: 'Max Mustermann',
+    personal_meeting_url: 'https://zoom.us/j/123456789',
+};
 
 type ZoomUser = {
     id: string;
@@ -39,6 +49,10 @@ enum ChatPrivileges {
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 
 const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
+    if (!isZoomFeatureActive()) {
+        // return test data if zoom is not active
+        return dummyUser;
+    }
     const { access_token } = await getAccessToken();
 
     const response = await zoomRetry(
@@ -90,6 +104,10 @@ const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 
 };
 
 async function getZoomUser(email: string): Promise<ZoomUser> {
+    if (!isZoomFeatureActive()) {
+        // return test data if zoom is not active
+        return dummyUser;
+    }
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -118,6 +136,9 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
 }
 
 async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
+    if (!isZoomFeatureActive()) {
+        return dummyUser;
+    }
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -149,8 +170,14 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
     return data;
 }
 
+// To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
 async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
-    // To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
+    if (!isZoomFeatureActive()) {
+        // return test data if zoom is not active
+        return {
+            token: '123456789',
+        };
+    }
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>

@@ -56,6 +56,7 @@ jobs:
           INTEGRATION_TARGET: "http://localhost:5000/apollo"
           INTEGRATION_SILENT: "true"
           ADMIN_AUTH_TOKEN: admintoken
+          ZOOM_ACTIVE: 'false'
 
   lint:
     runs-on: ubuntu-20.04
