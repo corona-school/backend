@@ -43,6 +43,7 @@ type LogData<Type extends LogType> = {
     instructorIssuedCertificate: { subcourseID: number; pupilID: number };
     pupilInterestConfirmationRequestSent: never;
     pupilInterestConfirmationRequestReminderSent: never;
+    cocCancel: any;
     pupilInterestConfirmationRequestStatusChange: { changeDate: number; newStatus: InterestConfirmationStatus; previousStatus: InterestConfirmationStatus };
 }[Type];
 

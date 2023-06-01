@@ -12,7 +12,7 @@ import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { canPublish, cancelSubcourse, editSubcourse, publishSubcourse, subcourseOverGracePeriod } from '../../common/courses/states';
-import { getUserTypeORM } from '../../common/user';
+import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
@@ -21,6 +21,12 @@ import { contactInstructors, contactParticipants } from '../../common/courses/co
 import { Student } from '../../common/entity/Student';
 import { validateEmail } from '../validators';
 import moment from 'moment';
+import {
+    addGroupAppointmentsOrganizer,
+    addGroupAppointmentsParticipant,
+    removeGroupAppointmentsOrganizer,
+    removeGroupAppointmentsParticipant,
+} from '../../common/appointment/participants';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -92,10 +98,13 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
+        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await getStudent(studentId);
+        const newInstructor = await getStudent(studentId);
+        const studentUserId = getUserIdTypeORM(newInstructor);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
+        await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -107,10 +116,13 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
+        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await getStudent(studentId);
+        const instructorToBeRemoved = await getStudent(studentId);
+        const studentUserId = getUserIdTypeORM(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
+        await removeGroupAppointmentsOrganizer(subcourseId, studentUserId);
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -290,9 +302,11 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
+        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
+        await addGroupAppointmentsParticipant(subcourseId, user.userID);
         return true;
     }
 
@@ -303,9 +317,11 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ): Promise<boolean> {
+        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
+        await addGroupAppointmentsParticipant(subcourseId, user.userID);
         return true;
     }
 
@@ -316,6 +332,7 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ) {
+        const { user } = context;
         let subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const pupil = await getPupil(pupilId);
@@ -335,6 +352,7 @@ export class MutateSubcourseResolver {
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
+        await addGroupAppointmentsParticipant(subcourseId, user.userID);
 
         return true;
     }
@@ -346,11 +364,13 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
+        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
         await leaveSubcourse(subcourse, pupil);
+        await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
         return true;
     }
 

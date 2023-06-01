@@ -1,4 +1,4 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification } from '../generated';
+import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -12,6 +12,7 @@ import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
+import { getAppointmentsForUser } from '../../common/appointment/get';
 
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
@@ -141,5 +142,18 @@ export class UserFieldsResolver {
         }
 
         return result;
+    }
+
+    @FieldResolver((returns) => [Lecture], { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @LimitedQuery()
+    async appointments(
+        @Root() user: User,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('cursor', { nullable: true }) cursor?: number,
+        @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
+    ): Promise<Lecture[]> {
+        return getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 }
