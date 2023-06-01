@@ -495,6 +495,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'minGrade'
             | 'maxGrade'
             | 'maxParticipants'
+            | 'allowChatContactParticipants'
+            | 'allowChatContactProspects'
+            | 'groupChatType'
         >({
             course_participation_certificate: nobody,
             lecture: nobody,

@@ -6,7 +6,6 @@ import {
     AppointmentCreateMatchInput,
     createGroupAppointments,
     createMatchAppointments,
-    isAppointmentFiveMinutesLater,
     isAppointmentOneWeekLater,
 } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
@@ -65,13 +64,7 @@ export class MutateAppointmentResolver {
     ) {
         const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
         await hasAccess(context, 'Match', match);
-        if (isAppointmentFiveMinutesLater(appointments[0].start)) {
-            await createMatchAppointments(matchId, appointments);
-        } else {
-            throw new Error('Appointment can not be created if start time is less than five minutes.');
-        }
-
-        // send notification
+        await createMatchAppointments(matchId, appointments);
         const student = await getStudent(context.user.studentId);
 
         await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {

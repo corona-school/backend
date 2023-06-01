@@ -548,6 +548,9 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
+  allowChatContactProspects        Boolean                            @default(true)
+  allowChatContactParticipants     Boolean                            @default(true)
+  groupChatType                    chat_type                          @default(NORMAL)
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
@@ -1017,4 +1020,9 @@ enum lecture_appointmenttype_enum {
   match
   internal
   legacy
+}
+
+enum chat_type {
+  NORMAL
+  ANNOUNCEMENT
 }
