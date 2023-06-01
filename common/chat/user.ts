@@ -21,7 +21,6 @@ const createChatUser = async (user: User): Promise<void> => {
             body: JSON.stringify({
                 name: `${user.firstname} ${user.lastname}`,
                 email: [user.email],
-                welcomeMessage: `Hey, ich bin ${user.firstname} `,
                 role: user.studentId ? 'student' : 'pupil',
             }),
         });
