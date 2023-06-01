@@ -61,6 +61,12 @@ class PublicSubcourseEditInput {
     maxParticipants?: number;
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     joinAfterStart?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactProspects?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactParticipants?: boolean;
+    @TypeGraphQL.Field((_type) => chat_type, { nullable: true })
+    groupChatType?: chat_type;
 }
 
 @InputType()
