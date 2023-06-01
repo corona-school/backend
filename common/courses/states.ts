@@ -3,7 +3,7 @@ import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { getCourse } from '../../graphql/util';
-import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../mails/courses';
+import { sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
@@ -80,8 +80,8 @@ export async function publishSubcourse(subcourse: Subcourse) {
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
-    const course = await getCourse(subcourse.courseId);
-    await sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
+    // const course = await getCourse(subcourse.courseId);
+    // TODO: Seperate Issue, Promotion every 7 days
 }
 
 /* ---------------- Subcourse Cancel ------------ */

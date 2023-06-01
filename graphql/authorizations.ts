@@ -385,7 +385,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             wix_creation_date: nobody,
             isRedacted: nobody,
             // these have cleaner variants in the data model:
-            subjects: nobody,
+            subjects: nobody, // -> subjectsFormatted
             pupil_screening: adminOrOwner,
 
             // these are associations which are wrongly in the TypeGraphQL generation
@@ -507,6 +507,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
+            conversationId: adminOrOwner,
             waiting_list_enrollment: adminOrOwner,
         }),
     },
