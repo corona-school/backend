@@ -3,6 +3,7 @@ import { pupilOne, pupilUpdated } from './user';
 import * as assert from 'assert';
 import { screenedInstructorOne } from './screening';
 import { CourseState } from '../common/entity/Course';
+import { ChatType } from '../common/chat/types';
 
 const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
@@ -94,6 +95,9 @@ export const subcourseOne = test('Create Subcourse', async () => {
                 maxGrade: 10
                 maxParticipants: 1
                 joinAfterStart: true
+                allowChatContactProspects: true
+                allowChatContactParticipants: true
+                groupChatType: ${ChatType.NORMAL}
                 lectures: [{ start: "${nextMinute.toISOString()}" duration: 1 }]
             }) { id }
         }
