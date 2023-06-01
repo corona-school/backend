@@ -253,15 +253,14 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
     }
 
     let pupils = await prisma.pupil.findMany({
-        where: { active: true, isParticipant: true, grade: { in: grades } },
+        where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
     });
 
     const courseSubject = course.subject;
-    const filteredPupils = pupils.filter(async (pupil) => {
+    const filteredPupils = pupils.filter((pupil) => {
         const subjects = parseSubjectString(pupil.subjects);
-        const pupilAlreadyParticipant = await isParticipant(subcourse, pupil);
         const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-        return !courseSubject || (!pupilAlreadyParticipant && isPupilsSubject);
+        return !courseSubject || isPupilsSubject;
     });
 
     const shuffledFilteredPupils = shuffleArray(filteredPupils);
