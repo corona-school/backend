@@ -1,32 +1,32 @@
-import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
-import { getLogger } from '../../common/logger/logger';
-import * as TypeGraphQL from 'type-graphql';
-import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
-import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendGuestInvitationMail, sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../../common/mails/courses';
-import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { GraphQLContext } from '../context';
-import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
-import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
-import { canPublish, cancelSubcourse, editSubcourse, publishSubcourse, subcourseOverGracePeriod } from '../../common/courses/states';
-import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
-import { PrerequisiteError } from '../../common/util/error';
-import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
-import { getFile } from '../files';
-import { contactInstructors, contactParticipants } from '../../common/courses/contact';
-import { Student } from '../../common/entity/Student';
-import { validateEmail } from '../validators';
 import moment from 'moment';
+import * as TypeGraphQL from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import {
     addGroupAppointmentsOrganizer,
     addGroupAppointmentsParticipant,
     removeGroupAppointmentsOrganizer,
     removeGroupAppointmentsParticipant,
 } from '../../common/appointment/participants';
+import { contactInstructors, contactParticipants } from '../../common/courses/contact';
+import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
+import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { Student } from '../../common/entity/Student';
+import { getLogger } from '../../common/logger/logger';
+import { sendGuestInvitationMail, sendPupilCourseSuggestion } from '../../common/mails/courses';
+import { prisma } from '../../common/prisma';
+import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
+import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
+import { PrerequisiteError } from '../../common/util/error';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { GraphQLContext } from '../context';
+import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
+import { getFile, removeFile } from '../files';
+import * as GraphQLModel from '../generated/models';
+import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
+import { validateEmail } from '../validators';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -502,6 +502,9 @@ export class MutateSubcourseResolver {
         const files = fileIDs.map(getFile);
 
         await contactInstructors(course, subcourse, pupil, title, body, files);
+        for (const fileID in fileIDs) {
+            removeFile(fileID);
+        }
         return true;
     }
 
@@ -523,6 +526,10 @@ export class MutateSubcourseResolver {
         const files = fileIDs.map(getFile);
 
         await contactParticipants(course, subcourse, instructor, title, body, files, participantIDs);
+        for (const fileID in fileIDs) {
+            removeFile(fileID);
+        }
+
         return true;
     }
 

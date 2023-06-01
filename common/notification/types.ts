@@ -61,7 +61,6 @@ export interface NotificationContext {
 // The authToken is passed as a separate variable, as authentication might change in the future
 export interface Context extends NotificationContext {
     user: Omit<Person, 'fullName'> & { fullName: string };
-    authToken: string;
     USER_APP_DOMAIN: string;
 }
 
@@ -86,6 +85,7 @@ type Template = string;
 export interface TranslationTemplate {
     headline: Template;
     body: Template;
+    modalText?: Template;
 }
 
 export interface NotificationMessage extends TranslationTemplate {

@@ -64,6 +64,8 @@ import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
 import { MutateAppointmentResolver } from './appointment/mutations';
+import { getCurrentTransaction } from '../common/session';
+import { MutateChatResolver } from './chat/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -170,6 +172,9 @@ const schema = buildSchemaSync({
         /* Appointments */
         MutateAppointmentResolver,
 
+        /* Chat */
+        MutateChatResolver,
+
         AdminMutationsResolver,
     ],
     authChecker,
@@ -185,4 +190,18 @@ export const apolloServer = new ApolloServer({
     introspection: true,
     debug: isDev,
     formatError,
+    formatResponse(response, requestContext) {
+        const transaction = getCurrentTransaction();
+
+        if (!response.extensions) {
+            response.extensions = {};
+        }
+
+        response.extensions['Transaction'] = {
+            sessionID: transaction.session?.sessionID ?? '?',
+            transactionID: transaction.transactionID,
+        };
+
+        return response;
+    },
 });

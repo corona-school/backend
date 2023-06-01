@@ -23,7 +23,6 @@ import {
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { logInContext } from '../logging';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
@@ -34,7 +33,7 @@ import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 
-const log = getLogger(`PupilMutation`);
+const logger = getLogger(`Pupil Mutations`);
 
 @InputType()
 export class PupilUpdateInput {
@@ -128,8 +127,6 @@ export async function updatePupil(
     update: PupilUpdateInput,
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
 ) {
-    const log = logInContext('Pupil', context);
-
     const {
         subjects,
         gradeAsInt,
@@ -181,18 +178,17 @@ export async function updatePupil(
     });
 
     if (pupil.registrationSource !== 'plus' && registrationSource === 'plus') {
-        Notification.actionTaken(pupil, 'pupil_joined_plus', {});
+        await Notification.actionTaken(pupil, 'pupil_joined_plus', {});
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForPupil(res));
 
-    log.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
+    logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
 }
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    const log = logInContext('Pupil', ctx);
     let { email, register, activate } = data;
 
     try {
@@ -215,23 +211,23 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
             if (!!register) {
                 if (!!pupil) {
                     // if account already exists, overwrite relevant data with new plus data
-                    log.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
+                    logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
                     pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
                 } else {
                     pupil = await registerPupil(register, true, tx);
-                    log.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
+                    logger.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
                 }
             }
             if (activate && pupil?.isPupil) {
-                log.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
+                logger.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
                 await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
             } else if (activate) {
                 await becomeTutee(pupil, activate, tx);
-                log.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
+                logger.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
             }
         });
     } catch (e) {
-        log.error(`Error while registering pupil ${email}, skipping this one`, e);
+        logger.error(`Error while registering pupil ${email}, skipping this one`, e);
         return { success: false, reason: e.publicMessage || e.toString() };
     }
     return { success: true, reason: '' };
@@ -298,13 +294,13 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
         const { entries } = data;
-        log.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
+        logger.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
         const results = [];
         for (const entry of entries) {
             const res = await pupilRegisterPlus(entry, context);
             results.push({ email: entry.email, ...res });
         }
-        log.info(
+        logger.info(
             `pupilRegisterPlusMany has finished. Count of successful pupils handled: ${results.filter((p) => p.success).length}. Failed count: ${
                 results.filter((p) => p.success).length
             }`

@@ -2,10 +2,10 @@ import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchIte
 import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
-import { accessURLForKey } from '../../../common/file-bucket';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { lectureDTOFactory } from './sync-lectures';
 import { getCourseImageURL } from '../../../common/courses/util';
+import { course_subject_enum as CourseSubjectEnum } from '@prisma/client';
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
@@ -102,6 +102,21 @@ function parseDescription(description: string): string {
     return `<p>${newDescription}</p>`;
 }
 
+function translateSubject(subject: CourseSubjectEnum): string {
+    switch (subject) {
+        case CourseSubjectEnum.P_dagogik:
+            return 'Pädagogik';
+        case CourseSubjectEnum.Franz_sisch:
+            return 'Französisch';
+        case CourseSubjectEnum.Niederl_ndisch:
+            return 'Niederländisch';
+        case CourseSubjectEnum.Deutsch_als_Zweitsprache:
+            return 'Deutsch als Zweitsprache';
+        default:
+            return subject;
+    }
+}
+
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
     const startDate: Moment = getStartDate(subcourse) || moment();
     // make sure that the weekday can be properly translated
@@ -129,7 +144,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         maxparticipants: subcourse.maxParticipants,
         participantscount: subcourse.subcourse_participants_pupil.length,
         openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
-        subject: subcourse.course.subject,
+        subject: translateSubject(subcourse.course.subject),
 
         mingrade: subcourse.minGrade,
         maxgrade: subcourse.maxGrade,

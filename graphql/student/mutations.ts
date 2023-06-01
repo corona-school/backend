@@ -1,7 +1,7 @@
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
-import { deactivateStudent } from '../../common/student/activation';
+import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -22,7 +22,6 @@ import {
 import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
@@ -137,13 +136,14 @@ export class StudentUpdateInput {
     university?: string;
 }
 
+const logger = getLogger('Student Mutations');
+
 export async function updateStudent(
     context: GraphQLContext,
     student: Student,
     update: StudentUpdateInput,
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
 ) {
-    const log = logInContext('Student', context);
     let {
         firstname,
         lastname,
@@ -199,12 +199,11 @@ export async function updateStudent(
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForStudent(res));
 
-    log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
+    logger.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
 }
 
 async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    const log = logInContext('Student', ctx);
     let { email, register, activate, screen } = data;
     const screener = await getSessionScreener(ctx);
 
@@ -241,10 +240,10 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
             if (!!activate && !student.isStudent) {
                 // activation data was provided; student isn't a tutor yet
                 student = await becomeTutor(student, activate, tx, true);
-                log.info(`Made account with email ${email} a tutor. Student(${student.id})`);
+                logger.info(`Made account with email ${email} a tutor. Student(${student.id})`);
             } else if (!!activate) {
                 // activation data was provided but student already is a tutor
-                log.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
+                logger.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
                 // update existing account with new activation data:
                 student = await updateStudent(ctx, student, { ...activate }, tx);
             }
@@ -284,6 +283,14 @@ export class MutateStudentResolver {
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
+        const student = await getStudent(studentId);
+        await reactivateStudent(student, reason);
         return true;
     }
 

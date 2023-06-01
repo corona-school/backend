@@ -22,6 +22,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         data: {
             dissolved: true,
             dissolveReason,
+            dissolvedAt: new Date(),
         },
     });
 
@@ -40,9 +41,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 
-    if (dissolver.email === student.email) {
+    if (dissolver && dissolver.email === student.email) {
         await Notification.actionTaken(pupil, 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
-    } else if (dissolver.email === pupil.email) {
+    } else if (dissolver && dissolver.email === pupil.email) {
         await Notification.actionTaken(student, 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
     }
 }
@@ -53,7 +54,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null },
+        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
         where: { id: match.id },
     });
 

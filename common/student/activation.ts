@@ -5,6 +5,7 @@ import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
 import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
+import { PrerequisiteError } from '../util/error';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
@@ -99,4 +100,15 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     await getTransactionLog().log(new DeActivateEvent(student, false, reason));
 
     return updatedStudent;
+}
+
+export async function reactivateStudent(student: Student, reason: string) {
+    if (student.active) {
+        throw new PrerequisiteError('Student is already active!');
+    }
+    if (student.isRedacted) {
+        throw new PrerequisiteError('Student already got redacted, too late... :(');
+    }
+    await prisma.student.update({ where: { id: student.id }, data: { active: true } });
+    await getTransactionLog().log(new DeActivateEvent(student, true, reason));
 }

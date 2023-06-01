@@ -217,14 +217,19 @@ export async function getMessage(
         return null;
     }
 
-    const { type, headline, body, navigateTo } = message;
+    const { type, headline, body, modalText, navigateTo } = message;
 
-    return {
+    const result = {
         type,
         body: renderTemplate(body, context),
         headline: renderTemplate(headline, context),
         navigateTo: renderTemplate(navigateTo, context),
     };
+
+    if (modalText) {
+        return { ...result, modalText: renderTemplate(modalText, context) };
+    }
+    return result;
 }
 
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
@@ -288,7 +293,6 @@ function getContext(notificationContext: NotificationContext, legacyUser: Person
     return {
         ...notificationContext,
         user: { ...legacyUser, fullName: getFullName(legacyUser) },
-        authToken: legacyUser.authToken ?? '',
         USER_APP_DOMAIN,
     };
 }

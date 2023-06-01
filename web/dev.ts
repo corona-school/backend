@@ -53,7 +53,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p1@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP1');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526364';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -71,7 +70,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p2@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP2');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526364';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
@@ -89,7 +87,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p3@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP3');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526365';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
@@ -109,7 +106,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p4@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP4');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526367';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([]);
@@ -127,7 +123,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p5@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP5');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526368';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Geschichte' }]);
@@ -145,7 +140,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p6@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 700000);
-    p.authToken = sha512('authtokenP6');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526369';
     p.wix_creation_date = new Date(new Date().getTime() - 70000000);
     p.subjects = JSON.stringify([{ name: 'Englisch' }, { name: 'Latein' }]);
@@ -163,7 +157,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p7@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 800000);
-    p.authToken = sha512('authtokenP7');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526370';
     p.wix_creation_date = new Date(new Date().getTime() - 80000000);
     p.subjects = JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]);
@@ -179,7 +172,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p8@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP8');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526371';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -197,7 +189,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p9@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP9');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526372';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -215,7 +206,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p10@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP10');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526373';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -244,7 +234,6 @@ export async function setupDevDB() {
     s1.isStudent = true;
     s1.verification = null;
     s1.verifiedAt = new Date(new Date().getTime() - 110000);
-    s1.authToken = sha512('authtokenS1');
     s1.wix_id = '00000000-0000-0002-0001-1b4c4c526364';
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
@@ -267,7 +256,6 @@ export async function setupDevDB() {
     s2.isStudent = true;
     s2.verification = null;
     s2.verifiedAt = new Date(new Date().getTime() - 220000);
-    s2.authToken = sha512('authtokenS2');
     s2.wix_id = '00000000-0000-0002-0002-1b4c4c526364';
     s2.wix_creation_date = new Date(new Date().getTime() - 22000000);
     s2.subjects = JSON.stringify([
@@ -286,7 +274,6 @@ export async function setupDevDB() {
     s3.isStudent = true;
     s3.verification = null;
     s3.verifiedAt = new Date(new Date().getTime() - 110000);
-    s3.authToken = sha512('authtokenS3');
     s3.wix_id = '00000000-0000-0002-0001-1b4c4c5263123';
     s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s3.subjects = JSON.stringify([
@@ -305,7 +292,6 @@ export async function setupDevDB() {
     s4.isStudent = false;
     s4.verification = null;
     s4.verifiedAt = new Date(new Date().getTime() - 110000);
-    s4.authToken = sha512('authtokenS4');
     s4.wix_id = '00000000-0000-0002-0001-1b4c4c5263126';
     s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s4.subjects = JSON.stringify([
@@ -324,7 +310,6 @@ export async function setupDevDB() {
     s5.isStudent = true;
     s5.verification = null;
     s5.verifiedAt = new Date(new Date().getTime() - 110000);
-    s5.authToken = sha512('authtokenS5');
     s5.wix_id = '00000000-0000-0002-0001-1b4c4c5263213132';
     s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s5.subjects = JSON.stringify([
@@ -351,7 +336,6 @@ export async function setupDevDB() {
     s6.jufoPastParticipationConfirmed = true;
     s6.verification = null;
     s6.verifiedAt = new Date(new Date().getTime() - 110000);
-    s6.authToken = sha512('authtokenS6');
     s6.wix_id = '00000000-0000-0002-0001-1b4c4c52632131096';
     s6.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s6.subjects = JSON.stringify([]);
@@ -369,7 +353,6 @@ export async function setupDevDB() {
     s7.verification = null;
     await s7.setProjectFields([{ name: ProjectField.CHEMIE, min: 1, max: 13 }]);
     s7.verifiedAt = new Date(new Date().getTime() - 110000);
-    s7.authToken = sha512('authtokenS7');
     s7.wix_id = '00000000-0000-0002-0001-1b4c4c5263213155';
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s7.subjects = JSON.stringify([
@@ -574,7 +557,6 @@ export async function setupDevDB() {
     mentor1.email = 'test+dev+m3@lern-fair.de';
     mentor1.verification = null;
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
-    mentor1.authToken = sha512('authtokenM3');
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
     mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
     mentor1.subjects = null;
@@ -1307,9 +1289,9 @@ export async function setupDevDB() {
     const schools: School[] = [];
 
     const school1 = new School();
-    school1.name = 'Corona School Germany';
-    school1.emailDomain = 'corona-school.de';
-    school1.website = 'https://corona-school.de';
+    school1.name = 'Lern Fair';
+    school1.emailDomain = 'lern-fair.de';
+    school1.website = 'https://lern-fair.de';
     school1.state = State.OTHER;
     school1.schooltype = SchoolType.SONSTIGES;
     school1.activeCooperation = true;
@@ -1435,7 +1417,7 @@ function sha512(input: string): string {
     return hash.update(input).digest('hex');
 }
 
-const PROD_URL = 'https://api.corona-school.de/apollo';
+const PROD_URL = 'https://api.lern-fair.de/apollo';
 
 async function importNotificationsFromProd() {
     const existingNotifications = await getNotifications();

@@ -80,7 +80,7 @@ export async function getAttachmentListHTML(attachments: { attachmentId: string;
     for (let { attachmentId, filename, size } of attachments) {
         attachmentListHTML =
             attachmentListHTML +
-            `<p><a href="https://api2.corona-school.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
+            `<p><a href="https://api.lern-fair.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
     }
 
     return attachmentListHTML;
