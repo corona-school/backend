@@ -27,6 +27,7 @@ import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { validateEmail } from '../validators';
+import { chat_type } from '../generated';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -40,6 +41,12 @@ class PublicSubcourseCreateInput {
     maxParticipants!: number;
     @TypeGraphQL.Field((_type) => Boolean)
     joinAfterStart!: boolean;
+    @TypeGraphQL.Field((_type) => Boolean)
+    allowChatContactProspects!: boolean;
+    @TypeGraphQL.Field((_type) => Boolean)
+    allowChatContactParticipants!: boolean;
+    @TypeGraphQL.Field((_type) => chat_type)
+    groupChatType!: chat_type;
     @TypeGraphQL.Field((_type) => [PublicLectureInput], { nullable: true })
     lectures?: PublicLectureInput[];
 }
@@ -54,6 +61,12 @@ class PublicSubcourseEditInput {
     maxParticipants?: number;
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     joinAfterStart?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactProspects?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactParticipants?: boolean;
+    @TypeGraphQL.Field((_type) => chat_type, { nullable: true })
+    groupChatType?: chat_type;
 }
 
 @InputType()
@@ -79,9 +92,21 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
-        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures } = subcourse;
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures, allowChatContactParticipants, allowChatContactProspects, groupChatType } =
+            subcourse;
         const result = await prisma.subcourse.create({
-            data: { courseId, published: false, joinAfterStart, minGrade, maxGrade, maxParticipants, lecture: { createMany: { data: lectures } } },
+            data: {
+                courseId,
+                published: false,
+                joinAfterStart,
+                minGrade,
+                maxGrade,
+                maxParticipants,
+                allowChatContactParticipants,
+                allowChatContactProspects,
+                groupChatType,
+                lecture: { createMany: { data: lectures } },
+            },
         });
 
         const student = await getSessionStudent(context, studentId);

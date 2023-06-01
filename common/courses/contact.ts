@@ -19,8 +19,8 @@ export async function canContactParticipants(subcourse: Subcourse): Promise<Deci
     return { allowed: true };
 }
 
-export async function canContactInstructors(course: Course, subcourse: Subcourse): Promise<Decision> {
-    if (!course.allowContact) {
+export async function canContactInstructors(subcourse: Subcourse): Promise<Decision> {
+    if (!subcourse.allowChatContactParticipants) {
         return { allowed: false, reason: 'contact-not-allowed' };
     }
 
@@ -32,7 +32,7 @@ export async function canContactInstructors(course: Course, subcourse: Subcourse
 }
 
 export async function contactInstructors(course: Course, subcourse: Subcourse, pupil: Pupil, title: string, body: string, files: File[]) {
-    const decision = await canContactInstructors(course, subcourse);
+    const decision = await canContactInstructors(subcourse);
     if (!decision.allowed) {
         throw new Error(`Not allowed to contact instructors - ${decision.reason}`);
     }

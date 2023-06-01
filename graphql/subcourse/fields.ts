@@ -453,8 +453,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Decision)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
-        const course = await getCourse(subcourse.courseId);
-        return await canContactInstructors(course, subcourse);
+        return await canContactInstructors(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
