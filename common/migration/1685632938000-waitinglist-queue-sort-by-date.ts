@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class waitinglistQueueSortByDate1682007564086 implements MigrationInterface {
-    name = 'waitinglistQueueSortByDate1682007564086';
+export class waitinglistQueueSortByDate1685632938000 implements MigrationInterface {
+    name = 'waitinglistQueueSortByDate1685632938000';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(

@@ -892,18 +892,17 @@ export async function setupDevDB() {
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];
-    subcourse2.maxParticipants = 10;
+    subcourse2.maxParticipants = 5;
     subcourse2.published = true;
-    subcourse2.participants = pupils.slice(0, pupils.length - 2);
-    subcourse2.waitingList = pupils.slice(-2);
+    subcourse2.participants = pupils.slice(0, 5);
 
     const waitingListEnrollment1 = new WaitingListEnrollment();
     waitingListEnrollment1.subcourse = subcourse2;
-    waitingListEnrollment1.pupil = pupils[1];
+    waitingListEnrollment1.pupil = pupils[5];
 
     const waitingListEnrollment2 = new WaitingListEnrollment();
     waitingListEnrollment2.subcourse = subcourse2;
-    waitingListEnrollment2.pupil = pupils[2];
+    waitingListEnrollment2.pupil = pupils[6];
 
     subcourse2.waitingListEnrollments = [waitingListEnrollment1, waitingListEnrollment2];
 
@@ -915,8 +914,9 @@ export async function setupDevDB() {
     subcourse3.minGrade = 10;
     subcourse3.maxGrade = 11;
     subcourse3.instructors = [s1, s2];
-    subcourse3.maxParticipants = 10;
+    subcourse3.maxParticipants = 3;
     subcourse3.published = true;
+    subcourse3.participants = pupils.slice(0, 3);
 
     subcourses.push(subcourse3);
 

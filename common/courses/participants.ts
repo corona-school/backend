@@ -73,6 +73,9 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
     if (await isParticipant(subcourse, pupil)) {
         throw new RedundantError(`Pupil is already participant`);
     }
+    if (await isOnWaitingList(subcourse, pupil)) {
+        throw new RedundantError('Pupil is already on waiting list');
+    }
 
     try {
         await prisma.waiting_list_enrollment.create({
@@ -96,7 +99,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
         },
     });
 
-    if (queueEnrollmentDeletions.count === 1) {
+    if (queueEnrollmentDeletions.count > 0) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
         await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });
     } else if (force) {
@@ -258,7 +261,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
         },
     });
 
-    if (deletion.count !== 1) {
+    if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Pupil is not a participant`);
     }
 
@@ -281,7 +284,6 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
 
-    // Unfortunately as the waiting list has no 'created at' field, we can't sort here
     const toJoin = await prisma.waiting_list_enrollment.findMany({
         where: { subcourseId: subcourse.id },
         orderBy: { createdAt: 'asc' },
