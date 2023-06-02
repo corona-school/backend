@@ -263,7 +263,6 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
         const memberIds = Object.keys(conversation.participants);
         const pupilIds = memberIds.filter((memberId) => !memberId.includes('student'));
 
-        // TODO test if only pupils are read rights
         for (const pupilId of pupilIds) {
             const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${pupilId}`, {
                 method: 'PATCH',
