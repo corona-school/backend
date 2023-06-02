@@ -28,6 +28,8 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
+import { addParticipant } from '../../common/chat/conversation';
+import { ChatType } from '../../common/chat/types';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -332,6 +334,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
         return true;
     }
 

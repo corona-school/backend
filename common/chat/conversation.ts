@@ -217,7 +217,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: 'normal' | 'announcement'): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${userId}`, {
@@ -226,6 +226,9 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: chatType === 'normal' ? 'Readwrite' : 'Read',
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -249,7 +252,7 @@ async function removeParticipant(user: User, conversationId: string): Promise<vo
     }
 }
 
-async function markConversationAsReadOnly(conversationId: string): Promise<void> {
+async function markConversationAsReadOnly(conversationId: string, reason?: 'announcement' | 'deactivate'): Promise<void> {
     try {
         const conversation = await getConversation(conversationId);
         const participantIds = Object.keys(conversation.participants);
