@@ -11,7 +11,7 @@ const logger = getLogger('Match');
 const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
 const PUPIL_MAX_MATCHES = 1;
-const PUPIL_MAX_DISSOLVED_MATCHES = 3;
+const PUPIL_MAX_DISSOLVED_MATCHES = 5;
 
 type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
