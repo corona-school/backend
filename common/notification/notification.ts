@@ -237,7 +237,7 @@ export async function importNotifications(notifications: Notification[], dropBef
         }
     }
 
-    logger.info(log);
+    logger.info('Imported Notifications', { log });
     return log;
 }
 
