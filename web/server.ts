@@ -25,8 +25,10 @@ logger.info('Starting Webserver');
 const app = express();
 
 // Log details about every HTTP request:
-const accessLogger = getLogger('access');
-app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
+if (process.env.LOG_FORMAT !== 'brief') {
+    const accessLogger = getLogger('access');
+    app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
+}
 
 // Set common security HTTP response headers:
 app.use(helmet());
@@ -110,3 +112,5 @@ ws.configure();
 
 // Start listening
 server.listen(port, () => logger.info(`Server listening on port ${port}`));
+
+export default server;
