@@ -34,7 +34,7 @@ export function setupFetchMock() {
                 process.exit(1);
             }
 
-            console.log(`Request to ${url} mocked`);
+            console.log(`     request to ${mock.method} ${url} mocked`);
             return new Response(mock.response ? (typeof mock.response === "string" ? mock.response : JSON.stringify(mock.response)) : "mocked response", { status: mock.responseStatus });
         }
 
