@@ -1,6 +1,8 @@
 import { randomBytes } from "crypto";
 import { GraphQLClient } from "graphql-request";
 
+import "./mock";
+
 import * as WebServer from "../web";
 
 /* -------------- Configuration ------------------- */
