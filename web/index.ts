@@ -34,7 +34,7 @@ export const started = (async function main() {
     }
 
     // -------- Start Webserver ------------------
-    return (await import('./server')).default;
+    return (await import('./server')).server;
 })();
 
 export async function shutdown() {

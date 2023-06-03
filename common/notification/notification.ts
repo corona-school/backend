@@ -367,7 +367,7 @@ export async function importMessageTranslations(messageTranslations: MessageTran
         throw new Error(log);
     }
 
-    logger.info(log);
+    logger.info('Message Translations imported', { log });
     return log;
 }
 
