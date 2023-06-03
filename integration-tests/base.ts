@@ -148,12 +148,9 @@ export async function finalizeTests() {
     if (failureCount === 0) {
         console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
         await WebServer.shutdown();
-        console.log(green(`Regular shut down done, stop pending tasks by sending SIGINT to self`));
-        process.kill(process.pid, "SIGINT");
-
+        console.log(green(`Regular shut down done, stop pending tasks by aborting process`));
         console.log(green(`\n\n\nAll tests SUCCEEDED in ${durationAll}ms`));
-
-
+        process.exit(0);
         return;
     }
 
