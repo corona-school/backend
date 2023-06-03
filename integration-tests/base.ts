@@ -15,9 +15,9 @@ const silent = process.env.INTEGRATION_SILENT === "true";
 
 /* -------------- Utils --------------------------- */
 
-const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
-const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
-const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
+export const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
+export const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
+export const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
 
 console.log(
     blue(`\n\nBackend Integration Tests\n`) +

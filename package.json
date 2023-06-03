@@ -28,8 +28,7 @@
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
     "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else echo 'Will only run migration in production...'; fi",
-    "integration-tests": "node -r source-map-support/register ./built/integration-tests/index.js",
-    "integration-tests:local": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js",
+    "integration-tests": "LOG_FORMAT=brief ADMIN_AUTH_TOKEN=admintoken SKIP_NOTIFICATION_IMPORT=true node -r source-map-support/register ./built/integration-tests/index.js",
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write",
     "test": "jest"

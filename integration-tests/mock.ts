@@ -1,4 +1,5 @@
 import assert from "assert";
+import { red } from "./base";
 
 interface MockedFetch {
     url: string;
@@ -22,11 +23,14 @@ export function setupFetchMock() {
         if (expectedCalls.length > 0 && expectedCalls[0].url === url) {
             const expectedCall = expectedCalls.shift();
             assert.strictEqual(options.body, expectedCall.body, `Wrong Body of request to ${url}`);
+            console.log(`Request to ${url} mocked`);
             return new Response(expectedCall.response, { status: expectedCall.responseStatus });
         }
 
-        console.log(`  request to ${url} not mocked`);
-        return originalFetch(resource, options);
+        console.log(red(`Request to ${url} not mocked! The integration tests must be self containing `));
+        process.exit(1);
+
+        // return originalFetch(resource, options);
     }
 
     global.fetch = mockedFetch;

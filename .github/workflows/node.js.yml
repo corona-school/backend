@@ -45,18 +45,11 @@ jobs:
         run: npx prisma generate
 
       - run: npm run build --if-present
-      - run: (npm run web &) | (timeout --preserve-status --foreground 10 cat; cat > /dev/null &) || exit 0
+      - run: npm test
+      - run: npm run integration tests
         env:
           DATABASE_URL: "postgres://coronaschool:coronanervt@localhost:5432/coronaschool-test"
-          ADMIN_AUTH_TOKEN: admintoken
-          ENV: dev
-          SKIP_NOTIFICATION_IMPORT: "true"
-      - run: npm run integration-tests
-        env:
-          INTEGRATION_TARGET: "http://localhost:5000/apollo"
-          INTEGRATION_SILENT: "true"
-          ADMIN_AUTH_TOKEN: admintoken
-
+        
   lint:
     runs-on: ubuntu-20.04
 
@@ -81,4 +74,3 @@ jobs:
         run: npx prisma generate
 
       - run: npm run linter
-      - run: npm test
