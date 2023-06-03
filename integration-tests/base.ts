@@ -1,10 +1,12 @@
 import { randomBytes } from "crypto";
 import { GraphQLClient } from "graphql-request";
 
+import * as WebServer from "../web";
+
 /* -------------- Configuration ------------------- */
 
 const APP = "lernfair-backend-dev";
-const URL = process.env.INTEGRATION_TARGET ?? `https://${APP}.herokuapp.com/apollo`;
+const URL = process.env.INTEGRATION_TARGET ?? `http://localhost:${process.env.PORT ?? 5000}/apollo`;
 const ADMIN_TOKEN = process.env.ADMIN_AUTH_TOKEN;
 
 const silent = process.env.INTEGRATION_SILENT === "true";
@@ -115,10 +117,16 @@ export function test<T>(name: string, runner: () => Promise<T>): Promise<T> {
 
 // This one actually runs all tests that were defined
 export async function finalizeTests() {
+    console.log(blue('-------------------- SETUP ------------------------'));
+
+    await WebServer.started;
+
+    console.log(blue('\n\n-------------------- TESTING ----------------------'));
+
     const startAll = Date.now();
     let failureCount = 0;
     for (const test of tests) {
-        console.log(`test ${test.name}:`);
+        console.log(blue(`\n\n------------------ TEST ${test.name} -----------`));
         try {
             const start = Date.now();
             const result = await test.runner();
@@ -133,16 +141,22 @@ export async function finalizeTests() {
         }
     }
 
-    console.log(`\n\nsummary:`);
-
     const durationAll = Date.now() - startAll;
 
     if (failureCount === 0) {
-        console.log(green(`  all tests SUCCEEDED in ${durationAll}ms`));
+        console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
+        await WebServer.shutdown();
+        console.log(green(`Regular shut down done, stop pending tasks by sending SIGINT to self`));
+        process.kill(process.pid, "SIGINT");
+
+        console.log(green(`\n\n\nAll tests SUCCEEDED in ${durationAll}ms`));
+
+
         return;
     }
 
-    console.error(red(`  ${failureCount} tests FAILED`));
+    console.error(red(`\n\n\n${failureCount} tests FAILED`));
+
 
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }
