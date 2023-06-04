@@ -142,6 +142,14 @@ void test('Create Chat for Match', async () => {
         responseStatus: 404
     });
 
+    // The student has one:
+    expectFetch({
+            method: "GET",
+            url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
+            responseStatus: 200,
+            response: {} // TODO: Mock properly
+    });
+
     expectFetch({
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
         "method": "PUT",
@@ -156,15 +164,6 @@ void test('Create Chat for Match', async () => {
         response: {} // TODO: Mock properly
     });
 
-
-    // The student has one:
-
-    expectFetch({
-        method: "GET",
-        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
-        responseStatus: 200,
-        response: {} // TODO: Mock properly
-    });
 
     // Then the conversion is created:
 
@@ -219,11 +218,13 @@ void test('Create Chat for Match', async () => {
       });
 
 
-    const { matchChatCreate: conversionID } = await pupilClient.request(`
+    const { matchChatCreate: conversationID } = await pupilClient.request(`
         mutation PupilCreatesChat {
 	        matchChatCreate(matcheeUserId: "${student.userID}")
         }
     `);
+
+    assert.strictEqual(conversationID, "mocked");
 });
 
 void test('Anyone Request Matching Statistics', async () => {

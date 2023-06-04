@@ -4,6 +4,7 @@ import { GraphQLClient } from "graphql-request";
 import "./mock";
 
 import * as WebServer from "../web";
+import { expectNoFetchMockLeft } from "./mock";
 
 /* -------------- Configuration ------------------- */
 
@@ -141,22 +142,23 @@ export async function finalizeTests() {
             failureCount += 1;
             test.reject(new Error(`Dependency ${test.name} failed`));
         }
+
+        expectNoFetchMockLeft();
     }
 
     const durationAll = Date.now() - startAll;
 
+    console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
+    await WebServer.shutdown();
+    console.log(green(`Regular shut down done, stop pending tasks by aborting process`));
+
     if (failureCount === 0) {
-        console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
-        await WebServer.shutdown();
-        console.log(green(`Regular shut down done, stop pending tasks by aborting process`));
         console.log(green(`\n\n\nAll tests SUCCEEDED in ${durationAll}ms`));
         process.exit(0);
         return;
     }
 
     console.error(red(`\n\n\n${failureCount} tests FAILED`));
-
-
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }
 
