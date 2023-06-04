@@ -24,6 +24,8 @@ const logger = getLogger('WebServer');
 logger.info('Starting Webserver');
 const app = express();
 
+logger.error('isso', new Error('hier'), {});
+
 // Log details about every HTTP request:
 const accessLogger = getLogger('access');
 app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
@@ -79,7 +81,6 @@ const options = {
 };
 
 app.use(cors(options));
-
 
 // ------------------------ GraphQL ---------------------------
 void (async function () {
