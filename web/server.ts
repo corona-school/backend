@@ -38,7 +38,7 @@ app.use((req, res, next) => {
 });
 
 // Parse Cookies and JSON Bodies:
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)
@@ -79,7 +79,6 @@ const options = {
 };
 
 app.use(cors(options));
-
 
 // ------------------------ GraphQL ---------------------------
 void (async function () {
