@@ -2,7 +2,7 @@ import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
 import { setupDevDB } from './dev';
 import moment from 'moment-timezone';
-import { isDev } from '../common/util/environment';
+import { isDev, isTest } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
 
 // Ensure Notification hooks are always loaded
@@ -29,7 +29,7 @@ export const started = (async function main() {
     });
 
     // -------- Fill DB on Dev -------------------
-    if (isDev && !isCommandArg('--keepDB')) {
+    if ((isDev || isTest) && !isCommandArg('--keepDB')) {
         await setupDevDB();
     }
 
