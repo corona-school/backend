@@ -91,7 +91,6 @@ export class MutateUserResolver {
 
         logs.map((log) => issueReporterLogger.info(log));
         const err: Error = {
-            name: 'IssueReporter',
             stack: errorStack,
             message: errorMessage,
         };
