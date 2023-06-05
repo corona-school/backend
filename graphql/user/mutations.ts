@@ -90,10 +90,8 @@ export class MutateUserResolver {
         issueReporterLogger.addContext('userID', context.user.userID);
 
         logs.map((log) => issueReporterLogger.info(log));
-        const err: Error = {
-            stack: errorStack,
-            message: errorMessage,
-        };
+        const err = new Error(errorMessage);
+        err.stack = errorStack;
         issueReporterLogger.error(errorMessage, err);
 
         if (!isDev) {
