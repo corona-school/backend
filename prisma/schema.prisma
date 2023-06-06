@@ -223,8 +223,8 @@ model match {
   id                       Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   uuid                     String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved                Boolean           @default(false)
-  dissolveReason           Int?
   dissolvedAt              DateTime?         @db.Timestamp(6)
+  dissolveReason           Int?
   proposedTime             DateTime?         @db.Timestamp(6)
   createdAt                DateTime          @default(now()) @db.Timestamp(6)
   updatedAt                DateTime          @default(now()) @db.Timestamp(6)
