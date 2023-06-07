@@ -59,7 +59,8 @@ export class MutateUserResolver {
         @Arg('errorMessage') errorMessage: string,
         @Arg('errorStack') errorStack: string,
         @Arg('logs', (type) => [String]) logs: string[],
-        @Arg('userAgent') userAgent: string
+        @Arg('userAgent') userAgent: string,
+        @Arg('componentStack', { nullable: true }) componentStack: string | null
     ) {
         let result = '';
         const section = (name: string, level: number) => (result += '\n\n' + ('-'.repeat(5 - level) + ' ' + name + ' ').padEnd(30 - level * 2, '-') + '\n');
@@ -92,10 +93,10 @@ export class MutateUserResolver {
         logs.map((log) => issueReporterLogger.info(log));
         const err: Error = {
             name: 'IssueReporter',
-            stack: errorStack,
+            stack: `Error: ${errorMessage}\n\t at ${errorStack}`,
             message: errorMessage,
         };
-        issueReporterLogger.error(errorMessage, err);
+        issueReporterLogger.error(errorMessage, err, { componentStack });
 
         if (!isDev) {
             await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
