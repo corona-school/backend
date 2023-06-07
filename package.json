@@ -54,6 +54,7 @@
     "cron": "^1.8.2",
     "csv-writer": "^1.6.0",
     "date-holidays": "^1.5.3",
+    "dd-trace": "^4.1.0",
     "dotenv": "^8.2.0",
     "ejs": "^3.1.7",
     "express": "^4.15.2",
