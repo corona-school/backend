@@ -32,8 +32,19 @@ app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
 // Set common security HTTP response headers:
 app.use(helmet());
 
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
+    return result;
+}
+
 // Attach a transaction to each request, that is propagated across continuations:
 app.use((req, res, next) => {
+    logger.error('Test errro', new Error(`Test error ${generateRandomString(10)}}`));
     startTransaction();
     next();
 });
