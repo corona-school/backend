@@ -16,7 +16,7 @@ import { Student } from '../../common/entity/Student';
 import { getLogger } from '../../common/logger/logger';
 import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
+import { getUserIdTypeORM, getUserTypeORM, userForPupil, userForStudent } from '../../common/user';
 import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
 import { PrerequisiteError } from '../../common/util/error';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
@@ -28,7 +28,7 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
-import { addParticipant } from '../../common/chat/conversation';
+import { addParticipant, markConversationAsReadOnly, removeParticipant } from '../../common/chat/conversation';
 import { ChatType } from '../../common/chat/types';
 
 const logger = getLogger('MutateCourseResolver');
@@ -129,9 +129,12 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const newInstructor = await getStudent(studentId);
+        const newInstructorUser = userForStudent(newInstructor);
         const studentUserId = getUserIdTypeORM(newInstructor);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
         await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
+        await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -147,9 +150,11 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
+        const instructorUser = userForStudent(instructorToBeRemoved);
         const studentUserId = getUserIdTypeORM(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
         await removeGroupAppointmentsOrganizer(subcourseId, studentUserId);
+        await removeParticipant(instructorUser, subcourse.conversationId);
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -195,7 +200,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await cancelSubcourse(subcourse);
-
+        await markConversationAsReadOnly(subcourse.conversationId, 'deactivate');
         return true;
     }
 
@@ -397,12 +402,13 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
+        const pupilUser = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
         await leaveSubcourse(subcourse, pupil);
         await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
-
+        await removeParticipant(pupilUser, subcourse.conversationId);
         return true;
     }
 
