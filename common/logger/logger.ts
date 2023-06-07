@@ -1,3 +1,5 @@
+import tracer from './tracing';
+import formats from 'dd-trace/ext/formats';
 import { isCommandArg } from '../util/basic';
 import { configure, addLayout, getLogger as getlog4jsLogger, Logger as Log4jsLogger } from 'log4js';
 import { getCurrentTransaction } from '../session';
@@ -13,8 +15,14 @@ addLayout('json', function () {
 
         // These tags will be used to identify the logs in datadog later on
         const tags = { env: process.env.ENV, version: process.env.HEROKU_RELEASE_VERSION || 'latest' };
+        const logLine = { ...logEvent, message, data, error, tags, service: process.env.SERVICE_NAME };
 
-        return JSON.stringify({ ...logEvent, message, data, error, tags, service: process.env.SERVICE_NAME });
+        const span = tracer.scope().active();
+        if (span) {
+            tracer.inject(span.context(), formats.LOG, logLine);
+        }
+
+        return JSON.stringify(logLine);
     };
 });
 
