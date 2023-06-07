@@ -6,6 +6,9 @@
         "node",
         "typescript"
     ],
+		"scripts": {
+			"postdeploy": "mkdir -p /etc/datadog-agent && cp ./config/dd-test.yaml /etc/datadog-agent/datadog.yaml"
+		},
     "website": "https://lern-fair.de/",
     "repository": "https://github.com/corona-school/backend/",
     "formation": {
@@ -24,7 +27,12 @@
             "env": {
                 "NODE_ENV": "production",
                 "ENV": "dev",
-                "MAILJET_LIVE": "0"
+                "MAILJET_LIVE": "0",
+								"DD_PROCESS_AGENT": "true",
+								"DD_APM_ENABLED": "true",
+								"DD_SITE": "datadoghq.eu",
+								"DD_AGENT_MAJOR_VERSION": "7",
+								"DD_ENABLE_HEROKU_POSTGRES": "true"
             },
             "addons": [
                 "heroku-postgresql:mini"
@@ -35,6 +43,9 @@
         {
           "url": "jontewks/puppeteer"
         },
+				{
+					"url": "https://github.com/DataDog/heroku-buildpack-datadog.git"
+				},
         {
           "url": "heroku/nodejs"
         }
