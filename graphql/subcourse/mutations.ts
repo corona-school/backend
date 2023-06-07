@@ -105,7 +105,7 @@ export class MutateSubcourseResolver {
                 allowChatContactParticipants,
                 allowChatContactProspects,
                 groupChatType,
-                lecture: { createMany: { data: lectures } },
+                lecture: { createMany: { data: lectures || [] } },
             },
         });
 
