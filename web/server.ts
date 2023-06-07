@@ -44,6 +44,7 @@ function generateRandomString(length) {
 
 // Attach a transaction to each request, that is propagated across continuations:
 app.use((req, res, next) => {
+    // this is just for testing purposes
     logger.error('Test errro', new Error(`Test error ${generateRandomString(10)}}`));
     startTransaction();
     next();
