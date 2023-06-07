@@ -37,6 +37,9 @@
         },
         {
           "url": "heroku/nodejs"
-        }
+        },
+				{
+					"url": "https://github.com/DataDog/heroku-buildpack-datadog.git"
+				}
     ]
 }
