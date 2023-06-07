@@ -1,3 +1,4 @@
+import _ from '../common/logger/tracing';
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
 import { setupDevDB } from './dev';
