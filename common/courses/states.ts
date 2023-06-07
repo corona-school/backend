@@ -152,8 +152,8 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
                     },
                 };
 
-                markConversationAsWriteable(subcourse.conversationId);
-                updateConversation(conversationToBeUpdated);
+                await markConversationAsWriteable(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
             } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
@@ -161,8 +161,8 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
                         type: 'announcement',
                     },
                 };
-                markConversationAsReadOnly(subcourse.conversationId);
-                updateConversation(conversationToBeUpdated);
+                await markConversationAsReadOnly(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
             }
         }
     }
