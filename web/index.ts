@@ -1,3 +1,4 @@
+import _ from '../common/logger/tracing';
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
 import { setupDevDB } from './dev';
@@ -34,18 +35,5 @@ export const started = (async function main() {
     }
 
     // -------- Start Webserver ------------------
-    return (await import('./server')).server;
+    await import('./server');
 })();
-
-export async function shutdown() {
-    logger.info(`Shutting down manually`);
-    const server = await started;
-
-    await new Promise<void>((res, rej) => server.close(err => err ? rej(err): res()));
-    logger.info(`Webserver stopped`);
-
-    await dbConnection?.close();
-    logger.info(`DB connection closed`);
-
-    logger.info(`Server shut down manually`);
-}
