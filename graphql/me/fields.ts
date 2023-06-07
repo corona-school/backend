@@ -23,22 +23,6 @@ export class FieldMeResolver {
         return context.user?.roles ?? [];
     }
 
-    @Query((returns) => String)
-    @Authorized(Role.USER)
-    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
-        const meetingIdAsInt = parseInt(meetingId);
-        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
-        return sdkKey;
-    }
-
-    @Query((returns) => String)
-    @Authorized(Role.USER)
-    async zoomZAK(@Ctx() context: GraphQLContext) {
-        const { user } = context;
-        const userZak = await getUserZAK(user.email);
-        return userZak.token || '';
-    }
-
     @FieldResolver((returns) => String)
     @Authorized(Role.USER)
     async chatSignature(@Ctx() context: GraphQLContext): Promise<string> {
