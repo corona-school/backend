@@ -335,6 +335,7 @@ export class MutateSubcourseResolver {
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
         await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+
         return true;
     }
 
@@ -350,6 +351,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
         return true;
     }
 
@@ -381,6 +383,7 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
 
         return true;
     }
@@ -399,6 +402,7 @@ export class MutateSubcourseResolver {
 
         await leaveSubcourse(subcourse, pupil);
         await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
+
         return true;
     }
 

@@ -1,11 +1,13 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser } from '../user';
+import { User, getUser, userForPupil, userForStudent } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
+import { Conversation, getConversation } from './conversation';
+import { getPupil, getStudent } from '../../graphql/util';
 
 const userIdToTalkJsId = (userId: string): string => {
     return userId.replace('/', '_');
@@ -114,6 +116,15 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
+const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
+    const student = await getStudent(matchees.studentId);
+    const pupil = await getPupil(matchees.pupilId);
+    const studentUser = userForStudent(student);
+    const pupilUser = userForPupil(pupil);
+    const conversationId = getConversationId([studentUser, pupilUser]);
+    const conversation = await getConversation(conversationId);
+    return { conversation, conversationId };
+};
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -122,6 +133,7 @@ export {
     getMatchByMatchees,
     createOneOnOneId,
     getConversationId,
+    getMatcheeConversation,
     checkIfSubcourseParticipation,
     getMembersForSubcourseGroupChat,
 };
