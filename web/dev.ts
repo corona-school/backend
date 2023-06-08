@@ -1032,9 +1032,10 @@ export async function setupDevDB() {
         await entityManager.save(Subcourse, subcourse);
         console.log('Inserted SubCourse.');
     }
-    // await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
-    // await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
-    // console.log('Inserted WaitingListEnrollments.');
+
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
+    console.log('Inserted WaitingListEnrollments.');
 
     // lectures
 
