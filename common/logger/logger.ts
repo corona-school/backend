@@ -4,6 +4,7 @@ import { getCurrentTransaction } from '../session';
 
 addLayout('json', function () {
     return function (logEvent) {
+        // Small change
         const message = logEvent.data.shift();
         const data = logEvent.data.shift();
 
