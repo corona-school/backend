@@ -17,7 +17,6 @@ addLayout('json', function () {
         const tags = { env: process.env.ENV, version: process.env.HEROKU_RELEASE_VERSION || 'latest' };
         const logLine = { ...logEvent, message, data, error, tags, service: process.env.SERVICE_NAME };
 
-        // trigger new deployment
         const span = tracer.scope().active();
         if (span) {
             tracer.inject(span.context(), formats.LOG, logLine);
