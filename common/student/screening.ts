@@ -5,6 +5,7 @@ import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
 import { getTransactionLog } from '../transactionlog';
 import CoCCancelledEvent from '../transactionlog/types/CoCCancelledEvent';
+import { RedundantError } from '../util/error';
 
 interface ScreeningInput {
     success: boolean;
@@ -63,6 +64,11 @@ export async function addTutorScreening(
 export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false) {
     if (student.createdAt < new Date('2022-01-01') && !ignoreAccCreationDate) {
         return;
+    }
+
+    const existingCoC = await prisma.certificate_of_conduct.count({ where: { studentId: student.id, criminalRecords: false } });
+    if (existingCoC > 0) {
+        throw new RedundantError('Student already handed in a CoC');
     }
 
     await cancelCoCReminders(student);
