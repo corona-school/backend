@@ -16,6 +16,7 @@ import { WebSocketService } from '../common/websocket';
 import { fileRouter } from './controllers/fileController';
 import { attachmentRouter } from './controllers/attachmentController';
 import { certificateRouter } from './controllers/certificateController';
+import { convertCertificateLinkToApiLink } from '../common/certificate';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -38,7 +39,7 @@ app.use((req, res, next) => {
 });
 
 // Parse Cookies and JSON Bodies:
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)
@@ -80,7 +81,6 @@ const options = {
 
 app.use(cors(options));
 
-
 // ------------------------ GraphQL ---------------------------
 void (async function () {
     await apolloServer.start();
@@ -97,7 +97,7 @@ app.get('/:certificateId', (req, res, next) => {
         return next();
     }
 
-    res.redirect(`https://api.lern-fair.de/api/certificate/${req.params.certificateId}/confirmation`);
+    res.redirect(convertCertificateLinkToApiLink(req));
 });
 
 // ------------------------ Serve HTTP & Websocket ------------------------

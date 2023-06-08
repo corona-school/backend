@@ -549,6 +549,7 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
+  conversationId                   String?                            @db.VarChar
   allowChatContactProspects        Boolean                            @default(true)
   allowChatContactParticipants     Boolean                            @default(true)
   groupChatType                    chat_type                          @default(NORMAL)

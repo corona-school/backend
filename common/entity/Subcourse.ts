@@ -87,6 +87,10 @@ export class Subcourse {
     })
     alreadyPromoted: boolean;
 
+    @Column({
+        nullable: true,
+    })
+    conversationId: string;
     @Column({ type: 'boolean', default: true })
     allowChatContactProspects: boolean;
 
