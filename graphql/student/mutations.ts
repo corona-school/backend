@@ -31,6 +31,7 @@ import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
+import { screening_jobstatus_enum, instructor_screening_jobstatus_enum } from '../../graphql/generated';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -45,6 +46,11 @@ export class ScreeningInput {
         nullable: true,
     })
     comment?: string | undefined;
+
+    @Field((_type) => screening_jobstatus_enum, {
+        nullable: true,
+    })
+    jobStatus?: screening_jobstatus_enum | undefined;
 
     @Field((_type) => String, {
         nullable: true,
