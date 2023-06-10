@@ -17,7 +17,7 @@ export class InstructorScreening {
     })
     comment: string;
 
-    @Column({ type: 'enum', enum: JobStatus, nullable: true })
+    @Column({ type: 'enum', enum: JobStatus, nullable: true, enumName: 'screening_jobstatus_enum' })
     jobStatus: JobStatus;
 
     @Column({

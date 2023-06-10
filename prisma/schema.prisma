@@ -167,17 +167,17 @@ model expertise_tag {
 }
 
 model instructor_screening {
-  id                    Int                                  @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
+  id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
-  comment               String?                              @db.VarChar
-  jobStatus             instructor_screening_jobstatus_enum?
-  knowsCoronaSchoolFrom String?                              @db.VarChar
-  createdAt             DateTime                             @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                             @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?                                 @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  student               student?                             @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
-  screener              screener?                            @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 model jufo_verification_transmission {
@@ -1028,18 +1028,10 @@ enum chat_type {
   ANNOUNCEMENT
 }
 
-enum instructor_screening_jobstatus_enum {
-  Sch_ler_in    @map("Schüler:in")
-  Student_in    @map("Student:in")
-  Angestellte_r @map("Angestellte:r")
-  Rentner_in    @map("Rentner:in")
-  Sonstige
-}
-
 enum screening_jobstatus_enum {
-  Sch_ler_in    @map("Schüler:in")
-  Student_in    @map("Student:in")
-  Angestellte_r @map("Angestellte:r")
-  Rentner_in    @map("Rentner:in")
-  Sonstige
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
 }
