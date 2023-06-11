@@ -92,4 +92,14 @@ export class Lecture {
         array: true,
     })
     declinedBy: User['userID'][];
+
+    @Column({ default: null, nullable: true })
+    zoomMeetingId: string;
+
+    @Column({
+        type: 'json',
+        default: [],
+        array: true,
+    })
+    zoomMeetingReport: any[];
 }

@@ -5,6 +5,9 @@ import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
 import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
+import { getZoomUser } from '../zoom/zoom-user';
+import { deleteZoomUser } from '../zoom/zoom-user';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
@@ -27,7 +30,6 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
             dissolved: false,
         },
     });
-
     for (const match of matches) {
         await dissolveMatch(match, 0, student);
     }
@@ -90,6 +92,12 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
             });
             // TODO Notify participants
         }
+    }
+
+    const zoomUser = await getZoomUser(student.email);
+
+    if (zoomUser) {
+        await deleteZoomUser(zoomUser.id);
     }
 
     const updatedStudent = await prisma.student.update({
