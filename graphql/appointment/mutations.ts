@@ -171,7 +171,7 @@ export class MutateAppointmentResolver {
 
         await prisma.lecture.update({
             where: { id: appointmentId },
-            data: { ...appointment, zoomMeetingReport: meetingReports },
+            data: { zoomMeetingReport: meetingReports },
         });
 
         return true;
