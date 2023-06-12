@@ -122,6 +122,7 @@ const getOrCreateConversation = async (participants: [User, User], conversationI
 
     const conversationIdOfParticipants = getConversationId(participants);
     const participantsConversation = await getConversation(conversationIdOfParticipants);
+    // TODO: DO NOT UPDATE when the conversation does not exist yet!
     const updatedConversation = { id: conversationIdOfParticipants, custom: { type: conversationInfos.custom.type } };
     await updateConversation(updatedConversation);
 
@@ -185,6 +186,7 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
 async function updateConversation(conversationToBeUpdated: { id: string } & ConversationInfos): Promise<any> {
     try {
         // check if conversation exists
+        // TODO: This does not check anything!
         await getConversation(conversationToBeUpdated.id);
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationToBeUpdated.id}`, {
             method: 'PUT',

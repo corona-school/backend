@@ -11,7 +11,7 @@ import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from '../common/user/roles';
-import { isDev } from '../common/util/environment';
+import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
@@ -576,8 +576,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             attachmentGroupId: nobody,
             // The context might contain sensitivie information of other users for which we do not know whether the user should access those
             // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
-            context: isDev ? onlyAdmin : nobody,
-            contextID: isDev ? onlyAdmin : nobody,
+            context: isDev || isTest ? onlyAdmin : nobody,
+            contextID: isDev || isTest ? onlyAdmin : nobody,
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
             error: onlyAdmin,
         }),
