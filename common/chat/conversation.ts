@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
+import { checkChatMembersAccessRights, checkResponseStatus, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
@@ -57,6 +57,7 @@ enum ChatAccess {
     READ = 'Read',
     READWRITE = 'ReadWrite',
 }
+
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos): Promise<string> => {
     let conversationId: string;
     const { type } = conversationInfos.custom;
@@ -127,6 +128,13 @@ const getOrCreateConversation = async (participants: [User, User], conversationI
 
     const conversationIdOfParticipants = getConversationId(participants);
     const participantsConversation = await getConversation(conversationIdOfParticipants);
+    const { readMembers } = checkChatMembersAccessRights(participantsConversation);
+    const isChatReadOnly = readMembers.length > 0;
+
+    if (isChatReadOnly) {
+        await markConversationAsWriteable(conversationIdOfParticipants);
+    }
+
     const updatedConversation = { id: conversationIdOfParticipants, custom: { type: conversationInfos.custom.type } };
     await updateConversation(updatedConversation);
 

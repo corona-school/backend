@@ -125,6 +125,26 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     const conversation = await getConversation(conversationId);
     return { conversation, conversationId };
 };
+
+const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMembers: string[]; readMembers: string[] } => {
+    const readWriteMembers: string[] = [];
+    const readMembers: string[] = [];
+
+    for (const participantId in conversation.participants) {
+        const participant = conversation.participants[participantId];
+        const access = participant.access;
+
+        if (access === 'ReadWrite') {
+            readWriteMembers.push(participantId);
+        } else if (access === 'Read') {
+            readMembers.push(participantId);
+        } else {
+            console.log(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte.`);
+        }
+    }
+    return { readWriteMembers, readMembers };
+};
+
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -136,4 +156,5 @@ export {
     getMatcheeConversation,
     checkIfSubcourseParticipation,
     getMembersForSubcourseGroupChat,
+    checkChatMembersAccessRights,
 };
