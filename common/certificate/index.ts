@@ -18,6 +18,7 @@ import { createSecretEmailToken } from '../secret';
 import { userForPupil, userForStudent } from '../user';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { generatePDFFromHTML } from '../util/pdf';
+import { Request } from 'express';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -327,6 +328,17 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
 
 function getCertificateLink(certificate: ParticipationCertificate, lang: Language) {
     return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang;
+}
+
+export function convertCertificateLinkToApiLink(req: Request) {
+    const url = new URL('https://api.lern-fair.de');
+
+    url.pathname = `/api/certificate/${req.params.certificateId}/confirmation`;
+    for (const [key, value] of Object.entries(req.query)) {
+        url.searchParams.append(key, value as string);
+    }
+
+    return url.toString();
 }
 
 async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {

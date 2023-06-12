@@ -200,6 +200,8 @@ model lecture {
   organizerIds          String[]                     @default([])
   participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
+  zoomMeetingId         String?                      @db.VarChar
+  zoomMeetingReport     Json[]                       @default([]) @db.Json
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
@@ -515,6 +517,7 @@ model student {
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
   aboutMe                                   String                                 @default("") @db.VarChar
+  zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
