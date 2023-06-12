@@ -323,7 +323,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
-    Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
+    Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
 };
 
@@ -477,6 +477,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
+            zoomUserId: nobody,
         }),
     },
     Subcourse: {
@@ -550,6 +551,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwner,
+                zoomMeetingId: participantOrOwner,
+                zoomMeetingReport: adminOrOwner,
             }
         ),
     },

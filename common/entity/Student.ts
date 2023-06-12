@@ -326,6 +326,9 @@ export class Student extends Person {
     @Column({ default: '', nullable: false })
     aboutMe: string;
 
+    @Column({ default: null, nullable: true })
+    zoomUserId: string;
+
     async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
         let currentScreening = await this.screening;
 
