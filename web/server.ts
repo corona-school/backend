@@ -60,7 +60,7 @@ export const server = (async function setupWebserver() {
         origins = [
             'http://localhost:3000',
             ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
-            'https://user-app-dev.herokuapp.com',
+            'https://lernfair-user-app-dev.herokuapp.com',
             /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
             'https://lern.retool.com',
         ];
