@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
-import { isDev, USER_APP_DOMAIN } from '../util/environment';
+import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
 import { Moment } from 'moment';
@@ -93,7 +93,7 @@ export async function requestToken(
     if (redirectTo) {
         // Ensures that the user is not redirected to a potential third party
         const { host } = new URL(redirectTo, `https://${USER_APP_DOMAIN}/`);
-        if (!isDev && !host.endsWith('lern-fair.de')) {
+        if (!isDev && !isTest && !host.endsWith('lern-fair.de')) {
             throw new Error(`Invalid redirectTo host '${host}'`);
         }
 
