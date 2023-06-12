@@ -8,9 +8,8 @@ import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
-import { getConversationId, getMatcheeConversation } from '../../common/chat/helper';
-import { userForPupil, userForStudent } from '../../common/user';
-import { getConversation, markConversationAsReadOnly, markConversationAsWriteable } from '../../common/chat';
+import { getMatcheeConversation } from '../../common/chat/helper';
+import { markConversationAsReadOnly, markConversationAsWriteable } from '../../common/chat';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {

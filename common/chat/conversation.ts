@@ -6,6 +6,7 @@ import { Message } from 'talkjs/all';
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
+import { ChatType } from './types';
 
 dotenv.config();
 
@@ -40,7 +41,7 @@ type Conversation = {
     custom?: CustomProps;
     lastMessage?: LastMessage;
     participants: {
-        [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
+        [id: string]: { access: ChatAccess; notify: boolean };
     };
     createdAt: number;
 };
@@ -52,6 +53,10 @@ type ConversationInfos = {
     custom: CustomProps;
 };
 
+enum ChatAccess {
+    READ = 'Read',
+    READWRITE = 'ReadWrite',
+}
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos): Promise<string> => {
     let conversationId: string;
     const { type } = conversationInfos.custom;
@@ -217,7 +222,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string, chatType?: 'normal' | 'announcement'): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${userId}`, {
@@ -227,7 +232,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: 'no
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                access: chatType === 'normal' ? 'Readwrite' : 'Read',
+                access: chatType === ChatType.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
             }),
         });
         await checkResponseStatus(response);
@@ -264,7 +269,7 @@ async function markConversationAsReadOnly(conversationId: string, reason?: 'anno
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'Read',
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -286,7 +291,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'ReadWrite',
+                    access: ChatAccess.READWRITE,
                 }),
             });
             await checkResponseStatus(response);
