@@ -552,7 +552,7 @@ model subcourse {
   conversationId                   String?                            @db.VarChar
   allowChatContactProspects        Boolean                            @default(true)
   allowChatContactParticipants     Boolean                            @default(true)
-  groupChatType                    chat_type                          @default(NORMAL)
+  groupChatType                    chat_type                          @default(course)
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
@@ -1025,6 +1025,6 @@ enum lecture_appointmenttype_enum {
 }
 
 enum chat_type {
-  NORMAL
-  ANNOUNCEMENT
+  course
+  announcement
 }

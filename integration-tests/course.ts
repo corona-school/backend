@@ -97,7 +97,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
                 joinAfterStart: true
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
-                groupChatType: ${ChatType.NORMAL}
+                groupChatType: ${ChatType.COURSE}
                 lectures: [{ start: "${nextMinute.toISOString()}" duration: 1 }]
             }) { id }
         }

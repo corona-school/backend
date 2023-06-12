@@ -97,7 +97,7 @@ export class Subcourse {
     @Column({ type: 'boolean', default: true })
     allowChatContactParticipants: boolean;
 
-    @Column({ type: 'enum', enum: ChatType, enumName: 'chat_type', default: ChatType.NORMAL })
+    @Column({ type: 'enum', enum: ChatType, enumName: 'chat_type', default: ChatType.COURSE })
     groupChatType: ChatType;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
