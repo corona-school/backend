@@ -261,6 +261,28 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
+
+        for (const memberId of memberIds) {
+            const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${memberId}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    access: 'Read',
+                }),
+            });
+            await checkResponseStatus(response);
+        }
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {
+    try {
+        const conversation = await getConversation(conversationId);
+        const memberIds = Object.keys(conversation.participants);
         const pupilIds = memberIds.filter((memberId) => !memberId.includes('student'));
 
         for (const pupilId of pupilIds) {
@@ -344,6 +366,7 @@ export {
     getOrCreateConversation,
     getOrCreateGroupConversation,
     deleteConversation,
+    markConversationAsReadOnlyForPupils,
     talkjsConversationApiUrl,
     Conversation,
     ConversationInfos,

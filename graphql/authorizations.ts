@@ -233,6 +233,7 @@ const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
@@ -506,7 +507,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
-            conversationId: adminOrOwner,
+            conversationId: subcourseParticipantOrOwner,
         }),
     },
     Course: {

@@ -9,7 +9,7 @@ import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
 import { ChatType } from '../chat/types';
-import { ConversationInfos, markConversationAsReadOnly, markConversationAsWriteable, updateConversation } from '../chat';
+import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Course States');
@@ -139,7 +139,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
 
     const isMaxParticipantsChanged: boolean = Boolean(update.maxParticipants);
-    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType);
+    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
 
     if (isMaxParticipantsChanged) {
         if (update.maxParticipants < participantCount) {
@@ -166,7 +166,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
                         type: 'announcement',
                     },
                 };
-                await markConversationAsReadOnly(subcourse.conversationId);
+                await markConversationAsReadOnlyForPupils(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
             }
         }
