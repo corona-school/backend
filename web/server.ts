@@ -16,6 +16,7 @@ import { WebSocketService } from '../common/websocket';
 import { fileRouter } from './controllers/fileController';
 import { attachmentRouter } from './controllers/attachmentController';
 import { certificateRouter } from './controllers/certificateController';
+import { convertCertificateLinkToApiLink } from '../common/certificate';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -98,7 +99,7 @@ export const server = (async function setupWebserver() {
             return next();
         }
 
-        res.redirect(`https://api.lern-fair.de/api/certificate/${req.params.certificateId}/confirmation`);
+        res.redirect(convertCertificateLinkToApiLink(req));
     });
 
     // ------------------------ Serve HTTP & Websocket ------------------------

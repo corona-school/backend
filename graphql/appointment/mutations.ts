@@ -12,10 +12,10 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getLecture, getStudent } from '../util';
-import moment from 'moment';
 import * as Notification from '../../common/notification';
 import { getLogger } from '../../common/logger/logger';
-import { getUser } from '../../common/user';
+import { getZoomMeetingReport } from '../../common/zoom/zoom-scheduled-meeting';
+import { Prisma } from '@prisma/client';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
@@ -156,6 +156,23 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
 
         await cancelAppointment(context.user, appointment);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+        const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
+        const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+        meetingReports.push(result);
+
+        await prisma.lecture.update({
+            where: { id: appointmentId },
+            data: { zoomMeetingReport: meetingReports },
+        });
 
         return true;
     }

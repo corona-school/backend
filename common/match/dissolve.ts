@@ -9,6 +9,7 @@ import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { getMatchHash } from './util';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Match');
 
@@ -22,9 +23,16 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         data: {
             dissolved: true,
             dissolveReason,
-            dissolvedAt: new Date(),
         },
     });
+    const matchLectures = await prisma.lecture.findMany({
+        where: {
+            matchId: match.id,
+        },
+    });
+    for (const lecture of matchLectures) {
+        await deleteZoomMeeting(lecture.zoomMeetingId);
+    }
 
     await logTransaction('matchDissolve', dissolver, {
         matchId: match.id,
@@ -62,6 +70,13 @@ export async function reactivateMatch(match: Match) {
 }
 
 export async function dissolveProjectMatch(match: Project_match, dissolveReason: number, dissolver: Pupil | Student | null) {
+    const matchLectures = await prisma.lecture.findMany({
+        where: { matchId: match.id },
+    });
+    for (const lecture of matchLectures) {
+        await deleteZoomMeeting(lecture.zoomMeetingId);
+    }
+
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
