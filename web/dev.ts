@@ -35,6 +35,9 @@ import { getNotifications, importMessageTranslations, importNotifications } from
 import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
+import { getLogger } from '../common/logger/logger';
+
+const logger = getLogger('DevSetup');
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -216,7 +219,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
-        console.log('Inserted Dev Pupil ' + i);
+        logger.debug('Inserted Dev Pupil ' + i);
         await _createFixedToken(userForPupil(pupils[i]), `authtokenP${i + 1}`);
         if (i % 2 === 0) {
             await createPassword(userForPupil(pupils[i]), `test`);
@@ -363,7 +366,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
-        console.log('Inserted Dev Student ' + i);
+        logger.debug('Inserted Dev Student ' + i);
         await _createFixedToken(userForStudent(students[i]), `authtokenS${i + 1}`);
         if (i % 2 === 0) {
             await createPassword(userForStudent(students[i]), `test`);
@@ -379,7 +382,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
-        console.log('Inserted Dev Match ' + i);
+        logger.debug('Inserted Dev Match ' + i);
     }
 
     const projectMatches: ProjectMatch[] = [];
@@ -390,7 +393,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < projectMatches.length; i++) {
         await entityManager.save(ProjectMatch, projectMatches[i]);
-        console.log('Inserted Dev ProjectMatch ' + i);
+        logger.debug('Inserted Dev ProjectMatch ' + i);
     }
 
     const signature = Buffer.from(
@@ -542,7 +545,7 @@ export async function setupDevDB() {
 
     for (const cert of [pc1, pc2, pc3, pc4, pc5]) {
         await entityManager.save(ParticipationCertificate, cert);
-        console.log('Inserted a certificate with ID: ' + cert.uuid);
+        logger.debug('Inserted a certificate with ID: ' + cert.uuid);
     }
 
     // mentor
@@ -573,7 +576,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < mentors.length; i++) {
         await entityManager.save(Mentor, mentors[i]);
-        console.log('Inserted Dev Mentor ' + i);
+        logger.debug('Inserted Dev Mentor ' + i);
     }
 
     // course tags
@@ -700,7 +703,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < tags.length; i++) {
         await entityManager.save(CourseTag, tags[i]);
-        console.log('Inserted Course Tag ' + tags[i].identifier);
+        logger.debug('Inserted Course Tag ' + tags[i].identifier);
     }
 
     // courses
@@ -866,7 +869,7 @@ export async function setupDevDB() {
     for (const course of courses) {
         await entityManager.save(Course, course);
 
-        console.log('Inserted Course ' + course.name);
+        logger.debug('Inserted Course ' + course.name);
     }
 
     // courses
@@ -1017,7 +1020,7 @@ export async function setupDevDB() {
 
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
-        console.log('Inserted SubCourse.');
+        logger.debug('Inserted SubCourse.');
     }
 
     // lectures
@@ -1126,7 +1129,7 @@ export async function setupDevDB() {
 
     for (const lecture of lectures) {
         await entityManager.save(Lecture, lecture);
-        console.log('Inserted Lecture.');
+        logger.debug('Inserted Lecture.');
     }
 
     // Screening results
@@ -1157,7 +1160,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < screeners.length; i++) {
         await entityManager.save(Screener, screeners[i]);
-        console.log('Inserted Dev Screener ' + i);
+        logger.debug('Inserted Dev Screener ' + i);
     }
 
     const screenings: Screening[] = [];
@@ -1193,7 +1196,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < screenings.length; i++) {
         await entityManager.save(Screening, screenings[i]);
-        console.log('Inserted Dev Screening ' + i);
+        logger.debug('Inserted Dev Screening ' + i);
     }
 
     // instructor screening
@@ -1228,7 +1231,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < instructorScreenings.length; i++) {
         await entityManager.save(InstructorScreening, instructorScreenings[i]);
-        console.log('Inserted Dev Instrcutor Screening ' + i);
+        logger.debug('Inserted Dev Instrcutor Screening ' + i);
     }
 
     //project coaching screenings
@@ -1245,7 +1248,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < projectCoachingScreenings.length; i++) {
         await entityManager.save(ProjectCoachingScreening, projectCoachingScreenings[i]);
-        console.log('Inserted Dev Project Screening ' + i);
+        logger.debug('Inserted Dev Project Screening ' + i);
     }
 
     // Test data for course attendance log
@@ -1258,7 +1261,7 @@ export async function setupDevDB() {
         courseAttendanceLog1.pupil = pupils[i];
         courseAttendanceLog1.lecture = lecture3;
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
-        console.log('Inserted Dev CourseAttendanceLog ' + i);
+        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
 
         // pupil attended today's lecture, which is already over
         const courseAttendanceLog2 = new CourseAttendanceLog();
@@ -1266,7 +1269,7 @@ export async function setupDevDB() {
         courseAttendanceLog2.pupil = pupils[i];
         courseAttendanceLog2.lecture = lecture5;
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
-        console.log('Inserted Dev CourseAttendanceLog ' + i);
+        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
     }
 
     //Insert some schools
@@ -1284,7 +1287,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < schools.length; i++) {
         await entityManager.save(schools[i]);
-        console.log('Inserted Dev School ' + i);
+        logger.debug('Inserted Dev School ' + i);
     }
 
     //Insert expert data
@@ -1302,7 +1305,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < expertiseTags.length; i++) {
         await entityManager.save(expertiseTags[i]);
-        console.log('Inserted Expertise Tag ' + i);
+        logger.debug('Inserted Expertise Tag ' + i);
     }
 
     const experts: ExpertData[] = [];
@@ -1349,7 +1352,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < experts.length; i++) {
         await entityManager.save(experts[i]);
-        console.log('Inserted Dev Expert ' + i);
+        logger.debug('Inserted Dev Expert ' + i);
     }
 
     //Insert pupil interest confirmation requests
@@ -1364,7 +1367,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < pticrs.length; i++) {
         await entityManager.save(pticrs[i]);
-        console.log('Inserted Pupil Tutoring Interest Request ' + i);
+        logger.debug('Inserted Pupil Tutoring Interest Request ' + i);
     }
 
     const certificates: CertificateOfConduct[] = [];
@@ -1379,7 +1382,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < certificates.length; i++) {
         await entityManager.save(certificates[i]);
-        console.log('Inserted COC ' + i);
+        logger.debug('Inserted COC ' + i);
     }
 
     //Insert remission request
@@ -1388,12 +1391,14 @@ export async function setupDevDB() {
     remissionRequest.uuid = randomBytes(5).toString('hex').toUpperCase();
 
     await entityManager.save(remissionRequest);
-    console.log('Inserted remission request');
+    logger.debug('Inserted remission request');
 
     if (!process.env.SKIP_NOTIFICATION_IMPORT) {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
+
+    logger.info(`Set up test data`);
 }
 
 function sha512(input: string): string {
@@ -1439,7 +1444,7 @@ async function importNotificationsFromProd() {
     ).json();
 
     await importNotifications(prodNotifications.data.notifications, false, true);
-    console.log(`Imported notifications from PROD`, prodNotifications.data.notifications);
+    logger.info(`Imported notifications from productive landscape`, prodNotifications.data.notifications);
 }
 
 async function importMessagesTranslationsFromProd() {
