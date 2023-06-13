@@ -22,91 +22,97 @@ import { convertCertificateLinkToApiLink } from '../common/certificate';
 
 const logger = getLogger('WebServer');
 
-logger.info('Starting Webserver');
-const app = express();
+export const server = (async function setupWebserver() {
+    logger.info('Starting Webserver');
+    const app = express();
 
-// Log details about every HTTP request:
-const accessLogger = getLogger('access');
-app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
-
-// Set common security HTTP response headers:
-app.use(helmet());
-
-// Attach a transaction to each request, that is propagated across continuations:
-app.use((req, res, next) => {
-    startTransaction();
-    next();
-});
-
-// Parse Cookies and JSON Bodies:
-app.use(bodyParser.json({ limit: '1mb' }));
-app.use(cookieParser());
-
-// Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)
-app.use(favicon('./assets/favicon.ico'));
-
-// Serve static assets:
-app.use('/public', express.static('./assets/public'));
-
-// -------------------- CORS ------------------------------
-
-let origins: (string | RegExp)[];
-
-const allowedSubdomains = [...allStateCooperationSubdomains, 'jufo', 'partnerschule', 'drehtuer', 'codu'];
-if (process.env.ENV == 'dev') {
-    origins = [
-        'http://localhost:3000',
-        ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
-        'https://user-app-dev.herokuapp.com',
-        /^https:\/\/lernfair-user-app-[\-a-z0-9]+.herokuapp.com$/,
-        'https://lern.retool.com',
-    ];
-} else {
-    origins = [
-        'https://dashboard.corona-school.de',
-        'https://my.corona-school.de',
-        ...allowedSubdomains.map((d) => `https://${d}.corona-school.de`),
-        'https://dashboard.lern-fair.de',
-        'https://my.lern-fair.de',
-        'https://app.lern-fair.de',
-        ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
-        'https://lern.retool.com',
-    ];
-}
-
-const options = {
-    origin: origins,
-    methods: ['GET', 'POST', 'DELETE', 'PUT', 'HEAD', 'PATCH'],
-};
-
-app.use(cors(options));
-
-// ------------------------ GraphQL ---------------------------
-void (async function () {
-    await apolloServer.start();
-    apolloServer.applyMiddleware({ app, path: '/apollo' });
-})();
-
-// ------------------------ HTTP Routes -----------------------
-app.use('/api/attachments', attachmentRouter);
-app.use('/api/certificate', certificateRouter);
-app.use('/api/files', fileRouter);
-
-app.get('/:certificateId', (req, res, next) => {
-    if (!req.subdomains.includes('verify')) {
-        return next();
+    // Log details about every HTTP request:
+    if (process.env.LOG_FORMAT !== 'brief') {
+        const accessLogger = getLogger('access');
+        app.use(connectLogger(accessLogger.getLoggerImpl(), { level: 'auto' }));
     }
 
-    res.redirect(convertCertificateLinkToApiLink(req));
-});
+    // Set common security HTTP response headers:
+    app.use(helmet());
 
-// ------------------------ Serve HTTP & Websocket ------------------------
-const port = process.env.PORT || 5000;
+    // Attach a transaction to each request, that is propagated across continuations:
+    app.use((req, res, next) => {
+        startTransaction();
+        next();
+    });
 
-const server = http.createServer(app);
+    // Parse Cookies and JSON Bodies:
+    app.use(bodyParser.json());
+    app.use(cookieParser());
 
-const ws = WebSocketService.getInstance(server);
-ws.configure();
+    // Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)
+    app.use(favicon('./assets/favicon.ico'));
 
-// Start listening
-server.listen(port, () => logger.info(`Server listening on port ${port}`));
+    // Serve static assets:
+    app.use('/public', express.static('./assets/public'));
+
+    // -------------------- CORS ------------------------------
+
+    let origins: (string | RegExp)[];
+
+    const allowedSubdomains = [...allStateCooperationSubdomains, 'jufo', 'partnerschule', 'drehtuer', 'codu'];
+    if (process.env.ENV == 'dev') {
+        origins = [
+            'http://localhost:3000',
+            ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
+            'https://lernfair-user-app-dev.herokuapp.com',
+            /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
+            'https://lern.retool.com',
+        ];
+    } else {
+        origins = [
+            'https://dashboard.corona-school.de',
+            'https://my.corona-school.de',
+            ...allowedSubdomains.map((d) => `https://${d}.corona-school.de`),
+            'https://dashboard.lern-fair.de',
+            'https://my.lern-fair.de',
+            'https://app.lern-fair.de',
+            ...allowedSubdomains.map((d) => `https://${d}.lern-fair.de`),
+            'https://lern.retool.com',
+        ];
+    }
+
+    const options = {
+        origin: origins,
+        methods: ['GET', 'POST', 'DELETE', 'PUT', 'HEAD', 'PATCH'],
+    };
+
+    app.use(cors(options));
+
+
+    // ------------------------ GraphQL ---------------------------
+    await apolloServer.start();
+    apolloServer.applyMiddleware({ app, path: '/apollo' });
+
+    // ------------------------ HTTP Routes -----------------------
+    app.use('/api/attachments', attachmentRouter);
+    app.use('/api/certificate', certificateRouter);
+    app.use('/api/files', fileRouter);
+
+    app.get('/:certificateId', (req, res, next) => {
+        if (!req.subdomains.includes('verify')) {
+            return next();
+        }
+
+        res.redirect(convertCertificateLinkToApiLink(req));
+    });
+
+    // ------------------------ Serve HTTP & Websocket ------------------------
+    const port = process.env.PORT || 5000;
+
+    const server = http.createServer(app);
+
+    const ws = WebSocketService.getInstance(server);
+    ws.configure();
+
+    // Start listening
+    await new Promise<void>((res) => server.listen(port, res));
+    logger.info(`Server listening on port ${port}`);
+
+    return server;
+})();
