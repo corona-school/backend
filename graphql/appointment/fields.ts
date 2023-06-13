@@ -73,9 +73,15 @@ export class ExtendedFieldsLectureResolver {
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
-    async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+    async participants(
+        @Ctx() context: GraphQLContext,
+        @Root() appointment: Appointment,
+        @Arg('take', (type) => Int) take: number,
+        @Arg('skip', (type) => Int) skip: number
+    ) {
+        await hasAccess(context, 'Lecture', appointment);
         return (await getUsers(appointment.participantIds)).map(({ email, ...rest }) => ({ ...rest }));
     }
 
@@ -143,7 +149,7 @@ export class ExtendedFieldsLectureResolver {
                 return course.name;
             }
             default:
-                return appointment.title;
+                return appointment.title || 'Kein Titel';
         }
     }
     @FieldResolver((returns) => String)
