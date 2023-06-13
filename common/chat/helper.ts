@@ -6,6 +6,7 @@ import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
+import { ChatMetaData, ConversationInfos } from './conversation';
 
 const userIdToTalkJsId = (userId: string): string => {
     return userId.replace('/', '_');
@@ -114,6 +115,23 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
+const convertConversationInfosToStringified = (conversationInfos: ConversationInfos): ConversationInfos => {
+    const convertedObj: ConversationInfos = {
+        subject: conversationInfos.subject,
+        photoUrl: conversationInfos.photoUrl,
+        welcomeMessages: conversationInfos.welcomeMessages,
+        custom: {} as ChatMetaData,
+    };
+
+    for (const key in conversationInfos.custom) {
+        if (conversationInfos.custom.hasOwnProperty(key)) {
+            convertedObj.custom[key] = JSON.stringify(conversationInfos.custom[key]);
+        }
+    }
+
+    return convertedObj;
+};
+
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -124,4 +142,5 @@ export {
     getConversationId,
     checkIfSubcourseParticipation,
     getMembersForSubcourseGroupChat,
+    convertConversationInfosToStringified,
 };
