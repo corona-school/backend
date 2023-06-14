@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, UpdateDateColumn, CreateDateColumn, ManyToOne } from 'typeorm';
 import { ScreeningInfo } from '../util/screening';
 import { Screener } from './Screener';
+import { JobStatus } from './ScreeningTypes';
 import { Student } from './Student';
 
 @Entity()
@@ -15,6 +16,9 @@ export class InstructorScreening {
         nullable: true,
     })
     comment: string;
+
+    @Column({ type: 'enum', enum: JobStatus, nullable: true, enumName: 'screening_jobstatus_enum' })
+    jobStatus: JobStatus;
 
     @Column({
         nullable: true,
