@@ -40,7 +40,10 @@ const getSubcourseInstructorContacts = async (pupil: User) => {
         where: {
             subcourse_instructors_student: {
                 some: {
-                    subcourse: { subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } } },
+                    subcourse: {
+                        allowChatContactParticipants: true,
+                        subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } },
+                    },
                 },
             },
         },
@@ -52,7 +55,10 @@ const getSubcourseParticipantContact = async (student: User) => {
         where: {
             subcourse_participants_pupil: {
                 some: {
-                    subcourse: { subcourse_instructors_student: { some: { studentId: student.studentId } } },
+                    subcourse: {
+                        allowChatContactParticipants: true,
+                        subcourse_instructors_student: { some: { studentId: student.studentId } },
+                    },
                 },
             },
         },

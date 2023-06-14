@@ -170,7 +170,7 @@ export class UserFieldsResolver {
     }
 
     @Query((returns) => [Contact])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
         return getMyContacts(user);

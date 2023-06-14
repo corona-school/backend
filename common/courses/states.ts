@@ -8,6 +8,8 @@ import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
+import { ChatType, ContactReason } from '../chat/types';
+import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Course States');
@@ -134,13 +136,35 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     if (!can.allowed) {
         throw new Error(`Cannot edit Subcourse(${subcourse.id}) reason: ${can.reason}`);
     }
+    const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
 
     const isMaxParticipantsChanged: boolean = Boolean(update.maxParticipants);
+    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
 
     if (isMaxParticipantsChanged) {
-        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (update.maxParticipants < participantCount) {
             throw new PrerequisiteError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+        }
+    }
+    if (isGroupChatTypeChanged) {
+        //* if the subcourse has already an conversation, the conversation has to be updated
+        if (subcourse.conversationId !== null) {
+            if (update.groupChatType === ChatType.NORMAL) {
+                const conversationToBeUpdated: { id: string } & ConversationInfos = {
+                    id: subcourse.conversationId,
+                    custom: {},
+                };
+
+                await markConversationAsWriteable(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
+            } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
+                const conversationToBeUpdated: { id: string } & ConversationInfos = {
+                    id: subcourse.conversationId,
+                    custom: {},
+                };
+                await markConversationAsReadOnlyForPupils(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
+            }
         }
     }
 

@@ -79,7 +79,6 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
 const getOrCreateConversation = async (
     participants: [User, User],
     conversationInfos: ConversationInfos,
-    type: 'oneOnOne' | 'group',
     reason: ContactReason,
     subcourseId?: number
 ): Promise<Conversation> => {
@@ -137,7 +136,7 @@ const getOrCreateConversation = async (
     }
 
     if (participantsConversation === undefined) {
-        const newConversationId = await createConversation(participants, conversationInfos, type);
+        const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
         await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
         const convertedConversation = convertTJConversation(newConversation);
@@ -266,12 +265,40 @@ async function removeParticipant(user: User, conversationId: string): Promise<vo
     }
 }
 
+function isStudentChatMember(memberUserId: string): boolean {
+    return memberUserId.includes('student');
+}
+
 async function markConversationAsReadOnly(conversationId: string): Promise<void> {
     try {
         const conversation = await getConversation(conversationId);
-        const participantIds = Object.keys(conversation.participants);
-        for (const participantId of participantIds) {
-            const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${participantId}`, {
+        const memberIds = Object.keys(conversation.participants);
+
+        for (const memberId of memberIds) {
+            const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${memberId}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    access: 'Read',
+                }),
+            });
+            await checkResponseStatus(response);
+        }
+    } catch (error) {
+        throw new Error('Could not mark conversation as readonly.');
+    }
+}
+async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {
+    try {
+        const conversation = await getConversation(conversationId);
+        const memberIds = Object.keys(conversation.participants);
+        const pupilIds = memberIds.filter((memberId) => !memberId.includes('student'));
+
+        for (const pupilId of pupilIds) {
+            const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}/participants/${pupilId}`, {
                 method: 'PATCH',
                 headers: {
                     Authorization: `Bearer ${apiKey}`,
@@ -351,6 +378,7 @@ export {
     getOrCreateConversation,
     getOrCreateGroupConversation,
     deleteConversation,
+    markConversationAsReadOnlyForPupils,
     talkjsConversationApiUrl,
     Conversation,
     ConversationInfos,
