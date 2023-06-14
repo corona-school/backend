@@ -4,10 +4,10 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation, markConversationAsReadOnly } from '../../common/chat';
+import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation, markConversationAsReadOnlyForPupils } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
-import { ChatType } from '../../common/chat/types';
+import { ChatType, ContactReason } from '../../common/chat/types';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -66,13 +66,13 @@ export class MutateChatResolver {
             subject: subcourse.course.name,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
-                type: groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'course',
+                type: groupChatType === ChatType.ANNOUNCEMENT ? ContactReason.ANNOUNCEMENT : ContactReason.COURSE,
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
         const conversation = await getOrCreateGroupConversation(subcourseMembers, subcourseId, conversationInfos);
         if (groupChatType === ChatType.ANNOUNCEMENT) {
-            await markConversationAsReadOnly(conversation.id);
+            await markConversationAsReadOnlyForPupils(conversation.id);
         }
         return conversation.id;
     }
