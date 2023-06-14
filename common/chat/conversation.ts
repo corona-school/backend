@@ -92,6 +92,7 @@ const getOrCreateConversation = async (
     const participantsConversationId = getConversationId(participants);
     const participantsConversation = await getConversation(participantsConversationId);
 
+    // if conversation already exists, furhter subcourseIds or matchId will be added to the conversation
     if (participantsConversation) {
         if (reason === ContactReason.MATCH) {
             const updatedConversation = {
@@ -135,6 +136,7 @@ const getOrCreateConversation = async (
         }
     }
 
+    // if no conversation exists, a new one will be created
     if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
@@ -162,7 +164,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        await sendSystemMessage('Schön dass du da bist!', newConversationId, 'first');
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },

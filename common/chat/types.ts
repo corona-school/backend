@@ -35,6 +35,7 @@ export type Conversation = {
 
 export type ChatMetaData = {
     start?: string;
+    groupType?: string;
     match?: { matchId: number };
     subcourse?: number[];
     prospectSubcourse?: number[];
@@ -57,6 +58,7 @@ export type TJConversation = {
 
 export type TJChatMetaData = {
     start?: string;
+    groupType?: string;
     match?: string;
     subcourse?: string;
     prospectSubcourse?: string;
@@ -72,12 +74,4 @@ export type ConversationInfos = {
 export enum ChatType {
     NORMAL = 'NORMAL',
     ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
-export enum ContactReason {
-    COURSE = 'course',
-    MATCH = 'match',
-    ANNOUNCEMENT = 'announcement',
-    PARTICIPANT = 'participant',
-    PROSPECT = 'prospect',
 }

@@ -125,7 +125,8 @@ const convertConversationInfosToStringified = (conversationInfos: ConversationIn
 
     for (const key in conversationInfos.custom) {
         if (conversationInfos.custom.hasOwnProperty(key)) {
-            convertedObj.custom[key] = JSON.stringify(conversationInfos.custom[key]);
+            const value = conversationInfos.custom[key];
+            convertedObj.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
         }
     }
 

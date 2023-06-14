@@ -65,6 +65,7 @@ export class MutateChatResolver {
             subject: subcourse.course.name,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
+                groupType: groupChatType,
                 subcourse: [subcourseId],
             },
         };
