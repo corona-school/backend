@@ -4,9 +4,10 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ContactReason, ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation } from '../../common/chat';
+import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
+import { ContactReason } from '../../common/chat/types';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -64,6 +65,7 @@ export class MutateChatResolver {
             subject: subcourse.course.name,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
+                subcourse: [subcourseId],
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
@@ -74,6 +76,7 @@ export class MutateChatResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.USER)
     async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        // TODO if prospect creation is merged -> adjust this
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
         return true;

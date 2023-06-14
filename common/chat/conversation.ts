@@ -1,11 +1,19 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, convertConversationInfosToStringified, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
+import {
+    checkResponseStatus,
+    convertConversationInfosToStringified,
+    convertTJConversation,
+    createOneOnOneId,
+    getConversationId,
+    userIdToTalkJsId,
+} from './helper';
 import { Message } from 'talkjs/all';
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
+import { ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
 
 dotenv.config();
 
@@ -14,53 +22,6 @@ const talkjsConversationApiUrl = `${talkjsApiUrl}/conversations`;
 const apiKey = process.env.TALKJS_API_KEY;
 
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
-type LastMessage = {
-    attachment: Message['attachment'];
-    conversationId: string;
-    createdAt: number;
-    custom: Message['custom'];
-    id: Message['id'];
-    senderId: Message['senderId'];
-    text: string;
-    type: Message['type'];
-};
-
-export enum ContactReason {
-    COURSE = 'course',
-    MATCH = 'match',
-    ANNOUNCEMENT = 'announcement',
-    PARTICIPANT = 'participant',
-    PROSPECT = 'prospect',
-}
-
-type Conversation = {
-    id: string;
-    subject?: string;
-    topicId?: string;
-    photoUrl?: string;
-    welcomeMessages?: string[];
-    custom?: ChatMetaData;
-    lastMessage?: LastMessage;
-    participants: {
-        [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
-    };
-    createdAt: number;
-};
-
-type ConversationInfos = {
-    subject?: string;
-    photoUrl?: string;
-    welcomeMessages?: string[];
-    custom: ChatMetaData;
-};
-
-export type ChatMetaData = {
-    start?: string;
-    match?: { matchId: number };
-    subcourse?: number[];
-    prospectSubcourse?: number[];
-    finished?: 'match_dissolved' | 'course_over';
-};
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
     let conversationId: string;
@@ -75,20 +36,13 @@ const createConversation = async (participants: User[], conversationInfos: Conve
             throw new Error(`No matching case for conversationType found: ${type}`);
     }
 
-    try {
-        const body = JSON.stringify({
-            subject: conversationInfos.subject ?? '',
-            welcomeMessages: conversationInfos.welcomeMessages ?? [],
-            custom: {
-                ...(conversationInfos.custom.start && { start: conversationInfos.custom.start }),
-                ...(conversationInfos.custom.match && { match: JSON.stringify(conversationInfos.custom.match) }),
-                ...(conversationInfos.custom.subcourse && { subcourse: JSON.stringify(conversationInfos.custom.subcourse) }),
-                ...(conversationInfos.custom.prospectSubcourse && { prospectSubcourse: JSON.stringify(conversationInfos.custom.prospectSubcourse) }),
-                ...(conversationInfos.custom.finished && { finished: conversationInfos.custom.finished }),
-            },
-            participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
-        });
+    const conversationInfosWithParticipants = {
+        ...convertConversationInfosToStringified(conversationInfos),
+        participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
+    };
 
+    try {
+        const body = JSON.stringify(conversationInfosWithParticipants);
         const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
             method: 'PUT',
             headers: {
@@ -104,7 +58,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 };
 
-const getConversation = async (conversationId: string): Promise<Conversation | undefined> => {
+const getConversation = async (conversationId: string): Promise<TJConversation | undefined> => {
     const response = await fetch(`${talkjsConversationApiUrl}/${conversationId}`, {
         method: 'GET',
         headers: {
@@ -136,30 +90,62 @@ const getOrCreateConversation = async (
         })
     );
 
-    const conversationIdOfParticipants = getConversationId(participants);
-    const participantsConversation = await getConversation(conversationIdOfParticipants);
-    const subcoursesFromConversation = participantsConversation?.custom.subcourse ?? [];
-    const prospectSubcoursesFromConversation = participantsConversation?.custom.prospectSubcourse ?? [];
+    const participantsConversationId = getConversationId(participants);
+    const participantsConversation = await getConversation(participantsConversationId);
 
-    const updatedConversation = {
-        id: conversationIdOfParticipants,
-        custom: {
-            ...(reason === ContactReason.MATCH && { match: conversationInfos.custom.match }),
-            ...(reason === ContactReason.PARTICIPANT && { subcourse: [...subcoursesFromConversation, subcourseId] }),
-            ...(reason === ContactReason.PROSPECT && { prospectSubcourse: [...prospectSubcoursesFromConversation, subcourseId] }),
-        },
-    };
+    if (participantsConversation) {
+        if (reason === ContactReason.MATCH) {
+            const updatedConversation = {
+                id: participantsConversationId,
+                custom: {
+                    match: conversationInfos.custom.match,
+                },
+            };
 
-    await updateConversation(updatedConversation);
+            await updateConversation(updatedConversation);
+        } else if (reason === ContactReason.PARTICIPANT) {
+            const subcoursesFromConversation = participantsConversation?.custom.subcourse ?? '';
+            const subcourseIds: number[] = JSON.parse(subcoursesFromConversation);
+
+            const updatedSubcourses: number[] = [...subcourseIds, subcourseId];
+            const returnUpdatedSubcourses = Array.from(new Set(updatedSubcourses));
+
+            const updatedConversation = {
+                id: participantsConversationId,
+                custom: {
+                    subcourse: returnUpdatedSubcourses,
+                },
+            };
+
+            await updateConversation(updatedConversation);
+        } else if (reason === ContactReason.PROSPECT) {
+            const prospectSubcoursesFromConversation = participantsConversation?.custom.prospectSubcourse ?? '';
+            const prospectSubcourseIds: number[] = JSON.parse(prospectSubcoursesFromConversation);
+
+            const updatedProspectSubcourse: number[] = [...prospectSubcourseIds, subcourseId];
+            const returnUpdatedProspectSubcourses = Array.from(new Set(updatedProspectSubcourse));
+
+            const updatedConversation = {
+                id: participantsConversationId,
+                custom: {
+                    prospectSubcourse: returnUpdatedProspectSubcourses,
+                },
+            };
+
+            await updateConversation(updatedConversation);
+        }
+    }
 
     if (participantsConversation === undefined) {
         const newConversationId = await createConversation(participants, conversationInfos, type);
         const newConversation = await getConversation(newConversationId);
         await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
-        return newConversation;
+        const convertedConversation = convertTJConversation(newConversation);
+        return convertedConversation;
     }
 
-    return participantsConversation;
+    const convertedParticipantsConversation = convertTJConversation(participantsConversation);
+    return convertedParticipantsConversation;
 };
 
 const getOrCreateGroupConversation = async (participants: User[], subcourseId: number, conversationInfos: ConversationInfos): Promise<Conversation> => {
@@ -182,11 +168,15 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
         });
-        return newConversation;
+        const convertedConversation = convertTJConversation(newConversation);
+
+        return convertedConversation;
     }
 
     const subcourseGroupChat = await getConversation(subcourse.conversationId);
-    return subcourseGroupChat;
+    const convertedSubcourseGroupChatConversation = convertTJConversation(subcourseGroupChat);
+
+    return convertedSubcourseGroupChatConversation;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {

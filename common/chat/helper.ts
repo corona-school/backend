@@ -6,7 +6,7 @@ import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
-import { ChatMetaData, ConversationInfos } from './conversation';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 
 const userIdToTalkJsId = (userId: string): string => {
     return userId.replace('/', '_');
@@ -132,6 +132,32 @@ const convertConversationInfosToStringified = (conversationInfos: ConversationIn
     return convertedObj;
 };
 
+const convertTJConversation = (conversation: TJConversation): Conversation => {
+    const { id, subject, topicId, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+
+    const convertedCustom: ChatMetaData = custom
+        ? {
+              ...(custom.start && { start: custom.start }),
+              ...(custom.match && { match: { matchId: parseInt(custom.match) } }),
+              ...(custom.subcourse && { subcourse: custom.subcourse.split(',').map(Number) }),
+              ...(custom.prospectSubcourse && { prospectSubcourse: custom.prospectSubcourse.split(',').map(Number) }),
+              ...(custom.finished && { finished: custom.finished }),
+          }
+        : {};
+
+    return {
+        id,
+        subject,
+        topicId,
+        photoUrl,
+        welcomeMessages,
+        custom: convertedCustom,
+        lastMessage,
+        participants,
+        createdAt,
+    };
+};
+
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -143,4 +169,5 @@ export {
     checkIfSubcourseParticipation,
     getMembersForSubcourseGroupChat,
     convertConversationInfosToStringified,
+    convertTJConversation,
 };
