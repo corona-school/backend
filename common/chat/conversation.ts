@@ -252,11 +252,7 @@ async function removeParticipant(user: User, conversationId: string): Promise<vo
 }
 
 function isStudentChatMember(memberUserId: string): boolean {
-    if (memberUserId.includes('student')) {
-        return true;
-    } else {
-        return false;
-    }
+    return memberUserId.includes('student');
 }
 
 async function markConversationAsReadOnly(conversationId: string): Promise<void> {
@@ -278,7 +274,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
             await checkResponseStatus(response);
         }
     } catch (error) {
-        throw new Error(error);
+        throw new Error('Could not mark conversation as readonly.');
     }
 }
 async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {

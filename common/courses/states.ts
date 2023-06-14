@@ -8,7 +8,7 @@ import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
-import { ChatType } from '../chat/types';
+import { ChatType, ContactReason } from '../chat/types';
 import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
@@ -153,7 +153,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
                     custom: {
-                        type: 'course',
+                        type: ContactReason.COURSE,
                     },
                 };
 
@@ -163,7 +163,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
                     custom: {
-                        type: 'announcement',
+                        type: ContactReason.ANNOUNCEMENT,
                     },
                 };
                 await markConversationAsReadOnlyForPupils(subcourse.conversationId);
