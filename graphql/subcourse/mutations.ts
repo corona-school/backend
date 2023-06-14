@@ -133,7 +133,11 @@ export class MutateSubcourseResolver {
         const studentUserId = getUserIdTypeORM(newInstructor);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
         await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+        await addParticipant(
+            newInstructorUser,
+            subcourse.conversationId,
+            subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
+        );
 
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
@@ -339,7 +343,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
 
         return true;
     }
@@ -356,7 +360,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
         return true;
     }
 
@@ -388,7 +392,7 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? 'announcement' : 'normal');
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
 
         return true;
     }
