@@ -81,7 +81,6 @@ export class ExtendedFieldsLectureResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ) {
-        await hasAccess(context, 'Lecture', appointment);
         return (await getUsers(appointment.participantIds)).map(({ email, ...rest }) => ({ ...rest }));
     }
 
