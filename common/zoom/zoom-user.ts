@@ -48,7 +48,7 @@ enum ChatPrivileges {
 
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 
-const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
+const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
     if (!isZoomFeatureActive()) {
         // return test data if zoom is not active
         return dummyUser;
@@ -93,6 +93,9 @@ const createZoomUser = async (student: Pick<student, 'firstname' | 'lastname' | 
     );
 
     const newUser = (await response.json()) as unknown as ZoomUser;
+
+    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
+    logger.info(`Zoom - added licence to Student(${student.id})`);
 
     if (response.status === 201) {
         logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
