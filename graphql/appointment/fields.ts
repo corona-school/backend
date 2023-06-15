@@ -73,7 +73,7 @@ export class ExtendedFieldsLectureResolver {
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
-    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
     async participants(
         @Ctx() context: GraphQLContext,
