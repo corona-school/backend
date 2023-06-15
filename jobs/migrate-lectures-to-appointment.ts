@@ -22,17 +22,6 @@ export default async function execute() {
                 participantIds: participants,
             };
         }
-        if (Boolean(lecture.matchId)) {
-            const match = await prisma.match.findUnique({where: {id: lecture.matchId}, select: {pupilId: true, studentId: true, student: true}});
-            const participants = [`pupil/${match.pupilId}`];
-            const organizers = [`student/${match.studentId}`];
-            return {
-                id: lecture.id,
-                appointmentType: lecture_appointmenttype_enum.match,
-                organizerIds: organizers,
-                participantIds: participants,
-            };
-        }
     }));
 
     // transaction to update all lectures
@@ -74,13 +63,12 @@ export default async function execute() {
 
     await Promise.all(lecturesInTheFutureWithNoMeetingId.map(async (lecture) => {
         // check if all organizers of that lecture have a zoom account
-        const studentIds = lecture.organizerIds.map((organizer) => parseInt(organizer.split("/")[1]));
+        const studentIds = lecture.organizerIds.map((organizer) => parseInt(organizer.split("/")[1], 10));
         const organizers = await prisma.student.findMany({where: {id: {in: studentIds}}});
         const zoomUsers = [];
         for (let organizer of organizers) {
             if (!organizer.zoomUserId) {
                 const zoomUser = await createZoomUser(organizer);
-                await prisma.student.update({where: {id: organizer.id}, data: {zoomUserId: zoomUser.id}});
                 zoomUsers.push(zoomUser);
             } else {
                 const zoomUser = await getZoomUser(organizer.email);
