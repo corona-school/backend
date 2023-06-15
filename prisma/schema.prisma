@@ -167,16 +167,17 @@ model expertise_tag {
 }
 
 model instructor_screening {
-  id                    Int       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
+  id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 model jufo_verification_transmission {
@@ -400,6 +401,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+  waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -458,16 +460,17 @@ model screener {
 }
 
 model screening {
-  id                    Int       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
+  id                    Int                       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
+  studentId             Int?                      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
 }
 
 model student {
@@ -560,6 +563,7 @@ model subcourse {
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
+  waiting_list_enrollment          waiting_list_enrollment[]
 }
 
 model subcourse_instructors_student {
@@ -664,6 +668,15 @@ model pupil_screening {
   comment     String?                     @db.VarChar
   pupilId     Int?
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+}
+
+model waiting_list_enrollment {
+  id          Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  pupilId     Int?
+  subcourseId Int?
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4c3bda70e61547bcdb61e85a110")
+  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
 }
 
 enum course_category_enum {
@@ -1027,4 +1040,12 @@ enum lecture_appointmenttype_enum {
 enum chat_type {
   NORMAL
   ANNOUNCEMENT
+}
+
+enum screening_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
 }

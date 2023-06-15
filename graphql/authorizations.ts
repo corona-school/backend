@@ -233,6 +233,7 @@ const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
@@ -325,6 +326,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Secret: { _all: nobody },
     Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
+    Waiting_list_enrollment: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -398,6 +400,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             match: nobody,
             _count: nobody,
+            waiting_list_enrollment: nobody,
         }),
     },
 
@@ -506,7 +509,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
-            conversationId: adminOrOwner,
+            conversationId: subcourseParticipantOrOwner,
+            waiting_list_enrollment: adminOrOwner,
         }),
     },
     Course: {
