@@ -272,7 +272,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
 
     logger.info(
         `Filtered ${filteredPupils.length} pupils and reduced that to (${randomFilteredPupilSample.length})
-        for Subcourse(${subcourse}) based on the predicted response rate`
+        for Subcourse(${subcourse.id}) based on the predicted response rate`
     );
 
     const context = await getNotificationContextForSubcourse(course, subcourse);

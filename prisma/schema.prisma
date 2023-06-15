@@ -167,16 +167,17 @@ model expertise_tag {
 }
 
 model instructor_screening {
-  id                    Int       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
+  id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 model jufo_verification_transmission {
@@ -200,6 +201,8 @@ model lecture {
   organizerIds          String[]                     @default([])
   participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
+  zoomMeetingId         String?                      @db.VarChar
+  zoomMeetingReport     Json[]                       @default([]) @db.Json
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
@@ -457,16 +460,17 @@ model screener {
 }
 
 model screening {
-  id                    Int       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
+  id                    Int                       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
+  studentId             Int?                      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
 }
 
 model student {
@@ -516,6 +520,7 @@ model student {
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
   aboutMe                                   String                                 @default("") @db.VarChar
+  zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
@@ -1035,4 +1040,12 @@ enum lecture_appointmenttype_enum {
 enum chat_type {
   NORMAL
   ANNOUNCEMENT
+}
+
+enum screening_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
 }

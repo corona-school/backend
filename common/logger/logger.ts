@@ -21,6 +21,8 @@ addLayout('json', function () {
 let appenders = ['out'];
 if (process.env.LOG_FORMAT === 'json') {
     appenders = ['outJson'];
+} else if (process.env.LOG_FORMAT === 'brief') {
+    appenders = ['outBrief'];
 }
 
 configure({
@@ -39,6 +41,13 @@ configure({
                         return '';
                     },
                 },
+            },
+        },
+        outBrief: {
+            type: 'stdout',
+            layout: {
+                type: 'pattern',
+                pattern: '     %[[%c]%] %m{0, 1}',
             },
         },
         outJson: { type: 'stdout', layout: { type: 'json' } },
