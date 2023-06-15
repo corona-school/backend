@@ -36,6 +36,7 @@ import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
 import { getLogger } from '../common/logger/logger';
+import { WaitingListEnrollment } from '../common/entity/WaitingListEnrollment';
 
 const logger = getLogger('DevSetup');
 
@@ -893,9 +894,19 @@ export async function setupDevDB() {
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];
-    subcourse2.maxParticipants = 10;
+    subcourse2.maxParticipants = 5;
     subcourse2.published = true;
-    subcourse2.participants = pupils;
+    subcourse2.participants = pupils.slice(0, 5);
+
+    const waitingListEnrollment1 = new WaitingListEnrollment();
+    waitingListEnrollment1.subcourse = subcourse2;
+    waitingListEnrollment1.pupil = pupils[5];
+
+    const waitingListEnrollment2 = new WaitingListEnrollment();
+    waitingListEnrollment2.subcourse = subcourse2;
+    waitingListEnrollment2.pupil = pupils[6];
+
+    subcourse2.waitingListEnrollments = [waitingListEnrollment1, waitingListEnrollment2];
 
     subcourses.push(subcourse2);
 
@@ -905,8 +916,9 @@ export async function setupDevDB() {
     subcourse3.minGrade = 10;
     subcourse3.maxGrade = 11;
     subcourse3.instructors = [s1, s2];
-    subcourse3.maxParticipants = 10;
+    subcourse3.maxParticipants = 3;
     subcourse3.published = true;
+    subcourse3.participants = pupils.slice(0, 3);
 
     subcourses.push(subcourse3);
 
@@ -1022,6 +1034,10 @@ export async function setupDevDB() {
         await entityManager.save(Subcourse, subcourse);
         logger.debug('Inserted SubCourse.');
     }
+
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
+    logger.debug('Inserted WaitingListEnrollments.');
 
     // lectures
 
