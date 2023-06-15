@@ -17,6 +17,7 @@ export enum ContactReason {
     ANNOUNCEMENT = 'announcement',
     PARTICIPANT = 'participant',
     PROSPECT = 'prospect',
+    CONTACT = 'contact',
 }
 
 export type Conversation = {

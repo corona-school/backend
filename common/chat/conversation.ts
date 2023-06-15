@@ -92,7 +92,6 @@ const getOrCreateConversation = async (
     const participantsConversationId = getConversationId(participants);
     const participantsConversation = await getConversation(participantsConversationId);
 
-    // if conversation already exists, furhter subcourseIds or matchId will be added to the conversation
     if (participantsConversation) {
         if (reason === ContactReason.MATCH) {
             const updatedConversation = {
@@ -133,11 +132,15 @@ const getOrCreateConversation = async (
             };
 
             await updateConversation(updatedConversation);
-        }
-    }
+        } else if (reason === ContactReason.CONTACT) {
+            const updatedConversation = {
+                id: participantsConversationId,
+                ...conversationInfos,
+            };
 
-    // if no conversation exists, a new one will be created
-    if (participantsConversation === undefined) {
+            await updateConversation(updatedConversation);
+        }
+    } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
         await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');

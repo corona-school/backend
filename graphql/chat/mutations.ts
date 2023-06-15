@@ -8,6 +8,7 @@ import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversatio
 import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
+import { getMyContacts } from '../../common/chat/contacts';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -41,7 +42,7 @@ export class MutateChatResolver {
         const allowed = await checkIfSubcourseParticipation([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
             custom: {
-                subcourse: [subcourseId],
+                ...(subcourseId && { subcourse: [subcourseId] }),
             },
         };
 
@@ -84,5 +85,24 @@ export class MutateChatResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
         await hasAccess(context, 'Subcourse', subcourse);
         return true;
+    }
+
+    @Mutation(() => String)
+    @Authorized(Role.USER)
+    async contactChatCreate(@Ctx() context: GraphQLContext, @Arg('contactUserId') contactUserId: string) {
+        const { user } = context;
+        const contactUser = await getUser(contactUserId);
+        const myContacts = await getMyContacts(user);
+        const contact = myContacts.find((c) => c.user.userID === contactUserId);
+
+        const conversationInfos: ConversationInfos = {
+            custom: {
+                ...(contact.match && { match: { matchId: contact.match.matchId } }),
+                ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
+            },
+        };
+
+        const conversation = await getOrCreateConversation([user, contactUser], conversationInfos, ContactReason.CONTACT);
+        return conversation.id;
     }
 }
