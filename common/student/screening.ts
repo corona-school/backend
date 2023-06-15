@@ -66,7 +66,7 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
         return;
     }
 
-    const existingCoC = await prisma.certificate_of_conduct.count({ where: { studentId: student.id, criminalRecords: false } });
+    const existingCoC = await prisma.certificate_of_conduct.count({ where: { studentId: student.id } });
     if (existingCoC > 0) {
         throw new RedundantError('Student already handed in a CoC');
     }
