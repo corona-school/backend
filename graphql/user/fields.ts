@@ -14,6 +14,8 @@ import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreference
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
+import { generateMeetingSDKJWT } from '../../common/zoom';
+import { getUserZAK } from '../../common/zoom/zoom-user';
 
 @ObjectType()
 export class Contact {
@@ -172,5 +174,24 @@ export class UserFieldsResolver {
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
         return getMyContacts(user);
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
+        const meetingIdAsInt = parseInt(meetingId);
+        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
+        return sdkKey;
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async zoomZAK(@Ctx() context: GraphQLContext) {
+        const { user } = context;
+        const userZak = await getUserZAK(user.email);
+        if (!userZak || !userZak.token) {
+            throw new Error('Could not retrieve Zoom ZAK');
+        }
+        return userZak.token;
     }
 }

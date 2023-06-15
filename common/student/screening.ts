@@ -5,11 +5,13 @@ import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
 import { getTransactionLog } from '../transactionlog';
 import CoCCancelledEvent from '../transactionlog/types/CoCCancelledEvent';
+import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 
 interface ScreeningInput {
     success: boolean;
     comment?: string;
+    jobStatus?: screening_jobstatus_enum;
     knowsCoronaSchoolFrom?: string;
 }
 

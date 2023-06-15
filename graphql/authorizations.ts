@@ -11,7 +11,7 @@ import { AuthenticationError, ForbiddenError } from './error';
 import { isParticipant } from '../common/courses/participants';
 import { getPupil } from './util';
 import { Role } from '../common/user/roles';
-import { isDev } from '../common/util/environment';
+import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
@@ -233,6 +233,7 @@ const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
@@ -323,7 +324,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
-    Message_translation: { _all: nobody }, // Should always be accessed through Notification.messageTranslations
+    Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
 };
 
@@ -477,6 +478,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
+            zoomUserId: nobody,
         }),
     },
     Subcourse: {
@@ -505,7 +507,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
-            conversationId: adminOrOwner,
+            conversationId: subcourseParticipantOrOwner,
         }),
     },
     Course: {
@@ -550,6 +552,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwner,
+                zoomMeetingId: participantOrOwner,
+                zoomMeetingReport: adminOrOwner,
             }
         ),
     },
@@ -572,8 +576,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             attachmentGroupId: nobody,
             // The context might contain sensitivie information of other users for which we do not know whether the user should access those
             // Also there are sometimes tokens which users shall only access via E-Mail, as otherwise users can bypass email verification
-            context: isDev ? onlyAdmin : nobody,
-            contextID: isDev ? onlyAdmin : nobody,
+            context: isDev || isTest ? onlyAdmin : nobody,
+            contextID: isDev || isTest ? onlyAdmin : nobody,
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
             error: onlyAdmin,
         }),

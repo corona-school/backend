@@ -33,6 +33,16 @@ The development version of the jobs can be run using `npm run jobs:dev`.
 The `/assets` folder contains development versions of various files. During Heroku builds, the folder is replaced by a secret version that is maintained in a [separate private repository](https://github.com/corona-school/coronaschool-certificate). The commit id of the version pulled is 
 stored in `.certificate-version`. 
 
+#### Configuration
+
+The following configuration can be done via ENV variables:
+
+| Name            | Value            | Description                                                                    |
+|-----------------|------------------|--------------------------------------------------------------------------------|
+| LOG_FORMAT      | (unset)          | Every log prefixed by session and transaction id, also log HTTP requests       |
+|                 | json             | Log as JSON, used in deployed environemnts to pass rich info to Datadog        |
+|                 | brief            | Only log category and message (omitting session prefix and HTTP requests)      |
+
 
 #### Command line arguments
 

@@ -146,4 +146,12 @@ export class ExtendedFieldsLectureResolver {
                 return appointment.title;
         }
     }
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER)
+    zoomMeetingId(@Root() appointment: Appointment): string {
+        if (!appointment.zoomMeetingId) {
+            return null;
+        }
+        return appointment.zoomMeetingId;
+    }
 }
