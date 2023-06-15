@@ -10,7 +10,7 @@ export class ExtendedFieldsMessageTranslationResolver {
     @FieldResolver((returns) => NotificationMessageType)
     @Authorized(Role.ADMIN)
     async sampleMessage(@Root() messageTranslation: MessageTranslation): Promise<NotificationMessageType> {
-        const notification = await getNotification(messageTranslation.notificationId);
+        const notification = await getNotification(messageTranslation.notificationId, true);
         const sampleContext = await getSampleContext(notification);
         const result = {
             body: renderTemplate((messageTranslation.template as any).body, sampleContext),
