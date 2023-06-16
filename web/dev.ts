@@ -11,7 +11,7 @@ import { hashPassword } from '../common/util/hashing';
 import { CourseTag } from '../common/entity/CourseTag';
 import { Course, CourseCategory, CourseState } from '../common/entity/Course';
 import { Subcourse } from '../common/entity/Subcourse';
-import { Lecture } from '../common/entity/Lecture';
+import { AppointmentType, Lecture } from '../common/entity/Lecture';
 import { InstructorScreening } from '../common/entity/InstructorScreening';
 import { CourseAttendanceLog } from '../common/entity/CourseAttendanceLog';
 import { Division, Expertise, Mentor } from '../common/entity/Mentor';
@@ -248,6 +248,7 @@ export async function setupDevDB() {
     s1.supportsInDaZ = true;
     s1.languages = [Language.ku, Language.en];
     s1.isCodu = true;
+    s1.zoomUserId = 'zJKyaiAyTNC-MWjiWC18KQ';
     students.push(s1);
 
     const s2 = new Student();
@@ -266,6 +267,7 @@ export async function setupDevDB() {
         { name: 'Mathematik', minGrade: 4, maxGrade: 6 },
     ]);
     s2.openMatchRequestCount = 2;
+    s2.zoomUserId = 'kLKyaiAyTNC-MWjiWCFFFF';
     students.push(s2);
 
     const s3 = new Student();
@@ -1060,6 +1062,10 @@ export async function setupDevDB() {
             lecture.duration = 15;
             lecture.start = new Date(currentLecture);
             lecture.instructor = s1;
+            lecture.organizerIds = subcourse2.instructors?.map((p) => `student/${p.id}`);
+            lecture.zoomMeetingId = '123456789';
+            lecture.participantIds = subcourse2.participants?.map((p) => `pupil/${p.id}`);
+            lecture.appointmentType = AppointmentType.GROUP;
             lectures.push(lecture);
 
             currentLecture += 60 * 60 * 1000;
@@ -1071,12 +1077,21 @@ export async function setupDevDB() {
     lecture3.duration = 120;
     lecture3.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture3.instructor = s1;
+    lecture3.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture3.zoomMeetingId = '123456789';
+    lecture3.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture3.appointmentType = AppointmentType.GROUP;
 
     const lecture4: Lecture = new Lecture();
     lecture4.subcourse = subcourse1;
     lecture4.duration = 120;
     lecture4.start = new Date(year, month, date + 14, 21, 0, 0, 0);
     lecture4.instructor = s1;
+    lecture4.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture4.zoomMeetingId = '123456789';
+    lecture4.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture4.appointmentType = AppointmentType.GROUP;
+
 
     // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
@@ -1084,6 +1099,10 @@ export async function setupDevDB() {
     lecture5.duration = 120;
     lecture5.start = new Date(year, month, date, 4, 0, 0, 0);
     lecture5.instructor = s1;
+    lecture5.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture5.zoomMeetingId = '123456789';
+    lecture5.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture5.appointmentType = AppointmentType.GROUP;
 
     // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
@@ -1091,6 +1110,10 @@ export async function setupDevDB() {
     lecture6.duration = 60;
     lecture6.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture6.instructor = s1;
+    lecture6.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture6.zoomMeetingId = '123456789';
+    lecture6.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture6.appointmentType = AppointmentType.GROUP;
 
     // today's second active lecture for courseAttendanceLog
     const lecture7: Lecture = new Lecture();
@@ -1098,48 +1121,81 @@ export async function setupDevDB() {
     lecture7.duration = 60;
     lecture7.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture7.instructor = s1;
+    lecture7.organizerIds = subcourse7.instructors?.map((p) => `student/${p.id}`);
+    lecture7.zoomMeetingId = '123456789';
+    lecture7.participantIds = subcourse7.participants?.map((p) => `pupil/${p.id}`);
+    lecture7.appointmentType = AppointmentType.GROUP;
 
     const lecture8: Lecture = new Lecture();
     lecture8.subcourse = subcourse3;
     lecture8.duration = 90;
     lecture8.start = new Date(year, month, date + 5, 10, 0, 0, 0);
     lecture8.instructor = s2;
+    lecture8.organizerIds = subcourse3.instructors?.map((p) => `student/${p.id}`);
+    lecture8.zoomMeetingId = '123456789';
+    lecture8.participantIds = subcourse3.participants?.map((p) => `pupil/${p.id}`);
+    lecture8.appointmentType = AppointmentType.GROUP;
+
 
     const lecture9: Lecture = new Lecture();
     lecture9.subcourse = subcourse4;
     lecture9.duration = 120;
     lecture9.start = new Date(year, month, date + 15, 11, 0, 0, 0);
     lecture9.instructor = s2;
+    lecture9.organizerIds = subcourse4.instructors?.map((p) => `student/${p.id}`);
+    lecture9.zoomMeetingId = '123456789';
+    lecture9.participantIds = subcourse4.participants?.map((p) => `pupil/${p.id}`);
+    lecture9.appointmentType = AppointmentType.GROUP;
 
     const lecture10: Lecture = new Lecture();
     lecture10.subcourse = subcourse8;
     lecture10.duration = 120;
     lecture10.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture10.instructor = s1;
+    lecture10.organizerIds = subcourse8.instructors?.map((p) => `student/${p.id}`);
+    lecture10.zoomMeetingId = '123456789';
+    lecture10.participantIds = subcourse8.participants?.map((p) => `pupil/${p.id}`);
+    lecture10.appointmentType = AppointmentType.GROUP;
 
     const lecture11: Lecture = new Lecture();
     lecture11.subcourse = subcourse9;
     lecture11.duration = 60;
     lecture11.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture11.instructor = s1;
+    lecture11.organizerIds = subcourse9.instructors?.map((p) => `student/${p.id}`);
+    lecture11.zoomMeetingId = '123456789';
+    lecture11.participantIds = subcourse9.participants?.map((p) => `pupil/${p.id}`);
+    lecture11.appointmentType = AppointmentType.GROUP;
 
     const lecture12: Lecture = new Lecture();
     lecture12.subcourse = subcourse10;
     lecture12.duration = 60;
     lecture12.start = new Date(year, month, date + 11, 20, 0, 0, 0);
     lecture12.instructor = s1;
+    lecture12.organizerIds = subcourse10.instructors?.map((p) => `student/${p.id}`);
+    lecture12.zoomMeetingId = '123456789';
+    lecture12.participantIds = subcourse10.participants?.map((p) => `pupil/${p.id}`);
+    lecture12.appointmentType = AppointmentType.GROUP;
 
     const lecture13: Lecture = new Lecture();
     lecture13.subcourse = subcourse11;
     lecture13.duration = 60;
     lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
+    lecture13.organizerIds = subcourse11.instructors?.map((p) => `student/${p.id}`);
+    lecture13.zoomMeetingId = '123456789';
+    lecture13.participantIds = subcourse11.participants?.map((p) => `pupil/${p.id}`);
+    lecture13.appointmentType = AppointmentType.GROUP;
 
     const lecture14: Lecture = new Lecture();
     lecture14.subcourse = subcourse12;
     lecture14.duration = 30;
     lecture14.start = new Date(year, month, date + 10, 20, 0, 0, 0);
     lecture14.instructor = s1;
+    lecture14.organizerIds = subcourse12.instructors?.map((p) => `student/${p.id}`);
+    lecture14.zoomMeetingId = '123456789';
+    lecture14.participantIds = subcourse12.participants?.map((p) => `pupil/${p.id}`);
+    lecture14.appointmentType = AppointmentType.GROUP;
 
     lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13, lecture14);
 
