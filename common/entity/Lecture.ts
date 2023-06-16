@@ -6,7 +6,7 @@ import { OneToMany } from 'typeorm/index';
 import { Match } from './Match';
 import { User } from '../user';
 
-enum AppointmentType {
+export enum AppointmentType {
     GROUP = 'group',
     MATCH = 'match',
     INTERNAL = 'internal',

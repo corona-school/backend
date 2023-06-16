@@ -13,6 +13,7 @@ import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
+import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -69,6 +70,10 @@ export const executeJob = async (job) => {
         case 'syncToWebflow':
             await syncToWebflow();
             break;
+        case 'migrateLecturesToAppointment': {
+            await migrateLecturesToAppointment();
+            break;
+        }
         default: {
             throw new Error(`Did not find job ${job}`);
         }
