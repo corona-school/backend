@@ -179,8 +179,15 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
         method: 'PUT',
-        body: `{\"custom\":\"{match:{matchId:${id}}}\",\"participants\":[\"pupil_${pupil.pupil.id}\",\"student_${student.student.id}\"]}`,
+        body: `{"custom":{"match":"{\\\\"matchId\\\\":${id}}"},"participants":["pupil_${pupil.pupil.id}","student_${student.student.id}"]}`,
         responseStatus: 200,
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' }, // TODO: mock propery
     });
 
     expectFetch({
