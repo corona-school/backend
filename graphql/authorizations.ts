@@ -480,7 +480,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
-            zoomUserId: nobody,
+            zoomUserId: onlyAdmin,
         }),
     },
     Subcourse: {
