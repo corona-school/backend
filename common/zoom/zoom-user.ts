@@ -5,20 +5,11 @@ import dotenv from 'dotenv';
 import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
-import { isZoomFeatureActive } from '.';
+import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 
 const logger = getLogger();
 
 dotenv.config();
-
-const dummyUser = {
-    id: '123456789',
-    first_name: 'Max',
-    last_name: 'Mustermann',
-    email: 'max@mustermann.de',
-    display_name: 'Max Mustermann',
-    personal_meeting_url: 'https://zoom.us/j/123456789',
-};
 
 type ZoomUser = {
     id: string;
@@ -49,10 +40,8 @@ enum ChatPrivileges {
 const zoomUserApiUrl = 'https://api.zoom.us/v2/users';
 
 const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> => {
-    if (!isZoomFeatureActive()) {
-        // return test data if zoom is not active
-        return dummyUser;
-    }
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
 
     const response = await zoomRetry(
@@ -106,11 +95,9 @@ const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastn
     return newUser;
 };
 
-async function getZoomUser(email: string): Promise<ZoomUser> {
-    if (!isZoomFeatureActive()) {
-        // return test data if zoom is not active
-        return dummyUser;
-    }
+async function getZoomUser(email: string): Promise<ZoomUser | null> {
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -126,22 +113,20 @@ async function getZoomUser(email: string): Promise<ZoomUser> {
     );
 
     if (response.status === 404) {
-        logger.error(`Zoom - No Zoom user found for student with email ${email}`);
+        logger.info(`Zoom - No Zoom user found for student with email ${email}`);
         return null;
-    } else if (response.status === 200) {
-        logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
-    } else {
-        logger.error(`Zoom - ${response.statusText}`);
+    } else if (!response.ok) {
+        throw new Error(`Zoom API Error - ${response.status} ${response.statusText}`);
     }
 
+    logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
     const data = response.json() as unknown as ZoomUser;
     return data;
 }
 
 async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
-    if (!isZoomFeatureActive()) {
-        return dummyUser;
-    }
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -175,12 +160,8 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
 
 // To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
 async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
-    if (!isZoomFeatureActive()) {
-        // return test data if zoom is not active
-        return {
-            token: '123456789',
-        };
-    }
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -198,6 +179,8 @@ async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
 }
 
 const deleteZoomUser = async (zoomUserId: string) => {
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
     const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
 

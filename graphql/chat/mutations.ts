@@ -78,13 +78,21 @@ export class MutateChatResolver {
         return conversation.id;
     }
 
-    @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.USER)
-    async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
-        // TODO if prospect creation is merged -> adjust this
-        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
-        await hasAccess(context, 'Subcourse', subcourse);
-        return true;
+    @Mutation(() => String)
+    @Authorized(Role.PUPIL)
+    async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('instructorUserId') instructorUserId: string, @Arg('subcourseId') subcourseId: number) {
+        const { user: prospectUser } = context;
+        const instructorUser = await getUser(instructorUserId);
+
+        const conversationInfos: ConversationInfos = {
+            custom: {
+                ...(subcourseId && { subcourse: [subcourseId] }),
+            },
+        };
+
+        const conversation = await getOrCreateConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
+
+        return conversation.id;
     }
 
     @Mutation(() => String)
