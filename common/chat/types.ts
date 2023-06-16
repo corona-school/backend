@@ -1,15 +1,4 @@
-import { Message } from 'talkjs/all';
-
-type LastMessage = {
-    attachment: Message['attachment'];
-    conversationId: string;
-    createdAt: number;
-    custom: Message['custom'];
-    id: Message['id'];
-    senderId: Message['senderId'];
-    text: string;
-    type: Message['type'];
-};
+import { ConversationData, Message } from 'talkjs/all';
 
 export enum ContactReason {
     COURSE = 'course',
@@ -20,14 +9,9 @@ export enum ContactReason {
     CONTACT = 'contact',
 }
 
-export type Conversation = {
-    id: string;
-    subject?: string;
-    topicId?: string;
-    photoUrl?: string;
-    welcomeMessages?: string[];
+export type Conversation = Pick<ConversationData, 'id' | 'subject' | 'photoUrl' | 'welcomeMessages'> & {
     custom?: ChatMetaData;
-    lastMessage?: LastMessage;
+    lastMessage?: Message;
     participants: {
         [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
     };
@@ -43,14 +27,9 @@ export type ChatMetaData = {
     finished?: 'match_dissolved' | 'course_over';
 };
 
-export type TJConversation = {
-    id: string;
-    subject?: string;
-    topicId?: string;
-    photoUrl?: string;
-    welcomeMessages?: string[];
+export type TJConversation = Conversation & {
     custom?: TJChatMetaData;
-    lastMessage?: LastMessage;
+    lastMessage?: Message;
     participants: {
         [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
     };

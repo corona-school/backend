@@ -4,7 +4,7 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation, markConversationAsReadOnlyForPupils } from '../../common/chat';
+import { ConversationInfos, getOrCreateOneOnOneConversation, getOrCreateGroupConversation, markConversationAsReadOnlyForPupils } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
@@ -29,7 +29,7 @@ export class MutateChatResolver {
             },
         };
 
-        const conversation = await getOrCreateConversation(matchees, conversationInfos, ContactReason.MATCH);
+        const conversation = await getOrCreateOneOnOneConversation(matchees, conversationInfos, ContactReason.MATCH);
         return conversation.id;
     }
 
@@ -47,7 +47,7 @@ export class MutateChatResolver {
         };
 
         if (allowed) {
-            const conversation = await getOrCreateConversation([user, memberUser], conversationInfos, ContactReason.PARTICIPANT, subcourseId);
+            const conversation = await getOrCreateOneOnOneConversation([user, memberUser], conversationInfos, ContactReason.PARTICIPANT, subcourseId);
             return conversation.id;
         }
         throw new Error('Participant is not allowed to create conversation.');
@@ -90,7 +90,7 @@ export class MutateChatResolver {
             },
         };
 
-        const conversation = await getOrCreateConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
+        const conversation = await getOrCreateOneOnOneConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
 
         return conversation.id;
     }
@@ -110,7 +110,7 @@ export class MutateChatResolver {
             },
         };
 
-        const conversation = await getOrCreateConversation([user, contactUser], conversationInfos, ContactReason.CONTACT);
+        const conversation = await getOrCreateOneOnOneConversation([user, contactUser], conversationInfos, ContactReason.CONTACT);
         return conversation.id;
     }
 }
