@@ -124,7 +124,7 @@ async function getZoomUser(email: string): Promise<ZoomUser | null> {
     return data;
 }
 
-async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
+async function updateZoomUser(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -150,7 +150,7 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
     const data = response.json() as unknown as ZoomUser;
 
     if (response.status === 204) {
-        logger.info(`Zoom - Updated Zoom user ${data.id} with email ${data.email}`);
+        logger.info(`Zoom - Updated Zoom user ${data.id} for Student(${student.id}) with email ${data.email}`);
     } else {
         throw new Error(`Zoom failed to update user ${response.statusText}`);
     }
