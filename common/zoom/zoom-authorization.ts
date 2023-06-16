@@ -1,5 +1,6 @@
+import assert from 'assert';
 import dotenv from 'dotenv';
-import { access } from 'fs';
+import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 
@@ -12,9 +13,17 @@ const apiSecret = process.env.ZOOM_API_SECRET;
 const grantType = 'account_credentials';
 const accountId = process.env.ZOOM_ACCOUNT_ID;
 
+if (isZoomFeatureActive()) {
+    assert(apiKey, 'Missing ZOOM_API_KEY in ENV');
+    assert(apiSecret, 'Missing ZOOM_API_SECRET in ENV');
+    assert(accountId, 'Missing ZOOM_ACCOUNT_ID in ENV');
+}
+
 let accessToken: string | null = null;
 
 const getAccessToken = async (scope?: string) => {
+    assureZoomFeatureActive();
+
     if (accessToken && !scope) {
         return { access_token: accessToken };
     }

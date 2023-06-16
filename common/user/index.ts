@@ -12,6 +12,7 @@ import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
 import { updateZoomUser } from '../zoom/zoom-user';
+import { isZoomFeatureActive } from '../zoom';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -223,7 +224,10 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
     const validatedEmail = validateEmail(email);
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
-        await updateZoomUser(user);
+        if (isZoomFeatureActive()) {
+            await updateZoomUser(user);
+        }
+
         return userForStudent(
             (await prisma.student.update({
                 where: { id: user.studentId },
