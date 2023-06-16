@@ -117,7 +117,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     );
 };
 
-const createZoomMeetingForAppointments = async (
+export const createZoomMeetingForAppointments = async (
     students: student[],
     appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[],
     isCourse: boolean

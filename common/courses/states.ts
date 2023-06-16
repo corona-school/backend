@@ -116,7 +116,7 @@ export async function cancelSubcourse(subcourse: Subcourse) {
     const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     for (const lecture of courseLectures) {
         if (lecture.zoomMeetingId) {
-            await deleteZoomMeeting(lecture.zoomMeetingId);
+            await deleteZoomMeeting(lecture);
         }
     }
     await sendSubcourseCancelNotifications(course, subcourse);
