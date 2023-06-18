@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { assureZoomFeatureActive } from '.';
 
 const logger = getLogger();
 
@@ -83,14 +83,14 @@ const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastn
 
     const newUser = (await response.json()) as unknown as ZoomUser;
 
-    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
-    logger.info(`Zoom - added licence to Student(${student.id})`);
-
     if (response.status === 201) {
         logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
-    } else {
-        logger.error(`Zoom - ${response.statusText}`);
+    } else if (!response.ok) {
+        throw new Error(`Zoom failed to create user ${response.statusText}`);
     }
+
+    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
+    logger.info(`Zoom - added licence to Student(${student.id})`);
 
     return newUser;
 };
