@@ -3,6 +3,8 @@ import { ZoomUser } from './zoom-user';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { lecture as Appointment } from '@prisma/client';
+import { prisma } from '../prisma';
 
 const logger = getLogger();
 
@@ -95,13 +97,13 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     return data;
 };
 
-async function getZoomMeeting(meetingId: string): Promise<ZoomMeeting> {
+async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
-            fetch(`${zoomMeetingUrl}/${meetingId}`, {
+            fetch(`${zoomMeetingUrl}/${appointment.zoomMeetingId}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${access_token}`,
@@ -133,11 +135,11 @@ async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
     return (await response.json()) as ZoomMeetings;
 }
 
-const deleteZoomMeeting = async (meetingId: string) => {
+const deleteZoomMeeting = async (appointment: Appointment) => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
-    const constructedUrl = `${zoomMeetingUrl}/${meetingId}?action=delete`;
+    const constructedUrl = `${zoomMeetingUrl}/${appointment.zoomMeetingId}?action=delete`;
 
     const response = await zoomRetry(
         () =>
@@ -152,11 +154,12 @@ const deleteZoomMeeting = async (meetingId: string) => {
         1000
     );
 
-    if (response.status === 204) {
-        logger.info(`Zoom - The Zoom Meeting ${meetingId} was deleted.`);
-    } else {
+    if (!response.ok) {
         throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${response.statusText}`);
     }
+
+    await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
+    logger.info(`Zoom - The Zoom Meeting ${appointment.zoomMeetingId} was deleted.`);
 };
 
 const getZoomMeetingReport = async (meetingId: string) => {

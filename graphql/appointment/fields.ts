@@ -7,6 +7,8 @@ import { Deprecated } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
+import { GraphQLJSON } from 'graphql-scalars';
+import { getZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -151,12 +153,14 @@ export class ExtendedFieldsLectureResolver {
                 return appointment.title || 'Kein Titel';
         }
     }
-    @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
-    zoomMeetingId(@Root() appointment: Appointment): string {
+
+    @FieldResolver((returns) => GraphQLJSON, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async zoomMeeting(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
         if (!appointment.zoomMeetingId) {
             return null;
         }
-        return appointment.zoomMeetingId;
+
+        return await getZoomMeeting(appointment);
     }
 }

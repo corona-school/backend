@@ -31,7 +31,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         },
     });
     for (const lecture of matchLectures) {
-        await deleteZoomMeeting(lecture.zoomMeetingId);
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
     }
 
     await logTransaction('matchDissolve', dissolver, {
@@ -74,7 +76,9 @@ export async function dissolveProjectMatch(match: Project_match, dissolveReason:
         where: { matchId: match.id },
     });
     for (const lecture of matchLectures) {
-        await deleteZoomMeeting(lecture.zoomMeetingId);
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
     }
 
     if (match.dissolved) {
