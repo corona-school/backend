@@ -13,7 +13,7 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
 
 dotenv.config();
 
@@ -74,7 +74,21 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
-// TODO: remove subcourse from custom prop, if subcourse cancel...
+const getAllConversations = async (): Promise<AllConversations> => {
+    const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${TALKJS_API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
+    }
+};
 
 const getOrCreateOneOnOneConversation = async (
     participants: [User, User],
@@ -385,6 +399,7 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getAllConversations,
     getOrCreateOneOnOneConversation,
     getOrCreateGroupConversation,
     deleteConversation,

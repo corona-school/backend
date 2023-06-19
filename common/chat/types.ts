@@ -60,3 +60,7 @@ export enum ChatAccess {
     READ = 'Read',
     READWRITE = 'ReadWrite',
 }
+
+export type AllConversations = {
+    data: Conversation[];
+};
