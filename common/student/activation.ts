@@ -95,12 +95,8 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         }
     }
 
-    if (isZoomFeatureActive()) {
-        const zoomUser = await getZoomUser(student.email);
-
-        if (zoomUser) {
-            await deleteZoomUser(zoomUser.id);
-        }
+    if (isZoomFeatureActive() && student.zoomUserId) {
+        await deleteZoomUser(student);
     }
 
     const updatedStudent = await prisma.student.update({

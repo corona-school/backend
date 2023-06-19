@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { assureZoomFeatureActive } from '.';
 
 const logger = getLogger();
 
@@ -83,14 +83,14 @@ const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastn
 
     const newUser = (await response.json()) as unknown as ZoomUser;
 
-    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
-    logger.info(`Zoom - added licence to Student(${student.id})`);
-
     if (response.status === 201) {
         logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
-    } else {
-        logger.error(`Zoom - ${response.statusText}`);
+    } else if (!response.ok) {
+        throw new Error(`Zoom failed to create user ${response.statusText}`);
     }
+
+    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
+    logger.info(`Zoom - added licence to Student(${student.id})`);
 
     return newUser;
 };
@@ -150,9 +150,9 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
     const data = response.json() as unknown as ZoomUser;
 
     if (response.status === 204) {
-        logger.info(`Zoom - Updated Zoom user ${data.id} for student with email ${data.email}`);
+        logger.info(`Zoom - Updated Zoom user ${data.id} with email ${data.email}`);
     } else {
-        logger.error(`Zoom - ${response.statusText}`);
+        throw new Error(`Zoom failed to update user ${response.statusText}`);
     }
 
     return data;
@@ -178,11 +178,11 @@ async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
     return response.json();
 }
 
-const deleteZoomUser = async (zoomUserId: string) => {
+const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>) => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
-    const constructedUrl = `${zoomUserApiUrl}/${zoomUserId}?action=delete`;
+    const constructedUrl = `${zoomUserApiUrl}/${student.zoomUserId}?action=delete`;
 
     const response = await zoomRetry(
         () =>
@@ -197,11 +197,12 @@ const deleteZoomUser = async (zoomUserId: string) => {
         1000
     );
 
-    if (response.status === 204) {
-        logger.info(`Zoom - Deleted Zoom user ${zoomUserId}`);
-    } else {
-        logger.error(`Zoom - ${response.statusText}`);
+    if (!response.ok) {
+        throw new Error(`Zoom failed to delete user for Student(${student.id}) ${response.statusText}`);
     }
+
+    await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: null } });
+    logger.info(`Zoom - Deleted Zoom user ${student.zoomUserId} of Student(${student.id})`);
 
     return response;
 };

@@ -232,7 +232,7 @@ const onlyAdmin = [Authorized(Role.ADMIN)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
-const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
 const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
@@ -480,7 +480,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
-            zoomUserId: nobody,
+            zoomUserId: onlyAdmin,
         }),
     },
     Subcourse: {
@@ -554,8 +554,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 matchId: adminOrOwner,
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
-                declinedBy: participantOrOwner,
-                zoomMeetingId: participantOrOwner,
+                declinedBy: participantOrOwnerOrAdmin,
+                zoomMeetingId: participantOrOwnerOrAdmin,
                 zoomMeetingReport: adminOrOwner,
             }
         ),

@@ -293,3 +293,17 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
     ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
     return [...students, ...pupils];
 }
+
+export async function getStudentsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('student/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.student.findMany({
+        where: { id: { in: ids } },
+    });
+}
+
+export async function getPupilsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('pupil/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.pupil.findMany({
+        where: { id: { in: ids } },
+    });
+}
