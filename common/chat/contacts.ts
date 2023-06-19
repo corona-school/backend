@@ -44,7 +44,7 @@ const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | Pupi
     if (user.pupilId) {
         const studentsWithMatchId = await prisma.student.findMany({
             where: {
-                match: { some: { pupilId: user.pupilId } },
+                match: { some: { pupilId: user.pupilId, dissolved: false } },
             },
             include: { match: true },
         });
@@ -60,7 +60,7 @@ const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | Pupi
     if (user.studentId) {
         const pupilsWithMatchId = await prisma.pupil.findMany({
             where: {
-                match: { some: { studentId: user.studentId } },
+                match: { some: { studentId: user.studentId, dissolved: false } },
             },
             include: { match: true },
         });
@@ -83,6 +83,7 @@ const getSubcourseInstructorContacts = async (pupil: User): Promise<StudentWithS
                     subcourse: {
                         allowChatContactParticipants: true,
                         subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } },
+                        cancelled: false,
                     },
                 },
             },
@@ -119,6 +120,7 @@ const getSubcourseParticipantContact = async (student: User): Promise<PupilWithS
                     subcourse: {
                         allowChatContactParticipants: true,
                         subcourse_instructors_student: { some: { studentId: student.studentId } },
+                        cancelled: false,
                     },
                 },
             },
