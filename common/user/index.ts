@@ -12,6 +12,7 @@ import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
 import { updateZoomUser } from '../zoom/zoom-user';
+import { isZoomFeatureActive } from '../zoom';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -223,7 +224,10 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
     const validatedEmail = validateEmail(email);
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
-        await updateZoomUser(user);
+        if (isZoomFeatureActive()) {
+            await updateZoomUser(user);
+        }
+
         return userForStudent(
             (await prisma.student.update({
                 where: { id: user.studentId },
@@ -288,4 +292,18 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
         })
     ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
     return [...students, ...pupils];
+}
+
+export async function getStudentsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('student/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.student.findMany({
+        where: { id: { in: ids } },
+    });
+}
+
+export async function getPupilsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('pupil/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.pupil.findMany({
+        where: { id: { in: ids } },
+    });
 }

@@ -14,7 +14,7 @@ import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreference
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
-import { generateMeetingSDKJWT } from '../../common/zoom';
+import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
 import { getUserZAK } from '../../common/zoom/zoom-user';
 
 @ObjectType()
@@ -188,6 +188,11 @@ export class UserFieldsResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async zoomZAK(@Ctx() context: GraphQLContext) {
         const { user } = context;
+
+        if (!isZoomFeatureActive()) {
+            return '';
+        }
+
         const userZak = await getUserZAK(user.email);
         if (!userZak || !userZak.token) {
             throw new Error('Could not retrieve Zoom ZAK');

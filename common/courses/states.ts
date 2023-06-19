@@ -115,7 +115,9 @@ export async function cancelSubcourse(subcourse: Subcourse) {
     const course = await getCourse(subcourse.courseId);
     const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     for (const lecture of courseLectures) {
-        await deleteZoomMeeting(lecture.zoomMeetingId);
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
@@ -152,9 +154,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             if (update.groupChatType === ChatType.NORMAL) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {
-                        type: ContactReason.COURSE,
-                    },
+                    custom: {},
                 };
 
                 await markConversationAsWriteable(subcourse.conversationId);
@@ -162,9 +162,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {
-                        type: ContactReason.ANNOUNCEMENT,
-                    },
+                    custom: {},
                 };
                 await markConversationAsReadOnlyForPupils(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);

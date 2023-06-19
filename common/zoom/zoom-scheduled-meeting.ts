@@ -2,7 +2,9 @@ import { getAccessToken } from './zoom-authorization';
 import { ZoomUser } from './zoom-user';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
-import { isZoomFeatureActive } from '.';
+import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { lecture as Appointment } from '@prisma/client';
+import { prisma } from '../prisma';
 
 const logger = getLogger();
 
@@ -12,41 +14,36 @@ enum RecurrenceMeetingTypes {
     MONTHLY = 3,
 }
 
-type ZoomMeeting = {
+export type ZoomMeeting = {
+    agenda: string;
+    created_at: string;
+    duration: number;
+    host_id: string;
+    id: number;
+    join_url: string;
+    pmi: string;
+    start_time: string;
+    timezone: string;
+    topic: string;
+    type: number;
+    uuid: string;
+};
+
+export type ZoomMeetings = {
     next_page_token: string;
     page_count: number;
     page_number: number;
     page_size: number;
     total_records: number;
-    meetings: [
-        {
-            agenda: string;
-            created_at: string;
-            duration: number;
-            host_id: string;
-            id: number;
-            join_url: string;
-            pmi: string;
-            start_time: string;
-            timezone: string;
-            topic: string;
-            type: number;
-            uuid: string;
-        }
-    ];
+    meetings: ZoomMeeting[];
 };
 
 const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCourse: boolean, endDateTime?: Date) => {
-    if (!isZoomFeatureActive()) {
-        // return test data if zoom is not active
-        return {
-            id: 123456789,
-        };
-    }
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCourse: boolean, endDateTime?: Date): Promise<ZoomMeeting> => {
+    assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
 
@@ -94,17 +91,19 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     if (response.status === 201) {
         logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
     } else {
-        logger.error(`Zoom - ${response.statusText}`);
+        throw new Error(`Zoom - failed to create meeting with ${response.status} ${response.statusText}`);
     }
 
     return data;
 };
 
-async function getZoomMeeting(meetingId: string) {
+async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
-            fetch(`${zoomMeetingUrl}/${meetingId}`, {
+            fetch(`${zoomMeetingUrl}/${appointment.zoomMeetingId}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${access_token}`,
@@ -115,10 +114,10 @@ async function getZoomMeeting(meetingId: string) {
         1000
     );
 
-    return response.json() as unknown as ZoomMeeting;
+    return (await response.json()) as ZoomMeeting;
 }
 
-async function getUsersZoomMeetings(email: string) {
+async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
     const { access_token } = await getAccessToken();
     const response = await zoomRetry(
         () =>
@@ -133,15 +132,14 @@ async function getUsersZoomMeetings(email: string) {
         1000
     );
 
-    return response.json() as unknown as ZoomMeeting;
+    return (await response.json()) as ZoomMeetings;
 }
 
-const deleteZoomMeeting = async (meetingId: string) => {
-    if (!meetingId) {
-        return;
-    }
+const deleteZoomMeeting = async (appointment: Appointment) => {
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken();
-    const constructedUrl = `${zoomMeetingUrl}/${meetingId}?action=delete`;
+    const constructedUrl = `${zoomMeetingUrl}/${appointment.zoomMeetingId}?action=delete`;
 
     const response = await zoomRetry(
         () =>
@@ -156,16 +154,17 @@ const deleteZoomMeeting = async (meetingId: string) => {
         1000
     );
 
-    if (response.status === 204) {
-        logger.info(`Zoom - The Zoom Meeting ${meetingId} was deleted.`);
-    } else {
-        logger.error(`Zoom - ${response.statusText}`);
+    if (!response.ok) {
+        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
+    logger.info(`Zoom - The Zoom Meeting ${appointment.zoomMeetingId} was deleted.`);
 };
 
 const getZoomMeetingReport = async (meetingId: string) => {
+    assureZoomFeatureActive();
+
     const { access_token } = await getAccessToken('report:read:admin');
     const constructedUrl = `${zoomMeetingReportUrl}/${meetingId}/participants`;
 
@@ -183,7 +182,7 @@ const getZoomMeetingReport = async (meetingId: string) => {
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
     } else {
-        logger.error(`Zoom - ${response.statusText}`);
+        throw new Error(`Zoom - Failed to retrieve Zoom Meeting Report ${response.statusText}`);
     }
 
     return response.json();

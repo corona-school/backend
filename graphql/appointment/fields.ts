@@ -7,6 +7,8 @@ import { Deprecated } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
+import { GraphQLJSON } from 'graphql-scalars';
+import { getZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -75,7 +77,12 @@ export class ExtendedFieldsLectureResolver {
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     @LimitEstimated(30)
-    async participants(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
+    async participants(
+        @Ctx() context: GraphQLContext,
+        @Root() appointment: Appointment,
+        @Arg('take', (type) => Int) take: number,
+        @Arg('skip', (type) => Int) skip: number
+    ) {
         return (await getUsers(appointment.participantIds)).map(({ email, ...rest }) => ({ ...rest }));
     }
 
@@ -143,15 +150,17 @@ export class ExtendedFieldsLectureResolver {
                 return course.name;
             }
             default:
-                return appointment.title;
+                return appointment.title || 'Kein Titel';
         }
     }
-    @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
-    zoomMeetingId(@Root() appointment: Appointment): string {
+
+    @FieldResolver((returns) => GraphQLJSON, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async zoomMeeting(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
         if (!appointment.zoomMeetingId) {
             return null;
         }
-        return appointment.zoomMeetingId;
+
+        return await getZoomMeeting(appointment);
     }
 }

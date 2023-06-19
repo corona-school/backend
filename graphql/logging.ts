@@ -1,10 +1,6 @@
 import { GraphQLRequestContext } from 'apollo-server-plugin-base';
 import { isDev } from '../common/util/environment';
 import { getLogger } from '../common/logger/logger';
-import { toPublicToken } from './authentication';
-import { Role } from './authorizations';
-import { GraphQLContext } from './context';
-import { isUnexpectedError } from './error';
 import { v4 as uuidv4 } from 'uuid';
 
 const logger = getLogger('GraphQL Query');
@@ -26,18 +22,6 @@ export const GraphQLLogger: any = {
         logger.info(`Started processing query`, { query });
 
         const handler: any = {
-            // Actually GraphQLRequestListener, but we're on v2 and not on v3
-            didEncounterErrors(requestContext: GraphQLRequestContext) {
-                const unexpected = requestContext.errors.some(isUnexpectedError);
-                if (!unexpected) {
-                    requestContext.errors.map((it) => logger.info('Expected Errors occurred', { error: `${it.name} (${it.message})` }));
-                } else {
-                    logger.addContext('uid', uid);
-                    for (const err of requestContext.errors) {
-                        logger.error(`Unexpected Errors occurred`, err);
-                    }
-                }
-            },
             willSendResponse(requestContext: GraphQLRequestContext) {
                 logger.info(
                     `Cache policy is ${JSON.stringify(requestContext.overallCachePolicy)}, cache was ${

@@ -63,7 +63,7 @@ export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
 
 export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
     return (
-        (await prisma.subcourse_waiting_list_pupil.count({
+        (await prisma.waiting_list_enrollment.count({
             where: { pupilId: pupil.id, subcourseId: subcourse.id },
         })) > 0
     );
@@ -73,10 +73,16 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
     if (await isParticipant(subcourse, pupil)) {
         throw new RedundantError(`Pupil is already participant`);
     }
+    if (await isOnWaitingList(subcourse, pupil)) {
+        throw new RedundantError('Pupil is already on waiting list');
+    }
 
     try {
-        await prisma.subcourse_waiting_list_pupil.create({
-            data: { pupilId: pupil.id, subcourseId: subcourse.id },
+        await prisma.waiting_list_enrollment.create({
+            data: {
+                subcourseId: subcourse.id,
+                pupilId: pupil.id,
+            },
         });
 
         await logTransaction('participantJoinedWaitingList', pupil, { courseID: subcourse.id });
@@ -86,14 +92,14 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
 }
 
 export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupil, force = true) {
-    const waitingListDeletion = await prisma.subcourse_waiting_list_pupil.deleteMany({
+    const queueEnrollmentDeletions = await prisma.waiting_list_enrollment.deleteMany({
         where: {
             pupilId: pupil.id,
             subcourseId: subcourse.id,
         },
     });
 
-    if (waitingListDeletion.count === 1) {
+    if (queueEnrollmentDeletions.count > 0) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
         await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });
     } else if (force) {
@@ -255,7 +261,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
         },
     });
 
-    if (deletion.count !== 1) {
+    if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Pupil is not a participant`);
     }
 
@@ -278,9 +284,9 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     logger.info(`Filling Subcourse(${subcourse.id}) with ${seatsLeft} seats left`);
 
-    // Unfortunately as the waiting list has no 'created at' field, we can't sort here
-    const toJoin = await prisma.subcourse_waiting_list_pupil.findMany({
+    const toJoin = await prisma.waiting_list_enrollment.findMany({
         where: { subcourseId: subcourse.id },
+        orderBy: { createdAt: 'asc' },
         take: seatsLeft,
         select: { pupil: true },
     });
