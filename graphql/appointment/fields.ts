@@ -1,9 +1,9 @@
 import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { Lecture as Appointment, lecture_appointmenttype_enum } from '../generated';
+import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import { Deprecated } from '../util';
+import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
@@ -43,7 +43,7 @@ class Organizer {
 @Resolver((of) => Appointment)
 export class ExtendedFieldsLectureResolver {
     @Query((returns) => Appointment)
-    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
     async appointment(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointmentId } });
         await hasAccess(context, 'Lecture', appointment);
@@ -75,7 +75,7 @@ export class ExtendedFieldsLectureResolver {
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
     @LimitEstimated(30)
     async participants(
         @Ctx() context: GraphQLContext,
@@ -87,14 +87,14 @@ export class ExtendedFieldsLectureResolver {
     }
 
     @FieldResolver((returns) => [Organizer])
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
         return (await getUsers(appointment.organizerIds)).map(({ email, ...rest }) => ({ ...rest }));
     }
 
     @FieldResolver((returns) => Int)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async position(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
             return (
@@ -113,7 +113,7 @@ export class ExtendedFieldsLectureResolver {
         throw new Error('Cannot determine position of loose appointment');
     }
     @FieldResolver((returns) => Int)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async total(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
             return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId } });
@@ -125,7 +125,7 @@ export class ExtendedFieldsLectureResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async displayName(@Ctx() context: GraphQLContext, @Root() appointment: Appointment): Promise<string> {
         switch (appointment.appointmentType) {
             case lecture_appointmenttype_enum.match: {
@@ -162,5 +162,25 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getZoomMeeting(appointment);
+    }
+
+    @FieldResolver((returns) => Match, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async match(@Root() appointment: Appointment) {
+        if (!appointment.matchId) {
+            return null;
+        }
+
+        return await getMatch(appointment.matchId);
+    }
+
+    @FieldResolver((returns) => Subcourse, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async subcourse(@Root() appointment: Appointment) {
+        if (!appointment.subcourseId) {
+            return null;
+        }
+
+        return await getSubcourse(appointment.subcourseId);
     }
 }
