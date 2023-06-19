@@ -8,8 +8,8 @@ import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
-import { getMatcheeConversation } from '../../common/chat/helper';
-import { markConversationAsReadOnly, markConversationAsWriteable } from '../../common/chat';
+import { getMatcheeConversation, removeMatchFromConversation } from '../../common/chat/helper';
+import { markConversationAsWriteable } from '../../common/chat';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -39,7 +39,9 @@ export class MutateMatchResolver {
         const { conversation, conversationId } = await getMatcheeConversation({ studentId: match.studentId, pupilId: match.pupilId });
 
         if (conversation) {
-            await markConversationAsReadOnly(conversationId);
+            // TODO: cant set as readonly, because maybe subcourse exists
+            // await markConversationAsReadOnly(conversationId);
+            await removeMatchFromConversation(conversation);
         }
         return true;
     }

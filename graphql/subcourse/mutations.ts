@@ -30,6 +30,7 @@ import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
 import { addParticipant, markConversationAsReadOnly, removeParticipant } from '../../common/chat/conversation';
 import { ChatType } from '../../common/chat/types';
+import { removeSubcourseFromConversation } from '../../common/chat/helper';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -204,6 +205,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await cancelSubcourse(subcourse);
+        await removeSubcourseFromConversation(subcourse);
         await markConversationAsReadOnly(subcourse.conversationId, 'deactivate');
         return true;
     }
