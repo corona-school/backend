@@ -1,9 +1,9 @@
 import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { Lecture as Appointment, lecture_appointmenttype_enum } from '../generated';
+import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import { Deprecated } from '../util';
+import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
@@ -162,5 +162,25 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getZoomMeeting(appointment);
+    }
+
+    @FieldResolver((returns) => Match, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async match(@Root() appointment: Appointment) {
+        if (!appointment.matchId) {
+            return null;
+        }
+
+        return await getMatch(appointment.matchId);
+    }
+
+    @FieldResolver((returns) => Subcourse, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async subcourse(@Root() appointment: Appointment) {
+        if (!appointment.subcourseId) {
+            return null;
+        }
+
+        return await getSubcourse(appointment.subcourseId);
     }
 }
