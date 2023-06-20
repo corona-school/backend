@@ -81,12 +81,14 @@ const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastn
         1000
     );
 
+    if (!response.ok) {
+        throw new Error(`Failed to create user: ${response.status} ${await response.text()}`);
+    }
+
     const newUser = (await response.json()) as unknown as ZoomUser;
 
     if (response.status === 201) {
         logger.info(`Zoom - Created Zoom user ${newUser.id} for student with email ${newUser.email}`);
-    } else if (!response.ok) {
-        throw new Error(`Failed to create user: ${response.status} ${response.statusText}`);
     }
 
     await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: newUser.id } });
@@ -116,7 +118,7 @@ async function getZoomUser(email: string): Promise<ZoomUser | null> {
         logger.info(`Zoom - No Zoom user found for student with email ${email}`);
         return null;
     } else if (!response.ok) {
-        throw new Error(`Zoom failed to get user: ${response.status} ${response.statusText}`);
+        throw new Error(`Zoom failed to get user: ${response.status} ${await response.text()}`);
     }
 
     logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
@@ -147,12 +149,14 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
         1000
     );
 
+    if (!response.ok) {
+        throw new Error(`Zoom failed to update user: ${response.status} ${await response.text()}`);
+    }
+
     const data = response.json() as unknown as ZoomUser;
 
     if (response.status === 204) {
         logger.info(`Zoom - Updated Zoom user ${data.id} with email ${data.email}`);
-    } else {
-        throw new Error(`Zoom failed to update user: ${response.status} ${response.statusText}`);
     }
 
     return data;
@@ -176,16 +180,16 @@ async function getUserZAK(userEmail: string): Promise<ZAKResponse> {
         1000
     );
 
-    const data = response.json();
-
     if (!response.ok) {
-        throw new Error(`Zoom failed to get ZAK: ${response.status} ${response.statusText}`);
+        throw new Error(`Zoom failed to get ZAK: ${response.status} ${await response.text()}`);
     }
+
+    const data = response.json();
 
     return data;
 }
 
-const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>) => {
+const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Promise<void> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -205,13 +209,11 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>) => {
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${response.statusText}`);
+        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${response.text()}`);
     }
 
     await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: null } });
     logger.info(`Zoom - Deleted Zoom user ${student.zoomUserId} of Student(${student.id})`);
-
-    return response;
 };
 
 export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK };

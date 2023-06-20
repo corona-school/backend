@@ -44,6 +44,11 @@ const getAccessToken = async (scope?: string) => {
             3,
             1000
         );
+
+        if (!response.ok) {
+            throw new Error(`Failed to get access token with ${response.status} ${await response.text()}`);
+        }
+
         const data = await response.json();
 
         logger.debug('Got access token');
@@ -53,12 +58,13 @@ const getAccessToken = async (scope?: string) => {
         if (data.access_token && !scope) {
             logger.info('Caching access token');
             accessToken = data.access_token;
-            setTimeout(() => (accessToken = null), data.expires_in * 1000);
+            setTimeout(() => {
+                accessToken = null;
+            }, data.expires_in * 1000);
         }
 
         return { access_token: data.access_token };
     } catch (error) {
-        console.log(error);
         const message = 'Error while getting access token';
         logger.error(message, error);
         throw new Error(message);
