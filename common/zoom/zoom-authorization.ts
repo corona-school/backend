@@ -25,7 +25,7 @@ const getAccessToken = async (scope?: string) => {
     assureZoomFeatureActive();
 
     if (accessToken && !scope) {
-        logger.debug('Using cached access token');
+        logger.info('Using cached access token');
         return { access_token: accessToken };
     }
     try {
@@ -48,7 +48,7 @@ const getAccessToken = async (scope?: string) => {
 
         logger.debug('Got access token');
         logger.debug(`Response status: ${response.status}`);
-        logger.debug(`Response status text: ${await response.text()}}`);
+        logger.debug(`Response status text: ${response.statusText}`);
 
         if (data.access_token && !scope) {
             logger.info('Caching access token');
@@ -58,6 +58,7 @@ const getAccessToken = async (scope?: string) => {
 
         return { access_token: data.access_token };
     } catch (error) {
+        console.log(error);
         const message = 'Error while getting access token';
         logger.error(message, error);
         throw new Error(message);

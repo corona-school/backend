@@ -91,7 +91,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     if (response.status === 201) {
         logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
     } else {
-        throw new Error(`Zoom - failed to create meeting with ${response.status} ${await response.text()}`);
+        throw new Error(`Zoom - failed to create meeting with ${response.status} ${response.statusText}`);
     }
 
     return data;
@@ -182,7 +182,7 @@ const getZoomMeetingReport = async (meetingId: string) => {
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
     } else {
-        throw new Error(`Failed to retrieve Zoom Meeting Report ${await response.text()}`);
+        throw new Error(`Failed to retrieve Zoom Meeting Report ${response.statusText}`);
     }
 
     return response.json();
