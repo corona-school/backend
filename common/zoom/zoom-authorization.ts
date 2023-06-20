@@ -58,7 +58,9 @@ const getAccessToken = async (scope?: string) => {
 
         return { access_token: data.access_token };
     } catch (error) {
-        logger.error('Error while getting access token', error);
+        const message = 'Error while getting access token';
+        logger.error(message, error);
+        throw new Error(message);
     }
 };
 
