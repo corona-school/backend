@@ -6,7 +6,7 @@ import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 
-const logger = getLogger();
+const logger = getLogger('Zoom Meeting');
 
 enum RecurrenceMeetingTypes {
     DAILY = 1,
@@ -87,11 +87,13 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
         1000
     );
 
+    if (!response.ok) {
+        throw new Error(`Zoom - failed to create meeting with ${response.status} ${await response.text()}`);
+    }
     const data = await response.json();
+
     if (response.status === 201) {
-        logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
-    } else {
-        throw new Error(`Zoom - failed to create meeting with ${response.status} ${response.statusText}`);
+        logger.info(`Zoom - The Zoom Meeting ${data.id} was created.`);
     }
 
     return data;
@@ -114,6 +116,10 @@ async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
         1000
     );
 
+    if (!response.ok) {
+        throw new Error(`Zoom - failed to get meeting with ${response.status} ${await response.text()}`);
+    }
+
     return (await response.json()) as ZoomMeeting;
 }
 
@@ -132,10 +138,14 @@ async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
         1000
     );
 
+    if (!response.ok) {
+        throw new Error(`Zoom - failed to get meetings with ${response.status} ${await response.text()}`);
+    }
+
     return (await response.json()) as ZoomMeetings;
 }
 
-const deleteZoomMeeting = async (appointment: Appointment) => {
+const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -155,7 +165,7 @@ const deleteZoomMeeting = async (appointment: Appointment) => {
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${response.statusText}`);
+        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${await response.text()}`);
     }
 
     await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
@@ -181,8 +191,8 @@ const getZoomMeetingReport = async (meetingId: string) => {
 
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
-    } else {
-        throw new Error(`Zoom - Failed to retrieve Zoom Meeting Report ${response.statusText}`);
+    } else if (!response.ok) {
+        throw new Error(`Failed to retrieve Zoom Meeting Report ${await response.text()}`);
     }
 
     return response.json();
