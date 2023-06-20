@@ -61,6 +61,7 @@ export class MutateUserResolver {
         @Arg('logs', (type) => [String]) logs: string[],
         @Arg('userAgent') userAgent: string,
         @Arg('componentStack', { nullable: true }) componentStack: string | null
+        // @Arg('version', { nullable: true }) version: string | null
     ) {
         let result = '';
         const section = (name: string, level: number) => (result += '\n\n' + ('-'.repeat(5 - level) + ' ' + name + ' ').padEnd(30 - level * 2, '-') + '\n');
@@ -90,10 +91,23 @@ export class MutateUserResolver {
         issueReporterLogger.addContext('userAgent', userAgent);
         issueReporterLogger.addContext('userID', context.user.userID);
 
+        const stack = errorStack
+            .split('\n')
+            .filter((line) => line !== '')
+            .map((line) => {
+                if (line.startsWith('@')) {
+                    return `<anonymous> ${line}`;
+                }
+                return line;
+            })
+            .map((line) => `  at ${line}`)
+            .join('\n');
+        console.log(stack);
+
         logs.map((log) => issueReporterLogger.info(log));
         const err: Error = {
             name: 'IssueReporter',
-            stack: `Error: ${errorMessage}\n\t at ${errorStack}`,
+            stack: `Error: ${errorMessage}\n${stack}`,
             message: errorMessage,
         };
         issueReporterLogger.error(errorMessage, err, { componentStack });
