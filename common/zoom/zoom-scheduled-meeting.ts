@@ -6,7 +6,7 @@ import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 
-const logger = getLogger();
+const logger = getLogger('ZoomMeeting');
 
 enum RecurrenceMeetingTypes {
     DAILY = 1,
@@ -91,7 +91,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     if (response.status === 201) {
         logger.info(`Zoom - The Zoom Meeting ${data.id} was created. The user with email "${data.host_email}" is assigned as host.`);
     } else {
-        throw new Error(`Zoom - failed to create meeting with ${response.status} ${response.statusText}`);
+        throw new Error(`Zoom - failed to create meeting with ${response.status} ${await response.text()}`);
     }
 
     return data;
@@ -155,7 +155,7 @@ const deleteZoomMeeting = async (appointment: Appointment) => {
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${response.statusText}`);
+        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${await response.text()}`);
     }
 
     await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
@@ -182,7 +182,7 @@ const getZoomMeetingReport = async (meetingId: string) => {
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
     } else {
-        throw new Error(`Zoom - Failed to retrieve Zoom Meeting Report ${response.statusText}`);
+        throw new Error(`Failed to retrieve Zoom Meeting Report ${await response.text()}`);
     }
 
     return response.json();
