@@ -109,7 +109,7 @@ export class MutateUserResolver {
         const err: Error = {
             name: 'IssueReporter',
             stack: `Error: ${errorMessage}\n${stack}`,
-            message: `console error: Error: ${errorMessage}`,
+            message: errorMessage,
         };
         issueReporterLogger.error(errorMessage, err, { componentStack });
 
