@@ -6,7 +6,7 @@ import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 
-const logger = getLogger('ZoomMeeting');
+const logger = getLogger('Zoom Meeting');
 
 enum RecurrenceMeetingTypes {
     DAILY = 1,

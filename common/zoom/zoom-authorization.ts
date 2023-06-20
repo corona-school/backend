@@ -4,7 +4,7 @@ import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 
-const logger = getLogger('ZoomAuthorization');
+const logger = getLogger('Zoom Authorization');
 
 dotenv.config();
 
