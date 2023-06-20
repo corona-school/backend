@@ -96,10 +96,11 @@ export class MutateUserResolver {
             .filter((line) => line !== '')
             .map((line) => {
                 if (line.startsWith('@')) {
-                    return `<anonymous> ${line}`;
+                    return `<anonymous>${line}`;
                 }
                 return line;
             })
+            .map((line) => line.split('@').join(' @ '))
             .map((line) => `  at ${line}`)
             .join('\n');
         console.log(stack);

@@ -110,7 +110,7 @@ export class Logger {
         // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.
         // https://docs.datadoghq.com/logs/error_tracking/backend/?tab=serilog#nodejs
         if (err) {
-            this.logger.addContext('error', { message: err.message, stack: err.stack });
+            this.logger.addContext('error', { message: err.message, stack: err.stack, kind: 'Error' });
         }
         this.logger.error(message, { ...args });
         this.logger.removeContext('error');
