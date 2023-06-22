@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
-import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
@@ -12,7 +12,7 @@ import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
-import { getAppointmentsForUser } from '../../common/appointment/get';
+import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
 import { getUserZAK } from '../../common/zoom/zoom-user';
@@ -167,6 +167,18 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async hasAppointments(@Root() user: User): Promise<boolean> {
+        return hasAppointmentsForUser(user);
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async lastAppointmentId(@Root() user: User): Promise<number> {
+        return getLastAppointmentId(user);
     }
 
     @Query((returns) => [Contact])
