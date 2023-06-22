@@ -130,7 +130,7 @@ const myAppointments = test('Get my appointments', async () => {
     } = await client.request(`
         query myAppointments {
             me {
-                appointments(take: 3) {
+                appointments(take: 3, skip: 0) {
                     id
                     title
                     description
@@ -172,7 +172,7 @@ void test('Cancel an appointment as a organizer', async () => {
     const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
     const {
         me: { appointments },
-    } = await client.request(`query myAppointments { me { appointments(take: 3) { id }}}`);
+    } = await client.request(`query myAppointments { me { appointments(take: 3, skip: 0) { id }}}`);
 
     assert.ok(isAppointmentCanceled);
     assert.ok(appointments.some((a) => a.id != appointmentId));
@@ -203,7 +203,7 @@ void test('Update an appointment', async () => {
     } = await client.request(`
         query myAppointments {
             me {
-                appointments(take: 10) {
+                appointments(take: 10, skip: 0) {
                     id
                     title
                     description
