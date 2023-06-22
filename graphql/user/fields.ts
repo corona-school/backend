@@ -161,8 +161,8 @@ export class UserFieldsResolver {
     @LimitedQuery()
     async appointments(
         @Root() user: User,
-        @Arg('take', { nullable: true }) take?: number,
-        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('take') take: number,
+        @Arg('skip') skip: number,
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {

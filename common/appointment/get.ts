@@ -56,13 +56,7 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
     return lastAppointment?.id;
 };
 
-export const getAppointmentsForUser = async (
-    user: User,
-    take?: number,
-    skip: number = 1,
-    cursor?: number,
-    direction?: QueryDirection
-): Promise<Appointment[]> => {
+export const getAppointmentsForUser = async (user: User, take: number, skip: number, cursor?: number, direction?: QueryDirection): Promise<Appointment[]> => {
     if (!direction && !cursor) {
         return getAppointmentsForUserFromNow(user.userID, take, skip);
     }
