@@ -172,7 +172,7 @@ void test('Cancel an appointment as a organizer', async () => {
     const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
     const {
         me: { appointments },
-    } = await client.request(`query myAppointments { me { appointments(take: 3) { id }}}`);
+    } = await client.request(`query myAppointments { me { appointments(take: 3, skip: 0) { id }}}`);
 
     assert.ok(isAppointmentCanceled);
     assert.ok(appointments.some((a) => a.id != appointmentId));
