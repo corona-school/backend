@@ -130,7 +130,7 @@ const myAppointments = test('Get my appointments', async () => {
     } = await client.request(`
         query myAppointments {
             me {
-                appointments(take: 3) {
+                appointments(take: 3, skip: 0) {
                     id
                     title
                     description
@@ -203,7 +203,7 @@ void test('Update an appointment', async () => {
     } = await client.request(`
         query myAppointments {
             me {
-                appointments(take: 10) {
+                appointments(take: 10, skip: 0) {
                     id
                     title
                     description
