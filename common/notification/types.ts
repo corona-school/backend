@@ -40,7 +40,7 @@ interface Attachment {
 
 // Previously the templates had a lot of repeating fields, such as "userFirstName"
 // by generalizing into a context that is partially available for each Notification, this was cleaned up
-export interface NotificationContext {
+export interface NotificationContextExtensions {
     uniqueId?: string; // if present, the same context (by uniqueId) will not be sent to the same user twice
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
@@ -52,6 +52,9 @@ export interface NotificationContext {
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
     campaign?: string;
+}
+
+export interface NotificationContext extends NotificationContextExtensions {
     // As it is not quite useful to maintain the variable shape in the backend as a missmatch with the Mailjet template won't be detected anyways,
     // further props can be set at will
     [key: string]: any;

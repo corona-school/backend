@@ -38,7 +38,7 @@ const dropSubcourseRelations = (subcourse: Subcourse | Prisma.subcourse) => ({
     course: undefined,
 });
 
-export async function sendSubcourseCancelNotifications(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+export async function sendSubcourseCancelNotifications(course: Prisma.course, subcourse: Prisma.subcourse) {
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     if (lectures.length == 0) {
         logger.info('No lectures found: no cancellation mails sent for subcourse ' + subcourse.id + ' of course ' + course.name);
@@ -66,10 +66,7 @@ export async function sendSubcourseCancelNotifications(course: Course | Prisma.c
         await sendTemplateMail(mail, participant.pupil.email);
         await Notification.actionTaken(participant.pupil, 'participant_course_cancelled', {
             uniqueId: `${subcourse.id}`,
-            course: dropCourseRelations(course),
-            subcourse: dropSubcourseRelations(subcourse),
-            firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-            firstLectureTime: moment(firstLecture).format('HH:mm'),
+            ...(await getNotificationContextForSubcourse(course, subcourse)),
         });
     }
 }
@@ -88,12 +85,7 @@ export async function sendCourseUpcomingReminderInstructor(
         firstLectureTime: moment(firstLecture).format('HH:mm'),
     });
     await sendTemplateMail(mail, instructor.email);
-    await Notification.actionTaken(instructor, 'instructor_course_reminder', {
-        course,
-        subcourse,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
+    await Notification.actionTaken(instructor, 'instructor_course_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
 export async function sendCourseUpcomingReminderParticipant(
@@ -102,12 +94,7 @@ export async function sendCourseUpcomingReminderParticipant(
     subcourse: Prisma.subcourse,
     firstLecture: Date
 ) {
-    await Notification.actionTaken(participant, 'participant_subcourse_reminder', {
-        subcourse,
-        course,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
+    await Notification.actionTaken(participant, 'participant_subcourse_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
 export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
@@ -192,7 +179,7 @@ export async function sendParticipantCourseCertificate(participant: Pupil, cours
     await sendTemplateMail(mail, participant.email);
 }
 
-async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
+export async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
     const { start } = await getFirstLecture(subcourse);
 
     const date = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'long', year: 'numeric' });
@@ -213,6 +200,9 @@ async function getNotificationContextForSubcourse(course: { name: string; descri
             time,
             day,
         },
+        // TODO: Legacy, remove
+        firstLectureDate: date,
+        firstLectureTime: time,
     };
 }
 
@@ -276,8 +266,8 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
         for Subcourse(${subcourse.id}) based on the predicted response rate`
     );
 
-    const context: NotificationContext = await getNotificationContextForSubcourse(course, subcourse);
-    context.uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
+    const context = await getNotificationContextForSubcourse(course, subcourse);
+    (context as NotificationContext).uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
     await Notification.bulkActionTaken(
         randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
         'available_places_on_subcourse',

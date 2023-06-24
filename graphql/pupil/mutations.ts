@@ -264,9 +264,10 @@ export class MutatePupilResolver {
     async pupilResendVerificationMail(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
 
-        const secretToken = await refreshToken(pupil);
-        await Notification.actionTaken(pupil, 'user_authenticate', {
-            secretToken,
+        const token = await refreshToken(pupil);
+        await Notification.actionTaken(pupil, 'user-authenticate', {
+            token,
+            redirectTo: '/',
         });
         return true;
     }

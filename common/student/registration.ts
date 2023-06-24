@@ -95,7 +95,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
     });
 
     if (!noEmail) {
-        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
     await logTransaction('verificationRequets', student, {});

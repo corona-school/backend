@@ -110,7 +110,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
     });
 
     if (!noEmail) {
-        await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '', verification });
+        await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
     await logTransaction('verificationRequets', pupil, {});

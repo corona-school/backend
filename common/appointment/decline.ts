@@ -4,6 +4,7 @@ import { getUser, getStudent, User } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
+import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const logger = getLogger('Appointment');
 
@@ -24,7 +25,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
                 await Notification.actionTaken(organizer, 'pupil_decline_appointment_group', {
                     appointment: getAppointmentForNotification(appointment),
                     pupil,
-                    course: subCourse.course,
+                    ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
                 });
             }
             break;

@@ -13,7 +13,7 @@ import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
-import { ActionID } from './actions';
+import { ActionID, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
 import { getMessageForNotification } from './messages';
@@ -409,7 +409,12 @@ export async function sendNotification(id: NotificationID, user: Person, notific
    If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
 
-export async function actionTaken(user: Person, actionId: ActionID, notificationContext: NotificationContext, attachments?: AttachmentGroup) {
+export async function actionTaken<ID extends ActionID>(
+    user: Person,
+    actionId: ID,
+    notificationContext: SpecificNotificationContext<ID>,
+    attachments?: AttachmentGroup
+) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
         return;
@@ -486,7 +491,7 @@ export async function actionTaken(user: Person, actionId: ActionID, notification
     logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
 }
 
-export async function bulkActionTaken(users: User[], actionId: ActionID, notificationContext: NotificationContext) {
+export async function bulkActionTaken<ID extends ActionID>(users: User[], actionId: ID, notificationContext: SpecificNotificationContext<ID>) {
     logger.debug(`Notification.bulkActionTaken context for action '${actionId}'`, notificationContext);
     const startTime = Date.now();
 
