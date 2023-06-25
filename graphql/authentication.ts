@@ -9,7 +9,7 @@ import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing'
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
 import { logInContext } from './logging';
-import { getUser, User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import { getUser, updateLastLogin, User, userForPupil, userForScreener, userForStudent } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { defaultScreener } from '../common/entity/Screener';
@@ -128,6 +128,7 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
         userSessions.set(context.sessionToken, context.user);
         logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     }
+    updateLastLogin(user);
 }
 
 @Resolver((of) => UserType)

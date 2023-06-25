@@ -197,12 +197,12 @@ model lecture {
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
   isCanceled            Boolean?                     @default(false)
+  organizerIds          String[]                     @default([])
+  participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
-  organizerIds          String[]                     @default([])
-  participantIds        String[]                     @default([])
   subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
   student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
@@ -258,6 +258,7 @@ model mentor {
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
+  lastLogin                    DateTime?               @db.Timestamp(6)
   wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
   wix_creation_date            DateTime                @db.Timestamp(6)
   division                     mentor_division_enum[]
@@ -366,6 +367,7 @@ model pupil {
   isRedacted                                   Boolean                                        @default(false)
   lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
+  lastLogin                                    DateTime?                                      @db.Timestamp(6)
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
   state                                        pupil_state_enum                               @default(other)
@@ -403,6 +405,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
+  waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
 model pupil_tutoring_interest_confirmation_request {
@@ -455,6 +458,7 @@ model screener {
   isRedacted                   Boolean                      @default(false)
   lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
+  lastLogin                    DateTime?                    @db.Timestamp(6)
   password                     String                       @db.VarChar
   verified                     Boolean?                     @default(false)
   oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
@@ -492,6 +496,7 @@ model student {
   isRedacted                                Boolean                                @default(false)
   lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
+  lastLogin                                 DateTime?                              @db.Timestamp(6)
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
   phone                                     String?                                @db.VarChar
@@ -564,6 +569,7 @@ model subcourse {
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
+  waiting_list_enrollment          waiting_list_enrollment[]
 }
 
 model subcourse_instructors_student {
@@ -668,6 +674,15 @@ model pupil_screening {
   comment     String?                     @db.VarChar
   pupilId     Int?
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+}
+
+model waiting_list_enrollment {
+  id          Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  pupilId     Int?
+  subcourseId Int?
+  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4c3bda70e61547bcdb61e85a110")
+  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
 }
 
 enum course_category_enum {

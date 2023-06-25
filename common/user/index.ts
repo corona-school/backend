@@ -286,3 +286,15 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
     ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
     return [...students, ...pupils];
 }
+
+export async function updateLastLogin(user: User) {
+    if (user.pupilId) {
+        await prisma.pupil.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
+    }
+    if (user.studentId) {
+        await prisma.student.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
+    }
+    if (user.screenerId) {
+        await prisma.student.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
+    }
+}
