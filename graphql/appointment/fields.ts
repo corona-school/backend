@@ -6,9 +6,10 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
+import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
+import { UserType } from '../types/user';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -186,5 +187,23 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getSubcourse(appointment.subcourseId);
+    }
+}
+
+@Resolver((of) => AppointmentParticipant)
+export class ExtendedFieldsParticipantResolver {
+    @FieldResolver((returns) => UserType)
+    @Authorized(Role.ADMIN)
+    async user(@Root() participant: AppointmentParticipant) {
+        return await getUser(participant.userID);
+    }
+}
+
+@Resolver((of) => Organizer)
+export class ExtendedFieldsOrganizerResolver {
+    @FieldResolver((returns) => UserType)
+    @Authorized(Role.ADMIN)
+    async user(@Root() organizer: Organizer) {
+        return await getUser(organizer.userID);
     }
 }
