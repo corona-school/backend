@@ -339,6 +339,19 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
+    async pupilScreenings(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT
+                    COUNT(*)::INT AS value,
+                    date_part('year', "createdAt"::date) AS year,
+                    date_part('month', "createdAt"::date) AS month
+                 FROM "screening"
+                 WHERE "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
+                 GROUP BY "year", "month"
+                 ORDER BY "year" ASC, "month" ASC;`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async notificationsSent(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
         COUNT(*)::INT AS value,
