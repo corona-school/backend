@@ -83,7 +83,11 @@ export class ExtendedFieldsLectureResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ) {
-        return (await getUsers(appointment.participantIds)).map(({ email, ...rest }) => ({ ...rest }));
+        const [userType] = getUserTypeAndIdForUserId(context.user.userID);
+        return (await getUsers(appointment.participantIds)).map(({ email, lastname, ...rest }) => ({
+            ...rest,
+            lastname: userType === 'pupil' ? undefined : lastname,
+        }));
     }
 
     @FieldResolver((returns) => [Organizer])
