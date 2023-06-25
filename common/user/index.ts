@@ -87,7 +87,7 @@ export type User = {
 export const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
-    const validTypes = ['student', 'pupil', 'screener'];
+    const validTypes = ['student', 'pupil', 'screener', 'admin'];
     const [type, id] = userId.split('/');
     if (!validTypes.includes(type)) {
         throw Error('No valid user type found in user id: ' + type);
