@@ -4,7 +4,7 @@ import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 
-const logger = getLogger();
+const logger = getLogger('Zoom Authorization');
 
 dotenv.config();
 
@@ -25,31 +25,50 @@ const getAccessToken = async (scope?: string) => {
     assureZoomFeatureActive();
 
     if (accessToken && !scope) {
+        logger.info('Using cached access token');
         return { access_token: accessToken };
     }
-    const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
-    const zoomAuthHeader = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
+    try {
+        const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
+        const zoomAuthHeader = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
 
-    const response = await zoomRetry(
-        () =>
-            fetch(zoomOauthApiUrl, {
-                method: 'POST',
-                headers: {
-                    Authorization: zoomAuthHeader,
-                },
-                ...(scope ? { body: JSON.stringify({ scope: [scope] }) } : {}),
-            }),
-        3,
-        1000
-    );
-    const data = await response.json();
+        const response = await zoomRetry(
+            () =>
+                fetch(zoomOauthApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: zoomAuthHeader,
+                    },
+                    ...(scope ? { body: JSON.stringify({ scope: [scope] }) } : {}),
+                }),
+            3,
+            1000
+        );
 
-    if (data.access_token) {
-        accessToken = data.access_token;
-        setTimeout(() => (accessToken = null), data.expires_in * 1000);
+        if (!response.ok) {
+            throw new Error(`Failed to get access token with ${response.status} ${await response.text()}`);
+        }
+
+        const data = await response.json();
+
+        logger.debug('Got access token');
+        logger.debug(`Response status: ${response.status}`);
+        logger.debug(`Response status text: ${response.statusText}`);
+
+        if (data.access_token && !scope) {
+            logger.info('Caching access token');
+            accessToken = data.access_token;
+            setTimeout(() => {
+                accessToken = null;
+            }, data.expires_in * 1000);
+        }
+
+        return { access_token: data.access_token };
+    } catch (error) {
+        const message = 'Error while getting access token';
+        logger.error(message, error);
+        throw new Error(message);
     }
-
-    return { access_token: data.access_token };
 };
 
 export { getAccessToken };
