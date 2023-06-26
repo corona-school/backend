@@ -1499,11 +1499,12 @@ async function importNotificationsFromProd() {
                         recipient
                         onActions
                         cancelledOnAction
-                        ${'' /* @TODO: Add type when prod updated */}
+                        type
                         delay
                         interval
                         sender
                         hookID
+                        sample_context
                     }
                 }`,
                 variables: {},
