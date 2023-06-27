@@ -4,15 +4,14 @@ import { Prisma } from '@prisma/client';
 import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
-import { lecture_appointmenttype_enum } from '../../graphql/generated';
+import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/user';
-import { student } from '@prisma/client';
+import { student as Student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
-import { Lecture } from '../entity/Lecture';
 
 const logger = getLogger();
 
@@ -96,7 +95,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     return createdMatchAppointments;
 };
 
-export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[]) => {
+export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
@@ -133,7 +132,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     // * send notification
     for await (const participant of participants) {
         await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
-            student: student,
+            student: organizer,
             user: participant,
             course: subcourse.course,
         });
@@ -143,7 +142,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 };
 
 export const createZoomMeetingForAppointments = async (
-    students: student[],
+    students: Student[],
     appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[],
     isCourse: boolean
 ) => {

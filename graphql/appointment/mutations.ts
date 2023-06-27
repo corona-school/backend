@@ -1,5 +1,5 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int, Authorized } from 'type-graphql';
-import { Lecture as Appointment } from '../generated';
+import { Lecture as Appointment, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
 import {
     AppointmentCreateGroupInput,
@@ -12,7 +12,7 @@ import {
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture, getMatch, getSubcourse } from '../util';
+import { getLecture, getMatch, getStudent, getSubcourse } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
@@ -64,8 +64,9 @@ export class MutateAppointmentResolver {
     @AuthorizedDeferred(Role.OWNER)
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
         const subcourse = await getSubcourse(appointment.subcourseId);
+        const organizer = await getStudent(context.user.studentId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await createGroupAppointments(subcourse.id, [appointment]);
+        await createGroupAppointments(subcourse.id, [appointment], organizer);
         return true;
     }
 
@@ -77,9 +78,11 @@ export class MutateAppointmentResolver {
         @Arg('appointments', () => [AppointmentCreateGroupInput]) appointments: AppointmentCreateGroupInput[]
     ) {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+        const organizer = await getStudent(context.user.studentId);
+
         await hasAccess(context, 'Subcourse', subcourse);
         if (isAppointmentOneWeekLater(appointments[0].start)) {
-            await createGroupAppointments(subcourseId, appointments);
+            await createGroupAppointments(subcourseId, appointments, organizer);
         } else {
             throw new Error('Appointment can not be created, because start is not one week later.');
         }
@@ -122,7 +125,7 @@ export class MutateAppointmentResolver {
     async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        await saveZoomMeetingReport(appointment);
+        await saveZoomMeetingReport(appointment as Lecture);
 
         return true;
     }
