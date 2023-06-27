@@ -13,62 +13,67 @@ import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
+import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
 export const executeJob = async (job) => {
     switch (job) {
         case 'screeningReminderJob': {
-            screeningReminderJob(getManager());
+            await screeningReminderJob(getManager());
             break;
         }
         case 'courseReminderJob': {
-            courseReminderJob(getManager());
+            await courseReminderJob(getManager());
             break;
         }
         case 'feedbackRequestJob': {
-            feedbackRequestJob(getManager());
+            await feedbackRequestJob(getManager());
             break;
         }
         case 'matchFollowUpJob': {
-            matchFollowUpJob(getManager());
+            await matchFollowUpJob(getManager());
             break;
         }
         case 'jufoVerificationInfo': {
-            jufoVerificationInfo(getManager());
+            await jufoVerificationInfo(getManager());
             break;
         }
         case 'projectMatchMaking': {
-            projectMatchMaking(getManager());
+            await projectMatchMaking(getManager());
             break;
         }
         case 'tutoringMatchMaking': {
-            tutoringMatchMaking(getManager());
+            await tutoringMatchMaking(getManager());
             break;
         }
         case 'InterestConfirmation': {
-            runInterestConfirmations();
+            await runInterestConfirmations();
             break;
         }
         case 'Notification': {
-            Notification.checkReminders();
+            await Notification.checkReminders();
             break;
         }
         case 'redactInactiveAccounts': {
-            redactInactiveAccounts();
+            await redactInactiveAccounts();
             break;
         }
         case 'dropOldNotificationContexts': {
-            dropOldNotificationContexts();
+            await dropOldNotificationContexts();
             break;
         }
         case 'anonymiseAttendanceLog': {
-            anonymiseAttendanceLog();
+            await anonymiseAttendanceLog();
             break;
         }
         case 'syncToWebflow':
-            syncToWebflow();
+            await syncToWebflow();
             break;
+        case 'migrateLecturesToAppointment': {
+            await migrateLecturesToAppointment();
+            break;
+        }
         default: {
             throw new Error(`Did not find job ${job}`);
         }

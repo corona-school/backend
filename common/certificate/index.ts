@@ -1,5 +1,4 @@
 import { readFileSync, existsSync } from 'fs';
-import { generatePDFFromHTMLString } from 'html-pppdf';
 import path from 'path';
 import moment from 'moment';
 import CertificateRequestEvent from '../transactionlog/types/CertificateRequestEvent';
@@ -7,7 +6,6 @@ import { getTransactionLog } from '../transactionlog';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import { mailjetTemplates, sendTemplateMail } from '../mails';
-import { createAutoLoginLink } from '../../web/controllers/utils';
 import * as Notification from '../notification';
 import { Pupil } from '../entity/Pupil';
 import { Student } from '../entity/Student';
@@ -16,6 +14,11 @@ import { getManager } from 'typeorm';
 import { Match } from '../entity/Match';
 import { ParticipationCertificate } from '../entity/ParticipationCertificate';
 import assert from 'assert';
+import { createSecretEmailToken } from '../secret';
+import { userForPupil, userForStudent } from '../user';
+import { USER_APP_DOMAIN } from '../util/environment';
+import { generatePDFFromHTML } from '../util/pdf';
+import { Request } from 'express';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -125,7 +128,9 @@ export interface ICertificateCreationParams {
 export async function issueCertificateRequest(
     pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
 ) {
-    const certificateLink = createAutoLoginLink(pc.pupil, `/settings?sign=${pc.uuid}`);
+    const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
+    // We show an important message on the dashboard, where pupils can sign the certificate:
+    const certificateLink = USER_APP_DOMAIN;
     const mail = mailjetTemplates.CERTIFICATEREQUEST({
         certificateLink,
         pupilFirstname: pc.pupil.firstname,
@@ -139,19 +144,8 @@ export async function issueCertificateRequest(
     });
 }
 
-export async function createCertificateLEGACY(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: Omit<ICertificateCreationParams, 'endDate'> & { endDate: number /* UNIX timestamp in seconds */ }
-) {
-    return await createCertificate(_requestor, matchId, { ...params, endDate: params.endDate && moment(params.endDate, 'X').toDate() });
-}
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(
-    _requestor: Student | PrismaStudent,
-    matchId: string,
-    params: ICertificateCreationParams
-): Promise<ParticipationCertificate> {
+export async function createCertificate(_requestor: PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
     const transactionLog = getTransactionLog();
 
@@ -211,8 +205,8 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
         SCHUELERFAECHER: certificate.subjects.split(','),
         SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek.toFixed(2),
-        SCHUELERGESAMT: certificate.hoursTotal.toFixed(2),
+        SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
+        SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
         MEDIUM: certificate.medium,
         SCREENINGDATUM: screeningDate ? moment(screeningDate).format('D.M.YYYY') : '[UNBEKANNTES DATUM]',
         ONGOING: certificate.ongoingLessons,
@@ -270,7 +264,8 @@ export async function signCertificate(
 
     const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
 
-    const certificateLink = createAutoLoginLink(certificate.student, `/settings`);
+    const authToken = await createSecretEmailToken(userForStudent(certificate.student));
+    const certificateLink = `${USER_APP_DOMAIN}/profile`;
     const mail = mailjetTemplates.CERTIFICATESIGNED(
         {
             certificateLink,
@@ -332,7 +327,18 @@ function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCert
 }
 
 function getCertificateLink(certificate: ParticipationCertificate, lang: Language) {
-    return 'http://verify.corona-school.de/' + certificate.uuid + '?lang=' + lang;
+    return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang;
+}
+
+export function convertCertificateLinkToApiLink(req: Request) {
+    const url = new URL('https://api.lern-fair.de');
+
+    url.pathname = `/api/certificate/${req.params.certificateId}/confirmation`;
+    for (const [key, value] of Object.entries(req.query)) {
+        url.searchParams.append(key, value as string);
+    }
+
+    return url.toString();
 }
 
 async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
@@ -366,7 +372,7 @@ async function createPDFBinary(certificate: ParticipationCertificate, link: stri
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format('D.M.YYYY'),
     });
 
-    return await generatePDFFromHTMLString(result, {
+    return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
     });
 }

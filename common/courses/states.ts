@@ -3,11 +3,14 @@ import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { getCourse } from '../../graphql/util';
-import { sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../mails/courses';
+import { sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
+import { ChatType, ContactReason } from '../chat/types';
+import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Course States');
 
@@ -80,8 +83,8 @@ export async function publishSubcourse(subcourse: Subcourse) {
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
-    const course = await getCourse(subcourse.courseId);
-    await sendPupilCourseSuggestion(course, subcourse, 'instructor_subcourse_published');
+    // const course = await getCourse(subcourse.courseId);
+    // TODO: Seperate Issue, Promotion every 7 days
 }
 
 /* ---------------- Subcourse Cancel ------------ */
@@ -110,6 +113,12 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
+    const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    for (const lecture of courseLectures) {
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
+    }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 }
@@ -129,13 +138,39 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     if (!can.allowed) {
         throw new Error(`Cannot edit Subcourse(${subcourse.id}) reason: ${can.reason}`);
     }
+    const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
 
     const isMaxParticipantsChanged: boolean = Boolean(update.maxParticipants);
+    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
 
     if (isMaxParticipantsChanged) {
-        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (update.maxParticipants < participantCount) {
             throw new PrerequisiteError(`Decreasing the number of max participants below the current number of participants is not allowed`);
+        }
+    }
+    if (isGroupChatTypeChanged) {
+        //* if the subcourse has already an conversation, the conversation has to be updated
+        if (subcourse.conversationId !== null) {
+            if (update.groupChatType === ChatType.NORMAL) {
+                const conversationToBeUpdated: { id: string } & ConversationInfos = {
+                    id: subcourse.conversationId,
+                    custom: {
+                        type: ContactReason.COURSE,
+                    },
+                };
+
+                await markConversationAsWriteable(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
+            } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
+                const conversationToBeUpdated: { id: string } & ConversationInfos = {
+                    id: subcourse.conversationId,
+                    custom: {
+                        type: ContactReason.ANNOUNCEMENT,
+                    },
+                };
+                await markConversationAsReadOnlyForPupils(subcourse.conversationId);
+                await updateConversation(conversationToBeUpdated);
+            }
         }
     }
 

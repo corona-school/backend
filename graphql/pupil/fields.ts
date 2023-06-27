@@ -10,7 +10,7 @@ import {
 } from '../generated';
 import { Arg, Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Role } from '../authorizations';
+import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { getUserIdTypeORM, userForPupil } from '../../common/user';
 import { LimitEstimated } from '../complexity';
 import { Subject } from '../types/subject';
@@ -34,6 +34,7 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
+    @ImpliesRoleOnResult(Role.SUBCOURSE_PARTICIPANT, /* if we are */ Role.OWNER)
     async subcoursesJoined(
         @Root() pupil: Required<Pupil>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
@@ -62,7 +63,7 @@ export class ExtendFieldsPupilResolver {
             where: {
                 AND: [
                     {
-                        subcourse_waiting_list_pupil: {
+                        waiting_list_enrollment: {
                             some: {
                                 pupilId: pupil.id,
                             },
@@ -118,6 +119,7 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
+    @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() pupil: Required<Pupil>) {
         return await prisma.match.findMany({
             where: { pupilId: pupil.id },

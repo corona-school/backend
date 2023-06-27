@@ -8,6 +8,7 @@ import {
     ManyToMany,
     ManyToOne,
     OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
@@ -16,6 +17,8 @@ import { Pupil } from './Pupil';
 import { Course } from './Course';
 import { Lecture } from './Lecture';
 import moment from 'moment';
+import { ChatType } from '../chat/types';
+import { WaitingListEnrollment } from './WaitingListEnrollment';
 
 @Entity()
 export class Subcourse {
@@ -45,6 +48,9 @@ export class Subcourse {
     })
     @JoinTable()
     waitingList: Pupil[];
+
+    @OneToMany(() => WaitingListEnrollment, (enrollment) => enrollment.subcourse)
+    waitingListEnrollments: WaitingListEnrollment[];
 
     @OneToMany((type) => Lecture, (lecture) => lecture.subcourse, {
         eager: true,
@@ -85,6 +91,19 @@ export class Subcourse {
         default: false,
     })
     alreadyPromoted: boolean;
+
+    @Column({
+        nullable: true,
+    })
+    conversationId: string;
+    @Column({ type: 'boolean', default: true })
+    allowChatContactProspects: boolean;
+
+    @Column({ type: 'boolean', default: true })
+    allowChatContactParticipants: boolean;
+
+    @Column({ type: 'enum', enum: ChatType, enumName: 'chat_type', default: ChatType.NORMAL })
+    groupChatType: ChatType;
 
     async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
         const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);

@@ -11,7 +11,7 @@ import { hashPassword } from '../common/util/hashing';
 import { CourseTag } from '../common/entity/CourseTag';
 import { Course, CourseCategory, CourseState } from '../common/entity/Course';
 import { Subcourse } from '../common/entity/Subcourse';
-import { Lecture } from '../common/entity/Lecture';
+import { AppointmentType, Lecture } from '../common/entity/Lecture';
 import { InstructorScreening } from '../common/entity/InstructorScreening';
 import { CourseAttendanceLog } from '../common/entity/CourseAttendanceLog';
 import { Division, Expertise, Mentor } from '../common/entity/Mentor';
@@ -35,6 +35,10 @@ import { getNotifications, importMessageTranslations, importNotifications } from
 import { Subject } from '../common/entity/Subject';
 import { _createFixedToken, createPassword } from '../common/secret';
 import { userForStudent, userForPupil } from '../common/user';
+import { getLogger } from '../common/logger/logger';
+import { WaitingListEnrollment } from '../common/entity/WaitingListEnrollment';
+
+const logger = getLogger('DevSetup');
 
 export async function setupDevDB() {
     const conn = getConnection();
@@ -52,7 +56,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p1@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP1');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526364';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -70,7 +73,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p2@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP2');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526364';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
@@ -88,7 +90,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p3@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP3');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526365';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
@@ -108,7 +109,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p4@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP4');
     p.wix_id = '00000000-0000-0001-0002-1b4c4c526367';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([]);
@@ -126,7 +126,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p5@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.authToken = sha512('authtokenP5');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526368';
     p.wix_creation_date = new Date(new Date().getTime() - 20000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Geschichte' }]);
@@ -144,7 +143,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p6@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 700000);
-    p.authToken = sha512('authtokenP6');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526369';
     p.wix_creation_date = new Date(new Date().getTime() - 70000000);
     p.subjects = JSON.stringify([{ name: 'Englisch' }, { name: 'Latein' }]);
@@ -162,7 +160,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p7@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 800000);
-    p.authToken = sha512('authtokenP7');
     p.wix_id = '00000000-0000-0001-0003-1b4c4c526370';
     p.wix_creation_date = new Date(new Date().getTime() - 80000000);
     p.subjects = JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]);
@@ -178,7 +175,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p8@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP8');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526371';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -196,7 +192,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p9@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP9');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526372';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -214,7 +209,6 @@ export async function setupDevDB() {
     p.email = 'test+dev+p10@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.authToken = sha512('authtokenP10');
     p.wix_id = '00000000-0000-0001-0001-1b4c4c526373';
     p.wix_creation_date = new Date(new Date().getTime() - 10000000);
     p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
@@ -226,7 +220,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < pupils.length; i++) {
         await entityManager.save(Pupil, pupils[i]);
-        console.log('Inserted Dev Pupil ' + i);
+        logger.debug('Inserted Dev Pupil ' + i);
         await _createFixedToken(userForPupil(pupils[i]), `authtokenP${i + 1}`);
         if (i % 2 === 0) {
             await createPassword(userForPupil(pupils[i]), `test`);
@@ -243,7 +237,6 @@ export async function setupDevDB() {
     s1.isStudent = true;
     s1.verification = null;
     s1.verifiedAt = new Date(new Date().getTime() - 110000);
-    s1.authToken = sha512('authtokenS1');
     s1.wix_id = '00000000-0000-0002-0001-1b4c4c526364';
     s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s1.subjects = JSON.stringify([
@@ -255,6 +248,7 @@ export async function setupDevDB() {
     s1.supportsInDaZ = true;
     s1.languages = [Language.ku, Language.en];
     s1.isCodu = true;
+    s1.zoomUserId = 'zJKyaiAyTNC-MWjiWC18KQ';
     students.push(s1);
 
     const s2 = new Student();
@@ -266,7 +260,6 @@ export async function setupDevDB() {
     s2.isStudent = true;
     s2.verification = null;
     s2.verifiedAt = new Date(new Date().getTime() - 220000);
-    s2.authToken = sha512('authtokenS2');
     s2.wix_id = '00000000-0000-0002-0002-1b4c4c526364';
     s2.wix_creation_date = new Date(new Date().getTime() - 22000000);
     s2.subjects = JSON.stringify([
@@ -274,6 +267,7 @@ export async function setupDevDB() {
         { name: 'Mathematik', minGrade: 4, maxGrade: 6 },
     ]);
     s2.openMatchRequestCount = 2;
+    s2.zoomUserId = 'kLKyaiAyTNC-MWjiWCFFFF';
     students.push(s2);
 
     const s3 = new Student();
@@ -285,7 +279,6 @@ export async function setupDevDB() {
     s3.isStudent = true;
     s3.verification = null;
     s3.verifiedAt = new Date(new Date().getTime() - 110000);
-    s3.authToken = sha512('authtokenS3');
     s3.wix_id = '00000000-0000-0002-0001-1b4c4c5263123';
     s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s3.subjects = JSON.stringify([
@@ -304,7 +297,6 @@ export async function setupDevDB() {
     s4.isStudent = false;
     s4.verification = null;
     s4.verifiedAt = new Date(new Date().getTime() - 110000);
-    s4.authToken = sha512('authtokenS4');
     s4.wix_id = '00000000-0000-0002-0001-1b4c4c5263126';
     s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s4.subjects = JSON.stringify([
@@ -323,7 +315,6 @@ export async function setupDevDB() {
     s5.isStudent = true;
     s5.verification = null;
     s5.verifiedAt = new Date(new Date().getTime() - 110000);
-    s5.authToken = sha512('authtokenS5');
     s5.wix_id = '00000000-0000-0002-0001-1b4c4c5263213132';
     s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s5.subjects = JSON.stringify([
@@ -350,7 +341,6 @@ export async function setupDevDB() {
     s6.jufoPastParticipationConfirmed = true;
     s6.verification = null;
     s6.verifiedAt = new Date(new Date().getTime() - 110000);
-    s6.authToken = sha512('authtokenS6');
     s6.wix_id = '00000000-0000-0002-0001-1b4c4c52632131096';
     s6.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s6.subjects = JSON.stringify([]);
@@ -368,7 +358,6 @@ export async function setupDevDB() {
     s7.verification = null;
     await s7.setProjectFields([{ name: ProjectField.CHEMIE, min: 1, max: 13 }]);
     s7.verifiedAt = new Date(new Date().getTime() - 110000);
-    s7.authToken = sha512('authtokenS7');
     s7.wix_id = '00000000-0000-0002-0001-1b4c4c5263213155';
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
     s7.subjects = JSON.stringify([
@@ -380,7 +369,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < students.length; i++) {
         await entityManager.save(Student, students[i]);
-        console.log('Inserted Dev Student ' + i);
+        logger.debug('Inserted Dev Student ' + i);
         await _createFixedToken(userForStudent(students[i]), `authtokenS${i + 1}`);
         if (i % 2 === 0) {
             await createPassword(userForStudent(students[i]), `test`);
@@ -396,7 +385,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
-        console.log('Inserted Dev Match ' + i);
+        logger.debug('Inserted Dev Match ' + i);
     }
 
     const projectMatches: ProjectMatch[] = [];
@@ -407,7 +396,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < projectMatches.length; i++) {
         await entityManager.save(ProjectMatch, projectMatches[i]);
-        console.log('Inserted Dev ProjectMatch ' + i);
+        logger.debug('Inserted Dev ProjectMatch ' + i);
     }
 
     const signature = Buffer.from(
@@ -559,7 +548,7 @@ export async function setupDevDB() {
 
     for (const cert of [pc1, pc2, pc3, pc4, pc5]) {
         await entityManager.save(ParticipationCertificate, cert);
-        console.log('Inserted a certificate with ID: ' + cert.uuid);
+        logger.debug('Inserted a certificate with ID: ' + cert.uuid);
     }
 
     // mentor
@@ -573,7 +562,6 @@ export async function setupDevDB() {
     mentor1.email = 'test+dev+m3@lern-fair.de';
     mentor1.verification = null;
     mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
-    mentor1.authToken = sha512('authtokenM3');
     mentor1.division = [Division.EVENTS, Division.FACEBOOK];
     mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
     mentor1.subjects = null;
@@ -591,7 +579,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < mentors.length; i++) {
         await entityManager.save(Mentor, mentors[i]);
-        console.log('Inserted Dev Mentor ' + i);
+        logger.debug('Inserted Dev Mentor ' + i);
     }
 
     // course tags
@@ -718,7 +706,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < tags.length; i++) {
         await entityManager.save(CourseTag, tags[i]);
-        console.log('Inserted Course Tag ' + tags[i].identifier);
+        logger.debug('Inserted Course Tag ' + tags[i].identifier);
     }
 
     // courses
@@ -884,7 +872,7 @@ export async function setupDevDB() {
     for (const course of courses) {
         await entityManager.save(Course, course);
 
-        console.log('Inserted Course ' + course.name);
+        logger.debug('Inserted Course ' + course.name);
     }
 
     // courses
@@ -908,9 +896,19 @@ export async function setupDevDB() {
     subcourse2.minGrade = 3;
     subcourse2.maxGrade = 10;
     subcourse2.instructors = [s1];
-    subcourse2.maxParticipants = 10;
+    subcourse2.maxParticipants = 5;
     subcourse2.published = true;
-    subcourse2.participants = pupils;
+    subcourse2.participants = pupils.slice(0, 5);
+
+    const waitingListEnrollment1 = new WaitingListEnrollment();
+    waitingListEnrollment1.subcourse = subcourse2;
+    waitingListEnrollment1.pupil = pupils[5];
+
+    const waitingListEnrollment2 = new WaitingListEnrollment();
+    waitingListEnrollment2.subcourse = subcourse2;
+    waitingListEnrollment2.pupil = pupils[6];
+
+    subcourse2.waitingListEnrollments = [waitingListEnrollment1, waitingListEnrollment2];
 
     subcourses.push(subcourse2);
 
@@ -920,8 +918,9 @@ export async function setupDevDB() {
     subcourse3.minGrade = 10;
     subcourse3.maxGrade = 11;
     subcourse3.instructors = [s1, s2];
-    subcourse3.maxParticipants = 10;
+    subcourse3.maxParticipants = 3;
     subcourse3.published = true;
+    subcourse3.participants = pupils.slice(0, 3);
 
     subcourses.push(subcourse3);
 
@@ -1035,8 +1034,12 @@ export async function setupDevDB() {
 
     for (const subcourse of subcourses) {
         await entityManager.save(Subcourse, subcourse);
-        console.log('Inserted SubCourse.');
+        logger.debug('Inserted SubCourse.');
     }
+
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
+    await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
+    logger.debug('Inserted WaitingListEnrollments.');
 
     // lectures
 
@@ -1059,6 +1062,10 @@ export async function setupDevDB() {
             lecture.duration = 15;
             lecture.start = new Date(currentLecture);
             lecture.instructor = s1;
+            lecture.organizerIds = subcourse2.instructors?.map((p) => `student/${p.id}`);
+            lecture.zoomMeetingId = '123456789';
+            lecture.participantIds = subcourse2.participants?.map((p) => `pupil/${p.id}`);
+            lecture.appointmentType = AppointmentType.GROUP;
             lectures.push(lecture);
 
             currentLecture += 60 * 60 * 1000;
@@ -1070,12 +1077,21 @@ export async function setupDevDB() {
     lecture3.duration = 120;
     lecture3.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture3.instructor = s1;
+    lecture3.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture3.zoomMeetingId = '123456789';
+    lecture3.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture3.appointmentType = AppointmentType.GROUP;
 
     const lecture4: Lecture = new Lecture();
     lecture4.subcourse = subcourse1;
     lecture4.duration = 120;
     lecture4.start = new Date(year, month, date + 14, 21, 0, 0, 0);
     lecture4.instructor = s1;
+    lecture4.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture4.zoomMeetingId = '123456789';
+    lecture4.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture4.appointmentType = AppointmentType.GROUP;
+
 
     // today's past lecture for courseAttendanceLog
     const lecture5: Lecture = new Lecture();
@@ -1083,6 +1099,10 @@ export async function setupDevDB() {
     lecture5.duration = 120;
     lecture5.start = new Date(year, month, date, 4, 0, 0, 0);
     lecture5.instructor = s1;
+    lecture5.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture5.zoomMeetingId = '123456789';
+    lecture5.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture5.appointmentType = AppointmentType.GROUP;
 
     // today's active lecture for courseAttendanceLog
     const lecture6: Lecture = new Lecture();
@@ -1090,6 +1110,10 @@ export async function setupDevDB() {
     lecture6.duration = 60;
     lecture6.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture6.instructor = s1;
+    lecture6.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
+    lecture6.zoomMeetingId = '123456789';
+    lecture6.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
+    lecture6.appointmentType = AppointmentType.GROUP;
 
     // today's second active lecture for courseAttendanceLog
     const lecture7: Lecture = new Lecture();
@@ -1097,54 +1121,87 @@ export async function setupDevDB() {
     lecture7.duration = 60;
     lecture7.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
     lecture7.instructor = s1;
+    lecture7.organizerIds = subcourse7.instructors?.map((p) => `student/${p.id}`);
+    lecture7.zoomMeetingId = '123456789';
+    lecture7.participantIds = subcourse7.participants?.map((p) => `pupil/${p.id}`);
+    lecture7.appointmentType = AppointmentType.GROUP;
 
     const lecture8: Lecture = new Lecture();
     lecture8.subcourse = subcourse3;
     lecture8.duration = 90;
     lecture8.start = new Date(year, month, date + 5, 10, 0, 0, 0);
     lecture8.instructor = s2;
+    lecture8.organizerIds = subcourse3.instructors?.map((p) => `student/${p.id}`);
+    lecture8.zoomMeetingId = '123456789';
+    lecture8.participantIds = subcourse3.participants?.map((p) => `pupil/${p.id}`);
+    lecture8.appointmentType = AppointmentType.GROUP;
+
 
     const lecture9: Lecture = new Lecture();
     lecture9.subcourse = subcourse4;
     lecture9.duration = 120;
     lecture9.start = new Date(year, month, date + 15, 11, 0, 0, 0);
     lecture9.instructor = s2;
+    lecture9.organizerIds = subcourse4.instructors?.map((p) => `student/${p.id}`);
+    lecture9.zoomMeetingId = '123456789';
+    lecture9.participantIds = subcourse4.participants?.map((p) => `pupil/${p.id}`);
+    lecture9.appointmentType = AppointmentType.GROUP;
 
     const lecture10: Lecture = new Lecture();
     lecture10.subcourse = subcourse8;
     lecture10.duration = 120;
     lecture10.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture10.instructor = s1;
+    lecture10.organizerIds = subcourse8.instructors?.map((p) => `student/${p.id}`);
+    lecture10.zoomMeetingId = '123456789';
+    lecture10.participantIds = subcourse8.participants?.map((p) => `pupil/${p.id}`);
+    lecture10.appointmentType = AppointmentType.GROUP;
 
     const lecture11: Lecture = new Lecture();
     lecture11.subcourse = subcourse9;
     lecture11.duration = 60;
     lecture11.start = new Date(year, month, date + 10, 19, 0, 0, 0);
     lecture11.instructor = s1;
+    lecture11.organizerIds = subcourse9.instructors?.map((p) => `student/${p.id}`);
+    lecture11.zoomMeetingId = '123456789';
+    lecture11.participantIds = subcourse9.participants?.map((p) => `pupil/${p.id}`);
+    lecture11.appointmentType = AppointmentType.GROUP;
 
     const lecture12: Lecture = new Lecture();
     lecture12.subcourse = subcourse10;
     lecture12.duration = 60;
     lecture12.start = new Date(year, month, date + 11, 20, 0, 0, 0);
     lecture12.instructor = s1;
+    lecture12.organizerIds = subcourse10.instructors?.map((p) => `student/${p.id}`);
+    lecture12.zoomMeetingId = '123456789';
+    lecture12.participantIds = subcourse10.participants?.map((p) => `pupil/${p.id}`);
+    lecture12.appointmentType = AppointmentType.GROUP;
 
     const lecture13: Lecture = new Lecture();
     lecture13.subcourse = subcourse11;
     lecture13.duration = 60;
     lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
     lecture13.instructor = s1;
+    lecture13.organizerIds = subcourse11.instructors?.map((p) => `student/${p.id}`);
+    lecture13.zoomMeetingId = '123456789';
+    lecture13.participantIds = subcourse11.participants?.map((p) => `pupil/${p.id}`);
+    lecture13.appointmentType = AppointmentType.GROUP;
 
     const lecture14: Lecture = new Lecture();
     lecture14.subcourse = subcourse12;
     lecture14.duration = 30;
     lecture14.start = new Date(year, month, date + 10, 20, 0, 0, 0);
     lecture14.instructor = s1;
+    lecture14.organizerIds = subcourse12.instructors?.map((p) => `student/${p.id}`);
+    lecture14.zoomMeetingId = '123456789';
+    lecture14.participantIds = subcourse12.participants?.map((p) => `pupil/${p.id}`);
+    lecture14.appointmentType = AppointmentType.GROUP;
 
     lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13, lecture14);
 
     for (const lecture of lectures) {
         await entityManager.save(Lecture, lecture);
-        console.log('Inserted Lecture.');
+        logger.debug('Inserted Lecture.');
     }
 
     // Screening results
@@ -1175,7 +1232,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < screeners.length; i++) {
         await entityManager.save(Screener, screeners[i]);
-        console.log('Inserted Dev Screener ' + i);
+        logger.debug('Inserted Dev Screener ' + i);
     }
 
     const screenings: Screening[] = [];
@@ -1211,7 +1268,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < screenings.length; i++) {
         await entityManager.save(Screening, screenings[i]);
-        console.log('Inserted Dev Screening ' + i);
+        logger.debug('Inserted Dev Screening ' + i);
     }
 
     // instructor screening
@@ -1246,7 +1303,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < instructorScreenings.length; i++) {
         await entityManager.save(InstructorScreening, instructorScreenings[i]);
-        console.log('Inserted Dev Instrcutor Screening ' + i);
+        logger.debug('Inserted Dev Instrcutor Screening ' + i);
     }
 
     //project coaching screenings
@@ -1263,7 +1320,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < projectCoachingScreenings.length; i++) {
         await entityManager.save(ProjectCoachingScreening, projectCoachingScreenings[i]);
-        console.log('Inserted Dev Project Screening ' + i);
+        logger.debug('Inserted Dev Project Screening ' + i);
     }
 
     // Test data for course attendance log
@@ -1276,7 +1333,7 @@ export async function setupDevDB() {
         courseAttendanceLog1.pupil = pupils[i];
         courseAttendanceLog1.lecture = lecture3;
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
-        console.log('Inserted Dev CourseAttendanceLog ' + i);
+        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
 
         // pupil attended today's lecture, which is already over
         const courseAttendanceLog2 = new CourseAttendanceLog();
@@ -1284,16 +1341,16 @@ export async function setupDevDB() {
         courseAttendanceLog2.pupil = pupils[i];
         courseAttendanceLog2.lecture = lecture5;
         await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
-        console.log('Inserted Dev CourseAttendanceLog ' + i);
+        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
     }
 
     //Insert some schools
     const schools: School[] = [];
 
     const school1 = new School();
-    school1.name = 'Corona School Germany';
-    school1.emailDomain = 'corona-school.de';
-    school1.website = 'https://corona-school.de';
+    school1.name = 'Lern Fair';
+    school1.emailDomain = 'lern-fair.de';
+    school1.website = 'https://lern-fair.de';
     school1.state = State.OTHER;
     school1.schooltype = SchoolType.SONSTIGES;
     school1.activeCooperation = true;
@@ -1302,7 +1359,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < schools.length; i++) {
         await entityManager.save(schools[i]);
-        console.log('Inserted Dev School ' + i);
+        logger.debug('Inserted Dev School ' + i);
     }
 
     //Insert expert data
@@ -1320,7 +1377,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < expertiseTags.length; i++) {
         await entityManager.save(expertiseTags[i]);
-        console.log('Inserted Expertise Tag ' + i);
+        logger.debug('Inserted Expertise Tag ' + i);
     }
 
     const experts: ExpertData[] = [];
@@ -1367,7 +1424,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < experts.length; i++) {
         await entityManager.save(experts[i]);
-        console.log('Inserted Dev Expert ' + i);
+        logger.debug('Inserted Dev Expert ' + i);
     }
 
     //Insert pupil interest confirmation requests
@@ -1382,7 +1439,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < pticrs.length; i++) {
         await entityManager.save(pticrs[i]);
-        console.log('Inserted Pupil Tutoring Interest Request ' + i);
+        logger.debug('Inserted Pupil Tutoring Interest Request ' + i);
     }
 
     const certificates: CertificateOfConduct[] = [];
@@ -1397,7 +1454,7 @@ export async function setupDevDB() {
 
     for (let i = 0; i < certificates.length; i++) {
         await entityManager.save(certificates[i]);
-        console.log('Inserted COC ' + i);
+        logger.debug('Inserted COC ' + i);
     }
 
     //Insert remission request
@@ -1406,12 +1463,14 @@ export async function setupDevDB() {
     remissionRequest.uuid = randomBytes(5).toString('hex').toUpperCase();
 
     await entityManager.save(remissionRequest);
-    console.log('Inserted remission request');
+    logger.debug('Inserted remission request');
 
     if (!process.env.SKIP_NOTIFICATION_IMPORT) {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
+
+    logger.info(`Set up test data`);
 }
 
 function sha512(input: string): string {
@@ -1419,7 +1478,7 @@ function sha512(input: string): string {
     return hash.update(input).digest('hex');
 }
 
-const PROD_URL = 'https://api.corona-school.de/apollo';
+const PROD_URL = 'https://api.lern-fair.de/apollo';
 
 async function importNotificationsFromProd() {
     const existingNotifications = await getNotifications();
@@ -1440,11 +1499,12 @@ async function importNotificationsFromProd() {
                         recipient
                         onActions
                         cancelledOnAction
-                        ${'' /* @TODO: Add type when prod updated */}
+                        type
                         delay
                         interval
                         sender
                         hookID
+                        sample_context
                     }
                 }`,
                 variables: {},
@@ -1457,7 +1517,7 @@ async function importNotificationsFromProd() {
     ).json();
 
     await importNotifications(prodNotifications.data.notifications, false, true);
-    console.log(`Imported notifications from PROD`, prodNotifications.data.notifications);
+    logger.info(`Imported notifications from productive landscape`, prodNotifications.data.notifications);
 }
 
 async function importMessagesTranslationsFromProd() {

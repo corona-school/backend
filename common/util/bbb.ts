@@ -10,7 +10,6 @@ import CreateCourseAttendanceLogEvent from '../transactionlog/types/CreateCourse
 import { BBBMeeting } from '../entity/BBBMeeting';
 import CreateBBBMeetingEvent from '../transactionlog/types/CreateBBBMeetingEvent';
 import { Student } from '../entity/Student';
-import { addCleanupAction } from './cleanup';
 
 const parser = new Parser();
 const logger = getLogger();
@@ -20,9 +19,8 @@ const baseUrl = process.env.BBB_BASEURL;
 
 const courseAttendanceLogInterval = 600000;
 const bbbMeetingInfoHandlerTimeout = setInterval(() => {
-    handleBBBMeetingInfos();
+    void handleBBBMeetingInfos();
 }, courseAttendanceLogInterval);
-addCleanupAction(() => clearInterval(bbbMeetingInfoHandlerTimeout)); //cleanup on sigterm
 
 export async function isBBBMeetingInDB(id: string): Promise<boolean> {
     // Meeting IDs must be at least 2 chars
@@ -63,7 +61,7 @@ export async function createBBBMeeting(name: string, id: string, user: Pupil | S
         return bbbMeeting;
     } catch (e) {
         logger.error("Can't save new bbb meeting: ", e);
-        logger.debug(bbbMeeting, e);
+        logger.debug('with bbb meeting', { bbbMeeting });
     }
 }
 
@@ -296,7 +294,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
 
     if (subcourseId == null) {
         logger.error("Can't save new course attendance: subcourseId is null");
-        logger.debug(courseAttendanceLog);
+        logger.debug('with attendance log', { courseAttendanceLog });
     } else {
         const activeLecture = await getActiveLectureOfSubcourse(subcourseId);
         if (activeLecture) {
@@ -328,7 +326,7 @@ export async function createOrUpdateCourseAttendanceLog(pupil: Pupil, ip: string
                     logger.info('Successfully saved new Course Attendance to lecture with id ', { lectureId: activeLecture.id });
                 } catch (e) {
                     logger.error("Can't save new course attendance:", e);
-                    logger.debug(courseAttendanceLog, e);
+                    logger.debug('with attendance log', { courseAttendanceLog });
                 }
             }
         } else {

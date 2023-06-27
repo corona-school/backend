@@ -106,7 +106,7 @@ export class ExtendedFieldsSubcourseResolver {
             } else if (isSessionPupil(context)) {
                 filters.push({
                     subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
-                    subcourse_waiting_list_pupil: { none: { pupilId: context.user!.pupilId! } },
+                    waiting_list_enrollment: { none: { pupilId: context.user!.pupilId! } },
                 });
             } /* else ignore */
         }
@@ -343,7 +343,7 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.pupil.findMany({
             select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true },
             where: {
-                subcourse_waiting_list_pupil: {
+                waiting_list_enrollment: {
                     some: {
                         subcourseId: subcourse.id,
                     },
@@ -359,7 +359,7 @@ export class ExtendedFieldsSubcourseResolver {
     async pupilsWaiting(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
             where: {
-                subcourse_waiting_list_pupil: {
+                waiting_list_enrollment: {
                     some: {
                         subcourseId: subcourse.id,
                     },
@@ -372,7 +372,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @PublicCache()
     async pupilsWaitingCount(@Root() subcourse: Subcourse) {
-        return await prisma.subcourse_waiting_list_pupil.count({
+        return await prisma.waiting_list_enrollment.count({
             where: { subcourseId: subcourse.id },
         });
     }
@@ -407,7 +407,7 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         const pupil = await getSessionPupil(context, pupilId);
-        return (await prisma.subcourse_waiting_list_pupil.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
+        return (await prisma.waiting_list_enrollment.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
     }
 
     @FieldResolver((returns) => BBBMeeting, { nullable: true })
@@ -453,8 +453,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Decision)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
-        const course = await getCourse(subcourse.courseId);
-        return await canContactInstructors(course, subcourse);
+        return await canContactInstructors(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
@@ -472,6 +471,12 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
     async appointments(@Root() subcourse: Subcourse) {
-        return await prisma.lecture.findMany({ where: { subcourseId: subcourse.id }, orderBy: { start: 'asc' } });
+        return await prisma.lecture.findMany({
+            where: {
+                subcourseId: subcourse.id,
+                isCanceled: false,
+            },
+            orderBy: { start: 'asc' },
+        });
     }
 }

@@ -33,7 +33,7 @@ import { MutateTutoringInterestConfirmationResolver } from './tutoring_interest_
 import { MutateParticipationCertificateResolver } from './certificate/mutations';
 import { ExtendedFieldsParticipationCertificateResolver } from './certificate/fields';
 import { ExtendFieldsStudentResolver } from './student/fields';
-import { ExtendedFieldsLectureResolver } from './appointment/fields';
+import { ExtendedFieldsLectureResolver, ExtendedFieldsOrganizerResolver, ExtendedFieldsParticipantResolver } from './appointment/fields';
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
@@ -64,6 +64,8 @@ import { validate } from './validators';
 import { ExtendedFieldsMessageTranslationResolver } from './message_translation/fields';
 import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields';
 import { MutateAppointmentResolver } from './appointment/mutations';
+import { getCurrentTransaction } from '../common/session';
+import { MutateChatResolver } from './chat/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -169,6 +171,11 @@ const schema = buildSchemaSync({
 
         /* Appointments */
         MutateAppointmentResolver,
+        ExtendedFieldsParticipantResolver,
+        ExtendedFieldsOrganizerResolver,
+
+        /* Chat */
+        MutateChatResolver,
 
         AdminMutationsResolver,
     ],
@@ -185,4 +192,18 @@ export const apolloServer = new ApolloServer({
     introspection: true,
     debug: isDev,
     formatError,
+    formatResponse(response, requestContext) {
+        const transaction = getCurrentTransaction();
+
+        if (!response.extensions) {
+            response.extensions = {};
+        }
+
+        response.extensions['Transaction'] = {
+            sessionID: transaction.session?.sessionID ?? '?',
+            transactionID: transaction.transactionID,
+        };
+
+        return response;
+    },
 });

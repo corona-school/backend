@@ -11,6 +11,8 @@ import { pupil as Pupil, student as Student, screener as Screener } from '@prism
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
+import { updateZoomUser } from '../zoom/zoom-user';
+import { isZoomFeatureActive } from '../zoom';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -85,10 +87,10 @@ export type User = {
 export const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
-    const validTypes = ['student', 'pupil', 'screener'];
+    const validTypes = ['student', 'pupil', 'screener', 'admin'];
     const [type, id] = userId.split('/');
     if (!validTypes.includes(type)) {
-        throw Error('No valid user type found in user id');
+        throw Error('No valid user type found in user id: ' + type);
     }
     const parsedId = parseInt(id, 10);
     return [type as UserTypes, parsedId];
@@ -219,12 +221,17 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
 }
 
 export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
+    const validatedEmail = validateEmail(email);
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
+        if (isZoomFeatureActive()) {
+            await updateZoomUser(user);
+        }
+
         return userForStudent(
             (await prisma.student.update({
                 where: { id: user.studentId },
-                data: { email: validateEmail(email) },
+                data: { email: validatedEmail },
                 select: userSelection,
             })) as Student
         );
@@ -233,7 +240,7 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
         return userForPupil(
             (await prisma.pupil.update({
                 where: { id: user.pupilId },
-                data: { email: validateEmail(email) },
+                data: { email: validatedEmail },
                 select: userSelection,
             })) as Pupil
         );
@@ -297,4 +304,18 @@ export async function updateLastLogin(user: User) {
     if (user.screenerId) {
         await prisma.student.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
     }
+}
+
+export async function getStudentsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('student/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.student.findMany({
+        where: { id: { in: ids } },
+    });
+}
+
+export async function getPupilsFromList(userIDs: string[]) {
+    const ids = userIDs.filter((it) => it.startsWith('pupil/')).map((it) => parseInt(it.split('/')[1], 10));
+    return await prisma.pupil.findMany({
+        where: { id: { in: ids } },
+    });
 }

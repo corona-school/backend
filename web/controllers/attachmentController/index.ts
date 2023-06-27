@@ -1,10 +1,11 @@
 import { getLogger } from '../../../common/logger/logger';
-import {Request, Response} from "express";
+import {Request, Response, Router} from "express";
 import {getAttachmentURL} from "../../../common/attachments";
 
 const logger = getLogger();
 
-
+export const attachmentRouter = Router();
+attachmentRouter.get('/:attachmentId/:filename', getAttachmentUrlEndpoint);
 
 /**
  * @api {GET} /attachments/:attachmentId/:filename getS3AttachmentLink
@@ -33,7 +34,7 @@ const logger = getLogger();
  * @apiGroup Attachments
  *
  * @apiExample {curl} Curl
- * curl -k -i -X GET https://api.corona-school.de/api/attachments/000000001-0000-0000-0701-1b4c4c526384/helloworld.png
+ * curl -k -i -X GET https://api.lern-fair.de/api/attachments/000000001-0000-0000-0701-1b4c4c526384/helloworld.png
  *
  * @apiUse StatusNoContent
  * @apiUse StatusBadRequest
@@ -41,7 +42,7 @@ const logger = getLogger();
  * @apiUse StatusForbidden
  * @apiUse StatusInternalServerError
  */
-export async function getAttachmentUrlEndpoint(req: Request, res: Response) {
+async function getAttachmentUrlEndpoint(req: Request, res: Response) {
     try {
         const { attachmentId, filename } = req.params;
 

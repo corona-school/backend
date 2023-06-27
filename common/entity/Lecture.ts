@@ -6,7 +6,7 @@ import { OneToMany } from 'typeorm/index';
 import { Match } from './Match';
 import { User } from '../user';
 
-enum AppointmentType {
+export enum AppointmentType {
     GROUP = 'group',
     MATCH = 'match',
     INTERNAL = 'internal',
@@ -92,4 +92,14 @@ export class Lecture {
         array: true,
     })
     declinedBy: User['userID'][];
+
+    @Column({ default: null, nullable: true })
+    zoomMeetingId: string;
+
+    @Column({
+        type: 'json',
+        default: [],
+        array: true,
+    })
+    zoomMeetingReport: any[];
 }

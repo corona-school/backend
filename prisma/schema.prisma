@@ -167,16 +167,17 @@ model expertise_tag {
 }
 
 model instructor_screening {
-  id                    Int       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
+  id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 model jufo_verification_transmission {
@@ -200,6 +201,8 @@ model lecture {
   organizerIds          String[]                     @default([])
   participantIds        String[]                     @default([])
   declinedBy            String[]                     @default([])
+  zoomMeetingId         String?                      @db.VarChar
+  zoomMeetingReport     Json[]                       @default([]) @db.Json
   instructorId          Int?
   subcourseId           Int?
   matchId               Int?
@@ -221,6 +224,7 @@ model match {
   id                       Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   uuid                     String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved                Boolean           @default(false)
+  dissolvedAt              DateTime?         @db.Timestamp(6)
   dissolveReason           Int?
   proposedTime             DateTime?         @db.Timestamp(6)
   createdAt                DateTime          @default(now()) @db.Timestamp(6)
@@ -252,9 +256,6 @@ model mentor {
   email                        String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
   verification                 String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
   verifiedAt                   DateTime?               @db.Timestamp(6)
-  authToken                    String?                 @unique(map: "IDX_d6c74ee02bc266daf510d3ef2a") @db.VarChar
-  authTokenUsed                Boolean                 @default(false)
-  authTokenSent                DateTime?               @db.Timestamp(6)
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
@@ -361,9 +362,6 @@ model pupil {
   email                                        String                                         @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
   verification                                 String?                                        @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
   verifiedAt                                   DateTime?                                      @db.Timestamp(6)
-  authToken                                    String?                                        @unique(map: "IDX_5ff14bcaf5fdce75691fa8f34a") @db.VarChar
-  authTokenUsed                                Boolean                                        @default(false)
-  authTokenSent                                DateTime?                                      @db.Timestamp(6)
   isRedacted                                   Boolean                                        @default(false)
   lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
@@ -452,9 +450,6 @@ model screener {
   email                        String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
   verification                 String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
   verifiedAt                   DateTime?                    @db.Timestamp(6)
-  authToken                    String?                      @unique(map: "IDX_b858e5a35c51a4dbf6922025e7") @db.VarChar
-  authTokenUsed                Boolean                      @default(false)
-  authTokenSent                DateTime?                    @db.Timestamp(6)
   isRedacted                   Boolean                      @default(false)
   lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
@@ -468,16 +463,17 @@ model screener {
 }
 
 model screening {
-  id                    Int       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
+  id                    Int                       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
-  comment               String?   @db.VarChar
-  knowsCoronaSchoolFrom String?   @db.VarChar
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  comment               String?                   @db.VarChar
+  jobStatus             screening_jobstatus_enum?
+  knowsCoronaSchoolFrom String?                   @db.VarChar
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
-  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
-  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
+  studentId             Int?                      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
+  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
+  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
 }
 
 model student {
@@ -490,9 +486,6 @@ model student {
   email                                     String                                 @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
   verification                              String?                                @unique(map: "IDX_34cbafcb0bcdfb2b6de9010acb") @db.VarChar
   verifiedAt                                DateTime?                              @db.Timestamp(6)
-  authToken                                 String?                                @unique(map: "IDX_f4d0994b549167f69e3cec7c00") @db.VarChar
-  authTokenUsed                             Boolean                                @default(false)
-  authTokenSent                             DateTime?                              @db.Timestamp(6)
   isRedacted                                Boolean                                @default(false)
   lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
@@ -531,6 +524,7 @@ model student {
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
   registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
   aboutMe                                   String                                 @default("") @db.VarChar
+  zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
   course_guest                              course_guest[]
@@ -562,6 +556,10 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
+  conversationId                   String?                            @db.VarChar
+  allowChatContactProspects        Boolean                            @default(true)
+  allowChatContactParticipants     Boolean                            @default(true)
+  groupChatType                    chat_type                          @default(NORMAL)
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
   course_participation_certificate course_participation_certificate[]
@@ -649,7 +647,7 @@ model typeorm_metadata {
 
 model message_translation {
   id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
-  template       Json                              @db.Json
+  template       Json?                             @db.Json
   navigateTo     String?
   language       message_translation_language_enum @default(de)
   notificationId Int?
@@ -1041,4 +1039,17 @@ enum lecture_appointmenttype_enum {
   match
   internal
   legacy
+}
+
+enum chat_type {
+  NORMAL
+  ANNOUNCEMENT
+}
+
+enum screening_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
 }

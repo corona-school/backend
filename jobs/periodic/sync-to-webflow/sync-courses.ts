@@ -2,10 +2,10 @@ import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchIte
 import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
-import { accessURLForKey } from '../../../common/file-bucket';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { lectureDTOFactory } from './sync-lectures';
 import { getCourseImageURL } from '../../../common/courses/util';
+import { course_subject_enum as CourseSubjectEnum } from '@prisma/client';
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
@@ -16,6 +16,7 @@ interface CourseDTO extends WebflowMetadata {
     instructor: string;
 
     startingdate: string;
+    endingdate: string;
     weekday: string;
     courseduration: string; // like "45 min"
     lecturecount: number;
@@ -52,15 +53,19 @@ function generateInstructor(subcourse: WebflowSubcourse): string {
     return names.join(', ');
 }
 
-function getStartDate(subcourse: WebflowSubcourse): Moment | null {
+function getStartAndEndDate(subcourse: WebflowSubcourse): [Moment, Moment] | null {
     let earliestDate: Moment | null = null;
+    let latestDate: Moment | null = null;
     for (const lecture of subcourse.lecture) {
-        const startDate = moment(lecture.start);
-        if (earliestDate == null || startDate.isBefore(earliestDate)) {
+        const lectureDate = moment(lecture.start);
+        if (earliestDate === null || lectureDate.isBefore(earliestDate)) {
             earliestDate = moment(lecture.start);
         }
+        if (latestDate === null || lectureDate.isAfter(latestDate)) {
+            latestDate = moment(lecture.start);
+        }
     }
-    return earliestDate;
+    return earliestDate && latestDate ? [earliestDate, latestDate] : null;
 }
 
 function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
@@ -102,8 +107,24 @@ function parseDescription(description: string): string {
     return `<p>${newDescription}</p>`;
 }
 
+function translateSubject(subject: CourseSubjectEnum): string {
+    switch (subject) {
+        case CourseSubjectEnum.P_dagogik:
+            return 'Pädagogik';
+        case CourseSubjectEnum.Franz_sisch:
+            return 'Französisch';
+        case CourseSubjectEnum.Niederl_ndisch:
+            return 'Niederländisch';
+        case CourseSubjectEnum.Deutsch_als_Zweitsprache:
+            return 'Deutsch als Zweitsprache';
+        default:
+            return subject;
+    }
+}
+
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
-    const startDate: Moment = getStartDate(subcourse) || moment();
+    const [startDate, endDate] = getStartAndEndDate(subcourse) || [moment(), moment()];
+
     // make sure that the weekday can be properly translated
     startDate.locale('de');
 
@@ -118,6 +139,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         instructor: generateInstructor(subcourse),
 
         startingdate: startDate.toISOString(),
+        endingdate: endDate.toISOString(),
         weekday: startDate.format('dddd'),
         courseduration: `${getTotalCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
         lecturecount: subcourse.lecture.length,
@@ -129,7 +151,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         maxparticipants: subcourse.maxParticipants,
         participantscount: subcourse.subcourse_participants_pupil.length,
         openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
-        subject: subcourse.course.subject,
+        subject: translateSubject(subcourse.course.subject),
 
         mingrade: subcourse.minGrade,
         maxgrade: subcourse.maxGrade,

@@ -1,32 +1,33 @@
-import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
-import { getLogger } from '../../common/logger/logger';
-import * as TypeGraphQL from 'type-graphql';
-import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver, UnauthorizedError } from 'type-graphql';
-import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { sendGuestInvitationMail, sendPupilCourseSuggestion, sendSubcourseCancelNotifications } from '../../common/mails/courses';
-import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { GraphQLContext } from '../context';
-import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
-import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
-import { canPublish, cancelSubcourse, editSubcourse, publishSubcourse, subcourseOverGracePeriod } from '../../common/courses/states';
-import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
-import { PrerequisiteError } from '../../common/util/error';
-import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
 import { randomBytes } from 'crypto';
-import { getFile } from '../files';
-import { contactInstructors, contactParticipants } from '../../common/courses/contact';
-import { Student } from '../../common/entity/Student';
-import { validateEmail } from '../validators';
 import moment from 'moment';
+import * as TypeGraphQL from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import {
     addGroupAppointmentsOrganizer,
     addGroupAppointmentsParticipant,
     removeGroupAppointmentsOrganizer,
     removeGroupAppointmentsParticipant,
 } from '../../common/appointment/participants';
+import { contactInstructors, contactParticipants } from '../../common/courses/contact';
+import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
+import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
+import { Student } from '../../common/entity/Student';
+import { getLogger } from '../../common/logger/logger';
+import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
+import { prisma } from '../../common/prisma';
+import { getUserIdTypeORM, getUserTypeORM } from '../../common/user';
+import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
+import { PrerequisiteError } from '../../common/util/error';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { GraphQLContext } from '../context';
+import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
+import { getFile, removeFile } from '../files';
+import * as GraphQLModel from '../generated/models';
+import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
+import { validateEmail } from '../validators';
+import { chat_type } from '../generated';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -40,6 +41,12 @@ class PublicSubcourseCreateInput {
     maxParticipants!: number;
     @TypeGraphQL.Field((_type) => Boolean)
     joinAfterStart!: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactProspects?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactParticipants?: boolean;
+    @TypeGraphQL.Field((_type) => chat_type, { nullable: true })
+    groupChatType?: chat_type;
     @TypeGraphQL.Field((_type) => [PublicLectureInput], { nullable: true })
     lectures?: PublicLectureInput[];
 }
@@ -54,6 +61,12 @@ class PublicSubcourseEditInput {
     maxParticipants?: number;
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     joinAfterStart?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactProspects?: boolean;
+    @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
+    allowChatContactParticipants?: boolean;
+    @TypeGraphQL.Field((_type) => chat_type, { nullable: true })
+    groupChatType?: chat_type;
 }
 
 @InputType()
@@ -79,9 +92,21 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
-        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures } = subcourse;
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures, allowChatContactParticipants, allowChatContactProspects, groupChatType } =
+            subcourse;
         const result = await prisma.subcourse.create({
-            data: { courseId, published: false, joinAfterStart, minGrade, maxGrade, maxParticipants, lecture: { createMany: { data: lectures } } },
+            data: {
+                courseId,
+                published: false,
+                joinAfterStart,
+                minGrade,
+                maxGrade,
+                maxParticipants,
+                allowChatContactParticipants,
+                allowChatContactProspects,
+                groupChatType,
+                lecture: { createMany: { data: lectures || [] } },
+            },
         });
 
         const student = await getSessionStudent(context, studentId);
@@ -337,7 +362,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         const pupil = await getPupil(pupilId);
 
-        const isOnWaitingList = (await prisma.subcourse_waiting_list_pupil.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
+        const isOnWaitingList = (await prisma.waiting_list_enrollment.count({ where: { pupilId: pupil.id, subcourseId: subcourse.id } })) > 0;
         if (!isOnWaitingList) {
             throw new PrerequisiteError(
                 `Pupil(${pupil.id}) is not on the waitinglist of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`
@@ -502,6 +527,9 @@ export class MutateSubcourseResolver {
         const files = fileIDs.map(getFile);
 
         await contactInstructors(course, subcourse, pupil, title, body, files);
+        for (const fileID in fileIDs) {
+            removeFile(fileID);
+        }
         return true;
     }
 
@@ -523,6 +551,10 @@ export class MutateSubcourseResolver {
         const files = fileIDs.map(getFile);
 
         await contactParticipants(course, subcourse, instructor, title, body, files, participantIDs);
+        for (const fileID in fileIDs) {
+            removeFile(fileID);
+        }
+
         return true;
     }
 
@@ -530,10 +562,9 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.INSTRUCTOR)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
-        const course = await getCourse(subcourse.courseId);
 
         await hasAccess(context, 'Subcourse', subcourse);
-        await sendPupilCourseSuggestion(course, subcourse, 'available_places_on_subcourse');
+        await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
 
         return true;

@@ -9,15 +9,16 @@ import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';
 import { CourseGuest, getCourseGuestLink } from '../../entity/CourseGuest';
 import * as Notification from '../../../common/notification';
-import { getFullName } from '../../user';
+import { getFullName, userForPupil } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
-import { Person } from '../../entity/Person';
-import { accessURLForKey } from '../../file-bucket';
-import { ActionID } from '../../notification/actions';
 import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity } from '../../courses/participants';
+import { getCourseCapacity, isParticipant } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
+import { createSecretEmailToken } from '../../secret';
+import { getCourse } from '../../../graphql/util';
+import { shuffleArray } from '../../../common/util/basic';
+import { NotificationContext } from '../../notification/types';
 
 const logger = getLogger('Course Notification');
 
@@ -117,6 +118,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
     }
 
     const firstLectureMoment = moment(firstLecture.start);
+    const authToken = await createSecretEmailToken(userForPupil(participant), undefined, moment().add(7, 'days'));
 
     const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
         participantFirstname: participant.firstname,
@@ -124,7 +126,7 @@ export async function sendParticipantRegistrationConfirmationMail(participant: P
         courseId: String(course.id),
         firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
         firstLectureTime: firstLectureMoment.format('HH:mm'),
-        authToken: participant.authToken,
+        authToken,
     });
 
     await sendTemplateMail(mail, participant.email);
@@ -234,40 +236,53 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-export async function sendPupilCourseSuggestion(course: Course | Prisma.course, subcourse: Prisma.subcourse, actionId: ActionID) {
-    // TODO: Reenable once we stabilized course promotions
-    return;
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
+    const predictedPupilResponseRate = 5; // in percent
 
-    const minGrade = subcourse.minGrade;
-    const maxGrade = subcourse.maxGrade;
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
-    const courseSubject = course.subject;
-    const grades = [];
+    if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+        throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
+    }
 
+    const course = await getCourse(subcourse.courseId);
+    const minGrade = subcourse.minGrade;
+    const maxGrade = subcourse.maxGrade;
+    const grades = [];
     for (let grade = minGrade; grade <= maxGrade; grade++) {
         grades.push(`${grade}. Klasse`);
     }
 
-    const pupils = await prisma.pupil.findMany({
-        where: { active: true, isParticipant: true, grade: { in: grades } },
+    let pupils = await prisma.pupil.findMany({
+        where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
     });
 
-    const context = await getNotificationContextForSubcourse(course, subcourse);
-
-    if (actionId === 'available_places_on_subcourse' && !isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
-        throw new Error(`Cannot send course promotion for Subcourse(${subcourse.id})`);
-    }
-
-    let sentCount = 0;
-    for (let pupil of pupils) {
+    const courseSubject = course.subject;
+    const filteredPupils = pupils.filter((pupil) => {
         const subjects = parseSubjectString(pupil.subjects);
         const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
-        if (!courseSubject || isPupilsSubject) {
-            await Notification.actionTaken(pupil, actionId, context);
-            sentCount += 1;
-        }
-    }
+        return !courseSubject || isPupilsSubject;
+    });
 
-    logger.info(`Sent ${sentCount} notifications to promote Subcourse(${subcourse.id})`);
+    const shuffledFilteredPupils = shuffleArray(filteredPupils);
+
+    // get random subset of filtered pupils
+    const seatsLeft = subcourse.maxParticipants * courseCapacity;
+    const randomPupilSampleSize = (seatsLeft / predictedPupilResponseRate) * 100;
+    const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
+
+    logger.info(
+        `Filtered ${filteredPupils.length} pupils and reduced that to (${randomFilteredPupilSample.length})
+        for Subcourse(${subcourse.id}) based on the predicted response rate`
+    );
+
+    const context: NotificationContext = await getNotificationContextForSubcourse(course, subcourse);
+    context.uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
+    await Notification.bulkActionTaken(
+        randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
+        'available_places_on_subcourse',
+        context
+    );
+
+    logger.info(`Sent ${randomFilteredPupilSample.length} notifications to promote Subcourse(${subcourse.id})`);
 }

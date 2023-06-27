@@ -1,5 +1,5 @@
 import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
-import { Root, Authorized, FieldResolver, Query, Resolver, Arg } from 'type-graphql';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
@@ -12,18 +12,30 @@ import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
-import { getAppointmentsForUser } from '../../common/appointment/get';
+import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
+import { getMyContacts } from '../../common/chat/contacts';
+import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
+import { getUserZAK } from '../../common/zoom/zoom-user';
 
+@ObjectType()
+export class Contact {
+    @Field((_type) => UserType)
+    user: UserType;
+    @Field((_type) => [String])
+    contactReasons: string[];
+    @Field((_type) => String, { nullable: true })
+    chatId?: string;
+}
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.USER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.USER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
@@ -73,7 +85,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {} };
+        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {}, sessionID: 'FAKE' };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }
@@ -149,11 +161,54 @@ export class UserFieldsResolver {
     @LimitedQuery()
     async appointments(
         @Root() user: User,
-        @Arg('take', { nullable: true }) take?: number,
-        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('take') take: number,
+        @Arg('skip') skip: number,
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async hasAppointments(@Root() user: User): Promise<boolean> {
+        return hasAppointmentsForUser(user);
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async lastAppointmentId(@Root() user: User): Promise<number> {
+        return getLastAppointmentId(user);
+    }
+
+    @Query((returns) => [Contact])
+    @Authorized(Role.USER)
+    async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
+        const { user } = context;
+        return getMyContacts(user);
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
+        const meetingIdAsInt = parseInt(meetingId);
+        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
+        return sdkKey;
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async zoomZAK(@Ctx() context: GraphQLContext) {
+        const { user } = context;
+
+        if (!isZoomFeatureActive()) {
+            return '';
+        }
+
+        const userZak = await getUserZAK(user.email);
+        if (!userZak || !userZak.token) {
+            throw new Error('Could not retrieve Zoom ZAK');
+        }
+        return userZak.token;
     }
 }

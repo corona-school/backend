@@ -5,6 +5,11 @@ import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
 import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
+import { getZoomUser } from '../zoom/zoom-user';
+import { deleteZoomUser } from '../zoom/zoom-user';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { PrerequisiteError } from '../util/error';
+import { isZoomFeatureActive } from '../zoom';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
@@ -26,7 +31,6 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
             dissolved: false,
         },
     });
-
     for (const match of matches) {
         await dissolveMatch(match, 0, student);
     }
@@ -91,6 +95,10 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         }
     }
 
+    if (isZoomFeatureActive() && student.zoomUserId) {
+        await deleteZoomUser(student);
+    }
+
     const updatedStudent = await prisma.student.update({
         data: { active: false },
         where: { id: student.id },
@@ -99,4 +107,15 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     await getTransactionLog().log(new DeActivateEvent(student, false, reason));
 
     return updatedStudent;
+}
+
+export async function reactivateStudent(student: Student, reason: string) {
+    if (student.active) {
+        throw new PrerequisiteError('Student is already active!');
+    }
+    if (student.isRedacted) {
+        throw new PrerequisiteError('Student already got redacted, too late... :(');
+    }
+    await prisma.student.update({ where: { id: student.id }, data: { active: true } });
+    await getTransactionLog().log(new DeActivateEvent(student, true, reason));
 }

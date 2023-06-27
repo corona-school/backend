@@ -1,7 +1,7 @@
 import * as GraphQLModel from '../generated/models';
-import { AuthorizedDeferred, Role } from '../authorizations';
+import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
-import { deactivateStudent } from '../../common/student/activation';
+import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -20,9 +20,8 @@ import {
     Prisma,
 } from '@prisma/client';
 import { setProjectFields } from '../../common/student/update';
-import { PrerequisiteError } from '../../common/util/error';
+import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { logInContext } from '../logging';
 import { userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
@@ -32,6 +31,9 @@ import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
+import { screening_jobstatus_enum } from '../../graphql/generated';
+import { createZoomUser, deleteZoomUser } from '../../common/zoom/zoom-user';
+import { GraphQLJSON } from 'graphql-scalars';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -46,6 +48,11 @@ export class ScreeningInput {
         nullable: true,
     })
     comment?: string | undefined;
+
+    @Field((_type) => screening_jobstatus_enum, {
+        nullable: true,
+    })
+    jobStatus?: screening_jobstatus_enum | undefined;
 
     @Field((_type) => String, {
         nullable: true,
@@ -137,13 +144,14 @@ export class StudentUpdateInput {
     university?: string;
 }
 
+const logger = getLogger('Student Mutations');
+
 export async function updateStudent(
     context: GraphQLContext,
     student: Student,
     update: StudentUpdateInput,
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
 ) {
-    const log = logInContext('Student', context);
     let {
         firstname,
         lastname,
@@ -199,12 +207,11 @@ export async function updateStudent(
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForStudent(res));
 
-    log.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
+    logger.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
 }
 
 async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    const log = logInContext('Student', ctx);
     let { email, register, activate, screen } = data;
     const screener = await getSessionScreener(ctx);
 
@@ -241,10 +248,10 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
             if (!!activate && !student.isStudent) {
                 // activation data was provided; student isn't a tutor yet
                 student = await becomeTutor(student, activate, tx, true);
-                log.info(`Made account with email ${email} a tutor. Student(${student.id})`);
+                logger.info(`Made account with email ${email} a tutor. Student(${student.id})`);
             } else if (!!activate) {
                 // activation data was provided but student already is a tutor
-                log.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
+                logger.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
                 // update existing account with new activation data:
                 student = await updateStudent(ctx, student, { ...activate }, tx);
             }
@@ -284,6 +291,14 @@ export class MutateStudentResolver {
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
+        const student = await getStudent(studentId);
+        await reactivateStudent(student, reason);
         return true;
     }
 
@@ -390,6 +405,45 @@ export class MutateStudentResolver {
         await cancelCoCReminders(student);
 
         log.info(`Cancelled CoC reminder for Student(${studentId})`);
+        return true;
+    }
+
+    @Mutation(() => GraphQLJSON)
+    @Authorized(Role.ADMIN)
+    async studentCreateZoomUser(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        if (student.zoomUserId) {
+            throw new RedundantError('Student already has a Zoom User');
+        }
+
+        const zoomUser = await createZoomUser(student);
+        log.info(`Admin created a Zoom User for Student(${student.id})`);
+        return zoomUser;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentDeleteZoomUser(@Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        if (!student.zoomUserId) {
+            throw new RedundantError('Student does not have a Zoom User');
+        }
+
+        const hasAppointmentsWithZoomMeeting =
+            (await prisma.lecture.count({
+                where: {
+                    organizerIds: { has: userForStudent(student).userID },
+                    zoomMeetingId: { not: null },
+                    start: { gte: new Date() },
+                },
+            })) > 0;
+
+        if (hasAppointmentsWithZoomMeeting) {
+            throw new PrerequisiteError('Cannot delete Zoom User for Student with scheduled Zoom Meetings');
+        }
+
+        await deleteZoomUser(student);
+        logger.info(`Admin deleted the Zoom User of Student(${student.id})`);
         return true;
     }
 }

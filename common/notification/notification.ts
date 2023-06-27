@@ -9,11 +9,13 @@ import { getLogger } from '../../common/logger/logger';
 import { hookExists } from './hook';
 import { getNotificationActions } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
+import { NotificationUpdateInput } from '../../graphql/generated';
 
 type MessageTranslationFromDb = {
     template: {
         body: string;
         headline: string;
+        modalText?: string;
     };
     id: number;
     notificationId: number;
@@ -97,8 +99,8 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
     invalidateCache();
 }
 
-export async function update(id: NotificationID, values: Partial<Omit<Notification, 'active'>>) {
-    if (values.hookID && !hookExists(values.hookID)) {
+export async function update(id: NotificationID, values: Partial<Omit<NotificationUpdateInput, 'active'>>) {
+    if (values.hookID && !hookExists(values.hookID.set)) {
         throw new Error(`Invalid HookID`);
     }
 
@@ -204,7 +206,7 @@ export async function importNotifications(notifications: Notification[], dropBef
                     }
                 } else {
                     const result = await prisma.notification.create({
-                        data: notification,
+                        data: { ...notification, sample_context: notification.sample_context ?? undefined },
                     });
 
                     log += `Created Notification(${notification.id})\n`;
@@ -235,7 +237,7 @@ export async function importNotifications(notifications: Notification[], dropBef
         }
     }
 
-    logger.info(log);
+    logger.info('Imported Notifications', { log });
     return log;
 }
 
@@ -365,7 +367,7 @@ export async function importMessageTranslations(messageTranslations: MessageTran
         throw new Error(log);
     }
 
-    logger.info(log);
+    logger.info('Message Translations imported', { log });
     return log;
 }
 

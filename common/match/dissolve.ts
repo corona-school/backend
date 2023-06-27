@@ -9,6 +9,7 @@ import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { getMatchHash } from './util';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Match');
 
@@ -24,6 +25,16 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
             dissolveReason,
         },
     });
+    const matchLectures = await prisma.lecture.findMany({
+        where: {
+            matchId: match.id,
+        },
+    });
+    for (const lecture of matchLectures) {
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
+    }
 
     await logTransaction('matchDissolve', dissolver, {
         matchId: match.id,
@@ -40,9 +51,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 
-    if (dissolver.email === student.email) {
+    if (dissolver && dissolver.email === student.email) {
         await Notification.actionTaken(pupil, 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
-    } else if (dissolver.email === pupil.email) {
+    } else if (dissolver && dissolver.email === pupil.email) {
         await Notification.actionTaken(student, 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
     }
 }
@@ -53,7 +64,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null },
+        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
         where: { id: match.id },
     });
 
@@ -61,6 +72,15 @@ export async function reactivateMatch(match: Match) {
 }
 
 export async function dissolveProjectMatch(match: Project_match, dissolveReason: number, dissolver: Pupil | Student | null) {
+    const matchLectures = await prisma.lecture.findMany({
+        where: { matchId: match.id },
+    });
+    for (const lecture of matchLectures) {
+        if (lecture.zoomMeetingId) {
+            await deleteZoomMeeting(lecture);
+        }
+    }
+
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
