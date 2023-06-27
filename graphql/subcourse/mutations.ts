@@ -2,12 +2,7 @@ import { randomBytes } from 'crypto';
 import moment from 'moment';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
-import {
-    addGroupAppointmentsOrganizer,
-    addGroupAppointmentsParticipant,
-    removeGroupAppointmentsOrganizer,
-    removeGroupAppointmentsParticipant,
-} from '../../common/appointment/participants';
+import { addGroupAppointmentsOrganizer, removeGroupAppointmentsOrganizer } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
@@ -327,11 +322,9 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
-        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
         return true;
     }
 
@@ -342,11 +335,9 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ): Promise<boolean> {
-        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
         return true;
     }
 
@@ -377,7 +368,6 @@ export class MutateSubcourseResolver {
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
 
         return true;
     }
@@ -395,7 +385,6 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await leaveSubcourse(subcourse, pupil);
-        await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
         return true;
     }
 

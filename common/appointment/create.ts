@@ -1,15 +1,18 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
+import { Prisma } from '@prisma/client';
 import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
-import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { createZoomMeeting, getZoomMeetingReport } from '../zoom/zoom-scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
 import { student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom';
+import * as Notification from '../../common/notification';
+import { Lecture } from '../entity/Lecture';
 
 const logger = getLogger();
 
@@ -64,7 +67,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
         zoomMeetingId = videoChat.id.toString();
     }
 
-    return await Promise.all(
+    const createdMatchAppointments = await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
                 await prisma.lecture.create({
@@ -82,11 +85,22 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                 })
         )
     );
+
+    // * send notification
+    await Notification.actionTaken(pupil, 'student_add_appointment_match', {
+        student,
+        user: pupil,
+        matchId: matchId,
+    });
+
+    return createdMatchAppointments;
 };
 
 export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[]) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
+    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
     const hosts = instructors.map((i) => i.student);
 
@@ -97,7 +111,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         zoomMeetingId = videoChat.id.toString();
     }
 
-    return await Promise.all(
+    const createdGroupAppointments = await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
                 await prisma.lecture.create({
@@ -115,6 +129,17 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                 })
         )
     );
+
+    // * send notification
+    for await (const participant of participants) {
+        await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
+            student: student,
+            user: participant,
+            course: subcourse.course,
+        });
+    }
+
+    return createdGroupAppointments;
 };
 
 export const createZoomMeetingForAppointments = async (
@@ -149,4 +174,15 @@ export const createZoomMeetingForAppointments = async (
     } catch (e) {
         throw new Error(`Zoom - Error while creating zoom meeting: ${e}`);
     }
+};
+
+export const saveZoomMeetingReport = async (appointment: Lecture) => {
+    const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
+    const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+    meetingReports.push(result);
+
+    await prisma.lecture.update({
+        where: { id: appointment.id },
+        data: { zoomMeetingReport: meetingReports },
+    });
 };

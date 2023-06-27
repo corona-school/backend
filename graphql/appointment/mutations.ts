@@ -7,19 +7,17 @@ import {
     createGroupAppointments,
     createMatchAppointments,
     isAppointmentOneWeekLater,
+    saveZoomMeetingReport,
 } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture, getStudent } from '../util';
-import * as Notification from '../../common/notification';
+import { getLecture, getMatch, getSubcourse } from '../util';
 import { getLogger } from '../../common/logger/logger';
-import { deleteZoomMeeting, getZoomMeetingReport } from '../../common/zoom/zoom-scheduled-meeting';
-import { Prisma } from '@prisma/client';
+import { deleteZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
-import { getStudentsFromList } from '../../common/user';
 import { RedundantError } from '../../common/util/error';
 
 const logger = getLogger('MutateAppointmentsResolver');
@@ -42,18 +40,10 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
     async appointmentMatchCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateMatchInput) {
-        const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
+        const match = await getMatch(appointment.matchId);
         await hasAccess(context, 'Match', match);
         await createMatchAppointments(match.id, [appointment]);
 
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        await Notification.actionTaken(match.pupil, 'student_add_appointment_match', {
-            student,
-            user: match.pupil,
-            matchId: appointment.matchId,
-        });
         return true;
     }
 
@@ -64,38 +54,18 @@ export class MutateAppointmentResolver {
         @Arg('matchId') matchId: number,
         @Arg('appointments', () => [AppointmentCreateMatchInput]) appointments: AppointmentCreateMatchInput[]
     ) {
-        const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
+        const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
         await createMatchAppointments(matchId, appointments);
-        const student = await getStudent(context.user.studentId);
-
-        await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {
-            student,
-            user: match.pupil,
-            matchId: matchId,
-        });
         return true;
     }
 
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER)
     async appointmentGroupCreate(@Ctx() context: GraphQLContext, @Arg('appointment') appointment: AppointmentCreateGroupInput) {
-        const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+        const subcourse = await getSubcourse(appointment.subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         await createGroupAppointments(subcourse.id, [appointment]);
-
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
-
-        for await (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
-                student: student,
-                user: participant,
-                course: subcourse.course,
-            });
-        }
         return true;
     }
 
@@ -113,19 +83,6 @@ export class MutateAppointmentResolver {
         } else {
             throw new Error('Appointment can not be created, because start is not one week later.');
         }
-
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
-
-        for await (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student_add_appointments_group', {
-                student: student,
-                user: participant,
-                course: subcourse.course,
-            });
-        }
         return true;
     }
 
@@ -134,7 +91,6 @@ export class MutateAppointmentResolver {
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
-
         await updateAppointment(context.user, appointment, appointmentToBeUpdated);
 
         return true;
@@ -143,9 +99,8 @@ export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
-        const appointment = await prisma.lecture.findUnique({ where: { id: appointmentId } });
+        const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-
         await declineAppointment(context.user, appointment);
 
         return true;
@@ -167,14 +122,7 @@ export class MutateAppointmentResolver {
     async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
-        const result = await getZoomMeetingReport(appointment.zoomMeetingId);
-        meetingReports.push(result);
-
-        await prisma.lecture.update({
-            where: { id: appointmentId },
-            data: { zoomMeetingReport: meetingReports },
-        });
+        await saveZoomMeetingReport(appointment);
 
         return true;
     }
