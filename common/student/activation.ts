@@ -5,11 +5,11 @@ import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
 import { getTransactionLog } from '../transactionlog';
 import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import * as Notification from '../notification';
-import { getZoomUser } from '../zoom/zoom-user';
-import { deleteZoomUser } from '../zoom/zoom-user';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { getZoomUser } from '../zoom/user';
+import { deleteZoomUser } from '../zoom/user';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
-import { isZoomFeatureActive } from '../zoom';
+import { isZoomFeatureActive } from '../zoom/util';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {

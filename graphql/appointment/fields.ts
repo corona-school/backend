@@ -8,7 +8,7 @@ import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
-import { getZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
+import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
 
 @ObjectType()

@@ -9,7 +9,7 @@ import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { getMatchHash } from './util';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 
 const logger = getLogger('Match');
 

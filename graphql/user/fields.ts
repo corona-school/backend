@@ -14,8 +14,8 @@ import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreference
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
-import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
-import { getUserZAK } from '../../common/zoom/zoom-user';
+import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
+import { getUserZAK } from '../../common/zoom/user';
 
 @ObjectType()
 export class Contact {

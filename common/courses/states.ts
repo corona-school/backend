@@ -10,7 +10,7 @@ import { getLastLecture } from './lectures';
 import moment from 'moment';
 import { ChatType, ContactReason } from '../chat/types';
 import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 
 const logger = getLogger('Course States');
 

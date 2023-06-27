@@ -14,7 +14,7 @@ import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getLecture, getMatch, getSubcourse } from '../util';
 import { getLogger } from '../../common/logger/logger';
-import { deleteZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
+import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';

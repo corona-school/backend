@@ -5,12 +5,12 @@ import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
-import { createZoomMeeting, getZoomMeetingReport } from '../zoom/zoom-scheduled-meeting';
-import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
+import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
+import { createZoomUser, getZoomUser } from '../zoom/user';
 import { student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
-import { isZoomFeatureActive } from '../zoom';
+import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
 import { Lecture } from '../entity/Lecture';
 
