@@ -4,11 +4,16 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateOneOnOneConversation, getOrCreateGroupConversation, markConversationAsReadOnlyForPupils } from '../../common/chat';
+import {
+    ConversationInfos,
+    getOrCreateOneOnOneConversation,
+    getOrCreateGroupConversation,
+    markConversationAsReadOnlyForPupils,
+    createContactChat,
+} from '../../common/chat';
 import { User, getUser } from '../../common/user';
-import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
+import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
-import { getMyContacts } from '../../common/chat/contacts';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -39,12 +44,14 @@ export class MutateChatResolver {
         const { user } = context;
         const memberUser = await getUser(memberUserId);
 
-        const allowed = await checkIfSubcourseParticipation([user.userID, memberUserId]);
+        const allowed = await isSubcourseParticipant([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
-            custom: {
-                ...(subcourseId && { subcourse: [subcourseId] }),
-            },
+            custom: {},
         };
+
+        if (subcourseId) {
+            conversationInfos.custom.subcourse = [subcourseId];
+        }
 
         if (allowed) {
             const conversation = await getOrCreateOneOnOneConversation([user, memberUser], conversationInfos, ContactReason.PARTICIPANT, subcourseId);
@@ -85,10 +92,12 @@ export class MutateChatResolver {
         const instructorUser = await getUser(instructorUserId);
 
         const conversationInfos: ConversationInfos = {
-            custom: {
-                ...(subcourseId && { subcourse: [subcourseId] }),
-            },
+            custom: {},
         };
+
+        if (subcourseId) {
+            conversationInfos.custom.prospectSubcourse = [subcourseId];
+        }
 
         const conversation = await getOrCreateOneOnOneConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
 
@@ -100,17 +109,7 @@ export class MutateChatResolver {
     async contactChatCreate(@Ctx() context: GraphQLContext, @Arg('contactUserId') contactUserId: string) {
         const { user } = context;
         const contactUser = await getUser(contactUserId);
-        const myContacts = await getMyContacts(user);
-        const contact = myContacts.find((c) => c.user.userID === contactUserId);
-
-        const conversationInfos: ConversationInfos = {
-            custom: {
-                ...(contact.match && { match: { matchId: contact.match.matchId } }),
-                ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
-            },
-        };
-
-        const conversation = await getOrCreateOneOnOneConversation([user, contactUser], conversationInfos, ContactReason.CONTACT);
-        return conversation.id;
+        const contactConversationId = await createContactChat(user, contactUser);
+        return contactConversationId;
     }
 }

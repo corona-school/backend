@@ -1,19 +1,13 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    checkResponseStatus,
-    convertConversationInfosToStringified,
-    convertTJConversation,
-    createOneOnOneId,
-    getConversationId,
-    userIdToTalkJsId,
-} from './helper';
+import { checkResponseStatus, convertConversationInfosToString, convertTJConversation, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
 import { Message } from 'talkjs/all';
-import { User } from '../user';
+import { User, getUser } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AccessRight, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { getMyContacts } from './contacts';
 
 dotenv.config();
 
@@ -37,7 +31,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 
     const conversationInfosWithParticipants = {
-        ...convertConversationInfosToStringified(conversationInfos),
+        ...convertConversationInfosToString(conversationInfos),
         participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
     };
 
@@ -213,7 +207,7 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(convertConversationInfosToStringified(conversationToBeUpdated)),
+            body: JSON.stringify(convertConversationInfosToString(conversationToBeUpdated)),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -283,7 +277,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'Read',
+                    access: AccessRight.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -306,7 +300,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'Read',
+                    access: AccessRight.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -328,7 +322,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'ReadWrite',
+                    access: AccessRight.READ_WRITE,
                 }),
             });
             await checkResponseStatus(response);
@@ -365,6 +359,24 @@ async function sendSystemMessage(message: string, conversationId: string, type?:
         throw new Error(error);
     }
 }
+async function createContactChat(meUser: User, contactUser: User): Promise<string> {
+    const myContacts = await getMyContacts(meUser);
+    const contact = myContacts.find((c) => c.user.userID === contactUser.userID);
+
+    if (!contact) {
+        throw new Error('Chat contact not found');
+    }
+
+    const conversationInfos: ConversationInfos = {
+        custom: {
+            ...(contact.match && { match: { matchId: contact.match.matchId } }),
+            ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
+        },
+    };
+
+    const conversation = await getOrCreateOneOnOneConversation([meUser, contactUser], conversationInfos, ContactReason.CONTACT);
+    return conversation.id;
+}
 
 export {
     getLastUnreadConversation,
@@ -380,6 +392,7 @@ export {
     getOrCreateGroupConversation,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
+    createContactChat,
     TALKJS_CONVERSATION_API_URL,
     Conversation,
     ConversationInfos,
