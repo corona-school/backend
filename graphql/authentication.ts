@@ -127,7 +127,7 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
         await userSessions.set(context.sessionToken, context.user);
         logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     }
-    updateLastLogin(user);
+    await updateLastLogin(user);
 }
 
 @Resolver((of) => UserType)
