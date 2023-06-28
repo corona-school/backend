@@ -206,7 +206,7 @@ export async function importNotifications(notifications: Notification[], dropBef
                     }
                 } else {
                     const result = await prisma.notification.create({
-                        data: notification,
+                        data: { ...notification, sample_context: notification.sample_context ?? undefined },
                     });
 
                     log += `Created Notification(${notification.id})\n`;
