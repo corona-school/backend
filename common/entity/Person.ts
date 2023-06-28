@@ -62,6 +62,7 @@ export abstract class Person {
     @Column({
         type: 'timestamp',
         nullable: true,
+        default: new Date(),
     })
     lastLogin?: Date;
 }

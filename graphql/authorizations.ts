@@ -401,6 +401,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             match: nobody,
             _count: nobody,
             waiting_list_enrollment: nobody,
+            lastLogin: nobody,
         }),
     },
 
@@ -481,6 +482,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             remission_request: nobody,
             _count: nobody,
             zoomUserId: onlyAdmin,
+            lastLogin: nobody,
         }),
     },
     Subcourse: {
