@@ -302,7 +302,7 @@ export async function updateLastLogin(user: User) {
         await prisma.student.update({ where: { id: user.studentId }, data: { lastLogin: new Date() } });
     }
     if (user.screenerId) {
-        await prisma.student.update({ where: { id: user.screenerId }, data: { lastLogin: new Date() } });
+        await prisma.screener.update({ where: { id: user.screenerId }, data: { lastLogin: new Date() } });
     }
 }
 
