@@ -1,6 +1,8 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
+import { PrerequisiteError } from '../../common/util/error';
+import { subcourseOver } from '../../common/courses/states';
 
 @ObjectType()
 class ByMonth {
@@ -171,6 +173,20 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
+    async nowFirstMatchesStudent(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT
+                    COUNT(*)::INT AS value,
+                    date_part('year', "createdAt"::date) AS year,
+                    date_part('month', "createdAt"::date) AS month
+                 FROM "match"
+                 WHERE "studentId" IN ( SELECT "studentId" FROM "match" GROUP BY "studentId" HAVING COUNT(*)::INT = 1 ) AND
+                   "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
+                 GROUP BY "year", "month"
+                 ORDER BY "year" ASC, "month" ASC;`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async nowDissolvedMatchesBeforeThreeMonths(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
@@ -242,7 +258,11 @@ export class StatisticsResolver {
                 GROUP BY "year", "month"
                 ORDER BY "year", "month";`;
     }
-
+    @FieldResolver(() => Int)
+    @Authorized(Role.ADMIN)
+    async numCourses() {
+        subcourseOver();
+    }
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async attendedCoursePlaces(@Root() statistics: Statistics) {
@@ -339,15 +359,43 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
-    async pupilScreenings(@Root() statistics: Statistics) {
+    async pupilScreenings(@Root() statistics: Statistics, @Arg('status') status: number) {
+        if (status < 0 || status > 3) {
+            throw new PrerequisiteError('Status must be a number between 0 and 3');
+        }
         return await prisma.$queryRaw`SELECT
                     COUNT(*)::INT AS value,
                     date_part('year', "createdAt"::date) AS year,
                     date_part('month', "createdAt"::date) AS month
-                 FROM "screening"
-                 WHERE "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp
+                 FROM "pupil_screening"
+                 WHERE "createdAt" > ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp AND "status" = '${status}'
                  GROUP BY "year", "month"
                  ORDER BY "year" ASC, "month" ASC;`;
+    }
+
+    @FieldResolver((returns) => Float)
+    @Authorized(Role.ADMIN)
+    async rateSuccessfulCoCs(@Root() statistics: Statistics) {
+        const currentDate = new Date(); // Get the current date
+        const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 8, currentDate.getDate());
+        const successfulScreeningsCount = await prisma.screening.count({ where: { success: true, createdAt: { gte: previousDate } }, distinct: 'studentId' });
+        const submittedCoCs = await prisma.certificate_of_conduct.count({ where: { createdAt: { gte: previousDate } }, distinct: 'studentId' });
+        return submittedCoCs / successfulScreeningsCount;
+    }
+
+    // @FieldResolver((returns) => Float)
+    // @Authorized(Role.ADMIN)
+    // async rateUndissolvedMatchAfterOneMonth(@Root() statistics: Statistics) {
+    //     const successfulScreeningsCount = await prisma.student.count({ where: { createdAt: match: {some: {dissolved: false}} }, distinct: 'studentId' });
+    //     return submittedCoCs / successfulScreeningsCount;
+    // }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN)
+    async dissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: number) {
+        return await prisma.match.count({
+            where: { dissolveReason: reason, AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lte: statistics.to } }] },
+        });
     }
 
     @FieldResolver((returns) => [ByMonth])
