@@ -13,7 +13,7 @@ export type Conversation = Pick<ConversationData, 'topicId' | 'id' | 'subject' |
     custom?: ChatMetaData;
     lastMessage?: Message;
     participants: {
-        [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
+        [id: string]: { access: ChatAccess; notify: boolean };
     };
     createdAt: number;
 };
@@ -31,7 +31,7 @@ export type TJConversation = Conversation & {
     custom?: TJChatMetaData;
     lastMessage?: Message;
     participants: {
-        [id: string]: { access: 'ReadWrite' | 'Read'; notify: boolean };
+        [id: string]: { access: ChatAccess; notify: boolean };
     };
     createdAt: number;
 };

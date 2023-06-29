@@ -9,9 +9,12 @@ import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { getAllConversations, getConversation, markConversationAsReadOnly, updateConversation } from './conversation';
+import { MatchContactPupil, MatchContactStudent } from './contacts';
 
-const userIdToTalkJsId = (userId: string): string => {
-    return userId.replace('/', '_');
+type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+
+const userIdToTalkJsId = (userId: string): TalkJSUserId => {
+    return userId.replace('/', '_') as TalkJSUserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
@@ -64,7 +67,7 @@ const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     return match;
 };
 
-const checkIfSubcourseParticipation = async (participants: string[]): Promise<boolean> => {
+const isSubcourseParticipant = async (participants: string[]): Promise<boolean> => {
     const participantUser = participants.map(async (participant) => {
         const user = await getUser(participant);
         return user;
@@ -146,8 +149,8 @@ const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMe
     return { readWriteMembers, readMembers };
 };
 
-const convertConversationInfosToStringified = (conversationInfos: ConversationInfos): ConversationInfos => {
-    const convertedObj: ConversationInfos = {
+const convertConversationInfosToString = (conversationInfos: ConversationInfos): ConversationInfos => {
+    const convertedConversationInfos: ConversationInfos = {
         subject: conversationInfos.subject,
         photoUrl: conversationInfos.photoUrl,
         welcomeMessages: conversationInfos.welcomeMessages,
@@ -157,11 +160,11 @@ const convertConversationInfosToStringified = (conversationInfos: ConversationIn
     for (const key in conversationInfos.custom) {
         if (conversationInfos.custom.hasOwnProperty(key)) {
             const value = conversationInfos.custom[key];
-            convertedObj.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
+            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
         }
     }
 
-    return convertedObj;
+    return convertedConversationInfos;
 };
 
 const convertTJConversation = (conversation: TJConversation): Conversation => {
@@ -264,6 +267,8 @@ const markEmptyConversationsAsReadOnly = async () => {
         }
     });
 };
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
 
 export {
     userIdToTalkJsId,
@@ -274,12 +279,15 @@ export {
     createOneOnOneId,
     getConversationId,
     getMatcheeConversation,
-    checkIfSubcourseParticipation,
-    getMembersForSubcourseGroupChat,
     checkChatMembersAccessRights,
-    convertConversationInfosToStringified,
-    convertTJConversation,
     removeSubcourseFromConversation,
     removeMatchFromConversation,
     markEmptyConversationsAsReadOnly,
+    markPastSubcoursesAsReadOnly,
+    isSubcourseParticipant,
+    getMembersForSubcourseGroupChat,
+    convertConversationInfosToString,
+    convertTJConversation,
+    isStudentContact,
+    isPupilContact,
 };

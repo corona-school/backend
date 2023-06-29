@@ -1,9 +1,10 @@
 import assert from 'assert';
 import { prisma } from '../prisma';
-import { isPupil, isStudent, userForPupil, userForStudent } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { User } from '../user';
 import { ContactReason } from './types';
+import { isPupilContact, isStudentContact } from './helper';
 
 export type UserContactType = {
     userID: string;
@@ -12,35 +13,52 @@ export type UserContactType = {
     email: string;
 };
 
-type UserContactlist = {
+type BaseContactList = {
     [userId: string]: {
         user: UserContactType;
         contactReasons: ContactReason[];
+    };
+};
+
+type CompleteContactList = BaseContactList & {
+    [userId: string]: {
         match?: { matchId: number };
         subcourse?: number[];
     };
 };
 
-type PupilWithSubcourseIds = {
+type MatchContactList = BaseContactList & {
+    [userId: string]: {
+        match: { matchId: number };
+    };
+};
+
+type SubcourseContactList = BaseContactList & {
+    [userId: string]: {
+        subcourse: number[];
+    };
+};
+
+type SubcourseContactPupil = {
     pupil: Pupil;
     subcourseIds: number[];
 };
 
-type StudentWithSubcourseIds = {
+type SubcourseContactStudent = {
     student: Student;
     subcourseIds: number[];
 };
 
-type PupilWithMatchId = {
+export type MatchContactPupil = {
     pupil: Pupil;
     matchId: number;
 };
 
-type StudentWithMatchId = {
+export type MatchContactStudent = {
     student: Student;
     matchId: number;
 };
-const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | PupilWithMatchId[]> => {
+const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[] | MatchContactPupil[]> => {
     if (user.pupilId) {
         const studentsWithMatchId = await prisma.student.findMany({
             where: {
@@ -49,7 +67,7 @@ const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | Pupi
             include: { match: true },
         });
 
-        const studentWithMatchId: StudentWithMatchId[] = studentsWithMatchId.map((studentWithMatchId) => {
+        const studentWithMatchId: MatchContactStudent[] = studentsWithMatchId.map((studentWithMatchId) => {
             return {
                 student: studentWithMatchId,
                 matchId: studentWithMatchId.match[0].id,
@@ -64,7 +82,7 @@ const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | Pupi
             },
             include: { match: true },
         });
-        const pupilWithMatchId: PupilWithMatchId[] = pupilsWithMatchId.map((pupilWithMatchId) => {
+        const pupilWithMatchId: MatchContactPupil[] = pupilsWithMatchId.map((pupilWithMatchId) => {
             return {
                 pupil: pupilWithMatchId,
                 matchId: pupilWithMatchId.match[0].id,
@@ -74,7 +92,7 @@ const getMatchContacts = async (user: User): Promise<StudentWithMatchId[] | Pupi
         return pupilWithMatchId;
     }
 };
-const getSubcourseInstructorContacts = async (pupil: User): Promise<StudentWithSubcourseIds[]> => {
+const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
     const studentsWithSubcourseIds = await prisma.student.findMany({
         where: {
@@ -97,11 +115,18 @@ const getSubcourseInstructorContacts = async (pupil: User): Promise<StudentWithS
                         },
                     },
                 },
+                where: {
+                    subcourse: {
+                        subcourse_participants_pupil: {
+                            some: { pupilId: pupil.pupilId },
+                        },
+                    },
+                },
             },
         },
     });
 
-    const instructorsWithSubcourseIds: StudentWithSubcourseIds[] = studentsWithSubcourseIds.map((studentWithSubcourseIds) => {
+    const instructorsWithSubcourseIds: SubcourseContactStudent[] = studentsWithSubcourseIds.map((studentWithSubcourseIds) => {
         const subcourseIds = studentWithSubcourseIds.subcourse_instructors_student.map((participant) => participant.subcourse.id);
         return {
             student: studentWithSubcourseIds,
@@ -111,7 +136,7 @@ const getSubcourseInstructorContacts = async (pupil: User): Promise<StudentWithS
 
     return instructorsWithSubcourseIds;
 };
-const getSubcourseParticipantContact = async (student: User): Promise<PupilWithSubcourseIds[]> => {
+const getSubcourseParticipantContactForUser = async (student: User): Promise<SubcourseContactPupil[]> => {
     assert(student.studentId, 'Student must have an studentId');
     const pupilsWithSubcourseIds = await prisma.pupil.findMany({
         where: {
@@ -138,7 +163,7 @@ const getSubcourseParticipantContact = async (student: User): Promise<PupilWithS
         },
     });
 
-    const participantsWithSubcourseIds: PupilWithSubcourseIds[] = pupilsWithSubcourseIds.map((pupilWithSubcourseIds) => {
+    const participantsWithSubcourseIds: SubcourseContactPupil[] = pupilsWithSubcourseIds.map((pupilWithSubcourseIds) => {
         const subcourseIds = pupilWithSubcourseIds.subcourse_participants_pupil.map((participant) => participant.subcourse.id);
         return {
             pupil: pupilWithSubcourseIds,
@@ -148,57 +173,58 @@ const getSubcourseParticipantContact = async (student: User): Promise<PupilWithS
 
     return participantsWithSubcourseIds;
 };
-const getMySubcourseContacts = async (user: User): Promise<UserContactlist> => {
-    let subcourseContactsList: UserContactlist = {};
+const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseContactList> => {
+    let subcourseContactsList: SubcourseContactList = {};
 
-    if (user.pupilId) {
-        const subcourseContacts = await getSubcourseInstructorContacts(user);
-        for (const subcourseContact of subcourseContacts) {
-            const instructorSubcourseId = userForStudent(subcourseContact.student).userID;
-            const contactReasons = [ContactReason.COURSE];
+    const subcourseContacts = await getInstructorsForPupilSubcourses(pupil);
+    for (const subcourseContact of subcourseContacts) {
+        const instructorSubcourseId = userForStudent(subcourseContact.student).userID;
+        const contactReasons = [ContactReason.COURSE];
 
-            subcourseContactsList[instructorSubcourseId] = {
-                user: {
-                    firstname: subcourseContact.student.firstname,
-                    lastname: subcourseContact.student.lastname,
-                    userID: instructorSubcourseId,
-                    email: subcourseContact.student.email,
-                },
-                contactReasons: contactReasons,
-                subcourse: subcourseContact.subcourseIds,
-            };
-        }
-    }
-
-    if (user.studentId) {
-        const subcourseContacts = await getSubcourseParticipantContact(user);
-        for (const subcourseContact of subcourseContacts) {
-            const participantSubcourseId = userForPupil(subcourseContact.pupil).userID;
-            const contactReasons = [ContactReason.COURSE];
-            subcourseContactsList[participantSubcourseId] = {
-                user: {
-                    firstname: subcourseContact.pupil.firstname,
-                    lastname: subcourseContact.pupil.lastname,
-                    userID: participantSubcourseId,
-                    email: subcourseContact.pupil.email,
-                },
-                contactReasons: contactReasons,
-                subcourse: subcourseContact.subcourseIds,
-            };
-        }
+        subcourseContactsList[instructorSubcourseId] = {
+            user: {
+                firstname: subcourseContact.student.firstname,
+                lastname: subcourseContact.student.lastname,
+                userID: instructorSubcourseId,
+                email: subcourseContact.student.email,
+            },
+            contactReasons: contactReasons,
+            subcourse: subcourseContact.subcourseIds,
+        };
     }
 
     return subcourseContactsList;
 };
-const getMyMatchContacts = async (user: User): Promise<UserContactlist> => {
-    let matchContactList: UserContactlist = {};
-    const matchContacts = await getMatchContacts(user);
+const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseContactList> => {
+    let subcourseContactsList: SubcourseContactList = {};
+
+    const subcourseContacts = await getSubcourseParticipantContactForUser(student);
+    for (const subcourseContact of subcourseContacts) {
+        const participantSubcourseId = userForPupil(subcourseContact.pupil).userID;
+        const contactReasons = [ContactReason.COURSE];
+        subcourseContactsList[participantSubcourseId] = {
+            user: {
+                firstname: subcourseContact.pupil.firstname,
+                lastname: subcourseContact.pupil.lastname,
+                userID: participantSubcourseId,
+                email: subcourseContact.pupil.email,
+            },
+            contactReasons: contactReasons,
+            subcourse: subcourseContact.subcourseIds,
+        };
+    }
+
+    return subcourseContactsList;
+};
+const getMyMatchContacts = async (user: User): Promise<MatchContactList> => {
+    let matchContactList: MatchContactList = {};
+    const matchContacts = await getMatchContactsForUser(user);
     for (const matchContact of matchContacts) {
         let matchee: User;
-        if ('student' in matchContact) {
+        if (isStudentContact(matchContact)) {
             matchee = userForStudent(matchContact.student as Student);
         }
-        if ('pupil' in matchContact) {
+        if (isPupilContact(matchContact)) {
             matchee = userForPupil(matchContact.pupil as Pupil);
         }
         const contactReasons = [ContactReason.MATCH];
@@ -213,7 +239,14 @@ const getMyMatchContacts = async (user: User): Promise<UserContactlist> => {
     return matchContactList;
 };
 export const getMyContacts = async (user: User) => {
-    const subcourseContacts = await getMySubcourseContacts(user);
+    let subcourseContacts: CompleteContactList = {};
+    if (user.pupilId) {
+        subcourseContacts = await getSubcourseContactsForPupil(user);
+    }
+
+    if (user.studentId) {
+        subcourseContacts = await getSubcourseContactsForStudent(user);
+    }
     const matchContacts = await getMyMatchContacts(user);
 
     for (const contactId in subcourseContacts) {
@@ -224,7 +257,7 @@ export const getMyContacts = async (user: User) => {
             delete matchContacts[contactId];
         }
     }
-    const myContacts = { ...subcourseContacts, ...matchContacts };
+    const myContacts: CompleteContactList = { ...subcourseContacts, ...matchContacts };
     const myContactsAsArray = Object.values(myContacts);
     return myContactsAsArray;
 };

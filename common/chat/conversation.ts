@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     checkChatMembersAccessRights,
     checkResponseStatus,
-    convertConversationInfosToStringified,
+    convertConversationInfosToString,
     convertTJConversation,
     createOneOnOneId,
     getConversationId,
@@ -14,6 +14,7 @@ import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
 import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { getMyContacts } from './contacts';
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
     }
 
     const conversationInfosWithParticipants = {
-        ...convertConversationInfosToStringified(conversationInfos),
+        ...convertConversationInfosToString(conversationInfos),
         participants: participants.map((participant: User) => userIdToTalkJsId(participant.userID)),
     };
 
@@ -233,7 +234,7 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(convertConversationInfosToStringified(conversationToBeUpdated)),
+            body: JSON.stringify(convertConversationInfosToString(conversationToBeUpdated)),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -306,7 +307,7 @@ async function markConversationAsReadOnly(conversationId: string, reason?: 'anno
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: 'Read',
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -388,6 +389,24 @@ async function sendSystemMessage(message: string, conversationId: string, type?:
         throw new Error(error);
     }
 }
+async function createContactChat(meUser: User, contactUser: User): Promise<string> {
+    const myContacts = await getMyContacts(meUser);
+    const contact = myContacts.find((c) => c.user.userID === contactUser.userID);
+
+    if (!contact) {
+        throw new Error('Chat contact not found');
+    }
+
+    const conversationInfos: ConversationInfos = {
+        custom: {
+            ...(contact.match && { match: { matchId: contact.match.matchId } }),
+            ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
+        },
+    };
+
+    const conversation = await getOrCreateOneOnOneConversation([meUser, contactUser], conversationInfos, ContactReason.CONTACT);
+    return conversation.id;
+}
 
 export {
     getLastUnreadConversation,
@@ -404,6 +423,7 @@ export {
     getOrCreateGroupConversation,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
+    createContactChat,
     TALKJS_CONVERSATION_API_URL,
     Conversation,
     ConversationInfos,
