@@ -20,7 +20,7 @@ import { GraphQLContext } from '../context';
 import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
+import { Deprecated, getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
 import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
 
@@ -87,8 +87,7 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
-        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures, allowChatContactParticipants, allowChatContactProspects, groupChatType } =
-            subcourse;
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
         const result = await prisma.subcourse.create({
             data: {
                 courseId,
@@ -100,7 +99,6 @@ export class MutateSubcourseResolver {
                 allowChatContactParticipants,
                 allowChatContactProspects,
                 groupChatType,
-                lecture: { createMany: { data: lectures || [] } },
             },
         });
 
@@ -192,6 +190,7 @@ export class MutateSubcourseResolver {
         return true;
     }
 
+    @Deprecated('zoom meetings are now created automatically.')
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseSetMeetingURL(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('meetingURL') meetingURL: string) {
@@ -230,6 +229,7 @@ export class MutateSubcourseResolver {
         return true;
     }
 
+    @Deprecated('zoom meetings are now created automatically.')
     @Mutation((returns) => String)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_PARTICIPANT)
     async subcourseJoinMeeting(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
@@ -272,6 +272,7 @@ export class MutateSubcourseResolver {
         return url;
     }
 
+    @Deprecated('use appointment creation instead.')
     @Mutation((returns) => GraphQLModel.Lecture)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async lectureCreate(
@@ -292,6 +293,7 @@ export class MutateSubcourseResolver {
         return result;
     }
 
+    @Deprecated('use appointment cancel instead.')
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async lectureDelete(@Ctx() context: GraphQLContext, @Arg('lectureId') lectureId: number): Promise<Boolean> {
