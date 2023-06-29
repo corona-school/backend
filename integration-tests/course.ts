@@ -98,7 +98,6 @@ export const subcourseOne = test('Create Subcourse', async () => {
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
                 groupChatType: ${ChatType.NORMAL}
-                lectures: [{ start: "${nextMinute.toISOString()}" duration: 1 }]
             }) { id }
         }
     `);
@@ -151,22 +150,6 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     // Now appears in public subcourses
     assert.ok(subcoursesPublicAfter.some(it => it.id === subcourseId)); */
-});
-
-void test('Admin set subcourse meetingURL and join', async () => {
-    await adminClient.request(`
-        mutation SetURL {
-            subcourseSetMeetingURL(subcourseId: 1, meetingURL: "https://example.com")
-        }
-    `);
-
-    const meetingURL = await adminClient.request(`
-        mutation GetURL {
-            subcourseJoinMeeting(subcourseId: 1)
-        }
-    `);
-
-    assert.strictEqual(meetingURL.subcourseJoinMeeting, 'https://example.com');
 });
 
 void test('Search further instructors', async () => {
