@@ -15,12 +15,12 @@ export function getAppointmentForNotification(appointment: Appointment, original
     return {
         ...appointment,
 
-        start_day: appointment.start.toLocaleString(language, { weekday: 'long' }),
-        start_date: appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' }),
-        start_time: appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit' }),
+        start_day: appointment.start.toLocaleString(language, { weekday: 'long', timeZone: 'Europe/Berlin' }),
+        start_date: appointment.start.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }),
+        start_time: appointment.start.toLocaleString(language, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
 
-        end_date: end.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric' }),
-        end_time: end.toLocaleString(language, { hour: '2-digit', minute: '2-digit' }),
+        end_date: end.toLocaleString(language, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }),
+        end_time: end.toLocaleString(language, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
 
         original: original ? getAppointmentForNotification(original) : undefined,
     };
