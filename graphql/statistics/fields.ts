@@ -565,59 +565,37 @@ export class StatisticsResolver {
         });
     }
 
-    @FieldResolver(() => [TimeSeries])
+    @FieldResolver(() => TimeBuckets)
     @Authorized(Role.ADMIN)
     async matchesByDuration(@Root() statistics: Statistics) {
-        let num0to2weeks = 0;
-        let num2to4weeks = 0;
-        let num1to2months = 0;
-        let num2to4months = 0;
-        let num4to10months = 0;
-        let numMoreThan10months = 0;
+        const buckets: TimeBuckets = {
+            num0to14: 0,
+            num15to28: 0,
+            num29to60: 0,
+            num61to120: 0,
+            num121to300: 0,
+            numMore: 0,
+        };
 
         const matches = await prisma.match.findMany({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
         matches.forEach((match) => {
-            const duration = match.dissolved ? match.dissolvedAt.getTime() - match.createdAt.getTime() : new Date().getTime() - match.createdAt.getTime();
-            if (duration < 2 * 7 * 24 * 60 * 60 * 1000) {
-                num0to2weeks++;
-            } else if (duration < 4 * 7 * 24 * 60 * 60 * 1000) {
-                num2to4weeks++;
-            } else if (duration < 2 * 30 * 24 * 60 * 60 * 1000) {
-                num1to2months++;
-            } else if (duration < 4 * 30 * 24 * 60 * 60 * 1000) {
-                num2to4months++;
-            } else if (duration < 10 * 30 * 24 * 60 * 60 * 1000) {
-                num4to10months++;
+            let duration = match.dissolved ? match.dissolvedAt.getTime() - match.createdAt.getTime() : new Date().getTime() - match.createdAt.getTime();
+            duration *= 24 * 60 * 60 * 1000;
+            if (duration <= 14) {
+                buckets.num0to14++;
+            } else if (duration <= 28) {
+                buckets.num15to28++;
+            } else if (duration <= 60) {
+                buckets.num29to60++;
+            } else if (duration <= 120) {
+                buckets.num61to120++;
+            } else if (duration <= 300) {
+                buckets.num121to300++;
             } else {
-                numMoreThan10months++;
+                buckets.numMore++;
             }
         });
-        return [
-            {
-                label: '0-2 Wochen',
-                value: num0to2weeks,
-            },
-            {
-                label: '2-4 Wochen',
-                value: num2to4weeks,
-            },
-            {
-                label: '1-2 Monate',
-                value: num1to2months,
-            },
-            {
-                label: '2-4 Monate',
-                value: num2to4months,
-            },
-            {
-                label: '4-10 Monate',
-                value: num4to10months,
-            },
-            {
-                label: '10+ Monate',
-                value: numMoreThan10months,
-            },
-        ];
+        return buckets;
     }
 
     @FieldResolver((returns) => [ByMonth])
