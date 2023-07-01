@@ -34,14 +34,6 @@ class TimeBuckets {
 }
 
 @ObjectType()
-class TimeSeries {
-    @Field({ nullable: true }) // null on invalid dates
-    label?: string;
-    @Field({ nullable: true })
-    value?: number;
-}
-
-@ObjectType()
 class Statistics {
     @Field({ nullable: true })
     from: string; // ISO Date String
