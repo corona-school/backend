@@ -9,6 +9,7 @@ import { getZoomUser } from '../zoom/zoom-user';
 import { deleteZoomUser } from '../zoom/zoom-user';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
+import { isZoomFeatureActive } from '../zoom';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
@@ -94,10 +95,8 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         }
     }
 
-    const zoomUser = await getZoomUser(student.email);
-
-    if (zoomUser) {
-        await deleteZoomUser(zoomUser.id);
+    if (isZoomFeatureActive() && student.zoomUserId) {
+        await deleteZoomUser(student);
     }
 
     const updatedStudent = await prisma.student.update({

@@ -16,6 +16,7 @@ interface CourseDTO extends WebflowMetadata {
     instructor: string;
 
     startingdate: string;
+    endingdate: string;
     weekday: string;
     courseduration: string; // like "45 min"
     lecturecount: number;
@@ -52,15 +53,19 @@ function generateInstructor(subcourse: WebflowSubcourse): string {
     return names.join(', ');
 }
 
-function getStartDate(subcourse: WebflowSubcourse): Moment | null {
+function getStartAndEndDate(subcourse: WebflowSubcourse): [Moment, Moment] | null {
     let earliestDate: Moment | null = null;
+    let latestDate: Moment | null = null;
     for (const lecture of subcourse.lecture) {
-        const startDate = moment(lecture.start);
-        if (earliestDate == null || startDate.isBefore(earliestDate)) {
+        const lectureDate = moment(lecture.start);
+        if (earliestDate === null || lectureDate.isBefore(earliestDate)) {
             earliestDate = moment(lecture.start);
         }
+        if (latestDate === null || lectureDate.isAfter(latestDate)) {
+            latestDate = moment(lecture.start);
+        }
     }
-    return earliestDate;
+    return earliestDate && latestDate ? [earliestDate, latestDate] : null;
 }
 
 function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
@@ -118,7 +123,8 @@ function translateSubject(subject: CourseSubjectEnum): string {
 }
 
 function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
-    const startDate: Moment = getStartDate(subcourse) || moment();
+    const [startDate, endDate] = getStartAndEndDate(subcourse) || [moment(), moment()];
+
     // make sure that the weekday can be properly translated
     startDate.locale('de');
 
@@ -133,6 +139,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
         instructor: generateInstructor(subcourse),
 
         startingdate: startDate.toISOString(),
+        endingdate: endDate.toISOString(),
         weekday: startDate.format('dddd'),
         courseduration: `${getTotalCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
         lecturecount: subcourse.lecture.length,

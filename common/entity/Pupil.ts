@@ -16,6 +16,7 @@ import { LearningGermanSince } from '../daz/learningGermanSince';
 import { Language } from '../daz/language';
 import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
 import { PupilScreening } from './PupilScreening';
+import { WaitingListEnrollment } from './WaitingListEnrollment';
 
 @Entity()
 export class Pupil extends Person {
@@ -101,6 +102,9 @@ export class Pupil extends Person {
 
     @ManyToMany((type) => Subcourse, (subcourse) => subcourse.waitingList)
     queuedSubcourses: Subcourse[];
+
+    @ManyToMany((type) => WaitingListEnrollment, (waitinglistenrollment) => waitinglistenrollment.pupil)
+    waitingListEnrollments: WaitingListEnrollment[];
 
     @OneToMany((type) => CourseAttendanceLog, (courseAttendanceLog) => courseAttendanceLog.pupil)
     courseAttendanceLog: CourseAttendanceLog[];

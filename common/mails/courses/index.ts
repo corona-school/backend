@@ -18,6 +18,7 @@ import { getCourseImageURL } from '../../courses/util';
 import { createSecretEmailToken } from '../../secret';
 import { getCourse } from '../../../graphql/util';
 import { shuffleArray } from '../../../common/util/basic';
+import { NotificationContext } from '../../notification/types';
 
 const logger = getLogger('Course Notification');
 
@@ -275,7 +276,8 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
         for Subcourse(${subcourse.id}) based on the predicted response rate`
     );
 
-    const context = await getNotificationContextForSubcourse(course, subcourse);
+    const context: NotificationContext = await getNotificationContextForSubcourse(course, subcourse);
+    context.uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
     await Notification.bulkActionTaken(
         randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
         'available_places_on_subcourse',

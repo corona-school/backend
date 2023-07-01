@@ -61,7 +61,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { sample_context: { not: null } },
+            where: { sample_context: { not: undefined } },
         });
 
         const aggregated = await prisma.concrete_notification.groupBy({

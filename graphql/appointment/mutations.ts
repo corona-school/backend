@@ -1,4 +1,4 @@
-import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int } from 'type-graphql';
+import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int, Authorized } from 'type-graphql';
 import { Lecture as Appointment } from '../generated';
 import { Role } from '../../common/user/roles';
 import {
@@ -14,11 +14,13 @@ import { prisma } from '../../common/prisma';
 import { getLecture, getStudent } from '../util';
 import * as Notification from '../../common/notification';
 import { getLogger } from '../../common/logger/logger';
-import { getZoomMeetingReport } from '../../common/zoom/zoom-scheduled-meeting';
+import { deleteZoomMeeting, getZoomMeetingReport } from '../../common/zoom/zoom-scheduled-meeting';
 import { Prisma } from '@prisma/client';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
+import { getStudentsFromList } from '../../common/user';
+import { RedundantError } from '../../common/util/error';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -175,5 +177,17 @@ export class MutateAppointmentResolver {
         });
 
         return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async appointmentDeleteZoomMeeting(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        if (!appointment.zoomMeetingId) {
+            throw new RedundantError('Appointment has no Zoom Meeting');
+        }
+
+        await deleteZoomMeeting(appointment);
+        logger.info(`Admin deleted Zoom Meeting of Appointment(${appointment.id})`);
     }
 }

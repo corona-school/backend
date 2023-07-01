@@ -232,7 +232,7 @@ const onlyAdmin = [Authorized(Role.ADMIN)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
-const participantOrOwner = [Authorized(Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
 const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
@@ -326,6 +326,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Secret: { _all: nobody },
     Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
+    Waiting_list_enrollment: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -399,6 +400,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_waiting_list_pupil: nobody,
             match: nobody,
             _count: nobody,
+            waiting_list_enrollment: nobody,
         }),
     },
 
@@ -478,7 +480,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
-            zoomUserId: nobody,
+            zoomUserId: onlyAdmin,
         }),
     },
     Subcourse: {
@@ -508,6 +510,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             _count: nobody,
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,
+            waiting_list_enrollment: adminOrOwner,
         }),
     },
     Course: {
@@ -548,11 +551,11 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 instructorId: nobody,
                 _count: nobody,
                 match: adminOrOwner,
-                matchId: adminOrOwner,
+                matchId: participantOrOwnerOrAdmin,
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
-                declinedBy: participantOrOwner,
-                zoomMeetingId: participantOrOwner,
+                declinedBy: participantOrOwnerOrAdmin,
+                zoomMeetingId: participantOrOwnerOrAdmin,
                 zoomMeetingReport: adminOrOwner,
             }
         ),
