@@ -551,7 +551,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 instructorId: nobody,
                 _count: nobody,
                 match: adminOrOwner,
-                matchId: adminOrOwner,
+                matchId: participantOrOwnerOrAdmin,
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwnerOrAdmin,

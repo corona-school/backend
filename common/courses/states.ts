@@ -154,9 +154,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             if (update.groupChatType === ChatType.NORMAL) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {
-                        type: ContactReason.COURSE,
-                    },
+                    custom: {},
                 };
 
                 await markConversationAsWriteable(subcourse.conversationId);
@@ -164,9 +162,7 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {
-                        type: ContactReason.ANNOUNCEMENT,
-                    },
+                    custom: {},
                 };
                 await markConversationAsReadOnlyForPupils(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
