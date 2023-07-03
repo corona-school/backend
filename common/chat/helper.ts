@@ -7,8 +7,8 @@ import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
-import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { getAllConversations, getConversation, markConversationAsReadOnly, updateConversation } from './conversation';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;

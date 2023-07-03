@@ -5,6 +5,7 @@ import zoomRetry from './zoom-retry';
 import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
+import moment from 'moment';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -67,10 +68,10 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
                     agenda: 'My Meeting',
                     default_password: false,
                     duration: 60,
-                    start_time: startTime,
-                    timezone: 'Europe/Berlin',
+                    start_time: moment(startTime).toISOString(),
                     type: RecurrenceMeetingTypes.WEEKLY,
                     mute_upon_entry: true,
+                    join_before_host: true,
                     waiting_room: isCourse ? true : false,
                     breakout_room: isCourse ? true : false,
                     recurrence: endDateTime && {

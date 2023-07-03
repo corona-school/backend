@@ -106,11 +106,13 @@ const getOrCreateOneOnOneConversation = async (
 
     const participantsConversationId = getConversationId(participants);
     const participantsConversation = await getConversation(participantsConversationId);
-    const { readMembers } = checkChatMembersAccessRights(participantsConversation);
-    const isChatReadOnly = readMembers.length > 0;
+    if (participantsConversation) {
+        const { readMembers } = checkChatMembersAccessRights(participantsConversation);
+        const isChatReadOnly = readMembers.length > 0;
 
-    if (isChatReadOnly) {
-        await markConversationAsWriteable(participantsConversationId);
+        if (isChatReadOnly) {
+            await markConversationAsWriteable(participantsConversationId);
+        }
     }
 
     if (participantsConversation) {
