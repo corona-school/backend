@@ -307,7 +307,7 @@ export class StatisticsResolver {
         return await prisma.pupil.count({
             where: {
                 match: { some: {} },
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lte: statistics.to } }],
+                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
             },
         });
     }
@@ -318,18 +318,18 @@ export class StatisticsResolver {
         return await prisma.waiting_list_enrollment.count({
             distinct: 'pupilId',
             where: {
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lte: statistics.to } }],
+                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
             },
         });
     }
 
     @FieldResolver(() => Int)
     @Authorized(Role.ADMIN)
-    async numCourseAppointments(@Root() statistics: Statistics, @Arg('category') category: course_category_enum) {
+    async numCourseAppointments(@Root() statistics: Statistics, @Arg('category', { nullable: true }) category?: course_category_enum) {
         return await prisma.lecture.count({
             where: {
-                subcourse: { course: { category: { equals: category } } },
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lte: statistics.to } }],
+                subcourse: category != null ? { course: { category: { equals: category } } } : undefined,
+                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
             },
         });
     }
@@ -338,7 +338,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async timeCommitment(@Root() statistics: Statistics) {
         const matches = await prisma.match.findMany({
-            where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lte: statistics.to } }] },
+            where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] },
             orderBy: { createdAt: 'asc' },
         });
         const intervals = new Map<number, number>();
@@ -426,18 +426,22 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
-    async averageMatchesOfTutee() {
-        const tuteesWithMatch = await prisma.pupil.count({ where: { match: { some: {} } } });
-        const matchesTotal = await prisma.match.count({});
+    async averageMatchesOfTutee(@Root() statistics: Statistics) {
+        const tuteesWithMatch = await prisma.pupil.count({
+            where: { match: { some: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } } },
+        });
+        const matchesTotal = await prisma.match.count({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
 
         return matchesTotal / tuteesWithMatch;
     }
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
-    async averageMatchesOfTutors() {
-        const tutorsWithMatch = await prisma.student.count({ where: { match: { some: {} } } });
-        const matchesTotal = await prisma.match.count({});
+    async averageMatchesOfTutors(@Root() statistics: Statistics) {
+        const tutorsWithMatch = await prisma.student.count({
+            where: { match: { some: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } } },
+        });
+        const matchesTotal = await prisma.match.count({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
 
         return matchesTotal / tutorsWithMatch;
     }
@@ -496,7 +500,7 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
-    async rateSuccessfulCoCs(@Root() statistics: Statistics) {
+    async rateSuccessfulCoCs() {
         const currentDate = new Date(); // Get the current date
         const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 8, currentDate.getDate());
         const successfulScreeningsCount = await prisma.screening.count({
@@ -515,44 +519,52 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
-    async rateFirstMatchDissolvedBeforeOneMonth(@Root() statistics: Statistics) {
-        const students = await prisma.student.findMany({ select: { match: true } });
+    async rateTutorFirstMatchStillActiveAfterOneMonth(@Root() statistics: Statistics) {
+        const now = new Date();
+        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        const students = await prisma.student.findMany({
+            where: {
+                createdAt: { lte: oneMonthAgo },
+                match: { some: {} },
+            },
+            select: {
+                match: true,
+            },
+        });
+
         const relevantStudents = students.filter((s) => {
             const firstMatch = s.match.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-            return firstMatch.createdAt > new Date(statistics.to) && firstMatch.createdAt < new Date(statistics.from);
+            return firstMatch.dissolvedAt.getTime() - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000;
         });
-        const numStudentsWithMatches = relevantStudents.reduce((acc, cur) => (cur.match.length > 0 ? acc + 1 : acc), 0);
-        const numStudentsFirstMatchDissolvedBeforeOneMonth = relevantStudents.reduce((acc, cur) => {
-            const firstMatch = cur.match.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-            if (
-                firstMatch.dissolved &&
-                firstMatch.dissolvedAt <= new Date(firstMatch.createdAt.getFullYear(), firstMatch.createdAt.getMonth() + 1, firstMatch.createdAt.getDate())
-            ) {
-                return acc + 1;
-            }
-            return acc;
-        }, 0);
-        return numStudentsFirstMatchDissolvedBeforeOneMonth / numStudentsWithMatches;
+
+        return relevantStudents.length / students.length;
     }
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
     async rateTargetAudience(@Root() statistics: Statistics) {
-        const numPupils = await prisma.pupil.count();
-        const numSuccessfulScreening = await prisma.pupil_screening.count({
-            where: { status: 'success' },
+        const numPupils = await prisma.pupil.count({
+            where: {
+                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+            },
+        });
+        const numSuccessfulScreenings = await prisma.pupil_screening.count({
+            where: {
+                status: 'success',
+                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+            },
             distinct: 'pupilId',
         });
-        return numSuccessfulScreening / numPupils;
+        return numSuccessfulScreenings / numPupils;
     }
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
-    async dissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: number) {
+    async numDissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: number) {
         return await prisma.match.count({
             where: {
                 dissolveReason: reason,
-                AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lte: statistics.to } }],
+                AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }],
             },
         });
     }
@@ -569,9 +581,11 @@ export class StatisticsResolver {
             numMore: 0,
         };
 
-        const matches = await prisma.match.findMany({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
+        const matches = await prisma.match.findMany({
+            where: { dissolved: true, AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }] },
+        });
         matches.forEach((match) => {
-            let duration = match.dissolved ? match.dissolvedAt.getTime() - match.createdAt.getTime() : new Date().getTime() - match.createdAt.getTime();
+            let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
             duration *= 24 * 60 * 60 * 1000;
             if (duration <= 14) {
                 buckets.num0to14++;
