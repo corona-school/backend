@@ -6,9 +6,13 @@ import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { MatchContactPupil, MatchContactStudent } from './contacts';
 
-const userIdToTalkJsId = (userId: string): string => {
-    return userId.replace('/', '_');
+type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+
+const userIdToTalkJsId = (userId: string): TalkJSUserId => {
+    return userId.replace('/', '_') as TalkJSUserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
@@ -61,7 +65,7 @@ const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     return match;
 };
 
-const checkIfSubcourseParticipation = async (participants: string[]): Promise<boolean> => {
+const isSubcourseParticipant = async (participants: string[]): Promise<boolean> => {
     const participantUser = participants.map(async (participant) => {
         const user = await getUser(participant);
         return user;
@@ -114,6 +118,53 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
+const convertConversationInfosToString = (conversationInfos: ConversationInfos): ConversationInfos => {
+    const convertedConversationInfos: ConversationInfos = {
+        subject: conversationInfos.subject,
+        photoUrl: conversationInfos.photoUrl,
+        welcomeMessages: conversationInfos.welcomeMessages,
+        custom: {} as ChatMetaData,
+    };
+
+    for (const key in conversationInfos.custom) {
+        if (conversationInfos.custom.hasOwnProperty(key)) {
+            const value = conversationInfos.custom[key];
+            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
+        }
+    }
+
+    return convertedConversationInfos;
+};
+
+const convertTJConversation = (conversation: TJConversation): Conversation => {
+    const { id, subject, topicId, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+
+    const convertedCustom: ChatMetaData = custom
+        ? {
+              ...(custom.start && { start: custom.start }),
+              ...(custom.match && { match: { matchId: parseInt(custom.match) } }),
+              ...(custom.subcourse && { subcourse: custom.subcourse.split(',').map(Number) }),
+              ...(custom.prospectSubcourse && { prospectSubcourse: custom.prospectSubcourse.split(',').map(Number) }),
+              ...(custom.finished && { finished: custom.finished }),
+          }
+        : {};
+
+    return {
+        id,
+        subject,
+        topicId,
+        photoUrl,
+        welcomeMessages,
+        custom: convertedCustom,
+        lastMessage,
+        participants,
+        createdAt,
+    };
+};
+
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
+
 export {
     userIdToTalkJsId,
     parseUnderscoreToSlash,
@@ -122,6 +173,10 @@ export {
     getMatchByMatchees,
     createOneOnOneId,
     getConversationId,
-    checkIfSubcourseParticipation,
+    isSubcourseParticipant,
     getMembersForSubcourseGroupChat,
+    convertConversationInfosToString,
+    convertTJConversation,
+    isStudentContact,
+    isPupilContact,
 };
