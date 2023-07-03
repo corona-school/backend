@@ -56,6 +56,10 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     });
     const combinedAlternativeHosts = altHosts.join(';');
 
+    const tz = 'Europe/Berlin';
+    const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+    logger.info(start);
+
     const response = await zoomRetry(
         () =>
             fetch(`${zoomUsersUrl}/${zoomUsers[0].id}/meetings`, {
@@ -68,8 +72,8 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
                     agenda: 'My Meeting',
                     default_password: false,
                     duration: 60,
-                    start_time: moment(startTime).format('YYYY-MM-DDTHH:mm:ss'),
-                    timezone: 'Europe/Berlin',
+                    start_time: start,
+                    timezone: tz,
                     type: RecurrenceMeetingTypes.WEEKLY,
                     mute_upon_entry: true,
                     join_before_host: true,
