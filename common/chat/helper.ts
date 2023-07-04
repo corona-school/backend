@@ -7,7 +7,7 @@ import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
-import { getAllConversations, getConversation, markConversationAsReadOnly, updateConversation } from './conversation';
+import { getAllConversations, getConversation, markConversationAsReadOnly } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
@@ -193,80 +193,6 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     };
 };
 
-const removeSubcourseFromConversation = async (subcourse: Subcourse): Promise<void> => {
-    const conversationId = subcourse.conversationId;
-    const conversation = await getConversation(conversationId);
-
-    if (conversation.custom.subcourse.includes(subcourse.id)) {
-        const index = conversation.custom.subcourse.indexOf(subcourse.id);
-        conversation.custom.subcourse.splice(index, 1);
-
-        const updatedConversation = {
-            id: conversationId,
-            custom: conversation.custom,
-        };
-
-        await updateConversation(updatedConversation);
-    }
-};
-
-const removeMatchFromConversation = async (conversation: Conversation): Promise<void> => {
-    if (conversation.custom.match) {
-        delete conversation.custom.match;
-
-        const updatedConversation = {
-            id: conversation.id,
-            custom: conversation.custom,
-        };
-
-        await updateConversation(updatedConversation);
-    }
-};
-
-const markPastSubcoursesAsReadOnly = async () => {
-    const prevDay = new Date();
-    prevDay.setDate(prevDay.getDate() - 1);
-
-    const conversations = await getAllConversations();
-
-    conversations.data.forEach(async (conversation) => {
-        conversation.custom.subcourse.forEach(async (subcourseId) => {
-            const subcourse = await prisma.subcourse.findUnique({
-                where: { id: subcourseId },
-                include: { lecture: true },
-            });
-
-            const lectures = subcourse.lecture;
-
-            if (lectures.length > 0) {
-                const sortedLectures = lectures.sort((a, b) => {
-                    const startA = new Date(a.start);
-                    const startB = new Date(b.start);
-                    return startA.getTime() - startB.getTime();
-                });
-
-                const lastLecture = sortedLectures[sortedLectures.length - 1];
-                const prevDay = new Date();
-
-                const endOfLastLecture = new Date(lastLecture.start);
-                endOfLastLecture.setMinutes(endOfLastLecture.getMinutes() + lastLecture.duration);
-
-                if (endOfLastLecture < prevDay) {
-                    await markConversationAsReadOnly(subcourse.conversationId);
-                }
-            }
-        });
-    });
-};
-
-const markEmptyConversationsAsReadOnly = async () => {
-    const conversations = await getAllConversations();
-    conversations.data.forEach(async (conversation) => {
-        if (!conversation.custom?.match && conversation.custom.subcourse.length === 0) {
-            await markConversationAsReadOnly(conversation.id);
-        }
-    });
-};
 const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
 const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
 
@@ -280,10 +206,6 @@ export {
     getConversationId,
     getMatcheeConversation,
     checkChatMembersAccessRights,
-    removeSubcourseFromConversation,
-    removeMatchFromConversation,
-    markEmptyConversationsAsReadOnly,
-    markPastSubcoursesAsReadOnly,
     isSubcourseParticipant,
     getMembersForSubcourseGroupChat,
     convertConversationInfosToString,
