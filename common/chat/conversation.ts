@@ -68,115 +68,6 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
-// TODO: remove subcourse from custom prop, if subcourse cancel...
-
-const getOrCreateOneOnOneConversation = async (
-    participants: [User, User],
-    conversationInfos: ConversationInfos,
-    reason: ContactReason,
-    subcourseId?: number
-): Promise<Conversation> => {
-    // * every participants need a talk js user
-    await Promise.all(
-        participants.map(async (participant) => {
-            await getOrCreateChatUser(participant);
-        })
-    );
-
-    const participantsConversationId = getConversationId(participants);
-    const participantsConversation = await getConversation(participantsConversationId);
-
-    if (participantsConversation) {
-        if (reason === ContactReason.MATCH) {
-            const updatedConversation = {
-                id: participantsConversationId,
-                custom: {
-                    match: conversationInfos.custom.match,
-                },
-            };
-
-            await updateConversation(updatedConversation);
-        } else if (reason === ContactReason.PARTICIPANT) {
-            const subcoursesFromConversation = participantsConversation?.custom.subcourse ?? '';
-            const subcourseIds: number[] = JSON.parse(subcoursesFromConversation);
-
-            const updatedSubcourses: number[] = [...subcourseIds, subcourseId];
-            const returnUpdatedSubcourses = Array.from(new Set(updatedSubcourses));
-
-            const updatedConversation = {
-                id: participantsConversationId,
-                custom: {
-                    subcourse: returnUpdatedSubcourses,
-                },
-            };
-
-            await updateConversation(updatedConversation);
-        } else if (reason === ContactReason.PROSPECT) {
-            const prospectSubcoursesFromConversation = participantsConversation?.custom.prospectSubcourse ?? '';
-            const prospectSubcourseIds: number[] = JSON.parse(prospectSubcoursesFromConversation);
-
-            const updatedProspectSubcourse: number[] = [...prospectSubcourseIds, subcourseId];
-            const returnUpdatedProspectSubcourses = Array.from(new Set(updatedProspectSubcourse));
-
-            const updatedConversation = {
-                id: participantsConversationId,
-                custom: {
-                    prospectSubcourse: returnUpdatedProspectSubcourses,
-                },
-            };
-
-            await updateConversation(updatedConversation);
-        } else if (reason === ContactReason.CONTACT) {
-            const updatedConversation = {
-                id: participantsConversationId,
-                ...conversationInfos,
-            };
-
-            await updateConversation(updatedConversation);
-        }
-    } else {
-        const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
-        const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
-        const convertedConversation = convertTJConversation(newConversation);
-        return convertedConversation;
-    }
-
-    const convertedParticipantsConversation = convertTJConversation(participantsConversation);
-    return convertedParticipantsConversation;
-};
-
-const getOrCreateGroupConversation = async (participants: User[], subcourseId: number, conversationInfos: ConversationInfos): Promise<Conversation> => {
-    await Promise.all(
-        participants.map(async (participant) => {
-            await getOrCreateChatUser(participant);
-        })
-    );
-
-    const subcourse = await prisma.subcourse.findUniqueOrThrow({
-        where: { id: subcourseId },
-        select: { conversationId: true },
-    });
-
-    if (subcourse.conversationId === null) {
-        const newConversationId = await createConversation(participants, conversationInfos, 'group');
-        const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Schön dass du da bist!', newConversationId, 'first');
-        await prisma.subcourse.update({
-            where: { id: subcourseId },
-            data: { conversationId: newConversationId },
-        });
-        const convertedConversation = convertTJConversation(newConversation);
-
-        return convertedConversation;
-    }
-
-    const subcourseGroupChat = await getConversation(subcourse.conversationId);
-    const convertedSubcourseGroupChatConversation = convertTJConversation(subcourseGroupChat);
-
-    return convertedSubcourseGroupChatConversation;
-};
-
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
     const userId = userIdToTalkJsId(user.userID);
     try {
@@ -359,24 +250,6 @@ async function sendSystemMessage(message: string, conversationId: string, type?:
         throw new Error(error);
     }
 }
-async function createContactChat(meUser: User, contactUser: User): Promise<string> {
-    const myContacts = await getMyContacts(meUser);
-    const contact = myContacts.find((c) => c.user.userID === contactUser.userID);
-
-    if (!contact) {
-        throw new Error('Chat contact not found');
-    }
-
-    const conversationInfos: ConversationInfos = {
-        custom: {
-            ...(contact.match && { match: { matchId: contact.match.matchId } }),
-            ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
-        },
-    };
-
-    const conversation = await getOrCreateOneOnOneConversation([meUser, contactUser], conversationInfos, ContactReason.CONTACT);
-    return conversation.id;
-}
 
 export {
     getLastUnreadConversation,
@@ -388,11 +261,8 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
-    getOrCreateOneOnOneConversation,
-    getOrCreateGroupConversation,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
-    createContactChat,
     TALKJS_CONVERSATION_API_URL,
     Conversation,
     ConversationInfos,
