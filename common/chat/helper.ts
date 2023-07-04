@@ -224,6 +224,8 @@ const removeMatchFromConversation = async (conversation: Conversation): Promise<
 };
 
 const markPastSubcoursesAsReadOnly = async () => {
+    // TODO change to moment
+    // TODO check also match
     const prevDay = new Date();
     prevDay.setDate(prevDay.getDate() - 1);
 
@@ -251,6 +253,7 @@ const markPastSubcoursesAsReadOnly = async () => {
                 const endOfLastLecture = new Date(lastLecture.start);
                 endOfLastLecture.setMinutes(endOfLastLecture.getMinutes() + lastLecture.duration);
 
+                // TODO + 30 days
                 if (endOfLastLecture < prevDay) {
                     await markConversationAsReadOnly(subcourse.conversationId);
                 }
