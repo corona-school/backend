@@ -2,7 +2,7 @@ import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
-import { course_category_enum } from '@prisma/client';
+import { course_category_enum, pupil_screening_status_enum } from '@prisma/client';
 
 @ObjectType()
 class ByMonth {
@@ -18,19 +18,15 @@ class ByMonth {
 }
 
 @ObjectType()
-class TimeBuckets {
+class Bucket {
     @Field()
-    num0to14: number;
+    from: number;
     @Field()
-    num15to28: number;
+    to: number;
     @Field()
-    num29to60: number;
+    value: number;
     @Field()
-    num61to120: number;
-    @Field()
-    num121to300: number;
-    @Field()
-    numMore: number;
+    label: string;
 }
 
 @ObjectType()
@@ -328,13 +324,14 @@ export class StatisticsResolver {
     async numCourseAppointments(@Root() statistics: Statistics, @Arg('category', { nullable: true }) category?: course_category_enum) {
         return await prisma.lecture.count({
             where: {
+                appointmentType: 'group',
                 subcourse: category != null ? { course: { category: { equals: category } } } : undefined,
                 AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
             },
         });
     }
 
-    @FieldResolver(() => TimeBuckets)
+    @FieldResolver(() => [Bucket])
     @Authorized(Role.ADMIN)
     async timeCommitment(@Root() statistics: Statistics) {
         const matches = await prisma.match.findMany({
@@ -349,32 +346,54 @@ export class StatisticsResolver {
             } else {
                 dateUntil = match.dissolvedAt;
             }
-            const matchLengthInDays = Math.round((dateUntil.getTime() - match.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+            const matchDuration = dateUntil.getTime() - match.createdAt.getTime();
 
-            intervals.set(match.studentId, matchLengthInDays + (intervals.get(match.studentId) ?? 0));
+            intervals.set(match.studentId, matchDuration + (intervals.get(match.studentId) ?? 0));
         }
-        const buckets: TimeBuckets = {
-            num0to14: 0,
-            num15to28: 0,
-            num29to60: 0,
-            num61to120: 0,
-            num121to300: 0,
-            numMore: 0,
-        };
-        intervals.forEach((value, key) => {
-            if (value <= 14) {
-                buckets.num0to14++;
-            } else if (value <= 28) {
-                buckets.num15to28++;
-            } else if (value <= 60) {
-                buckets.num29to60++;
-            } else if (value <= 120) {
-                buckets.num61to120++;
-            } else if (value <= 300) {
-                buckets.num121to300++;
-            } else {
-                buckets.numMore++;
-            }
+        let buckets: Bucket[] = [
+            {
+                from: 0,
+                to: 14 * 24 * 3600 * 1000,
+                value: 0,
+                label: '0-14 Tage',
+            },
+            {
+                from: 14 * 24 * 3600 * 1000,
+                to: 28 * 24 * 3600 * 1000,
+                value: 0,
+                label: '14-28 Tage',
+            },
+            {
+                from: 28 * 24 * 3600 * 1000,
+                to: 60 * 24 * 3600 * 1000,
+                value: 0,
+                label: '28-60 Tage',
+            },
+            {
+                from: 60 * 24 * 3600 * 1000,
+                to: 120 * 24 * 3600 * 1000,
+                value: 0,
+                label: '60-120 Tage',
+            },
+            {
+                from: 120 * 24 * 3600 * 1000,
+                to: 300 * 24 * 3600 * 1000,
+                value: 0,
+                label: '120-300 Tage',
+            },
+            {
+                from: 300 * 24 * 3600 * 1000,
+                to: -1,
+                value: 0,
+                label: '300+ Tage',
+            },
+        ];
+        intervals.forEach((duration, key) => {
+            buckets = buckets.map((b) => {
+                if (b.from >= duration && (b.to < duration || b.to === -1)) {
+                    return { value: b.value + 1, ...b };
+                }
+            });
         });
         return buckets;
     }
@@ -483,10 +502,7 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
-    async pupilScreenings(@Root() statistics: Statistics, @Arg('status') status: number) {
-        if (status < 0 || status > 3) {
-            throw new PrerequisiteError('Status must be a number between 0 and 3');
-        }
+    async pupilScreenings(@Root() statistics: Statistics, @Arg('status') status: pupil_screening_status_enum) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month
@@ -542,7 +558,7 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
-    async rateTargetAudience(@Root() statistics: Statistics) {
+    async ratePupilsInTargetAudience(@Root() statistics: Statistics) {
         const numPupils = await prisma.pupil.count({
             where: {
                 AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
@@ -569,40 +585,86 @@ export class StatisticsResolver {
         });
     }
 
-    @FieldResolver(() => TimeBuckets)
+    @FieldResolver(() => [Bucket])
     @Authorized(Role.ADMIN)
     async matchesByDuration(@Root() statistics: Statistics) {
-        const buckets: TimeBuckets = {
-            num0to14: 0,
-            num15to28: 0,
-            num29to60: 0,
-            num61to120: 0,
-            num121to300: 0,
-            numMore: 0,
-        };
+        let buckets: Bucket[] = [
+            {
+                from: 0,
+                to: 14 * 24 * 3600 * 1000,
+                value: 0,
+                label: '0-14 Tage',
+            },
+            {
+                from: 14 * 24 * 3600 * 1000,
+                to: 28 * 24 * 3600 * 1000,
+                value: 0,
+                label: '14-28 Tage',
+            },
+            {
+                from: 28 * 24 * 3600 * 1000,
+                to: 60 * 24 * 3600 * 1000,
+                value: 0,
+                label: '28-60 Tage',
+            },
+            {
+                from: 60 * 24 * 3600 * 1000,
+                to: 120 * 24 * 3600 * 1000,
+                value: 0,
+                label: '60-120 Tage',
+            },
+            {
+                from: 120 * 24 * 3600 * 1000,
+                to: 300 * 24 * 3600 * 1000,
+                value: 0,
+                label: '120-300 Tage',
+            },
+            {
+                from: 300 * 24 * 3600 * 1000,
+                to: -1,
+                value: 0,
+                label: '300+ Tage',
+            },
+        ];
 
         const matches = await prisma.match.findMany({
-            where: { dissolved: true, AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }] },
+            where: {
+                dissolved: true,
+                AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }],
+            },
         });
+
         matches.forEach((match) => {
             let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
-            duration *= 24 * 60 * 60 * 1000;
-            if (duration <= 14) {
-                buckets.num0to14++;
-            } else if (duration <= 28) {
-                buckets.num15to28++;
-            } else if (duration <= 60) {
-                buckets.num29to60++;
-            } else if (duration <= 120) {
-                buckets.num61to120++;
-            } else if (duration <= 300) {
-                buckets.num121to300++;
-            } else {
-                buckets.numMore++;
-            }
+            buckets = buckets.map((b) => {
+                if (b.from >= duration && (b.to < duration || b.to === -1)) {
+                    return { value: b.value + 1, ...b };
+                }
+            });
         });
         return buckets;
     }
+
+    // @FieldResolver(() => TimeBuckets)
+    // @Authorized(Role.ADMIN)
+    // async fokusUsedPlaces(@Root() statistics: Statistics) {
+    //     let usedPlaces = 0;
+    //     const courses = await prisma.lecture.findMany({
+    //         where: {
+    //             AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+    //             zoomMeetingReport: {},
+    //         },
+    //         select: {
+    //             id: true,
+    //             subcourse: {
+    //                 select: {
+    //                     subcourse_participants_pupil: { select: { pupilId: true } },
+    //                 },
+    //             },
+    //         },
+    //     });
+    //     await prisma.bbb_meeting.count({ where: {} });
+    // }
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
