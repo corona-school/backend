@@ -389,11 +389,7 @@ export class StatisticsResolver {
             },
         ];
         intervals.forEach((duration, key) => {
-            buckets = buckets.map((b) => {
-                if (b.from >= duration && (b.to < duration || b.to === -1)) {
-                    return { value: b.value + 1, ...b };
-                }
-            });
+            buckets.find((b) => b.from >= duration && (b.to < duration || b.to === -1)).value += 1;
         });
         return buckets;
     }
@@ -636,16 +632,12 @@ export class StatisticsResolver {
 
         matches.forEach((match) => {
             let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
-            buckets = buckets.map((b) => {
-                if (b.from >= duration && (b.to < duration || b.to === -1)) {
-                    return { value: b.value + 1, ...b };
-                }
-            });
+            buckets.find((b) => b.from >= duration && (b.to < duration || b.to === -1)).value += 1;
         });
         return buckets;
     }
 
-    // @FieldResolver(() => TimeBuckets)
+    // @FieldResolver(() => [Bucket])
     // @Authorized(Role.ADMIN)
     // async fokusUsedPlaces(@Root() statistics: Statistics) {
     //     let usedPlaces = 0;
