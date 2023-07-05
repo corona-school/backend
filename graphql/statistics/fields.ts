@@ -286,11 +286,11 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [ByMonth])
     @Authorized(Role.ADMIN)
-    async numCourses(@Root() statistics: Statistics) {
+    async numSubcourses(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month
-                                      FROM "course"
+                                      FROM "subcourse"
                                       WHERE "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month"
