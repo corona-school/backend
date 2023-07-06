@@ -509,7 +509,7 @@ export class StatisticsResolver {
                                       FROM "pupil_screening"
                                       WHERE "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
-                                        AND "status" = ${status}
+                                        AND "status" = ${status}::pupil_screening_status_enum
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
