@@ -311,10 +311,10 @@ export class StatisticsResolver {
     @FieldResolver(() => Int)
     @Authorized(Role.ADMIN)
     async numPupilsOnWaitingList(@Root() statistics: Statistics) {
-        const enrollments: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
+        const enrollments: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
             FROM "waiting_list_enrollment"
             WHERE "createdAt" >= ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp;`;
-        return enrollments.value;
+        return enrollments[0].value;
     }
 
     @FieldResolver(() => Int)
@@ -541,15 +541,15 @@ export class StatisticsResolver {
         const currentDate = new Date(); // Get the current date
         const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 8, currentDate.getDate());
 
-        const successfulScreeningsCount: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
+        const successfulScreeningsCount: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
             FROM "screening"
             WHERE "success" = true AND "createdAt" >= ${previousDate.toISOString()}::timestamp;
         `;
-        const submittedCoCs: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
+        const submittedCoCs: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
             FROM "certificate_of_conduct"
             WHERE "createdAt" >= ${previousDate.toISOString()}::timestamp;
         `;
-        return submittedCoCs.value / successfulScreeningsCount.value;
+        return submittedCoCs[0].value / successfulScreeningsCount[0].value;
     }
 
     @FieldResolver((returns) => Float)
@@ -584,12 +584,12 @@ export class StatisticsResolver {
             },
         });
 
-        const successfulScreeningsCount: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
+        const successfulScreeningsCount: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
             FROM "pupil_screening"
             WHERE "status" = '1' AND "createdAt" >= ${statistics.from}::timestamp AND "createdAt" < ${statistics.to}::timestamp;
         `;
 
-        return successfulScreeningsCount.value / numPupils;
+        return successfulScreeningsCount[0].value / numPupils;
     }
 
     @FieldResolver((returns) => Int)
