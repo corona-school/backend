@@ -311,12 +311,10 @@ export class StatisticsResolver {
     @FieldResolver(() => Int)
     @Authorized(Role.ADMIN)
     async numPupilsOnWaitingList(@Root() statistics: Statistics) {
-        return await prisma.waiting_list_enrollment.count({
-            distinct: 'pupilId',
-            where: {
-                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
-            },
-        });
+        const enrollments: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
+            FROM "waiting_list_enrollment"
+            WHERE "createdAt" >= ${statistics.from} AND "createdAt" < ${statistics.to}`;
+        return enrollments.value;
     }
 
     @FieldResolver(() => Int)
@@ -542,18 +540,16 @@ export class StatisticsResolver {
     async rateSuccessfulCoCs() {
         const currentDate = new Date(); // Get the current date
         const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 8, currentDate.getDate());
-        const successfulScreeningsCount = await prisma.screening.count({
-            where: {
-                success: true,
-                createdAt: { gte: previousDate },
-            },
-            distinct: 'studentId',
-        });
-        const submittedCoCs = await prisma.certificate_of_conduct.count({
-            where: { createdAt: { gte: previousDate } },
-            distinct: 'studentId',
-        });
-        return submittedCoCs / successfulScreeningsCount;
+
+        const successfulScreeningsCount: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
+            FROM "screening"
+            WHERE "success" = true AND "createdAt" >= ${previousDate.toISOString()}
+        `;
+        const submittedCoCs: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "studentId")::int AS value
+            FROM "certificate_of_conduct"
+            WHERE "createdAt" >= ${previousDate.toISOString()}
+        `;
+        return submittedCoCs.value / successfulScreeningsCount.value;
     }
 
     @FieldResolver((returns) => Float)
@@ -587,14 +583,13 @@ export class StatisticsResolver {
                 AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
-        const numSuccessfulScreenings = await prisma.pupil_screening.count({
-            where: {
-                status: 'success',
-                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
-            },
-            distinct: 'pupilId',
-        });
-        return numSuccessfulScreenings / numPupils;
+
+        const successfulScreeningsCount: { value: number } = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
+            FROM "pupil_screening"
+            WHERE "status" = '1' AND "createdAt" >= ${statistics.from} AND "createdAt" < ${statistics.to}
+        `;
+
+        return successfulScreeningsCount.value / numPupils;
     }
 
     @FieldResolver((returns) => Int)
