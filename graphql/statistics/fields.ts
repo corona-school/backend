@@ -503,22 +503,22 @@ export class StatisticsResolver {
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async pupilScreenings(@Root() statistics: Statistics, @Arg('status') status: pupil_screening_status_enum) {
-        let statusInt;
+        let statusNum;
         switch (status) {
             case 'pending': {
-                statusInt = 0;
+                statusNum = '0';
                 break;
             }
             case 'success': {
-                statusInt = 1;
+                statusNum = '1';
                 break;
             }
             case 'rejection': {
-                statusInt = 2;
+                statusNum = '2';
                 break;
             }
             case 'dispute': {
-                statusInt = 3;
+                statusNum = '3';
                 break;
             }
             default: {
@@ -532,7 +532,7 @@ export class StatisticsResolver {
                                       FROM "pupil_screening"
                                       WHERE "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
-                                        AND "status" = ${statusInt}::pupil_screening_status_enum
+                                        AND "status" = ${statusNum}::pupil_screening_status_enum
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
