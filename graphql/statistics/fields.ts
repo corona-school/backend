@@ -503,13 +503,36 @@ export class StatisticsResolver {
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async pupilScreenings(@Root() statistics: Statistics, @Arg('status') status: pupil_screening_status_enum) {
+        let statusInt;
+        switch (status) {
+            case 'pending': {
+                statusInt = 0;
+                break;
+            }
+            case 'success': {
+                statusInt = 1;
+                break;
+            }
+            case 'rejection': {
+                statusInt = 2;
+                break;
+            }
+            case 'dispute': {
+                statusInt = 3;
+                break;
+            }
+            default: {
+                throw new Error('Invalid status');
+            }
+        }
+
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month
                                       FROM "pupil_screening"
                                       WHERE "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
-                                        AND "status" = ${status}::pupil_screening_status_enum
+                                        AND "status" = ${statusInt}::pupil_screening_status_enum
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
