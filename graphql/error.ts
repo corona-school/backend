@@ -20,6 +20,21 @@ export const isUnexpectedError = (error: GraphQLError) => {
     );
 };
 
+export function isErrorSafeToExpose(err: ApolloError) {
+    if (!err.extensions) {
+        return false;
+    }
+
+    switch (err.extensions.code) {
+        case 'BAD_USER_INPUT':
+            return true;
+        case 'GRAPHQL_VALIDATION_FAILED':
+            return true;
+        default:
+            return false;
+    }
+}
+
 const logger = getLogger('ApolloError');
 
 export function formatError(error: ApolloError) {
@@ -35,6 +50,9 @@ export function formatError(error: ApolloError) {
     }
 
     logger.error(`Unexpected Errors occurred`, error);
+    if (isErrorSafeToExpose(error)) {
+        return error;
+    }
     /* All other kinds of errors are not expected here. Better not share them with clients, they might contain secrets! */
     return new Error(`Internal Server Error - Consult logs for details`);
 }

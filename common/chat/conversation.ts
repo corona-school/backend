@@ -296,7 +296,7 @@ async function removeParticipant(user: User, conversationId: string): Promise<vo
     }
 }
 
-async function markConversationAsReadOnly(conversationId: string, reason?: 'announcement' | 'deactivate'): Promise<void> {
+async function markConversationAsReadOnly(conversationId: string): Promise<void> {
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
