@@ -387,7 +387,7 @@ export class StatisticsResolver {
             },
         ];
         intervals.forEach((duration, key) => {
-            buckets.find((b) => b.from >= duration && (b.to < duration || b.to === -1)).value += 1;
+            buckets.find((b) => b.from <= duration && (b.to > duration || b.to === -1)).value += 1;
         });
         return buckets;
     }
@@ -654,7 +654,7 @@ export class StatisticsResolver {
 
         matches.forEach((match) => {
             let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
-            buckets.find((b) => b.from >= duration && (b.to < duration || b.to === -1)).value += 1;
+            buckets.find((b) => b.from <= duration && (b.to > duration || b.to === -1)).value += 1;
         });
         return buckets;
     }
