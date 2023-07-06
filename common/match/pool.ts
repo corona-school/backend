@@ -590,17 +590,10 @@ export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[],
         return [];
     }
 
-    const offered = await offeredSubjects(pool);
     const result: Pupil[] = [];
 
     const pupilsToRequest = await getPupils(pool, toggles, toSend * 5);
     for (const pupil of pupilsToRequest) {
-        // Skip pupils who only want subjects that are not offered at the moment
-        const subjects = JSON.parse(pupil.subjects).map((it) => it.name);
-        if (!subjects.some((it) => offered.includes(it))) {
-            continue;
-        }
-
         result.push(pupil);
 
         toSend -= 1;
