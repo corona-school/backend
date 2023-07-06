@@ -303,7 +303,7 @@ export class StatisticsResolver {
         return await prisma.pupil.count({
             where: {
                 match: { some: {} },
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
     }
@@ -314,7 +314,7 @@ export class StatisticsResolver {
         return await prisma.waiting_list_enrollment.count({
             distinct: 'pupilId',
             where: {
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
     }
@@ -326,7 +326,7 @@ export class StatisticsResolver {
             where: {
                 appointmentType: 'group',
                 subcourse: category != null ? { course: { category: { equals: category } } } : undefined,
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
     }
@@ -335,7 +335,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async timeCommitment(@Root() statistics: Statistics) {
         const matches = await prisma.match.findMany({
-            where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] },
+            where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
             orderBy: { createdAt: 'asc' },
         });
         const intervals = new Map<number, number>();
@@ -443,9 +443,11 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async averageMatchesOfTutee(@Root() statistics: Statistics) {
         const tuteesWithMatch = await prisma.pupil.count({
-            where: { match: { some: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } } },
+            where: { match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } } },
         });
-        const matchesTotal = await prisma.match.count({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
+        const matchesTotal = await prisma.match.count({
+            where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
+        });
 
         return matchesTotal / tuteesWithMatch;
     }
@@ -454,9 +456,11 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async averageMatchesOfTutors(@Root() statistics: Statistics) {
         const tutorsWithMatch = await prisma.student.count({
-            where: { match: { some: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } } },
+            where: { match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } } },
         });
-        const matchesTotal = await prisma.match.count({ where: { AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }] } });
+        const matchesTotal = await prisma.match.count({
+            where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
+        });
 
         return matchesTotal / tutorsWithMatch;
     }
@@ -557,13 +561,13 @@ export class StatisticsResolver {
     async ratePupilsInTargetAudience(@Root() statistics: Statistics) {
         const numPupils = await prisma.pupil.count({
             where: {
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
         const numSuccessfulScreenings = await prisma.pupil_screening.count({
             where: {
                 status: 'success',
-                AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+                AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
             distinct: 'pupilId',
         });
@@ -576,7 +580,7 @@ export class StatisticsResolver {
         return await prisma.match.count({
             where: {
                 dissolveReason: reason,
-                AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }],
+                AND: [{ dissolvedAt: { gte: new Date(statistics.from) } }, { dissolvedAt: { lt: new Date(statistics.to) } }],
             },
         });
     }
@@ -626,7 +630,7 @@ export class StatisticsResolver {
         const matches = await prisma.match.findMany({
             where: {
                 dissolved: true,
-                AND: [{ dissolvedAt: { gte: statistics.from } }, { dissolvedAt: { lt: statistics.to } }],
+                AND: [{ dissolvedAt: { gte: new Date(statistics.from) } }, { dissolvedAt: { lt: new Date(statistics.to) } }],
             },
         });
 
@@ -643,7 +647,7 @@ export class StatisticsResolver {
     //     let usedPlaces = 0;
     //     const courses = await prisma.lecture.findMany({
     //         where: {
-    //             AND: [{ createdAt: { gte: statistics.from } }, { createdAt: { lt: statistics.to } }],
+    //             AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
     //             zoomMeetingReport: {},
     //         },
     //         select: {
