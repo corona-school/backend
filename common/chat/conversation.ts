@@ -75,7 +75,7 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
-const getAllConversations = async (): Promise<AllConversations> => {
+const getAllConversations = async () => {
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
         headers: {
@@ -338,6 +338,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
             await checkResponseStatus(response);
         }
     } catch (error) {
+        console.log('ERROR on mark convo as readonly', error);
         throw new Error(error);
     }
 }
