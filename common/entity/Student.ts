@@ -7,11 +7,8 @@ import { Lecture } from './Lecture';
 import { State } from './State';
 import { Subcourse } from './Subcourse';
 import { InstructorScreening } from './InstructorScreening';
-import { ProjectFieldWithGradeInfoType } from '../jufo/projectFieldWithGradeInfoType';
-import { TutorJufoParticipationIndication } from '../jufo/participationIndication';
 import { ProjectFieldWithGradeRestriction } from './ProjectFieldWithGradeRestriction';
 import { ProjectCoachingScreening } from './ProjectCoachingScreening';
-import { parseSubjectString, Subject, toStudentSubjectDatabaseFormat } from '../util/subjectsutils';
 import { ScreeningInfo } from '../util/screening';
 import { Screener } from './Screener';
 import { JufoVerificationTransmission } from './JufoVerificationTransmission';
@@ -21,8 +18,13 @@ import { CourseGuest } from './CourseGuest';
 import { Language } from '../daz/language';
 import * as Notification from '../notification';
 import { RemissionRequest } from './RemissionRequest';
-import { createRemissionRequest } from '../remission-request';
 import { CertificateOfConduct } from './CertificateOfConduct';
+
+enum TutorJufoParticipationIndication {
+    YES = 'yes', //was past jufo participant
+    NO = 'no', //was no past jufo participant
+    IDK = 'idk', //don't know whether she*he was jufo participant
+}
 
 export enum TeacherModule {
     INTERNSHIP = 'internship',
@@ -328,206 +330,6 @@ export class Student extends Person {
 
     @Column({ default: null, nullable: true })
     zoomUserId: string;
-
-    async setTutorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
-        let currentScreening = await this.screening;
-
-        if (!screeningInfo) {
-            if (currentScreening) {
-                await getManager().remove(currentScreening);
-                this.screening = Promise.resolve(undefined);
-            }
-            return;
-        }
-
-        if (!currentScreening) {
-            currentScreening = new Screening();
-        }
-        await currentScreening.updateScreeningInfo(screeningInfo, screener);
-        this.screening = Promise.resolve(currentScreening);
-
-        if (currentScreening.success) {
-            await Notification.actionTaken(this, 'tutor_screening_success', {});
-        } else {
-            await Notification.actionTaken(this, 'tutor_screening_rejection', {});
-        }
-    }
-
-    async setInstructorScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
-        let currentScreening = await this.instructorScreening;
-
-        if (!screeningInfo) {
-            if (currentScreening) {
-                await getManager().remove(currentScreening);
-                this.instructorScreening = Promise.resolve(undefined);
-            }
-            return;
-        }
-
-        if (!currentScreening) {
-            currentScreening = new InstructorScreening();
-        }
-        await currentScreening.updateScreeningInfo(screeningInfo, screener);
-        this.instructorScreening = Promise.resolve(currentScreening);
-
-        if (currentScreening.success) {
-            await Notification.actionTaken(this, 'instructor_screening_success', {});
-        } else {
-            await Notification.actionTaken(this, 'instructor_screening_rejection', {});
-        }
-    }
-
-    async setProjectCoachingScreeningResult(screeningInfo: ScreeningInfo, screener: Screener) {
-        let currentScreening = await this.projectCoachingScreening;
-
-        if (!screeningInfo) {
-            if (currentScreening) {
-                await getManager().remove(currentScreening);
-                this.projectCoachingScreening = Promise.resolve(undefined);
-            }
-            return;
-        }
-
-        if (!currentScreening) {
-            currentScreening = new ProjectCoachingScreening();
-        }
-        await currentScreening.updateScreeningInfo(screeningInfo, screener);
-        this.projectCoachingScreening = Promise.resolve(currentScreening);
-
-        if (currentScreening.success) {
-            await Notification.actionTaken(this, 'coach_screening_success', {});
-        } else {
-            await Notification.actionTaken(this, 'coach_screening_rejection', {});
-        }
-    }
-
-    // Use this method if you wanna set project fields of a student, because this method is able to set them safely without errors
-    // also see https://github.com/typeorm/typeorm/issues/3801
-    async setProjectFields(fields: ProjectFieldWithGradeInfoType[]) {
-        //delete old project fields to prevent errors
-        for (const pf of (await this.projectFields) ?? []) {
-            await getManager().remove(pf);
-        }
-        //set new values
-        this.projectFields = Promise.resolve(fields.map((f) => new ProjectFieldWithGradeRestriction(f.name, f.min, f.max)));
-    }
-    async getProjectFields(): Promise<ProjectFieldWithGradeInfoType[]> {
-        return (await this.projectFields).map((pf) => {
-            return {
-                name: pf.projectField,
-                min: pf.min,
-                max: pf.max,
-            };
-        });
-    }
-
-    async screeningStatus(): Promise<ScreeningStatus> {
-        const screening = await this.screening;
-
-        if (!screening) {
-            return ScreeningStatus.Unscreened;
-        }
-
-        if (screening.success) {
-            return ScreeningStatus.Accepted;
-        } else {
-            return ScreeningStatus.Rejected;
-        }
-    }
-
-    async instructorScreeningStatus(): Promise<ScreeningStatus> {
-        const instructorScreening = await this.instructorScreening;
-
-        if (!instructorScreening) {
-            return ScreeningStatus.Unscreened;
-        }
-
-        if (instructorScreening.success) {
-            return ScreeningStatus.Accepted;
-        } else {
-            return ScreeningStatus.Rejected;
-        }
-    }
-
-    async projectCoachingScreeningStatus(): Promise<ScreeningStatus> {
-        const projectCoachingScreening = await this.projectCoachingScreening;
-        const studentScreening = await this.screening;
-
-        if (!projectCoachingScreening && !studentScreening) {
-            return ScreeningStatus.Unscreened;
-        }
-        //if someone is explicitly not allowed for project coaching, don't care whether he was accepted as a student for 1-on-1 tutoring
-        if (projectCoachingScreening?.success === false) {
-            return ScreeningStatus.Rejected;
-        }
-
-        //...otherwise beeing successfully screened as student is also sufficient.
-        if (projectCoachingScreening?.success || studentScreening?.success) {
-            return ScreeningStatus.Accepted;
-        }
-
-        return ScreeningStatus.Rejected;
-    }
-
-    async scheduleCoCReminders() {
-        if (this.createdAt < new Date('2022-01-01')) {
-            return;
-        }
-
-        if (this.remissionRequest) {
-            return;
-        }
-
-        if ((await this.screeningStatus()) === ScreeningStatus.Accepted || (await this.projectCoachingScreeningStatus()) === ScreeningStatus.Accepted) {
-            await createRemissionRequest(this);
-            await Notification.actionTaken(this, 'coc_reminder', {});
-        }
-    }
-
-    // Return the subjects formatted in the Subject Format
-    getSubjectsFormatted(): Subject[] {
-        try {
-            return parseSubjectString(this.subjects);
-        } catch (e) {
-            throw new Error(`Invalid subject format string "${this.subjects}" for student with email ${this.email} found!`);
-        }
-    }
-    setSubjectsFormatted(subjects: Subject[]) {
-        this.subjects = JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat));
-    }
-
-    isIntern(): boolean {
-        return this.module === TeacherModule.INTERNSHIP;
-    }
-}
-
-//re-export
-export { Subject };
-
-export enum ScreeningStatus {
-    Unscreened = 'UNSCREENED',
-    Accepted = 'ACCEPTED',
-    Rejected = 'REJECTED',
-}
-
-export function getAllStudents(manager: EntityManager): Promise<Student[]> | undefined {
-    return manager.createQueryBuilder(Student, 's').getMany(); //case insensitive query
-}
-
-export function getStudentByEmail(manager: EntityManager, email: string): Promise<Student> | undefined {
-    return manager.createQueryBuilder(Student, 's').where('s.email ILIKE :email', { email: email }).orderBy('s.email').getOne(); //case insensitive query
-}
-
-export function getStudentByWixID(manager: EntityManager, wixID: string) {
-    return manager.findOne(Student, { wix_id: wixID });
-}
-
-export async function activeMatchesOfStudent(s: Student, manager: EntityManager) {
-    return (await s.matches).filter((m) => m.dissolved === false);
-}
-
-export async function activeMatchCountOfStudent(s: Student, manager: EntityManager) {
-    return (await activeMatchesOfStudent(s, manager)).length;
 }
 
 export const DEFAULT_PROJECT_COACH_GRADERESTRICTIONS = {
