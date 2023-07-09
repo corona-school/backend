@@ -7,9 +7,9 @@ import { prisma } from '../../common/prisma';
 import { logTransaction } from '../../common/transactionlog/log';
 import { RedundantError } from '../../common/util/error';
 import { UserInputError } from '../error';
-import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
 import { requestInterestConfirmation } from '../../common/match/interest';
 import { getLogger } from '../../common/logger/logger';
+import { v4 as uuid } from 'uuid';
 
 const logger = getLogger('MutateTutoringInterest');
 
@@ -70,7 +70,7 @@ export class MutateTutoringInterestConfirmationResolver {
         }
 
         await prisma.pupil_tutoring_interest_confirmation_request.create({
-            data: { token: generateToken(), pupilId, status, invalidated: false },
+            data: { token: uuid(), pupilId, status, invalidated: false },
         });
 
         void logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
