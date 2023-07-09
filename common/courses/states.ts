@@ -1,4 +1,4 @@
-import { subcourse as Subcourse } from '@prisma/client';
+import { subcourse as Subcourse, course as Course } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -11,6 +11,7 @@ import moment from 'moment';
 import { ChatType, ContactReason } from '../chat/types';
 import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { CourseState } from '../entity/Course';
 
 const logger = getLogger('Course States');
 
@@ -50,6 +51,27 @@ export async function subcourseOver(subcourse: Subcourse) {
 
     const now = moment();
     return moment(lastLecture.start).add(lastLecture.duration, 'minutes').isBefore(now);
+}
+
+/* ------------------ Course Review ----------------- */
+export async function allowCourse(course: Course, screeningComment: string | null) {
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: course.id } });
+    logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
+
+    // Usually when a new course is created, instructors also create a proper subcourse with it
+    // and then forget to publish it after it was approved. Thus we just publish during approval,
+    // assuming the subcourses are ready:
+    const subcourses = await prisma.subcourse.findMany({ where: { courseId: course.id } });
+    for (const subcourse of subcourses) {
+        if (await canPublish(subcourse)) {
+            await publishSubcourse(subcourse);
+        }
+    }
+}
+
+export async function denyCourse(course: Course, screeningComment: string | null) {
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: course.id } });
+    logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 }
 
 /* ------------------ Subcourse Publish ------------- */
