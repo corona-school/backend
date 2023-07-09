@@ -140,3 +140,143 @@ void test('Admin Search Users', async () => {
     assert(searchUsersByPartialName.some((it) => it.email === pupilEmail));
     assert(searchUsersByPartialName.some((it) => it.email === studentEmail));
 });
+
+void test('Admin Manage Notifications', async () => {
+    const { client: pupilClient, pupil } = await pupilOne;
+
+    const { notificationCreate: { id } } = await adminClient.request(`mutation CreateNotification {
+        notificationCreate(notification: { 
+            description: "MOCK"
+            active: false
+            recipient: 0
+            onActions: { set: []}
+            cancelledOnAction: { set: []}
+            sample_context: { test: "test" }
+        }) { id }
+    }`);
+
+
+    await adminClient.requestShallFail(`mutation SetMessageWithInvalidTemplate {
+        notificationSetMessageTranslation(
+            notificationId: ${id}
+            language: "de"
+            headline: "{{user.firstname}}"
+            body: "{{user.fullName"
+            navigateTo: "/{{test}}"
+            modalText: ""
+        )
+    }`);
+
+    await adminClient.request(`mutation SetMessage {
+        notificationSetMessageTranslation(
+            notificationId: ${id}
+            language: "de"
+            headline: "{{user.firstname}}"
+            body: "{{user.fullName}}"
+            navigateTo: "/{{test}}"
+            modalText: ""
+        )
+    }`);
+
+    await adminClient.request(`mutation Activate { notificationActivate(notificationId: ${id}, active: true)}`);
+
+    
+    await adminClient.requestShallFail(`mutation SendOutWithMissingContext { 
+        concreteNotificationBulkCreate(
+        startAt: "${new Date(0).toISOString()}"
+        skipDraft: true
+        context: { }
+        userIds: ["${pupil.userID}"]
+        notificationId: ${id}
+      )
+    }`);
+
+
+    await adminClient.request(`mutation SendOut { 
+        concreteNotificationBulkCreate(
+        startAt: "${new Date(0).toISOString()}"
+        skipDraft: true
+        context: { test: "test2", uniqueId: "test" }
+        userIds: ["${pupil.userID}"]
+        notificationId: ${id}
+      )
+    }`);
+
+    const { me: { concreteNotifications: scheduled }} = await pupilClient.request(`query NotificationScheduled { 
+        me { 
+          concreteNotifications(take:100) { 
+            notificationID
+            state
+            sentAt
+            message { 
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    assert.ok(!scheduled.find(it => it.notificationID === id), "Concrete notification already visible?");
+
+    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+
+    const { me: { concreteNotifications: sent }} = await pupilClient.request(`query NotificationSent { 
+        me { 
+          concreteNotifications(take:100) { 
+            notificationID
+            state
+            sentAt
+            message { 
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    const notification = sent.find(it => it.notificationID === id);
+    assert.strictEqual(notification.state, 2);
+    assert.strictEqual(notification.message.headline, pupil.firstname);
+    assert.strictEqual(notification.message.body, pupil.firstname + " " + pupil.lastname);
+    assert.strictEqual(notification.message.navigateTo, "/test2");
+
+    // Ensure the cache is properly invalidated:
+    await adminClient.request(`mutation SetMessage {
+        notificationSetMessageTranslation(
+            notificationId: ${id}
+            language: "de"
+            headline: "{{user.firstname}}"
+            body: "TEST"
+            navigateTo: "/{{test}}"
+            modalText: ""
+        )
+    }`);
+
+    const { me: { concreteNotifications: sent2 }} = await pupilClient.request(`query NotificationSent2 { 
+        me { 
+          concreteNotifications(take:100) { 
+            notificationID
+            state
+            sentAt
+            message { 
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    const notification2 = sent2.find(it => it.notificationID === id);
+    assert.strictEqual(notification2.state, 2);
+    assert.strictEqual(notification2.message.headline, pupil.firstname);
+    assert.strictEqual(notification2.message.body, "TEST");
+    assert.strictEqual(notification2.message.navigateTo, "/test2");
+
+
+}) 
