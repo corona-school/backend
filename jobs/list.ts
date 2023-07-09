@@ -11,6 +11,7 @@ import dropOldNotificationContexts from './periodic/drop-old-notification-contex
 import { runInterestConfirmations } from '../common/match/pool';
 import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import syncToWebflow from './periodic/sync-to-webflow';
+import { postStatisticsToSlack } from './slack-statistics';
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
@@ -42,4 +43,6 @@ export const allJobs: CSCronJob[] = [
     { cronTime: '00 00 01 * * *', jobFunction: dropOldNotificationContexts },
     // Synch DB data to webflow CMS
     { cronTime: '00 */15 * * * *', jobFunction: syncToWebflow },
+    // Send Slack Messages monthly:
+    { cronTime: '00 00 10 01 * *', jobFunction: postStatisticsToSlack }
 ];
