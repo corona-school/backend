@@ -1,10 +1,9 @@
 import { pupil as Pupil, student as Student } from '@prisma/client';
-import { getTransactionLog } from '../transactionlog';
 import { prisma } from '../prisma';
-import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
 import { dissolveMatch } from '../match/dissolve';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
+import { logTransaction } from '../transactionlog/log';
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
@@ -16,7 +15,7 @@ export async function activatePupil(pupil: Pupil) {
         where: { id: pupil.id },
     });
 
-    await getTransactionLog().log(new DeActivateEvent(pupil, true));
+    await logTransaction('deActivate', pupil, { newStatus: true });
 
     return updatedPupil;
 }
@@ -47,7 +46,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
         where: { id: pupil.id },
     });
 
-    await getTransactionLog().log(new DeActivateEvent(pupil, false, reason));
+    await logTransaction('deActivate', pupil, { newStatus: false, deactivationReason: reason });
 
     return updatedPupil;
 }

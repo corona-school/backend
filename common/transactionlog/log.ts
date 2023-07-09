@@ -7,7 +7,6 @@ import {
 } from '@prisma/client';
 import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
 import { getLogger } from '../../common/logger/logger';
-import { MentoringCategory } from '../mentoring/categories';
 import { prisma } from '../prisma';
 
 /* To ensure consistency with existing logs,
@@ -32,7 +31,7 @@ type LogData<Type extends LogType> = {
     cancelledCourse: { id: number };
     cancelledSubcourse: { id: number };
     createdCourseAttendanceLog: { courseAttendanceLog: CourseAttendanceLog };
-    contactMentor: { category: MentoringCategory; text: string; subject?: string };
+    contactMentor: { category: any; text: string; subject?: string };
     bbbMeeting: { bbbMeeting: BBBMeeting };
     contactExpert: { emailText: string; subject?: string };
     participantJoinedCourse: { subcourseID: number };
