@@ -16,14 +16,11 @@ import {
     student_module_enum as TeacherModule,
 } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
-import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from '../../common/jufo/participationIndication';
 import { School } from '../../common/entity/School';
 import { RateLimit } from '../rate-limit';
 import {
     becomeInstructor,
     BecomeInstructorData,
-    becomeProjectCoach,
-    BecomeProjectCoachData,
     becomeTutor,
     BecomeTutorData,
     ProjectFieldWithGradeData,
@@ -31,8 +28,6 @@ import {
     RegisterStudentData,
 } from '../../common/student/registration';
 import {
-    becomeProjectCoachee,
-    BecomeProjectCoacheeData,
     becomeStatePupil,
     BecomeStatePupilData,
     becomeTutee,
@@ -168,37 +163,6 @@ export class BecomeTutorInput implements BecomeTutorData {
 
     @Field((type) => Boolean, { nullable: true })
     supportsInDaZ?: boolean;
-}
-
-@InputType()
-class BecomeProjectCoachInput implements BecomeProjectCoachData {
-    @Field((type) => [ProjectFieldWithGradeInput])
-    projectFields: ProjectFieldWithGradeInput[];
-
-    @Field((type) => TutorJufoParticipationIndication)
-    wasJufoParticipant: TutorJufoParticipationIndication;
-
-    @Field((type) => Boolean)
-    isUniversityStudent: boolean;
-
-    @Field((type) => Boolean)
-    hasJufoCertificate: boolean;
-
-    @Field((type) => String)
-    @MaxLength(3000)
-    jufoPastParticipationInfo: string;
-}
-
-@InputType()
-class BecomeProjectCoacheeInput implements BecomeProjectCoacheeData {
-    @Field((type) => [ProjectField])
-    projectFields: ProjectField[];
-
-    @Field((type) => Boolean)
-    isJufoParticipant: TuteeJufoParticipationIndication;
-
-    @Field((type) => Int)
-    projectMemberCount: number;
 }
 
 @InputType()
@@ -388,38 +352,6 @@ export class MutateMeResolver {
         await updateSessionUser(context, userForStudent(student));
 
         // After successful screening and re authentication, the user will receive the TUTOR role
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.STUDENT, Role.ADMIN)
-    async meBecomeProjectCoach(@Ctx() context: GraphQLContext, data: BecomeProjectCoachInput, @Arg('studentId', { nullable: true }) studentId: number) {
-        const student = await getSessionStudent(context, studentId);
-
-        await becomeProjectCoach(student, data);
-
-        logger.info(`Student(${student.id}) requested to become a project coach`);
-
-        // After successful screening and re authentication, the user will receive the PROJECT_COACH role
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
-    async meBecomeProjectCoachee(
-        @Ctx() context: GraphQLContext,
-        @Arg('data') data: BecomeProjectCoacheeInput,
-        @Arg('pupilId', { nullable: true }) pupilId: number
-    ) {
-        const pupil = await getSessionPupil(context, pupilId);
-
-        const updatedPupil = await becomeProjectCoachee(pupil, data);
-        await evaluatePupilRoles(updatedPupil, context);
-        // The user should now have the PROJECT_COACHEE role
-
-        logger.info(`Pupil(${pupil.id}) upgraded their account to a PROJECT_COACHEE`);
 
         return true;
     }

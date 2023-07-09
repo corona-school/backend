@@ -1,7 +1,6 @@
 /* Enums need to be registered as documented in https://typegraphql.com/docs/0.16.0/enums.html */
 import { registerEnumType } from 'type-graphql';
 
-import { TutorJufoParticipationIndication, TuteeJufoParticipationIndication } from '../../common/jufo/participationIndication';
 import {
     pupil_learninggermansince_enum as LearningGermanSince,
     pupil_languages_enum as Language,
@@ -16,7 +15,6 @@ import {
     course_category_enum as CourseCategory,
     pupil_screening_status_enum as PupilScreeningStatus,
 } from '@prisma/client';
-import { MentoringCategory } from '../../common/mentoring/categories';
 import { LoginOption } from '../../common/secret';
 
 registerEnumType(SchoolType, {
@@ -57,16 +55,6 @@ registerEnumType(StudentLanguage, {
     description: 'languages commonly spoken at Lern-Fair (except TypeScript)',
 });
 
-registerEnumType(TuteeJufoParticipationIndication, {
-    name: 'TuteeJufoParticipationIndication',
-    description: 'A complicated way of storing TRUE / FALSE / NULL',
-});
-
-registerEnumType(TutorJufoParticipationIndication, {
-    name: 'TutorJufoParticipationIndication',
-    description: 'A different way of storing TRUE / FALSE / NULL',
-});
-
 registerEnumType(LearningGermanSince, {
     name: 'LearningGermanySince',
 });
@@ -77,10 +65,6 @@ registerEnumType(NotificationSender, {
 
 registerEnumType(CourseCategory, {
     name: 'CourseCategory',
-});
-
-registerEnumType(MentoringCategory, {
-    name: 'MentorCategory',
 });
 
 registerEnumType(LoginOption, { name: 'LoginOption' });
