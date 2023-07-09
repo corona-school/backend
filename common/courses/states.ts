@@ -56,7 +56,7 @@ export async function subcourseOver(subcourse: Subcourse) {
 /* ------------------ Course Review ----------------- */
 export async function allowCourse(course: Course, screeningComment: string | null) {
     await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: course.id } });
-    logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`);
+    logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 
     // Usually when a new course is created, instructors also create a proper subcourse with it
     // and then forget to publish it after it was approved. Thus we just publish during approval,
@@ -71,7 +71,7 @@ export async function allowCourse(course: Course, screeningComment: string | nul
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
     await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: course.id } });
-    logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`);
+    logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 }
 
 /* ------------------ Subcourse Publish ------------- */
