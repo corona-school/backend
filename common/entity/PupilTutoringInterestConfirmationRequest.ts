@@ -1,6 +1,4 @@
 import { Column, CreateDateColumn, Entity, EntityManager, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { generateToken } from '../../jobs/periodic/fetch/utils/verification';
-import { generateStatusChangeURLFromToken } from '../interest-confirmation/tutoring/notify/urls';
 import { Pupil } from './Pupil';
 
 export enum InterestConfirmationStatus {
@@ -57,20 +55,4 @@ export class PupilTutoringInterestConfirmationRequest {
         this.pupil = pupil;
         this.token = token;
     }
-
-    confirmationURL(): string {
-        return generateStatusChangeURLFromToken(this.token, true);
-    }
-    refusalURL(): string {
-        return generateStatusChangeURLFromToken(this.token, false);
-    }
-}
-
-export async function createUniqueToken(manager: EntityManager): Promise<string> {
-    let generatedToken: string;
-    do {
-        generatedToken = generateToken(); //TODO: improve token generation, or at least its import path
-    } while (await manager.findOne(PupilTutoringInterestConfirmationRequest, { token: generatedToken }));
-
-    return generatedToken;
 }
