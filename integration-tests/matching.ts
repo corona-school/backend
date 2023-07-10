@@ -3,6 +3,11 @@ import { pupilOne, studentOne } from './user';
 import * as assert from 'assert';
 import { expectFetch } from './mock';
 
+const ONE_ON_ONE_SYSTEM_MESSAGE =
+    'Standardmäßig werdet ihr über neue Chat-Nachrichten per E-Mail informiert. In den Einstellungen könnt ihr eure Benachrichtigungen anpassen. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.';
+const GROUP_CHAT_SYSTEM_MESSAGE =
+    'In diesem Gruppen-Chat können Kursleiter:innen wichtige Ankündigungen und weitere Informationen zum ihrem Kurs mit allen Schüler:innen teilen. Dabei können Kursleiter:innen einstellen, ob auch Schüler:innen in den Gruppen-Chat schreiben dürfen. Der Chat wird 30 Tage nach Ende des Kurses inaktiv. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.';
+
 const pupilWithMR = test('Pupil Request Match', async () => {
     const { client, pupil } = await pupilOne;
 
@@ -200,7 +205,7 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
         method: 'POST',
-        body: '[{"text":"Willkommen im Lern-Fair Chat!","type":"SystemMessage","custom":{"type":"first"}}]',
+        body: '[{"text":"Standardmäßig werdet ihr über neue Chat-Nachrichten per E-Mail informiert. In den Einstellungen könnt ihr eure Benachrichtigungen anpassen. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.","type":"SystemMessage","custom":{"type":"first"}}]',
         responseStatus: 200,
     });
 
