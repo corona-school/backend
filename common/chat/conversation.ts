@@ -15,6 +15,11 @@ const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
 
+const ONE_ON_ONE_SYSTEM_MESSAGE =
+    'Standardmäßig werdet ihr über neue Chat-Nachrichten per E-Mail informiert. In den Einstellungen könnt ihr eure Benachrichtigungen anpassen. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.';
+const GROUP_CHAT_SYSTEM_MESSAGE =
+    'In diesem Gruppen-Chat können Kursleiter:innen wichtige Ankündigungen und weitere Informationen zum ihrem Kurs mit allen Schüler:innen teilen. Dabei können Kursleiter:innen einstellen, ob auch Schüler:innen in den Gruppen-Chat schreiben dürfen. Der Chat wird 30 Tage nach Ende des Kurses inaktiv. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.';
+
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -137,7 +142,7 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        await sendSystemMessage(ONE_ON_ONE_SYSTEM_MESSAGE, newConversationId, 'first');
         const convertedConversation = convertTJConversation(newConversation);
         return convertedConversation;
     }
@@ -161,7 +166,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Schön dass du da bist!', newConversationId, 'first');
+        await sendSystemMessage(GROUP_CHAT_SYSTEM_MESSAGE, newConversationId, 'first');
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
