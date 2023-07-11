@@ -1,8 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import moment from 'moment';
-import CertificateRequestEvent from '../transactionlog/types/CertificateRequestEvent';
-import { getTransactionLog } from '../transactionlog';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import { mailjetTemplates, sendTemplateMail } from '../mails';
@@ -19,6 +17,7 @@ import { userForPupil, userForStudent } from '../user';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { generatePDFFromHTML } from '../util/pdf';
 import { Request } from 'express';
+import { logTransaction } from '../transactionlog/log';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -147,7 +146,6 @@ export async function issueCertificateRequest(
 /* Students can create certificates, which pupils can then sign */
 export async function createCertificate(_requestor: PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
     const entityManager = getManager();
-    const transactionLog = getTransactionLog();
 
     const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
 
@@ -174,7 +172,7 @@ export async function createCertificate(_requestor: PrismaStudent, matchId: stri
     } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
 
     await entityManager.save(ParticipationCertificate, pc);
-    await transactionLog.log(new CertificateRequestEvent(requestor, match.uuid));
+    await logTransaction('certificateRequest', requestor as any, { uuid: match.uuid });
 
     if (params.state === 'awaiting-approval') {
         await issueCertificateRequest(pc);

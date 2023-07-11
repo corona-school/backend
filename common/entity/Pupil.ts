@@ -6,17 +6,20 @@ import { State } from './State';
 import { School } from './School';
 import { CourseAttendanceLog } from './CourseAttendanceLog';
 import { SchoolType } from './SchoolType';
-import { ProjectField } from '../jufo/projectFields';
-import { TuteeJufoParticipationIndication } from '../jufo/participationIndication';
 import { ProjectMatch } from './ProjectMatch';
-import { gradeAsInt } from '../util/gradestrings';
-import { Student, DEFAULT_PROJECT_COACH_GRADERESTRICTIONS, DEFAULT_TUTORING_GRADERESTRICTIONS } from './Student';
-import { parseSubjectString, Subject, toPupilSubjectDatabaseFormat } from '../util/subjectsutils';
 import { LearningGermanSince } from '../daz/learningGermanSince';
 import { Language } from '../daz/language';
 import { PupilTutoringInterestConfirmationRequest } from './PupilTutoringInterestConfirmationRequest';
 import { PupilScreening } from './PupilScreening';
 import { WaitingListEnrollment } from './WaitingListEnrollment';
+import { ProjectField } from './ProjectFieldWithGradeRestriction';
+
+enum TuteeJufoParticipationIndication {
+    YES = 'yes', //is a jufo participant
+    NO = 'no', //is no jufo participant
+    UNSURE = 'unsure', //still not sure whether she*he will participate
+    NEVERHEARD = 'neverheard', //does not know Jufo
+}
 
 @Entity()
 export class Pupil extends Person {
@@ -224,75 +227,4 @@ export class Pupil extends Person {
 
     @OneToMany(() => PupilScreening, (screening) => screening.pupil)
     screenings: PupilScreening[];
-
-    gradeAsNumber(): number | null {
-        if (this.grade == null) {
-            return null;
-        }
-        return gradeAsInt(this.grade);
-    }
-    setGradeAsNumber(newGrade: number) {
-        this.grade = `${newGrade}. Klasse`;
-    }
-
-    assumedProjectCoachingMatchingGrade(): number {
-        return this.gradeAsNumber() ?? 13; //if no grade is given (usually only for project coachees which have left the normal school and attend the "Berufsschule"), assume 13, because those people are usually older
-    }
-
-    async overlappingProjectFieldsWithCoach(coach: Student): Promise<ProjectField[]> {
-        const fieldsCoach = await coach.getProjectFields();
-        const pupilGrade = this.assumedProjectCoachingMatchingGrade();
-
-        return this.projectFields.filter((f) =>
-            fieldsCoach.some(
-                (fc) =>
-                    fc.name === f &&
-                    (fc.min ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MIN) <= pupilGrade &&
-                    pupilGrade <= (fc.max ?? DEFAULT_PROJECT_COACH_GRADERESTRICTIONS.MAX)
-            )
-        );
-    }
-
-    getSubjectsFormatted(): Subject[] {
-        try {
-            return parseSubjectString(this.subjects);
-        } catch (e) {
-            throw new Error(`Invalid subject format string "${this.subjects}" for pupil with email ${this.email} found!`);
-        }
-    }
-    setSubjectsFormatted(subjects: Subject[]) {
-        this.subjects = JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat));
-    }
-
-    overlappingSubjectsWithTutor(tutor: Student): Subject[] {
-        const tutorSubjects = tutor.getSubjectsFormatted();
-        const tuteeSubjects = this.getSubjectsFormatted();
-
-        const tuteeGrade = this.gradeAsNumber();
-
-        return tuteeSubjects.filter((tuteeS) =>
-            tutorSubjects.some(
-                (tutorS) =>
-                    tuteeS.name === tutorS.name &&
-                    (tutorS.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade &&
-                    tuteeGrade <= (tutorS.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)
-            )
-        );
-    }
-}
-
-export function getPupilWithEmail(manager: EntityManager, email: string) {
-    return manager.findOne(Pupil, { email: email });
-}
-
-export function getPupilByWixID(manager: EntityManager, wixID: string) {
-    return manager.findOne(Pupil, { wix_id: wixID });
-}
-
-export async function activeMatchesOfPupil(p: Pupil, manager: EntityManager) {
-    return (await p.matches).filter((m) => m.dissolved === false);
-}
-
-export async function activeMatchCountOfPupil(p: Pupil, manager: EntityManager) {
-    return (await activeMatchesOfPupil(p, manager)).length;
 }

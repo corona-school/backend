@@ -2,9 +2,6 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, Man
 import { Student } from './Student';
 import { Subcourse } from './Subcourse';
 import { CourseTag } from './CourseTag';
-import { ApiCourseUpdate } from '../dto/ApiCourseUpdate';
-import { createCourseTag } from '../util/createCourseTag';
-import { accessURLForKey } from '../file-bucket/s3';
 import { CourseGuest } from './CourseGuest';
 import { SchoolType } from './SchoolType';
 import { Subject } from './Subject';
@@ -115,43 +112,4 @@ export class Course {
 
     @OneToMany((type) => CourseGuest, (guests) => guests.course)
     guests: CourseGuest[];
-
-    async updateCourse(update: ApiCourseUpdate) {
-        if (!update.isValid()) {
-            throw new Error('Cannot use invalid ApiCourseUpdate to update course!');
-        }
-
-        if (update.instructors) {
-            update.instructors = await Promise.all(
-                update.instructors.map((it) => getManager().findOneOrFail(Student, { where: { id: it.id, isInstructor: true } }))
-            );
-        }
-
-        for (const [key, value] of Object.entries(update)) {
-            if (typeof value !== 'undefined') {
-                this[key] = value;
-            }
-        }
-    }
-
-    async updateTags(tags: { identifier?: string; name?: string }[]) {
-        let newTags: CourseTag[] = [];
-        for (let i = 0; i < tags.length; i++) {
-            if (tags[i].identifier) {
-                newTags.push(
-                    await getManager()
-                        .findOneOrFail(CourseTag, { where: { identifier: tags[i].identifier } })
-                        .catch(async () => await createCourseTag(tags[i].name, this.category))
-                );
-            } else {
-                newTags.push(await createCourseTag(tags[i].name, this.category));
-            }
-        }
-
-        this.tags = newTags;
-    }
-
-    imageURL(): string | null {
-        return this.imageKey ? accessURLForKey(this.imageKey) : null;
-    }
 }

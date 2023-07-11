@@ -180,7 +180,7 @@ export class ExtendedFieldsLectureResolver {
     }
 
     @FieldResolver((returns) => Subcourse, { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    @Authorized(Role.USER, Role.ADMIN)
     async subcourse(@Root() appointment: Appointment) {
         if (!appointment.subcourseId) {
             return null;
