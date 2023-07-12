@@ -1,5 +1,4 @@
 import { getLogger } from '../logger/logger';
-import { material } from '../mentoring/material';
 import { google, calendar_v3 as googleCalendar } from 'googleapis';
 
 const logger = getLogger();
@@ -102,29 +101,4 @@ export async function listFiles(folderID: string) {
         .catch((err) => logger.warn('Drive files query failed: ' + err.message));
 
     return files;
-}
-
-export async function getPeerToPeerCallDate(): Promise<PeerToPeerCall> {
-    const events = await queryEvents({
-        calendarId: material.call_calendar,
-        maxResults: 1,
-        orderBy: 'startTime',
-        singleEvents: true,
-        timeMin: new Date().toISOString(),
-    });
-    if (events.length === 0) {
-        return {};
-    }
-    if (events.length === 1) {
-        const peerToPeerCall = parsePeerToPeerCall(events[0]);
-
-        if (!peerToPeerCall.link) {
-            logger.warn('No valid link extracted from calendar event.');
-        }
-
-        return peerToPeerCall;
-    }
-    if (events.length > 1) {
-        logger.warn('Calendar query returned more than one event.');
-    }
 }

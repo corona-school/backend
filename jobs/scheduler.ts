@@ -3,7 +3,6 @@ import { Mutex } from 'async-mutex';
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, EntityManager } from 'typeorm';
 import { CSCronJob } from './types';
-import { invalidateActiveTransactionLog } from '../common/transactionlog';
 
 const logger = getLogger();
 
@@ -18,8 +17,6 @@ async function getActiveJobConnection() {
         jobConnection = await createConnection();
     } else if (!jobConnection.isConnected) {
         logger.info('Job database connection is no longer connected. Reconnect...');
-        //Do this always, to have no transaction log that uses a connection that was closed (which then would result in errors)
-        invalidateActiveTransactionLog(); // that might not be necessary here, but include it for safety reasons
         await jobConnection.connect();
     }
 
