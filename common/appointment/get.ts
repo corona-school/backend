@@ -9,6 +9,7 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     const appointmentsCount = await prisma.lecture.count({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: user.userID },
             },
@@ -34,6 +35,7 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
     const lastAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: user.userID },
             },
@@ -73,6 +75,7 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
     const appointments = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: userId },
             },
@@ -109,6 +112,7 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
     const appointmentsFromNow = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             start: {
                 gte: moment().subtract(MAXIMUM_APPOINTMENT_DURATION, 'hours').toDate(),
             },
