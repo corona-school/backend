@@ -5,11 +5,17 @@ import { table } from "../common/slack/blocks";
 export async function postStatisticsToSlack() {
     const lastMonthBegin = new Date();
     lastMonthBegin.setMonth(lastMonthBegin.getMonth() - 1);
-    lastMonthBegin.setDate(1);
+    lastMonthBegin.setUTCDate(1);
+    lastMonthBegin.setUTCHours(0);
+    lastMonthBegin.setUTCMinutes(0);
+    lastMonthBegin.setUTCSeconds(0);
     const begin = lastMonthBegin.toISOString();
 
     const lastMonthEnd = new Date();
-    lastMonthEnd.setDate(-1);
+    lastMonthEnd.setUTCDate(1);
+    lastMonthEnd.setUTCHours(0);
+    lastMonthEnd.setUTCMinutes(0);
+    lastMonthEnd.setUTCSeconds(0);
     const end = lastMonthEnd.toISOString();
 
 

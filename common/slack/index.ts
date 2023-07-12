@@ -1,5 +1,5 @@
-import { getLogger } from 'log4js';
 import { SlackBlock } from './blocks';
+import { getLogger } from '../logger/logger';
 
 export interface SlackChannel {
     name: string;
@@ -23,15 +23,15 @@ const logger = getLogger('Slack');
 
 export async function sendToSlack(channel: SlackChannel, message: SlackMessage) {
     if (!channel.webhookURL) {
-        logger.warn('Cannot send message to ' + channel.name + ' as webhook is missing');
+        logger.warn('Cannot send message to Slack as webhook is missing', { channel: channel.name });
         return;
     }
 
     const request = await fetch(channel.webhookURL, { method: 'POST', body: JSON.stringify(message), headers: { 'content-type': 'application/json' } });
     if (request.ok) {
-        logger.info('Sent Slack Message to ' + channel.name, { message });
+        logger.info('Sent Slack Message', { message, channel: channel.name });
     } else {
         // Unlike other places we do not fail here with an error, as the Slack integration is usually optional
-        logger.error('Failed to send Slack message', { status: request.status, text: await request.text() }, JSON.stringify(message, null, 2));
+        logger.error('Failed to send Slack message', { status: request.status, text: await request.text(), message: JSON.stringify(message, null, 2) });
     }
 }
