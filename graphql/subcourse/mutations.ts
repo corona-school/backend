@@ -17,7 +17,6 @@ import { getLogger } from '../../common/logger/logger';
 import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, getUserTypeORM, userForPupil, userForStudent } from '../../common/user';
-import { createBBBMeeting, createOrUpdateCourseAttendanceLog, getMeetingUrl, isBBBMeetingRunning, startBBBMeeting } from '../../common/util/bbb';
 import { PrerequisiteError } from '../../common/util/error';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
