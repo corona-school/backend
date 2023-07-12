@@ -80,7 +80,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
                     waiting_room: isCourse ? true : false,
                     breakout_room: isCourse ? true : false,
                     recurrence: endDateTime && {
-                        end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
+                        end_date_time: moment(endDateTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss'),
                         type: RecurrenceMeetingTypes.WEEKLY,
                     },
                     settings: {

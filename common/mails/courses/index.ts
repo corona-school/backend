@@ -13,7 +13,7 @@ import { getFullName, userForPupil } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity, isParticipant } from '../../courses/participants';
+import { getCourseCapacity, getCourseFreePlaces, isParticipant } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
 import { createSecretEmailToken } from '../../secret';
 import { getCourse } from '../../../graphql/util';
@@ -236,9 +236,9 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
-    const predictedPupilResponseRate = 5; // in percent
+const PREDICTED_PUPIL_RESPONSE_RATE = 1; /* % */
 
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
     if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
@@ -267,13 +267,14 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
     const shuffledFilteredPupils = shuffleArray(filteredPupils);
 
     // get random subset of filtered pupils
-    const seatsLeft = subcourse.maxParticipants * courseCapacity;
-    const randomPupilSampleSize = (seatsLeft / predictedPupilResponseRate) * 100;
+    const seatsLeft = await getCourseFreePlaces(subcourse);
+    const randomPupilSampleSize = (seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100;
     const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
 
     logger.info(
-        `Filtered ${filteredPupils.length} pupils and reduced that to (${randomFilteredPupilSample.length})
-        for Subcourse(${subcourse.id}) based on the predicted response rate`
+        `Filtered ${filteredPupils.length} pupils that could join the course and reduced that to ${randomFilteredPupilSample.length} (for ${seatsLeft} available places)
+        for Subcourse(${subcourse.id}) based on the predicted response rate of ${PREDICTED_PUPIL_RESPONSE_RATE}%`,
+        { subcourseId: subcourse.id }
     );
 
     const context: NotificationContext = await getNotificationContextForSubcourse(course, subcourse);

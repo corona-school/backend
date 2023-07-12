@@ -119,44 +119,9 @@ export class Match {
     @Column({ nullable: true })
     matchPool?: string;
 
-    jitsiLink(): string {
-        return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(this.uuid)}`;
-    }
-
-    overlappingSubjects(): Subject[] {
-        return this.pupil.overlappingSubjectsWithTutor(this.student);
-    }
-
     constructor(pupil: Pupil, student: Student, uuid: string = generateUUID()) {
         this.pupil = pupil;
         this.student = student;
         this.uuid = uuid;
     }
-}
-
-export async function haveDissolvedMatch(s: Student, p: Pupil, manager: EntityManager) {
-    return (await manager.find(Match, { student: s, pupil: p, dissolved: true })).length > 0;
-}
-
-export async function alreadyMatched(s: Student, p: Pupil, manager: EntityManager) {
-    const matches = manager.find(Match, { student: s, pupil: p });
-
-    return (await matches).length !== 0;
-}
-
-export async function getMatchByID(id: number, manager: EntityManager): Promise<Match> {
-    return manager.findOne(Match, {
-        id: id,
-    });
-}
-
-///Takes the given matches instances and re-queries them from the database, returning new instances for all of them.
-export async function reloadMatchesInstances(matches: Match[], manager: EntityManager): Promise<Match[]> {
-    return await Promise.all(matches.map(async (m) => await getMatchByID(m.id, manager)));
-}
-
-/// An interface that can be used if someone wants to represent a match just as a pair of student and pupil (without additional match metadata). Every Match is also a MatchPair
-export interface MatchPair {
-    student: Student;
-    pupil: Pupil;
 }

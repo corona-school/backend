@@ -55,7 +55,6 @@ import { MutateSubcourseResolver } from './subcourse/mutations';
 import { UserFieldsResolver } from './user/fields';
 import { MutateUserResolver } from './user/mutations';
 import { StatisticsResolver } from './statistics/fields';
-import { MutateMentorResolver } from './mentor/mutations';
 import { AdminMutationsResolver } from './admin';
 import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
@@ -151,9 +150,6 @@ const schema = buildSchemaSync({
 
         /* Statistics */
         StatisticsResolver,
-
-        /* Mentor */
-        MutateMentorResolver,
 
         /* Tutor Screenings */
         ExtendedFieldsTutorScreeningResolver,

@@ -13,7 +13,7 @@ export interface LectureDTO extends WebflowMetadata {
     duration: string;
 }
 
-export function lectureDTOFactory(data: any): WebflowMetadata {
+export function lectureDTOFactory(data: any): LectureDTO {
     // This is just some syntactic sugar to convert the api data to an internal interface.
     // Late on we could implement some checks here, to verify the data.
     return data;
