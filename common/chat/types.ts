@@ -59,6 +59,7 @@ export enum ChatType {
 export enum ChatAccess {
     READ = 'Read',
     READWRITE = 'ReadWrite',
+    NONE = 'None',
 }
 
 export type AllConversations = {

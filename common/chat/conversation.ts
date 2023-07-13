@@ -97,7 +97,6 @@ const getOrCreateOneOnOneConversation = async (
     reason: ContactReason,
     subcourseId?: number
 ): Promise<Conversation> => {
-    // * every participants need a talk js user
     await Promise.all(
         participants.map(async (participant) => {
             await getOrCreateChatUser(participant);
@@ -280,15 +279,19 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
     }
 }
 
-async function removeParticipant(user: User, conversationId: string): Promise<void> {
+async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
-            method: 'DELETE',
+            method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: ChatAccess.NONE,
+                notify: false,
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -414,7 +417,7 @@ export {
     getLastUnreadConversation,
     createConversation,
     updateConversation,
-    removeParticipant,
+    removeParticipantFromCourseChat,
     addParticipant,
     markConversationAsReadOnly,
     markConversationAsWriteable,
