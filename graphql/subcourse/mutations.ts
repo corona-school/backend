@@ -265,7 +265,7 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType);
 
         return true;
     }

@@ -13,8 +13,9 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AllConversations, ChatAccess, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
 import { getMyContacts } from './contacts';
+import { chat_type } from '@prisma/client';
 
 dotenv.config();
 
@@ -266,7 +267,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: chat_type): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -276,7 +277,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                access: chatType === ChatType.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
+                access: chatType === chat_type.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
             }),
         });
         await checkResponseStatus(response);
