@@ -205,7 +205,7 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
         method: 'POST',
-        body: '[{"text":"Standardmäßig werdet ihr über neue Chat-Nachrichten per E-Mail informiert. In den Einstellungen könnt ihr eure Benachrichtigungen anpassen. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.","type":"SystemMessage","custom":{"type":"first"}}]',
+        body: '[{"text":"*","type":"SystemMessage","custom":{"type":"first"}}]',
         responseStatus: 200,
     });
 
