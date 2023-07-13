@@ -126,7 +126,10 @@ const getOrCreateOneOnOneConversation = async (
             await updateConversation(updatedConversation);
         } else if (reason === ContactReason.PARTICIPANT) {
             const subcoursesFromConversation = participantsConversation?.custom.subcourse ?? '';
-            const subcourseIds: number[] = JSON.parse(subcoursesFromConversation);
+            let subcourseIds: number[] = [];
+            if (subcoursesFromConversation) {
+                subcourseId = JSON.parse(subcoursesFromConversation);
+            }
 
             const updatedSubcourses: number[] = [...subcourseIds, subcourseId];
             const returnUpdatedSubcourses = Array.from(new Set(updatedSubcourses));
@@ -141,7 +144,10 @@ const getOrCreateOneOnOneConversation = async (
             await updateConversation(updatedConversation);
         } else if (reason === ContactReason.PROSPECT) {
             const prospectSubcoursesFromConversation = participantsConversation?.custom.prospectSubcourse ?? '';
-            const prospectSubcourseIds: number[] = JSON.parse(prospectSubcoursesFromConversation);
+            let prospectSubcourseIds: number[] = [];
+            if (prospectSubcoursesFromConversation) {
+                prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation);
+            }
 
             const updatedProspectSubcourse: number[] = [...prospectSubcourseIds, subcourseId];
             const returnUpdatedProspectSubcourses = Array.from(new Set(updatedProspectSubcourse));
