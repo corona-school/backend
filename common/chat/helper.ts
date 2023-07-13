@@ -7,7 +7,7 @@ import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
-import { getAllConversations, getConversation, markConversationAsReadOnly } from './conversation';
+import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
@@ -143,7 +143,7 @@ const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMe
         } else if (access === 'Read') {
             readMembers.push(participantId);
         } else {
-            console.log(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte.`);
+            throw new Error(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte auf die Conversation ${conversation.id}.`);
         }
     }
     return { readWriteMembers, readMembers };
