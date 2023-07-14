@@ -60,3 +60,12 @@ export enum ChatType {
     NORMAL = 'NORMAL',
     ANNOUNCEMENT = 'ANNOUNCEMENT',
 }
+
+export enum SystemMessage {
+    FIRST = 'first',
+    GROUP_CHANGED = 'group_changed',
+    GROUP_OVER = 'group_over',
+    GROUP_REACTIVATE = 'group_reactivate',
+    ONE_ON_ONE_OVER = 'one_on_one_over',
+    ONE_ON_ONE_REACTIVATE = 'one_on_one_reactivate',
+}

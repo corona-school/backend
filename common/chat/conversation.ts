@@ -6,7 +6,7 @@ import { Message } from 'talkjs/all';
 import { User, getUser } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AccessRight, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AccessRight, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
 
@@ -137,7 +137,7 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
         const convertedConversation = convertTJConversation(newConversation);
         return convertedConversation;
     }
@@ -161,7 +161,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
@@ -332,7 +332,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
