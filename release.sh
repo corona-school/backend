@@ -14,7 +14,8 @@ fi
 if [ "$ENV" = 'production' ]; then
   echo "=========== Development Release =============="
   echo "----------- Run Migrations -----------------"
-  npm run db:deploy-migrations
+  echo "TODO"
+  # npm run db:deploy-migrations
   echo "=========== DONE ============================="
 fi
 
