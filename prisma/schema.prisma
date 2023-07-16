@@ -697,6 +697,7 @@ enum course_coursestate_enum {
   allowed
   denied
   cancelled
+  test
 }
 
 enum expert_data_allowed_enum {
