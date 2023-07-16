@@ -20,7 +20,7 @@ jobs:
           POSTGRES_PASSWORD: test
           POSTGRES_DB: integration
         ports:
-          - 5432:1
+          - 1::5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       postgres-verify-schema:
         image: postgres:10.8
@@ -29,7 +29,7 @@ jobs:
           POSTGRES_PASSWORD: test
           POSTGRES_DB: verify-schema
         ports:
-          - 5432:2
+          - 2:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
