@@ -24,7 +24,7 @@ backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningCon
 
 To run the backend, compile it first using `npm run build`. Make sure to have all dependencies installed before building by using `npm ci`. 
 You also need to set your environment accordingly (for further details see [.env.example](.env.example)) and set up a local PostgreSQL database server.
-To set up the database, create a database and user and set the `DATABASE_URL` in your .env file.
+To set up the database, create a database and user and set the `DATABASE_URL` in your .env file. Grant the user the rights to create databases (`ALTER USER <user> CREATEDB;`).
 Then run `npm run db:reset` to apply the Prisma Schema to the Database. You can additionally use `npm run db:seed` to fill the database with some test content.
 
 To run the development configuration of the web server handling the API requests run `npm run web:dev`.
