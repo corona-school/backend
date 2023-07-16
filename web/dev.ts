@@ -35,7 +35,6 @@ const logger = getLogger('DevSetup');
 
 export async function setupDevDB() {
     const conn = getConnection();
-    await conn.synchronize(true);
 
     const entityManager = getManager();
 

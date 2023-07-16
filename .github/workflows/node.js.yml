@@ -57,12 +57,15 @@ jobs:
         run: npm run build --if-present
 
       - name: Verify Prisma Schema against Prisma Migrations
-        run: npm prisma-verify
+        run: npm run prisma-verify
         env:
           SHADOW_DB: "postgres://test:test@localhost:5002/verify-schema"
 
       - name: Run Unit Tests
         run: npm test
+
+      - name: Setup Dev DB with Prisma Schema
+        run: npm run prisma-reset-db
 
       - name: Run Integration Tests
         run: npm run integration-tests
