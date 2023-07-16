@@ -1,7 +1,7 @@
 echo "Starting Release for Environment '$ENV'"
 
 # ----------- STAGING & REVIEW APPS --------------
-if [ \"$ENV\" = 'dev' ]; then
+if [ "$ENV" = 'dev' ]; then
   echo "=========== Development Release =============="
   echo "----------- Set up DB Schema -----------------"
   npm run db:reset -- --force
@@ -11,7 +11,7 @@ if [ \"$ENV\" = 'dev' ]; then
 fi
 
 # ----------- PRODUCTION -------------------------
-if [ \"$ENV\" = 'production' ]; then
+if [ "$ENV" = 'production' ]; then
   echo "=========== Development Release =============="
   echo "----------- Run Migrations -----------------"
   npm run db:deploy-migrations
