@@ -1,3 +1,5 @@
+echo "Starting Release for Environment '$ENV'"
+
 # ----------- STAGING & REVIEW APPS --------------
 if [ \"$ENV\" = 'dev' ]; then
   echo "=========== Development Release =============="
@@ -15,3 +17,5 @@ if [ \"$ENV\" = 'production' ]; then
   npm run db:deploy-migrations
   echo "=========== DONE ============================="
 fi
+
+echo "Finished Release"
