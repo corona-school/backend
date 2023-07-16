@@ -60,6 +60,7 @@ jobs:
         run: npm run prisma-verify
         env:
           SHADOW_DB: "postgres://test:test@localhost:5002/verify-schema"
+          DATABASE_URL: "postgres://test:test@localhost:5002/DO-NOT-USE"
 
       - name: Run Unit Tests
         run: npm test
