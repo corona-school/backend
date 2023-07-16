@@ -569,7 +569,9 @@ export class StatisticsResolver {
 
         const relevantStudents = students.filter((s) => {
             const firstMatch = s.match.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-            return firstMatch.dissolvedAt.getTime() - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000;
+            return (
+                (firstMatch.dissolved ? firstMatch.dissolvedAt.getTime() : new Date().getTime()) - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000
+            );
         });
 
         return relevantStudents.length / students.length;
