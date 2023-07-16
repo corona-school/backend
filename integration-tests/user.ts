@@ -263,6 +263,83 @@ export const instructorOne = test('Register Instructor', async () => {
     return { client, instructor };
 });
 
+export const instructorTwo = test('Register Instructor Two', async () => {
+    await setup;
+    const mockEmailVerification = await createMockVerification;
+
+    const client = createUserClient();
+    const userRandom = randomBytes(5).toString('base64');
+
+    await client.request(`
+        mutation RegisterStudent {
+            meRegisterStudent(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterStudentAgain {
+            meRegisterStudent(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
+                newsletter: false
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    const { me: instructor } = await client.request(`
+        query GetBasics {
+            me {
+                firstname
+                lastname
+                email
+                student { id }
+            }
+        }
+    `);
+
+    await client.request(`mutation RequestVerifyToken { tokenRequest(email: "TEST+${userRandom}@lern-fair.de", action: "user-verify-email")}`);
+
+    const {
+        context: { token },
+    } = await assertUserReceivedNotification(mockEmailVerification, `student/${instructor.student.id}`);
+    assert(token, 'User received email verification token');
+
+    await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
+
+    const { myRoles: rolesBefore } = await client.request(`query GetRolesBeforeBecomeInstructor { myRoles }`);
+    assert.deepStrictEqual(rolesBefore, ['UNAUTHENTICATED', 'USER', 'STUDENT']);
+
+    await client.request(`
+        mutation BecomeInstructor {
+            meBecomeInstructor(data: {
+                message: ""
+            })
+        }
+    `);
+
+    const { myRoles: rolesAfter } = await client.request(`query GetRolesAfterBecomeInstructor { myRoles }`);
+    assert.deepStrictEqual(rolesAfter, ['UNAUTHENTICATED', 'USER', 'STUDENT', 'WANNABE_INSTRUCTOR']);
+    // Not yet INSTRUCTOR as not yet screened
+
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    instructor.email = instructor.email.toUpperCase();
+
+    return { client, instructor };
+});
+
 export const pupilUpdated = test('Update Pupil', async () => {
     const { client, pupil } = await pupilOne;
     await adminClient.request(`mutation updatePupil { pupilUpdate( pupilId: ${pupil.pupil.id}, data: { gradeAsInt: 5 } ) }`);
