@@ -1,7 +1,7 @@
 import { adminClient, defaultClient, test } from './base';
-import { instructorTwo, pupilOne, pupilUpdated } from './user';
+import { pupilOne, pupilUpdated } from './user';
 import * as assert from 'assert';
-import { screenedInstructorOne } from './screening';
+import { screenedInstructorOne, screenedInstructorTwo } from './screening';
 import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
 
@@ -156,7 +156,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
 void test('Search further instructors', async () => {
     const { client } = await screenedInstructorOne;
-    const { instructor: instructor2 } = await instructorTwo;
+    const { instructor: instructor2 } = await screenedInstructorTwo;
 
     // Partial searches yield no result to not leak infos
     const partialSearch = await client.request(`query { otherInstructors(search: "${instructor2.firstname}", take: 100, skip: 0) { id }}`);
