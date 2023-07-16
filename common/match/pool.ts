@@ -522,7 +522,7 @@ export async function getInterestConfirmationRate() {
         where: { status: InterestConfirmationStatus.CONFIRMED },
     });
 
-    return confirmedInterestConfirmations / totalInterestConfirmations;
+    return confirmedInterestConfirmations / totalInterestConfirmations || 0;
 }
 
 // Predicted Pupil Match Time in Days
