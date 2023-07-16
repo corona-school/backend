@@ -1,78 +1,66 @@
 /* eslint-disable comma-dangle */
-import { getConnection, getManager } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { Pupil } from '../common/entity/Pupil';
-import { Student, TeacherModule } from '../common/entity/Student';
-import { Match } from '../common/entity/Match';
-import { Screener } from '../common/entity/Screener';
-import { Screening } from '../common/entity/Screening';
-import { ParticipationCertificate } from '../common/entity/ParticipationCertificate';
-import { hashPassword } from '../common/util/hashing';
-import { CourseTag } from '../common/entity/CourseTag';
-import { Course, CourseCategory, CourseState } from '../common/entity/Course';
-import { Subcourse } from '../common/entity/Subcourse';
-import { AppointmentType, Lecture } from '../common/entity/Lecture';
-import { InstructorScreening } from '../common/entity/InstructorScreening';
-import { CourseAttendanceLog } from '../common/entity/CourseAttendanceLog';
-import { Division, Expertise, Mentor } from '../common/entity/Mentor';
-import { School } from '../common/entity/School';
-import { State } from '../common/entity/State';
-import { SchoolType } from '../common/entity/SchoolType';
-import { LearningGermanSince } from '../common/daz/learningGermanSince';
-import { Language } from '../common/daz/language';
-import { PupilTutoringInterestConfirmationRequest } from '../common/entity/PupilTutoringInterestConfirmationRequest';
-import { CourseGuest } from '../common/entity/CourseGuest';
-import { RemissionRequest } from '../common/entity/RemissionRequest';
-import { CertificateOfConduct } from '../common/entity/CertificateOfConduct';
-import { getNotifications, importMessageTranslations, importNotifications } from '../common/notification/notification';
-import { Subject } from '../common/entity/Subject';
-import { _createFixedToken, createPassword } from '../common/secret';
-import { userForStudent, userForPupil } from '../common/user';
-import { getLogger } from '../common/logger/logger';
-import { WaitingListEnrollment } from '../common/entity/WaitingListEnrollment';
+import { hashPassword } from './common/util/hashing';
+import { getNotifications, importMessageTranslations, importNotifications } from './common/notification/notification';
+import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
+import { userForStudent, userForPupil, updateUser } from './common/user';
+import { getLogger } from './common/logger/logger';
+import { becomeTutee, registerPupil } from './common/pupil/registration';
+import { isDev, isTest } from './common/util/environment';
+import { updatePupil } from './graphql/pupil/mutations';
+import { prisma } from './common/prisma';
 
 const logger = getLogger('DevSetup');
 
-export async function setupDevDB() {
-    const conn = getConnection();
+void (async function setupDevDB() {
+    if (!isDev && !isTest) {
+        throw new Error(`Are you sure you want to seed the DB in a non development / test environment?`);
+    }
 
-    const entityManager = getManager();
+    logger.info('Starting to Seed DB');
 
-    const pupils: Pupil[] = [];
+    const pupil1 = await registerPupil({
+        firstname: 'Max',
+        lastname: 'Musterschüler',
+        email: 'test+dev+p1@lern-fair.de',
+        aboutMe: "I'm Pupil1",
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bb'
+    });
+    await verifyEmail(userForPupil(pupil1));
+    await prisma.pupil.update({
+        where: { id: pupil1.id },
+        data: {
+            languages: ['Bulgarisch', 'Italienisch'],
+            subjects: JSON.stringify([{ name: "Deutsch" }, { name: 'Mathematik' }, { name: 'Englisch' }]),
+            learningGermanSince: 'less_than_one',
+            grade: '3. Klasse'
+        }
+    });
 
-    let p = new Pupil();
-    p.firstname = 'Max';
-    p.lastname = 'Musterschüler';
-    p.active = true;
-    p.isPupil = true;
-    p.email = 'test+dev+p1@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.wix_id = '00000000-0000-0001-0001-1b4c4c526364';
-    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
-    p.grade = '3. Klasse';
-    p.openMatchRequestCount = 0;
-    p.languages = [Language.bg, Language.it];
-    p.learningGermanSince = LearningGermanSince.lessThanOne;
-    p.matchReason = 'Ich möchte gerne einen Tutor haben, der mir beim Lernen hilft.';
-    pupils.push(p);
 
-    p = new Pupil();
-    p.firstname = 'Tom';
-    p.lastname = 'Müller';
-    p.active = true;
-    p.email = 'test+dev+p2@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.wix_id = '00000000-0000-0001-0002-1b4c4c526364';
-    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
-    p.grade = '6. Klasse';
-    p.openMatchRequestCount = 0;
-    p.matchReason = 'Ich brauche Hilfe bei meinen Hausaufgaben.';
-    pupils.push(p);
+    const pupil2 = await registerPupil({
+        firstname: "Tom",
+        lastname: "Müller",
+        email: 'test+dev+p2@lern-fair.de',
+        aboutMe: "I'm Pupil 2",
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil2));
+    await prisma.pupil.update({
+        where: { id: pupil2.id },
+        data: {
+            languages: [],
+            subjects: JSON.stringify([{ name: "Spanisch" }, { name: "Deutsch" }]),
+            grade: `6. Klasse`
+        }
+    });
 
+
+    /*
     p = new Pupil();
     p.firstname = 'Tom';
     p.lastname = 'Müller2';
@@ -1359,13 +1347,15 @@ export async function setupDevDB() {
     await entityManager.save(remissionRequest);
     logger.debug('Inserted remission request');
 
+    */
+
     if (!process.env.SKIP_NOTIFICATION_IMPORT) {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
 
-    logger.info(`Set up test data`);
-}
+    logger.info(`Successfully seeded the DB`);
+})();
 
 function sha512(input: string): string {
     const hash = createHash('sha512');

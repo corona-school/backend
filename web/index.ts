@@ -1,6 +1,5 @@
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
-import { setupDevDB } from './dev';
 import moment from 'moment-timezone';
 import { isDev, isTest } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
@@ -27,11 +26,6 @@ export const started = (async function main() {
         await getConnection()?.close();
         logger.info(`Closed Database connection`);
     });
-
-    // -------- Fill DB on Dev -------------------
-    if ((isDev || isTest) && !isCommandArg('--keepDB')) {
-        await setupDevDB();
-    }
 
     // -------- Start Webserver ------------------
     return (await import('./server')).server;
