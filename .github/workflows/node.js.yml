@@ -13,16 +13,23 @@ jobs:
         node-version: [18.x]
 
     services:
-      postgres:
+      postgres-integration:
         image: postgres:10.8
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: 
-          - integration
-          - verify-schema
+          POSTGRES_DB: integration
         ports:
-          - 5432:5432
+          - 5432:1
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      postgres-verify-schema:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: verify-schema
+        ports:
+          - 5432:2
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
@@ -52,7 +59,7 @@ jobs:
       - name: Verify Prisma Schema against Prisma Migrations
         run: npm prisma-verify
         env:
-          SHADOW_DB: "postgres://test:test@localhost:5432/verify-schema"
+          SHADOW_DB: "postgres://test:test@localhost:2/verify-schema"
 
       - name: Run Unit Tests
         run: npm test
@@ -60,7 +67,7 @@ jobs:
       - name: Run Integration Tests
         run: npm run integration-tests
         env:
-          DATABASE_URL: "postgres://test:test@localhost:5432/integration"
+          DATABASE_URL: "postgres://test:test@localhost:1/integration"
 
   lint:
     runs-on: ubuntu-20.04
