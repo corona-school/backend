@@ -9,8 +9,23 @@ dotenv.config();
 const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}/users`;
 const apiKey = process.env.TALKJS_API_KEY;
 
+const shortenLastName = (lastname: string) => {
+    if (lastname.length > 0) {
+        return lastname.charAt(0).concat('.');
+    }
+    return '';
+};
+
+const getChatName = (user: User) => {
+    if (user.pupilId) {
+        return `${user.firstname} ${shortenLastName(user.lastname)}`;
+    }
+    return `${user.firstname} ${user.lastname}`;
+};
+
 const createChatUser = async (user: User): Promise<void> => {
     const userId = userIdToTalkJsId(user.userID);
+    const userName = getChatName(user);
     try {
         const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
             method: 'PUT',
@@ -19,7 +34,7 @@ const createChatUser = async (user: User): Promise<void> => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                name: `${user.firstname} ${user.lastname}`,
+                name: userName,
                 email: [user.email],
                 role: user.studentId ? 'student' : 'pupil',
             }),
