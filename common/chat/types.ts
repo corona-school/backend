@@ -9,16 +9,11 @@ export enum ContactReason {
     CONTACT = 'contact',
 }
 
-export enum AccessRight {
-    READ = 'Read',
-    READ_WRITE = 'ReadWrite',
-}
-
 export type Conversation = Pick<ConversationData, 'topicId' | 'id' | 'subject' | 'photoUrl' | 'welcomeMessages'> & {
     custom?: ChatMetaData;
     lastMessage?: Message;
     participants: {
-        [id: string]: { access: AccessRight; notify: boolean };
+        [id: string]: { access: ChatAccess; notify: boolean };
     };
     createdAt: number;
 };
@@ -36,7 +31,7 @@ export type TJConversation = Conversation & {
     custom?: TJChatMetaData;
     lastMessage?: Message;
     participants: {
-        [id: string]: { access: AccessRight; notify: boolean };
+        [id: string]: { access: ChatAccess; notify: boolean };
     };
     createdAt: number;
 };
@@ -69,3 +64,12 @@ export enum SystemMessage {
     ONE_ON_ONE_OVER = 'one_on_one_over',
     ONE_ON_ONE_REACTIVATE = 'one_on_one_reactivate',
 }
+export enum ChatAccess {
+    READ = 'Read',
+    READWRITE = 'ReadWrite',
+    NONE = 'None',
+}
+
+export type AllConversations = {
+    data: Conversation[];
+};
