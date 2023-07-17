@@ -14,7 +14,6 @@ import {
     Prisma,
     PrismaClient,
 } from '@prisma/client';
-import { Address } from 'address-rfc2821';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toPupilSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
@@ -141,9 +140,8 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
     }
 
     const school = await prisma.school.findUnique({ where: { id: pupil.schoolId }, rejectOnNotFound: true });
-    const teacherEmail = new Address(data.teacherEmail);
 
-    if (school.emailDomain !== teacherEmail.host) {
+    if (!data.teacherEmail.endsWith(school.emailDomain)) {
         throw new Error(`Invalid Teacher Email '${data.teacherEmail} as School Domain is '${school.emailDomain}'`);
     }
 
