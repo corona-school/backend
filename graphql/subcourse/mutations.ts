@@ -129,11 +129,13 @@ export class MutateSubcourseResolver {
         const studentUserId = getUserIdTypeORM(newInstructor);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
         await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        await addParticipant(
-            newInstructorUser,
-            subcourse.conversationId,
-            subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
-        );
+        if (subcourse.conversationId) {
+            await addParticipant(
+                newInstructorUser,
+                subcourse.conversationId,
+                subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
+            );
+        }
 
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
@@ -154,7 +156,9 @@ export class MutateSubcourseResolver {
         const studentUserId = getUserIdTypeORM(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
         await removeGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
+        }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -200,7 +204,9 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await cancelSubcourse(subcourse);
-        await markConversationAsReadOnly(subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await markConversationAsReadOnly(subcourse.conversationId);
+        }
         return true;
     }
 
@@ -216,7 +222,9 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        if (subcourse.conversationId) {
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        }
 
         return true;
     }
@@ -265,7 +273,9 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType);
+        if (subcourse.conversationId) {
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType);
+        }
 
         return true;
     }
@@ -285,7 +295,10 @@ export class MutateSubcourseResolver {
 
         await leaveSubcourse(subcourse, pupil);
         await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
-        await removeParticipantFromCourseChat(pupilUser, subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await removeParticipantFromCourseChat(pupilUser, subcourse.conversationId);
+        }
+
         return true;
     }
 
