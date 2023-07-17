@@ -9,6 +9,7 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
+import { postStatisticsToSlack } from './slack-statistics';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -47,6 +48,10 @@ export const executeJob = async (job) => {
             break;
         case 'migrateLecturesToAppointment': {
             await migrateLecturesToAppointment();
+            break;
+        }
+        case 'sendSlackStatistics': {
+            await postStatisticsToSlack();
             break;
         }
         default: {

@@ -12,7 +12,7 @@ import { contactInstructors, contactParticipants } from '../../common/courses/co
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
-import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
+import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { getUserIdTypeORM, userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
@@ -312,48 +312,6 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseInviteGuest(
-        @Ctx() context: GraphQLContext,
-        @Arg('subcourseId') subcourseId: number,
-        @Arg('firstname') firstname: string,
-        @Arg('lastname') lastname: string,
-        @Arg('email') email: string
-    ) {
-        email = validateEmail(email);
-
-        const subcourse = await getSubcourse(subcourseId);
-        await hasAccess(context, 'Subcourse', subcourse);
-
-        const course = await getCourse(subcourse.courseId);
-
-        const token = randomBytes(48).toString('hex');
-        let inviterId: number | null = null;
-
-        if (isSessionStudent(context)) {
-            inviterId = context.user!.studentId;
-        }
-
-        // TODO: Move Guests from Course to Subcourse
-
-        const guest = await prisma.course_guest.create({
-            data: {
-                firstname,
-                lastname,
-                email,
-                token,
-                inviterId,
-                courseId: course.id,
-            },
-        });
-
-        await sendGuestInvitationMail(guest);
-        logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
-
         return true;
     }
 

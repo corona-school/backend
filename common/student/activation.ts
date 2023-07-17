@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { course_coursestate_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
-import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
+import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
 import { getZoomUser } from '../zoom/zoom-user';
 import { deleteZoomUser } from '../zoom/zoom-user';
@@ -32,17 +32,6 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     });
     for (const match of matches) {
         await dissolveMatch(match, 0, student);
-    }
-
-    let projectMatches = await prisma.project_match.findMany({
-        where: {
-            studentId: student.id,
-            dissolved: false,
-        },
-    });
-
-    for (const match of projectMatches) {
-        await dissolveProjectMatch(match, 0, student);
     }
 
     //Delete course records for the student.

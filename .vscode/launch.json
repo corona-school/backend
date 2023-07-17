@@ -42,14 +42,6 @@
             ],
             "envFile": "${workspaceRoot}/.env",
             "outputCapture": "std"
-        },
-        {
-            "type": "node-terminal",
-            "name": "[TS-Node] Web (Debug)",
-            "request": "launch",
-            "command": "TYPEORM_URL=$DATABASE_URL TYPEORM_CONNECTION=postgres TYPEORM_ENTITIES=common/entity/*.ts ts-node ${workspaceRoot}/web/index.ts",
-            "outputCapture": "std",
-            "envFile": "${workspaceRoot}/.env",
         }
     ]
 }

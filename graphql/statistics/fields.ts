@@ -338,6 +338,9 @@ export class StatisticsResolver {
         });
         const intervals = new Map<number, number>();
         for (const match of matches) {
+            if (match.dissolved && match.dissolvedAt == null) {
+                continue;
+            }
             let dateUntil;
             if (!match.dissolved || match.dissolvedAt < match.createdAt) {
                 dateUntil = new Date();
@@ -567,12 +570,20 @@ export class StatisticsResolver {
             },
         });
 
+        let counterweight = 0; // due to historical reasons we have lost the dissolvedAt date of some (3772) dissolved matches. If we encounter such a match, we should remove the student from the denominator to avoid bias.
+
         const relevantStudents = students.filter((s) => {
             const firstMatch = s.match.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-            return firstMatch.dissolvedAt.getTime() - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000;
+            if (firstMatch.dissolved && firstMatch.dissolvedAt == null) {
+                counterweight++;
+                return false;
+            }
+            return (
+                (firstMatch.dissolved ? firstMatch.dissolvedAt.getTime() : new Date().getTime()) - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000
+            );
         });
 
-        return relevantStudents.length / students.length;
+        return relevantStudents.length / (students.length - counterweight);
     }
 
     @FieldResolver((returns) => Float)
@@ -653,6 +664,9 @@ export class StatisticsResolver {
         });
 
         matches.forEach((match) => {
+            if (match.dissolvedAt == null) {
+                return;
+            }
             let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
             buckets.find((b) => b.from <= duration && (b.to > duration || b.to === -1)).value += 1;
         });
