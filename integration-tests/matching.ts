@@ -157,7 +157,7 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
         method: 'PUT',
-        body: JSON.stringify({ name: `${pupil.firstname} ${pupil.lastname}`, email: [pupil.email.toLowerCase()], role: 'pupil' }),
+        body: JSON.stringify({ name: `${pupil.firstname} ${pupil.lastname.charAt(0).concat('.')}`, email: [pupil.email.toLowerCase()], role: 'pupil' }),
         responseStatus: 200,
     });
 
