@@ -97,7 +97,7 @@ export async function sendCourseUpcomingReminderParticipant(
     await Notification.actionTaken(participant, 'participant_subcourse_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
-async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
+export async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
     const { start } = await getFirstLecture(subcourse);
 
     const date = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'long', year: 'numeric' });
