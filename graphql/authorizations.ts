@@ -401,6 +401,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             match: nobody,
             _count: nobody,
             waiting_list_enrollment: nobody,
+            lastLogin: adminOrOwner,
         }),
     },
 
@@ -481,6 +482,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             remission_request: nobody,
             _count: nobody,
             zoomUserId: onlyAdmin,
+            lastLogin: adminOrOwner,
         }),
     },
     Subcourse: {
@@ -551,7 +553,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 instructorId: nobody,
                 _count: nobody,
                 match: adminOrOwner,
-                matchId: adminOrOwner,
+                matchId: participantOrOwnerOrAdmin,
                 participantIds: adminOrOwner,
                 organizerIds: adminOrOwner,
                 declinedBy: participantOrOwnerOrAdmin,

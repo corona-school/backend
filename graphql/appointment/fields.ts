@@ -6,9 +6,10 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers } from '../../common/user';
+import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/zoom-scheduled-meeting';
+import { UserType } from '../types/user';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -83,7 +84,11 @@ export class ExtendedFieldsLectureResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ) {
-        return (await getUsers(appointment.participantIds)).map(({ email, ...rest }) => ({ ...rest }));
+        const [userType] = getUserTypeAndIdForUserId(context.user.userID);
+        return (await getUsers(appointment.participantIds)).map(({ email, lastname, ...rest }) => ({
+            ...rest,
+            lastname: userType === 'pupil' ? undefined : lastname,
+        }));
     }
 
     @FieldResolver((returns) => [Organizer])
@@ -175,12 +180,30 @@ export class ExtendedFieldsLectureResolver {
     }
 
     @FieldResolver((returns) => Subcourse, { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    @Authorized(Role.USER, Role.ADMIN)
     async subcourse(@Root() appointment: Appointment) {
         if (!appointment.subcourseId) {
             return null;
         }
 
         return await getSubcourse(appointment.subcourseId);
+    }
+}
+
+@Resolver((of) => AppointmentParticipant)
+export class ExtendedFieldsParticipantResolver {
+    @FieldResolver((returns) => UserType)
+    @Authorized(Role.ADMIN)
+    async user(@Root() participant: AppointmentParticipant) {
+        return await getUser(participant.userID);
+    }
+}
+
+@Resolver((of) => Organizer)
+export class ExtendedFieldsOrganizerResolver {
+    @FieldResolver((returns) => UserType)
+    @Authorized(Role.ADMIN)
+    async user(@Root() organizer: Organizer) {
+        return await getUser(organizer.userID);
     }
 }

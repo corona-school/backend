@@ -6,7 +6,6 @@ import {
     AppointmentCreateMatchInput,
     createGroupAppointments,
     createMatchAppointments,
-    createZoomMeetingForAppointments,
     isAppointmentOneWeekLater,
 } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';

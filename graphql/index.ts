@@ -33,11 +33,10 @@ import { MutateTutoringInterestConfirmationResolver } from './tutoring_interest_
 import { MutateParticipationCertificateResolver } from './certificate/mutations';
 import { ExtendedFieldsParticipationCertificateResolver } from './certificate/fields';
 import { ExtendFieldsStudentResolver } from './student/fields';
-import { ExtendedFieldsLectureResolver } from './appointment/fields';
+import { ExtendedFieldsLectureResolver, ExtendedFieldsOrganizerResolver, ExtendedFieldsParticipantResolver } from './appointment/fields';
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
-import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import { ExtendedFieldsSchoolResolver } from './school/fields';
 import { MutateStudentResolver } from './student/mutations';
 import { MutateCertificateOfConductResolver } from './certificate_of_conduct/mutations';
@@ -55,7 +54,6 @@ import { MutateSubcourseResolver } from './subcourse/mutations';
 import { UserFieldsResolver } from './user/fields';
 import { MutateUserResolver } from './user/mutations';
 import { StatisticsResolver } from './statistics/fields';
-import { MutateMentorResolver } from './mentor/mutations';
 import { AdminMutationsResolver } from './admin';
 import { ExtendedFieldsTutorScreeningResolver } from './tutor_screening/fields';
 import { ExtendedFieldsInstructorScreeningResolver } from './instructor_screening/fields';
@@ -66,6 +64,7 @@ import { ExtendedFieldsPupil_screeningResolver } from './pupil_screening/fields'
 import { MutateAppointmentResolver } from './appointment/mutations';
 import { getCurrentTransaction } from '../common/session';
 import { MutateChatResolver } from './chat/mutations';
+import { playground } from './playground';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -152,9 +151,6 @@ const schema = buildSchemaSync({
         /* Statistics */
         StatisticsResolver,
 
-        /* Mentor */
-        MutateMentorResolver,
-
         /* Tutor Screenings */
         ExtendedFieldsTutorScreeningResolver,
 
@@ -171,6 +167,8 @@ const schema = buildSchemaSync({
 
         /* Appointments */
         MutateAppointmentResolver,
+        ExtendedFieldsParticipantResolver,
+        ExtendedFieldsOrganizerResolver,
 
         /* Chat */
         MutateChatResolver,
@@ -180,7 +178,7 @@ const schema = buildSchemaSync({
     authChecker,
 });
 
-const plugins: PluginDefinition[] = [responseCachePlugin() as any, GraphQLLogger as any, ApolloServerPluginLandingPageGraphQLPlayground()];
+const plugins: PluginDefinition[] = [responseCachePlugin() as any, GraphQLLogger as any, playground];
 
 export const apolloServer = new ApolloServer({
     schema,

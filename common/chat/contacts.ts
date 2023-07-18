@@ -1,8 +1,10 @@
 import assert from 'assert';
 import { prisma } from '../prisma';
-import { isPupil, isStudent, userForPupil, userForStudent } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { User } from '../user';
+import { ContactReason } from './types';
+import { isPupilContact, isStudentContact } from './helper';
 
 export type UserContactType = {
     userID: string;
@@ -11,133 +13,251 @@ export type UserContactType = {
     email: string;
 };
 
-type UserContactlist = {
+type BaseContactList = {
     [userId: string]: {
         user: UserContactType;
-        contactReasons: string[];
+        contactReasons: ContactReason[];
     };
 };
 
-const getMatchContacts = async (user: User): Promise<Student[] | Pupil[]> => {
+type CompleteContactList = BaseContactList & {
+    [userId: string]: {
+        match?: { matchId: number };
+        subcourse?: number[];
+    };
+};
+
+type MatchContactList = BaseContactList & {
+    [userId: string]: {
+        match: { matchId: number };
+    };
+};
+
+type SubcourseContactList = BaseContactList & {
+    [userId: string]: {
+        subcourse: number[];
+    };
+};
+
+type SubcourseContactPupil = {
+    pupil: Pupil;
+    subcourseIds: number[];
+};
+
+type SubcourseContactStudent = {
+    student: Student;
+    subcourseIds: number[];
+};
+
+export type MatchContactPupil = {
+    pupil: Pupil;
+    matchId: number;
+};
+
+export type MatchContactStudent = {
+    student: Student;
+    matchId: number;
+};
+const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[] | MatchContactPupil[]> => {
     if (user.pupilId) {
-        return await prisma.student.findMany({
+        const studentsWithMatchId = await prisma.student.findMany({
             where: {
-                match: { some: { pupilId: user.pupilId } },
+                match: { some: { pupilId: user.pupilId, dissolved: false } },
             },
+            include: { match: true },
         });
+
+        const studentWithMatchId: MatchContactStudent[] = studentsWithMatchId.map((studentWithMatchId) => {
+            return {
+                student: studentWithMatchId,
+                matchId: studentWithMatchId.match[0].id,
+            };
+        });
+        return studentWithMatchId;
     }
     if (user.studentId) {
-        return await prisma.pupil.findMany({
+        const pupilsWithMatchId = await prisma.pupil.findMany({
             where: {
-                match: { some: { studentId: user.studentId } },
+                match: { some: { studentId: user.studentId, dissolved: false } },
             },
+            include: { match: true },
         });
+        const pupilWithMatchId: MatchContactPupil[] = pupilsWithMatchId.map((pupilWithMatchId) => {
+            return {
+                pupil: pupilWithMatchId,
+                matchId: pupilWithMatchId.match[0].id,
+            };
+        });
+
+        return pupilWithMatchId;
     }
 };
-const getSubcourseInstructorContacts = async (pupil: User) => {
+const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
-    return await prisma.student.findMany({
+    const studentsWithSubcourseIds = await prisma.student.findMany({
         where: {
             subcourse_instructors_student: {
                 some: {
                     subcourse: {
                         allowChatContactParticipants: true,
                         subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } },
+                        cancelled: false,
+                    },
+                },
+            },
+        },
+        include: {
+            subcourse_instructors_student: {
+                select: {
+                    subcourse: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                },
+                where: {
+                    subcourse: {
+                        subcourse_participants_pupil: {
+                            some: { pupilId: pupil.pupilId },
+                        },
                     },
                 },
             },
         },
     });
+
+    const instructorsWithSubcourseIds: SubcourseContactStudent[] = studentsWithSubcourseIds.map((studentWithSubcourseIds) => {
+        const subcourseIds = studentWithSubcourseIds.subcourse_instructors_student.map((participant) => participant.subcourse.id);
+        return {
+            student: studentWithSubcourseIds,
+            subcourseIds: subcourseIds,
+        };
+    });
+
+    return instructorsWithSubcourseIds;
 };
-const getSubcourseParticipantContact = async (student: User) => {
+const getSubcourseParticipantContactForUser = async (student: User): Promise<SubcourseContactPupil[]> => {
     assert(student.studentId, 'Student must have an studentId');
-    return await prisma.pupil.findMany({
+    const pupilsWithSubcourseIds = await prisma.pupil.findMany({
         where: {
             subcourse_participants_pupil: {
                 some: {
                     subcourse: {
                         allowChatContactParticipants: true,
                         subcourse_instructors_student: { some: { studentId: student.studentId } },
+                        cancelled: false,
+                    },
+                },
+            },
+        },
+        include: {
+            subcourse_participants_pupil: {
+                select: {
+                    subcourse: {
+                        select: {
+                            id: true,
+                        },
                     },
                 },
             },
         },
     });
+
+    const participantsWithSubcourseIds: SubcourseContactPupil[] = pupilsWithSubcourseIds.map((pupilWithSubcourseIds) => {
+        const subcourseIds = pupilWithSubcourseIds.subcourse_participants_pupil.map((participant) => participant.subcourse.id);
+        return {
+            pupil: pupilWithSubcourseIds,
+            subcourseIds: subcourseIds,
+        };
+    });
+
+    return participantsWithSubcourseIds;
 };
-const getMySubcourseContacts = async (user: User): Promise<UserContactlist> => {
-    let subcourseContactsList: UserContactlist = {};
+const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseContactList> => {
+    let subcourseContactsList: SubcourseContactList = {};
 
-    if (user.pupilId) {
-        const subcourseContacts = await getSubcourseInstructorContacts(user);
-        for (const subcourseContact of subcourseContacts) {
-            const instructorSubcourseId = userForStudent(subcourseContact).userID;
-            const contactReasons = ['subcourse'];
+    const subcourseContacts = await getInstructorsForPupilSubcourses(pupil);
+    for (const subcourseContact of subcourseContacts) {
+        const instructorSubcourseId = userForStudent(subcourseContact.student).userID;
+        const contactReasons = [ContactReason.COURSE];
 
-            subcourseContactsList[instructorSubcourseId] = {
-                user: {
-                    firstname: subcourseContact.firstname,
-                    lastname: subcourseContact.lastname,
-                    userID: instructorSubcourseId,
-                    email: subcourseContact.email,
-                },
-                contactReasons: contactReasons,
-            };
-        }
-    }
-
-    if (user.studentId) {
-        const subcourseContacts = await getSubcourseParticipantContact(user);
-        for (const subcourseContact of subcourseContacts) {
-            const participantSubcourseId = userForPupil(subcourseContact).userID;
-            const contactReasons = ['subcourse'];
-
-            subcourseContactsList[participantSubcourseId] = {
-                user: {
-                    firstname: subcourseContact.firstname,
-                    lastname: subcourseContact.lastname,
-                    userID: participantSubcourseId,
-                    email: subcourseContact.email,
-                },
-                contactReasons: contactReasons,
-            };
-        }
+        subcourseContactsList[instructorSubcourseId] = {
+            user: {
+                firstname: subcourseContact.student.firstname,
+                lastname: subcourseContact.student.lastname,
+                userID: instructorSubcourseId,
+                email: subcourseContact.student.email,
+            },
+            contactReasons: contactReasons,
+            subcourse: subcourseContact.subcourseIds,
+        };
     }
 
     return subcourseContactsList;
 };
-const getMyMatchContacts = async (user: User): Promise<UserContactlist> => {
-    let matchContactList: UserContactlist = {};
-    const matchContacts = await getMatchContacts(user);
+const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseContactList> => {
+    let subcourseContactsList: SubcourseContactList = {};
+
+    const subcourseContacts = await getSubcourseParticipantContactForUser(student);
+    for (const subcourseContact of subcourseContacts) {
+        const participantSubcourseId = userForPupil(subcourseContact.pupil).userID;
+        const contactReasons = [ContactReason.COURSE];
+        subcourseContactsList[participantSubcourseId] = {
+            user: {
+                firstname: subcourseContact.pupil.firstname,
+                lastname: subcourseContact.pupil.lastname,
+                userID: participantSubcourseId,
+                email: subcourseContact.pupil.email,
+            },
+            contactReasons: contactReasons,
+            subcourse: subcourseContact.subcourseIds,
+        };
+    }
+
+    return subcourseContactsList;
+};
+const getMyMatchContacts = async (user: User): Promise<MatchContactList> => {
+    let matchContactList: MatchContactList = {};
+    const matchContacts = await getMatchContactsForUser(user);
     for (const matchContact of matchContacts) {
         let matchee: User;
-        if (isStudent(matchContact)) {
-            matchee = userForStudent(matchContact as Student);
+        if (isStudentContact(matchContact)) {
+            matchee = userForStudent(matchContact.student as Student);
         }
-        if (isPupil(matchContact)) {
-            matchee = userForPupil(matchContact as Pupil);
+        if (isPupilContact(matchContact)) {
+            matchee = userForPupil(matchContact.pupil as Pupil);
         }
-        const contactReasons = ['match'];
+        const contactReasons = [ContactReason.MATCH];
 
         matchContactList[matchee.userID] = {
             user: { firstname: matchee.firstname, lastname: matchee.lastname, userID: matchee.userID, email: matchee.email },
             contactReasons: contactReasons,
+            match: { matchId: matchContact.matchId },
         };
     }
 
     return matchContactList;
 };
 export const getMyContacts = async (user: User) => {
-    const subcourseContacts = await getMySubcourseContacts(user);
+    let subcourseContacts: CompleteContactList = {};
+    if (user.pupilId) {
+        subcourseContacts = await getSubcourseContactsForPupil(user);
+    }
+
+    if (user.studentId) {
+        subcourseContacts = await getSubcourseContactsForStudent(user);
+    }
     const matchContacts = await getMyMatchContacts(user);
 
     for (const contactId in subcourseContacts) {
         const doubleContact = matchContacts[contactId];
         if (doubleContact) {
             subcourseContacts[contactId].contactReasons.push(...doubleContact.contactReasons);
+            subcourseContacts[contactId].match = doubleContact.match;
             delete matchContacts[contactId];
         }
     }
-    const myContacts = { ...subcourseContacts, ...matchContacts };
+    const myContacts: CompleteContactList = { ...subcourseContacts, ...matchContacts };
     const myContactsAsArray = Object.values(myContacts);
     return myContactsAsArray;
 };

@@ -1,9 +1,9 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
-import { diff, hash, mapDBIdToId, DBIdMap } from './diff';
+import { diff, hash, mapToDBId, DBIdMap } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
-import { lectureDTOFactory } from './sync-lectures';
+import { LectureDTO, lectureDTOFactory } from './sync-lectures';
 import { getCourseImageURL } from '../../../common/courses/util';
 import { course_subject_enum as CourseSubjectEnum } from '@prisma/client';
 
@@ -85,8 +85,8 @@ function listLectureStartDates(subcourse: WebflowSubcourse): string {
     return appointments.join('\n');
 }
 
-function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): string[] {
-    const result = [];
+function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap<LectureDTO>): string[] {
+    let result: LectureDTO[] = [];
 
     for (const lecture of subcourse.lecture) {
         if (lectureIds[lecture.id]) {
@@ -96,7 +96,8 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
         }
     }
 
-    return result;
+    // This will make sure that the attached lectures are sorted by their start date.
+    return result.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()).map((lecture) => lecture._id);
 }
 
 // The description is a WYSIWYG editor that translates the information into HTML code, so we should do the same.
@@ -122,7 +123,7 @@ function translateSubject(subject: CourseSubjectEnum): string {
     }
 }
 
-function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap): CourseDTO {
+function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap<LectureDTO>): CourseDTO {
     const [startDate, endDate] = getStartAndEndDate(subcourse) || [moment(), moment()];
 
     // make sure that the weekday can be properly translated
@@ -173,8 +174,8 @@ export default async function syncCourses(logger: Logger): Promise<void> {
 
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
-    const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
-    const lectureDBIdMap = mapDBIdToId(webflowLectures);
+    const webflowLectures = await getCollectionItems<LectureDTO>(lectureCollectionId, lectureDTOFactory);
+    const lectureDBIdMap = mapToDBId<LectureDTO>(webflowLectures);
 
     const subCourses = await getWebflowSubcourses();
     const dbCourses = subCourses.map((course) => courseToDTO(logger, course, lectureDBIdMap));

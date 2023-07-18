@@ -87,10 +87,10 @@ export type User = {
 export const userSelection = { id: true, firstname: true, lastname: true, email: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
-    const validTypes = ['student', 'pupil', 'screener'];
+    const validTypes = ['student', 'pupil', 'screener', 'admin'];
     const [type, id] = userId.split('/');
     if (!validTypes.includes(type)) {
-        throw Error('No valid user type found in user id');
+        throw Error('No valid user type found in user id: ' + type);
     }
     const parsedId = parseInt(id, 10);
     return [type as UserTypes, parsedId];
@@ -292,6 +292,18 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
         })
     ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
     return [...students, ...pupils];
+}
+
+export async function updateLastLogin(user: User) {
+    if (user.pupilId) {
+        await prisma.pupil.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
+    }
+    if (user.studentId) {
+        await prisma.student.update({ where: { id: user.studentId }, data: { lastLogin: new Date() } });
+    }
+    if (user.screenerId) {
+        await prisma.screener.update({ where: { id: user.screenerId }, data: { lastLogin: new Date() } });
+    }
 }
 
 export async function getStudentsFromList(userIDs: string[]) {

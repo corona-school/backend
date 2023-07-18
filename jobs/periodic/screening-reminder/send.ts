@@ -1,6 +1,6 @@
 import { EntityManager } from "typeorm";
 import { Student } from "../../../common/entity/Student";
-import { sendInstructorScreeningReminderToStudent, sendJufoAlumniScreeningReminderToStudent, sendTutorScreeningReminderToStudent } from "../../../common/administration/screening/reminder";
+import { sendInstructorScreeningReminderToStudent, sendTutorScreeningReminderToStudent } from "../../../common/administration/screening/reminder";
 import mailjet from "../../../common/mails/mailjet";
 import { getLogger } from '../../../common/logger/logger';
 
@@ -15,8 +15,7 @@ async function sendScreeningReminderToStudentBasedOnType(manager: EntityManager,
         // send tutor screening reminder
         await sendTutorScreeningReminderToStudent(manager, student);
     } else if (!student.isStudent && student.isProjectCoach && !student.isUniversityStudent) {
-        // send jufo alumni screening reminder
-        await sendJufoAlumniScreeningReminderToStudent(manager, student);
+        // DEPRECATED
     } else {
         throw new Error(`Cannot send screening reminder to student because the screening reminder type cannot be determined: ${JSON.stringify(student)}!`);
     }

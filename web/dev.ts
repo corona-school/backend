@@ -18,13 +18,6 @@ import { Division, Expertise, Mentor } from '../common/entity/Mentor';
 import { School } from '../common/entity/School';
 import { State } from '../common/entity/State';
 import { SchoolType } from '../common/entity/SchoolType';
-import { ProjectField } from '../common/jufo/projectFields';
-import { TuteeJufoParticipationIndication, TutorJufoParticipationIndication } from '../common/jufo/participationIndication';
-import { ProjectMatch } from '../common/entity/ProjectMatch';
-import { ProjectCoachingScreening } from '../common/entity/ProjectCoachingScreening';
-import { ExpertData } from '../common/entity/ExpertData';
-import { ExpertiseTag } from '../common/entity/ExpertiseTag';
-import { ExpertAllowedIndication } from '../common/jufo/expertAllowedIndication';
 import { LearningGermanSince } from '../common/daz/learningGermanSince';
 import { Language } from '../common/daz/language';
 import { PupilTutoringInterestConfirmationRequest } from '../common/entity/PupilTutoringInterestConfirmationRequest';
@@ -103,9 +96,7 @@ export async function setupDevDB() {
     p.isParticipant = false;
     p.isPupil = false;
     p.active = true;
-    p.isJufoParticipant = TuteeJufoParticipationIndication.YES;
     p.isProjectCoachee = true;
-    p.projectFields = [ProjectField.ARBEITSWELT, ProjectField.BIOLOGIE];
     p.email = 'test+dev+p4@lern-fair.de';
     p.verification = null;
     p.verifiedAt = new Date(new Date().getTime() - 200000);
@@ -334,8 +325,6 @@ export async function setupDevDB() {
     s6.isInstructor = false;
     s6.isProjectCoach = true;
     s6.isStudent = false;
-    await s6.setProjectFields([{ name: ProjectField.ARBEITSWELT, min: 1, max: 13 }]);
-    s6.wasJufoParticipant = TutorJufoParticipationIndication.YES;
     s6.isUniversityStudent = false;
     s6.hasJufoCertificate = false;
     s6.jufoPastParticipationConfirmed = true;
@@ -356,7 +345,6 @@ export async function setupDevDB() {
     s7.isStudent = true;
     s7.isProjectCoach = true;
     s7.verification = null;
-    await s7.setProjectFields([{ name: ProjectField.CHEMIE, min: 1, max: 13 }]);
     s7.verifiedAt = new Date(new Date().getTime() - 110000);
     s7.wix_id = '00000000-0000-0002-0001-1b4c4c5263213155';
     s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
@@ -386,17 +374,6 @@ export async function setupDevDB() {
     for (let i = 0; i < matches.length; i++) {
         await entityManager.save(Match, matches[i]);
         logger.debug('Inserted Dev Match ' + i);
-    }
-
-    const projectMatches: ProjectMatch[] = [];
-
-    let pm = new ProjectMatch(pupils[3], students[5]);
-    pm.uuid = '000000001-0000-0000-0001-2c5d5d637475';
-    projectMatches.push(pm);
-
-    for (let i = 0; i < projectMatches.length; i++) {
-        await entityManager.save(ProjectMatch, projectMatches[i]);
-        logger.debug('Inserted Dev ProjectMatch ' + i);
     }
 
     const signature = Buffer.from(
@@ -1306,23 +1283,6 @@ export async function setupDevDB() {
         logger.debug('Inserted Dev Instrcutor Screening ' + i);
     }
 
-    //project coaching screenings
-    const projectCoachingScreenings: ProjectCoachingScreening[] = [];
-
-    const projectCoachingScreening1 = new ProjectCoachingScreening();
-    projectCoachingScreening1.success = true;
-    projectCoachingScreening1.comment = '🎉';
-    projectCoachingScreening1.knowsCoronaSchoolFrom = 'Internet';
-    projectCoachingScreening1.screener = screeners[0];
-    projectCoachingScreening1.student = students[5];
-
-    projectCoachingScreenings.push(projectCoachingScreening1);
-
-    for (let i = 0; i < projectCoachingScreenings.length; i++) {
-        await entityManager.save(ProjectCoachingScreening, projectCoachingScreenings[i]);
-        logger.debug('Inserted Dev Project Screening ' + i);
-    }
-
     // Test data for course attendance log
 
     for (let i = 0; i < pupils.length; i++) {
@@ -1360,71 +1320,6 @@ export async function setupDevDB() {
     for (let i = 0; i < schools.length; i++) {
         await entityManager.save(schools[i]);
         logger.debug('Inserted Dev School ' + i);
-    }
-
-    //Insert expert data
-    const expertiseTags: ExpertiseTag[] = [];
-
-    const tag1 = new ExpertiseTag();
-    tag1.name = 'LTE';
-
-    expertiseTags.push(tag1);
-
-    const tag2 = new ExpertiseTag();
-    tag2.name = 'Glasfaser';
-
-    expertiseTags.push(tag2);
-
-    for (let i = 0; i < expertiseTags.length; i++) {
-        await entityManager.save(expertiseTags[i]);
-        logger.debug('Inserted Expertise Tag ' + i);
-    }
-
-    const experts: ExpertData[] = [];
-
-    const expert1 = new ExpertData();
-    expert1.student = students[5];
-    expert1.contactEmail = 'test+dev+j1@lern-fair.de';
-    expert1.description = 'JuFo is great!';
-
-    experts.push(expert1);
-
-    const expert2 = new ExpertData();
-    expert2.student = students[6];
-    expert2.contactEmail = 'test+dev+j1@lern-fair.de';
-    expert2.description =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis gravida, erat in dignissim vestibulum, ex nisl consequat nisl, at sagittis mauris Glasfaser eu nisl. Cras quis dui blandit, tincidunt libero id, porttitor nisi. Sed eu tellus interdum, luctus quam id, pretium dolor. Praesent feugiat quis sem in porttitor. Ut auctor erat nisl, vitae tempus nisl ullamcorper nec.';
-    expert2.active = true;
-    expert2.allowed = ExpertAllowedIndication.YES;
-    expert2.expertiseTags = [tag1, tag2];
-
-    experts.push(expert2);
-
-    const expert3 = new ExpertData();
-    expert3.student = students[3];
-    expert3.contactEmail = 'test+dev+j3@lern-fair.de';
-    expert3.description =
-        'Die Elektronik ist ein Hauptgebiet der Elektrotechnik. Sie ist die Wissenschaft von der Steuerung des elektrischen Stromes durch elektronische Schaltungen, das heißt Schaltungen, in denen mindestens ein Bauelement aufgrund von Vakuum- oder Halbleiter-Leitung funktioniert. Elektronische Elemente verhalten sich nichtlinear, während das Verhalten anderer elektrischer (nicht-elektronischer) Elemente als linear bezeichnet wird';
-    expert3.active = true;
-    expert3.allowed = ExpertAllowedIndication.YES;
-    expert3.expertiseTags = [tag2];
-
-    experts.push(expert3);
-
-    const expert4 = new ExpertData();
-    expert4.student = students[4];
-    expert4.contactEmail = 'test+dev+j4@lern-fair.de';
-    expert4.description =
-        'Chemie ([çeˈmi:]; mittel- und norddeutsch auch [ʃeˈmi:]; süddeutsch: [keˈmi:]) ist diejenige Naturwissenschaft, die sich mit dem Aufbau, den Eigenschaften und der Umwandlung von chemischen Stoffen beschäftigt. Ein Stoff besteht aus Atomen, Molekülen oder beidem. Er kann außerdem Ionen enthalten. Die chemischen Reaktionen sind Vorgänge in den Elektronenhüllen der Atome, Moleküle und Ionen.';
-    expert4.active = true;
-    expert4.allowed = ExpertAllowedIndication.YES;
-    expert4.expertiseTags = [tag1];
-
-    experts.push(expert4);
-
-    for (let i = 0; i < experts.length; i++) {
-        await entityManager.save(experts[i]);
-        logger.debug('Inserted Dev Expert ' + i);
     }
 
     //Insert pupil interest confirmation requests
@@ -1499,11 +1394,12 @@ async function importNotificationsFromProd() {
                         recipient
                         onActions
                         cancelledOnAction
-                        ${'' /* @TODO: Add type when prod updated */}
+                        type
                         delay
                         interval
                         sender
                         hookID
+                        sample_context
                     }
                 }`,
                 variables: {},

@@ -9,6 +9,7 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     const appointmentsCount = await prisma.lecture.count({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: user.userID },
             },
@@ -34,6 +35,7 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
     const lastAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: user.userID },
             },
@@ -73,6 +75,7 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
     const appointments = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
             NOT: {
                 declinedBy: { has: userId },
             },
@@ -101,9 +104,18 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
 };
 
 const getAppointmentsForUserFromNow = async (userId: User['userID'], take: number, skip: number): Promise<Appointment[]> => {
-    const appointments = await prisma.lecture.findMany({
+    /**
+     * The current maximum duration of an appointment is 4 hours.
+     */
+    const MAXIMUM_APPOINTMENT_DURATION = 4;
+
+    const appointmentsFromNow = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            subcourse: { published: true },
+            start: {
+                gte: moment().subtract(MAXIMUM_APPOINTMENT_DURATION, 'hours').toDate(),
+            },
             NOT: {
                 declinedBy: { has: userId },
             },
@@ -125,14 +137,5 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
         skip,
     });
 
-    const appointmentsGreaterThanNow = appointments.filter((appointments: Appointment) => {
-        const start = appointments.start;
-        const duration = appointments.duration;
-        const now = new Date();
-        const end = moment(start).add(duration, 'minutes').toDate();
-
-        return end >= now;
-    });
-
-    return appointmentsGreaterThanNow;
+    return appointmentsFromNow;
 };

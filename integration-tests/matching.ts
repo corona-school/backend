@@ -85,7 +85,9 @@ const match1 = test('Manual Match creation', async () => {
         }
     `);
 
-    const { me: { pupil: p1 }} = await pupilClient.request(`
+    const {
+        me: { pupil: p1 },
+    } = await pupilClient.request(`
         query PupilWithMatch {
             me {
                 pupil {
@@ -106,7 +108,9 @@ const match1 = test('Manual Match creation', async () => {
     assert.strictEqual(p1.matches[0].student.firstname, student.firstname);
     assert.strictEqual(p1.matches[0].student.lastname, student.lastname);
 
-    const { me: { student: s1 }} = await studentClient.request(`
+    const {
+        me: { student: s1 },
+    } = await studentClient.request(`
         query StudentWithMatch {
             me {
                 student {
@@ -137,86 +141,68 @@ void test('Create Chat for Match', async () => {
 
     // The pupil does not have one, it gets created:
     expectFetch({
-        method: "GET",
+        method: 'GET',
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
-        responseStatus: 404
+        responseStatus: 404,
     });
 
     // The student has one:
     expectFetch({
-            method: "GET",
-            url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
-            responseStatus: 200,
-            response: {} // TODO: Mock properly
+        method: 'GET',
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
+        responseStatus: 200,
+        response: {}, // TODO: Mock properly
     });
 
     expectFetch({
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
-        "method": "PUT",
-        "body": JSON.stringify({"name": `${pupil.firstname} ${pupil.lastname}`, "email": [pupil.email.toLowerCase()], "role": "pupil"}),
-        "responseStatus": 200
+        method: 'PUT',
+        body: JSON.stringify({ name: `${pupil.firstname} ${pupil.lastname.charAt(0).concat('.')}`, email: [pupil.email.toLowerCase()], role: 'pupil' }),
+        responseStatus: 200,
     });
 
     expectFetch({
-        method: "GET",
+        method: 'GET',
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
         responseStatus: 200,
-        response: {} // TODO: Mock properly
+        response: {}, // TODO: Mock properly
     });
-
 
     // Then the conversion is created:
 
     expectFetch({
-        url: "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        method: "GET",
-        responseStatus: 404
-      });
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 404,
+    });
 
-        // TODO: Remove duplicate fetch
-      expectFetch({
-        url: "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        method: "GET",
-        responseStatus: 404
-      });
-
-      // TODO: Why PUT twice?
-      expectFetch({
-        url: "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        method: "PUT",
-        body: "{\"id\":\"*\",\"custom\":{\"type\":\"match\"}}",
-        responseStatus: 200
-      });
-
-      expectFetch({
-        url: "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        method: "PUT",
-        body: `{\"custom\":{\"type\":\"match\"},\"participants\":[\"pupil_${pupil.pupil.id}\",\"student_${student.student.id}\"]}`,
-        responseStatus: 200
-      });
-
-      expectFetch({
-        url: "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        method: "GET",
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'PUT',
+        body: `{"custom":{"match":"{\\\\"matchId\\\\":${id}}"},"participants":["pupil_${pupil.pupil.id}","student_${student.student.id}"]}`,
         responseStatus: 200,
-        response: { "id": "mocked" } // TODO: mock propery
-      });
+    });
 
-      // TODO: Why twice?
-      expectFetch({
-        "url": "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*",
-        "method": "GET",
-        "responseStatus": 200,
-        "response": { "id": "mocked" } // TODO: mock properly
-      });
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' }, // TODO: mock propery
+    });
 
-      expectFetch({
-        "url": "https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages",
-        "method": "POST",
-        "body": "[{\"text\":\"Willkommen im Lern-Fair Chat!\",\"type\":\"SystemMessage\",\"custom\":{\"type\":\"first\"}}]",
-        "responseStatus": 200
-      });
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' }, // TODO: mock propery
+    });
 
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
+        method: 'POST',
+        body: '[{"text":"*","type":"SystemMessage","custom":{"type":"first"}}]',
+        responseStatus: 200,
+    });
 
     const { matchChatCreate: conversationID } = await pupilClient.request(`
         mutation PupilCreatesChat {
@@ -224,7 +210,7 @@ void test('Create Chat for Match', async () => {
         }
     `);
 
-    assert.strictEqual(conversationID, "mocked");
+    assert.strictEqual(conversationID, 'mocked');
 });
 
 void test('Anyone Request Matching Statistics', async () => {
