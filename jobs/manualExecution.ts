@@ -10,6 +10,7 @@ import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
+import { postStatisticsToSlack } from './slack-statistics';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -52,6 +53,9 @@ export const executeJob = async (job) => {
         }
         case 'flagOldConversations': {
             await flagInactiveConversationsAsReadonly();
+        }
+        case 'sendSlackStatistics': {
+            await postStatisticsToSlack();
             break;
         }
         default: {

@@ -143,7 +143,7 @@ const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMe
         } else if (access === 'Read') {
             readMembers.push(participantId);
         } else {
-            console.log(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte.`);
+            throw new Error(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte auf die Conversation ${conversation.id}.`);
         }
     }
     return { readWriteMembers, readMembers };

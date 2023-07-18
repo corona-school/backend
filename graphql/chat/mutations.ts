@@ -14,6 +14,7 @@ import {
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
+import { getCourseImageURL } from '../../common/courses/util';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -68,9 +69,11 @@ export class MutateChatResolver {
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
         });
         await hasAccess(context, 'Subcourse', subcourse);
+        const courseImage = getCourseImageURL(subcourse.course);
 
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,
+            photoUrl: courseImage,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
                 groupType: groupChatType,

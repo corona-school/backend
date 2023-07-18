@@ -1,7 +1,6 @@
-import { EntityManager } from "typeorm";
-import { Student } from "../../../entity/Student";
-import { sendInstructorScreeningInvitationReminderMail, sendProjectCoachingJufoAlumniScreeningInvitationReminderMail, sendScreeningInvitationReminderMail } from "../../../mails/screening";
-
+import { EntityManager } from 'typeorm';
+import { Student } from '../../../entity/Student';
+import { sendInstructorScreeningInvitationReminderMail, sendScreeningInvitationReminderMail } from '../../../mails/screening';
 
 export async function sendTutorScreeningReminderToStudent(manager: EntityManager, student: Student) {
     //send actual mail...
@@ -21,17 +20,6 @@ export async function sendInstructorScreeningReminderToStudent(manager: EntityMa
     //...store that in database
     student.lastSentInstructorScreeningInvitationDate = new Date();
     student.sentInstructorScreeningReminderCount += 1;
-
-    await manager.save(student);
-}
-
-export async function sendJufoAlumniScreeningReminderToStudent(manager: EntityManager, student: Student) {
-    //send actual mail...
-    await sendProjectCoachingJufoAlumniScreeningInvitationReminderMail(student);
-
-    //...store that in database
-    student.lastSentJufoAlumniScreeningInvitationDate = new Date();
-    student.sentJufoAlumniScreeningReminderCount += 1;
 
     await manager.save(student);
 }

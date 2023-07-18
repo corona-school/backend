@@ -11,23 +11,20 @@ import {
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
-import { Pupil, Pupil as TypeORMPupil } from '../../common/entity/Pupil';
-import { Student } from '../../common/entity/Student';
 import { getLogger } from '../../common/logger/logger';
-import { sendGuestInvitationMail, sendPupilCoursePromotion } from '../../common/mails/courses';
+import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, getUserTypeORM, userForPupil, userForStudent } from '../../common/user';
+import { getUserIdTypeORM, userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
-import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
-import { AuthenticationError, ForbiddenError, UserInputError } from '../error';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
-import { getCourse, getLecture, getPupil, getStudent, getSubcourse } from '../util';
+import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
-import { addParticipant, markConversationAsReadOnly, removeParticipant } from '../../common/chat/conversation';
+import { addParticipant, markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { ChatType } from '../../common/chat/types';
 
 const logger = getLogger('MutateCourseResolver');
@@ -132,11 +129,13 @@ export class MutateSubcourseResolver {
         const studentUserId = getUserIdTypeORM(newInstructor);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
         await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        await addParticipant(
-            newInstructorUser,
-            subcourse.conversationId,
-            subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
-        );
+        if (subcourse.conversationId) {
+            await addParticipant(
+                newInstructorUser,
+                subcourse.conversationId,
+                subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
+            );
+        }
 
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
@@ -157,7 +156,9 @@ export class MutateSubcourseResolver {
         const studentUserId = getUserIdTypeORM(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
         await removeGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        await removeParticipant(instructorUser, subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
+        }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
         return true;
     }
@@ -203,7 +204,9 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await cancelSubcourse(subcourse);
-        await markConversationAsReadOnly(subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await markConversationAsReadOnly(subcourse.conversationId);
+        }
         return true;
     }
 
@@ -219,7 +222,9 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        if (subcourse.conversationId) {
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        }
 
         return true;
     }
@@ -268,7 +273,9 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        if (subcourse.conversationId) {
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType);
+        }
 
         return true;
     }
@@ -288,7 +295,10 @@ export class MutateSubcourseResolver {
 
         await leaveSubcourse(subcourse, pupil);
         await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
-        await removeParticipant(pupilUser, subcourse.conversationId);
+        if (subcourse.conversationId) {
+            await removeParticipantFromCourseChat(pupilUser, subcourse.conversationId);
+        }
+
         return true;
     }
 
@@ -315,48 +325,6 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseInviteGuest(
-        @Ctx() context: GraphQLContext,
-        @Arg('subcourseId') subcourseId: number,
-        @Arg('firstname') firstname: string,
-        @Arg('lastname') lastname: string,
-        @Arg('email') email: string
-    ) {
-        email = validateEmail(email);
-
-        const subcourse = await getSubcourse(subcourseId);
-        await hasAccess(context, 'Subcourse', subcourse);
-
-        const course = await getCourse(subcourse.courseId);
-
-        const token = randomBytes(48).toString('hex');
-        let inviterId: number | null = null;
-
-        if (isSessionStudent(context)) {
-            inviterId = context.user!.studentId;
-        }
-
-        // TODO: Move Guests from Course to Subcourse
-
-        const guest = await prisma.course_guest.create({
-            data: {
-                firstname,
-                lastname,
-                email,
-                token,
-                inviterId,
-                courseId: course.id,
-            },
-        });
-
-        await sendGuestInvitationMail(guest);
-        logger.info(`User(${context.user!.userID}) invited Guest(${email}) to Subcourse(${subcourse.id})`);
-
         return true;
     }
 

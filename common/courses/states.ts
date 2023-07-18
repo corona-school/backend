@@ -8,10 +8,11 @@ import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
-import { ChatType, ContactReason } from '../chat/types';
-import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
+import { ChatType, SystemMessage } from '../chat/types';
+import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, sendSystemMessage, updateConversation } from '../chat';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { CourseState } from '../entity/Course';
+import systemMessages from '../chat/localization';
 
 const logger = getLogger('Course States');
 
@@ -176,18 +177,24 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             if (update.groupChatType === ChatType.NORMAL) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {},
+                    custom: {
+                        groupType: ChatType.NORMAL,
+                    },
                 };
 
                 await markConversationAsWriteable(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
+                await sendSystemMessage(systemMessages.de.toGroupChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
             } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {},
+                    custom: {
+                        groupType: ChatType.ANNOUNCEMENT,
+                    },
                 };
                 await markConversationAsReadOnlyForPupils(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
+                await sendSystemMessage(systemMessages.de.toAnnouncementChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
             }
         }
     }
