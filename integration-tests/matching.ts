@@ -200,7 +200,7 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
         method: 'POST',
-        body: '[{"text":"Willkommen im Lern-Fair Chat!","type":"SystemMessage","custom":{"type":"first"}}]',
+        body: '[{"text":"*","type":"SystemMessage","custom":{"type":"first"}}]',
         responseStatus: 200,
     });
 

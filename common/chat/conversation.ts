@@ -13,16 +13,16 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AllConversations, ChatAccess, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AllConversations, ChatAccess, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
 import { chat_type } from '@prisma/client';
+import systemMessages from './localization';
 
 dotenv.config();
 
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
-
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -172,7 +172,7 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
         const convertedConversation = convertTJConversation(newConversation);
         return convertedConversation;
     }
@@ -196,7 +196,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Schön dass du da bist!', newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
@@ -374,7 +374,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
