@@ -9,6 +9,17 @@ import { becomeTutee, registerPupil } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
 import { updatePupil } from './graphql/pupil/mutations';
 import { prisma } from './common/prisma';
+import { becomeInstructor, becomeTutor, registerStudent } from './common/student/registration';
+import { addInstructorScreening, addTutorScreening } from './common/student/screening';
+import { createMatch } from './common/match/create';
+import { TEST_POOL } from './common/match/pool';
+import { createCourseTag } from './common/util/createCourseTag';
+import { CourseCategory, CourseState } from './common/entity/Course';
+import { createRemissionRequest } from './common/remission-request';
+import { Subject } from './common/entity/Subject';
+import { joinSubcourseWaitinglist } from './common/courses/participants';
+import { AppointmentType } from './common/entity/Lecture';
+import { create as createCoC } from './common/certificate-of-conduct/certificateOfConduct';
 
 const logger = getLogger('DevSetup');
 
@@ -29,6 +40,8 @@ void (async function setupDevDB() {
         state: 'bb'
     });
     await verifyEmail(userForPupil(pupil1));
+    await _createFixedToken(userForPupil(pupil1), `authtokenP1`);
+    await createPassword(userForPupil(pupil1), `test`);
     await prisma.pupil.update({
         where: { id: pupil1.id },
         data: {
@@ -50,6 +63,7 @@ void (async function setupDevDB() {
         state: 'bw'
     });
     await verifyEmail(userForPupil(pupil2));
+    await _createFixedToken(userForPupil(pupil2), `authtokenP2`);
     await prisma.pupil.update({
         where: { id: pupil2.id },
         data: {
@@ -60,308 +74,254 @@ void (async function setupDevDB() {
     });
 
 
-    /*
-    p = new Pupil();
-    p.firstname = 'Tom';
-    p.lastname = 'Müller2';
-    p.isParticipant = true;
-    p.isPupil = false;
-    p.active = true;
-    p.email = 'test+dev+p3@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.wix_id = '00000000-0000-0001-0002-1b4c4c526365';
-    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]);
-    p.grade = '6. Klasse';
-    p.openMatchRequestCount = 0;
-    pupils.push(p);
-
-    p = new Pupil();
-    p.firstname = 'Jufi';
-    p.lastname = 'Pufi';
-    p.isParticipant = false;
-    p.isPupil = false;
-    p.active = true;
-    p.isProjectCoachee = true;
-    p.email = 'test+dev+p4@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.wix_id = '00000000-0000-0001-0002-1b4c4c526367';
-    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify([]);
-    p.grade = '6. Klasse';
-    p.openMatchRequestCount = 0;
-    pupils.push(p);
-
-    p = new Pupil();
-    p.active = true;
-    p.firstname = 'Martin';
-    p.lastname = 'Ulz';
-    p.isParticipant = false;
-    p.isPupil = true;
-    p.isProjectCoachee = false;
-    p.email = 'test+dev+p5@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 200000);
-    p.wix_id = '00000000-0000-0001-0003-1b4c4c526368';
-    p.wix_creation_date = new Date(new Date().getTime() - 20000000);
-    p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Geschichte' }]);
-    p.grade = '13. Klasse';
-    p.openMatchRequestCount = 1;
-    pupils.push(p);
-
-    const p6 = (p = new Pupil());
-    p.active = true;
-    p.firstname = 'Laurin';
-    p.lastname = 'Ipsem';
-    p.isParticipant = false;
-    p.isPupil = true;
-    p.isProjectCoachee = false;
-    p.email = 'test+dev+p6@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 700000);
-    p.wix_id = '00000000-0000-0001-0003-1b4c4c526369';
-    p.wix_creation_date = new Date(new Date().getTime() - 70000000);
-    p.subjects = JSON.stringify([{ name: 'Englisch' }, { name: 'Latein' }]);
-    p.grade = '10. Klasse';
-    p.openMatchRequestCount = 1;
-    pupils.push(p);
-
-    const p7 = (p = new Pupil());
-    p.active = true;
-    p.firstname = 'Lari';
-    p.lastname = 'Fari';
-    p.isParticipant = false;
-    p.isPupil = true;
-    p.isProjectCoachee = false;
-    p.email = 'test+dev+p7@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 800000);
-    p.wix_id = '00000000-0000-0001-0003-1b4c4c526370';
-    p.wix_creation_date = new Date(new Date().getTime() - 80000000);
-    p.subjects = JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]);
-    p.grade = '7. Klasse';
-    p.openMatchRequestCount = 1;
-    pupils.push(p);
-
-    const p8 = (p = new Pupil());
-    p.firstname = 'Max8';
-    p.lastname = 'Musterschüler8';
-    p.active = true;
-    p.isPupil = true;
-    p.email = 'test+dev+p8@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.wix_id = '00000000-0000-0001-0001-1b4c4c526371';
-    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
-    p.grade = '3. Klasse';
-    p.openMatchRequestCount = 0;
-    p.languages = [Language.bg, Language.it];
-    p.learningGermanSince = LearningGermanSince.lessThanOne;
-    pupils.push(p);
-
-    const p9 = (p = new Pupil());
-    p.firstname = 'Max9';
-    p.lastname = 'Musterschüler9';
-    p.active = true;
-    p.isPupil = true;
-    p.email = 'test+dev+p9@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.wix_id = '00000000-0000-0001-0001-1b4c4c526372';
-    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
-    p.grade = '3. Klasse';
-    p.openMatchRequestCount = 0;
-    p.languages = [Language.bg, Language.it];
-    p.learningGermanSince = LearningGermanSince.lessThanOne;
-    pupils.push(p);
-
-    const p10 = (p = new Pupil());
-    p.firstname = 'Max10';
-    p.lastname = 'Musterschüler10';
-    p.active = true;
-    p.isPupil = true;
-    p.email = 'test+dev+p10@lern-fair.de';
-    p.verification = null;
-    p.verifiedAt = new Date(new Date().getTime() - 100000);
-    p.wix_id = '00000000-0000-0001-0001-1b4c4c526373';
-    p.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    p.subjects = JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]);
-    p.grade = '3. Klasse';
-    p.openMatchRequestCount = 0;
-    p.languages = [Language.bg, Language.it];
-    p.learningGermanSince = LearningGermanSince.lessThanOne;
-    pupils.push(p);
-
-    for (let i = 0; i < pupils.length; i++) {
-        await entityManager.save(Pupil, pupils[i]);
-        logger.debug('Inserted Dev Pupil ' + i);
-        await _createFixedToken(userForPupil(pupils[i]), `authtokenP${i + 1}`);
-        if (i % 2 === 0) {
-            await createPassword(userForPupil(pupils[i]), `test`);
+    const pupil3 = await registerPupil({
+        firstname: 'Tom',
+        lastname: 'Müller2',
+        email: 'test+dev+p3@lern-fair.de',
+        aboutMe: "I'm Pupil 3",
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil3));
+    await _createFixedToken(userForPupil(pupil3), `authtokenP3`);
+    await createPassword(userForPupil(pupil3), `test`);
+    await prisma.pupil.update({
+        where: { id: pupil3.id },
+        data: {
+            subjects:  JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]),
+            grade: '6. Klasse'
         }
-    }
-    const students: Student[] = [];
+    });
 
-    const s1 = new Student();
-    s1.firstname = 'Leon';
-    s1.lastname = 'Jackson';
-    s1.active = true;
-    s1.email = 'test+dev+s1@lern-fair.de';
-    s1.isInstructor = true;
-    s1.isStudent = true;
-    s1.verification = null;
-    s1.verifiedAt = new Date(new Date().getTime() - 110000);
-    s1.wix_id = '00000000-0000-0002-0001-1b4c4c526364';
-    s1.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s1.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-    s1.openMatchRequestCount = 1;
-    s1.isProjectCoach = true;
-    s1.supportsInDaZ = true;
-    s1.languages = [Language.ku, Language.en];
-    s1.isCodu = true;
-    s1.zoomUserId = 'zJKyaiAyTNC-MWjiWC18KQ';
-    students.push(s1);
-
-    const s2 = new Student();
-    s2.firstname = 'Melanie';
-    s2.lastname = 'Meiers';
-    s2.active = true;
-    s2.email = 'test+dev+s2@lern-fair.de';
-    s2.isInstructor = true;
-    s2.isStudent = true;
-    s2.verification = null;
-    s2.verifiedAt = new Date(new Date().getTime() - 220000);
-    s2.wix_id = '00000000-0000-0002-0002-1b4c4c526364';
-    s2.wix_creation_date = new Date(new Date().getTime() - 22000000);
-    s2.subjects = JSON.stringify([
-        { name: 'Deutsch', minGrade: 3, maxGrade: 5 },
-        { name: 'Mathematik', minGrade: 4, maxGrade: 6 },
-    ]);
-    s2.openMatchRequestCount = 2;
-    s2.zoomUserId = 'kLKyaiAyTNC-MWjiWCFFFF';
-    students.push(s2);
-
-    const s3 = new Student();
-    s3.firstname = 'Leon';
-    s3.lastname = 'Erath';
-    s3.active = true;
-    s3.email = 'test+dev+s3@lern-fair.de';
-    s3.isInstructor = true;
-    s3.isStudent = true;
-    s3.verification = null;
-    s3.verifiedAt = new Date(new Date().getTime() - 110000);
-    s3.wix_id = '00000000-0000-0002-0001-1b4c4c5263123';
-    s3.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s3.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-    s3.openMatchRequestCount = 1;
-    students.push(s3);
-
-    const s4 = new Student();
-    s4.firstname = 'Leon2';
-    s4.lastname = 'Erath2';
-    s4.active = true;
-    s4.email = 'test+dev+s4@lern-fair.de';
-    s4.isInstructor = true;
-    s4.isStudent = false;
-    s4.verification = null;
-    s4.verifiedAt = new Date(new Date().getTime() - 110000);
-    s4.wix_id = '00000000-0000-0002-0001-1b4c4c5263126';
-    s4.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s4.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-    s4.openMatchRequestCount = 1;
-    students.push(s4);
-
-    const s5 = new Student();
-    s5.firstname = 'Leon5';
-    s5.lastname = 'Erath5';
-    s5.active = true;
-    s5.email = 'test+dev+s5@lern-fair.de';
-    s5.isInstructor = false;
-    s5.isStudent = true;
-    s5.verification = null;
-    s5.verifiedAt = new Date(new Date().getTime() - 110000);
-    s5.wix_id = '00000000-0000-0002-0001-1b4c4c5263213132';
-    s5.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s5.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-    s5.openMatchRequestCount = 1;
-    s5.module = TeacherModule.INTERNSHIP;
-    s5.moduleHours = 10;
-    students.push(s5);
-
-    const s6 = new Student();
-    s6.firstname = 'Jufo';
-    s6.lastname = 'Tufo';
-    s6.active = true;
-    s6.email = 'test+dev+s6@lern-fair.de';
-    s6.isInstructor = false;
-    s6.isProjectCoach = true;
-    s6.isStudent = false;
-    s6.isUniversityStudent = false;
-    s6.hasJufoCertificate = false;
-    s6.jufoPastParticipationConfirmed = true;
-    s6.verification = null;
-    s6.verifiedAt = new Date(new Date().getTime() - 110000);
-    s6.wix_id = '00000000-0000-0002-0001-1b4c4c52632131096';
-    s6.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s6.subjects = JSON.stringify([]);
-    s6.openMatchRequestCount = 1;
-    students.push(s6);
-
-    const s7 = new Student();
-    s7.firstname = 'Jufo';
-    s7.lastname = 'Mufo';
-    s7.active = true;
-    s7.email = 'test+dev+s7@lern-fair.de';
-    s7.isInstructor = false;
-    s7.isStudent = true;
-    s7.isProjectCoach = true;
-    s7.verification = null;
-    s7.verifiedAt = new Date(new Date().getTime() - 110000);
-    s7.wix_id = '00000000-0000-0002-0001-1b4c4c5263213155';
-    s7.wix_creation_date = new Date(new Date().getTime() - 11000000);
-    s7.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-    s7.openMatchRequestCount = 1;
-    students.push(s7);
-
-    for (let i = 0; i < students.length; i++) {
-        await entityManager.save(Student, students[i]);
-        logger.debug('Inserted Dev Student ' + i);
-        await _createFixedToken(userForStudent(students[i]), `authtokenS${i + 1}`);
-        if (i % 2 === 0) {
-            await createPassword(userForStudent(students[i]), `test`);
+    const pupil4 = await registerPupil({
+        firstname: 'Jufi',
+        lastname: 'Pufi',
+        email: 'test+dev+p4@lern-fair.de',
+        aboutMe: 'Im Pupil 4',
+        newsletter: false,
+        state: 'bw',
+        registrationSource: 'normal'
+    });
+    await verifyEmail(userForPupil(pupil4));
+    await _createFixedToken(userForPupil(pupil4), `authtokenP4`);
+    
+    await prisma.pupil.update({
+        where: { id: pupil4.id },
+        data: { 
+            subjects: JSON.stringify([]),
+            grade: '6. Klasse',
         }
-    }
+    });
 
-    const matches: Match[] = [];
+    const pupil5 = await registerPupil({
+        firstname: 'Martin',
+        lastname: 'Ulz',
+        email: 'test+dev+p5@lern-fair.de',
+        aboutMe: `I'm Pupil 5`,
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil5));
+    await _createFixedToken(userForPupil(pupil5), `authtokenP5`);
+    await createPassword(userForPupil(pupil5), `test`);
+    await prisma.pupil.update({
+        where: { id: pupil5.id },
+        data: {
+            subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Geschichte' }]),
+            grade: '13. Klasse'
+        }
+    });
+    
+    const pupil6 = await registerPupil({
+        firstname: 'Laurin',
+        lastname: 'Ipsem',
+        email: 'test+dev+p6@lern-fair.de',
+        newsletter: false,
+        aboutMe: `I'm Pupil6`,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil6));
+    await _createFixedToken(userForPupil(pupil6), `authtokenP6`);
+    await prisma.pupil.update({
+        where: { id: pupil6.id },
+        data: {
+            subjects: JSON.stringify([{ name: 'Englisch' }, { name: 'Latein' }]),
+            grade: '10. Klasse'
+        }
+    });
 
-    matches.push(
-        new Match(pupils[0], students[0], '000000001-0000-0000-0001-1b4c4c526364'),
-        new Match(pupils[1], students[0], '000000001-0000-0000-0002-1b4c4c526364')
-    );
+    const pupil7 = await registerPupil({
+        firstname: 'Lari',
+        lastname: 'Fari',
+        email: 'test+dev+p7@lern-fair.de',
+        aboutMe: `I'm Pupil7`,
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil7));
+    await _createFixedToken(userForPupil(pupil7), `authtokenP7`);
+    await createPassword(userForPupil(pupil7), `test`);
+    await prisma.pupil.update({
+        where: { id: pupil7.id },
+        data: { 
+            subjects: JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]),
+            grade: '7. Klasse'
+        }
+    });
 
-    for (let i = 0; i < matches.length; i++) {
-        await entityManager.save(Match, matches[i]);
-        logger.debug('Inserted Dev Match ' + i);
-    }
+    const pupil8 = await registerPupil({
+        firstname: 'Max8',
+        lastname: 'Musterschüler8',
+        email: 'test+dev+p8@lern-fair.de',
+        aboutMe: `I'm Pupil 8`,
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil8));
+    await _createFixedToken(userForPupil(pupil8), `authtokenP8`);
+    await prisma.pupil.update({
+        where: { id: pupil8.id },
+        data: { 
+            subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
+            grade: '3. Klasse',
+            languages: ['Bulgarisch', 'Italienisch'],
+            learningGermanSince: 'less_than_one'
+        },
+    });
+
+    const pupil9 = await registerPupil({
+        firstname: 'Max9',
+        lastname: 'Musterschüler9',
+        email: 'test+dev+p9@lern-fair.de',
+        aboutMe: `I'm Pupil9`,
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw'
+    });
+    await verifyEmail(userForPupil(pupil9));
+    await _createFixedToken(userForPupil(pupil9), `authtokenP9`);
+    await createPassword(userForPupil(pupil9), `test`);
+    await prisma.pupil.update({
+        where: { id: pupil9.id },
+        data: { 
+            subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
+            grade: '3. Klasse',
+            languages: ['Bulgarisch', 'Italienisch'],
+            learningGermanSince: 'less_than_one'
+        }
+    });
+
+    const pupil10 = await registerPupil({
+        firstname: 'Max10',
+        lastname: 'Musterschüler10',
+        email: 'test+dev+p10@lern-fair.de',
+        aboutMe: `I'm Pupil 10`,
+        newsletter: false,
+        registrationSource: 'normal',
+        state: 'bw',
+    });
+    await verifyEmail(userForPupil(pupil10));
+    await _createFixedToken(userForPupil(pupil10), `authtokenP10`);
+    await prisma.pupil.update({
+        where: { id: pupil10.id },
+        data: {
+            subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
+            grade: '3. Klasse',
+            languages: ['Bulgarisch', 'Italienisch'],
+            learningGermanSince: 'less_than_one'
+        }
+    });
+
+
+    const screener1 = await prisma.screener.insert({
+        firstname: 'Maxi',
+        lastname: 'Screenerfrau',
+        email: 'test+dev+sc1@lern-fair.de',
+        password: await hashPassword('screener'),
+        verified: true
+    });
+
+
+    const student1 = await registerStudent({
+        firstname: 'Leon',
+        lastname: 'Jackson',
+        email: 'test+dev+s1@lern-fair.de',
+        aboutMe: `Im Student 1`,
+        newsletter: false,
+        registrationSource: 'normal'
+    });
+    await verifyEmail(userForStudent(student1));
+    await _createFixedToken(userForStudent(student1), `authtokenS1`);
+    await createPassword(userForStudent(student1), `test`);
+    await createRemissionRequest(student1);
+    await createCoC(new Date(), new Date(), false, student1.id);
+    await becomeTutor(student1, {
+        languages: ['Bulgarisch', 'Italienisch'],
+        subjects: [
+            { name: 'Englisch', grade: { min: 1, max: 8 }},
+            { name: 'Spanisch', grade: { min: 6, max: 10 }},
+        ]
+    });
+    await addTutorScreening(screener1, student1, { success: true });
+    await becomeInstructor(student1, { });
+    await addInstructorScreening(screener1, student1, {
+        success: true,
+        comment: "success"
+    });
+
+    const student2 = await registerStudent({
+        firstname: 'Melanie',
+        lastname: 'Meiers',
+        aboutMe: `Im Student 2`,
+        email: 'test+dev+s2@lern-fair.de',
+        newsletter: false,
+        registrationSource: 'normal'
+    });
+    await verifyEmail(userForStudent(student2));
+    await _createFixedToken(userForStudent(student2), `authtokenS2`);
+    await createPassword(userForStudent(student2), `test`);
+    await becomeTutor(student2, { 
+        languages: [],
+        subjects: [
+            { name: 'Deutsch', grade: { min: 3, max: 5 } },
+            { name: 'Mathematik', grade: { min: 4, max: 6 } },
+        ]
+    });
+    await addTutorScreening(screener1, student2, { success: true });
+    await becomeInstructor(student2, { });
+    await addInstructorScreening(screener1, student2, { success: true });
+    await prisma.student.update({
+        where: { id: student2.id },
+        data: { zoomUserId: 'kLKyaiAyTNC-MWjiWCFFFF' }
+    });
+
+    const student3 = await registerStudent({
+        firstname: 'Leon',
+        lastname: 'Erath',
+        email: 'test+dev+s3@lern-fair.de',
+        aboutMe: `I'm Student 3`,
+        newsletter: false,
+        registrationSource: 'normal'
+    });
+    await verifyEmail(userForStudent(student3));
+    await _createFixedToken(userForStudent(student3), `authtokenS3`);
+    await createPassword(userForStudent(student3), `test`);
+    await becomeTutor(student3, {
+        languages: [],
+        subjects: [
+            { name: 'Englisch', grade: { min: 1, max: 8 } },
+            { name: 'Spanisch', grade: { min: 6, max: 10 } },
+        ]
+    });
+    await addTutorScreening(screener1, student3, { success: true });
+    
+    await createMatch(pupil1, student1, TEST_POOL);
+    await createMatch(pupil2, student1, TEST_POOL);
 
     const signature = Buffer.from(
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAACdCAMAAAAe7DTLAAADAFBMVEX//' +
@@ -434,10 +394,10 @@ void (async function setupDevDB() {
         'utf-8'
     );
 
-    const pc1 = Object.assign(new ParticipationCertificate(), {
+    await prisma.participation_certificate.insert({
         uuid: randomBytes(5).toString('hex').toUpperCase(),
-        pupil: pupils[0],
-        student: students[0],
+        pupil: pupil1.id,
+        student: student1.id,
         subjects: 'Englisch,Deutsch',
         certificateDate: new Date(),
         startDate: new Date(),
@@ -449,10 +409,10 @@ void (async function setupDevDB() {
         // state: old, before automatic process, shall default to "manual"
     });
 
-    const pc2 = Object.assign(new ParticipationCertificate(), {
+    await prisma.participation_certificate.insert({
         uuid: randomBytes(5).toString('hex').toUpperCase(),
-        pupil: pupils[0],
-        student: students[0],
+        pupil: pupil1,
+        student: student1,
         subjects: 'Englisch,Deutsch',
         certificateDate: new Date(),
         startDate: new Date(),
@@ -464,10 +424,10 @@ void (async function setupDevDB() {
         state: 'awaiting-approval',
     });
 
-    const pc3 = Object.assign(new ParticipationCertificate(), {
+    await prisma.participation_certificate.insert({
         uuid: randomBytes(5).toString('hex').toUpperCase(),
-        pupil: pupils[0],
-        student: students[0],
+        pupil: pupil1,
+        student: student1,
         subjects: 'Englisch,Deutsch',
         certificateDate: new Date(),
         startDate: new Date(),
@@ -479,10 +439,10 @@ void (async function setupDevDB() {
         state: 'awaiting-approval',
     });
 
-    const pc4 = Object.assign(new ParticipationCertificate(), {
+    await prisma.participation_certificate.insert({
         uuid: randomBytes(5).toString('hex').toUpperCase(),
-        pupil: pupils[0],
-        student: students[0],
+        pupil: pupil1,
+        student: student1,
         subjects: 'Englisch,Deutsch',
         certificateDate: new Date(),
         startDate: new Date(),
@@ -495,10 +455,10 @@ void (async function setupDevDB() {
         signatureParent: signature,
     });
 
-    const pc5 = Object.assign(new ParticipationCertificate(), {
+    await prisma.participation_certificate.insert({
         uuid: randomBytes(5).toString('hex').toUpperCase(),
-        pupil: pupils[0],
-        student: students[0],
+        pupil: pupil1,
+        student: student1,
         subjects: 'Englisch,Deutsch',
         certificateDate: new Date(),
         startDate: new Date(),
@@ -510,504 +470,146 @@ void (async function setupDevDB() {
         state: 'awaiting-approval',
     });
 
-    for (const cert of [pc1, pc2, pc3, pc4, pc5]) {
-        await entityManager.save(ParticipationCertificate, cert);
-        logger.debug('Inserted a certificate with ID: ' + cert.uuid);
-    }
-
-    // mentor
-
-    const mentors: Mentor[] = [];
-
-    const mentor1 = new Mentor();
-    mentor1.firstname = 'Aurelie';
-    mentor1.lastname = 'Streich';
-    mentor1.active = true;
-    mentor1.email = 'test+dev+m3@lern-fair.de';
-    mentor1.verification = null;
-    mentor1.verifiedAt = new Date(new Date().getTime() - 200000);
-    mentor1.division = [Division.EVENTS, Division.FACEBOOK];
-    mentor1.expertise = [Expertise.SPECIALIZED, Expertise.EDUCATIONAL, Expertise.TECHSUPPORT, Expertise.SELFORGANIZATION];
-    mentor1.subjects = null;
-    mentor1.teachingExperience = true;
-    mentor1.message = 'text';
-    mentor1.description = 'text';
-    mentor1.wix_id = '00000000-0000-0001-0001-1b4c4c526364';
-    mentor1.wix_creation_date = new Date(new Date().getTime() - 10000000);
-    mentor1.subjects = JSON.stringify([
-        { name: 'Englisch', minGrade: 1, maxGrade: 8 },
-        { name: 'Spanisch', minGrade: 6, maxGrade: 10 },
-    ]);
-
-    mentors.push(mentor1);
-
-    for (let i = 0; i < mentors.length; i++) {
-        await entityManager.save(Mentor, mentors[i]);
-        logger.debug('Inserted Dev Mentor ' + i);
-    }
-
-    // course tags
-    const tags: CourseTag[] = [];
-
-    let t = new CourseTag();
-    t.name = 'easy';
-    t.identifier = 'easy';
-    t.category = 'revision';
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = 'medium';
-    t.identifier = 'medium';
-    t.category = 'revision';
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = 'difficult';
-    t.identifier = 'difficult';
-    t.category = 'revision';
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = 'Mathematik';
-    t.identifier = 'Mathematics';
-    t.category = 'revision';
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = 'Englisch';
-    t.identifier = 'English';
-    t.category = 'revision';
-    tags.push(t);
-
-    const revision = (t = new CourseTag());
-    t.name = 'Deutsch';
-    t.identifier = 'German';
-    t.category = 'revision';
-    tags.push(t);
-
-    const clubTagNamesMap = {
-        mint: 'MINT',
-        liberalarts: 'Geisteswissenschaften',
-        socialsciences: 'Sozialwissenschaften',
-        language: 'Sprache',
-        'music-art-culture': 'Musik, Kunst und Kultur',
-        environment: 'Natur und Umwelt',
-        personaldevelopment: 'Persönlichkeitsentwicklung',
-        'play&fun': 'Spiel und Spaß',
-        'priorknowledge-no': 'Ohne Vorkenntnisse',
-        'priorknowledge-required': 'Vorkenntnisse benötigt',
-        'material-no': 'Ohne Material',
-        'material-required': 'Material benötigt',
-        creativity: 'Kreativität',
-        sports: 'Sport & Bewegung',
-        science: 'Naturwissenschaften',
-        music: 'Musik',
-        health: 'Gesundheit',
-        intercultural: 'Interkulturelles',
-    };
-
-    const focusTagNamesMap = {
-        genz: 'GenZ',
-        socialmedia: 'Social Media',
-    };
-
-    const clubTagMap = Object.fromEntries(
-        Object.entries(clubTagNamesMap).map(([identifier, name]) => {
-            const t = new CourseTag();
-            t.name = name;
-            t.identifier = identifier;
-            t.category = 'club';
-
-            return [identifier, t];
-        })
-    );
-
-    const focusTagMap = Object.fromEntries(
-        Object.entries(focusTagNamesMap).map(([identifier, name]) => {
-            const t = new CourseTag();
-            t.name = name;
-            t.identifier = identifier;
-            t.category = 'focus';
-
-            return [identifier, t];
-        })
-    );
-
-    const mint = clubTagMap['mint'];
-    const musicArtCulture = clubTagMap['music-art-culture'];
-    const play = clubTagMap['play&fun'];
-    const creativity = clubTagMap['creativity'];
-    const sports = clubTagMap['sports'];
-    const science = clubTagMap['science'];
-    const music = clubTagMap['music'];
-    const health = clubTagMap['health'];
-
-    const clubTags = Object.values(clubTagMap);
-    tags.push(...clubTags);
-
-    const genz = focusTagMap['genz'];
-
-    const focusTags = Object.values(focusTagMap);
-    tags.push(...focusTags);
-
-    const preparation = (t = new CourseTag());
-    t.name = 'Prüfungsvorbereitung';
-    t.identifier = 'preparation';
-    t.category = 'coaching';
-    tags.push(t);
-
-    t = new CourseTag();
-    t.name = 'Selbstsorganisation';
-    t.identifier = 'organisation';
-    t.category = 'coaching';
-    tags.push(t);
-
-    const personality = (t = new CourseTag());
-    t.name = 'Persönlichkeitsbildung';
-    t.identifier = 'personality';
-    t.category = 'coaching';
-    tags.push(t);
-
-    for (let i = 0; i < tags.length; i++) {
-        await entityManager.save(CourseTag, tags[i]);
-        logger.debug('Inserted Course Tag ' + tags[i].identifier);
-    }
-
-    // courses
-
-    const courses: Course[] = [];
-
-    let course1 = new Course();
-    course1.instructors = [s1, s2];
-    course1.name = 'Grundlagen der Physik';
-    course1.outline = 'E(m) = m * c * c';
-    course1.description =
-        'Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.';
-    course1.category = CourseCategory.COACHING;
-    course1.tags = [preparation, science];
-    course1.subcourses = [];
-    course1.courseState = CourseState.SUBMITTED;
-
-    courses.push(course1);
-
-    let course2 = new Course();
-    course2.instructors = [s1];
-    course2.name = 'COBOL und ABAP - Eine Reise in die Steinzeit der Informatik';
-    course2.outline = 'Mit lebenden Exemplaren zum anschauen';
-    course2.description = 'COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.';
-    course2.category = CourseCategory.CLUB;
-    course2.tags = [science];
-    course2.subcourses = [];
-    course2.courseState = CourseState.ALLOWED;
-    course2.allowContact = true;
-    course2.correspondent = s1;
-
-    courses.push(course2);
-
-    let course3 = new Course();
-    course3.instructors = [s1, s2];
-    course3.name = 'Grundlagen der Mathematik';
-    course3.outline = '(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0';
-    course3.description = 'Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...';
-    course3.category = CourseCategory.REVISION;
-    course3.tags = [preparation, science];
-    course3.subcourses = [];
-    course3.courseState = CourseState.DENIED;
-    course3.subject = Subject.MATHEMATIK;
-
-    courses.push(course3);
-
-    let course4 = new Course();
-    course4.instructors = [s2];
-    course4.name = 'KIZ, 187, Aligatoah.';
-    course4.outline = 'Die Musik des neuen Jahrtausends';
-    course4.description = 'Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.';
-    course4.category = CourseCategory.REVISION;
-    course4.tags = [preparation, science];
-    course4.subcourses = [];
-    course4.courseState = CourseState.CANCELLED;
-    course3.subject = Subject.MUSIK;
-
-    courses.push(course4);
-
-    // for testing courseAttendanceLog
-    let course5 = new Course();
-    course5.instructors = [s1, s2];
-    course5.name = 'Gitarre lernen für Anfänger';
-    course5.outline = 'Mit 3 Akkorden zum ersten Song';
-    course5.description = 'In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!';
-    course5.category = CourseCategory.CLUB;
-    course5.tags = [music];
-    course5.subcourses = [];
-    course5.courseState = CourseState.ALLOWED;
-    course5.subject = Subject.MUSIK;
-
-    courses.push(course5);
-
-    let course6 = new Course();
-    course6.instructors = [s1];
-    course6.name = 'The Science behind Chocolate';
-    course6.outline = 'Can you actually burn chocolate? Does chocolate make me happy? Where do most cocoa beans come from?';
-    course6.description =
-        'Chocolate comes in all shapes and sizes, varying degrees of colour and sweetness – Nearly everyone likes chocolate! But what is the science behind chocolate? What are the myths that exist around chocolate? And last, but not least: What is our impact as consumers of chocolate? Want to know more about it? Then, join us for our upcoming sessions on the world of chocolate! The sessions will take part in English – but do not hesitate to come along. No worries – your English does not need to be perfect!';
-    course6.category = CourseCategory.CLUB;
-    course6.tags = [science, creativity, play];
-    course6.subcourses = [];
-    course6.courseState = CourseState.ALLOWED;
-
-    courses.push(course6);
-
-    let course7 = new Course();
-    course7.instructors = [s1];
-    course7.name = '1x1 der Studienfinanzierung';
-    course7.outline = 'Fit ins Studium - Wie du ohne finanzielle Sorgen das Studium beginnst!';
-    course7.description =
-        'Studium! - aber keine Ahnung wie? Oder wie viel? Du möchtest gerne studieren, aber weißt nicht, was es kostet? Oder du weißt, was es kostet, aber nicht, wie du es bezahlen sollst? Von Stipendien hast du gehört, aber glaubst, dass die nur für Ausnahmetalente sind? In unserem Kurs möchten wir all diese Fragen und noch viel mehr diskutieren und auch mit einigen Mythen aufräumen. In diesem Kurs werden wir die folgenden Themen genauer besprechen: •	Welche Kosten kommen im Studium auf Dich zu? •	Universität vs. (Fach-)Hochschule: Was sind die Unterschiede? •	Privat- oder öffentlich finanziertes Studium? •	Ankommen im ‚Uni‘-Leben •	Finanzierung des Studiums: BAföG, Stipendien, Studienkredite und weitere Möglichkeiten';
-    course7.category = CourseCategory.CLUB;
-    course7.tags = [science, creativity, play];
-    course7.subcourses = [];
-    course7.courseState = CourseState.ALLOWED;
-
-    courses.push(course7);
-
-    let course8 = new Course();
-    course8.instructors = [s1];
-    course8.name = 'Lorem Ipsum';
-    course8.outline =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-    course8.description =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-    course8.category = CourseCategory.CLUB;
-    course8.tags = [science, creativity, play];
-    course8.subcourses = [];
-    course8.courseState = CourseState.ALLOWED;
-    course8.subject = Subject.LATEIN;
-
-    let guest1 = new CourseGuest('test+dev+g1@lern-fair.de', 'Tim1', 'Marx1', course8, s1, 'guestToken1');
-    let guest2 = new CourseGuest('test+dev+g2@lern-fair.de', 'Tim2', 'Marx2', course8, s1, 'guestToken2');
-    let guest3 = new CourseGuest('test+dev+g3@lern-fair.de', 'Tim3', 'Marx3', course8, s1, 'guestToken3');
-    let guest4 = new CourseGuest('test+dev+g4@lern-fair.de', 'Tim4', 'Marx4', course8, s1, 'guestToken4');
-    let guest5 = new CourseGuest('test+dev+g5@lern-fair.de', 'Tim5', 'Marx5', course8, s1, 'guestToken5');
-    let guest6 = new CourseGuest('test+dev+g6@lern-fair.de', 'Tim6', 'Marx6', course8, s1, 'guestToken6');
-    let guest7 = new CourseGuest('test+dev+g7@lern-fair.de', 'Tim7', 'Marx7', course8, s1, 'guestToken7');
-    let guest8 = new CourseGuest('test+dev+g8@lern-fair.de', 'Tim8', 'Marx8', course8, s1, 'guestToken8');
-    let guest9 = new CourseGuest('test+dev+g9@lern-fair.de', 'Tim9', 'Marx9', course8, s1, 'guestToken9');
-    let guest10 = new CourseGuest('test+dev+g10@lern-fair.de', 'Tim10', 'Marx10', course8, s1, 'guestToken10');
-    await entityManager.save(CourseGuest, guest1);
-    await entityManager.save(CourseGuest, guest2);
-    await entityManager.save(CourseGuest, guest3);
-    await entityManager.save(CourseGuest, guest4);
-    await entityManager.save(CourseGuest, guest5);
-    await entityManager.save(CourseGuest, guest6);
-    await entityManager.save(CourseGuest, guest7);
-    await entityManager.save(CourseGuest, guest8);
-    await entityManager.save(CourseGuest, guest9);
-    await entityManager.save(CourseGuest, guest10);
-
-    course8.guests = [guest1, guest2, guest3, guest4, guest5, guest6, guest7, guest8, guest9, guest10];
-    courses.push(course8);
-
-    let course9 = new Course();
-    course9.instructors = [s1];
-    course9.name = 'dolor sit amet, consectetur';
-    course9.outline =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-    course9.description =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-    course9.category = CourseCategory.CLUB;
-    course9.tags = [science, music, play];
-    course9.subcourses = [];
-    course9.courseState = CourseState.ALLOWED;
-
-    courses.push(course9);
-
-    let course10 = new Course();
-    course10.instructors = [s1];
-    course10.name = 'Gen Z';
-    course10.outline = 'Was die Gen Z von der Arbeitswelt erwartet!';
-    course10.description = 'Du gehörst zur Gen Z und möchtest mehr über die Arbeitswelt erfahren?';
-    course10.category = CourseCategory.FOCUS;
-    course10.tags = [genz];
-    course10.subcourses = [];
-    course10.courseState = CourseState.ALLOWED;
-
-    courses.push(course10);
-
-    for (const course of courses) {
-        await entityManager.save(Course, course);
-
-        logger.debug('Inserted Course ' + course.name);
-    }
-
-    // courses
-
-    const subcourses = [];
-
-    const subcourse1 = new Subcourse();
-    subcourse1.course = course1;
-    subcourse1.joinAfterStart = true;
-    subcourse1.minGrade = 1;
-    subcourse1.maxGrade = 13;
-    subcourse1.instructors = [s1, s2];
-    subcourse1.maxParticipants = 4;
-    subcourse1.published = false;
-
-    subcourses.push(subcourse1);
-
-    const subcourse2 = new Subcourse();
-    subcourse2.course = course2;
-    subcourse2.joinAfterStart = true;
-    subcourse2.minGrade = 3;
-    subcourse2.maxGrade = 10;
-    subcourse2.instructors = [s1];
-    subcourse2.maxParticipants = 5;
-    subcourse2.published = true;
-    subcourse2.participants = pupils.slice(0, 5);
-
-    const waitingListEnrollment1 = new WaitingListEnrollment();
-    waitingListEnrollment1.subcourse = subcourse2;
-    waitingListEnrollment1.pupil = pupils[5];
-
-    const waitingListEnrollment2 = new WaitingListEnrollment();
-    waitingListEnrollment2.subcourse = subcourse2;
-    waitingListEnrollment2.pupil = pupils[6];
-
-    subcourse2.waitingListEnrollments = [waitingListEnrollment1, waitingListEnrollment2];
-
-    subcourses.push(subcourse2);
-
-    const subcourse3 = new Subcourse();
-    subcourse3.course = course3;
-    subcourse3.joinAfterStart = false;
-    subcourse3.minGrade = 10;
-    subcourse3.maxGrade = 11;
-    subcourse3.instructors = [s1, s2];
-    subcourse3.maxParticipants = 3;
-    subcourse3.published = true;
-    subcourse3.participants = pupils.slice(0, 3);
-
-    subcourses.push(subcourse3);
-
-    const subcourse4 = new Subcourse();
-    subcourse4.course = course4;
-    subcourse4.joinAfterStart = false;
-    subcourse4.minGrade = 8;
-    subcourse4.maxGrade = 11;
-    subcourse4.instructors = [s2];
-    subcourse4.maxParticipants = 10;
-    subcourse4.published = true;
-
-    subcourses.push(subcourse4);
-
-    const subcourse5 = new Subcourse();
-    subcourse5.course = course5;
-    subcourse5.joinAfterStart = true;
-    subcourse5.minGrade = 3;
-    subcourse5.maxGrade = 10;
-    subcourse5.instructors = [s1, s2];
-    subcourse5.maxParticipants = 10;
-    subcourse5.published = true;
-    subcourse5.participants = pupils;
-
-    subcourses.push(subcourse5);
-
-    const subcourse6 = new Subcourse();
-    subcourse6.course = course5;
-    subcourse6.joinAfterStart = true;
-    subcourse6.minGrade = 3;
-    subcourse6.maxGrade = 10;
-    subcourse6.instructors = [s1, s2];
-    subcourse6.maxParticipants = 10;
-    subcourse6.published = true;
-    subcourse6.participants = pupils;
-
-    subcourses.push(subcourse6);
-
-    // courseId and subcourseId should be different. Used for testing courseAttendanceLog
-    const subcourse7 = new Subcourse();
-    subcourse7.course = course5;
-    subcourse7.joinAfterStart = true;
-    subcourse7.minGrade = 3;
-    subcourse7.maxGrade = 10;
-    subcourse7.instructors = [s1, s2];
-    subcourse7.maxParticipants = 4;
-    subcourse7.published = true;
-    subcourse7.participants = pupils.slice(0, 5);
-
-    subcourses.push(subcourse7);
-
-    const subcourse8 = new Subcourse();
-    subcourse8.course = course6;
-    subcourse8.joinAfterStart = true;
-    subcourse8.minGrade = 3;
-    subcourse8.maxGrade = 10;
-    subcourse8.instructors = [s1];
-    subcourse8.maxParticipants = 10;
-    subcourse8.published = true;
-    subcourse8.participants = pupils.slice(0, 5);
-
-    subcourses.push(subcourse8);
-
-    const subcourse9 = new Subcourse();
-    subcourse9.course = course7;
-    subcourse9.joinAfterStart = true;
-    subcourse9.minGrade = 1;
-    subcourse9.maxGrade = 10;
-    subcourse9.instructors = [s1];
-    subcourse9.maxParticipants = 7;
-    subcourse9.published = true;
-    subcourse9.participants = pupils.slice(0, 7);
-
-    subcourses.push(subcourse9);
-
-    const subcourse10 = new Subcourse();
-    subcourse10.course = course8;
-    subcourse10.joinAfterStart = true;
-    subcourse10.minGrade = 1;
-    subcourse10.maxGrade = 10;
-    subcourse10.instructors = [s1];
-    subcourse10.maxParticipants = 20;
-    subcourse10.published = true;
-    subcourse10.participants = pupils;
-
-    subcourses.push(subcourse10);
-
-    const subcourse11 = new Subcourse();
-    subcourse11.course = course9;
-    subcourse11.joinAfterStart = true;
-    subcourse11.minGrade = 1;
-    subcourse11.maxGrade = 10;
-    subcourse11.instructors = [s1];
-    subcourse11.maxParticipants = 20;
-    subcourse11.published = true;
-    subcourse11.participants = pupils;
-
-    subcourses.push(subcourse11);
-
-    // course to test subcourse suggestions
-    const subcourse12 = new Subcourse();
-    subcourse12.course = course10;
-    subcourse12.joinAfterStart = true;
-    subcourse12.minGrade = 3;
-    subcourse12.maxGrade = 5;
-    subcourse12.instructors = [s1];
-    subcourse12.maxParticipants = 20;
-    subcourse12.published = true;
-
-    subcourses.push(subcourse12);
-
-    for (const subcourse of subcourses) {
-        await entityManager.save(Subcourse, subcourse);
-        logger.debug('Inserted SubCourse.');
-    }
-
-    await entityManager.save(WaitingListEnrollment, waitingListEnrollment1);
-    await entityManager.save(WaitingListEnrollment, waitingListEnrollment2);
-    logger.debug('Inserted WaitingListEnrollments.');
-
-    // lectures
-
-    const lectures = [];
+    const mint = await createCourseTag('MINT', CourseCategory.FOCUS);
+    const music = await createCourseTag('Musik', CourseCategory.FOCUS);
+
+    const course1 = await prisma.course.create({
+        data: {
+            instructors: [student1, student2],
+            name: 'Grundlagen der Physik',
+            outline: 'E(m) = m * c * c',
+            description:
+                'Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.';
+            category: CourseCategory.COACHING,
+            tags: [mint],
+            courseState: CourseState.SUBMITTED
+        }
+    });
+
+    const course2 = await prisma.course.create({
+        data: {
+            instructors: [student1],
+            name: 'COBOL und ABAP - Eine Reise in die Steinzeit der Informatik',
+            outline: 'Mit lebenden Exemplaren zum anschauen',
+            description: 'COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.',
+            category: CourseCategory.CLUB,
+            tags: [mint],
+            courseState: CourseState.ALLOWED,
+            allowContact: true
+        }
+    });
+
+    const course3 = await prisma.course.create({
+        data: {
+            instructors: [student1, student2],
+            name: 'Grundlagen der Mathematik',
+            outline: '(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0',
+            description: 'Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...',
+            category: CourseCategory.REVISION,
+            tags: [mint],
+            subcourses: [],
+            courseState: CourseState.DENIED,
+            subject: Subject.MATHEMATIK
+        }
+    });
+
+    const course4 = await prisma.course.create({
+        data: {
+            instructors: [student1],
+            name: 'KIZ, 187, Aligatoah.',
+            outline: 'Die Musik des neuen Jahrtausends',
+            description: 'Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.',
+            category: CourseCategory.REVISION,
+            tags: [music],
+            CourseState: CourseState.CANCELLED,
+            subject: Subject.MUSIK
+        }
+    });
+    
+    const course5 = await prisma.course.create({
+        data: {
+            instructors = [student1, student2],
+            name: 'Gitarre lernen für Anfänger',
+            outline: 'Mit 3 Akkorden zum ersten Song',
+            description: 'In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!',
+            category: CourseCategory.CLUB,
+            tags: [music],
+            courseState: CourseState.ALLOWED,
+            subject: Subject.MUSIK
+        }
+    });
+
+    const subcourse1 = await prisma.subcourse.create({
+        data: {
+            courseId: course1.id,
+            joinAfterStart: true,
+            minGrade: 1,
+            maxGrade: 13,
+            instructors: [student1, student2],
+            maxParticipants: 4,
+            published: false
+        }
+    });
+    
+    const subcourse2 = await prisma.subcourse.create({
+        data: {
+            courseId: course2.id,
+            joinAfterStart: true,
+            minGrade: 3,
+            maxGrade: 10,
+            instructors: [student1],
+            maxParticipants: 5,
+            published: true,
+            participants: [
+                pupil1,
+                pupil2,
+                pupil3,
+                pupil4,
+                pupil5
+            ]
+        }
+    })
+
+    await joinSubcourseWaitinglist(subcourse2, pupil6);
+    await joinSubcourseWaitinglist(subcourse2, pupil7);
+
+    const subcourse3 = await prisma.subcourse.create({
+        data: {
+            courseId: course3.id,
+            joinAfterStart: false,
+            minGrade: 10,
+            maxGrade: 11,
+            instructors: [student1, student2],
+            maxParticipants: 3,
+            published: true,
+            participants: [pupil1, pupil2, pupil3]
+        }
+    });
+
+    const subcourse4 = await prisma.subcourse.create({
+        data: {
+            courseId: course4.id,
+            joinAfterStart: false,
+            minGrade: 8,
+            maxGrade: 11,
+            instructors: [student2],
+            maxParticipants: 10,
+            published: true
+        }
+    });
+
+    const subcourse5 = await prisma.subcourse.create({
+        data: {    
+            courseId: course5.id,
+            joinAfterStart: true,
+            minGrade: 3,
+            maxGrade: 10,
+            instructors: [student1, student2],
+            maxParticipants: 10,
+            published: true,
+            participants: [pupil1, pupil2, pupil3, pupil4, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
+        }
+    });
 
     const now = new Date();
     const year = now.getFullYear();
@@ -1021,334 +623,94 @@ void (async function setupDevDB() {
         let currentLecture = Date.now();
         let endLectures = Date.now() + 24 * 60 * 60 * 1000;
         while (currentLecture < endLectures) {
-            const lecture: Lecture = new Lecture();
-            lecture.subcourse = subcourse2;
-            lecture.duration = 15;
-            lecture.start = new Date(currentLecture);
-            lecture.instructor = s1;
-            lecture.organizerIds = subcourse2.instructors?.map((p) => `student/${p.id}`);
-            lecture.zoomMeetingId = '123456789';
-            lecture.participantIds = subcourse2.participants?.map((p) => `pupil/${p.id}`);
-            lecture.appointmentType = AppointmentType.GROUP;
-            lectures.push(lecture);
+            await prisma.lecture.create({
+                data: {
+                    subcourseId: subcourse2.id,
+                    duration: 15,
+                    start: new Date(currentLecture),
+                    organizerIds: subcourse2.instructors?.map((p) => `student/${p.id}`),
+                    zoomMeetingId: '123456789',
+                    participantIds: subcourse2.participants?.map((p) => `pupil/${p.id}`),
+                    appointmentType: AppointmentType.GROUP,
+                }
+            });
 
             currentLecture += 60 * 60 * 1000;
         }
     }
 
-    const lecture3: Lecture = new Lecture();
-    lecture3.subcourse = subcourse1;
-    lecture3.duration = 120;
-    lecture3.start = new Date(year, month, date + 10, 19, 0, 0, 0);
-    lecture3.instructor = s1;
-    lecture3.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
-    lecture3.zoomMeetingId = '123456789';
-    lecture3.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
-    lecture3.appointmentType = AppointmentType.GROUP;
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse1.id,
+            duration: 120,
+            start: new Date(year, month, date + 10, 19, 0, 0, 0),
+            organizerIds: subcourse1.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse1.participants?.map((p) => `pupil/${p.id}`),
+            appointmentType: AppointmentType.GROUP
+        }
+    });
 
-    const lecture4: Lecture = new Lecture();
-    lecture4.subcourse = subcourse1;
-    lecture4.duration = 120;
-    lecture4.start = new Date(year, month, date + 14, 21, 0, 0, 0);
-    lecture4.instructor = s1;
-    lecture4.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
-    lecture4.zoomMeetingId = '123456789';
-    lecture4.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
-    lecture4.appointmentType = AppointmentType.GROUP;
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse1.id,
+            duration: 120,
+            start: new Date(year, month, date + 14, 21, 0, 0, 0),
+            organizerIds: subcourse1.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse1.participants?.map((p) => `pupil/${p.id}`),
+            appointmentType: AppointmentType.GROUP
+        }
+    });
 
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse1.id,
+            duration: 120,
+            start: new Date(year, month, date, 4, 0, 0, 0),
+            organizerIds: subcourse1.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse1.participants?.map((p) => `pupil/${p.id}`);
+            appointmentType: AppointmentType.GROUP
+        }
+    });
 
-    // today's past lecture for courseAttendanceLog
-    const lecture5: Lecture = new Lecture();
-    lecture5.subcourse = subcourse1;
-    lecture5.duration = 120;
-    lecture5.start = new Date(year, month, date, 4, 0, 0, 0);
-    lecture5.instructor = s1;
-    lecture5.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
-    lecture5.zoomMeetingId = '123456789';
-    lecture5.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
-    lecture5.appointmentType = AppointmentType.GROUP;
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse1.id,
+            duration: 60,
+            start: new Date(year, month, date, hours, minutes - 1, 0, 0),
+            organizerIds: subcourse1.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse1.participants?.map((p) => `pupil/${p.id}`),
+            appointmentType: AppointmentType.GROUP
+        }
+    });
 
-    // today's active lecture for courseAttendanceLog
-    const lecture6: Lecture = new Lecture();
-    lecture6.subcourse = subcourse1;
-    lecture6.duration = 60;
-    lecture6.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
-    lecture6.instructor = s1;
-    lecture6.organizerIds = subcourse1.instructors?.map((p) => `student/${p.id}`);
-    lecture6.zoomMeetingId = '123456789';
-    lecture6.participantIds = subcourse1.participants?.map((p) => `pupil/${p.id}`);
-    lecture6.appointmentType = AppointmentType.GROUP;
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse3.id,
+            duration: 90,
+            start: new Date(year, month, date + 5, 10, 0, 0, 0),
+            organizerIds: subcourse3.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse3.participants?.map((p) => `pupil/${p.id}`),
+            appointmentType: AppointmentType.GROUP
+        }
+    });
 
-    // today's second active lecture for courseAttendanceLog
-    const lecture7: Lecture = new Lecture();
-    lecture7.subcourse = subcourse7;
-    lecture7.duration = 60;
-    lecture7.start = new Date(year, month, date, hours, minutes - 1, 0, 0);
-    lecture7.instructor = s1;
-    lecture7.organizerIds = subcourse7.instructors?.map((p) => `student/${p.id}`);
-    lecture7.zoomMeetingId = '123456789';
-    lecture7.participantIds = subcourse7.participants?.map((p) => `pupil/${p.id}`);
-    lecture7.appointmentType = AppointmentType.GROUP;
-
-    const lecture8: Lecture = new Lecture();
-    lecture8.subcourse = subcourse3;
-    lecture8.duration = 90;
-    lecture8.start = new Date(year, month, date + 5, 10, 0, 0, 0);
-    lecture8.instructor = s2;
-    lecture8.organizerIds = subcourse3.instructors?.map((p) => `student/${p.id}`);
-    lecture8.zoomMeetingId = '123456789';
-    lecture8.participantIds = subcourse3.participants?.map((p) => `pupil/${p.id}`);
-    lecture8.appointmentType = AppointmentType.GROUP;
-
-
-    const lecture9: Lecture = new Lecture();
-    lecture9.subcourse = subcourse4;
-    lecture9.duration = 120;
-    lecture9.start = new Date(year, month, date + 15, 11, 0, 0, 0);
-    lecture9.instructor = s2;
-    lecture9.organizerIds = subcourse4.instructors?.map((p) => `student/${p.id}`);
-    lecture9.zoomMeetingId = '123456789';
-    lecture9.participantIds = subcourse4.participants?.map((p) => `pupil/${p.id}`);
-    lecture9.appointmentType = AppointmentType.GROUP;
-
-    const lecture10: Lecture = new Lecture();
-    lecture10.subcourse = subcourse8;
-    lecture10.duration = 120;
-    lecture10.start = new Date(year, month, date + 10, 19, 0, 0, 0);
-    lecture10.instructor = s1;
-    lecture10.organizerIds = subcourse8.instructors?.map((p) => `student/${p.id}`);
-    lecture10.zoomMeetingId = '123456789';
-    lecture10.participantIds = subcourse8.participants?.map((p) => `pupil/${p.id}`);
-    lecture10.appointmentType = AppointmentType.GROUP;
-
-    const lecture11: Lecture = new Lecture();
-    lecture11.subcourse = subcourse9;
-    lecture11.duration = 60;
-    lecture11.start = new Date(year, month, date + 10, 19, 0, 0, 0);
-    lecture11.instructor = s1;
-    lecture11.organizerIds = subcourse9.instructors?.map((p) => `student/${p.id}`);
-    lecture11.zoomMeetingId = '123456789';
-    lecture11.participantIds = subcourse9.participants?.map((p) => `pupil/${p.id}`);
-    lecture11.appointmentType = AppointmentType.GROUP;
-
-    const lecture12: Lecture = new Lecture();
-    lecture12.subcourse = subcourse10;
-    lecture12.duration = 60;
-    lecture12.start = new Date(year, month, date + 11, 20, 0, 0, 0);
-    lecture12.instructor = s1;
-    lecture12.organizerIds = subcourse10.instructors?.map((p) => `student/${p.id}`);
-    lecture12.zoomMeetingId = '123456789';
-    lecture12.participantIds = subcourse10.participants?.map((p) => `pupil/${p.id}`);
-    lecture12.appointmentType = AppointmentType.GROUP;
-
-    const lecture13: Lecture = new Lecture();
-    lecture13.subcourse = subcourse11;
-    lecture13.duration = 60;
-    lecture13.start = new Date(year, month, date - 5, 20, 0, 0, 0);
-    lecture13.instructor = s1;
-    lecture13.organizerIds = subcourse11.instructors?.map((p) => `student/${p.id}`);
-    lecture13.zoomMeetingId = '123456789';
-    lecture13.participantIds = subcourse11.participants?.map((p) => `pupil/${p.id}`);
-    lecture13.appointmentType = AppointmentType.GROUP;
-
-    const lecture14: Lecture = new Lecture();
-    lecture14.subcourse = subcourse12;
-    lecture14.duration = 30;
-    lecture14.start = new Date(year, month, date + 10, 20, 0, 0, 0);
-    lecture14.instructor = s1;
-    lecture14.organizerIds = subcourse12.instructors?.map((p) => `student/${p.id}`);
-    lecture14.zoomMeetingId = '123456789';
-    lecture14.participantIds = subcourse12.participants?.map((p) => `pupil/${p.id}`);
-    lecture14.appointmentType = AppointmentType.GROUP;
-
-    lectures.push(lecture3, lecture4, lecture5, lecture6, lecture7, lecture8, lecture9, lecture10, lecture11, lecture12, lecture13, lecture14);
-
-    for (const lecture of lectures) {
-        await entityManager.save(Lecture, lecture);
-        logger.debug('Inserted Lecture.');
-    }
-
-    // Screening results
-    const screeners: Screener[] = [];
-
-    let screener = new Screener();
-    screener.firstname = 'Maxi';
-    screener.lastname = 'Screenerfrau';
-    screener.active = true;
-    screener.email = 'test+dev+sc1@lern-fair.de';
-    screener.oldNumberID = -1;
-    // Screeners use another hashing algorithm than regular users
-    screener.password = await hashPassword('screener');
-    screener.verified = true;
-
-    screeners.push(screener);
-
-    let screener2 = new Screener();
-    screener2.firstname = 'Hanna';
-    screener2.lastname = 'Falkland';
-    screener2.active = true;
-    screener2.email = 'test+dev+sc2@lern-fair.de';
-    screener2.oldNumberID = -2;
-    screener2.password = await hashPassword('smsmsms'); //Don't be a fool, try Corona School ❤️
-    screener2.verified = true;
-
-    screeners.push(screener2);
-
-    for (let i = 0; i < screeners.length; i++) {
-        await entityManager.save(Screener, screeners[i]);
-        logger.debug('Inserted Dev Screener ' + i);
-    }
-
-    const screenings: Screening[] = [];
-    // The created date here is modified so this student becomes a defaulter
-    // for the 8 weeks certificate submission rule.
-    let sres = new Screening();
-    sres.success = true;
-    sres.comment = '🎉';
-    sres.createdAt = new Date('2021-09-01');
-    sres.knowsCoronaSchoolFrom = 'Internet';
-    sres.screener = screeners[0];
-    sres.student = students[0];
-
-    screenings.push(sres);
-
-    let sres2 = new Screening();
-    sres2.success = true;
-    sres2.comment = '🎉';
-    sres2.knowsCoronaSchoolFrom = 'Internet';
-    sres2.screener = screeners[0];
-    sres2.student = students[1];
-
-    screenings.push(sres2);
-
-    let sres3 = new Screening();
-    sres3.success = true;
-    sres3.comment = '🎉';
-    sres3.knowsCoronaSchoolFrom = 'Internet';
-    sres3.screener = screeners[0];
-    sres3.student = students[2];
-
-    screenings.push(sres3);
-
-    for (let i = 0; i < screenings.length; i++) {
-        await entityManager.save(Screening, screenings[i]);
-        logger.debug('Inserted Dev Screening ' + i);
-    }
-
-    // instructor screening
-    const instructorScreenings: InstructorScreening[] = [];
-
-    const instructorScrenning1 = new InstructorScreening();
-    instructorScrenning1.success = true;
-    instructorScrenning1.comment = '🎉';
-    instructorScrenning1.knowsCoronaSchoolFrom = 'Internet';
-    instructorScrenning1.screener = screeners[0];
-    instructorScrenning1.student = students[2];
-
-    instructorScreenings.push(instructorScrenning1);
-
-    const instructorScrenning2 = new InstructorScreening();
-    instructorScrenning2.success = true;
-    instructorScrenning2.comment = '🎉';
-    instructorScrenning2.knowsCoronaSchoolFrom = 'Internet';
-    instructorScrenning2.screener = screeners[0];
-    instructorScrenning2.student = students[1];
-
-    instructorScreenings.push(instructorScrenning2);
-
-    const instructorScrenning3 = new InstructorScreening();
-    instructorScrenning3.success = true;
-    instructorScrenning3.comment = '🎉';
-    instructorScrenning3.knowsCoronaSchoolFrom = 'Internet';
-    instructorScrenning3.screener = screeners[0];
-    instructorScrenning3.student = students[0];
-
-    instructorScreenings.push(instructorScrenning3);
-
-    for (let i = 0; i < instructorScreenings.length; i++) {
-        await entityManager.save(InstructorScreening, instructorScreenings[i]);
-        logger.debug('Inserted Dev Instrcutor Screening ' + i);
-    }
-
-    // Test data for course attendance log
-
-    for (let i = 0; i < pupils.length; i++) {
-        // pupil attended lecture in the past
-        const courseAttendanceLog1 = new CourseAttendanceLog();
-        courseAttendanceLog1.createdAt = new Date('2020-08-10 08:00:00.983055');
-        courseAttendanceLog1.ip = 'localhost';
-        courseAttendanceLog1.pupil = pupils[i];
-        courseAttendanceLog1.lecture = lecture3;
-        await entityManager.save(CourseAttendanceLog, courseAttendanceLog1);
-        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
-
-        // pupil attended today's lecture, which is already over
-        const courseAttendanceLog2 = new CourseAttendanceLog();
-        courseAttendanceLog2.ip = 'localhost';
-        courseAttendanceLog2.pupil = pupils[i];
-        courseAttendanceLog2.lecture = lecture5;
-        await entityManager.save(CourseAttendanceLog, courseAttendanceLog2);
-        logger.debug('Inserted Dev CourseAttendanceLog ' + i);
-    }
-
-    //Insert some schools
-    const schools: School[] = [];
-
-    const school1 = new School();
-    school1.name = 'Lern Fair';
-    school1.emailDomain = 'lern-fair.de';
-    school1.website = 'https://lern-fair.de';
-    school1.state = State.OTHER;
-    school1.schooltype = SchoolType.SONSTIGES;
-    school1.activeCooperation = true;
-
-    schools.push(school1);
-
-    for (let i = 0; i < schools.length; i++) {
-        await entityManager.save(schools[i]);
-        logger.debug('Inserted Dev School ' + i);
-    }
-
-    //Insert pupil interest confirmation requests
-    const pticrs: PupilTutoringInterestConfirmationRequest[] = [];
-
-    const pticr1 = new PupilTutoringInterestConfirmationRequest(p6, 'interest-confirmation-token-P6');
-    pticrs.push(pticr1);
-
-    const pticr2 = new PupilTutoringInterestConfirmationRequest(p7, 'interest-confirmation-token-P7');
-    pticr2.reminderSentDate = new Date(Date.now() - 6.912e8); // minus 8 days in ms
-    pticrs.push(pticr2);
-
-    for (let i = 0; i < pticrs.length; i++) {
-        await entityManager.save(pticrs[i]);
-        logger.debug('Inserted Pupil Tutoring Interest Request ' + i);
-    }
-
-    const certificates: CertificateOfConduct[] = [];
-    const certi = new CertificateOfConduct();
-    certi.student = students[0];
-    certi.criminalRecords = true;
-    certi.dateOfIssue = new Date();
-    certi.dateOfInspection = new Date();
-
-    //Toggle this to test JOB for sreening missing COCs
-    certificates.push(certi);
-
-    for (let i = 0; i < certificates.length; i++) {
-        await entityManager.save(certificates[i]);
-        logger.debug('Inserted COC ' + i);
-    }
-
-    //Insert remission request
-    const remissionRequest = new RemissionRequest();
-    remissionRequest.student = students[0];
-    remissionRequest.uuid = randomBytes(5).toString('hex').toUpperCase();
-
-    await entityManager.save(remissionRequest);
-    logger.debug('Inserted remission request');
-
-    */
-
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse4.id,
+            duration: 120,
+            start: new Date(year, month, date + 15, 11, 0, 0, 0),
+            organizerIds: subcourse4.instructors?.map((p) => `student/${p.id}`),
+            zoomMeetingId: '123456789',
+            participantIds: subcourse4.participants?.map((p) => `pupil/${p.id}`),
+            appointmentType: AppointmentType.GROUP
+        }
+    });
+    
     if (!process.env.SKIP_NOTIFICATION_IMPORT) {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
