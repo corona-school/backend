@@ -41,7 +41,6 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
 
 export default async function flagInactiveConversationsAsReadonly() {
     const conversations = await getAllConversations();
-    // const conversationIds: string[] = [];
     const conversationsTo: conversationsToDeactivate[] = [];
 
     for (const conversation of conversations.data) {
@@ -79,15 +78,6 @@ export default async function flagInactiveConversationsAsReadonly() {
             }
         }
     }
-
-    // if (conversationIds.length > 0) {
-    //     for (const id of conversationIds) {
-    //         await markConversationAsReadOnly(id);
-    //     }
-    //     logger.info(`Mark conversations without purpose as readonly.`);
-    // } else {
-    //     logger.info('No conversation to mark as readonly');
-    // }
 
     if (conversationsTo.length > 0) {
         for (const convo of conversationsTo) {
