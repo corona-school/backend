@@ -13,7 +13,7 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
 
@@ -111,6 +111,7 @@ const getOrCreateOneOnOneConversation = async (
 
         if (isChatReadOnly) {
             await markConversationAsWriteable(participantsConversationId);
+            await sendSystemMessage(systemMessages.de.reactivated, participantsConversationId, SystemMessage.ONE_ON_ONE_REACTIVATE);
         }
     }
 

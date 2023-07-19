@@ -1,11 +1,22 @@
 import moment from 'moment';
 import { getMatch, getSubcourse } from '../../../graphql/util';
-import { getAllConversations, markConversationAsReadOnly } from '../../../common/chat';
+import { getAllConversations, markConversationAsReadOnly, sendSystemMessage } from '../../../common/chat';
 import { getLogger } from '../../../common/logger/logger';
 import { Lecture } from '../../../graphql/generated';
+import { SystemMessage } from '../../../common/chat/types';
+import systemMessages from '../../../common/chat/localization';
 
 const logger = getLogger();
 
+enum ConversationType {
+    GROUP = 'group',
+    ONE_ON_ONE = 'one_on_one',
+}
+
+type conversationsToDeactivate = {
+    id: string;
+    conversationType: ConversationType;
+};
 async function isActiveMatch(id: number): Promise<boolean> {
     const today = moment().endOf('day');
     const match = await getMatch(id);
@@ -30,7 +41,8 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
 
 export default async function flagInactiveConversationsAsReadonly() {
     const conversations = await getAllConversations();
-    const conversationIds: string[] = [];
+    // const conversationIds: string[] = [];
+    const conversationsTo: conversationsToDeactivate[] = [];
 
     for (const conversation of conversations.data) {
         let shouldMarkAsReadonly: boolean;
@@ -53,13 +65,38 @@ export default async function flagInactiveConversationsAsReadonly() {
         }
 
         if (shouldMarkAsReadonly) {
-            conversationIds.push(conversation.id);
+            // conversationIds.push(conversation.id);
+            if (conversation.custom.match) {
+                conversationsTo.push({
+                    id: conversation.id,
+                    conversationType: ConversationType.ONE_ON_ONE,
+                });
+            } else {
+                conversationsTo.push({
+                    id: conversation.id,
+                    conversationType: ConversationType.GROUP,
+                });
+            }
         }
     }
 
-    if (conversationIds.length > 0) {
-        for (const id of conversationIds) {
-            await markConversationAsReadOnly(id);
+    // if (conversationIds.length > 0) {
+    //     for (const id of conversationIds) {
+    //         await markConversationAsReadOnly(id);
+    //     }
+    //     logger.info(`Mark conversations without purpose as readonly.`);
+    // } else {
+    //     logger.info('No conversation to mark as readonly');
+    // }
+
+    if (conversationsTo.length > 0) {
+        for (const convo of conversationsTo) {
+            await markConversationAsReadOnly(convo.id);
+            if (convo.conversationType === ConversationType.ONE_ON_ONE) {
+                await sendSystemMessage(systemMessages.de.deactivated, convo.id, SystemMessage.ONE_ON_ONE_OVER);
+            } else {
+                await sendSystemMessage(systemMessages.de.deactivated, convo.id, SystemMessage.GROUP_OVER);
+            }
         }
         logger.info(`Mark conversations without purpose as readonly.`);
     } else {
