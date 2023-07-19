@@ -13,11 +13,13 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
+import { getLogger } from '../logger/logger';
 
 dotenv.config();
+const logger = getLogger('Conversation');
 
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
@@ -75,7 +77,7 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
-const getAllConversations = async () => {
+const getAllConversations = async (): Promise<AllConversations> => {
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
         headers: {
@@ -348,7 +350,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
             await checkResponseStatus(response);
         }
     } catch (error) {
-        console.log('ERROR on mark convo as readonly', error);
+        logger.error('Could not mark conversation as readonly', error);
         throw new Error(error);
     }
 }

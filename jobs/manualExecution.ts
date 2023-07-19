@@ -53,6 +53,7 @@ export const executeJob = async (job) => {
         }
         case 'flagOldConversations': {
             await flagInactiveConversationsAsReadonly();
+            break;
         }
         case 'sendSlackStatistics': {
             await postStatisticsToSlack();

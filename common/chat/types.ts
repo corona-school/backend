@@ -9,7 +9,7 @@ export enum ContactReason {
     CONTACT = 'contact',
 }
 
-export type Conversation = Pick<ConversationData, 'topicId' | 'id' | 'subject' | 'photoUrl' | 'welcomeMessages'> & {
+export type Conversation = Pick<ConversationData, 'id' | 'subject' | 'photoUrl' | 'welcomeMessages'> & {
     custom?: ChatMetaData;
     lastMessage?: Message;
     participants: {
@@ -71,5 +71,5 @@ export enum ChatAccess {
 }
 
 export type AllConversations = {
-    data: Conversation[];
+    data: TJConversation[];
 };
