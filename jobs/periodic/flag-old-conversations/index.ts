@@ -64,7 +64,6 @@ export default async function flagInactiveConversationsAsReadonly() {
         }
 
         if (shouldMarkAsReadonly) {
-            // conversationIds.push(conversation.id);
             if (conversation.custom.match) {
                 conversationsTo.push({
                     id: conversation.id,
