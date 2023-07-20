@@ -8,7 +8,7 @@ import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
-import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
@@ -130,6 +130,10 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
+const countChatParticipants = (conversation: Conversation): number => {
+    return Object.keys(conversation.participants).length;
+};
+
 const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMembers: string[]; readMembers: string[] } => {
     const readWriteMembers: string[] = [];
     const readMembers: string[] = [];
@@ -168,7 +172,7 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
 };
 
 const convertTJConversation = (conversation: TJConversation): Conversation => {
-    const { id, subject, topicId, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+    const { id, subject, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
 
     const convertedCustom: ChatMetaData = custom
         ? {
@@ -183,7 +187,6 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     return {
         id,
         subject,
-        topicId,
         photoUrl,
         welcomeMessages,
         custom: convertedCustom,
@@ -203,6 +206,7 @@ export {
     createChatSignature,
     getMatchByMatchees,
     createOneOnOneId,
+    countChatParticipants,
     getConversationId,
     getMatcheeConversation,
     checkChatMembersAccessRights,
