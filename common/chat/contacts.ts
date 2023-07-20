@@ -95,7 +95,7 @@ const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[
 };
 const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
-    const today = moment().toISOString();
+    const yesterday = moment().subtract(1, 'day').toISOString();
     const studentsWithSubcourseIds = await prisma.student.findMany({
         where: {
             subcourse_instructors_student: {
@@ -104,7 +104,7 @@ const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseC
                         allowChatContactParticipants: true,
                         subcourse_participants_pupil: { some: { pupilId: pupil.pupilId } },
                         cancelled: false,
-                        lecture: { some: { start: { gte: today } } },
+                        lecture: { some: { start: { gte: yesterday } } },
                     },
                 },
             },
@@ -141,7 +141,7 @@ const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseC
 };
 const getSubcourseParticipantContactForUser = async (student: User): Promise<SubcourseContactPupil[]> => {
     assert(student.studentId, 'Student must have an studentId');
-    const today = moment().toISOString();
+    const yesterday = moment().subtract(1, 'day').toISOString();
 
     const pupilsWithSubcourseIds = await prisma.pupil.findMany({
         where: {
@@ -151,7 +151,7 @@ const getSubcourseParticipantContactForUser = async (student: User): Promise<Sub
                         allowChatContactParticipants: true,
                         subcourse_instructors_student: { some: { studentId: student.studentId } },
                         cancelled: false,
-                        lecture: { some: { start: { gte: today } } },
+                        lecture: { some: { start: { gte: yesterday } } },
                     },
                 },
             },
