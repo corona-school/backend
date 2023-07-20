@@ -112,7 +112,6 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
     const appointmentsFromNow = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
-            subcourse: { published: true },
             start: {
                 gte: moment().subtract(MAXIMUM_APPOINTMENT_DURATION, 'hours').toDate(),
             },
