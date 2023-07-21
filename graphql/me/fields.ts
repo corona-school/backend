@@ -1,13 +1,9 @@
 import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver } from 'type-graphql';
 import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Role, hasAccess } from '../authorizations';
+import { Role } from '../authorizations';
 import { UserType } from '../types/user';
-import { getUserZAK } from '../../common/zoom/user';
-import { generateMeetingSDKJWT } from '../../common/zoom/util';
 import { createChatSignature } from '../../common/chat/helper';
-import { Field, ObjectType } from 'type-graphql';
-import { UserContactType, getMyContacts } from '../../common/chat/contacts';
 
 @Resolver((of) => UserType)
 export class FieldMeResolver {

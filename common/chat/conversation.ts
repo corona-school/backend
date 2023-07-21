@@ -1,21 +1,9 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    checkChatMembersAccessRights,
-    checkResponseStatus,
-    convertConversationInfosToString,
-    convertTJConversation,
-    createOneOnOneId,
-    getConversationId,
-    userIdToTalkJsId,
-} from './helper';
+import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { User } from '../user';
-import { getOrCreateChatUser } from './user';
-import { prisma } from '../prisma';
-import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
-import { getMyContacts } from './contacts';
-import systemMessages from './localization';
+import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
 
 dotenv.config();
@@ -258,7 +246,6 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
 
 async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     try {
-        // check if conversation exists
         const conversation = await getConversation(conversationId);
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/messages`, {
             method: 'POST',

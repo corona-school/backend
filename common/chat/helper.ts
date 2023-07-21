@@ -8,7 +8,7 @@ import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
-import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
@@ -28,11 +28,6 @@ function createOneOnOneId(userA: User, userB: User): string {
     const hashedIds = sha1(userIds);
     return truncate(hashedIds, { length: 10 });
 }
-
-const getConversationId = (participants: User[]) => {
-    const conversationId = createOneOnOneId(participants[0], participants[1]);
-    return conversationId;
-};
 
 const parseUnderscoreToSlash = (id: string): string => {
     return id.replace('_', '/');
@@ -125,7 +120,7 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     const pupil = await getPupil(matchees.pupilId);
     const studentUser = userForStudent(student);
     const pupilUser = userForPupil(pupil);
-    const conversationId = getConversationId([studentUser, pupilUser]);
+    const conversationId = createOneOnOneId(studentUser, pupilUser);
     const conversation = await getConversation(conversationId);
     return { conversation, conversationId };
 };
@@ -207,7 +202,6 @@ export {
     getMatchByMatchees,
     createOneOnOneId,
     countChatParticipants,
-    getConversationId,
     getMatcheeConversation,
     checkChatMembersAccessRights,
     isSubcourseParticipant,
