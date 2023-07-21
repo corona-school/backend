@@ -1,14 +1,13 @@
 /* eslint-disable camelcase */
 import { course_coursestate_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
-import { dissolveMatch, dissolveProjectMatch } from '../match/dissolve';
-import { getTransactionLog } from '../transactionlog';
-import DeActivateEvent from '../transactionlog/types/DeActivateEvent';
+import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
 import { getZoomUser } from '../zoom/user';
 import { deleteZoomUser } from '../zoom/user';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
+import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
@@ -33,17 +32,6 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     });
     for (const match of matches) {
         await dissolveMatch(match, 0, student);
-    }
-
-    let projectMatches = await prisma.project_match.findMany({
-        where: {
-            studentId: student.id,
-            dissolved: false,
-        },
-    });
-
-    for (const match of projectMatches) {
-        await dissolveProjectMatch(match, 0, student);
     }
 
     //Delete course records for the student.
@@ -104,7 +92,7 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         where: { id: student.id },
     });
 
-    await getTransactionLog().log(new DeActivateEvent(student, false, reason));
+    await logTransaction('deActivate', student, { newStatus: false, deactivationReason: reason });
 
     return updatedStudent;
 }
@@ -117,5 +105,5 @@ export async function reactivateStudent(student: Student, reason: string) {
         throw new PrerequisiteError('Student already got redacted, too late... :(');
     }
     await prisma.student.update({ where: { id: student.id }, data: { active: true } });
-    await getTransactionLog().log(new DeActivateEvent(student, true, reason));
+    await logTransaction('deActivate', student, { newStatus: true, deactivationReason: reason });
 }

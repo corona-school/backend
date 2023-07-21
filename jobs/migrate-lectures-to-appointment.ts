@@ -1,7 +1,6 @@
 import { prisma } from '../common/prisma';
 import { getLogger } from '../common/logger/logger';
 import { lecture_appointmenttype_enum } from '../graphql/generated';
-import { create } from 'lodash';
 import { createZoomUser, getZoomUser } from '../common/zoom/user';
 import { createZoomMeeting } from '../common/zoom/scheduled-meeting';
 

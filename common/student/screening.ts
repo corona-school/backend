@@ -3,10 +3,9 @@ import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
-import { getTransactionLog } from '../transactionlog';
-import CoCCancelledEvent from '../transactionlog/types/CoCCancelledEvent';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
+import { logTransaction } from '../transactionlog/log';
 
 interface ScreeningInput {
     success: boolean;
@@ -79,8 +78,6 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 }
 
 export async function cancelCoCReminders(student: Student) {
-    const transactionLog = getTransactionLog();
-
     await Notification.actionTaken(student, 'coc_cancelled', {});
-    await transactionLog.log(new CoCCancelledEvent(student));
+    await logTransaction('cocCancel', student, { studentId: student.id });
 }

@@ -1,12 +1,14 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser } from '../user';
+import { User, getUser, userForPupil, userForStudent } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
-import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { getPupil, getStudent } from '../../graphql/util';
+import { getConversation } from './conversation';
+import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
@@ -118,6 +120,39 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
+const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
+    const student = await getStudent(matchees.studentId);
+    const pupil = await getPupil(matchees.pupilId);
+    const studentUser = userForStudent(student);
+    const pupilUser = userForPupil(pupil);
+    const conversationId = getConversationId([studentUser, pupilUser]);
+    const conversation = await getConversation(conversationId);
+    return { conversation, conversationId };
+};
+
+const countChatParticipants = (conversation: Conversation): number => {
+    return Object.keys(conversation.participants).length;
+};
+
+const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMembers: string[]; readMembers: string[] } => {
+    const readWriteMembers: string[] = [];
+    const readMembers: string[] = [];
+
+    for (const participantId in conversation.participants) {
+        const participant = conversation.participants[participantId];
+        const access = participant.access;
+
+        if (access === 'ReadWrite') {
+            readWriteMembers.push(participantId);
+        } else if (access === 'Read') {
+            readMembers.push(participantId);
+        } else {
+            throw new Error(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte auf die Conversation ${conversation.id}.`);
+        }
+    }
+    return { readWriteMembers, readMembers };
+};
+
 const convertConversationInfosToString = (conversationInfos: ConversationInfos): ConversationInfos => {
     const convertedConversationInfos: ConversationInfos = {
         subject: conversationInfos.subject,
@@ -137,7 +172,7 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
 };
 
 const convertTJConversation = (conversation: TJConversation): Conversation => {
-    const { id, subject, topicId, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+    const { id, subject, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
 
     const convertedCustom: ChatMetaData = custom
         ? {
@@ -152,7 +187,6 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     return {
         id,
         subject,
-        topicId,
         photoUrl,
         welcomeMessages,
         custom: convertedCustom,
@@ -172,7 +206,10 @@ export {
     createChatSignature,
     getMatchByMatchees,
     createOneOnOneId,
+    countChatParticipants,
     getConversationId,
+    getMatcheeConversation,
+    checkChatMembersAccessRights,
     isSubcourseParticipant,
     getMembersForSubcourseGroupChat,
     convertConversationInfosToString,

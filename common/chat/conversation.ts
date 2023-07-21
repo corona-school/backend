@@ -1,20 +1,29 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, convertConversationInfosToString, convertTJConversation, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
-import { Message } from 'talkjs/all';
-import { User, getUser } from '../user';
+import {
+    checkChatMembersAccessRights,
+    checkResponseStatus,
+    convertConversationInfosToString,
+    convertTJConversation,
+    createOneOnOneId,
+    getConversationId,
+    userIdToTalkJsId,
+} from './helper';
+import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AccessRight, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
+import systemMessages from './localization';
+import { getLogger } from '../logger/logger';
 
 dotenv.config();
+const logger = getLogger('Conversation');
 
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
-
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -54,6 +63,22 @@ const createConversation = async (participants: User[], conversationInfos: Conve
 
 const getConversation = async (conversationId: string): Promise<TJConversation | undefined> => {
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${TALKJS_API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
+    }
+};
+
+const getAllConversations = async (): Promise<AllConversations> => {
+    const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${TALKJS_API_KEY}`,
@@ -123,7 +148,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -132,6 +157,9 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: chatType === ChatType.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -139,15 +167,19 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
     }
 }
 
-async function removeParticipant(user: User, conversationId: string): Promise<void> {
+async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
-            method: 'DELETE',
+            method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: ChatAccess.NONE,
+                notify: false,
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -168,7 +200,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ,
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -191,12 +223,13 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ,
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
         }
     } catch (error) {
+        logger.error('Could not mark conversation as readonly', error);
         throw new Error(error);
     }
 }
@@ -213,7 +246,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ_WRITE,
+                    access: ChatAccess.READWRITE,
                 }),
             });
             await checkResponseStatus(response);
@@ -223,7 +256,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
@@ -255,12 +288,13 @@ export {
     getLastUnreadConversation,
     createConversation,
     updateConversation,
-    removeParticipant,
+    removeParticipantFromCourseChat,
     addParticipant,
     markConversationAsReadOnly,
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getAllConversations,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
     TALKJS_CONVERSATION_API_URL,

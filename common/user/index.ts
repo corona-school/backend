@@ -294,6 +294,18 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
     return [...students, ...pupils];
 }
 
+export async function updateLastLogin(user: User) {
+    if (user.pupilId) {
+        await prisma.pupil.update({ where: { id: user.pupilId }, data: { lastLogin: new Date() } });
+    }
+    if (user.studentId) {
+        await prisma.student.update({ where: { id: user.studentId }, data: { lastLogin: new Date() } });
+    }
+    if (user.screenerId) {
+        await prisma.screener.update({ where: { id: user.screenerId }, data: { lastLogin: new Date() } });
+    }
+}
+
 export async function getStudentsFromList(userIDs: string[]) {
     const ids = userIDs.filter((it) => it.startsWith('student/')).map((it) => parseInt(it.split('/')[1], 10));
     return await prisma.student.findMany({

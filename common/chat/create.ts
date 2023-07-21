@@ -1,10 +1,11 @@
 import { User } from '../user';
-import { ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
-import { convertTJConversation, getConversationId } from './helper';
-import { createConversation, getConversation, sendSystemMessage, updateConversation } from './conversation';
+import { ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { checkChatMembersAccessRights, convertTJConversation, getConversationId } from './helper';
+import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
 import { getMyContacts } from './contacts';
+import systemMessages from './localization';
 
 const getOrCreateOneOnOneConversation = async (
     participants: [User, User],
@@ -16,6 +17,16 @@ const getOrCreateOneOnOneConversation = async (
 
     const participantsConversationId = getConversationId(participants);
     const participantsConversation = await getConversation(participantsConversationId);
+
+    if (participantsConversation) {
+        const { readMembers } = checkChatMembersAccessRights(participantsConversation);
+        const isChatReadOnly = readMembers.length > 0;
+
+        if (isChatReadOnly) {
+            await markConversationAsWriteable(participantsConversationId);
+            await sendSystemMessage(systemMessages.de.reactivated, participantsConversationId, SystemMessage.ONE_ON_ONE_REACTIVATE);
+        }
+    }
 
     if (participantsConversation) {
         await handleExistingConversation(participantsConversationId, reason, subcourseId, participantsConversation, conversationInfos);
@@ -112,7 +123,7 @@ async function updateContactConversation(conversationId: string, conversationInf
 }
 
 async function sendWelcomeMessage(conversationId: string, welcomeMessage: string): Promise<void> {
-    await sendSystemMessage(welcomeMessage, conversationId, 'first');
+    await sendSystemMessage(welcomeMessage, conversationId, SystemMessage.FIRST);
 }
 
 const getOrCreateGroupConversation = async (participants: User[], subcourseId: number, conversationInfos: ConversationInfos): Promise<Conversation> => {
@@ -126,7 +137,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendWelcomeMessage(newConversationId, 'Schön dass du da bist!');
+        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },

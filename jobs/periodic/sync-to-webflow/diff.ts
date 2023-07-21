@@ -6,7 +6,9 @@ export function hash<T extends WebflowMetadata>(data: T): string {
     return sha1(raw);
 }
 
-function mapToDBId<T extends WebflowMetadata>(data: T[]): { [key: number]: T } {
+export type DBIdMap<T> = { [key: number]: T };
+
+export function mapToDBId<T extends WebflowMetadata>(data: T[]): DBIdMap<T> {
     const res = {};
     for (const row of data) {
         res[row.slug] = row;
@@ -41,14 +43,4 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
     }
 
     return { new: newEntries, outdated: outdatedEntries, changed: changedEntries };
-}
-
-export type DBIdMap = { [key: number]: string };
-
-export function mapDBIdToId(items: WebflowMetadata[]): DBIdMap {
-    const result: DBIdMap = {};
-    for (const item of items) {
-        result[item.slug] = item._id;
-    }
-    return result;
 }
