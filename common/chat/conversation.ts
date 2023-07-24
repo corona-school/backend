@@ -17,16 +17,19 @@ import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, Co
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
 import { getLogger } from '../logger/logger';
+import assert from 'assert';
 
 dotenv.config();
 const logger = getLogger('Conversation');
 
-const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
+const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
+const TALKJS_API_URL = `https://api.talkjs.com/v1/${TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to create conversation.');
     let conversationId: string;
     switch (type) {
         case 'oneOnOne':
@@ -62,6 +65,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
 };
 
 const getConversation = async (conversationId: string): Promise<TJConversation | undefined> => {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to get a conversation.');
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
         method: 'GET',
         headers: {
@@ -78,6 +82,7 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
 };
 
 const getAllConversations = async (): Promise<AllConversations> => {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to get all conversations.');
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
         headers: {
@@ -215,6 +220,8 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to get last unread conversation.');
+    assert(TALKJS_APP_ID, 'No TalkJS app ID found to get last unread conversation.');
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_API_URL}/users/${userId}/conversations?unreadsOnly=true`, {
@@ -235,6 +242,7 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
  * NOTE: PUT merges data with existing data, if any. For example, you cannot remove participants from a conversation by PUTing a list of participants that excludes some existing participants. If you want to remove participants from a conversation, use `removeParticipant`.
  */
 async function updateConversation(conversationToBeUpdated: { id: string } & ConversationInfos): Promise<any> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to update conversation.');
     try {
         // TODO: This does not check anything!
         await getConversation(conversationToBeUpdated.id);
@@ -270,6 +278,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
 }
 
 async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to add a participant to conversation.');
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -289,6 +298,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
 }
 
 async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to remove participant from group conversation.');
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -309,6 +319,7 @@ async function removeParticipantFromCourseChat(user: User, conversationId: strin
 }
 
 async function markConversationAsReadOnly(conversationId: string): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to mark conversation as readonly.');
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
@@ -331,6 +342,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
     }
 }
 async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to mark conversation readonly for pupils.');
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
@@ -356,6 +368,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
 }
 
 async function markConversationAsWriteable(conversationId: string): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to mark conversation.');
     try {
         const conversation = await getConversation(conversationId);
         const participantIds = Object.keys(conversation.participants);
@@ -378,6 +391,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
 }
 
 async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
+    assert(TALKJS_API_KEY, 'No TalkJS secret key found to send a system message.');
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);

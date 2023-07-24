@@ -8,17 +8,20 @@ import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
-import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
+import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
 
+const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
+    assert(TALKJS_API_KEY, `No TalkJS secret key found for user ${user.userID} to create a chat signature.`);
     const userId = (await getOrCreateChatUser(user)).id;
-    const key = process.env.TALKJS_API_KEY;
+    const key = TALKJS_API_KEY;
     const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
     return hash.digest('hex');
 };
