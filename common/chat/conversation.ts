@@ -5,16 +5,20 @@ import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId
 import { User } from '../user';
 import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
+import assert from 'assert';
 
 dotenv.config();
 const logger = getLogger('Conversation');
 
-const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
+const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
+const TALKJS_API_URL = `https://api.talkjs.com/v1/${TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
-const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
+const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to create a conversation.`);
+
     let conversationId: string;
     switch (type) {
         case 'oneOnOne':
@@ -37,7 +41,7 @@ const createConversation = async (participants: User[], conversationInfos: Conve
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
             method: 'PUT',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: body,
@@ -50,10 +54,11 @@ const createConversation = async (participants: User[], conversationInfos: Conve
 };
 
 const getConversation = async (conversationId: string): Promise<TJConversation | undefined> => {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get a conversation.`);
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
         method: 'GET',
         headers: {
-            Authorization: `Bearer ${TALKJS_API_KEY}`,
+            Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
             'Content-Type': 'application/json',
         },
     });
@@ -66,10 +71,12 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
 };
 
 const getAllConversations = async (): Promise<AllConversations> => {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
+
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
         headers: {
-            Authorization: `Bearer ${TALKJS_API_KEY}`,
+            Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
             'Content-Type': 'application/json',
         },
     });
@@ -82,12 +89,14 @@ const getAllConversations = async (): Promise<AllConversations> => {
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get last unread conversation.`);
+
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_API_URL}/users/${userId}/conversations?unreadsOnly=true`, {
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -102,13 +111,15 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
  * NOTE: PUT merges data with existing data, if any. For example, you cannot remove participants from a conversation by PUTing a list of participants that excludes some existing participants. If you want to remove participants from a conversation, use `removeParticipant`.
  */
 async function updateConversation(conversationToBeUpdated: { id: string } & ConversationInfos): Promise<any> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to update conversation ${conversationToBeUpdated.id}.`);
+
     try {
         // TODO: This does not check anything!
         await getConversation(conversationToBeUpdated.id);
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationToBeUpdated.id}`, {
             method: 'PUT',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(convertConversationInfosToString(conversationToBeUpdated)),
@@ -120,13 +131,15 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
 }
 
 async function deleteConversation(conversationId: string): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to delete conversation ${conversationId}.`);
+
     try {
         // check if conversation exists
         await getConversation(conversationId);
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
             method: 'DELETE',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -137,12 +150,14 @@ async function deleteConversation(conversationId: string): Promise<void> {
 }
 
 async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to add participant ${user.userID} to conversation ${conversationId}.`);
+
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
             method: 'PUT',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -156,12 +171,14 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
 }
 
 async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to remove participant ${user.userID} from conversation ${conversationId}.`);
+
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
             method: 'PATCH',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -176,6 +193,8 @@ async function removeParticipantFromCourseChat(user: User, conversationId: strin
 }
 
 async function markConversationAsReadOnly(conversationId: string): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as readonly.`);
+
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
@@ -184,7 +203,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
             const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${memberId}`, {
                 method: 'PATCH',
                 headers: {
-                    Authorization: `Bearer ${TALKJS_API_KEY}`,
+                    Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -198,6 +217,8 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
     }
 }
 async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as readonly for pupils.`);
+
     try {
         const conversation = await getConversation(conversationId);
         const memberIds = Object.keys(conversation.participants);
@@ -207,7 +228,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
             const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${pupilId}`, {
                 method: 'PATCH',
                 headers: {
-                    Authorization: `Bearer ${TALKJS_API_KEY}`,
+                    Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -223,6 +244,8 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
 }
 
 async function markConversationAsWriteable(conversationId: string): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as writeable.`);
+
     try {
         const conversation = await getConversation(conversationId);
         const participantIds = Object.keys(conversation.participants);
@@ -230,7 +253,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
             const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${participantId}`, {
                 method: 'PATCH',
                 headers: {
-                    Authorization: `Bearer ${TALKJS_API_KEY}`,
+                    Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -245,12 +268,14 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
 }
 
 async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to send system message for conversation ${conversationId}.`);
+
     try {
         const conversation = await getConversation(conversationId);
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/messages`, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${TALKJS_API_KEY}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify([

@@ -10,15 +10,19 @@ import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
+import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+
+const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
     const userId = (await getOrCreateChatUser(user)).id;
-    const key = process.env.TALKJS_API_KEY;
+    const key = TALKJS_SECRET_KEY;
     const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
     return hash.digest('hex');
 };
