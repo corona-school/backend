@@ -13,6 +13,11 @@ const createMockVerification = test('Create Mock Email Verify Notification', asy
     return await createMockNotification('user-verify-email', 'UserVerifyEmailNotification');
 });
 
+export const createInactivityMockNotification = test('Create Mock inactivity notification', async () => {
+    await setup;
+    return await createMockNotification('person_inactivity_reminder', 'UserInactivityReminderNotification');
+});
+
 export async function createNewPupil() {
     const mockEmailVerification = await createMockVerification;
 

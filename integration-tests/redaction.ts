@@ -5,6 +5,7 @@ import { createNewPupil, createNewStudent } from './user';
 import moment from 'moment';
 import redactInactiveAccounts, { GRACE_PERIOD } from '../jobs/periodic/redact-inactive-accounts';
 import { pupil, student } from '@prisma/client';
+import { adminClient } from './base';
 
 function testUser(shouldBeRedacted: boolean, userOld: pupil | student, userNew: pupil | student) {
     // TODO: check how to check if other things have been deleted
@@ -25,6 +26,7 @@ function testUser(shouldBeRedacted: boolean, userOld: pupil | student, userNew: 
 // Pupil
 // ------------------------------
 void test('Should redact pupil that is inactive since three years', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const pupil = await createNewPupil();
     await prisma.pupil.update({
         where: { id: pupil.pupil.pupil.id },
@@ -44,6 +46,7 @@ void test('Should redact pupil that is inactive since three years', async () => 
 });
 
 void test('Should not redact pupil that is inactive since almost three years', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const pupil = await createNewPupil();
     await prisma.pupil.update({
         where: { id: pupil.pupil.pupil.id },
@@ -63,6 +66,7 @@ void test('Should not redact pupil that is inactive since almost three years', a
 });
 
 void test('Should not redact pupil that is inactive since three years, but account is active', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const pupil = await createNewPupil();
     await prisma.pupil.update({
         where: { id: pupil.pupil.pupil.id },
@@ -82,6 +86,7 @@ void test('Should not redact pupil that is inactive since three years, but accou
 });
 
 void test('Should ignore pupil with lastLogin = NULL', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const pupil = await createNewPupil();
     await prisma.pupil.update({
         where: { id: pupil.pupil.pupil.id },
@@ -104,6 +109,7 @@ void test('Should ignore pupil with lastLogin = NULL', async () => {
 // Student
 // ------------------------------
 void test('Should redact student that is inactive since three years', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const student = await createNewStudent();
     await prisma.student.update({
         where: { id: student.student.student.id },
@@ -123,6 +129,7 @@ void test('Should redact student that is inactive since three years', async () =
 });
 
 void test('Should not redact student that is inactive since almost three years', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const student = await createNewStudent();
     await prisma.student.update({
         where: { id: student.student.student.id },
@@ -142,6 +149,7 @@ void test('Should not redact student that is inactive since almost three years',
 });
 
 void test('Should not redact student that is inactive since three years, but account is active', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
     const student = await createNewStudent();
     await prisma.student.update({
         where: { id: student.student.student.id },
