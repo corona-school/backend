@@ -8,6 +8,11 @@ const logger = getLogger();
 
 const GRACE_PERIOD = 30; // in days
 
+// These two constants are used to replace the names of redacted accounts.
+// We are using more descriptive names to make it easier to identify them by our users in case the names are still shown somewhere.
+const REDACTED_FIRST_NAME = 'Account';
+const REDACTED_LAST_NAME = 'gelöscht';
+
 export default async function execute() {
     logger.info('Inactive account redaction job will be executed...');
 
@@ -62,8 +67,8 @@ export default async function execute() {
                 id: pupil.id,
             },
             data: {
-                firstname: 'REDACTED',
-                lastname: 'REDACTED',
+                firstname: REDACTED_FIRST_NAME,
+                lastname: REDACTED_LAST_NAME,
                 email: 'test+redacted+p+' + pupil.id + '@lern-fair.de', //email needs to be unique
                 teacherEmailAddress: null,
                 msg: null,
@@ -82,8 +87,8 @@ export default async function execute() {
                 id: student.id,
             },
             data: {
-                firstname: 'REDACTED',
-                lastname: 'REDACTED',
+                firstname: REDACTED_FIRST_NAME,
+                lastname: REDACTED_LAST_NAME,
                 email: 'test+redacted+s+' + student.id + '@lern-fair.de', //email needs to be unique
                 msg: null,
                 phone: null,
@@ -103,8 +108,8 @@ export default async function execute() {
                 id: screener.id,
             },
             data: {
-                firstname: 'REDACTED',
-                lastname: 'REDACTED',
+                firstname: REDACTED_FIRST_NAME,
+                lastname: REDACTED_LAST_NAME,
                 email: 'test+redacted+sc+' + screener.id + '@lern-fair.de', //email needs to be unique
                 isRedacted: true,
             },
@@ -120,8 +125,8 @@ export default async function execute() {
                 id: mentor.id,
             },
             data: {
-                firstname: 'REDACTED',
-                lastname: 'REDACTED',
+                firstname: REDACTED_FIRST_NAME,
+                lastname: REDACTED_LAST_NAME,
                 email: 'test+redacted+m+' + mentor.id + '@lern-fair.de', //email needs to be unique
                 message: null,
                 description: null,
