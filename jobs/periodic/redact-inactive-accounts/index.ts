@@ -3,6 +3,7 @@ import { prisma } from '../../../common/prisma';
 import moment from 'moment';
 import { deleteAttachment } from '../../../common/attachments';
 import { ConcreteNotificationState } from '../../../common/notification/types';
+import { findAllPersons } from './query';
 
 const logger = getLogger();
 
@@ -15,53 +16,14 @@ const REDACTED_LAST_NAME = 'gelöscht';
 
 export default async function execute() {
     logger.info('Inactive account redaction job will be executed...');
-
-    const pupilsToBeRedacted = await prisma.pupil.findMany({
-        where: {
-            active: false,
-            lastLogin: {
-                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
-            },
-            isRedacted: false,
-        },
-    });
-
-    const studentsToBeRedacted = await prisma.student.findMany({
-        where: {
-            active: false,
-            lastLogin: {
-                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
-            },
-            isRedacted: false,
-        },
-    });
-
-    const mentorsToBeRedacted = await prisma.mentor.findMany({
-        where: {
-            active: false,
-            lastLogin: {
-                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
-            },
-            isRedacted: false,
-        },
-    });
-
-    const screenersToBeRedacted = await prisma.screener.findMany({
-        where: {
-            active: false,
-            lastLogin: {
-                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
-            },
-            isRedacted: false,
-        },
-    });
+    const persons = await findAllPersons(false, moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate());
 
     logger.info(
-        `${pupilsToBeRedacted.length} pupils, ${studentsToBeRedacted.length} students, ${screenersToBeRedacted.length} screeners, and ${mentorsToBeRedacted.length} mentors to be redacted`
+        `${persons.pupils.length} pupils, ${persons.students.length} students, ${persons.screener.length} screeners, and ${persons.mentors.length} mentors to be redacted`
     );
 
     let redactedPupilsCount = 0;
-    for (let pupil of pupilsToBeRedacted) {
+    for (let pupil of persons.pupils) {
         await prisma.pupil.update({
             where: {
                 id: pupil.id,
@@ -81,7 +43,7 @@ export default async function execute() {
     }
 
     let redactedStudentsCount = 0;
-    for (let student of studentsToBeRedacted) {
+    for (let student of persons.students) {
         await prisma.student.update({
             where: {
                 id: student.id,
@@ -102,7 +64,7 @@ export default async function execute() {
     }
 
     let redactedScreenersCount = 0;
-    for (let screener of screenersToBeRedacted) {
+    for (let screener of persons.screener) {
         await prisma.screener.update({
             where: {
                 id: screener.id,
@@ -119,7 +81,7 @@ export default async function execute() {
     }
 
     let redactedMentorsCount = 0;
-    for (let mentor of mentorsToBeRedacted) {
+    for (let mentor of persons.mentors) {
         await prisma.mentor.update({
             where: {
                 id: mentor.id,
@@ -143,10 +105,10 @@ export default async function execute() {
         where: {
             userId: {
                 in: [
-                    ...pupilsToBeRedacted.map((p) => `pupil/${p.id}`),
-                    ...studentsToBeRedacted.map((s) => `student/${s.id}`),
-                    ...screenersToBeRedacted.map((s) => `screener/${s.id}`),
-                    ...mentorsToBeRedacted.map((m) => `mentor/${m.id}`),
+                    ...persons.pupils.map((p) => `pupil/${p.id}`),
+                    ...persons.students.map((s) => `student/${s.id}`),
+                    ...persons.screener.map((s) => `screener/${s.id}`),
+                    ...persons.mentors.map((m) => `mentor/${m.id}`),
                 ],
             },
             state: {
@@ -163,7 +125,7 @@ export default async function execute() {
     await prisma.participation_certificate.updateMany({
         where: {
             pupilId: {
-                in: pupilsToBeRedacted.map((p) => p.id),
+                in: persons.pupils.map((p) => p.id),
             },
         },
         data: {
@@ -176,7 +138,7 @@ export default async function execute() {
     await prisma.participation_certificate.deleteMany({
         where: {
             studentId: {
-                in: studentsToBeRedacted.map((s) => s.id),
+                in: persons.students.map((s) => s.id),
             },
             state: 'awaiting-approval',
         },
@@ -187,10 +149,10 @@ export default async function execute() {
         where: {
             uploaderID: {
                 in: [
-                    ...pupilsToBeRedacted.map((p) => `pupil/${p.id}`),
-                    ...studentsToBeRedacted.map((s) => `student/${s.id}`),
-                    ...screenersToBeRedacted.map((s) => `screener/${s.id}`),
-                    ...mentorsToBeRedacted.map((m) => `mentor/${m.id}`),
+                    ...persons.pupils.map((p) => `pupil/${p.id}`),
+                    ...persons.students.map((s) => `student/${s.id}`),
+                    ...persons.screener.map((s) => `screener/${s.id}`),
+                    ...persons.mentors.map((m) => `mentor/${m.id}`),
                 ],
             },
         },
@@ -204,7 +166,7 @@ export default async function execute() {
     await prisma.log.deleteMany({
         where: {
             user: {
-                in: [...pupilsToBeRedacted.map((p) => p.wix_id), ...studentsToBeRedacted.map((s) => s.wix_id), ...mentorsToBeRedacted.map((m) => m.wix_id)],
+                in: [...persons.pupils.map((p) => p.wix_id), ...persons.students.map((s) => s.wix_id), ...persons.mentors.map((m) => m.wix_id)],
             },
         },
     });
