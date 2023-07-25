@@ -6,7 +6,7 @@ import { ConcreteNotificationState } from '../../../common/notification/types';
 
 const logger = getLogger();
 
-const GRACE_PERIOD = 30; // in days
+export const GRACE_PERIOD = 4 * 365; // three years in days
 
 // These two constants are used to replace the names of redacted accounts.
 // We are using more descriptive names to make it easier to identify them by our users in case the names are still shown somewhere.
@@ -19,7 +19,7 @@ export default async function execute() {
     const pupilsToBeRedacted = await prisma.pupil.findMany({
         where: {
             active: false,
-            updatedAt: {
+            lastLogin: {
                 lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
@@ -29,7 +29,7 @@ export default async function execute() {
     const studentsToBeRedacted = await prisma.student.findMany({
         where: {
             active: false,
-            updatedAt: {
+            lastLogin: {
                 lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
@@ -39,7 +39,7 @@ export default async function execute() {
     const mentorsToBeRedacted = await prisma.mentor.findMany({
         where: {
             active: false,
-            updatedAt: {
+            lastLogin: {
                 lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
@@ -49,7 +49,7 @@ export default async function execute() {
     const screenersToBeRedacted = await prisma.screener.findMany({
         where: {
             active: false,
-            updatedAt: {
+            lastLogin: {
                 lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,

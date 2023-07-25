@@ -1,18 +1,18 @@
-import { randomBytes } from "crypto";
-import { GraphQLClient } from "graphql-request";
+import { randomBytes } from 'crypto';
+import { GraphQLClient } from 'graphql-request';
 
-import "./mock";
+import './mock';
 
-import * as WebServer from "../web";
-import { expectNoFetchMockLeft } from "./mock";
+import * as WebServer from '../web';
+import { expectNoFetchMockLeft } from './mock';
 
 /* -------------- Configuration ------------------- */
 
-const APP = "lernfair-backend-dev";
+const APP = 'lernfair-backend-dev';
 const URL = process.env.INTEGRATION_TARGET ?? `http://localhost:${process.env.PORT ?? 5000}/apollo`;
 const ADMIN_TOKEN = process.env.ADMIN_AUTH_TOKEN;
 
-const silent = process.env.INTEGRATION_SILENT === "true";
+const silent = process.env.INTEGRATION_SILENT === 'true';
 
 /* -------------- Utils --------------------------- */
 
@@ -20,17 +20,14 @@ export const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
 export const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
 export const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
 
-console.log(
-    blue(`\n\nBackend Integration Tests\n`) +
-    ` testing ${URL}\n\n`
-);
+console.log(blue(`\n\nBackend Integration Tests\n`) + ` testing ${URL}\n\n`);
 
 /* -------------- GraphQL Client Wrapper ------------------ */
 
 // This wrapper provides assertions and logging around a GraphQLClient of the graphql-request package
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
-        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? "(unnamed)";
+        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
         console.log(blue(`+ ${name}`));
         if (!silent) {
             console.log(`   request:`, query.trim());
@@ -43,7 +40,7 @@ function wrapClient(client: GraphQLClient) {
     }
 
     async function requestShallFail(query: string): Promise<never> {
-        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? "(unnamed)";
+        const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
         console.log(blue(`+ ${name}`));
 
         if (!silent) {
@@ -54,7 +51,7 @@ function wrapClient(client: GraphQLClient) {
             await client.request(query);
         } catch (error) {
             if (!silent) {
-                console.log(`  successfully failed with ${error.message.split(":")[0]}`);
+                console.log(`  successfully failed with ${error.message.split(':')[0]}`);
             }
             return;
         }
@@ -76,24 +73,28 @@ function wrapClient(client: GraphQLClient) {
 
 export const defaultClient = wrapClient(new GraphQLClient(URL));
 
-const adminAuthorization = `Basic ${Buffer.from("admin:" + ADMIN_TOKEN).toString("base64")}`;
+const adminAuthorization = `Basic ${Buffer.from('admin:' + ADMIN_TOKEN).toString('base64')}`;
 
-export const adminClient = wrapClient(new GraphQLClient(URL, {
-    headers: {
-        authorization: adminAuthorization,
-    }
-}));
+export const adminClient = wrapClient(
+    new GraphQLClient(URL, {
+        headers: {
+            authorization: adminAuthorization,
+        },
+    })
+);
 
 export function createUserClient() {
-    return wrapClient(new GraphQLClient(URL, {
-        headers: {
-            authorization: `Bearer ${randomBytes(36).toString("base64")}`
-        }
-    }));
+    return wrapClient(
+        new GraphQLClient(URL, {
+            headers: {
+                authorization: `Bearer ${randomBytes(36).toString('base64')}`,
+            },
+        })
+    );
 }
 
 /* -------------- Test Runner ------------------- */
-const tests: { name: string, runner: () => Promise<any>, resolve: (value: any) => void, reject: (error: Error) => void }[] = [];
+const tests: { name: string; runner: () => Promise<any>; resolve: (value: any) => void; reject: (error: Error) => void }[] = [];
 
 /* test(...) has the following guarantees:
    - Runners are executed in order of definition
@@ -161,4 +162,3 @@ export async function finalizeTests() {
     console.error(red(`\n\n\n${failureCount} tests FAILED`));
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }
-
