@@ -4,10 +4,11 @@ import { getStudent, User } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
+import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Appointment');
 
-export async function cancelAppointment(user: User, appointment: Appointment) {
+export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean) {
     await prisma.lecture.update({
         data: { isCanceled: true },
         where: { id: appointment.id },
@@ -44,5 +45,9 @@ export async function cancelAppointment(user: User, appointment: Appointment) {
         case AppointmentType.internal:
         case AppointmentType.legacy:
             break;
+    }
+
+    if (!silent) {
+        await deleteZoomMeeting(appointment);
     }
 }

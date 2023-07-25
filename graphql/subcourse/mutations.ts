@@ -196,10 +196,11 @@ export class MutateSubcourseResolver {
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        await cancelSubcourse(subcourse);
+        await cancelSubcourse(user, subcourse);
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
