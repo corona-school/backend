@@ -101,7 +101,98 @@ export const pupilOne = test('Register Pupil', async () => {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
 
-    return { client, pupil: pupil as { userID: string, firstname: string; lastname: string; email: string; pupil: { id: number } } };
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
+});
+
+export const pupilTwo = test('Register Pupil', async () => {
+    const mockEmailVerification = await createMockVerification;
+
+    await setup;
+
+    const client = createUserClient();
+
+    const userRandom = randomBytes(5).toString('base64');
+
+    const {
+        meRegisterPupil: { id },
+    } = await client.request(`
+        mutation RegisterPupil {
+            meRegisterPupil(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                state: bw
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterPupilAgain {
+            meRegisterPupil(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
+                newsletter: false
+                state: bw
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    const { myRoles: rolesBeforeEmailVerification } = await client.request(`
+        query GetRolesBeforeEmailVerification {
+            myRoles
+        }
+    `);
+
+    assert.deepStrictEqual(rolesBeforeEmailVerification, ['UNAUTHENTICATED', 'USER', 'PUPIL']);
+
+    await client.request(`mutation RequestVerifyToken { tokenRequest(email: "TEST+${userRandom}@lern-fair.de", action: "user-verify-email")}`);
+
+    const {
+        context: { token },
+    } = await assertUserReceivedNotification(mockEmailVerification, `pupil/${id}`);
+    assert(token, 'User received email verification token');
+    await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
+
+    const { me: pupil, myRoles } = await client.request(`
+        query GetBasics {
+            myRoles
+            me {
+                userID
+                firstname
+                lastname
+                email
+                pupil {
+                    id
+                    isPupil
+                    isParticipant
+                    openMatchRequestCount
+                }
+            }
+        }
+    `);
+
+    assert.strictEqual(pupil.firstname, `firstname:${userRandom}`);
+    assert.strictEqual(pupil.lastname, `lastname:${userRandom}`);
+    assert.strictEqual(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.pupil.isPupil, true);
+    assert.strictEqual(pupil.pupil.isParticipant, true);
+    assert.strictEqual(pupil.pupil.openMatchRequestCount, 0);
+
+    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'PUPIL', 'TUTEE', 'PARTICIPANT']);
+
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    pupil.email = pupil.email.toUpperCase();
+
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
 });
 
 export const studentOne = test('Register Student', async () => {
