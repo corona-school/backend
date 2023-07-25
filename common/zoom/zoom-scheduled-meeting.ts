@@ -173,8 +173,9 @@ const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
     if (!response.ok) {
         if (response.status === 404) {
             await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
+        } else {
+            throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${await response.text()}`);
         }
-        throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${await response.text()}`);
     }
 
     await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: null } });
