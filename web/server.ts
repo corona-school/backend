@@ -17,6 +17,7 @@ import { fileRouter } from './controllers/fileController';
 import { attachmentRouter } from './controllers/attachmentController';
 import { certificateRouter } from './controllers/certificateController';
 import { convertCertificateLinkToApiLink } from '../common/certificate';
+import { chatNotificationRouter } from './controllers/chatNotificationController';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -84,7 +85,6 @@ export const server = (async function setupWebserver() {
 
     app.use(cors(options));
 
-
     // ------------------------ GraphQL ---------------------------
     await apolloServer.start();
     apolloServer.applyMiddleware({ app, path: '/apollo' });
@@ -93,6 +93,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/attachments', attachmentRouter);
     app.use('/api/certificate', certificateRouter);
     app.use('/api/files', fileRouter);
+    app.use('/api', chatNotificationRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {
