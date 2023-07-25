@@ -18,7 +18,9 @@ export const getWebflowSubcourses = async (): Promise<WebflowSubcourse[]> => {
             course: true,
             subcourse_instructors_student: { include: { student: true } },
             subcourse_participants_pupil: true,
-            lecture: true,
+            lecture: {
+                where: { isCanceled: false },
+            },
         },
     });
     return courses.filter((course) => course.lecture.length > 0);
