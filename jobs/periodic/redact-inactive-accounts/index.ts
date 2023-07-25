@@ -15,9 +15,7 @@ export default async function execute() {
         where: {
             active: false,
             updatedAt: {
-                lt: moment().startOf('day')
-                    .subtract(GRACE_PERIOD, 'days')
-                    .toDate(),
+                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
         },
@@ -27,9 +25,7 @@ export default async function execute() {
         where: {
             active: false,
             updatedAt: {
-                lt: moment().startOf('day')
-                    .subtract(GRACE_PERIOD, 'days')
-                    .toDate(),
+                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
         },
@@ -39,28 +35,25 @@ export default async function execute() {
         where: {
             active: false,
             updatedAt: {
-                lt: moment().startOf('day')
-                    .subtract(GRACE_PERIOD, 'days')
-                    .toDate(),
+                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
         },
     });
-
 
     const screenersToBeRedacted = await prisma.screener.findMany({
         where: {
             active: false,
             updatedAt: {
-                lt: moment().startOf('day')
-                    .subtract(GRACE_PERIOD, 'days')
-                    .toDate(),
+                lt: moment().startOf('day').subtract(GRACE_PERIOD, 'days').toDate(),
             },
             isRedacted: false,
         },
     });
 
-    logger.info(`${pupilsToBeRedacted.length} pupils, ${studentsToBeRedacted.length} students, ${screenersToBeRedacted.length} screeners, and ${mentorsToBeRedacted.length} mentors to be redacted`);
+    logger.info(
+        `${pupilsToBeRedacted.length} pupils, ${studentsToBeRedacted.length} students, ${screenersToBeRedacted.length} screeners, and ${mentorsToBeRedacted.length} mentors to be redacted`
+    );
 
     let redactedPupilsCount = 0;
     for (let pupil of pupilsToBeRedacted) {
@@ -142,22 +135,19 @@ export default async function execute() {
 
     // drop context of concrete notifications
     await prisma.concrete_notification.updateMany({
-        where:
-            {
-                userId: {
-                    in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
-                        ...studentsToBeRedacted.map(s => `student/${s.id}`),
-                        ...screenersToBeRedacted.map(s => `screener/${s.id}`),
-                        ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)],
-                },
-                state: {
-                    in: [
-                        ConcreteNotificationState.ACTION_TAKEN,
-                        ConcreteNotificationState.SENT,
-                        ConcreteNotificationState.ERROR,
-                    ],
-                },
+        where: {
+            userId: {
+                in: [
+                    ...pupilsToBeRedacted.map((p) => `pupil/${p.id}`),
+                    ...studentsToBeRedacted.map((s) => `student/${s.id}`),
+                    ...screenersToBeRedacted.map((s) => `screener/${s.id}`),
+                    ...mentorsToBeRedacted.map((m) => `mentor/${m.id}`),
+                ],
             },
+            state: {
+                in: [ConcreteNotificationState.ACTION_TAKEN, ConcreteNotificationState.SENT, ConcreteNotificationState.ERROR],
+            },
+        },
         data: {
             context: {},
             state: ConcreteNotificationState.ARCHIVED,
@@ -168,7 +158,7 @@ export default async function execute() {
     await prisma.participation_certificate.updateMany({
         where: {
             pupilId: {
-                in: pupilsToBeRedacted.map(p => p.id),
+                in: pupilsToBeRedacted.map((p) => p.id),
             },
         },
         data: {
@@ -177,14 +167,26 @@ export default async function execute() {
         },
     });
 
+    // remove all the open participation certificates where the student is to be redacted
+    await prisma.participation_certificate.deleteMany({
+        where: {
+            studentId: {
+                in: studentsToBeRedacted.map((s) => s.id),
+            },
+            state: 'awaiting-approval',
+        },
+    });
+
     // remove attachments' files from S3 bucket if associated user is to be redacted
     const attachmentsToBeDeleted = await prisma.attachment.findMany({
         where: {
             uploaderID: {
-                in: [...pupilsToBeRedacted.map(p => `pupil/${p.id}`),
-                    ...studentsToBeRedacted.map(s => `student/${s.id}`),
-                    ...screenersToBeRedacted.map(s => `screener/${s.id}`),
-                    ...mentorsToBeRedacted.map(m => `mentor/${m.id}`)],
+                in: [
+                    ...pupilsToBeRedacted.map((p) => `pupil/${p.id}`),
+                    ...studentsToBeRedacted.map((s) => `student/${s.id}`),
+                    ...screenersToBeRedacted.map((s) => `screener/${s.id}`),
+                    ...mentorsToBeRedacted.map((m) => `mentor/${m.id}`),
+                ],
             },
         },
     });
@@ -197,12 +199,12 @@ export default async function execute() {
     await prisma.log.deleteMany({
         where: {
             user: {
-                in: [...pupilsToBeRedacted.map(p => p.wix_id),
-                    ...studentsToBeRedacted.map(s => s.wix_id),
-                    ...mentorsToBeRedacted.map(m => m.wix_id)],
+                in: [...pupilsToBeRedacted.map((p) => p.wix_id), ...studentsToBeRedacted.map((s) => s.wix_id), ...mentorsToBeRedacted.map((m) => m.wix_id)],
             },
         },
     });
 
-    logger.info(`Redacted ${redactedPupilsCount} pupils, ${redactedStudentsCount} students, ${redactedScreenersCount} screeners, and ${redactedMentorsCount} mentors.`);
+    logger.info(
+        `Redacted ${redactedPupilsCount} pupils, ${redactedStudentsCount} students, ${redactedScreenersCount} screeners, and ${redactedMentorsCount} mentors.`
+    );
 }
