@@ -1,5 +1,11 @@
 import { getLogger } from '../../../common/logger/logger';
 import { Request, Response, Router } from 'express';
+import { NotificationTriggered } from './types';
+import { talkJsIdToUserId } from '../../../common/chat/helper';
+import { getPupil, getStudent, getUser } from '../../../common/user';
+import * as Notification from '../../../common/notification';
+import { pupil as Pupil, student as Student } from '@prisma/client';
+import { ChatType, getChatType, getNotificationContext, verifyChatUser } from './util';
 
 const logger = getLogger('ChatNotification');
 
@@ -7,65 +13,34 @@ export const chatNotificationRouter = Router();
 
 chatNotificationRouter.post('/chat-notification', handleChatNotification);
 
-async function handleChatNotification(req: Request, res: Response) {
+async function handleChatNotification(req: Request, res: Response): Promise<void> {
     try {
         logger.info('Request at /chat-notification');
-        logger.info(req.body);
+        const notificationBody: NotificationTriggered = req.body;
+        const { data } = notificationBody;
+        const recipient = data.recipient;
+        const recipientUserId = talkJsIdToUserId(recipient.id);
+        const recipientUser = await getUser(recipientUserId);
 
-        // TODO get right user
+        const conversationParticipants = Object.keys(data.conversation.participants);
+        const chatType = getChatType(conversationParticipants);
 
-        // TODO send notification to user
+        const isUserVerified = await verifyChatUser(recipientUser);
 
+        if (isUserVerified) {
+            const notificationContext = await getNotificationContext(notificationBody);
+            let userToNotify: Pupil | Student;
+            if (recipientUser.pupilId) {
+                userToNotify = await getPupil(recipientUser);
+            } else {
+                userToNotify = await getStudent(recipientUser);
+            }
+
+            const notificationAction = chatType === ChatType.ONE_ON_ONE ? 'missed_one_on_one_chat_message' : 'missed_course_chat_message';
+            await Notification.actionTaken(userToNotify, notificationAction, notificationContext);
+        }
         res.status(200).send({ status: 'ok' });
     } catch (e) {
-        res.status(500).send({ error: 'Intrnal Server Error' });
+        res.status(500).send({ error: 'Internal Server Error' });
     }
 }
-
-// {
-//     createdAt: 1690292045626,
-//     data: {
-//       conversation: {
-//         createdAt: 1690285437967,
-//         custom: [Object],
-//         id: '2e3f123...',
-//         participants: [Object],
-//         photoUrl: null,
-//         subject: null,
-//         topicId: null,
-//         welcomeMessages: null
-//       },
-//       messages: [ [Object], [Object] ],
-//       notificationId: 'ntf_6KNyKH2LFZpvbev9bQdgvR',
-//       recipient: {
-//         availabilityText: null,
-//         createdAt: 1690285437850,
-//         custom: {},
-//         email: [Array],
-//         id: 'student_1',
-//         locale: null,
-//         name: 'Leon Jackson',
-//         phone: null,
-//         photoUrl: null,
-//         pushTokens: {},
-//         role: 'student',
-//         welcomeMessage: null
-//       },
-//       sender: {
-//         availabilityText: null,
-//         createdAt: 1690285435466,
-//         custom: {},
-//         email: [Array],
-//         id: 'pupil_1',
-//         locale: null,
-//         name: 'Max M.',
-//         phone: null,
-//         photoUrl: null,
-//         pushTokens: {},
-//         role: 'pupil',
-//         welcomeMessage: null
-//       }
-//     },
-//     id: 'evt_AY3QOPr99lYlEemrbs',
-//     type: 'notification.triggered'
-//   } {}

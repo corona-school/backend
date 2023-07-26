@@ -412,6 +412,31 @@ const _notificationActions = {
             appointment: sampleAppointment,
         },
     },
+    missed_one_on_one_chat_message: {
+        description: 'Missed message in 1:1 chat',
+        sampleContext: {
+            sender: sampleUser,
+            recipient: sampleUser,
+            conversationId: sampleAppointment,
+            message: '',
+            totalUnread: '',
+            matchId: '',
+            loginToken: '',
+        },
+    },
+    missed_course_chat_message: {
+        description: 'Missed message in group chat',
+        sampleContext: {
+            sender: sampleUser,
+            recipient: sampleUser,
+            conversationId: sampleAppointment,
+            message: '',
+            totalUnread: '',
+            courseId: '',
+            courseName: '',
+            loginToken: '',
+        },
+    },
 
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
