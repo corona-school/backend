@@ -47,7 +47,7 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
         }
 
         notificationContext = {
-            sender: { fullname: firstnameSender },
+            sender: { firstname: firstnameSender },
             recipient: { firstname: firstnameRecipient },
             conversationId: conversation.id,
             message: messages[0].text,
@@ -61,7 +61,7 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
         const course = await getCourse(subcourse.courseId);
 
         notificationContext = {
-            sender: { fullname: firstnameSender },
+            sender: { firstname: firstnameSender },
             recipient: { firstname: firstnameRecipient },
             conversationId: conversation.id,
             message: messages[0].text,
