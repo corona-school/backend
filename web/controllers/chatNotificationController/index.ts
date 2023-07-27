@@ -16,6 +16,12 @@ chatNotificationRouter.post('/chat-notification', handleChatNotification);
 async function handleChatNotification(req: Request, res: Response): Promise<void> {
     try {
         logger.info('Request at /chat/chat-notification');
+        const userAgent = req.headers['user-agent'];
+
+        if (!userAgent && !userAgent.includes('talkjs/webhook')) {
+            throw new Error('Invalid User-Agent');
+        }
+
         const notificationBody: NotificationTriggered = req.body;
         const { data } = notificationBody;
         const recipient = data.recipient;
