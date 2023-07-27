@@ -50,9 +50,8 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                 break;
         }
     }
+
     if (appointment.zoomMeetingId) {
         await deleteZoomMeeting(appointment);
-    } else {
-        throw new RedundantError('Appointment has no Zoom Meeting');
     }
 }
