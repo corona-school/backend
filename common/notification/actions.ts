@@ -443,6 +443,10 @@ const _notificationActions = {
             message: sampleMissedCourseMessage,
         },
     },
+    person_inactivity_reminder: {
+        description: 'Person / Inactive Reminder. User will soon be deleted.',
+        sampleContext: {},
+    },
 
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
