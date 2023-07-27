@@ -21,5 +21,6 @@ import './admin';
 import './registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */
 import './deactivation';
+import './redaction';
 
 void finalizeTests();
