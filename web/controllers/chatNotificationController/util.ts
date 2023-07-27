@@ -27,8 +27,7 @@ export async function verifyChatUser(user: User) {
 }
 
 export async function getNotificationContext(notificationBody: NotificationTriggered): Promise<GroupNotificationContext | OneOnOneNotificationContext> {
-    const { recipient, sender, conversation, messages } = notificationBody.data;
-    const firstnameRecipient: string = recipient.name.split(' ')[0];
+    const { sender, conversation, messages } = notificationBody.data;
     const firstnameSender: string = sender.name.split(' ')[0];
 
     const subcourseConversation = conversation.custom.subcourse ? JSON.parse(conversation.custom.subcourse) : undefined;
@@ -48,7 +47,6 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
 
         notificationContext = {
             sender: { firstname: firstnameSender },
-            recipient: { firstname: firstnameRecipient },
             conversationId: conversation.id,
             message: messages[0].text,
             totalUnread: messages.length.toString(),
@@ -62,7 +60,6 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
 
         notificationContext = {
             sender: { firstname: firstnameSender },
-            recipient: { firstname: firstnameRecipient },
             conversationId: conversation.id,
             message: messages[0].text,
             totalUnread: messages.length.toString(),
@@ -71,7 +68,7 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
         };
     }
 
-    logger.info(`CONTEXT: ${JSON.stringify(notificationContext)}`);
+    logger.info('Created Notification context for chat message', notificationContext);
 
     return notificationContext;
 }

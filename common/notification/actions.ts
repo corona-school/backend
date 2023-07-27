@@ -43,6 +43,23 @@ const sampleAppointment = {
     },
 };
 
+const sampleMissedCourseMessage = {
+    sender: 'Leon',
+    conversationId: '1',
+    message: 'Hey',
+    totalUnread: '1',
+    courseId: '1',
+    courseName: 'Gen Z',
+};
+
+const sampleMissedOneOnOneMessage = {
+    sender: 'Max',
+    conversationId: '2',
+    message: 'Hey!',
+    totalUnread: '1',
+    matchId: '1',
+};
+
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
 };
@@ -415,26 +432,15 @@ const _notificationActions = {
     missed_one_on_one_chat_message: {
         description: 'Missed message in 1:1 chat',
         sampleContext: {
-            sender: sampleUser,
-            recipient: sampleUser,
-            conversationId: sampleAppointment,
-            message: '',
-            totalUnread: '',
-            matchId: '',
-            loginToken: '',
+            user: sampleUser,
+            message: sampleMissedOneOnOneMessage,
         },
     },
     missed_course_chat_message: {
         description: 'Missed message in group chat',
         sampleContext: {
-            sender: sampleUser,
-            recipient: sampleUser,
-            conversationId: sampleAppointment,
-            message: '',
-            totalUnread: '',
-            courseId: '',
-            courseName: '',
-            loginToken: '',
+            user: sampleUser,
+            message: sampleMissedCourseMessage,
         },
     },
 

@@ -93,7 +93,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/attachments', attachmentRouter);
     app.use('/api/certificate', certificateRouter);
     app.use('/api/files', fileRouter);
-    app.use('/api', chatNotificationRouter);
+    app.use('/api/chat', chatNotificationRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {

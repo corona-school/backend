@@ -68,7 +68,6 @@ type ChatParticipant = {
 
 type NotificationContextBase = {
     sender: ChatParticipant;
-    recipient: ChatParticipant;
     conversationId: string;
     message: string;
     totalUnread: string;

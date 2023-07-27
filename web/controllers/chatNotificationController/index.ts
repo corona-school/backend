@@ -15,7 +15,7 @@ chatNotificationRouter.post('/chat-notification', handleChatNotification);
 
 async function handleChatNotification(req: Request, res: Response): Promise<void> {
     try {
-        logger.info('Request at /chat-notification');
+        logger.info('Request at /chat/chat-notification');
         const notificationBody: NotificationTriggered = req.body;
         const { data } = notificationBody;
         const recipient = data.recipient;
@@ -40,7 +40,8 @@ async function handleChatNotification(req: Request, res: Response): Promise<void
             await Notification.actionTaken(userToNotify, notificationAction, notificationContext);
         }
         res.status(200).send({ status: 'ok' });
-    } catch (e) {
+    } catch (error) {
+        logger.error(`Failed to send notification for missed messages`, error);
         res.status(500).send({ error: 'Internal Server Error' });
     }
 }
