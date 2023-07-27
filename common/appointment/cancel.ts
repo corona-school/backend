@@ -5,6 +5,7 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { RedundantError } from '../util/error';
 
 const logger = getLogger('Appointment');
 
@@ -49,6 +50,9 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                 break;
         }
     }
-
-    await deleteZoomMeeting(appointment);
+    if (appointment.zoomMeetingId) {
+        await deleteZoomMeeting(appointment);
+    } else {
+        throw new RedundantError('Appointment has no Zoom Meeting');
+    }
 }
