@@ -1,5 +1,5 @@
 import express from 'express';
-import http from 'http';
+import http, { IncomingMessage } from 'http';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -18,6 +18,7 @@ import { attachmentRouter } from './controllers/attachmentController';
 import { certificateRouter } from './controllers/certificateController';
 import { convertCertificateLinkToApiLink } from '../common/certificate';
 import { chatNotificationRouter } from './controllers/chatNotificationController';
+import { WithRawBody } from './controllers/chatNotificationController/types';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -43,7 +44,13 @@ export const server = (async function setupWebserver() {
     });
 
     // Parse Cookies and JSON Bodies:
-    app.use(bodyParser.json());
+    app.use(
+        bodyParser.json({
+            verify: (req: WithRawBody<IncomingMessage>, res, buf) => {
+                req.rawBody = buf;
+            },
+        })
+    );
     app.use(cookieParser());
 
     // Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)

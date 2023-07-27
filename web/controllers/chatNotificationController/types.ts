@@ -84,3 +84,5 @@ export type OneOnOneNotificationContext = NotificationContextBase & {
     courseId?: string;
     subcourseIds?: string;
 };
+
+export type WithRawBody<T> = T & { rawBody: Buffer };

@@ -72,3 +72,5 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
 
     return notificationContext;
 }
+
+export class InvalidSignatureError extends Error {}
