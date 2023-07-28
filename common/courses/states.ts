@@ -10,9 +10,10 @@ import { getLastLecture } from './lectures';
 import moment from 'moment';
 import { ChatType, SystemMessage } from '../chat/types';
 import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, sendSystemMessage, updateConversation } from '../chat';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { CourseState } from '../entity/Course';
 import systemMessages from '../chat/localization';
+import { cancelAppointment } from '../appointment/cancel';
+import { User } from '../user';
 
 const logger = getLogger('Course States');
 
@@ -128,7 +129,7 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(subcourse: Subcourse) {
+export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     const can = await canCancel(subcourse);
     if (!can.allowed) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
@@ -136,11 +137,9 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
-    const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
-    for (const lecture of courseLectures) {
-        if (lecture.zoomMeetingId) {
-            await deleteZoomMeeting(lecture);
-        }
+    const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    for (const appointment of courseAppointments) {
+        await cancelAppointment(user, appointment, true);
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
