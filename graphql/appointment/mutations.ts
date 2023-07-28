@@ -157,7 +157,7 @@ export class MutateAppointmentResolver {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
 
-        await cancelAppointment(context.user, appointment);
+        await cancelAppointment(context.user, appointment, false);
 
         return true;
     }
