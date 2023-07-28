@@ -46,6 +46,7 @@ export const server = (async function setupWebserver() {
     // Parse Cookies and JSON Bodies:
     app.use(
         bodyParser.json({
+            // To be able to persist the raw body of the request we use the verify function and extend the request object by the key `rawBody`
             verify: (req: WithRawBody<IncomingMessage>, res, buf) => {
                 req.rawBody = buf;
             },

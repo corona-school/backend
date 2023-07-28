@@ -58,6 +58,7 @@ async function handleChatNotification(req: WithRawBody<Request>, res: Response):
         if (error instanceof InvalidSignatureError) {
             logger.info('Invalid Signature');
             res.status(401).send({ error: 'Unauthorized' });
+            return;
         }
         logger.error(`Failed to send notification for missed messages`, error);
         res.status(500).send({ error: 'Internal Server Error' });
