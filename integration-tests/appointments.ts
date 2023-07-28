@@ -39,7 +39,7 @@ const firstAppointment = test('Create an appointment for a subcourse', async () 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+        body: '{"agenda":"My Meeting","default_password":false,"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
         responseStatus: 201,
         response: { id: 10 },
     });
@@ -91,7 +91,7 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"recurrence":{"end_date_time":"*","type":2},"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+        body: '{"agenda":"My Meeting","default_password":false,"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"recurrence":{"end_date_time":"*","type":2},"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
         responseStatus: 201,
         response: { id: 10 },
     });
@@ -202,6 +202,13 @@ void test('Update an appointment', async () => {
         }
         )
     }`);
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/123',
+        method: 'PATCH',
+        body: '{"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"recurrence":{"end_date_time":"*","type":2}}',
+        responseStatus: 204,
+    });
 
     const {
         me: { appointments },
