@@ -78,11 +78,7 @@ export async function updateAppointment(
             break;
     }
 
-    const before = await getZoomMeeting(appointment);
     await updateZoomMeeting(appointment.zoomMeetingId, newStart, newDuration, lastDate);
-    const after = await getZoomMeeting(appointment);
-    logger.info(`BEFORE: ${JSON.stringify(before)}`);
-    logger.info(`UPDATED: ${JSON.stringify(after)}`);
 
     logger.info(`Participants of Appointment(${id}) were notified of the appointment change`);
 }
