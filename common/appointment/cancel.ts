@@ -42,7 +42,6 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                 await Notification.actionTaken(match.pupil, 'student_cancel_appointment_match', {
                     appointment: getAppointmentForNotification(appointment),
                     student,
-                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
 
                 break;
