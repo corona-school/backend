@@ -9,7 +9,10 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
+import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import { postStatisticsToSlack } from './slack-statistics';
+import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
+import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -35,6 +38,14 @@ export const executeJob = async (job) => {
             await redactInactiveAccounts();
             break;
         }
+        case 'sendInactivityNotification': {
+            await sendInactivityNotification();
+            break;
+        }
+        case 'deactivateInactiveAccounts': {
+            await deactivateInactiveAccounts();
+            break;
+        }
         case 'dropOldNotificationContexts': {
             await dropOldNotificationContexts();
             break;
@@ -48,6 +59,10 @@ export const executeJob = async (job) => {
             break;
         case 'migrateLecturesToAppointment': {
             await migrateLecturesToAppointment();
+            break;
+        }
+        case 'flagOldConversations': {
+            await flagInactiveConversationsAsReadonly();
             break;
         }
         case 'sendSlackStatistics': {

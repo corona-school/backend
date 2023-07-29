@@ -13,12 +13,13 @@ import {
 import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AllConversations, ChatAccess, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
-import { chat_type } from '@prisma/client';
 import systemMessages from './localization';
+import { getLogger } from '../logger/logger';
 
 dotenv.config();
+const logger = getLogger('Conversation');
 
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
@@ -112,6 +113,7 @@ const getOrCreateOneOnOneConversation = async (
 
         if (isChatReadOnly) {
             await markConversationAsWriteable(participantsConversationId);
+            await sendSystemMessage(systemMessages.de.reactivated, participantsConversationId, SystemMessage.ONE_ON_ONE_REACTIVATE);
         }
     }
 
@@ -267,7 +269,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string, chatType?: chat_type): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -277,7 +279,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: cha
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                access: chatType === chat_type.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
+                access: chatType === ChatType.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
             }),
         });
         await checkResponseStatus(response);
@@ -348,6 +350,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
             await checkResponseStatus(response);
         }
     } catch (error) {
+        logger.error('Could not mark conversation as readonly', error);
         throw new Error(error);
     }
 }

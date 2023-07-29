@@ -8,13 +8,18 @@ import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
-import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+export type UserId = `${'pupil' | 'student'}/${number}`;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
+};
+
+const talkJsIdToUserId = (userId: string): UserId => {
+    return userId.replace('_', '/') as UserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
@@ -130,6 +135,10 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
+const countChatParticipants = (conversation: Conversation): number => {
+    return Object.keys(conversation.participants).length;
+};
+
 const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMembers: string[]; readMembers: string[] } => {
     const readWriteMembers: string[] = [];
     const readMembers: string[] = [];
@@ -168,7 +177,7 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
 };
 
 const convertTJConversation = (conversation: TJConversation): Conversation => {
-    const { id, subject, topicId, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+    const { id, subject, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
 
     const convertedCustom: ChatMetaData = custom
         ? {
@@ -183,7 +192,6 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     return {
         id,
         subject,
-        topicId,
         photoUrl,
         welcomeMessages,
         custom: convertedCustom,
@@ -198,11 +206,13 @@ const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): conta
 
 export {
     userIdToTalkJsId,
+    talkJsIdToUserId,
     parseUnderscoreToSlash,
     checkResponseStatus,
     createChatSignature,
     getMatchByMatchees,
     createOneOnOneId,
+    countChatParticipants,
     getConversationId,
     getMatcheeConversation,
     checkChatMembersAccessRights,

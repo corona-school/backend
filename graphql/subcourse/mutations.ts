@@ -130,11 +130,7 @@ export class MutateSubcourseResolver {
         await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
         await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
         if (subcourse.conversationId) {
-            await addParticipant(
-                newInstructorUser,
-                subcourse.conversationId,
-                subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL
-            );
+            await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
 
         logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
@@ -200,10 +196,11 @@ export class MutateSubcourseResolver {
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        await cancelSubcourse(subcourse);
+        await cancelSubcourse(user, subcourse);
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
@@ -223,7 +220,7 @@ export class MutateSubcourseResolver {
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
         if (subcourse.conversationId) {
-            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
 
         return true;
@@ -241,7 +238,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType === ChatType.ANNOUNCEMENT ? ChatType.ANNOUNCEMENT : ChatType.NORMAL);
+        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         return true;
     }
 
@@ -274,7 +271,7 @@ export class MutateSubcourseResolver {
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
         if (subcourse.conversationId) {
-            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType);
+            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
 
         return true;

@@ -8,7 +8,7 @@ import { isCommandArg } from '../common/util/basic';
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
 
-const logger = getLogger("WebServer");
+const logger = getLogger('WebServer');
 logger.debug('Debug logging enabled');
 
 moment.locale('de'); //set global moment date format
@@ -41,7 +41,7 @@ export async function shutdown() {
     logger.info(`Shutting down manually`);
     const server = await started;
 
-    await new Promise<void>((res, rej) => server.close(err => err ? rej(err): res()));
+    await new Promise<void>((res, rej) => server.close((err) => (err ? rej(err) : res())));
     logger.info(`Webserver stopped`);
 
     await dbConnection?.close();
