@@ -88,7 +88,7 @@ export class MutateAppointmentResolver {
 
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
-        for await (const participant of participants) {
+        for (const participant of participants) {
             await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
                 student: student,
                 ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
