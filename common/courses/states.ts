@@ -1,4 +1,4 @@
-import { subcourse as Subcourse } from '@prisma/client';
+import { subcourse as Subcourse, course as Course } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -8,9 +8,12 @@ import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
-import { ChatType, ContactReason } from '../chat/types';
-import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../chat';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { ChatType, SystemMessage } from '../chat/types';
+import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, sendSystemMessage, updateConversation } from '../chat';
+import { CourseState } from '../entity/Course';
+import systemMessages from '../chat/localization';
+import { cancelAppointment } from '../appointment/cancel';
+import { User } from '../user';
 
 const logger = getLogger('Course States');
 
@@ -50,6 +53,27 @@ export async function subcourseOver(subcourse: Subcourse) {
 
     const now = moment();
     return moment(lastLecture.start).add(lastLecture.duration, 'minutes').isBefore(now);
+}
+
+/* ------------------ Course Review ----------------- */
+export async function allowCourse(course: Course, screeningComment: string | null) {
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: course.id } });
+    logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
+
+    // Usually when a new course is created, instructors also create a proper subcourse with it
+    // and then forget to publish it after it was approved. Thus we just publish during approval,
+    // assuming the subcourses are ready:
+    const subcourses = await prisma.subcourse.findMany({ where: { courseId: course.id } });
+    for (const subcourse of subcourses) {
+        if (await canPublish(subcourse)) {
+            await publishSubcourse(subcourse);
+        }
+    }
+}
+
+export async function denyCourse(course: Course, screeningComment: string | null) {
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: course.id } });
+    logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 }
 
 /* ------------------ Subcourse Publish ------------- */
@@ -105,7 +129,7 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(subcourse: Subcourse) {
+export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     const can = await canCancel(subcourse);
     if (!can.allowed) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
@@ -113,11 +137,9 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
-    const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
-    for (const lecture of courseLectures) {
-        if (lecture.zoomMeetingId) {
-            await deleteZoomMeeting(lecture);
-        }
+    const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    for (const appointment of courseAppointments) {
+        await cancelAppointment(user, appointment, true);
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
@@ -154,18 +176,24 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
             if (update.groupChatType === ChatType.NORMAL) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {},
+                    custom: {
+                        groupType: ChatType.NORMAL,
+                    },
                 };
 
                 await markConversationAsWriteable(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
+                await sendSystemMessage(systemMessages.de.toGroupChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
             } else if (update.groupChatType === ChatType.ANNOUNCEMENT) {
                 const conversationToBeUpdated: { id: string } & ConversationInfos = {
                     id: subcourse.conversationId,
-                    custom: {},
+                    custom: {
+                        groupType: ChatType.ANNOUNCEMENT,
+                    },
                 };
                 await markConversationAsReadOnlyForPupils(subcourse.conversationId);
                 await updateConversation(conversationToBeUpdated);
+                await sendSystemMessage(systemMessages.de.toAnnouncementChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
             }
         }
     }

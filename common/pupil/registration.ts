@@ -3,7 +3,6 @@ import { isEmailAvailable } from '../user/email';
 import { v4 as uuidv4 } from 'uuid';
 import { School } from '../entity/School';
 import * as Notification from '../notification';
-import { TuteeJufoParticipationIndication } from '../jufo/participationIndication';
 import {
     pupil_projectfields_enum as ProjectField,
     pupil_state_enum as State,
@@ -15,11 +14,9 @@ import {
     Prisma,
     PrismaClient,
 } from '@prisma/client';
-import { Subject } from '../entity/Student';
-import { Address } from 'address-rfc2821';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
-import { toPupilSubjectDatabaseFormat } from '../util/subjectsutils';
+import { toPupilSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
 import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
 
 export interface RegisterPupilData {
@@ -38,11 +35,6 @@ export interface RegisterPupilData {
     redirectTo?: string;
 }
 
-export interface BecomeProjectCoacheeData {
-    projectFields: ProjectField[];
-    isJufoParticipant: TuteeJufoParticipationIndication;
-    projectMemberCount: number;
-}
 export interface BecomeTuteeData {
     subjects: Subject[];
     gradeAsInt?: number;
@@ -118,26 +110,6 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
     return pupil;
 }
 
-export async function becomeProjectCoachee(pupil: Pupil, data: BecomeProjectCoacheeData) {
-    if (pupil.isProjectCoachee) {
-        throw new RedundantError(`Pupil is already project coachee`);
-    }
-
-    const { isJufoParticipant, projectFields, projectMemberCount } = data;
-
-    const updatedPupil = await prisma.pupil.update({
-        data: {
-            isProjectCoachee: true,
-            isJufoParticipant,
-            projectFields,
-            projectMemberCount,
-        },
-        where: { id: pupil.id },
-    });
-
-    return updatedPupil;
-}
-
 export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (pupil.isPupil) {
         throw new RedundantError(`Pupil is already tutee`);
@@ -168,9 +140,8 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
     }
 
     const school = await prisma.school.findUnique({ where: { id: pupil.schoolId }, rejectOnNotFound: true });
-    const teacherEmail = new Address(data.teacherEmail);
 
-    if (school.emailDomain !== teacherEmail.host) {
+    if (!data.teacherEmail.endsWith(school.emailDomain)) {
         throw new Error(`Invalid Teacher Email '${data.teacherEmail} as School Domain is '${school.emailDomain}'`);
     }
 

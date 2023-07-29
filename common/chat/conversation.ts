@@ -1,20 +1,29 @@
 /* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { checkResponseStatus, convertConversationInfosToString, convertTJConversation, createOneOnOneId, getConversationId, userIdToTalkJsId } from './helper';
-import { Message } from 'talkjs/all';
-import { User, getUser } from '../user';
+import {
+    checkChatMembersAccessRights,
+    checkResponseStatus,
+    convertConversationInfosToString,
+    convertTJConversation,
+    createOneOnOneId,
+    getConversationId,
+    userIdToTalkJsId,
+} from './helper';
+import { User } from '../user';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
-import { AccessRight, ContactReason, Conversation, ConversationInfos, TJConversation } from './types';
+import { AllConversations, ChatAccess, ChatType, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getMyContacts } from './contacts';
+import systemMessages from './localization';
+import { getLogger } from '../logger/logger';
 
 dotenv.config();
+const logger = getLogger('Conversation');
 
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_API_KEY = process.env.TALKJS_API_KEY;
-
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -68,7 +77,21 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
-// TODO: remove subcourse from custom prop, if subcourse cancel...
+const getAllConversations = async (): Promise<AllConversations> => {
+    const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${TALKJS_API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (response.status === 200) {
+        return await response.json();
+    } else {
+        return undefined;
+    }
+};
 
 const getOrCreateOneOnOneConversation = async (
     participants: [User, User],
@@ -76,7 +99,6 @@ const getOrCreateOneOnOneConversation = async (
     reason: ContactReason,
     subcourseId?: number
 ): Promise<Conversation> => {
-    // * every participants need a talk js user
     await Promise.all(
         participants.map(async (participant) => {
             await getOrCreateChatUser(participant);
@@ -85,6 +107,15 @@ const getOrCreateOneOnOneConversation = async (
 
     const participantsConversationId = getConversationId(participants);
     const participantsConversation = await getConversation(participantsConversationId);
+    if (participantsConversation) {
+        const { readMembers } = checkChatMembersAccessRights(participantsConversation);
+        const isChatReadOnly = readMembers.length > 0;
+
+        if (isChatReadOnly) {
+            await markConversationAsWriteable(participantsConversationId);
+            await sendSystemMessage(systemMessages.de.reactivated, participantsConversationId, SystemMessage.ONE_ON_ONE_REACTIVATE);
+        }
+    }
 
     if (participantsConversation) {
         if (reason === ContactReason.MATCH) {
@@ -98,7 +129,10 @@ const getOrCreateOneOnOneConversation = async (
             await updateConversation(updatedConversation);
         } else if (reason === ContactReason.PARTICIPANT) {
             const subcoursesFromConversation = participantsConversation?.custom.subcourse ?? '';
-            const subcourseIds: number[] = JSON.parse(subcoursesFromConversation);
+            let subcourseIds: number[] = [];
+            if (subcoursesFromConversation) {
+                subcourseId = JSON.parse(subcoursesFromConversation);
+            }
 
             const updatedSubcourses: number[] = [...subcourseIds, subcourseId];
             const returnUpdatedSubcourses = Array.from(new Set(updatedSubcourses));
@@ -113,7 +147,10 @@ const getOrCreateOneOnOneConversation = async (
             await updateConversation(updatedConversation);
         } else if (reason === ContactReason.PROSPECT) {
             const prospectSubcoursesFromConversation = participantsConversation?.custom.prospectSubcourse ?? '';
-            const prospectSubcourseIds: number[] = JSON.parse(prospectSubcoursesFromConversation);
+            let prospectSubcourseIds: number[] = [];
+            if (prospectSubcoursesFromConversation) {
+                prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation);
+            }
 
             const updatedProspectSubcourse: number[] = [...prospectSubcourseIds, subcourseId];
             const returnUpdatedProspectSubcourses = Array.from(new Set(updatedProspectSubcourse));
@@ -137,7 +174,7 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Willkommen im Lern-Fair Chat!', newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
         const convertedConversation = convertTJConversation(newConversation);
         return convertedConversation;
     }
@@ -161,7 +198,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage('Schön dass du da bist!', newConversationId, 'first');
+        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
@@ -232,7 +269,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
     }
 }
 
-async function addParticipant(user: User, conversationId: string): Promise<void> {
+async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
@@ -241,6 +278,9 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: chatType === ChatType.NORMAL ? ChatAccess.READWRITE : ChatAccess.READ,
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -248,15 +288,19 @@ async function addParticipant(user: User, conversationId: string): Promise<void>
     }
 }
 
-async function removeParticipant(user: User, conversationId: string): Promise<void> {
+async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
     const userId = userIdToTalkJsId(user.userID);
     try {
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}/participants/${userId}`, {
-            method: 'DELETE',
+            method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${TALKJS_API_KEY}`,
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                access: ChatAccess.NONE,
+                notify: false,
+            }),
         });
         await checkResponseStatus(response);
     } catch (error) {
@@ -277,7 +321,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ,
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
@@ -300,12 +344,13 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ,
+                    access: ChatAccess.READ,
                 }),
             });
             await checkResponseStatus(response);
         }
     } catch (error) {
+        logger.error('Could not mark conversation as readonly', error);
         throw new Error(error);
     }
 }
@@ -322,7 +367,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access: AccessRight.READ_WRITE,
+                    access: ChatAccess.READWRITE,
                 }),
             });
             await checkResponseStatus(response);
@@ -332,7 +377,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
     }
 }
 
-async function sendSystemMessage(message: string, conversationId: string, type?: string): Promise<void> {
+async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     try {
         // check if conversation exists
         const conversation = await getConversation(conversationId);
@@ -382,12 +427,13 @@ export {
     getLastUnreadConversation,
     createConversation,
     updateConversation,
-    removeParticipant,
+    removeParticipantFromCourseChat,
     addParticipant,
     markConversationAsReadOnly,
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getAllConversations,
     getOrCreateOneOnOneConversation,
     getOrCreateGroupConversation,
     deleteConversation,

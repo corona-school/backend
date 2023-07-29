@@ -2,11 +2,6 @@ import { getManager } from 'typeorm';
 
 import screeningReminderJob from './periodic/screening-reminder';
 import courseReminderJob from './periodic/course-reminder';
-import feedbackRequestJob from './periodic/feedback-request';
-import matchFollowUpJob from './periodic/match-follow-up';
-import jufoVerificationInfo from './periodic/jufo-verification-info';
-import projectMatchMaking from './periodic/project-match-making';
-import tutoringMatchMaking from './periodic/tutoring-match-making';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
@@ -14,6 +9,10 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
+import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
+import { postStatisticsToSlack } from './slack-statistics';
+import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
+import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -27,26 +26,6 @@ export const executeJob = async (job) => {
             await courseReminderJob(getManager());
             break;
         }
-        case 'feedbackRequestJob': {
-            await feedbackRequestJob(getManager());
-            break;
-        }
-        case 'matchFollowUpJob': {
-            await matchFollowUpJob(getManager());
-            break;
-        }
-        case 'jufoVerificationInfo': {
-            await jufoVerificationInfo(getManager());
-            break;
-        }
-        case 'projectMatchMaking': {
-            await projectMatchMaking(getManager());
-            break;
-        }
-        case 'tutoringMatchMaking': {
-            await tutoringMatchMaking(getManager());
-            break;
-        }
         case 'InterestConfirmation': {
             await runInterestConfirmations();
             break;
@@ -57,6 +36,14 @@ export const executeJob = async (job) => {
         }
         case 'redactInactiveAccounts': {
             await redactInactiveAccounts();
+            break;
+        }
+        case 'sendInactivityNotification': {
+            await sendInactivityNotification();
+            break;
+        }
+        case 'deactivateInactiveAccounts': {
+            await deactivateInactiveAccounts();
             break;
         }
         case 'dropOldNotificationContexts': {
@@ -72,6 +59,14 @@ export const executeJob = async (job) => {
             break;
         case 'migrateLecturesToAppointment': {
             await migrateLecturesToAppointment();
+            break;
+        }
+        case 'flagOldConversations': {
+            await flagInactiveConversationsAsReadonly();
+            break;
+        }
+        case 'sendSlackStatistics': {
+            await postStatisticsToSlack();
             break;
         }
         default: {

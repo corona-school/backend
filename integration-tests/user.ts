@@ -13,7 +13,12 @@ const createMockVerification = test('Create Mock Email Verify Notification', asy
     return await createMockNotification('user-verify-email', 'UserVerifyEmailNotification');
 });
 
-export const pupilOne = test('Register Pupil', async () => {
+export const createInactivityMockNotification = test('Create Mock inactivity notification', async () => {
+    await setup;
+    return await createMockNotification('person_inactivity_reminder', 'UserInactivityReminderNotification');
+});
+
+export async function createNewPupil() {
     const mockEmailVerification = await createMockVerification;
 
     await setup;
@@ -101,10 +106,12 @@ export const pupilOne = test('Register Pupil', async () => {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
 
-    return { client, pupil: pupil as { userID: string, firstname: string; lastname: string; email: string; pupil: { id: number } } };
-});
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
+}
 
-export const studentOne = test('Register Student', async () => {
+export const pupilOne = test('Register Pupil', createNewPupil);
+
+export async function createNewStudent() {
     await setup;
     const mockEmailVerification = await createMockVerification;
 
@@ -184,7 +191,9 @@ export const studentOne = test('Register Student', async () => {
     student.email = student.email.toUpperCase();
 
     return { client, student: student as { userID: string; firstname: string; lastname: string; email: string; student: { id: number } } };
-});
+}
+
+export const studentOne = test('Register Student', createNewStudent);
 
 export const instructorOne = test('Register Instructor', async () => {
     await setup;

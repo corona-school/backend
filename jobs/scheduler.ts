@@ -1,31 +1,26 @@
 import cron from 'cron';
-import { Mutex } from 'async-mutex';
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, EntityManager } from 'typeorm';
 import { CSCronJob } from './types';
-import { invalidateActiveTransactionLog } from '../common/transactionlog';
 
 const logger = getLogger();
 
-const activeConnectionMutex = new Mutex();
-let jobConnection: Connection;
+let jobConnection: Promise<Connection> | null = null;
 /// Returns the connection(pool) that should be used for all the jobs. The returned connection is always active, i.e. connected.
 async function getActiveJobConnection() {
-    const release = await activeConnectionMutex.acquire(); //restrict access to this function to only one concurrent caller (to prevent creating two default connections, which occurs primarily if two jobs are scheduled at just the same time)
-
-    if (!jobConnection) {
+    if (jobConnection == null) {
         logger.info('Create new connection to database...');
-        jobConnection = await createConnection();
-    } else if (!jobConnection.isConnected) {
-        logger.info('Job database connection is no longer connected. Reconnect...');
-        //Do this always, to have no transaction log that uses a connection that was closed (which then would result in errors)
-        invalidateActiveTransactionLog(); // that might not be necessary here, but include it for safety reasons
-        await jobConnection.connect();
+        jobConnection = createConnection();
     }
 
-    release();
+    const connection = await jobConnection;
 
-    return jobConnection;
+    if (!connection.isConnected) {
+        logger.info('Job database connection is no longer connected. Reconnect...');
+        await connection.connect();
+    }
+
+    return connection;
 }
 
 function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
@@ -81,5 +76,8 @@ export async function unscheduleAllJobs() {
 }
 
 export async function shutdownConnection() {
-    await jobConnection?.close();
+    if (jobConnection != null) {
+        await (await jobConnection)?.close();
+        jobConnection = null;
+    }
 }
