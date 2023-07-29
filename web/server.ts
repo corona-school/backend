@@ -1,5 +1,5 @@
 import express from 'express';
-import http from 'http';
+import http, { IncomingMessage } from 'http';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -17,6 +17,8 @@ import { fileRouter } from './controllers/fileController';
 import { attachmentRouter } from './controllers/attachmentController';
 import { certificateRouter } from './controllers/certificateController';
 import { convertCertificateLinkToApiLink } from '../common/certificate';
+import { chatNotificationRouter } from './controllers/chatNotificationController';
+import { WithRawBody } from './controllers/chatNotificationController/types';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -42,7 +44,14 @@ export const server = (async function setupWebserver() {
     });
 
     // Parse Cookies and JSON Bodies:
-    app.use(bodyParser.json());
+    app.use(
+        bodyParser.json({
+            // To be able to persist the raw body of the request we use the verify function and extend the request object by the key `rawBody`
+            verify: (req: WithRawBody<IncomingMessage>, res, buf) => {
+                req.rawBody = buf;
+            },
+        })
+    );
     app.use(cookieParser());
 
     // Add a Favicon to the Backend (as we have some URLs that are directly opened on the backend)
@@ -84,7 +93,6 @@ export const server = (async function setupWebserver() {
 
     app.use(cors(options));
 
-
     // ------------------------ GraphQL ---------------------------
     await apolloServer.start();
     apolloServer.applyMiddleware({ app, path: '/apollo' });
@@ -93,6 +101,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/attachments', attachmentRouter);
     app.use('/api/certificate', certificateRouter);
     app.use('/api/files', fileRouter);
+    app.use('/api/chat', chatNotificationRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {
