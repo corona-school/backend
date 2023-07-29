@@ -10,6 +10,7 @@ import { hookExists } from './hook';
 import { getNotificationActions, sampleUser } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
 import { NotificationUpdateInput } from '../../graphql/generated';
+import { USER_APP_DOMAIN } from '../util/environment';
 
 type MessageTranslationFromDb = {
     template: {
@@ -270,7 +271,7 @@ export function getSampleContextExternal(notification: Notification): SampleCont
 // as it contains at least the subset of the available fields in the context,
 // which will definitely be available
 export function getSampleContext(notification: Notification): Context {
-    return { ...getSampleContextExternal(notification), user: sampleUser as any, USER_APP_DOMAIN: 'https://app.lern-fair.de' };
+    return { ...getSampleContextExternal(notification), user: sampleUser as any, USER_APP_DOMAIN };
 }
 
 // Returns the sample context as [['user.firstname', 'Jonas'], ['user.lastname', 'Wilms']]
