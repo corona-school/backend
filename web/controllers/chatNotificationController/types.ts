@@ -62,7 +62,7 @@ export interface UserMessage {
 }
 
 type ChatParticipant = {
-    firstname?: string;
+    firstname: string;
     fullname?: string;
 };
 

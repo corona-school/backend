@@ -46,7 +46,7 @@ const sampleAppointment = {
 };
 
 const sampleMissedCourseMessage = {
-    sender: 'Leon',
+    sender: { firstname: 'Leon' },
     conversationId: '1',
     message: 'Hey',
     totalUnread: '1',
@@ -55,7 +55,7 @@ const sampleMissedCourseMessage = {
 };
 
 const sampleMissedOneOnOneMessage = {
-    sender: 'Max',
+    sender: { firstname: 'Max' },
     conversationId: '2',
     message: 'Hey!',
     totalUnread: '1',
@@ -483,17 +483,11 @@ const _notificationActions = {
     },
     missed_one_on_one_chat_message: {
         description: 'Missed message in 1:1 chat',
-        sampleContext: {
-            user: sampleUser,
-            message: sampleMissedOneOnOneMessage,
-        },
+        sampleContext: sampleMissedOneOnOneMessage,
     },
     missed_course_chat_message: {
         description: 'Missed message in group chat',
-        sampleContext: {
-            user: sampleUser,
-            message: sampleMissedCourseMessage,
-        },
+        sampleContext: sampleMissedCourseMessage,
     },
     person_inactivity_reminder: {
         description: 'Person / Inactive Reminder. User will soon be deleted.',
