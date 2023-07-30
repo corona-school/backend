@@ -98,7 +98,7 @@ void (async function setupDevDB() {
     await prisma.pupil.update({
         where: { id: pupil3.id },
         data: {
-            subjects:  JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]),
+            subjects: JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]),
             grade: '6. Klasse'
         }
     });
@@ -114,10 +114,10 @@ void (async function setupDevDB() {
     });
     await verifyEmail(userForPupil(pupil4));
     await _createFixedToken(userForPupil(pupil4), `authtokenP4`);
-    
+
     await prisma.pupil.update({
         where: { id: pupil4.id },
-        data: { 
+        data: {
             subjects: JSON.stringify([]),
             grade: '6. Klasse',
         }
@@ -142,7 +142,7 @@ void (async function setupDevDB() {
             grade: '13. Klasse'
         }
     });
-    
+
     const pupil6 = await registerPupil({
         firstname: 'Laurin',
         lastname: 'Ipsem',
@@ -176,7 +176,7 @@ void (async function setupDevDB() {
     await createPassword(userForPupil(pupil7), `test`);
     await prisma.pupil.update({
         where: { id: pupil7.id },
-        data: { 
+        data: {
             subjects: JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]),
             grade: '7. Klasse'
         }
@@ -195,7 +195,7 @@ void (async function setupDevDB() {
     await _createFixedToken(userForPupil(pupil8), `authtokenP8`);
     await prisma.pupil.update({
         where: { id: pupil8.id },
-        data: { 
+        data: {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             grade: '3. Klasse',
             languages: ['Bulgarisch', 'Italienisch'],
@@ -217,7 +217,7 @@ void (async function setupDevDB() {
     await createPassword(userForPupil(pupil9), `test`);
     await prisma.pupil.update({
         where: { id: pupil9.id },
-        data: { 
+        data: {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             grade: '3. Klasse',
             languages: ['Bulgarisch', 'Italienisch'],
@@ -296,7 +296,7 @@ void (async function setupDevDB() {
     await verifyEmail(userForStudent(student2));
     await _createFixedToken(userForStudent(student2), `authtokenS2`);
     await createPassword(userForStudent(student2), `test`);
-    await becomeTutor(student2, { 
+    await becomeTutor(student2, {
         languages: [],
         subjects: [
             { name: 'Deutsch', grade: { min: 3, max: 5 } },
