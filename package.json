@@ -35,6 +35,7 @@
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write",
     "test": "jest",
+    "db:reset": "prisma db push",
     "db:seed": "node -r dotenv/config ./built/seed-db.js"
   },
   "dependencies": {
