@@ -109,7 +109,7 @@ void test('Admin Search Users', async () => {
 
     const { usersSearch: searchUsersByPartialEmail } = await adminClient.request(`
         query SearchUsersByPartialEmail {
-            usersSearch(query: " @lern-fair.de") {
+            usersSearch(query: " @lern-fair.de", take: 1000) {
                 email
             }
         }
@@ -120,7 +120,7 @@ void test('Admin Search Users', async () => {
 
     const { usersSearch: searchStudentsByPartialEmail } = await adminClient.request(`
         query SearchStudentsByPartialEmail {
-            usersSearch(query: "@lern-fair.de " only: "student") {
+            usersSearch(query: "@lern-fair.de " only: "student", take: 1000) {
                 email
             }
         }
@@ -131,7 +131,7 @@ void test('Admin Search Users', async () => {
 
     const { usersSearch: searchUsersByPartialName } = await adminClient.request(`
         query SearchUsersByPartialName {
-            usersSearch(query: "firstname lastname") {
+            usersSearch(query: "firstname lastname", take: 1000) {
                 email
             }
         }
@@ -196,7 +196,7 @@ void test('Admin Manage Notifications', async () => {
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
         skipDraft: true
-        context: { test: "test2", uniqueId: "test" }
+        context: { test: "test2", uniqueId: "test_${Date.now()}" }
         userIds: ["${pupil.userID}"]
         notificationId: ${id}
       )
