@@ -4,7 +4,7 @@
 
 **Non Goals** of the tests is to cover each and every feature and ensure that nothing breaks, also we do not want to reach full coverage / test-driven development. We simply don't have capacity for that.
 
-To run integration tests locally, ensure the database url is set correctly to some local database, then run the integration tests with `npm run integration-tests`.
+To run integration tests locally, ensure the database url is set correctly to some local database (the database should have the correct schema, i.e. run `npm run db:reset`, but the tests should generally be independent of existing database's content), then run the integration tests with `npm run integration-tests`.
 
 To write a new integration test, add a new Typescript file to `/integration-tests` and import it from `index.ts`.
 A test consists of the following parts:
