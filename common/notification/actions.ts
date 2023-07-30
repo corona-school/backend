@@ -14,7 +14,7 @@ export interface NotificationAction {
     readonly recommendedCancelations?: readonly string[];
 }
 
-const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
+export const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
 const sampleCourse = {
     course: {
         name: 'Apollo',

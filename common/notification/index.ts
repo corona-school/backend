@@ -2,7 +2,7 @@ import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
 import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { getNotification, getNotifications } from './notification';
+import { getNotification, getNotifications, getSampleContext, getSampleContextExternal } from './notification';
 import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
 import { getLogger } from '../logger/logger';
 import { Student } from '../entity/Student';
@@ -16,10 +16,6 @@ import { inAppChannel } from './channels/inapp';
 import { ActionID, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
-import { getMessageForNotification } from './messages';
-import { TranslationLanguage } from '../entity/MessageTranslation';
-import { renderTemplate } from '../../utils/helpers';
-import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 
 const logger = getLogger('Notification');
 
@@ -86,7 +82,7 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     return Object.assign({}, channelsBasePreference, channelsUserPreference);
 };
 
-function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
+export function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
     return {
         ...notificationContext,
         user: { ...legacyUser, fullName: getFullName(legacyUser) },
@@ -326,11 +322,9 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
 export function validateContext(notification: Notification, context: NotificationContext) {
-    if (!notification.sample_context) {
-        throw new Error(`Cannot validate Notification(${notification.id}) without sample_context`);
-    }
+    const sampleContext = getSampleContextExternal(notification);
 
-    const expectedKeys = Object.keys(notification.sample_context);
+    const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
 
@@ -589,35 +583,6 @@ export async function checkReminders() {
     }
 
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
-}
-
-// Renders a Message for a certain Concrete Notification
-export async function getMessage(
-    concreteNotification: ConcreteNotification | ConcreteNotificationPrisma,
-    language: TranslationLanguage = TranslationLanguage.DE
-): Promise<NotificationMessageType | null> {
-    const legacyUser = await getUserTypeORM(concreteNotification.userId);
-    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
-
-    const message = await getMessageForNotification(concreteNotification.notificationID, language);
-
-    if (!message) {
-        return null;
-    }
-
-    const { type, headline, body, modalText, navigateTo } = message;
-
-    const result = {
-        type,
-        body: renderTemplate(body, context),
-        headline: renderTemplate(headline, context),
-        navigateTo: renderTemplate(navigateTo, context),
-    };
-
-    if (modalText) {
-        return { ...result, modalText: renderTemplate(modalText, context) };
-    }
-    return result;
 }
 
 // TODO: Check queue state, find pending emails and ones with errors, report to Admins, resend / cleanup utilities
