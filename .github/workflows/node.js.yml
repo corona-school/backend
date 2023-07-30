@@ -51,7 +51,7 @@ jobs:
         run: npm test
 
       - name: Setup Dev DB with Prisma Schema
-        run: npm run db:reset -- --force --skip-generate
+        run: npm run db:reset -- --skip-generate
         env:
           DATABASE_URL: "postgres://test:test@localhost:5001/integration"
 
