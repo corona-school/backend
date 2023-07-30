@@ -35,6 +35,7 @@
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write",
     "test": "jest",
+    "db:setup": "psql -v \"$DATABASE_URL\" 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";'",
     "db:reset": "prisma db push",
     "db:reset-hard": "prisma db push --force-reset",
     "db:seed": "node -r dotenv/config ./built/seed-db.js"
