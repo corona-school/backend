@@ -30,7 +30,7 @@
     "db:migration:revert": "npm run typeorm -- migration:revert",
     "db:migration:show": "npm run typeorm -- migration:show",
     "linter": "eslint . --ext .ts",
-    "heroku:release": "if [ \"$ENV\" = 'production' ]; then npx typeorm migration:run; else npm run db:seed fi",
+    "heroku:release": "./release.sh",
     "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write",
