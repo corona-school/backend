@@ -224,6 +224,26 @@ const balancingCoefficients = {
     matchingPriority: 0.1,
 };
 
+export const TEST_POOL = {
+    name: 'TEST-DO-NOT-USE',
+    toggles: ['allow-unverified'],
+    pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
+        isPupil: true,
+        openMatchRequestCount: { gt: 0 },
+    }),
+    studentsToMatch: (toggles): Prisma.studentWhereInput => ({
+        isStudent: true,
+        openMatchRequestCount: { gt: 0 },
+    }),
+    createMatch(pupil, student) {
+        if (!isDev) {
+            throw new Error(`The Test Pool may not be run in production!`);
+        }
+        return createMatch(pupil, student, this);
+    },
+    settings: { balancingCoefficients },
+} as const;
+
 const _pools = [
     {
         name: 'lern-fair-now',
@@ -293,25 +313,7 @@ const _pools = [
         createMatch,
         settings: { balancingCoefficients },
     },
-    {
-        name: 'TEST-DO-NOT-USE',
-        toggles: ['allow-unverified'],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
-            isPupil: true,
-            openMatchRequestCount: { gt: 0 },
-        }),
-        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
-            isStudent: true,
-            openMatchRequestCount: { gt: 0 },
-        }),
-        createMatch(pupil, student) {
-            if (!isDev) {
-                throw new Error(`The Test Pool may not be run in production!`);
-            }
-            return createMatch(pupil, student, this);
-        },
-        settings: { balancingCoefficients },
-    },
+    TEST_POOL,
 ] as const;
 export const pools: Readonly<MatchPool[]> = _pools;
 export type ConcreteMatchPool = (typeof _pools)[number];
