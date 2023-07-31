@@ -249,7 +249,6 @@ const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = 
      so always make sure to apply proper authorizations to those
 */
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
-    Spaceship: allAdmin,
     Course: allAdmin,
     Pupil: allAdmin,
     Match: allAdmin,

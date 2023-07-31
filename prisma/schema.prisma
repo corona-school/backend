@@ -542,11 +542,7 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-}
-
-model spaceship {
-  name String @unique
-  planet String
+  ownsSpaceship                             Boolean
 }
 
 model subcourse {
