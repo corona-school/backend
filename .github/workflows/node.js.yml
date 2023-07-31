@@ -22,6 +22,15 @@ jobs:
         ports:
           - 5001:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      postgres-verify-schema:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: verify-schema
+        ports:
+          - 5002:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - uses: actions/checkout@v2
@@ -46,6 +55,12 @@ jobs:
 
       - name: Build Backend
         run: npm run build --if-present
+
+      - name: Verify Prisma Schema against Prisma Migrations
+        run: npm run db:verify-schema
+        env:
+          SHADOW_DB: "postgres://test:test@localhost:5002/verify-schema"
+          DATABASE_URL: "postgres://test:test@localhost:5002/DO-NOT-USE"
 
       - name: Run Unit Tests
         run: npm test
