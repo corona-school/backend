@@ -6,6 +6,7 @@ import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 import { assureZoomFeatureActive } from '.';
+import { FullZoomUser } from './type';
 
 const logger = getLogger('Zoom User');
 
@@ -216,4 +217,37 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Prom
     logger.info(`Zoom - Deleted Zoom user ${student.zoomUserId} of Student(${student.id})`);
 };
 
-export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK };
+async function getZoomUsers(): Promise<FullZoomUser> {
+    assureZoomFeatureActive();
+    const scope = 'user:read:admin';
+
+    const { access_token } = await getAccessToken(scope);
+    const response = await zoomRetry(
+        () =>
+            fetch(`${zoomUserApiUrl}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            }),
+        3,
+        1000
+    );
+
+    logger.info(`ZOOM USERS RESPONSE ${JSON.stringify(response)}`);
+
+    if (response.status === 404) {
+        logger.info(`Zoom - No Zoom users found`);
+        return null;
+    } else if (!response.ok) {
+        throw new Error(`Zoom failed to get users: ${response.status} ${await response.text()}`);
+    }
+
+    logger.info(`Zoom - Retrieved Zoom users `);
+    const data = response.json();
+
+    logger.info(`ZOOM USERS RESPONSE ${JSON.stringify(data)}`);
+    return data;
+}
+export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUsers };
