@@ -8,5 +8,9 @@ export const renderTemplate = (template: string, context: Partial<Context>, stri
         log.error('Template string undefined');
         return undefined;
     }
-    return compile(template, { strict })(context);
+    return compile(template, { strict, noEscape: true, knownHelpersOnly: true })(context);
 };
+
+export function compileTemplate(template: string) {
+    return compile(template, { strict: true, noEscape: true, knownHelpersOnly: true });
+}

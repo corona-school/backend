@@ -4,6 +4,7 @@ import { getStudent, User } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
+import { getNotificationContextForSubcourse } from '../mails/courses';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { RedundantError } from '../util/error';
 
@@ -30,7 +31,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                     await Notification.actionTaken(participant.pupil, 'student_cancel_appointment_group', {
                         appointment: getAppointmentForNotification(appointment),
                         student,
-                        course: subcourse.course,
+                        ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                     });
                 }
 

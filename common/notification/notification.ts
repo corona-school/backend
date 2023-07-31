@@ -7,9 +7,10 @@ import { NotificationRecipient } from '../entity/Notification';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import { hookExists } from './hook';
-import { getNotificationActions } from './actions';
+import { getNotificationActions, sampleUser } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
 import { NotificationUpdateInput } from '../../graphql/generated';
+import { USER_APP_DOMAIN } from '../util/environment';
 
 type MessageTranslationFromDb = {
     template: {
@@ -243,12 +244,9 @@ export async function importNotifications(notifications: Notification[], dropBef
 
 /* -------------------- Sample Context ------------------------------ */
 
-// Returns a sample context for a notification, this can be used to validate
-// templates which should be rendered with concrete notification contexts,
-// as it contains at least the subset of the available fields in the context,
-// which will definitely be available
+// The context that needs to be passed into the notification system to render a specific notification:
 type SampleContext = Partial<Context>;
-export function getSampleContext(notification: Notification): SampleContext {
+export function getSampleContextExternal(notification: Notification): SampleContext {
     // For campaigns, there is no action that triggers the notification, instead this is done by an Admin for many users
     // For that, the notification has a sample_context which can be used in the notification templates,
     //  and which has to be provided by the Admin
@@ -261,7 +259,19 @@ export function getSampleContext(notification: Notification): SampleContext {
         .filter((it) => notification.onActions.includes(it.id))
         .map((it) => it.sampleContext);
 
+    if (sampleContexts.length === 0) {
+        return {};
+    }
+
     return sampleContexts.reduce(subset) as SampleContext;
+}
+
+// Returns a sample context for a notification, this can be used to validate
+// templates which should be rendered with concrete notification contexts,
+// as it contains at least the subset of the available fields in the context,
+// which will definitely be available
+export function getSampleContext(notification: Notification): Context {
+    return { ...getSampleContextExternal(notification), user: sampleUser as any, USER_APP_DOMAIN };
 }
 
 // Returns the sample context as [['user.firstname', 'Jonas'], ['user.lastname', 'Wilms']]

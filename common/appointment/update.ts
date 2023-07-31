@@ -5,7 +5,8 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import moment from 'moment';
-import { getZoomMeeting, updateZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { updateZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const logger = getLogger('Appointment');
 
@@ -53,7 +54,7 @@ export async function updateAppointment(
                 await Notification.actionTaken(participant.pupil, 'pupil_change_appointment_group', {
                     student: student,
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
-                    course: subcourse.course,
+                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
             }
             break;
