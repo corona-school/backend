@@ -542,7 +542,6 @@ model student {
   remission_request                         remission_request?
   screening                                 screening?
   subcourse_instructors_student             subcourse_instructors_student[]
-  ownsSpaceship                             Boolean
 }
 
 model subcourse {
