@@ -10,6 +10,7 @@ import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { deleteZoomUser } from '../zoom/zoom-user';
 
 const logger = getLogger('Match');
 
@@ -17,8 +18,6 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
-
-    console.log('CAN REMOVE LICENSE', await canRemoveZoomLicense(match.studentId));
 
     await prisma.match.update({
         where: { id: match.id },
@@ -51,6 +50,9 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     const matchDate = '' + +match.createdAt;
     const uniqueId = '' + match.id;
 
+    if (await canRemoveZoomLicense(match.studentId)) {
+        await deleteZoomUser(student);
+    }
     await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 

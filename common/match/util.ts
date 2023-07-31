@@ -38,7 +38,6 @@ export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
     const prevDay = new Date();
     prevDay.setDate(prevDay.getDate() - 1);
 
-    // TODO no other matches
     const matchesCount = await prisma.match.count({
         where: {
             studentId: studentId,
@@ -46,9 +45,6 @@ export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
         },
     });
 
-    console.log(`COUNT MATCHES: ${matchesCount}`);
-
-    // TODO no subcourse instructor
     const subcourses = await prisma.subcourse.findMany({
         where: {
             subcourse_instructors_student: { some: { studentId: studentId } },
@@ -60,17 +56,10 @@ export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
             },
         },
     });
-    console.log(`COUNT SUBCOURSES: ${Object.keys(subcourses).length}`, typeof subcourses);
 
     if (Object.keys(subcourses).length === 0 && matchesCount === 0) {
         return true;
     }
 
     return false;
-}
-
-export async function removeZoomLicense(student: Student) {
-    if (await canRemoveZoomLicense(student.id)) {
-        await deleteZoomUser(student);
-    }
 }
