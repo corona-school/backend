@@ -98,8 +98,8 @@ class WebSocketService {
             if (!connections) {
                 throw new Error(`No connections found for user with userId: ${userId}`);
             }
-            for await (let [_, connection] of connections) {
-                return new Promise((resolve, reject) => {
+            for (const [_, connection] of connections) {
+                await new Promise<void>((resolve, reject) => {
                     connection.send(JSON.stringify(message), (err?: Error) => {
                         if (err) {
                             reject(err);
