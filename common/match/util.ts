@@ -1,8 +1,10 @@
 import { match as Match, pupil as Pupil, student as Student } from '@prisma/client';
+import { prisma } from '../prisma';
 import { parseSubjectString } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { hashToken } from '../util/hashing';
+import { deleteZoomUser } from '../zoom/zoom-user';
 
 export function getJitsiTutoringLink(match: Match) {
     return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(match.uuid)}`;
@@ -29,4 +31,32 @@ export function getOverlappingSubjects(pupil: Pupil, student: Student) {
 // Instead of using the id, some other unique fields are used to complicate attacks
 export function getMatchHash(match: { createdAt: Date; uuid: string }) {
     return hashToken(`${match.createdAt}${match.uuid}`);
+}
+
+export async function canRemoveZoomLicense(student: Student): Promise<boolean> {
+    // TODO no other matches
+    // * dissolved
+    const matches = prisma.match.findMany({
+        where: {
+            student: student,
+        },
+    });
+
+    // TODO no subcourse instructor
+    // * cancelled
+    const subcourses = prisma.subcourse.findMany({
+        where: {
+            subcourse_instructors_student: {
+                student: student,
+            },
+        },
+    });
+
+    return false;
+}
+
+export async function removeZoomLicense(student: Student) {
+    if (await canRemoveZoomLicense(student)) {
+        await deleteZoomUser(student);
+    }
 }
