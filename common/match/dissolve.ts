@@ -8,7 +8,7 @@ import { logTransaction } from '../transactionlog/log';
 import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
-import { getMatchHash } from './util';
+import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 
 const logger = getLogger('Match');
@@ -17,6 +17,8 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
+
+    console.log('CAN REMOVE LICENSE', await canRemoveZoomLicense(match.studentId));
 
     await prisma.match.update({
         where: { id: match.id },

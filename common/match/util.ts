@@ -5,6 +5,7 @@ import { gradeAsInt } from '../util/gradestrings';
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { hashToken } from '../util/hashing';
 import { deleteZoomUser } from '../zoom/zoom-user';
+import { excludePastSubcourses } from '../courses/filters';
 
 export function getJitsiTutoringLink(match: Match) {
     return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(match.uuid)}`;
@@ -33,30 +34,43 @@ export function getMatchHash(match: { createdAt: Date; uuid: string }) {
     return hashToken(`${match.createdAt}${match.uuid}`);
 }
 
-export async function canRemoveZoomLicense(student: Student): Promise<boolean> {
+export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
+    const prevDay = new Date();
+    prevDay.setDate(prevDay.getDate() - 1);
+
     // TODO no other matches
-    // * dissolved
-    const matches = prisma.match.findMany({
+    const matchesCount = await prisma.match.count({
         where: {
-            student: student,
+            studentId: studentId,
+            dissolved: false,
         },
     });
 
+    console.log(`COUNT MATCHES: ${matchesCount}`);
+
     // TODO no subcourse instructor
-    // * cancelled
-    const subcourses = prisma.subcourse.findMany({
+    const subcourses = await prisma.subcourse.findMany({
         where: {
-            subcourse_instructors_student: {
-                student: student,
+            subcourse_instructors_student: { some: { studentId: studentId } },
+            cancelled: false,
+            lecture: {
+                some: {
+                    start: { gte: prevDay },
+                },
             },
         },
     });
+    console.log(`COUNT SUBCOURSES: ${Object.keys(subcourses).length}`, typeof subcourses);
+
+    if (Object.keys(subcourses).length === 0 && matchesCount === 0) {
+        return true;
+    }
 
     return false;
 }
 
 export async function removeZoomLicense(student: Student) {
-    if (await canRemoveZoomLicense(student)) {
+    if (await canRemoveZoomLicense(student.id)) {
         await deleteZoomUser(student);
     }
 }
