@@ -1,9 +1,23 @@
-if [ "$ENV" = 'production' ]; then
-    echo 'Production Deployment, running migrations'
-    npx typeorm migration:run
-else 
-    echo 'Non-Productive Deployment, setting up DB with seeded data' 
-    npm run db:setup
-    npm run db:reset
-    npm run db:seed 
+echo "Starting Release for Environment '$ENV'"
+
+# ----------- STAGING & REVIEW APPS --------------
+if [ "$ENV" = 'dev' ]; then
+  echo "=========== Development Release =============="
+  echo "----------- Set up DB Schema -----------------"
+  npm run db:setup
+  npm run db:reset
+  echo "----------- Seed DB with sample users --------"
+  npm run db:seed
+  echo "=========== DONE ============================="
 fi
+
+# ----------- PRODUCTION -------------------------
+if [ "$ENV" = 'production' ]; then
+  echo "=========== Development Release =============="
+  echo "----------- Run Migrations -----------------"
+  echo "TODO: Enable Prisma based migrations"
+  # npm run db:deploy-migrations
+  echo "=========== DONE ============================="
+fi
+
+echo "Finished Release"
