@@ -48,12 +48,13 @@ export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
     const subcourses = await prisma.subcourse.findMany({
         where: {
             subcourse_instructors_student: { some: { studentId: studentId } },
-            cancelled: false,
-            lecture: {
-                some: {
-                    start: { gte: prevDay },
+            OR: [
+                { cancelled: true },
+                {
+                    cancelled: false,
+                    lecture: { some: { start: { gte: prevDay } } },
                 },
-            },
+            ],
         },
     });
 
