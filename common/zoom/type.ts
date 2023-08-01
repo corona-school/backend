@@ -1,37 +1,39 @@
-export type CustomAttribute = {
+export type ZoomUserResponse = {
+    page_count: number;
+    page_number: number;
+    page_size: number;
+    total_recoreds: number;
+    next_page_token?: number;
+    users: ZoomUserInfo[];
+};
+
+type CustomAttribute = {
     key: string;
     name: string;
     value: string;
 };
 
-export type FullZoomUser = {
-    user_created_at: string;
-    custom_attributes: CustomAttribute[];
-    dept: string;
-    email: string;
-    employee_unique_id: string;
-    first_name: string;
-    group_ids: string[];
+type ZoomUserInfo = {
     id: string;
-    im_group_ids: string[];
-    last_client_version: string;
-    last_login_time: string;
+    first_name: string;
     last_name: string;
-    plan_united_type: string;
-    pmi: number;
-    role_id: string;
-    status: string;
-    timezone: string;
-    type: number;
-    verified: number;
     display_name: string;
+    email: string;
+    type: number;
+    pmi: number;
+    timezone: string;
+    verified: number;
+    dept: string;
+    created_at: string;
+    last_login_time: string;
+    last_client_version: string;
+    group_ids: string[];
+    custom_attributes: CustomAttribute[];
+    employee_unique_id: string;
+    language: string;
+    status: string;
+    role_id: string;
+    user_created_at: string;
 };
 
-export type ApiResponse = {
-    next_page_token: string;
-    page_count: number;
-    page_number: number;
-    page_size: number;
-    total_records: number;
-    users: FullZoomUser[];
-};
+export type ZoomUserType = Pick<ZoomUserInfo, 'id' | 'first_name' | 'last_name' | 'email' | 'type' | 'status' | 'role_id'>;

@@ -6,7 +6,7 @@ import { student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import zoomRetry from './zoom-retry';
 import { assureZoomFeatureActive } from '.';
-import { FullZoomUser } from './type';
+import { ZoomUserResponse, ZoomUserType } from './type';
 
 const logger = getLogger('Zoom User');
 
@@ -217,37 +217,40 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Prom
     logger.info(`Zoom - Deleted Zoom user ${student.zoomUserId} of Student(${student.id})`);
 };
 
-async function getZoomUsers(): Promise<FullZoomUser> {
+async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
     assureZoomFeatureActive();
     const scope = 'user:read:admin';
-
     const { access_token } = await getAccessToken(scope);
-    const response = await zoomRetry(
-        () =>
-            fetch(`${zoomUserApiUrl}`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${access_token}`,
-                    'Content-Type': 'application/json',
-                },
-            }),
-        3,
-        1000
-    );
 
-    logger.info(`ZOOM USERS RESPONSE ${JSON.stringify(response)}`);
+    try {
+        const response = await zoomRetry(
+            () =>
+                fetch(`${zoomUserApiUrl}`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }),
+            3,
+            1000
+        );
+        if (response.status === 404) {
+            logger.info(`Zoom - No Zoom users found`);
+            return null;
+        } else if (!response.ok) {
+            throw new Error(`Zoom failed to get users: ${response.status} ${await response.text()}`);
+        }
+        const data = (await response.json()) as ZoomUserResponse;
+        const usersSubset = data.users.map((user) => {
+            const { id, first_name, last_name, email, type, status, role_id } = user;
+            return { id, first_name, last_name, email, type, status, role_id };
+        });
 
-    if (response.status === 404) {
-        logger.info(`Zoom - No Zoom users found`);
+        return usersSubset;
+    } catch (error) {
+        logger.error(`ERROR to get user infos with error ${error}`);
         return null;
-    } else if (!response.ok) {
-        throw new Error(`Zoom failed to get users: ${response.status} ${await response.text()}`);
     }
-
-    logger.info(`Zoom - Retrieved Zoom users `);
-    const data = response.json();
-
-    logger.info(`ZOOM USERS RESPONSE ${JSON.stringify(data)}`);
-    return data;
 }
-export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUsers };
+export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUserInfos as getZoomUsers };

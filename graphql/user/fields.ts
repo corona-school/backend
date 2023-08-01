@@ -212,10 +212,10 @@ export class UserFieldsResolver {
         return userZak.token;
     }
 
-    @Query((returns) => Boolean)
+    @Query((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.ADMIN)
     async usersZoomLicenses(@Ctx() context: GraphQLContext) {
         const zoomUsers = await getZoomUsers();
-        return true;
+        return zoomUsers;
     }
 }
