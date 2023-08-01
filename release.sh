@@ -4,8 +4,8 @@ echo "Starting Release for Environment '$ENV'"
 if [ "$ENV" = 'dev' ]; then
   echo "=========== Development Release =============="
   echo "----------- Set up DB Schema -----------------"
-  npm run db:setup
-  npm run db:reset
+  npm run db:setup:heroku
+  npm run db:reset-hard
   echo "----------- Seed DB with sample users --------"
   npm run db:seed
   echo "=========== DONE ============================="
