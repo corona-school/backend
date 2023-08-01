@@ -10,7 +10,7 @@ import {
 } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
@@ -124,16 +124,10 @@ export class MutateSubcourseResolver {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        const newInstructor = await getStudent(studentId);
-        const newInstructorUser = userForStudent(newInstructor);
-        const studentUserId = getUserIdTypeORM(newInstructor);
-        await prisma.subcourse_instructors_student.create({ data: { subcourseId, studentId } });
-        await addGroupAppointmentsOrganizer(subcourseId, studentUserId);
-        if (subcourse.conversationId) {
-            await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
-        }
 
-        logger.info(`Student (${studentId}) was added as an instructor to Subcourse(${subcourseId}) by User(${context.user!.userID})`);
+        const newInstructor = await getStudent(studentId);
+
+        await addSubcourseInstructor(context.user!, subcourse, newInstructor);
         return true;
     }
 

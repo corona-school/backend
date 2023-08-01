@@ -12,11 +12,13 @@ void test('Plus student batch registration', async () => {
     await setup;
     const userRandom = () => randomBytes(5).toString('base64');
 
+    const runId = Date.now();
+
     const res = await adminClient.request(gql`
         mutation registermany {
             studentRegisterPlusMany(data: {entries: [
                 {  # fail because emails different
-                    email: "test+it+s1@lern-fair.de",
+                    email: "test+${runId}+s1@lern-fair.de",
                     register: {
                         email: "test+differentEmail@lern-fair.de",
                         firstname: "f${userRandom()}",
@@ -26,9 +28,9 @@ void test('Plus student batch registration', async () => {
                     }
                 },
                 {  # invalid subject (to check if registration is rolled back properly)
-                    email: "test+it+s2@lern-fair.de",
+                    email: "test+${runId}+s2@lern-fair.de",
                     register: {
-                        email: "test+it+s2@lern-fair.de",
+                        email: "test+${runId}+s2@lern-fair.de",
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
@@ -41,13 +43,13 @@ void test('Plus student batch registration', async () => {
                     }
                 },
                 {  # try to update failed account (test removal of email whitespace)
-                    email: "test+it+s2@lern-fair.de ",
+                    email: "test+${runId}+s2@lern-fair.de ",
                     screen: {success: true}
                 },
                 {  # Now create it properly
-                    email: "test+it+s2@lern-fair.de ",
+                    email: "test+${runId}+s2@lern-fair.de ",
                     register: {
-                        email: "test+it+s2@lern-fair.de",
+                        email: "test+${runId}+s2@lern-fair.de",
                         firstname: "*updatedF*",
                         lastname: "*updatedL*",
                         newsletter: false,
@@ -60,7 +62,7 @@ void test('Plus student batch registration', async () => {
                     },
                 },
                 {   # update previous
-                    email: "test+it+s2@lern-fair.de",
+                    email: "test+${runId}+s2@lern-fair.de",
                     activate: {
                         languages: [Albanisch, Franz_sisch],
                         subjects: [{name: "Französisch"}],
@@ -69,7 +71,7 @@ void test('Plus student batch registration', async () => {
                     screen: {success: true}
                 },
                 {  # fail because account doesn't exist
-                    email: "test+it+s3@lern-fair.de",
+                    email: "test+${runId}+s3@lern-fair.de",
                     activate: {
                         languages: [Albanisch, Franz_sisch],
                         subjects: [{name: "Mathematik"}],
@@ -77,9 +79,9 @@ void test('Plus student batch registration', async () => {
                     }
                 },
                 {  # fail because email is invalid
-                    email: "test+it+s?@@lern-fair.de",
+                    email: "test+${runId}+s?@@lern-fair.de",
                     register: {
-                        email: "test+it+s?@@lern-fair.de",
+                        email: "test+${runId}+s?@@lern-fair.de",
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
@@ -103,11 +105,13 @@ void test('Plus pupil batch registration', async () => {
     await setup;
     const userRandom = () => randomBytes(5).toString('base64');
 
+    const runId = Date.now();
+
     const res = await adminClient.request(gql`
         mutation registermany {
             pupilRegisterPlusMany(data: {entries: [
                 {  # fail because emails different
-                    email: "test+it+p1@lern-fair.de",
+                    email: "test+${runId}+p1@lern-fair.de",
                     register: {
                         email: "test+differentEmail@lern-fair.de",
                         firstname: "f${userRandom()}",
@@ -118,9 +122,9 @@ void test('Plus pupil batch registration', async () => {
                     }
                 },
                 {  # invalid subject (to check if registration is rolled back properly)
-                    email: "test+it+p2@lern-fair.de",
+                    email: "test+${runId}+p2@lern-fair.de",
                     register: {
-                        email: "test+it+p2@lern-fair.de",
+                        email: "test+${runId}+p2@lern-fair.de",
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
@@ -134,12 +138,12 @@ void test('Plus pupil batch registration', async () => {
                     }
                 },
                 {  # try to update failed account (test removal of email whitespace)
-                    email: "test+it+p2@lern-fair.de "
+                    email: "test+${runId}+p2@lern-fair.de "
                 },
                 {  # Now create it properly
-                    email: "test+it+p2@lern-fair.de ",
+                    email: "test+${runId}+p2@lern-fair.de ",
                     register: {
-                        email: "test+it+p2@lern-fair.de",
+                        email: "test+${runId}+p2@lern-fair.de",
                         firstname: "*updatedF*",
                         lastname: "*updatedL*",
                         newsletter: false,
@@ -153,7 +157,7 @@ void test('Plus pupil batch registration', async () => {
                     },
                 },
                 {   # update previous
-                    email: "test+it+p2@lern-fair.de",
+                    email: "test+${runId}+p2@lern-fair.de",
                     activate: {
                         languages: [Albanisch, Franz_sisch],
                         subjects: [{name: "Englisch"}],
@@ -161,7 +165,7 @@ void test('Plus pupil batch registration', async () => {
                     }
                 },
                 {  # fail because account doesn't exist
-                    email: "test+it+p3@lern-fair.de",
+                    email: "test+${runId}+p3@lern-fair.de",
                     activate: {
                         languages: [Albanisch, Franz_sisch],
                         subjects: [{name: "Mathematik"}],
@@ -169,9 +173,9 @@ void test('Plus pupil batch registration', async () => {
                     }
                 },
                 {  # fail because email is invalid
-                    email: "test+it+p?@@lern-fair.de",
+                    email: "test+${runId}+p?@@lern-fair.de",
                     register: {
-                        email: "test+it+p?@@lern-fair.de",
+                        email: "test+${runId}+p?@@lern-fair.de",
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
