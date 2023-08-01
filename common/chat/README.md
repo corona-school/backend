@@ -1,4 +1,4 @@
-# CHAT
+# INTEGRATED CHAT
 
 ## Overview
 
@@ -16,24 +16,13 @@ For 1:1 chats, we create a unique Conversation ID dynamically using the SHA-1 ha
 
 On the other hand, for group chats, we generate random UUIDv4 Conversation IDs. UUIDv4 ensures that the generated IDs are globally unique and suitable for identifying group chat sessions. The group chat Conversation ID is always associated with a specific subcourse in our database.
 
-## Ways to create a new chat
-
--   group chat for subcourses
--   one-on-one chat
-    -   from match
-    -   as prospect
-    -   as participant
-    -   as instructor
-    -   from contact list
-
 ## 🔁 Chat Deactivation and Reactivation
 
-The chats are only deacticated rather than deleting chats permanently. Chats are deactivated to allow for reactivation at a later stage if needed. We implement an automated process to deactivate chats using a cron job called `flagInactiveConversationsAsReadonly`. The deactivation occurs after 30 days when there is no longer a valid reason for the chat to remain active. The reasons for chat deactivation include:
+The chats are only deacticated rather than deleting chats permanently. Chats are deactivated to allow for reactivation at a later stage if needed. An automated process was implemented to deactivate chats using a cron job called `flagInactiveConversationsAsReadonly`. The deactivation occurs after 30 days when there is no longer a valid reason for the chat to remain active. The 30-day period for deactivation allows participants to continue using the chat for the initial 30 days after its last relevant activity. Once deactivated, the chat becomes readonly for all participants, preventing any further modifications or interactions.
+The reasons for chat deactivation include:
 
 -   **Match Dissolution**: If a match between chat participants was dissolved more than 30 days ago, the chat is no longer considered relevant and is deactivated.
 -   **Subcourse Completion**: If the associated subcourse for the chat has ended more than 30 days ago, the chat serves no further purpose and is deactivated.
-
-The 30-day period for deactivation allows participants to continue using the chat for the initial 30 days after its last relevant activity. Once deactivated, the chat becomes readonly for all participants, preventing any further modifications or interactions.
 
 ### Reactivation of Chats
 
@@ -72,7 +61,7 @@ With TalkJS Dashboard, we can easily create a custom chat theme to match our app
 
 We utilize custom metadata during the creation of chats to provide additional context and information. Depending on whether it's a group chat or a 1:1 chat, the custom metadata contains different properties.
 
-### Group Chat Custom Metadata
+### 👥 Group Chat Custom Metadata
 
 For group chats, the custom metadata includes the following properties:
 
@@ -81,7 +70,7 @@ For group chats, the custom metadata includes the following properties:
 -   `subcourse`: An array containing the IDs of the subcourses for which the group chat was created.
     In the case of an "announcement" group chat, only the instructor has read-write rights, while other participants have read rights.
 
-### 1:1 Chat Custom Metadata
+### 👤 1:1 Chat Custom Metadata
 
 For 1:1 chats, the custom metadata includes the following properties:
 
@@ -94,7 +83,13 @@ For 1:1 chats, the custom metadata includes the following properties:
 
 We send system messages to communicate important events and actions within chats.
 
--   First Messages: The "First" system message is sent when a new chat conversation is initiated. We use it to welcome users and provide any necessary instructions for using the chat.
--   Group Chat Type Changed: The "Group Changed" system message is sent when the type of a group chat is changed (from 'normal' to 'announcement', or other way round). It notifies participants about the changes and any updates related to the group chat.
--   Chat Deactivation (Over): The "Group Over" system message is sent when a group chat or a 1:1 chat is deactivated. It notifies users that the chat is no longer active and provides relevant information about the deactivation.
--   Chat Reactivation: The "Group Reactivate" and "1:1 Reactivate" system messages are sent when a deactivated chat is reactivated. These messages inform users that the chat is active again and can be used for communication.
+### Events:
+
+-   `First Messages`: The "First" system message is sent when a new chat conversation is initiated. We use it to welcome users and provide any necessary instructions for using the chat.
+-   `Group Chat Type Changed`: The "Group Changed" system message is sent when the type of a group chat is changed (from 'normal' to 'announcement', or other way round). It notifies participants about the changes and any updates related to the group chat.
+-   `Chat Deactivation`: The "Group Over" system message is sent when a group chat or a 1:1 chat is deactivated. It notifies users that the chat is no longer active and provides relevant information about the deactivation.
+-   `Chat Reactivation`: The "Group Reactivate" and "1:1 Reactivate" system messages are sent when a deactivated chat is reactivated. These messages inform users that the chat is active again and can be used for communication.
+
+## Webhook for missed messages
+
+The webhook's main purpose is to detect when a user misses a regular chat message (not system messages). When the webhook receives the `notification.trigger` action for a missed regular message, it generates a Lern-Fair notification. This notification is sent to the user in-app and via email to inform them about the missed message. By doing so, we ensure that users are promptly notified about any missed important communications within the chat.
