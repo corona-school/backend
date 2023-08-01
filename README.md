@@ -66,8 +66,8 @@ The following command line arguments are available (i.e. run `npm run web -- --d
 
 We use the [Prisma Schema](https://www.prisma.io/docs/concepts/components/prisma-schema) to describe our data model.
 When changing the data model, we have potentially differing states:
-- The *schema* as described in `prisma.schema`, this is the one we modify manually
-- The *migrations* found in /prisma/migrations, these are used to setup local / test databases with `npm run db:reset` and migrate the productive database
+- The *schema* as described in `prisma.schema`, this is the one we modify manually and from which we setup local and staging databases
+- The *migrations* found in /prisma/migrations, these are used to migrate the productive database
 - The state in the *local database*
 - The state in the *productive database*
 - The state in the *local typescript types* derived from Prisma, which we use to validate the backend code during build time
@@ -75,9 +75,9 @@ We usually want to keep them all in sync.
 
 To start changing the data model, ensure that they all are in sync:
 1. Check out a recent state of the master branch to fetch the latest schema and migrations
-2. Run `npm run db:reset` to ensure the local database and typescript is in the state described by the migrations
+2. Run `npm run db:reset-for-migration` to ensure the local database and typescript is in the state described by the migrations
 
-Then modify `prisma.schema` to your needs. Afterwards run `npm run db:create-migration`, which shows the difference between the schema and the migrations, creates a new migration and rebuilds the local database and typescript based on that. Make sure to commit both the schema change and the migration in the same commit to simplify a potential revert. Now you can make further changes to the code till the feature is ready. When opening a pull request, a Github Action ensures that the migrations are in sync with the schema. When we merge the pull request to master and trigger a productive deployment, the migration will be run on the productive database, bringing all states back into sync. 
+Then modify `prisma.schema` to your needs. Afterwards run `npm run db:create-migration`, which shows the difference between the schema and the migrations, creates a new migration and rebuilds the local database and typescript based on that. Make sure to commit both the schema change and the migration in the same commit to simplify a potential revert. You probably also need to adapt `graphql/authorizations.ts` for the build to work again, as we enforce that all GraphQL entities have proper permissions assigned. Now you can make further changes to the code till the feature is ready. When opening a pull request, a Github Action ensures that the migrations are in sync with the schema. When we merge the pull request to master and trigger a productive deployment, the migration will be run on the productive database, bringing all states back into sync. 
 
 
 

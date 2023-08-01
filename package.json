@@ -33,6 +33,7 @@
     "db:setup:heroku": "psql \"$DATABASE_URL?sslmode=prefer\" -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\" WITH SCHEMA heroku_ext;'",
     "db:reset": "prisma db push --skip-generate",
     "db:reset-hard": "prisma db push --skip-generate --force-reset",
+    "db:reset-for-migration": "npx prisma migrate reset",
     "db:seed": "node -r dotenv/config ./built/seed-db.js",
     "db:verify-schema": "prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url $SHADOW_DB --exit-code",
     "db:create-migration": "prisma migrate dev",
