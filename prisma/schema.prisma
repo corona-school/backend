@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions", "orderByNulls"]
+  previewFeatures = ["orderByNulls"]
 }
 
 generator typegraphql {
@@ -388,7 +388,7 @@ model pupil {
   matchingPriority                             Int                                            @default(0)
   lastUpdatedSettingsViaBlocker                DateTime?                                      @db.Timestamp(6)
   teacherEmailAddress                          String?                                        @db.VarChar
-  registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
+  registrationSource                           pupil_registrationsource_enum                  @default(normal)
   coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   aboutMe                                      String                                         @default("") @db.VarChar
   matchReason                                  String                                         @default("") @db.VarChar
@@ -522,7 +522,7 @@ model student {
   sentInstructorScreeningReminderCount      Int                                    @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
-  registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  registrationSource                        student_registrationsource_enum        @default(normal)
   aboutMe                                   String                                 @default("") @db.VarChar
   zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
@@ -667,7 +667,7 @@ model pupil_screening {
   id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
   createdAt   DateTime                    @default(now()) @db.Timestamp(6)
   updatedAt   DateTime                    @default(now()) @db.Timestamp(6)
-  status      pupil_screening_status_enum @default(dbgenerated("0"))
+  status      pupil_screening_status_enum @default(pending)
   invalidated Boolean                     @default(false)
   comment     String?                     @db.VarChar
   pupilId     Int?
