@@ -4,6 +4,6 @@ if [ "$ENV" = 'production' ]; then
 else 
     echo 'Non-Productive Deployment, setting up DB with seeded data' 
     npm run db:setup
-    npm run db:reset
+    npm run db:reset-hard
     npm run db:seed 
 fi
