@@ -4,10 +4,17 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getOrCreateConversation, getOrCreateGroupConversation, markConversationAsReadOnlyForPupils } from '../../common/chat';
+import {
+    ConversationInfos,
+    getOrCreateOneOnOneConversation,
+    getOrCreateGroupConversation,
+    markConversationAsReadOnlyForPupils,
+    createContactChat,
+} from '../../common/chat';
 import { User, getUser } from '../../common/user';
-import { checkIfSubcourseParticipation, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
+import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
+import { getCourseImageURL } from '../../common/courses/util';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -24,30 +31,31 @@ export class MutateChatResolver {
 
         const conversationInfos: ConversationInfos = {
             custom: {
-                type: 'match',
+                match: { matchId: match.id },
             },
         };
 
-        const conversation = await getOrCreateConversation(matchees, conversationInfos);
+        const conversation = await getOrCreateOneOnOneConversation(matchees, conversationInfos, ContactReason.MATCH);
         return conversation.id;
     }
 
     @Mutation(() => String)
     @Authorized(Role.USER)
-    // TODO rename participantUserId to memberUserId
-    async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('participantUserId') participantUserId: string) {
+    async participantChatCreate(@Ctx() context: GraphQLContext, @Arg('memberUserId') memberUserId: string, @Arg('subcourseId') subcourseId: number) {
         const { user } = context;
-        const participantUser = await getUser(participantUserId);
+        const memberUser = await getUser(memberUserId);
 
-        const allowed = await checkIfSubcourseParticipation([user.userID, participantUserId]);
+        const allowed = await isSubcourseParticipant([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
-            custom: {
-                type: 'participant',
-            },
+            custom: {},
         };
 
+        if (subcourseId) {
+            conversationInfos.custom.subcourse = [subcourseId];
+        }
+
         if (allowed) {
-            const conversation = await getOrCreateConversation([user, participantUser], conversationInfos);
+            const conversation = await getOrCreateOneOnOneConversation([user, memberUser], conversationInfos, ContactReason.PARTICIPANT, subcourseId);
             return conversation.id;
         }
         throw new Error('Participant is not allowed to create conversation.');
@@ -61,12 +69,15 @@ export class MutateChatResolver {
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
         });
         await hasAccess(context, 'Subcourse', subcourse);
+        const courseImage = getCourseImageURL(subcourse.course);
 
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,
+            photoUrl: courseImage,
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
-                type: groupChatType === ChatType.ANNOUNCEMENT ? ContactReason.ANNOUNCEMENT : ContactReason.COURSE,
+                groupType: groupChatType,
+                subcourse: [subcourseId],
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
@@ -79,18 +90,29 @@ export class MutateChatResolver {
 
     @Mutation(() => String)
     @Authorized(Role.PUPIL)
-    async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('instructorUserId') instructorUserId: string) {
+    async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('instructorUserId') instructorUserId: string, @Arg('subcourseId') subcourseId: number) {
         const { user: prospectUser } = context;
         const instructorUser = await getUser(instructorUserId);
 
         const conversationInfos: ConversationInfos = {
-            custom: {
-                type: 'prospect',
-            },
+            custom: {},
         };
 
-        const conversation = await getOrCreateConversation([prospectUser, instructorUser], conversationInfos);
+        if (subcourseId) {
+            conversationInfos.custom.prospectSubcourse = [subcourseId];
+        }
+
+        const conversation = await getOrCreateOneOnOneConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
 
         return conversation.id;
+    }
+
+    @Mutation(() => String)
+    @Authorized(Role.USER)
+    async contactChatCreate(@Ctx() context: GraphQLContext, @Arg('contactUserId') contactUserId: string) {
+        const { user } = context;
+        const contactUser = await getUser(contactUserId);
+        const contactConversationId = await createContactChat(user, contactUser);
+        return contactConversationId;
     }
 }

@@ -1,6 +1,5 @@
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
-import { setupDevDB } from './dev';
 import moment from 'moment-timezone';
 import { isDev, isTest } from '../common/util/environment';
 import { isCommandArg } from '../common/util/basic';
@@ -8,7 +7,7 @@ import { isCommandArg } from '../common/util/basic';
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
 
-const logger = getLogger("WebServer");
+const logger = getLogger('WebServer');
 logger.debug('Debug logging enabled');
 
 moment.locale('de'); //set global moment date format
@@ -28,11 +27,6 @@ export const started = (async function main() {
         logger.info(`Closed Database connection`);
     });
 
-    // -------- Fill DB on Dev -------------------
-    if ((isDev || isTest) && !isCommandArg('--keepDB')) {
-        await setupDevDB();
-    }
-
     // -------- Start Webserver ------------------
     return (await import('./server')).server;
 })();
@@ -41,7 +35,7 @@ export async function shutdown() {
     logger.info(`Shutting down manually`);
     const server = await started;
 
-    await new Promise<void>((res, rej) => server.close(err => err ? rej(err): res()));
+    await new Promise<void>((res, rej) => server.close((err) => (err ? rej(err) : res())));
     logger.info(`Webserver stopped`);
 
     await dbConnection?.close();

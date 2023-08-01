@@ -5,6 +5,7 @@ import zoomRetry from './zoom-retry';
 import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
+import moment from 'moment';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -55,6 +56,10 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
     });
     const combinedAlternativeHosts = altHosts.join(';');
 
+    const tz = 'Europe/Berlin';
+    const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+    logger.info(start);
+
     const response = await zoomRetry(
         () =>
             fetch(`${zoomUsersUrl}/${zoomUsers[0].id}/meetings`, {
@@ -67,14 +72,15 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
                     agenda: 'My Meeting',
                     default_password: false,
                     duration: 60,
-                    start_time: startTime,
-                    timezone: 'Europe/Berlin',
+                    start_time: start,
+                    timezone: tz,
                     type: RecurrenceMeetingTypes.WEEKLY,
                     mute_upon_entry: true,
+                    join_before_host: true,
                     waiting_room: isCourse ? true : false,
                     breakout_room: isCourse ? true : false,
                     recurrence: endDateTime && {
-                        end_date_time: new Date(endDateTime.setHours(24, 0, 0, 0)),
+                        end_date_time: moment(endDateTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss'),
                         type: RecurrenceMeetingTypes.WEEKLY,
                     },
                     settings: {
@@ -164,7 +170,7 @@ const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
         1000
     );
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 404) {
         throw new Error(`Zoom - Failed to delete meeting with ${response.status} ${await response.text()}`);
     }
 

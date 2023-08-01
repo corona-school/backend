@@ -13,7 +13,7 @@ import { getFullName, userForPupil } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity, isParticipant } from '../../courses/participants';
+import { getCourseCapacity, getCourseFreePlaces, isParticipant } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
 import { createSecretEmailToken } from '../../secret';
 import { getCourse } from '../../../graphql/util';
@@ -38,7 +38,7 @@ const dropSubcourseRelations = (subcourse: Subcourse | Prisma.subcourse) => ({
     course: undefined,
 });
 
-export async function sendSubcourseCancelNotifications(course: Course | Prisma.course, subcourse: Subcourse | Prisma.subcourse) {
+export async function sendSubcourseCancelNotifications(course: Prisma.course, subcourse: Prisma.subcourse) {
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     if (lectures.length == 0) {
         logger.info('No lectures found: no cancellation mails sent for subcourse ' + subcourse.id + ' of course ' + course.name);
@@ -66,10 +66,7 @@ export async function sendSubcourseCancelNotifications(course: Course | Prisma.c
         await sendTemplateMail(mail, participant.pupil.email);
         await Notification.actionTaken(participant.pupil, 'participant_course_cancelled', {
             uniqueId: `${subcourse.id}`,
-            course: dropCourseRelations(course),
-            subcourse: dropSubcourseRelations(subcourse),
-            firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-            firstLectureTime: moment(firstLecture).format('HH:mm'),
+            ...(await getNotificationContextForSubcourse(course, subcourse)),
         });
     }
 }
@@ -88,12 +85,7 @@ export async function sendCourseUpcomingReminderInstructor(
         firstLectureTime: moment(firstLecture).format('HH:mm'),
     });
     await sendTemplateMail(mail, instructor.email);
-    await Notification.actionTaken(instructor, 'instructor_course_reminder', {
-        course,
-        subcourse,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
+    await Notification.actionTaken(instructor, 'instructor_course_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
 export async function sendCourseUpcomingReminderParticipant(
@@ -102,97 +94,10 @@ export async function sendCourseUpcomingReminderParticipant(
     subcourse: Prisma.subcourse,
     firstLecture: Date
 ) {
-    await Notification.actionTaken(participant, 'participant_subcourse_reminder', {
-        subcourse,
-        course,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
+    await Notification.actionTaken(participant, 'participant_subcourse_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
-export async function sendParticipantRegistrationConfirmationMail(participant: Pupil, course: Course, subcourse: Subcourse) {
-    const firstLecture = subcourse.firstLecture();
-
-    if (!firstLecture) {
-        throw new Error(`Cannot send registration confirmation mail for subcourse with ID ${subcourse.id}, because that course has no specified first lecture`);
-    }
-
-    const firstLectureMoment = moment(firstLecture.start);
-    const authToken = await createSecretEmailToken(userForPupil(participant), undefined, moment().add(7, 'days'));
-
-    const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
-        participantFirstname: participant.firstname,
-        courseName: course.name,
-        courseId: String(course.id),
-        firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
-        firstLectureTime: firstLectureMoment.format('HH:mm'),
-        authToken,
-    });
-
-    await sendTemplateMail(mail, participant.email);
-
-    await Notification.actionTaken(participant, 'participant_course_joined', {
-        course,
-        firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
-        firstLectureTime: firstLectureMoment.format('HH:mm'),
-    });
-}
-
-export async function sendParticipantToInstructorMail(participant: Pupil, instructor: Student, course: Course, messageTitle: string, messageBody: string) {
-    await sendTextEmail(
-        `[${course.name}] ${messageTitle}`, //subject
-        messageBody, //email text
-        DEFAULTSENDERS.noreply, //sender address
-        instructor.email, //receiver
-        `${getFullName(participant)} via Lern-Fair`, //sender name
-        `${getFullName(instructor)}`, //receiver name
-        participant.email, //replyTo address
-        `${getFullName(participant)}` //replyTo name
-    );
-}
-
-export async function sendGuestInvitationMail({ id }: Pick<CourseGuest, 'id'>) {
-    const guest = await prisma.course_guest.findUniqueOrThrow({ where: { id: id } });
-    const inviter = await prisma.student.findUniqueOrThrow({ where: { id: guest.inviterId } });
-    const course = await prisma.course.findUniqueOrThrow({ where: { id: guest.courseId } });
-    const subcourse = await prisma.subcourse.findFirstOrThrow({
-        where: { courseId: course.id },
-    });
-
-    const firstLecture = await getFirstLecture(subcourse);
-    const firstLectureMoment = moment(firstLecture.start);
-
-    const mail = mailjetTemplates.COURSESGUESTINVITATION({
-        guestFirstname: guest.firstname,
-        hostFirstname: inviter.firstname,
-        hostEmail: inviter.email,
-        courseName: course.name,
-        firstLectureDate: firstLectureMoment.format('DD.MM.YYYY'),
-        firstLectureTime: firstLectureMoment.format('HH:mm'),
-        linkVideochat: getCourseGuestLink(guest),
-    });
-
-    await sendTemplateMail(mail, guest.email);
-}
-
-export async function sendParticipantCourseCertificate(participant: Pupil, course: Course, certificateBuffer: Buffer) {
-    //create base 64 version of pdf certificate
-    const base64Certificate = certificateBuffer.toString('base64');
-
-    //create mail
-    const mail = mailjetTemplates.COURSESCERTIFICATE(
-        {
-            participantFirstname: participant.firstname,
-            courseName: course.name,
-        },
-        base64Certificate
-    );
-
-    //send mail 🎉
-    await sendTemplateMail(mail, participant.email);
-}
-
-async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
+export async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
     const { start } = await getFirstLecture(subcourse);
 
     const date = start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'long', year: 'numeric' });
@@ -213,6 +118,9 @@ async function getNotificationContextForSubcourse(course: { name: string; descri
             time,
             day,
         },
+        // TODO: Legacy, remove
+        firstLectureDate: date,
+        firstLectureTime: time,
     };
 }
 
@@ -236,9 +144,9 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
-    const predictedPupilResponseRate = 5; // in percent
+const PREDICTED_PUPIL_RESPONSE_RATE = 1; /* % */
 
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
     if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
@@ -267,17 +175,18 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
     const shuffledFilteredPupils = shuffleArray(filteredPupils);
 
     // get random subset of filtered pupils
-    const seatsLeft = subcourse.maxParticipants * courseCapacity;
-    const randomPupilSampleSize = (seatsLeft / predictedPupilResponseRate) * 100;
+    const seatsLeft = await getCourseFreePlaces(subcourse);
+    const randomPupilSampleSize = (seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100;
     const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
 
     logger.info(
-        `Filtered ${filteredPupils.length} pupils and reduced that to (${randomFilteredPupilSample.length})
-        for Subcourse(${subcourse.id}) based on the predicted response rate`
+        `Filtered ${filteredPupils.length} pupils that could join the course and reduced that to ${randomFilteredPupilSample.length} (for ${seatsLeft} available places)
+        for Subcourse(${subcourse.id}) based on the predicted response rate of ${PREDICTED_PUPIL_RESPONSE_RATE}%`,
+        { subcourseId: subcourse.id }
     );
 
-    const context: NotificationContext = await getNotificationContextForSubcourse(course, subcourse);
-    context.uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
+    const context = await getNotificationContextForSubcourse(course, subcourse);
+    (context as NotificationContext).uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
     await Notification.bulkActionTaken(
         randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
         'available_places_on_subcourse',

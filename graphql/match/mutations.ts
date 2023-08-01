@@ -8,6 +8,8 @@ import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
+import { getMatcheeConversation } from '../../common/chat/helper';
+import { markConversationAsWriteable } from '../../common/chat';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -34,7 +36,6 @@ export class MutateMatchResolver {
         await hasAccess(context, 'Match', match);
 
         await dissolveMatch(match, dissolveReason, /* dissolver:*/ null);
-
         return true;
     }
 
@@ -43,9 +44,12 @@ export class MutateMatchResolver {
     async matchReactivate(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
-
         await reactivateMatch(match);
+        const { conversation, conversationId } = await getMatcheeConversation({ studentId: match.studentId, pupilId: match.pupilId });
 
+        if (conversation) {
+            await markConversationAsWriteable(conversationId);
+        }
         return true;
     }
 }

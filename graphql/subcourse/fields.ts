@@ -9,7 +9,7 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Bbb_meeting as BBBMeeting, Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import { Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -408,14 +408,6 @@ export class ExtendedFieldsSubcourseResolver {
 
         const pupil = await getSessionPupil(context, pupilId);
         return (await prisma.waiting_list_enrollment.count({ where: { subcourseId: subcourse.id, pupilId: pupil.id } })) > 0;
-    }
-
-    @FieldResolver((returns) => BBBMeeting, { nullable: true })
-    @Authorized(Role.OWNER, Role.ADMIN)
-    async meeting(@Root() subcourse: Subcourse) {
-        return await prisma.bbb_meeting.findFirst({
-            where: { meetingID: '' + subcourse.id },
-        });
     }
 
     @FieldResolver((returns) => Decision)

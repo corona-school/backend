@@ -21,6 +21,7 @@ import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
 import { getStudentsFromList } from '../../common/user';
 import { RedundantError } from '../../common/util/error';
+import { getNotificationContextForSubcourse } from '../../common/mails/courses';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -51,8 +52,7 @@ export class MutateAppointmentResolver {
 
         await Notification.actionTaken(match.pupil, 'student_add_appointment_match', {
             student,
-            user: match.pupil,
-            matchId: appointment.matchId,
+            matchId: '' + appointment.matchId,
         });
         return true;
     }
@@ -71,8 +71,7 @@ export class MutateAppointmentResolver {
 
         await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {
             student,
-            user: match.pupil,
-            matchId: matchId,
+            matchId: '' + matchId,
         });
         return true;
     }
@@ -89,11 +88,10 @@ export class MutateAppointmentResolver {
 
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
-        for await (const participant of participants) {
+        for (const participant of participants) {
             await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
                 student: student,
-                user: participant,
-                course: subcourse.course,
+                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });
         }
         return true;
@@ -119,11 +117,10 @@ export class MutateAppointmentResolver {
 
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
-        for await (const participant of participants) {
+        for (const participant of participants) {
             await Notification.actionTaken(participant.pupil, 'student_add_appointments_group', {
                 student: student,
-                user: participant,
-                course: subcourse.course,
+                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });
         }
         return true;
@@ -157,7 +154,7 @@ export class MutateAppointmentResolver {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
 
-        await cancelAppointment(context.user, appointment);
+        await cancelAppointment(context.user, appointment, false);
 
         return true;
     }

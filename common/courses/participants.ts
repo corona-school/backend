@@ -268,7 +268,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);
     await logTransaction('participantLeftCourse', pupil, { subcourseID: subcourse.id });
 
-    const course = prisma.course.findUnique({ where: { id: subcourse.courseId } });
+    const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
     await Notification.actionTaken(pupil, 'participant_course_leave', {
         course,
@@ -300,10 +300,14 @@ export async function fillSubcourse(subcourse: Subcourse) {
     }
 }
 
-export async function getCourseCapacity(subcourse: Subcourse) {
-    const maxCapacity = subcourse.maxParticipants;
-    const participants = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+export async function getCourseParticipantCount(subcourse: Subcourse) {
+    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+}
 
-    const capactiy: number = participants / maxCapacity;
-    return capactiy;
+export async function getCourseCapacity(subcourse: Subcourse) {
+    return (await getCourseParticipantCount(subcourse)) / subcourse.maxParticipants;
+}
+
+export async function getCourseFreePlaces(subcourse: Subcourse) {
+    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
 }

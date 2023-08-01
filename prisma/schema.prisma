@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions", "orderByNulls"]
+  previewFeatures = ["orderByNulls"]
 }
 
 generator typegraphql {
@@ -259,6 +259,7 @@ model mentor {
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
+  lastLogin                    DateTime?               @default(now()) @db.Timestamp(6)
   wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
   wix_creation_date            DateTime                @db.Timestamp(6)
   division                     mentor_division_enum[]
@@ -364,6 +365,7 @@ model pupil {
   isRedacted                                   Boolean                                        @default(false)
   lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
+  lastLogin                                    DateTime?                                      @default(now()) @db.Timestamp(6)
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
   state                                        pupil_state_enum                               @default(other)
@@ -386,7 +388,7 @@ model pupil {
   matchingPriority                             Int                                            @default(0)
   lastUpdatedSettingsViaBlocker                DateTime?                                      @db.Timestamp(6)
   teacherEmailAddress                          String?                                        @db.VarChar
-  registrationSource                           pupil_registrationsource_enum                  @default(dbgenerated("0"))
+  registrationSource                           pupil_registrationsource_enum                  @default(normal)
   coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   aboutMe                                      String                                         @default("") @db.VarChar
   matchReason                                  String                                         @default("") @db.VarChar
@@ -451,6 +453,7 @@ model screener {
   isRedacted                   Boolean                      @default(false)
   lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
+  lastLogin                    DateTime?                    @default(now()) @db.Timestamp(6)
   password                     String                       @db.VarChar
   verified                     Boolean?                     @default(false)
   oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
@@ -486,6 +489,7 @@ model student {
   isRedacted                                Boolean                                @default(false)
   lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
+  lastLogin                                 DateTime?                              @default(now()) @db.Timestamp(6)
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
   phone                                     String?                                @db.VarChar
@@ -518,7 +522,7 @@ model student {
   sentInstructorScreeningReminderCount      Int                                    @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
-  registrationSource                        student_registrationsource_enum        @default(dbgenerated("0"))
+  registrationSource                        student_registrationsource_enum        @default(normal)
   aboutMe                                   String                                 @default("") @db.VarChar
   zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
@@ -663,7 +667,7 @@ model pupil_screening {
   id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
   createdAt   DateTime                    @default(now()) @db.Timestamp(6)
   updatedAt   DateTime                    @default(now()) @db.Timestamp(6)
-  status      pupil_screening_status_enum @default(dbgenerated("0"))
+  status      pupil_screening_status_enum @default(pending)
   invalidated Boolean                     @default(false)
   comment     String?                     @db.VarChar
   pupilId     Int?

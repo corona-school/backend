@@ -33,6 +33,17 @@ The development version of the jobs can be run using `npm run jobs:dev`.
 The `/assets` folder contains development versions of various files. During Heroku builds, the folder is replaced by a secret version that is maintained in a [separate private repository](https://github.com/corona-school/coronaschool-certificate). The commit id of the version pulled is 
 stored in `.certificate-version`. 
 
+#### Watcher & automatic restarts
+
+For easier development, it is possible to run the web backend with automatic recompilations and restarts.
+To do this, first follow the instructions in the Build & Run section above.
+
+Afterward, start the backend in watch mode by executing `npm run web:watch`.
+This will automatically recompile the TypeScript code after every change and restart the server after the compilation is complete.
+
+You can pass additional arguments to control the backend, such as `npm run web:watch -- --keepDB` to avoid recreating the database on every restart.
+Additionally, you can pass any other supported arguments.
+
 #### Configuration
 
 The following configuration can be done via ENV variables:

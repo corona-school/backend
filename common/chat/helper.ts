@@ -1,14 +1,25 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser } from '../user';
+import { User, getUser, userForPupil, userForStudent } from '../user';
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
+import { getPupil, getStudent } from '../../graphql/util';
+import { getConversation } from './conversation';
+import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { MatchContactPupil, MatchContactStudent } from './contacts';
 
-const userIdToTalkJsId = (userId: string): string => {
-    return userId.replace('/', '_');
+type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+export type UserId = `${'pupil' | 'student'}/${number}`;
+
+const userIdToTalkJsId = (userId: string): TalkJSUserId => {
+    return userId.replace('/', '_') as TalkJSUserId;
+};
+
+const talkJsIdToUserId = (userId: string): UserId => {
+    return userId.replace('_', '/') as UserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
@@ -61,7 +72,7 @@ const getMatchByMatchees = async (matchees: string[]): Promise<match> => {
     return match;
 };
 
-const checkIfSubcourseParticipation = async (participants: string[]): Promise<boolean> => {
+const isSubcourseParticipant = async (participants: string[]): Promise<boolean> => {
     const participantUser = participants.map(async (participant) => {
         const user = await getUser(participant);
         return user;
@@ -114,14 +125,101 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
+const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
+    const student = await getStudent(matchees.studentId);
+    const pupil = await getPupil(matchees.pupilId);
+    const studentUser = userForStudent(student);
+    const pupilUser = userForPupil(pupil);
+    const conversationId = getConversationId([studentUser, pupilUser]);
+    const conversation = await getConversation(conversationId);
+    return { conversation, conversationId };
+};
+
+const countChatParticipants = (conversation: Conversation): number => {
+    return Object.keys(conversation.participants).length;
+};
+
+const checkChatMembersAccessRights = (conversation: Conversation): { readWriteMembers: string[]; readMembers: string[] } => {
+    const readWriteMembers: string[] = [];
+    const readMembers: string[] = [];
+
+    for (const participantId in conversation.participants) {
+        const participant = conversation.participants[participantId];
+        const access = participant.access;
+
+        if (access === 'ReadWrite') {
+            readWriteMembers.push(participantId);
+        } else if (access === 'Read') {
+            readMembers.push(participantId);
+        } else {
+            throw new Error(`Teilnehmer mit der ID ${participantId} hat unbekannte Zugriffsrechte auf die Conversation ${conversation.id}.`);
+        }
+    }
+    return { readWriteMembers, readMembers };
+};
+
+const convertConversationInfosToString = (conversationInfos: ConversationInfos): ConversationInfos => {
+    const convertedConversationInfos: ConversationInfos = {
+        subject: conversationInfos.subject,
+        photoUrl: conversationInfos.photoUrl,
+        welcomeMessages: conversationInfos.welcomeMessages,
+        custom: {} as ChatMetaData,
+    };
+
+    for (const key in conversationInfos.custom) {
+        if (conversationInfos.custom.hasOwnProperty(key)) {
+            const value = conversationInfos.custom[key];
+            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
+        }
+    }
+
+    return convertedConversationInfos;
+};
+
+const convertTJConversation = (conversation: TJConversation): Conversation => {
+    const { id, subject, photoUrl, welcomeMessages, custom, lastMessage, participants, createdAt } = conversation;
+
+    const convertedCustom: ChatMetaData = custom
+        ? {
+              ...(custom.start && { start: custom.start }),
+              ...(custom.match && { match: { matchId: parseInt(custom.match) } }),
+              ...(custom.subcourse && { subcourse: custom.subcourse.split(',').map(Number) }),
+              ...(custom.prospectSubcourse && { prospectSubcourse: custom.prospectSubcourse.split(',').map(Number) }),
+              ...(custom.finished && { finished: custom.finished }),
+          }
+        : {};
+
+    return {
+        id,
+        subject,
+        photoUrl,
+        welcomeMessages,
+        custom: convertedCustom,
+        lastMessage,
+        participants,
+        createdAt,
+    };
+};
+
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
+
 export {
     userIdToTalkJsId,
+    talkJsIdToUserId,
     parseUnderscoreToSlash,
     checkResponseStatus,
     createChatSignature,
     getMatchByMatchees,
     createOneOnOneId,
+    countChatParticipants,
     getConversationId,
-    checkIfSubcourseParticipation,
+    getMatcheeConversation,
+    checkChatMembersAccessRights,
+    isSubcourseParticipant,
     getMembersForSubcourseGroupChat,
+    convertConversationInfosToString,
+    convertTJConversation,
+    isStudentContact,
+    isPupilContact,
 };

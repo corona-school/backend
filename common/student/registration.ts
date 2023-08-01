@@ -12,18 +12,10 @@ import {
     Prisma,
     PrismaClient,
 } from '@prisma/client';
-import { Subject } from '../entity/Student';
-import {
-    sendFirstInstructorScreeningInvitationMail,
-    sendFirstProjectCoachingJufoAlumniScreeningInvitationMail,
-    sendFirstScreeningInvitationMail,
-} from '../mails/screening';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../entity/Screener';
-import { TutorJufoParticipationIndication } from '../jufo/participationIndication';
 import { logTransaction } from '../transactionlog/log';
-import { setProjectFields } from './update';
 import { PrerequisiteError, RedundantError } from '../util/error';
-import { toStudentSubjectDatabaseFormat } from '../util/subjectsutils';
+import { toStudentSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
 import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
 
 export interface RegisterStudentData {
@@ -57,14 +49,6 @@ export interface ProjectFieldWithGradeData {
     max: number;
 }
 
-export interface BecomeProjectCoachData {
-    projectFields: ProjectFieldWithGradeData[];
-    wasJufoParticipant: TutorJufoParticipationIndication;
-    isUniversityStudent: boolean;
-    hasJufoCertificate: boolean;
-    jufoPastParticipationInfo: string;
-}
-
 export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
@@ -95,7 +79,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
     });
 
     if (!noEmail) {
-        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '', verification: student.verification });
+        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
     await logTransaction('verificationRequets', student, {});
@@ -159,45 +143,4 @@ export async function becomeTutor(
     }
     return res;
     // TODO: Currently students are not invited for screening again when they want to become tutors? Why is that?
-}
-
-export async function becomeProjectCoach(student: Student, data: BecomeProjectCoachData) {
-    if (student.isProjectCoach) {
-        throw new RedundantError(`Student is already a coach`);
-    }
-
-    const { hasJufoCertificate, isUniversityStudent, jufoPastParticipationInfo, projectFields, wasJufoParticipant } = data;
-
-    if (projectFields) {
-        await setProjectFields(student, projectFields);
-    }
-
-    await prisma.student.update({
-        data: {
-            isProjectCoach: true,
-            wasJufoParticipant,
-            isUniversityStudent,
-            hasJufoCertificate,
-            jufoPastParticipationInfo,
-        },
-        where: { id: student.id },
-    });
-
-    const wasScreened = (await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } })) > 0;
-
-    if (!wasScreened) {
-        if (student.isUniversityStudent) {
-            await sendFirstScreeningInvitationMail(student);
-            await prisma.student.update({
-                data: { lastSentScreeningInvitationDate: new Date() },
-                where: { id: student.id },
-            });
-        } else {
-            await sendFirstProjectCoachingJufoAlumniScreeningInvitationMail(student);
-            await prisma.student.update({
-                data: { lastSentJufoAlumniScreeningInvitationDate: new Date() },
-                where: { id: student.id },
-            });
-        }
-    }
 }

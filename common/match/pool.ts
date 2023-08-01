@@ -224,6 +224,26 @@ const balancingCoefficients = {
     matchingPriority: 0.1,
 };
 
+export const TEST_POOL = {
+    name: 'TEST-DO-NOT-USE',
+    toggles: ['allow-unverified'],
+    pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
+        isPupil: true,
+        openMatchRequestCount: { gt: 0 },
+    }),
+    studentsToMatch: (toggles): Prisma.studentWhereInput => ({
+        isStudent: true,
+        openMatchRequestCount: { gt: 0 },
+    }),
+    createMatch(pupil, student) {
+        if (!isDev) {
+            throw new Error(`The Test Pool may not be run in production!`);
+        }
+        return createMatch(pupil, student, this);
+    },
+    settings: { balancingCoefficients },
+} as const;
+
 const _pools = [
     {
         name: 'lern-fair-now',
@@ -293,25 +313,7 @@ const _pools = [
         createMatch,
         settings: { balancingCoefficients },
     },
-    {
-        name: 'TEST-DO-NOT-USE',
-        toggles: ['allow-unverified'],
-        pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
-            isPupil: true,
-            openMatchRequestCount: { gt: 0 },
-        }),
-        studentsToMatch: (toggles): Prisma.studentWhereInput => ({
-            isStudent: true,
-            openMatchRequestCount: { gt: 0 },
-        }),
-        createMatch(pupil, student) {
-            if (!isDev) {
-                throw new Error(`The Test Pool may not be run in production!`);
-            }
-            return createMatch(pupil, student, this);
-        },
-        settings: { balancingCoefficients },
-    },
+    TEST_POOL,
 ] as const;
 export const pools: Readonly<MatchPool[]> = _pools;
 export type ConcreteMatchPool = (typeof _pools)[number];
@@ -522,7 +524,7 @@ export async function getInterestConfirmationRate() {
         where: { status: InterestConfirmationStatus.CONFIRMED },
     });
 
-    return confirmedInterestConfirmations / totalInterestConfirmations;
+    return confirmedInterestConfirmations / totalInterestConfirmations || 0;
 }
 
 // Predicted Pupil Match Time in Days
@@ -590,17 +592,10 @@ export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[],
         return [];
     }
 
-    const offered = await offeredSubjects(pool);
     const result: Pupil[] = [];
 
     const pupilsToRequest = await getPupils(pool, toggles, toSend * 5);
     for (const pupil of pupilsToRequest) {
-        // Skip pupils who only want subjects that are not offered at the moment
-        const subjects = JSON.parse(pupil.subjects).map((it) => it.name);
-        if (!subjects.some((it) => offered.includes(it))) {
-            continue;
-        }
-
         result.push(pupil);
 
         toSend -= 1;
