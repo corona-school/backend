@@ -260,18 +260,6 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilResendVerificationMail(@Arg('pupilId') pupilId: number): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-
-        const secretToken = await refreshToken(pupil);
-        await Notification.actionTaken(pupil, 'user_authenticate', {
-            secretToken,
-        });
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTEE)
     async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);

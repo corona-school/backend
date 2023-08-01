@@ -1,11 +1,17 @@
 import { message_translation_language_enum as MessageTranslationLanguage } from '@prisma/client';
 import { getSampleContext } from './notification';
-import { Notification, NotificationMessage } from './types';
+import { ConcreteNotification, Notification, NotificationContext, NotificationMessage } from './types';
 import { prisma } from '../prisma';
 import { MessageTranslation, TranslationLanguage } from '../entity/MessageTranslation';
 import { NotificationType } from '../entity/Notification';
-import { renderTemplate } from '../../utils/helpers';
+import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
+import { NotificationMessageType } from '../../graphql/types/notificationMessage';
+import { getUserTypeORM } from '../user';
+import { getContext } from '.';
+import { getLogger } from 'log4js';
+
+const logger = getLogger('Message');
 
 export async function getMessageForNotification(
     notificationId: number,
@@ -42,6 +48,68 @@ export async function getMessageForNotification(
     return { body, headline, modalText, navigateTo: translation.navigateTo, type: notification.type as NotificationType };
 }
 
+type CachedMessageTemplate = {
+    type: NotificationType;
+    body: (context: NotificationContext) => string;
+    headline: (context: NotificationContext) => string;
+    navigateTo?: (context: NotificationContext) => string;
+    modalText?: (context: NotificationContext) => string;
+};
+
+const cachedTemplates = new Map</* notification id + language */ string, CachedMessageTemplate | null /* = no message */>();
+
+async function loadTemplate(notificationID: number, language: TranslationLanguage): Promise<CachedMessageTemplate | null> {
+    const cacheKey = notificationID + ':' + language;
+
+    if (cachedTemplates.has(cacheKey)) {
+        logger.debug(`Got Message for Notification(${notificationID}) from cache`);
+        return cachedTemplates.get(cacheKey);
+    }
+
+    const message = await getMessageForNotification(notificationID, language);
+
+    if (!message) {
+        cachedTemplates.set(cacheKey, null);
+        return null;
+    }
+
+    const { type, headline, body, modalText, navigateTo } = message;
+
+    const template = {
+        type,
+        body: compileTemplate(body),
+        headline: compileTemplate(headline),
+        navigateTo: navigateTo && compileTemplate(navigateTo),
+        modalText: modalText && compileTemplate(modalText),
+    };
+
+    cachedTemplates.set(cacheKey, template);
+    logger.info(`Loaded Message for Notification(${notificationID}) into cache`);
+    return template;
+}
+
+// Renders a Message for a certain Concrete Notification
+export async function getMessage(
+    concreteNotification: ConcreteNotification,
+    language: TranslationLanguage = TranslationLanguage.DE
+): Promise<NotificationMessageType | null> {
+    const template = await loadTemplate(concreteNotification.notificationID, language);
+    if (!template) {
+        return null;
+    }
+
+    const legacyUser = await getUserTypeORM(concreteNotification.userId);
+    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
+
+    return {
+        type: template.type,
+        headline: template.headline(context),
+        body: template.body(context),
+        navigateTo: template.navigateTo?.(context),
+        modalText: template.modalText?.(context),
+    };
+}
+
 export async function setMessageTranslation({
     notification,
     language,
@@ -60,7 +128,6 @@ export async function setMessageTranslation({
     const sampleContext = getSampleContext(notification);
 
     function abortWithError(error: any, field: string, template: string) {
-        console.log(error);
         if (error.lineNumber && error.column && error.endColumn) {
             const line = template.split('\n')[error.lineNumber - 1];
             const region = line.slice(Math.max(0, error.column - 10), Math.min(line.length, error.endColumn + 10));
@@ -115,4 +182,7 @@ export async function setMessageTranslation({
             data: { language, notificationId: notification.id, template: { body, headline, modalText }, navigateTo },
         }),
     ]);
+
+    cachedTemplates.delete(notification.id + ':' + language);
+    logger.info(`Updated Message for Notification(${notification.id}, invalidated cache`, { language, headline, body, modalText, navigateTo });
 }

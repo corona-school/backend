@@ -12,9 +12,14 @@ import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversati
 import { MatchContactPupil, MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+export type UserId = `${'pupil' | 'student'}/${number}`;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
+};
+
+const talkJsIdToUserId = (userId: string): UserId => {
+    return userId.replace('_', '/') as UserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     const userId = (await getOrCreateChatUser(user)).id;
@@ -201,6 +206,7 @@ const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): conta
 
 export {
     userIdToTalkJsId,
+    talkJsIdToUserId,
     parseUnderscoreToSlash,
     checkResponseStatus,
     createChatSignature,
