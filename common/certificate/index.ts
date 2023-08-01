@@ -312,7 +312,6 @@ function exposeCertificate(
         startDate,
         subjects,
         uuid,
-        // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
         userIs: pupil.id === to.pupilId ? 'pupil' : 'student',
         pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
         student: { firstname: student.firstname, lastname: student.lastname },
