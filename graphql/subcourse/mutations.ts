@@ -167,7 +167,8 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await publishSubcourse(subcourse);
-        await sendPupilCoursePromotion(subcourse);
+        const course = await getCourse(subcourse.courseId);
+        if (course.category !== 'focus') await sendPupilCoursePromotion(subcourse);
         return true;
     }
 
