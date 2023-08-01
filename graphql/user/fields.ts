@@ -120,8 +120,12 @@ export class UserFieldsResolver {
 
     @Query((returns) => [UserType])
     @Authorized(Role.ADMIN)
-    async usersSearch(@Arg('query') query: string, @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener') {
-        return await findUsers(query, only);
+    async usersSearch(
+        @Arg('query') query: string,
+        @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener',
+        @Arg('take', () => Int, { nullable: true }) take?: number
+    ) {
+        return await findUsers(query, only, take);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users

@@ -1,4 +1,4 @@
-import { subcourse as Subcourse, course as Course } from '@prisma/client';
+import { subcourse as Subcourse, course as Course, student as Student } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -9,11 +9,20 @@ import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
 import { ChatType, SystemMessage } from '../chat/types';
-import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, sendSystemMessage, updateConversation } from '../chat';
+import {
+    addParticipant,
+    ConversationInfos,
+    markConversationAsReadOnlyForPupils,
+    markConversationAsWriteable,
+    sendSystemMessage,
+    updateConversation,
+} from '../chat';
 import { CourseState } from '../entity/Course';
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
-import { User } from '../user';
+import { getUserIdTypeORM, User, userForStudent } from '../user';
+import context from '../../graphql/context';
+import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 
 const logger = getLogger('Course States');
 
@@ -205,4 +214,22 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     }
 
     return result;
+}
+
+export async function addCourseInstructor(user: User | null, course: Course, newInstructor: Student) {
+    await prisma.course_instructors_student.create({ data: { courseId: course.id, studentId: newInstructor.id } });
+    logger.info(`Student (${newInstructor.id}) was added as an instructor to Course(${course.id}) by User(${user?.userID})`);
+}
+
+export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
+    await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
+
+    const newInstructorUser = userForStudent(newInstructor);
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructorUser.userID);
+
+    if (subcourse.conversationId) {
+        await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
+    }
+
+    logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }
