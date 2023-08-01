@@ -214,7 +214,7 @@ export class UserFieldsResolver {
 
     @Query((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.ADMIN)
-    async usersZoomLicenses(@Ctx() context: GraphQLContext) {
+    async zoomUserLicenses() {
         const zoomUsers = await getZoomUsers();
         return zoomUsers;
     }
