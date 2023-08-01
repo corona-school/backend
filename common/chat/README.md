@@ -2,11 +2,9 @@
 
 ## Overview
 
-This project utilizes the TalkJS API to provide an integrated chat functionality in our React app. TalkJS is a powerful platform for adding chats to websites and apps, allowing us to facilitate real-time communication between users.
+This project utilizes the [TalkJS API](https://talkjs.com/docs/) to provide an integrated chat functionality in our React app. TalkJS is a powerful platform for adding chats to websites and apps, allowing us to facilitate real-time communication between users.
 
-## How it works
-
-## Conversation IDs for 1:1 Chats and Group Chats
+## 💬 Conversation IDs for 1:1 Chats and Group Chats
 
 In this project, we use two different types of Conversation IDs to distinguish between 1:1 chats and group chats. The conversation IDs are essential for identifying and managing different chat sessions in the TalkJS API.
 
@@ -28,7 +26,7 @@ On the other hand, for group chats, we generate random UUIDv4 (Universally Uniqu
     -   as instructor
     -   from contact list
 
-# Chat Deactivation and Reactivation
+## 🔁 Chat Deactivation and Reactivation
 
 In this project, we adopt a chat deactivation mechanism rather than deleting chats permanently. Chats are deactivated to allow for reactivation at a later stage if needed. We implement an automated process to deactivate chats using a cron job called `flagInactiveConversationsAsReadonly`. The deactivation occurs after 30 days when there is no longer a valid reason for the chat to remain active. The reasons for chat deactivation include:
 
@@ -48,7 +46,7 @@ To handle the automated deactivation process, we use a cron job that runs period
 
 By adopting a chat deactivation approach rather than immediate deletion, we ensure that important conversations are not lost permanently and that participants can revisit and reactivate chats as needed within the defined 30-day window.
 
-## Customizing Chat Theme and User Settings
+## 🎨 Customizing
 
 In this project, we take advantage of TalkJS' powerful customization features to create a tailored chat experience for our users. TalkJS offers a Dashboard where we can customize the chat theme, along with various user settings, to enhance the overall chat functionality.
 
@@ -71,7 +69,7 @@ With TalkJS Dashboard, we can easily create a custom chat theme to match our app
 -   Custom Message Actions
     TalkJS Dashboard provides a powerful feature called Custom Message Actions. With this feature, we can define custom actions that users can perform on specific types of messages within the chat. For instance, we can add actions like "Accept," "Decline," or "View Details" to messages containing invitations or proposals. Custom message actions enhance the chat's interactivity and facilitate specific actions without leaving the chat context.
 
-## Metadata
+## ⚡️ Metadata
 
 In this project, we utilize custom metadata during the creation of chats to provide additional context and information. Depending on whether it's a group chat or a 1:1 chat, the custom metadata contains different properties.
 
@@ -87,9 +85,9 @@ export type ChatMetaData = {
 };
 ```
 
--   start: Represents the start date of the course associated with the group chat. It indicates the first session or event of the course.
--   groupType: Specifies the type of the group chat. It can be either "NORMAL" or "ANNOUNCEMENT".
--   subcourse: An array containing the IDs of the subcourses for which the group chat was created.
+-   `start`: Represents the start date of the course associated with the group chat. It indicates the first session or event of the course.
+-   `groupType`: Specifies the type of the group chat. It can be either "NORMAL" or "ANNOUNCEMENT".
+-   `subcourse`: An array containing the IDs of the subcourses for which the group chat was created.
     In the case of an "announcement" group chat, only the instructor has read-write rights, while other participants have read rights.
 
 ### 1:1 Chat Custom Metadata
@@ -109,3 +107,12 @@ export type ChatMetaData = {
 -   `subcourse`: An array containing the IDs of the subcourses relevant to the 1:1 chat, depending on the context. For example, if the chat is about contacting a course instructor, it may contain the ID of the relevant subcourse. Similarly, if its about contacting a match partner, it may contain the ID of the relevant subcourse.
 -   `prospectSubcourse`: If the chat is initiated to contact a course participant for a specific subcourse of interest, this property contains the ID of that subcourse.
     The custom metadata allows us to add relevant information to each chat, providing essential context for the communication and enabling effective handling of different types of chats.
+
+## ⚙️ System Messages
+
+In this project, we utilize system messages to communicate important events and actions within chats. System messages are automated messages that provide relevant information to users during various chat interactions. Below are the different types of system messages used in the application:
+
+-   First Messages: The "First" system message is sent when a new chat conversation is initiated. We use it to welcome users and provide any necessary instructions for using the chat.
+-   Group Chat Type Changed: The "Group Changed" system message is sent when the type of a group chat is changed (from 'normal' to 'announcement', or other way round). It notifies participants about the changes and any updates related to the group chat.
+-   Chat Deactivation (Over): The "Group Over" system message is sent when a group chat or a 1:1 chat is deactivated. It notifies users that the chat is no longer active and provides relevant information about the deactivation.
+-   Chat Reactivation: The "Group Reactivate" and "1:1 Reactivate" system messages are sent when a deactivated chat is reactivated. These messages inform users that the chat is active again and can be used for communication.
