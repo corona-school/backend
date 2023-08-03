@@ -35,9 +35,10 @@
     "prettier": "./prettier-commits.sh",
     "prettier-on": "prettier --write",
     "test": "jest",
-    "db:setup": "psql \"$DATABASE_URL\" -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";'",
+    "db:setup": "psql \"$DATABASE_URL?sslmode=prefer\" -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";'",
+    "db:setup:heroku": "psql \"$DATABASE_URL?sslmode=prefer\" -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\" WITH SCHEMA heroku_ext;'",
     "db:reset": "prisma db push --skip-generate",
-    "db:reset-hard": "prisma db push --force-reset",
+    "db:reset-hard": "prisma db push --skip-generate --force-reset",
     "db:seed": "node -r dotenv/config ./built/seed-db.js"
   },
   "dependencies": {
