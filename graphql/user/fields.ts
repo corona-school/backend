@@ -15,7 +15,7 @@ import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
-import { getUserZAK } from '../../common/zoom/zoom-user';
+import { getUserZAK, getZoomUsers } from '../../common/zoom/zoom-user';
 
 @ObjectType()
 export class Contact {
@@ -214,5 +214,12 @@ export class UserFieldsResolver {
             throw new Error('Could not retrieve Zoom ZAK');
         }
         return userZak.token;
+    }
+
+    @Query((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async zoomUserLicenses() {
+        const zoomUsers = await getZoomUsers();
+        return zoomUsers;
     }
 }
