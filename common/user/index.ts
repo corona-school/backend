@@ -319,3 +319,11 @@ export async function getPupilsFromList(userIDs: string[]) {
         where: { id: { in: ids } },
     });
 }
+
+export async function refetchStudent(student: Student) {
+    return (await prisma.student.findUnique({ where: { id: student.id } }))!;
+}
+
+export async function refetchPupil(pupil: Pupil) {
+    return (await prisma.pupil.findUnique({ where: { id: pupil.id } }))!;
+}

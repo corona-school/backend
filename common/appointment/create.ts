@@ -12,6 +12,7 @@ import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
+import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const logger = getLogger();
 
@@ -88,8 +89,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     // * send notification
     await Notification.actionTaken(pupil, 'student_add_appointment_match', {
         student,
-        user: pupil,
-        matchId: matchId,
+        matchId: matchId.toString(),
     });
 
     return createdMatchAppointments;
@@ -133,8 +133,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     for await (const participant of participants) {
         await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
             student: organizer,
-            user: participant,
-            course: subcourse.course,
+            ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
         });
     }
 

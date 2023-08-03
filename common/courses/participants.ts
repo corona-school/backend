@@ -274,7 +274,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);
     await logTransaction('participantLeftCourse', pupil, { subcourseID: subcourse.id });
 
-    const course = prisma.course.findUnique({ where: { id: subcourse.courseId } });
+    const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
     await Notification.actionTaken(pupil, 'participant_course_leave', {
         course,

@@ -1,4 +1,4 @@
-import { subcourse as Subcourse, course as Course } from '@prisma/client';
+import { subcourse as Subcourse, course as Course, student as Student } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -9,10 +9,19 @@ import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
 import moment from 'moment';
 import { ChatType, SystemMessage } from '../chat/types';
-import { ConversationInfos, markConversationAsReadOnlyForPupils, markConversationAsWriteable, sendSystemMessage, updateConversation } from '../chat';
+import {
+    addParticipant,
+    ConversationInfos,
+    markConversationAsReadOnlyForPupils,
+    markConversationAsWriteable,
+    sendSystemMessage,
+    updateConversation,
+} from '../chat';
 import { CourseState } from '../entity/Course';
 import systemMessages from '../chat/localization';
-import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
+import { cancelAppointment } from '../appointment/cancel';
+import { User, userForStudent } from '../user';
+import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 
 const logger = getLogger('Course States');
 
@@ -128,7 +137,7 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(subcourse: Subcourse) {
+export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     const can = await canCancel(subcourse);
     if (!can.allowed) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
@@ -136,11 +145,9 @@ export async function cancelSubcourse(subcourse: Subcourse) {
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
-    const courseLectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
-    for (const lecture of courseLectures) {
-        if (lecture.zoomMeetingId) {
-            await deleteZoomMeeting(lecture);
-        }
+    const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    for (const appointment of courseAppointments) {
+        await cancelAppointment(user, appointment, true);
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
@@ -206,4 +213,22 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     }
 
     return result;
+}
+
+export async function addCourseInstructor(user: User | null, course: Course, newInstructor: Student) {
+    await prisma.course_instructors_student.create({ data: { courseId: course.id, studentId: newInstructor.id } });
+    logger.info(`Student (${newInstructor.id}) was added as an instructor to Course(${course.id}) by User(${user?.userID})`);
+}
+
+export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
+    await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
+
+    const newInstructorUser = userForStudent(newInstructor);
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructorUser.userID);
+
+    if (subcourse.conversationId) {
+        await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
+    }
+
+    logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }

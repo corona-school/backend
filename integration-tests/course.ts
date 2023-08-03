@@ -1,7 +1,7 @@
 import { adminClient, defaultClient, test } from './base';
 import { pupilOne, pupilUpdated } from './user';
 import * as assert from 'assert';
-import { screenedInstructorOne } from './screening';
+import { screenedInstructorOne, screenedInstructorTwo } from './screening';
 import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
 
@@ -154,21 +154,22 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
 void test('Search further instructors', async () => {
     const { client } = await screenedInstructorOne;
+    const { instructor: instructor2 } = await screenedInstructorTwo;
 
     // Partial searches yield no result to not leak infos
-    const partialSearch = await client.request(`query { otherInstructors(search: "melanie", take: 100, skip: 0) { id }}`);
+    const partialSearch = await client.request(`query { otherInstructors(search: "${instructor2.firstname}", take: 100, skip: 0) { id }}`);
     assert.ok(partialSearch.otherInstructors.length === 0);
 
     const partialEmailSearch = await client.request(`query { otherInstructors(search: "@lern-fair.de", take: 100, skip: 0) { id }}`);
     assert.ok(partialEmailSearch.otherInstructors.length === 0);
 
-    const fullNameSearch = await client.request(`query { otherInstructors(search: "melanie meiers", take: 100, skip: 0) { firstname lastname }}`);
-    assert.equal(fullNameSearch.otherInstructors.length, 1);
-    assert.equal(fullNameSearch.otherInstructors[0].firstname, 'Melanie');
+    const fullNameSearch = await client.request(`query { otherInstructors(search: "${instructor2.firstname} ${instructor2.lastname}", take: 100, skip: 0) { firstname lastname }}`);
+    assert.strictEqual(fullNameSearch.otherInstructors.length, 1);
+    assert.strictEqual(fullNameSearch.otherInstructors[0].firstname, instructor2.firstname);
 
-    const fullEmailSearch = await client.request(`query { otherInstructors(search: "test+dev+s2@lern-fair.de", take: 100, skip: 0) { firstname lastname }}`);
-    assert.equal(fullEmailSearch.otherInstructors.length, 1);
-    assert.equal(fullEmailSearch.otherInstructors[0].firstname, 'Melanie');
+    const fullEmailSearch = await client.request(`query { otherInstructors(search: "${instructor2.email}", take: 100, skip: 0) { firstname lastname }}`);
+    assert.strictEqual(fullEmailSearch.otherInstructors.length, 1);
+    assert.strictEqual(fullEmailSearch.otherInstructors[0].firstname, instructor2.firstname);
 });
 
 void test('Public Course Suggestions', async () => {

@@ -8,7 +8,7 @@ import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { TranslationLanguage } from '../../common/entity/MessageTranslation';
-import { getMessage } from '../../common/notification';
+import { getMessage } from '../../common/notification/messages';
 
 @ObjectType()
 class Campaign {
@@ -44,7 +44,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @FieldResolver((returns) => NotificationMessageType, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async message(
-        @Root() concreteNotification: ConcreteNotification,
+        @Root() concreteNotification: Required<ConcreteNotification>,
         @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
     ): Promise<NotificationMessageType | null> {
         return getMessage(concreteNotification, language);

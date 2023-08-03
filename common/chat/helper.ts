@@ -13,11 +13,16 @@ import { MatchContactPupil, MatchContactStudent } from './contacts';
 import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
+export type UserId = `${'pupil' | 'student'}/${number}`;
 
 const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
+};
+
+const talkJsIdToUserId = (userId: string): UserId => {
+    return userId.replace('_', '/') as UserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
@@ -200,6 +205,7 @@ const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): conta
 
 export {
     userIdToTalkJsId,
+    talkJsIdToUserId,
     parseUnderscoreToSlash,
     checkResponseStatus,
     createChatSignature,

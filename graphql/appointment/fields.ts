@@ -103,14 +103,14 @@ export class ExtendedFieldsLectureResolver {
     async position(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
             return (
-                (await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId }, orderBy: { start: 'asc' } })).findIndex(
+                (await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
                     (currentAppointment) => currentAppointment.id === appointment.id
                 ) + 1
             );
         }
         if (appointment.matchId) {
             return (
-                (await prisma.lecture.findMany({ where: { matchId: appointment.matchId }, orderBy: { start: 'asc' } })).findIndex(
+                (await prisma.lecture.findMany({ where: { matchId: appointment.matchId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
                     (currentAppointment) => currentAppointment.id === appointment.id
                 ) + 1
             );
@@ -121,10 +121,10 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER, Role.ADMIN)
     async total(@Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId } });
+            return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId, isCanceled: false } });
         }
         if (appointment.matchId) {
-            return await prisma.lecture.count({ where: { matchId: appointment.matchId } });
+            return await prisma.lecture.count({ where: { matchId: appointment.matchId, isCanceled: false } });
         }
         throw new Error('Cannot determine total of loose appointment');
     }

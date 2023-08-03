@@ -3,7 +3,9 @@
 //  however a few other attributes of the action are maintained here to provide admin users with better tooling
 //  for creating notifications for these actions. The ones documented here are incomplete
 
-type NestedStringObject = { [key: string]: string | NestedStringObject };
+import { NotificationContextExtensions } from './types';
+
+type NestedStringObject = { [key: string]: string | boolean | NestedStringObject };
 
 export interface NotificationAction {
     readonly id: string;
@@ -12,7 +14,7 @@ export interface NotificationAction {
     readonly recommendedCancelations?: readonly string[];
 }
 
-const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
+export const sampleUser = { firstname: 'Max', fullName: 'Max Mustermann' };
 const sampleCourse = {
     course: {
         name: 'Apollo',
@@ -43,8 +45,26 @@ const sampleAppointment = {
     },
 };
 
+const sampleMissedCourseMessage = {
+    sender: { firstname: 'Leon' },
+    conversationId: '1',
+    message: 'Hey',
+    totalUnread: '1',
+    courseId: '1',
+    courseName: 'Gen Z',
+};
+
+const sampleMissedOneOnOneMessage = {
+    sender: { firstname: 'Max' },
+    conversationId: '2',
+    message: 'Hey!',
+    totalUnread: '1',
+    matchId: '1',
+};
+
 const DEPRECATED = {
     description: 'DEPRECATED - DO NOT USE',
+    sampleContext: {},
 };
 
 // The following is not typed to be able to extract the string literal types via 'as const', types are checked below
@@ -63,64 +83,75 @@ const _notificationActions = {
     },
     user_registration_verified_email: {
         description: 'User / E-Mail verified',
+        sampleContext: {},
     },
     pupil_screening_add: {
         description: 'Pupil / Screening was added',
+        sampleContext: {},
     },
     pupil_screening_rejected: {
         description: 'Pupil / Screening was rejected',
+        sampleContext: {},
     },
     pupil_screening_succeeded: {
         description: 'Pupil / Screening was successful',
+        sampleContext: {},
     },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
+        sampleContext: {},
     },
     pupil_joined_plus: {
         description: 'Pupil / Joined Lern-Fair Plus',
+        sampleContext: {},
     },
     tutor_screening_invitation: {
         description: 'Tutor / Was invited for screening',
+        sampleContext: {},
     },
     tutor_screening_success: {
         description: 'Tutor / Screening was successful',
+        sampleContext: {},
     },
     tutor_screening_rejection: {
         description: 'Tutor / Screening was rejected',
+        sampleContext: {},
     },
     instructor_screening_invitation: {
         description: 'Instructor was invited for screening',
+        sampleContext: {},
     },
     instructor_screening_success: {
         description: 'Instructor / Screening was successful',
+        sampleContext: {},
     },
     instructor_screening_rejection: {
         description: 'Instructor / Screening was rejected',
+        sampleContext: {},
     },
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
+            firstLectureDate: '12.12.1984',
+            firstLectureTime: '12:00',
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
     participant_course_cancelled: {
         description: 'Participant / Course was cancelled',
         sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            ...sampleCourse,
         },
     },
     participant_course_waiting_list_join: {
         description: 'Participant / Joined Waitinglist of Course',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -130,7 +161,7 @@ const _notificationActions = {
         description: 'Participant / Joined Course',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -139,7 +170,7 @@ const _notificationActions = {
         description: 'Participant / Left Waitinglist of Course',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -147,17 +178,14 @@ const _notificationActions = {
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
         sampleContext: {
-            course: {
-                title: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            ...sampleCourse,
         },
     },
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -166,7 +194,7 @@ const _notificationActions = {
         description: 'Instructor / Course cancelled',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -175,7 +203,7 @@ const _notificationActions = {
         description: 'Instructor / Course published',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -184,7 +212,7 @@ const _notificationActions = {
         description: 'Instructor / Course starts soon',
         sampleContext: {
             course: {
-                title: 'Hallo Welt',
+                name: 'Hallo Welt',
                 description: 'Ein Kurs',
             },
         },
@@ -201,42 +229,56 @@ const _notificationActions = {
         description: 'Student / Tutoring Certificate was signed',
         sampleContext: {
             pupil: sampleUser,
+            certificateLink: 'https://...',
         },
     },
     pupil_certificate_approval: {
         description: 'Pupil / Tutoring Certificate needs approval',
         sampleContext: {
             student: sampleUser,
+            certificateLink: 'https://...',
         },
     },
     tutee_match_dissolved_other: {
         description: 'Tutee / Match was dissolved by student',
         sampleContext: {
             student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
         },
     },
     tutee_match_dissolved: {
         description: 'Tutee / Match was dissolved',
         sampleContext: {
             student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
         },
     },
     tutor_match_dissolved_other: {
         description: 'Tutor / Match was dissolved by pupil',
         sampleContext: {
             pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
         },
     },
     tutor_match_dissolved: {
         description: 'Tutor / Match was dissolved',
         sampleContext: {
             pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
         },
     },
     tutee_matching_success: {
         description: 'Tutee / Match success',
         sampleContext: {
             student: sampleUser,
+            matchSubjects: 'Deutsch, Englisch',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutee_matching_lern-fair-now': {
@@ -257,6 +299,10 @@ const _notificationActions = {
         description: 'Tutor / Match success',
         sampleContext: {
             pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutor_matching_lern-fair-now': {
@@ -274,33 +320,64 @@ const _notificationActions = {
     'tutor_matching_TEST-DO-NOT-USE': DEPRECATED,
     tutee_matching_confirm_interest: {
         description: 'Tutee / Confirm Interest',
+        sampleContext: {
+            confirmationURL: 'https://...',
+            refusalURL: 'https://...',
+        },
     },
     tutee_matching_confirm_interest_reminder: {
         description: 'Tutee / Confirm Interest Reminder',
+        sampleContext: {
+            confirmationURL: 'https://...',
+            refusalURL: 'https://...',
+        },
     },
 
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
+        sampleContext: {},
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
+        sampleContext: {},
     },
     coc_cancelled: {
         description: 'Student / Certificate of Conduct Cancelled',
+        sampleContext: {},
     },
 
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',
+        sampleContext: {
+            instructorFirstName: 'Leon',
+            participantFirstName: 'Max',
+            courseName: 'Beispielkurs',
+            messageTitle: 'Testtitel',
+            messageBody: 'Testcontent',
+            participantMail: 'max@example.com',
+            replyToAddress: 'leon@example.com',
+        },
     },
     participant_course_message: {
         description: 'Participant / Course Message from Instructor',
+        sampleContext: {
+            instructorFirstName: 'Leon',
+            participantFirstName: 'Max',
+            courseName: 'Beispielkurs',
+            messageTitle: 'Testtitel',
+            messageBody: 'Testcontent',
+            instructorMail: 'max@example.com',
+            replyToAddress: 'leon@example.com',
+        },
     },
 
     pupil_account_deactivated: {
         description: 'Pupil / Account deactivated',
+        sampleContext: {},
     },
     student_account_deactivated: {
         description: 'Student / Account deactivated',
+        sampleContext: {},
     },
 
     'user-verify-email': {
@@ -335,23 +412,20 @@ const _notificationActions = {
         description: 'Student / Group Appointment Added',
         sampleContext: {
             student: sampleUser,
-            user: sampleUser,
-            course: sampleCourse,
+            ...sampleCourse,
         },
     },
     student_add_appointments_group: {
         description: 'Student / Group Appointments Added',
         sampleContext: {
             student: sampleUser,
-            user: sampleUser,
-            course: sampleCourse,
+            ...sampleCourse,
         },
     },
     student_add_appointment_match: {
         description: 'Student / Match Appointment Added',
         sampleContext: {
             student: sampleUser,
-            pupil: sampleUser,
             matchId: '1',
         },
     },
@@ -359,20 +433,19 @@ const _notificationActions = {
         description: 'Student / Match Appointments Added',
         sampleContext: {
             student: sampleUser,
-            pupil: sampleUser,
             matchId: '1',
         },
     },
     pupil_decline_appointment_group: {
-        description: 'Pupil / Group Appointment Declined',
+        description: 'Instructor / Group Appointment declined by Participant',
         sampleContext: {
             appointment: sampleAppointment,
             pupil: sampleUser,
-            course: sampleCourse,
+            ...sampleCourse,
         },
     },
     pupil_decline_appointment_match: {
-        description: 'Pupil / Match Appointment Declined',
+        description: 'Tutor / Match Appointment declined by Pupil',
         sampleContext: {
             appointment: sampleAppointment,
             pupil: sampleUser,
@@ -383,34 +456,38 @@ const _notificationActions = {
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
-            user: sampleUser,
-            course: sampleCourse,
+            ...sampleCourse,
         },
     },
     student_cancel_appointment_match: {
-        description: 'Student / Match Appointment Cancelled',
+        description: 'Tutee / Match Appointment cancelled by Student',
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
-            user: sampleUser,
         },
     },
     pupil_change_appointment_group: {
-        description: 'Student / Group Appointment Updated',
+        description: 'Participant / Group Appointment updated by Student',
         sampleContext: {
             student: sampleUser,
-            pupil: sampleUser,
             appointment: sampleAppointment,
-            course: sampleCourse,
+            ...sampleCourse,
         },
     },
     pupil_change_appointment_match: {
-        description: 'Student / Match Appointment Updated',
+        description: 'Tutee / Match Appointment updated by Student',
         sampleContext: {
             student: sampleUser,
-            pupil: sampleUser,
             appointment: sampleAppointment,
         },
+    },
+    missed_one_on_one_chat_message: {
+        description: 'Missed message in 1:1 chat',
+        sampleContext: sampleMissedOneOnOneMessage,
+    },
+    missed_course_chat_message: {
+        description: 'Missed message in group chat',
+        sampleContext: sampleMissedCourseMessage,
     },
     person_inactivity_reminder: {
         description: 'Person / Inactive Reminder. User will soon be deleted.',
@@ -433,7 +510,29 @@ const _notificationActions = {
     feedback_request_pupil: DEPRECATED,
 } as const;
 
+// Instead of specifying each action context twice (once as a type and once as a sampleContext value)
+// we just derive the type from the sampleContext be replacing concrete string literal types such as 'Student / Match Appointment Updated'
+// with their generic counterpart, i.e. string
+
+// The notification system computes some fields automatically, no need to pass them in:
+type ComputedField = 'fullName';
+
+type MapLiteralTypeToType<Input> = {
+    [K in Exclude<keyof Input, ComputedField>]: Input[K] extends string
+        ? string
+        : Input[K] extends boolean
+        ? boolean
+        : Input[K] extends object
+        ? MapLiteralTypeToType<Input[K]>
+        : never;
+};
+
 export type ActionID = keyof typeof _notificationActions;
+
+// Unlike NotificationContext which is just typed as { [any: string]: string }, this type derives concrete key value pairs from the sampleContexts above
+export type SpecificNotificationContext<ID extends ActionID> = MapLiteralTypeToType<(typeof _notificationActions)[ID]['sampleContext']> &
+    NotificationContextExtensions;
+
 const notificationActions: { readonly [actionId: string]: Omit<NotificationAction, 'id'> } = _notificationActions;
 
 export function getNotificationActions(): NotificationAction[] {

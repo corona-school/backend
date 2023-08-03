@@ -1,4 +1,4 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
+import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -15,7 +15,7 @@ import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
-import { getUserZAK } from '../../common/zoom/user';
+import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 
 @ObjectType()
 export class Contact {
@@ -120,8 +120,12 @@ export class UserFieldsResolver {
 
     @Query((returns) => [UserType])
     @Authorized(Role.ADMIN)
-    async usersSearch(@Arg('query') query: string, @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener') {
-        return await findUsers(query, only);
+    async usersSearch(
+        @Arg('query') query: string,
+        @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener',
+        @Arg('take', () => Int, { nullable: true }) take?: number
+    ) {
+        return await findUsers(query, only, take);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
@@ -210,5 +214,12 @@ export class UserFieldsResolver {
             throw new Error('Could not retrieve Zoom ZAK');
         }
         return userZak.token;
+    }
+
+    @Query((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async zoomUserLicenses() {
+        const zoomUsers = await getZoomUsers();
+        return zoomUsers;
     }
 }
