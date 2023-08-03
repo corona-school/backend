@@ -4,21 +4,31 @@
 
 This project utilizes the [TalkJS API](https://talkjs.com/docs/) to provide an integrated chat functionality in our React app. TalkJS allows to facilitate real-time communication between users.
 
+### Components
+
+| Components                                   | function                                                                                                                         |
+| -------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `contacts.ts`                                | Get all contacts that a user is allowed to contact                                                                               |
+| `conversation.ts`                            | Gunctions to create chats, send system messages, mark conversations, update and delte conversations, add and remove participants |
+| `helper.ts`                                  | Helper functions i.e. to create IDs, chat signature                                                                              |
+| `localization.ts`                            | Translations for the system messages                                                                                             |
+| `user.ts`                                    | Functions to get or create chat user                                                                                             |
+| `jobs/periodic/flag-old-conversation`        | Cronjob to mark conversations without purpose as "readonly"                                                                      |
+| `web/controllers/chatNotificationController` | Webhook for missed messages                                                                                                      |
+| `chat/mutations.ts`                          | GraphQL endpoints to create Chats                                                                                                |
+
 ### 💬 Conversation IDs for 1:1 Chats and Group Chats
 
 Two different types of Conversation IDs are used to distinguish between 1:1 chats and group chats. The conversation IDs are essential for identifying and managing different chat sessions in the TalkJS API.
 
--   **1:1 Chat Conversation IDs**
-
-    For one-on-one chats, we create a unique Conversation ID dynamically. This ID is not stored in the database since it can be easily generated on-the-fly based on the two participants' IDs.
-
--   **Group Chat Conversation IDs**
-
-    On the other hand, for group chats, we generate random UUIDv4 Conversation IDs. UUIDv4 ensures that the generated IDs are globally unique and suitable for identifying group chat sessions. The group chat Conversation ID is always associated with a specific subcourse in our database.
+| ID                              |                                                                                                                                    |
+| ------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| **1:1 Chat Conversation IDs**   | unique Conversation IDs, not stored in the database since it can be easily generated on-the-fly based on the two participants' IDs |
+| **Group Chat Conversation IDs** | random UUIDv4 Conversation IDs, globally unique, is always associated with a specific subcourse in our database                    |
 
 ### ⚡️ Metadata
 
-We utilize custom metadata during the creation of chats to provide additional context and information. Depending on whether it's a group chat or a 1:1 chat, the custom metadata contains different properties. The metadata is necessary first to show correct data on the chat and also to get further informations, i.e. to deactivate if subcourse is over or match is dissolved.
+We utilize custom metadata during the creation of chats to provide additional context and information. Depending on whether it's a group chat or a 1:1 chat, the custom metadata contains different properties. The metadata is necessary on the one hand to display correct data in the chat and on the other hand to get further information, e.g. to deactivate when the subcourse is over or the match has been dissolved.
 
 **👥 Group Chat Custom Metadata**
 
@@ -41,8 +51,6 @@ The reasons for chat deactivation include:
 -   **Match Dissolution**: If a match between chat participants was dissolved more than 30 days ago, the chat is no longer considered relevant and is deactivated.
 -   **Subcourse Completion**: If the associated subcourse for the chat has ended more than 30 days ago, the chat serves no further purpose and is deactivated.
 
-Deactivated chats can be reactivated if necessary. When a participant accesses a deactivated chat, they will have the option to reactivate it, triggering the chat to become active again.
-
 ### ⚓️ Webhook for missed messages
 
 The webhook's main purpose is to detect when a user misses a regular chat message (not system messages). When the webhook receives the `notification.trigger` action for a missed regular message, it generates a Lern-Fair notification. This notification is sent to the user in-app and via email to inform them about the missed message. By doing so, we ensure that users are promptly notified about any missed important communications within the chat.
@@ -64,7 +72,7 @@ TalkJS customization features is used to create a tailored chat. TalkJS offers a
 
 **Custom Chat Theme:** `lern-fair-theme`
 
-**User Settings**
+**User Settings (examples)**
 
 -   **File Upload**
 -   **Voice Messages**
