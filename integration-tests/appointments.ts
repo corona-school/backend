@@ -167,11 +167,12 @@ const myAppointments = test('Get my appointments', async () => {
 //     const clientAppointments = await myAppointments;
 //     const appointmentId = clientAppointments[0].id;
 
-//     expectFetch({
-//         url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
-//         method: 'POST',
-//         responseStatus: 200,
-//     });
+// expectFetch({
+//     url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
+//     method: 'POST',
+//     responseStatus: 200,
+//     response: { access_token: 'ZOOM_ACCESS_TOKEN' },
+// });
 
 //     await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);
 //     const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
@@ -184,7 +185,7 @@ const myAppointments = test('Get my appointments', async () => {
 // });
 
 void test('Update an appointment', async () => {
-    const { client } = await screenedInstructorOne;
+    const { client, instructor } = await screenedInstructorOne;
     await firstAppointment;
     const clientAppointments = await myAppointments;
     const appointmentId = clientAppointments[1].id;
@@ -202,6 +203,27 @@ void test('Update an appointment', async () => {
         }
         )
     }`);
+
+    expectFetch({
+        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
+        method: 'POST',
+        responseStatus: 200,
+        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
+    });
+
+    expectFetch({
+        url: `https://api.zoom.us/v2/users/${instructor.email.toLowerCase()}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {
+            id: '123',
+            first_name: instructor.firstname,
+            last_name: instructor.lastname,
+            email: instructor.email,
+            display_name: instructor.firstname + ' ' + instructor.lastname,
+            personal_meeting_url: 'https://meet',
+        },
+    });
 
     expectFetch({
         url: 'https://api.zoom.us/v2/meetings/123',
