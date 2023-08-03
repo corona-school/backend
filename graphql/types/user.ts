@@ -1,6 +1,6 @@
 import { User } from '../../common/user';
 import { Pupil, Student, Screener } from '../generated';
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, Int } from 'type-graphql';
 
 @ObjectType()
 export class UserType implements User {
