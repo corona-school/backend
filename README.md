@@ -3,8 +3,6 @@
 - [GraphQL Guidelines](graphql/README.md)
 - [The Notification System](common/notification/README.md)
 - [Writing Integration Tests](integration-tests/WRITING_TESTS.md)
-- [How-to migrate db with TypeORM](common/migration/HOW-TO-MIGRATE-README.md)
-- [Administration stuff / business logic](common/administration/README.md)
 
 The backend exposes various APIs to other services and runs various background jobs on top of a PostgreSQL database. 
 It is deployed in two Heroku Dynos, one answering API requests and one running jobs. 
@@ -25,7 +23,9 @@ backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningCon
 ### Build & Run
 
 To run the backend, compile it first using `npm run build`. Make sure to have all dependencies installed before building by using `npm ci`. 
-You also need to set your environment accordingly (for further details see [.env.example](.env.example)) and set up a local database server.
+You also need to set your environment accordingly (for further details see [.env.example](.env.example)) and set up a local PostgreSQL database server.
+To set up the database, create a database and user and set the `DATABASE_URL` in your .env file. Grant the user the rights to create databases (`ALTER USER <user> CREATEDB;`).
+Then run `npm run db:setup` to configure Postgres correctly, then `npm run db:reset` to apply the Prisma Schema to the Database. You can additionally use `npm run db:seed` to fill the database with some test content.
 
 To run the development configuration of the web server handling the API requests run `npm run web:dev`.
 The development version of the jobs can be run using `npm run jobs:dev`.
@@ -41,7 +41,6 @@ To do this, first follow the instructions in the Build & Run section above.
 Afterward, start the backend in watch mode by executing `npm run web:watch`.
 This will automatically recompile the TypeScript code after every change and restart the server after the compilation is complete.
 
-You can pass additional arguments to control the backend, such as `npm run web:watch -- --keepDB` to avoid recreating the database on every restart.
 Additionally, you can pass any other supported arguments.
 
 #### Configuration
@@ -63,13 +62,33 @@ The following command line arguments are available (i.e. run `npm run web -- --d
 |----------|------------------------------------------------------------------------------------|
 | \--debug | Sets the log level to debug which prints out tons of information                   |
 
-### Docs
+### Changes to the Data-Model
 
-For building the API Docs you need [apidoc](https://apidocjs.com/) in your PATH. 
-If you use the reference from the development dependencies, you will probably have to add `node_modules/.bin` manually to your PATH. 
-If you don't mind you can also install it globally using `npm install -g apidoc`.
-The build process is initiated using `npm run web:docs` and outputs the static html to `web/public/docs`. 
-You can either open the `index.html` manually or start the web server for serving.
+We use the [Prisma Schema](https://www.prisma.io/docs/concepts/components/prisma-schema) to describe our data model.
+When changing the data model, we have potentially differing states:
+- The *schema* as described in `prisma.schema`, this is the one we modify manually and from which we setup local and staging databases
+- The *migrations* found in /prisma/migrations, these are used to migrate the productive database
+- The state in the *local database*
+- The state in the *productive database*
+- The state in the *local typescript types* derived from Prisma, which we use to validate the backend code during build time
+We usually want to keep them all in sync.
+
+To start changing the data model, ensure that they all are in sync:
+1. Check out a recent state of the master branch to fetch the latest schema and migrations
+2. Run `npm run db:reset-for-migration` to ensure the local database and typescript is in the state described by the migrations
+
+Then modify `prisma.schema` to your needs. Afterwards run `npm run db:create-migration`, which shows the difference between the schema and the migrations, creates a new migration and rebuilds the local database and typescript based on that. Make sure to commit both the schema change and the migration in the same commit to simplify a potential revert. You probably also need to adapt `graphql/authorizations.ts` for the build to work again, as we enforce that all GraphQL entities have proper permissions assigned. Now you can make further changes to the code till the feature is ready. When opening a pull request, a Github Action ensures that the migrations are in sync with the schema. When we merge the pull request to master and trigger a productive deployment, the migration will be run on the productive database, bringing all states back into sync. 
+
+
+
+### Deployment
+
+Apart from local environments, the backend is deployed in the following ways:
+- Inside *Github Actions* we start the backend to run unit tests, integration tests and verify the Prisma Schema
+- *Review Apps* are created for each Pull Request, where the database is seeded with test content, external connections (Mailjet etc.) are disabled by default
+- The *Staging Environment* is automatically deployed from pushes to master, where the database is seeded with test content, some external connections are enabled to end-to-end test features
+- The *Productive Environment* is manually promoted from the staging environment, database migrations are applied on promotions
+
 
 ### Contributing
 
