@@ -5,6 +5,7 @@ import { prisma } from '../prisma';
 import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import assert from 'assert';
 import { getLogger } from '../logger/logger';
+import { userForPupil } from '../user';
 
 const REMIND_AFTER = 7; /* days */
 const REMOVE_AFTER = 14; /* days */
@@ -31,7 +32,7 @@ export async function requestInterestConfirmation(pupil: Pupil) {
         },
     });
 
-    await Notification.actionTaken(pupil, 'tutee_matching_confirm_interest', {
+    await Notification.actionTaken(userForPupil(pupil), 'tutee_matching_confirm_interest', {
         uniqueId: `${confirmationRequest.id}`,
         confirmationURL: getConfirmationURL(confirmationRequest, true),
         refusalURL: getConfirmationURL(confirmationRequest, false),
@@ -55,7 +56,7 @@ export async function sendInterestConfirmationReminders() {
     });
 
     for (const confirmationRequest of toRemind) {
-        await Notification.actionTaken(confirmationRequest.pupil, 'tutee_matching_confirm_interest_reminder', {
+        await Notification.actionTaken(userForPupil(confirmationRequest.pupil), 'tutee_matching_confirm_interest_reminder', {
             uniqueId: `${confirmationRequest.id}`,
             confirmationURL: getConfirmationURL(confirmationRequest, true),
             refusalURL: getConfirmationURL(confirmationRequest, false),

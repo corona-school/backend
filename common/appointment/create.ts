@@ -107,8 +107,8 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         duration: appointmentToBeCreated.duration,
                         subcourseId: appointmentToBeCreated.subcourseId,
                         appointmentType: lecture_appointmenttype_enum.group,
-                        organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
-                        participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                        organizerIds: instructors.map((i) => userForStudent(i.student).userID),
+                        participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                         zoomMeetingId,
                     },
                 })

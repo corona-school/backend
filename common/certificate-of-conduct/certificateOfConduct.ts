@@ -3,6 +3,7 @@ import { prisma } from '../prisma';
 import { deactivateStudent } from '../student/activation';
 import { getStudent } from '../../graphql/util';
 import * as Notification from '../notification';
+import { userForStudent } from '../user';
 
 const logger = getLogger('Certificate of Conduct');
 
@@ -17,7 +18,7 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
         },
     });
     logger.info(`Certificate of Conduct (${result.id}) created\n`);
-    await Notification.actionTaken(student, 'student_coc_updated', {});
+    await Notification.actionTaken(userForStudent(student), 'student_coc_updated', {});
     if (criminalRecords) {
         await deactivateStudent(student);
     }

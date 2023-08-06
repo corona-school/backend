@@ -49,7 +49,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
     await Promise.all(
         instructors.map(async (instructor) => {
             await Notification.actionTaken(
-                instructor,
+                userForStudent(instructor),
                 'instructor_course_participant_message',
                 {
                     instructorFirstName: instructor.firstname,
@@ -94,7 +94,7 @@ export async function contactParticipants(
     await Promise.all(
         selectedParticipants.map(async (participant) => {
             await Notification.actionTaken(
-                participant,
+                userForPupil(participant),
                 'participant_course_message',
                 {
                     courseName: course.name,
