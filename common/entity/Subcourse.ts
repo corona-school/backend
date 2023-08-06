@@ -2,7 +2,6 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    getManager,
     JoinColumn,
     JoinTable,
     ManyToMany,
@@ -104,22 +103,6 @@ export class Subcourse {
 
     @Column({ type: 'enum', enum: ChatType, enumName: 'chat_type', default: ChatType.NORMAL })
     groupChatType: ChatType;
-
-    async addLecture(newLecture: { start: Date; duration: number; instructor: { id: number } }) {
-        const instructor = this.instructors.find((it) => it.id === newLecture.instructor.id);
-
-        if (!instructor) {
-            throw new Error('Student is not instructor of this subcourse.');
-        }
-
-        const lecture = new Lecture();
-        lecture.instructor = instructor;
-        lecture.start = newLecture.start;
-        lecture.duration = newLecture.duration;
-
-        await getManager().save(Lecture, lecture);
-        this.lectures.push(lecture);
-    }
 
     sortedLectures(): Lecture[] {
         return this.lectures?.sort((a, b) => a.start.getTime() - b.start.getTime());
