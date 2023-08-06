@@ -1,8 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { User } from '../user';
 import assert from 'assert';
-import { userForPupil, userForStudent } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
