@@ -1,8 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
-import { getUserForTypeORM } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
@@ -52,8 +51,8 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
-    const studentUserId = getUserIdTypeORM(student);
-    const pupilUserId = getUserIdTypeORM(pupil);
+    const studentUserId = userForStudent(student).userID;
+    const pupilUserId = userForPupil(pupil).userID;
     const hosts = [student];
 
     let zoomMeetingId: string | null;
