@@ -1,30 +1,28 @@
-import { InstructorScreening } from '../entity/InstructorScreening';
-import { ProjectCoachingScreening } from '../entity/ProjectCoachingScreening';
-import { Screening } from '../entity/Screening';
+import { prisma } from '../prisma';
 
-export type AnyScreening = Screening | InstructorScreening | ProjectCoachingScreening;
+const DEFAULT_SCREENER_FIRSTNAME = 'DEFAULT_SCREENER';
+export const DEFAULT_SCREENER_NUMBER_ID = -1;
 
-export type ScreeningInfo = {
-    verified: boolean;
-    comment?: string;
-    knowsCoronaSchoolFrom?: string;
-};
-
-export function screeningInfoFrom(screening: AnyScreening): ScreeningInfo | undefined {
-    if (!screening) {
-        return undefined;
+export const defaultScreener = (async function getDefaultScreenerEntry() {
+    const existing = await prisma.screener.findUnique({ where: { oldNumberID: DEFAULT_SCREENER_NUMBER_ID } });
+    if (existing) {
+        return existing;
     }
 
-    return {
-        verified: screening.success,
-        comment: screening.comment,
-        knowsCoronaSchoolFrom: screening.knowsCoronaSchoolFrom,
-    };
-}
-
-export function hasRequiredScreeningInfo(s: ScreeningInfo) {
-    return (
-        typeof s.verified === 'boolean' &&
-        ((s.comment ? typeof s.comment === 'string' : true) || (s.knowsCoronaSchoolFrom ? typeof s.knowsCoronaSchoolFrom === 'string' : true))
-    );
-}
+    return await prisma.screener.create({
+        data: {
+            firstname: DEFAULT_SCREENER_FIRSTNAME,
+            lastname: '',
+            password: '',
+            verified: true,
+            id: DEFAULT_SCREENER_NUMBER_ID,
+            oldNumberID: DEFAULT_SCREENER_NUMBER_ID,
+            email: 'kontakt@lern-fair.de',
+            active: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            verification: null,
+            verifiedAt: new Date(),
+        },
+    });
+})();
