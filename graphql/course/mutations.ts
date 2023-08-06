@@ -12,10 +12,9 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
-import { course_schooltype_enum, course_subject_enum } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
-import { CourseState } from '../../common/entity/Course';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 
@@ -32,9 +31,9 @@ class PublicCourseCreateInput {
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
 
-    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
-    subject?: course_subject_enum;
-    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
+    subject?: CourseSubject;
+    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 
@@ -51,9 +50,9 @@ class PublicCourseEditInput {
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
 
-    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
-    subject?: course_subject_enum;
-    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
+    subject?: CourseSubject;
+    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 

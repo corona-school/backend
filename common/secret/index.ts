@@ -2,7 +2,7 @@ import { User } from '../user';
 import { secret as Secret } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
-import { SecretType } from '../entity/Secret';
+import { secret_type_enum as SecretType } from '@prisma/client';
 
 export * from './password';
 export * from './token';

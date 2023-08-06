@@ -1,5 +1,4 @@
-import { pupil as Pupil, student as Student } from '@prisma/client';
-import { RegistrationSource } from '../entity/Person';
+import { pupil as Pupil, student as Student, pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
@@ -26,7 +25,7 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
         return { allowed: false, reason: 'max-requests', limit: PUPIL_MAX_REQUESTS };
     }
 
-    if (pupil.registrationSource === '' + RegistrationSource.COOPERATION) {
+    if (pupil.registrationSource === '' + RegistrationSource.cooperation) {
         return { allowed: true };
     }
 

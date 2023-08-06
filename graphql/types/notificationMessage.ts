@@ -1,6 +1,5 @@
 import { ObjectType, Field, InputType } from 'type-graphql';
-import type { TranslationTemplate, NotificationMessage } from '../../common/notification/types';
-import { NotificationType } from '../../common/entity/Notification';
+import type { TranslationTemplate, NotificationMessage, NotificationType } from '../../common/notification/types';
 
 @InputType('MessageTemplate')
 export abstract class MessageTemplateType implements TranslationTemplate {

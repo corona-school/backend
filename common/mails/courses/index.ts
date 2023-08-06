@@ -1,13 +1,8 @@
-import { Subcourse } from '../../entity/Subcourse';
-import { Course } from '../../entity/Course';
 import { prisma } from '../../prisma';
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from '../index';
 import moment from 'moment-timezone';
 import { getLogger } from '../../logger/logger';
-import { Student } from '../../entity/Student';
-import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';
-import { CourseGuest, getCourseGuestLink } from '../../entity/CourseGuest';
 import * as Notification from '../../../common/notification';
 import { getFullName, userForPupil, userForStudent } from '../../user';
 import * as Prisma from '@prisma/client';
@@ -21,22 +16,6 @@ import { shuffleArray } from '../../../common/util/basic';
 import { NotificationContext } from '../../notification/types';
 
 const logger = getLogger('Course Notification');
-
-const dropCourseRelations = (course: Course | Prisma.course) => ({
-    ...course,
-    instructors: undefined,
-    guests: undefined,
-    correspondent: undefined,
-    subcourses: undefined,
-});
-
-const dropSubcourseRelations = (subcourse: Subcourse | Prisma.subcourse) => ({
-    ...subcourse,
-    instructors: undefined,
-    participants: undefined,
-    waitingList: undefined,
-    course: undefined,
-});
 
 export async function sendSubcourseCancelNotifications(course: Prisma.course, subcourse: Prisma.subcourse) {
     let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });

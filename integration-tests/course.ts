@@ -2,8 +2,8 @@ import { adminClient, defaultClient, test } from './base';
 import { pupilOne, pupilUpdated } from './user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './screening';
-import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
+import { course_coursestate_enum as CourseState } from "@prisma/client";
 
 const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
@@ -201,7 +201,7 @@ void test('Public Course Suggestions', async () => {
             (subcourse) =>
                 subcourse.published &&
                 !subcourse.cancelled &&
-                subcourse.course.courseState === CourseState.ALLOWED &&
+                subcourse.course.courseState === CourseState.allowed &&
                 // subcourse.minGrade <= pupilsGrade &&
                 // subcourse.maxGrade >= pupilsGrade &&
                 !subcourse.isParticipant &&

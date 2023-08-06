@@ -1,4 +1,3 @@
-import { SecretType } from '../entity/Secret';
 import { getUser, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
@@ -10,6 +9,7 @@ import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
 import { Moment } from 'moment';
 import { isEmailAvailable } from '../user/email';
+import { secret_type_enum as SecretType } from '@prisma/client';
 
 const logger = getLogger('Token');
 

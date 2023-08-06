@@ -1,8 +1,7 @@
-import { Prisma, subcourse } from '@prisma/client';
+import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
 import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
-import { CourseState } from '../../common/entity/Course';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { Role } from '../authorizations';
@@ -50,7 +49,7 @@ export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
         cancelled: { equals: false },
         course: {
             is: {
-                courseState: { equals: CourseState.ALLOWED },
+                courseState: { equals: CourseState.allowed },
             },
         },
         lecture: { some: { start: { gt: new Date() } } },

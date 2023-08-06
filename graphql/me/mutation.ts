@@ -14,9 +14,9 @@ import {
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
     student_module_enum as TeacherModule,
+    school as School,
 } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
-import { School } from '../../common/entity/School';
 import { RateLimit } from '../rate-limit';
 import {
     becomeInstructor,

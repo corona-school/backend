@@ -2,7 +2,6 @@ import { Concrete_notification as ConcreteNotification, Notification } from '../
 import { Arg, Authorized, FieldResolver, Int, Mutation, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
-import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import {
     bulkCreateConcreteNotifications,
     cancelDraftedAndDelayed,
@@ -16,6 +15,7 @@ import { getUsers } from '../util';
 import { getNotification } from '../../common/notification/notification';
 import { getUser } from '../../common/user';
 import { JSONResolver } from 'graphql-scalars';
+import { ConcreteNotificationState } from '../../common/notification/types';
 
 @Resolver((of) => ConcreteNotification)
 export class MutateConcreteNotificationsResolver {

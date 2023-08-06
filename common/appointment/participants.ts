@@ -1,8 +1,8 @@
-import { Lecture } from '../entity/Lecture';
 import { prisma } from '../prisma';
 import { User } from '../user';
+import { lecture as Appointment } from '@prisma/client';
 
-export async function isAppointmentParticipant(lecture: Lecture, user: User): Promise<boolean> {
+export async function isAppointmentParticipant(lecture: Appointment, user: User): Promise<boolean> {
     return !!(await prisma.lecture.findFirst({
         where: {
             id: lecture.id,

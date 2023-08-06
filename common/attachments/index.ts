@@ -1,11 +1,9 @@
-import { Student } from '../entity/Student';
-import { Pupil } from '../entity/Pupil';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile } from '../file-bucket';
 import { User } from '../user';
 import { friendlyFileSize } from '../util/basic';
-import { Attachment } from '../entity/Attachment';
+import { attachment as Attachment } from '@prisma/client';
 
 export interface File {
     originalname: string;

@@ -11,10 +11,10 @@ import { AuthenticationError, ForbiddenError } from './error';
 import { getUser, updateLastLogin, User, userForPupil, userForScreener, userForStudent } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
-import { defaultScreener } from '../common/entity/Screener';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
+import { defaultScreener } from '../common/util/screening';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 

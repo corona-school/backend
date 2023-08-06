@@ -1,7 +1,6 @@
 import { prisma } from '../prisma';
 import { isEmailAvailable } from '../user/email';
 import { v4 as uuidv4 } from 'uuid';
-import { School } from '../entity/School';
 import * as Notification from '../notification';
 import {
     pupil_projectfields_enum as ProjectField,
@@ -10,6 +9,7 @@ import {
     pupil_registrationsource_enum as RegistrationSource,
     pupil_languages_enum as Language,
     pupil_learninggermansince_enum,
+    school as School,
     pupil_schooltype_enum as SchoolType,
     Prisma,
     PrismaClient,
