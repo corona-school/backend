@@ -1,5 +1,4 @@
-import { Student as TypeORMStudent } from '../entity/Student';
-import { student, student as PrismaStudent } from '@prisma/client';
+import { student, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { randomBytes } from 'crypto';
 import { getLogger } from '../../common/logger/logger';
@@ -17,7 +16,7 @@ const verificationPageName = 'verifiedRemissionRequestPage';
 
 const dateFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const;
 
-export async function createRemissionRequest(student: TypeORMStudent | PrismaStudent) {
+export async function createRemissionRequest(student: Student) {
     const remissionRequest = await prisma.remission_request.findUnique({
         where: { studentId: student.id },
     });

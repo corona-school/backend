@@ -15,8 +15,6 @@ import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 
-// TODO: Replace TypeORM operations with Prisma
-
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
 export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;

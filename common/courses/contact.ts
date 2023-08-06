@@ -1,8 +1,6 @@
 import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { File } from '../attachments';
-import { Pupil as TypeORMPupil } from '../entity/Pupil';
-import { Student as TypeORMStudent } from '../entity/Student';
 import * as Notification from '../notification';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';

@@ -10,7 +10,6 @@ It is deployed in two Heroku Dynos, one answering API requests and one running j
 ```
                                        +-[ Backend Web Dyno ]-----------------------------------------------------------+
 web-user-app      ----[ REST    ]----> | (Express) /web/controllers                                                     |
-                                       |                                                  (TypeORM) /common/entity/*    |
 backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningController   (Prisma)  /prisma/*           | ----- SQL ----> PostgreSQL 
                                        |                                                                                |
    ReTool         ----[ GraphQL ]----> | (Apollo)  /graphql                             (Mailjet) /common/mails/*       | ----- REST ----> Mailjet        
