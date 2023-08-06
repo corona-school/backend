@@ -78,7 +78,7 @@ export interface BulkAction<Entity> {
     name: string;
     action: string;
     getData: () => Promise<Entity[]>;
-    getUser: (entity: Entity) => Promise<Person>;
+    getUser: (entity: Entity) => Promise<User>;
     getContext: (entity: Entity) => Promise<NotificationContext>;
     getActionDate: (entity: Entity) => Date;
 }
