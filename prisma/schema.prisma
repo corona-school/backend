@@ -1,8 +1,17 @@
+// This Schema is the single source of truth for our data model
+// From it we generate
+// - SQL Migrations to set up / migrate the underlying PostgreSQL databases
+// - Typescript Types to make all the logic on top of the data typesafe
+// - GraphQL Resolvers, to automatically expose the data to clients (enriched with authorization checks)
+//
+// Previously we used TypeORM as our ORM, and before that the database was migrated manually, 
+// and we still have some legacy from that time (i.e. 'strings as json' ...)
+
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls"]
 }
 
+// 'prisma generate' also generates GraphQL Resolvers:
 generator typegraphql {
   provider = "typegraphql-prisma"
   output   = "../graphql/generated"
@@ -13,15 +22,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// An attachment is a file uploaded to an object storage and attached to a notification
+// We also store it in the DB to be able to track the file's lifecycle, i.e. delete it when the notification is archived
 model attachment {
   id                String   @id(map: "PK_d2a80c3a8d467f08a750ac4b420") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   uploaderID        String   @db.VarChar
   filename          String   @db.VarChar
   size              Int
+  // The attachmentGroupId acts as an n to m mapping between concrete notifications and attachments
   attachmentGroupId String   @db.VarChar
   date              DateTime @db.Timestamp(6)
 }
 
+// DEPRECATED
+// Was used for course meetings before Zoom was introduced in Summer 2023
 model bbb_meeting {
   id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)
@@ -33,18 +47,22 @@ model bbb_meeting {
   alternativeUrl String?  @db.VarChar
 }
 
+// A Concrete Notification represents a Notification sent to one specific user
 model concrete_notification {
   id                Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
   userId            String   @db.VarChar
   notificationID    Int
+  // The contextID moves context.uniqueId out of the JSON field, to be able to query it efficiently:
   contextID         String?  @db.VarChar
   context           Json     @db.Json
   attachmentGroupId String?  @db.VarChar
   sentAt            DateTime @db.Timestamp(6)
-  state             Int
+  state             Int // This should be an enum
   error             String?  @db.VarChar
 }
 
+// A Course acts as a template for multiple Subcourses
+// (though historically the UI was never built to reuse a Course, so most Courses have exactly one Subcourse)
 model course {
   id                         Int                          @id(map: "PK_bf95180dd756fd204fb01ce4916") @default(autoincrement())
   createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
@@ -52,14 +70,20 @@ model course {
   name                       String                       @db.VarChar
   outline                    String                       @db.VarChar
   description                String                       @db.VarChar
+  // The imageKey refers to a file in the object store and can be resolved to a file URL
   imageKey                   String?                      @db.VarChar
   category                   course_category_enum
   subject                    course_subject_enum?
   schooltype                 course_schooltype_enum[]     @default([other])
+  // The courseState represents the course approval flow, where the Support checks and approves courses
+  // Created -> Submitted -> Approved
   courseState                course_coursestate_enum      @default(created)
   screeningComment           String?                      @db.VarChar
+  // DEPRECATED: The publicRanking was used historically to order courses in the UI
   publicRanking              Int                          @default(0)
   allowContact               Boolean                      @default(false)
+  // DEPRECATED: The correspondent was historically used as the main contact responsible
+  //             Instead, use the course_instructors_student relation
   correspondentId            Int?
   student                    student?                     @relation(fields: [correspondentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0682a6fe3bace3ed13377c1b1ca")
   course_guest               course_guest[]
@@ -68,6 +92,7 @@ model course {
   subcourse                  subcourse[]
 }
 
+// DEPRECATED: This was filled from BBB Meetings, replaced with the zoomMeetingReports field of lectures
 model course_attendance_log {
   id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
   createdAt    DateTime @default(now()) @db.Timestamp(6)
@@ -80,6 +105,7 @@ model course_attendance_log {
   pupil        pupil?   @relation(fields: [pupilId], references: [id], onDelete: Cascade, map: "FK_acc59dc4321a888376f7fad5a3d")
 }
 
+// DEPRECATED: This was used historically to invite guests to BBB Course Meetings
 model course_guest {
   id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
@@ -94,6 +120,7 @@ model course_guest {
   student   student? @relation(fields: [inviterId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0843258a46daa7d91dc2cef917")
 }
 
+// A course instructor can edit a course and create subcourses from it
 model course_instructors_student {
   courseId  Int
   studentId Int
@@ -105,6 +132,7 @@ model course_instructors_student {
   @@index([studentId], map: "IDX_66b47860afa3098729925338c1")
 }
 
+// DEPRECATED: Course Instructors were able to send a participation certificate to some participants of a course
 model course_participation_certificate {
   id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
   createdAt   DateTime   @default(now()) @db.Timestamp(6)
@@ -119,6 +147,7 @@ model course_participation_certificate {
 
 model course_tag {
   id                     Int                      @id(map: "PK_6c6a0ad4b5f67db91353e5b2ae1") @default(autoincrement())
+  // DEPRECATED: Both id and (name, category) are unique, no need for another unique "identifier"
   identifier             String                   @unique(map: "IDX_275561ded9309f727f8e795bf1") @db.VarChar
   name                   String                   @db.VarChar
   category               String                   @db.VarChar
@@ -136,6 +165,8 @@ model course_tags_course_tag {
   @@index([courseId], map: "IDX_d6261ad9de1fc5f06946095bf8")
 }
 
+// DEPRECATED: There once was a project where 'experts' in certain areas would help pupils with 'Jugend Forscht' projects ("jufo")
+// For that we collected student skills for some time
 model expert_data {
   id                                       Int                                        @id(map: "PK_096e6e0f8fcc7e142b555fde91e") @default(autoincrement())
   createdAt                                DateTime                                   @default(now()) @db.Timestamp(6)
@@ -166,11 +197,16 @@ model expertise_tag {
   expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
 }
 
+// If a Student wants to hold Courses, they are screened as Instructors by the Support Team
+// Durinng the Screening we also collect some additional user information
 model instructor_screening {
   id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
   comment               String?                   @db.VarChar
   jobStatus             screening_jobstatus_enum?
+  // This is a String and not an enum to be able to quickly support further values without a DB migration,
+  // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
+  // so a COUNT(*) GROUP BY should work relatively well:
   knowsCoronaSchoolFrom String?                   @db.VarChar
   createdAt             DateTime                  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
@@ -180,6 +216,7 @@ model instructor_screening {
   screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
+// DEPRECATED: We once had a cooperation with Jugend Forscht ("jufo")
 model jufo_verification_transmission {
   id        Int      @id(map: "PK_3e81acd237ad0b7e97003c835d8") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
@@ -188,22 +225,32 @@ model jufo_verification_transmission {
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
+// Till Summer 2023 we only offered "Course Lectures", so a meeting for a Subcourse at a particular point in time
+// Then we evolved "Course Lectures" into "Appointments", were any group of users could meet together.
+// In the codebase we call this 'appointment' and also still 'lecture'
 model lecture {
   id                    Int                          @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                     @default(now()) @db.Timestamp(6)
   start                 DateTime                     @db.Timestamp(6)
-  duration              Int
+  duration              Int // in seconds
   title                 String?
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
   isCanceled            Boolean?                     @default(false)
+  // A set of UserIDs of users that can modify the appointment:
   organizerIds          String[]                     @default([])
+  // A set of UserIDs of users that only participate:
   participantIds        String[]                     @default([])
+  // A subset of organizerIds and participantIds that have declined the appointment:
   declinedBy            String[]                     @default([])
+  // A Zoom Meeting might be attached to an Appointment (unless Zoom is turned off):
   zoomMeetingId         String?                      @db.VarChar
+  // When an organizer leaves a Zoom Meeting, we collect a Zoom Meeting Report from the API:
   zoomMeetingReport     Json[]                       @default([]) @db.Json
+  // DEPRECATED: This was used for Course Lectures before the evolution to Appointments. Use organizerIds instead
   instructorId          Int?
+  // An Appointment might be related to a Subcourse or a Match - but it can also be a standalone meeting:
   subcourseId           Int?
   matchId               Int?
   subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
@@ -212,30 +259,54 @@ model lecture {
   course_attendance_log course_attendance_log[]
 }
 
+
+// The Transaction Log is supposed to store a history of business transactions for a user,
+// however as this is not filled consistently across the codebase one can only see half of the user actions
 model log {
   id        Int              @id(map: "PK_350604cbdf991d5930d9e618fbd") @default(autoincrement())
   logtype   log_logtype_enum @default(misc)
   createdAt DateTime         @default(now()) @db.Timestamp(6)
+  // Instead of the UserID, this uses the WixID of pupils and students (which also happens to be a unique identifier)
   user      String           @db.VarChar
+  // This is usually valid JSON:
   data      String           @db.VarChar
 }
 
 model match {
   id                       Int               @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  // DEPRECATED: The uuid was used to generate non-guessable meeting room links, replaced by Appointments/Zoom
   uuid                     String            @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved                Boolean           @default(false)
   dissolvedAt              DateTime?         @db.Timestamp(6)
+  // At some point in time the dissolve UI of pupils and students deviated,
+  // and they would write different ids for the same dissolve reason into this field
+  // As we do not store who dissolved the match, it is quite hard to interpret this number:
+  // (but you can make some weird joins with the log table to find out who dissolved it)
   dissolveReason           Int?
+  // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
+  // The functionality was removed a long time ago, and is generally replaced with Appointments
   proposedTime             DateTime?         @db.Timestamp(6)
   createdAt                DateTime          @default(now()) @db.Timestamp(6)
   updatedAt                DateTime          @default(now()) @db.Timestamp(6)
+  // DEPRECATED: With the Notification System we now use Concrete Notifications to track 
+  // whether a notification was already sent. These booleans were used a long time ago by some cron jobs:
   feedbackToPupilMail      Boolean           @default(false)
   feedbackToStudentMail    Boolean           @default(false)
   followUpToPupilMail      Boolean           @default(false)
   followUpToStudentMail    Boolean           @default(false)
+
+  // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
   source                   match_source_enum @default(matchedinternal)
+
+  // FirstMatchRequest - createdAt gives a rough estimate how long a student / pupil had to wait for a match
+  // As a user can create multiple match requests, and we do not know which match request lead to which match,
+  // we store the time of the first match request. So this can be seen as an upper boundary, but the average user
+  // has only one match request at a time anyways
   studentFirstMatchRequest DateTime?         @db.Timestamp(6)
   pupilFirstMatchRequest   DateTime?         @db.Timestamp(6)
+
+  // Since the introduction of Match Pools we also track whether a match was created for Lern-Fair Now or Lern-Fair Plus.
+  // Previously one could not distinguish plus and now matches
   matchPool                String?           @db.VarChar
   studentId                Int?
   pupilId                  Int?
@@ -243,9 +314,12 @@ model match {
   student                  student?          @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
   lecture                  lecture[]
 
+  // Pupils never get matched to the same Student again,
+  // if they want to continue their match we reactivate the existing match instead
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
 
+// DEPRECATED: We once had a third group of users apart from pupils and students called mentors
 model mentor {
   id                           Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
   createdAt                    DateTime                @default(now()) @db.Timestamp(6)
@@ -271,26 +345,43 @@ model mentor {
   imageUrl                     String?                 @db.VarChar
 }
 
+// A template for a Notification sent to a User
 model notification {
   id                  Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  // If set, the user is notified via Mail using this template:
   mailjetTemplateId   Int?
   description         String                    @db.VarChar
   active              Boolean
+  // An enum, was intended to be able to i.e. notify the teacher or parent of a pupil
+  // Never used in reality so far
   recipient           Int
   onActions           String[]
+  // Users can toggle notifications on or off per type:
   type                notification_type_enum    @default(legacy)
   cancelledOnAction   String[]
-  delay               Int?
-  interval            Int?
+  // If set, the notification is not sent immeadiately but after the delay:
+  delay               Int? // hours
+  // If set, the notification is repeated indefinetly till an action in the 'cancelledOnAction' list is triggered:
+  interval            Int? // hours
+  // The sender influences the sender email address, so that replies directly go to the correct team
   sender              notification_sender_enum?
+  // If set a hook is executed when the Notification is sent out:
   hookID              String?                   @db.VarChar
+  // For Notifications that are not related to any actions (= campaigns), this provides a sample context
+  // For Notifications with actions one can just take the subset of all sample contexts of all actions
+  // This is used to validate message templates to only use the right variables, and to show a rich UI in Retool
+  // for maintaining notifications
   sample_context      Json?                     @db.Json
+  // If set, the user gets in-app notifications:
   message_translation message_translation[]
 }
 
+// A certificate that a student helped one pupil (= match), signed by the pupil or their parents
 model participation_certificate {
   id                Int       @id(map: "PK_431b3e203adb26c29ecef120034") @default(autoincrement())
+  // Non-guessable, used for the public verification endpoint that everyone can visit to check that a certificate was issued by us
   uuid              String    @unique(map: "IDX_5c7ebcd2f3fc7ed6022a478980") @db.VarChar
+  // comma-separated strings:
   subjects          String    @db.VarChar
   categories        String    @db.VarChar
   certificateDate   DateTime  @default(now()) @db.Timestamp(6)
@@ -300,7 +391,10 @@ model participation_certificate {
   hoursTotal        Decimal   @db.Decimal
   medium            String    @db.VarChar
   ongoingLessons    Boolean   @default(false)
+  // enum, can be 'manual' if the pupil signs the certificate manually be downloading it,
+  // or 'awaiting-approval' -> 'aproved' if the signature functionality of the user app is used
   state             String    @default("manual") @db.VarChar
+  // Either the signaturePupil or signatureParent is set, depending on whether the pupil is a minor and needs the signature of their parent
   signaturePupil    Bytes?
   signatureParent   Bytes?
   signatureLocation String?   @db.VarChar
@@ -311,6 +405,7 @@ model participation_certificate {
   student           student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_b8bb6da6b807a7b382218947647")
 }
 
+// DEPRECATED: We once had a project were students helped pupils with their Jugend-Forscht Project, and had a separate screening for that
 model project_coaching_screening {
   id                    Int       @id(map: "PK_4a1d3d3d6f0fa2b36c8347e357c") @default(autoincrement())
   success               Boolean
@@ -324,6 +419,7 @@ model project_coaching_screening {
   screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_91fa06e6e9aa04b5da93d034cae")
 }
 
+// DEPRECATED
 model project_field_with_grade_restriction {
   id           Int                                                    @id(map: "PK_9f450f4d0e5e20c5a0a6fee6dea") @default(autoincrement())
   createdAt    DateTime                                               @default(now()) @db.Timestamp(6)
@@ -337,6 +433,7 @@ model project_field_with_grade_restriction {
   @@unique([projectField, studentId], name: "UQ_PROJECT_FIELDS", map: "UQ_PROJECT_FIELDS")
 }
 
+// DEPRECATED
 model project_match {
   id             Int      @id(map: "PK_14902d121cc871092943b3857e5") @default(autoincrement())
   uuid           String   @unique(map: "IDX_58dbaf83a377f347d9fab47fc5") @db.VarChar
@@ -360,35 +457,57 @@ model pupil {
   lastname                                     String?                                        @db.VarChar
   active                                       Boolean                                        @default(true)
   email                                        String                                         @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
+  // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
+  //             Replaced by Secret table
   verification                                 String?                                        @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
+  // If set, the user email was verified:
   verifiedAt                                   DateTime?                                      @db.Timestamp(6)
+  // The account was anonymized, and all personal data was replaced with placeholders
+  // (but still keep the entry to keep foreign keys consistent and for statistics):
   isRedacted                                   Boolean                                        @default(false)
+  // The last time the notification popup was opened in the App:
   lastTimeCheckedNotifications                 DateTime?                                      @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                      Json?                                          @db.Json
+  // The last time the user logged in to the Backend through GraphQL (= with the App):
   lastLogin                                    DateTime?                                      @default(now()) @db.Timestamp(6)
+  // DEPRECATED: We once had a registration form through Wix, the wix_id is still sometimes used as a foreign key
+  // for users, as unlike pupil.id/student.id it is unique across entities
   wix_id                                       String                                         @unique(map: "IDX_16c46adbb2885e591364e476e5") @db.VarChar
   wix_creation_date                            DateTime                                       @db.Timestamp(6)
   state                                        pupil_state_enum                               @default(other)
   schooltype                                   pupil_schooltype_enum                          @default(other)
+  // DEPRECATED: ?
   msg                                          String?                                        @db.VarChar
   grade                                        String?                                        @db.VarChar
+  // DEPRECATED: Replaced by notificationPreferences
   newsletter                                   Boolean                                        @default(false)
+  // 'isPupil' indicated whether a pupil wants to do tutoring, should rather be 'isTutee'
   isPupil                                      Boolean                                        @default(false)
+  // JSON with the format: [{ name: "Deutsch" }, { name: "Englisch", mandatory: true }]
   subjects                                     String?                                        @db.VarChar
+  // Number of matches a pupil wants to have, usually limited to one
   openMatchRequestCount                        Int                                            @default(1)
   firstMatchRequest                            DateTime?                                      @db.Timestamp(6)
+  // indicates whether a pupil wants to join courses, usually true
   isParticipant                                Boolean                                        @default(true)
+  
+  // DEPRECATED:
   isProjectCoachee                             Boolean                                        @default(false)
   projectFields                                pupil_projectfields_enum[]                     @default([])
   isJufoParticipant                            String                                         @default("unsure") @db.VarChar
   openProjectMatchRequestCount                 Int                                            @default(1)
   projectMemberCount                           Int                                            @default(1)
+  
   languages                                    pupil_languages_enum[]                         @default([])
   learningGermanSince                          pupil_learninggermansince_enum?
+  // Can be used to match some pupils earlier than others, rarely used
   matchingPriority                             Int                                            @default(0)
   lastUpdatedSettingsViaBlocker                DateTime?                                      @db.Timestamp(6)
+  // Used some time ago when we had cooperations with certain schools:
   teacherEmailAddress                          String?                                        @db.VarChar
+  // The regration form that was used by the pupil, mainly used to detect Lern-Fair Plus users
   registrationSource                           pupil_registrationsource_enum                  @default(normal)
+  // DEPRECATED: We had a cooperation with the 'Codu Studie' and tracked specific users for that study:
   coduToken                                    String?                                        @unique(map: "UQ_530c5238700824af32352324363") @db.VarChar
   aboutMe                                      String                                         @default("") @db.VarChar
   matchReason                                  String                                         @default("") @db.VarChar
@@ -406,18 +525,24 @@ model pupil {
   waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
+// To only match active users, we sent interest confirmation requests to pupils before matching them
+// Now replaced by Pupil Screening, but still keeping it alive as it might be useful in the future again:
 model pupil_tutoring_interest_confirmation_request {
   id               Int       @id(map: "PK_5f3515ba0bd182b1cc34f06ef11") @default(autoincrement())
   createdAt        DateTime  @default(now()) @db.Timestamp(6)
   updatedAt        DateTime  @default(now()) @db.Timestamp(6)
   status           String    @default("pending") @db.VarChar
+  // invalidated if a Match was created or the Match Request was revoked
   invalidated      Boolean   @default(false)
+  // DEPRECATED: Was used to offer a direct link for confirmation, now replaced by an important notification in the App
   token            String    @unique(map: "IDX_8108668f1658b14b9db299634e") @db.VarChar
+  // DEPRECATED: Replaced by the Notification System
   reminderSentDate DateTime? @db.Timestamp(6)
   pupilId          Int?
   pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 
+// We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free
 model remission_request {
   id        Int      @id(map: "PK_4ea2cbe40d9d5cfe1d39a44558f") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
@@ -427,12 +552,14 @@ model remission_request {
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5b96e9df53055059ad903ebc98c")
 }
 
+// Incomplete List of German Schools, mainly filled with past cooperations
 model school {
   id                Int                    @id(map: "PK_57836c3fe2f2c7734b20911755e") @default(autoincrement())
   createdAt         DateTime               @default(now()) @db.Timestamp(6)
   updatedAt         DateTime               @default(now()) @db.Timestamp(6)
   name              String                 @db.VarChar
   website           String?                @unique(map: "IDX_b365d0ef66facdfeb842d45683") @db.VarChar
+  // Used to associate pupils with schools through their teacher's mail address
   emailDomain       String                 @unique(map: "IDX_f3f92f9182a7fccc2858fd63cc") @db.VarChar
   state             school_state_enum?     @default(other)
   schooltype        school_schooltype_enum @default(other)
@@ -440,6 +567,9 @@ model school {
   pupil             pupil[]
 }
 
+// A member of the Lern-Fair team doing screenings, there is one 'Default Screener' account used by Admins
+// Historically there was a dedicated Screening Tool were screeners could log in.
+// Nowadays Screenings are done via Retool, with the Default Screener
 model screener {
   id                           Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
   createdAt                    DateTime                     @default(now()) @db.Timestamp(6)
@@ -454,19 +584,25 @@ model screener {
   lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
   lastLogin                    DateTime?                    @default(now()) @db.Timestamp(6)
+  // DEPRECATED, Use Secret instead
   password                     String                       @db.VarChar
   verified                     Boolean?                     @default(false)
+  // DEPRECATED:
   oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
   instructor_screening         instructor_screening[]
   project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
 }
 
+// A Screening for Students that want to tutor pupils
 model screening {
   id                    Int                       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
   comment               String?                   @db.VarChar
   jobStatus             screening_jobstatus_enum?
+  // This is a String and not an enum to be able to quickly support further values without a DB migration,
+  // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
+  // so a COUNT(*) GROUP BY should work relatively well:
   knowsCoronaSchoolFrom String?                   @db.VarChar
   createdAt             DateTime                  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
@@ -484,26 +620,41 @@ model student {
   lastname                                  String?                                @db.VarChar
   active                                    Boolean                                @default(true)
   email                                     String                                 @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
+  // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
+  //             Replaced by Secret table
   verification                              String?                                @unique(map: "IDX_34cbafcb0bcdfb2b6de9010acb") @db.VarChar
+  // If set, the user email was verified:
   verifiedAt                                DateTime?                              @db.Timestamp(6)
+  // The account was anonymized, and all personal data was replaced with placeholders
+  // (but still keep the entry to keep foreign keys consistent and for statistics):
   isRedacted                                Boolean                                @default(false)
   lastTimeCheckedNotifications              DateTime?                              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                                  @db.Json
   lastLogin                                 DateTime?                              @default(now()) @db.Timestamp(6)
+  // DEPRECATED: We once had a registration form through Wix, the wix_id is still sometimes used as a foreign key
+  // for users, as unlike pupil.id/student.id it is unique across entities
   wix_id                                    String                                 @unique(map: "IDX_545d0c66310ca5df98b4765cc7") @db.VarChar
   wix_creation_date                         DateTime                               @db.Timestamp(6)
+  // DEPRECATED: This was intended to notify users via SMS, but never landed in the UI:
   phone                                     String?                                @db.VarChar
   feedback                                  String?                                @db.VarChar
+  // DEPRECATED: Replaced by notificationPreferences
   newsletter                                Boolean                                @default(false)
+  // Wether the user wants to do tutoring, should rather be 'isTutor'
   isStudent                                 Boolean                                @default(false)
+  // JSON with the format: [{ name: "Deutsch", minGrade: 1, maxGrade: 10 }]
   subjects                                  String?                                @db.VarChar
   openMatchRequestCount                     Int                                    @default(1)
   firstMatchRequest                         DateTime?                              @db.Timestamp(6)
+  // DEPRECATED:
   isCodu                                    Boolean                                @default(false)
+  // Whether the user wants to do courses
   isInstructor                              Boolean                                @default(false)
+  // DEPRECATED: ?
   msg                                       String?                                @db.VarChar
   state                                     student_state_enum?                    @default(other)
   university                                String?                                @db.VarChar
+  // DEPRECATED
   module                                    student_module_enum?
   moduleHours                               Int?
   isProjectCoach                            Boolean                                @default(false)
@@ -511,19 +662,26 @@ model student {
   hasJufoCertificate                        Boolean?
   jufoPastParticipationInfo                 String?                                @db.VarChar
   jufoPastParticipationConfirmed            Boolean?
+  // DEPRECATED: Replaced by screening.jobInfo
   isUniversityStudent                       Boolean?
+  // DEPRECATED
   openProjectMatchRequestCount              Int                                    @default(1)
   sentJufoAlumniScreeningReminderCount      Int                                    @default(0)
   lastSentJufoAlumniScreeningInvitationDate DateTime?                              @db.Timestamp(6)
+  // Might still be in use somewhere, is used to mark students that support in 'Deutsch als Zweitsprache'
   supportsInDaZ                             Boolean?
   languages                                 student_languages_enum[]               @default([])
+  // DEPRECATED: Replaced by Notification System
   sentScreeningReminderCount                Int                                    @default(0)
   lastSentScreeningInvitationDate           DateTime?                              @db.Timestamp(6)
   sentInstructorScreeningReminderCount      Int                                    @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                              @db.Timestamp(6)
+  
   lastUpdatedSettingsViaBlocker             DateTime?                              @db.Timestamp(6)
+  // The registration form used to register the user, mainly used to find Lern-Fair Plus students
   registrationSource                        student_registrationsource_enum        @default(normal)
   aboutMe                                   String                                 @default("") @db.VarChar
+  // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
   zoomUserId                                String?                                @db.VarChar
   certificate_of_conduct                    certificate_of_conduct?
   course                                    course[]
@@ -544,6 +702,7 @@ model student {
   subcourse_instructors_student             subcourse_instructors_student[]
 }
 
+// A concrete course with participants, each course might have multiple subcourses with different instructors
 model subcourse {
   id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
   createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
@@ -556,6 +715,8 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
+  // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants 
+  // of a Subcourse might change, we create a random ID for it and store it:
   conversationId                   String?                            @db.VarChar
   allowChatContactProspects        Boolean                            @default(true)
   allowChatContactParticipants     Boolean                            @default(true)
@@ -570,6 +731,7 @@ model subcourse {
   waiting_list_enrollment          waiting_list_enrollment[]
 }
 
+// This is redundant with the Appointment.organizerIds of the appointments attached to the Subcourse and should generally be in sync
 model subcourse_instructors_student {
   subcourseId Int
   studentId   Int
@@ -581,6 +743,7 @@ model subcourse_instructors_student {
   @@index([studentId], map: "IDX_b36e4eeff8040a09cc811dbb26")
 }
 
+// This is redundant with the Appointment.participantIds of the appointments attached to the Subcourse and should generally be in sync
 model subcourse_participants_pupil {
   subcourseId Int
   pupilId     Int
@@ -592,6 +755,7 @@ model subcourse_participants_pupil {
   @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
 }
 
+// DEPRECATED - Replaced by waiting_list_enrollment
 model subcourse_waiting_list_pupil {
   subcourseId Int
   pupilId     Int
@@ -603,25 +767,31 @@ model subcourse_waiting_list_pupil {
   @@index([subcourseId], map: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
+// We require a Certifcate of Conduct to be handed in by Students, which is verified by Support
 model certificate_of_conduct {
   id               Int      @id(map: "PK_95058dd1916a7fb5ff77170c374") @default(autoincrement())
   createdAt        DateTime @default(now()) @db.Timestamp(6)
   updatedAt        DateTime @default(now()) @db.Timestamp(6)
+  // Filled by support:
   dateOfInspection DateTime @db.Timestamp(6)
   dateOfIssue      DateTime @db.Timestamp(6)
   criminalRecords  Boolean
+  
   studentId        Int?     @unique(map: "REL_11ea2a4aad67ab6428a6ca21b4")
   student          student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_11ea2a4aad67ab6428a6ca21b41")
 }
 
+// Every time we run the matching algorithm, we collect its stats:
 model match_pool_run {
   id             Int      @id(map: "PK_94a8e7729d108dfa44fb65c1a10") @default(autoincrement())
+  // By filtering Match.createdAt that are close to runAt, one can find the matches created by this run:
   runAt          DateTime @default(now()) @db.Timestamp(6)
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
 }
 
+// A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
 model secret {
   id          Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
   createdAt   DateTime         @default(now()) @db.Timestamp(6)
@@ -630,9 +800,14 @@ model secret {
   secret      String           @db.VarChar
   expiresAt   DateTime?        @db.Timestamp(6)
   lastUsed    DateTime?        @db.Timestamp(6)
+  // For Tokens created on a device, this contains the User-Agent of the Device
+  // Might also be 'Support' if someone from Support logs in on behalf of the user
+  // For EMAIL_TOKENs, contains the email the token is sent to. Can be used to confirm additional email addresses
+  // (i.e. during email address change)
   description String?          @db.VarChar
 }
 
+// DEPRECATED: Used by our old ORM to track migrations, to be removed once Prisma Migrations work reliably
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model typeorm_metadata {
   type     String  @db.VarChar
@@ -645,6 +820,7 @@ model typeorm_metadata {
   @@ignore
 }
 
+// A Message Template for a Notification in a specific language
 model message_translation {
   id             Int                               @id(map: "PK_159f92cfb8a0b269fbc863c74ee") @default(autoincrement())
   template       Json?                             @db.Json
@@ -654,6 +830,7 @@ model message_translation {
   notification   notification?                     @relation(fields: [notificationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5ae486c5ef53f5335af8a4ae260")
 }
 
+// An important information shown on the landing page of the App:
 model important_information {
   id          Int                                   @id(map: "PK_bcd2068ca02cc6f323bf01754a5") @default(autoincrement())
   title       String
@@ -663,17 +840,21 @@ model important_information {
   language    important_information_language_enum   @default(de)
 }
 
+// Before matching a pupil, in some match pools we ask them to do a screening beforehand:
 model pupil_screening {
   id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
   createdAt   DateTime                    @default(now()) @db.Timestamp(6)
   updatedAt   DateTime                    @default(now()) @db.Timestamp(6)
   status      pupil_screening_status_enum @default(pending)
+  // invalidated when a Match is created or the Match Request is revoked
   invalidated Boolean                     @default(false)
   comment     String?                     @db.VarChar
   pupilId     Int?
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 }
 
+// When a subcourse is already full, pupils can still enroll on a waiting list
+// The instructors can then decide to accept them as participants
 model waiting_list_enrollment {
   id          Int        @id(map: "PK_7c3bb40b03f8c4e1325ed4df416") @default(autoincrement())
   createdAt   DateTime   @default(now()) @db.Timestamp(6)
@@ -699,6 +880,7 @@ enum course_coursestate_enum {
   cancelled
 }
 
+// DEPRECATED
 enum expert_data_allowed_enum {
   pending
   yes
@@ -707,7 +889,7 @@ enum expert_data_allowed_enum {
 
 enum log_logtype_enum {
   misc
-  verificationRequets
+  verificationRequets // sic!
   verified
   matchDissolve
   projectMatchDissolve
@@ -739,12 +921,14 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestStatusChange
 }
 
+// DEPRECATED
 enum match_source_enum {
   imported
   matchedexternal
   matchedinternal
 }
 
+// DEPRECATED
 enum mentor_division_enum {
   facebook
   email
@@ -753,6 +937,7 @@ enum mentor_division_enum {
   supervision
 }
 
+// DEPRECATED
 enum mentor_expertise_enum {
   language_difficulties_and_communication @map("language difficulties and communication")
   specialized_expertise_in_subjects       @map("specialized expertise in subjects")
@@ -761,6 +946,7 @@ enum mentor_expertise_enum {
   self_organization                       @map("self-organization")
 }
 
+// DEPRECATED
 enum project_field_with_grade_restriction_projectfield_enum {
   Arbeitswelt
   Biologie
@@ -802,6 +988,7 @@ enum pupil_learninggermansince_enum {
   less_than_one  @map("<1")
 }
 
+// DEPRECATED
 enum pupil_projectfields_enum {
   Arbeitswelt
   Biologie
