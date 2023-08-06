@@ -1,4 +1,3 @@
-import { EntityManager } from 'typeorm';
 import { CourseState } from '../../../common/entity/Course';
 import moment from 'moment-timezone';
 import { getLogger } from '../../../common/logger/logger';
@@ -7,12 +6,12 @@ import { prisma } from '../../../common/prisma';
 
 const logger = getLogger();
 
-export default async function execute(manager: EntityManager) {
+export default async function execute() {
     logger.info('CourseReminder job: looking for subcourses with first lecture in two days...');
-    await sendUpcomingCourseReminders(manager);
+    await sendUpcomingCourseReminders();
 }
 
-async function sendUpcomingCourseReminders(manager: EntityManager) {
+async function sendUpcomingCourseReminders() {
     /* eslint camelcase: 'off' */
     const feasibleSubcourses = await prisma.subcourse.findMany({
         where: {

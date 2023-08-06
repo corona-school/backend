@@ -21,7 +21,6 @@ import { AppointmentType } from './common/entity/Lecture';
 import { create as createCoC } from './common/certificate-of-conduct/certificateOfConduct';
 import { addCourseInstructor, addSubcourseInstructor } from './common/courses/states';
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
-import { createConnection } from 'typeorm';
 import { createCourseTag } from './common/courses/tags';
 import { course_category_enum as CourseCategory, } from "@prisma/client";
 
@@ -37,8 +36,6 @@ void (async function setupDevDB() {
     }
 
     logger.info('Starting to Seed DB');
-
-    await createConnection();
 
     const pupil1 = await registerPupil({
         firstname: 'Max',
