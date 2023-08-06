@@ -8,7 +8,6 @@ import cookieParser from 'cookie-parser';
 import favicon from 'express-favicon';
 import { getLogger } from '../common/logger/logger';
 import { startTransaction } from '../common/session';
-import { allStateCooperationSubdomains } from '../common/entity/State';
 
 import { apolloServer } from '../graphql';
 import { WebSocketService } from '../common/websocket';
@@ -64,7 +63,7 @@ export const server = (async function setupWebserver() {
 
     let origins: (string | RegExp)[];
 
-    const allowedSubdomains = [...allStateCooperationSubdomains, 'jufo', 'partnerschule', 'drehtuer', 'codu'];
+    const allowedSubdomains = ['jufo', 'partnerschule', 'drehtuer', 'codu'];
     if (process.env.ENV == 'dev') {
         origins = [
             'http://localhost:3000',
