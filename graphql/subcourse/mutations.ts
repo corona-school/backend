@@ -161,6 +161,11 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await publishSubcourse(subcourse);
+        const course = await getCourse(subcourse.courseId);
+        logger.info(`Subcourse(${subcourseId}) was published by User(${context.user!.userID})`);
+        if (course.category !== 'focus') {
+            await sendPupilCoursePromotion(subcourse);
+        }
         return true;
     }
 
@@ -171,6 +176,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await fillSubcourse(subcourse);
+        logger.info(`Subcourse(${subcourseId}) was filled by User(${context.user!.userID})`);
         return true;
     }
 
@@ -184,6 +190,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
 
+        logger.info(`Subcourse(${subcourseId}) was edited by User(${context.user!.userID})`);
         return await editSubcourse(subcourse, data);
     }
 
@@ -198,6 +205,7 @@ export class MutateSubcourseResolver {
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
+        logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user!.userID})`);
         return true;
     }
 
@@ -216,7 +224,7 @@ export class MutateSubcourseResolver {
         if (subcourse.conversationId) {
             await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
-
+        logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -233,6 +241,7 @@ export class MutateSubcourseResolver {
         await joinSubcourse(subcourse, pupil, false);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
         await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
+        logger.info(`Pupil(${pupilId}) manually joined Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -267,7 +276,7 @@ export class MutateSubcourseResolver {
         if (subcourse.conversationId) {
             await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
-
+        logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from waitinglist`);
         return true;
     }
 
@@ -289,7 +298,7 @@ export class MutateSubcourseResolver {
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(pupilUser, subcourse.conversationId);
         }
-
+        logger.info(`Pupil(${pupilId}) left Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -316,6 +325,7 @@ export class MutateSubcourseResolver {
         const pupil = await getSessionPupil(context, pupilId);
         const subcourse = await getSubcourse(subcourseId);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force */ true);
+        logger.info(`Pupil(${pupilId}) left waitinglist of Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -342,6 +352,7 @@ export class MutateSubcourseResolver {
         for (const fileID in fileIDs) {
             removeFile(fileID);
         }
+        logger.info(`Pupil(${pupil.id}) sent notification to instructor of Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -366,7 +377,7 @@ export class MutateSubcourseResolver {
         for (const fileID in fileIDs) {
             removeFile(fileID);
         }
-
+        logger.info(`Instructor(${instructor.id}) sent notification to participants of Subcourse(${subcourseId})`);
         return true;
     }
 
@@ -378,7 +389,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
-
+        logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user!.userID})`);
         return true;
     }
 }
