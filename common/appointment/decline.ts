@@ -5,10 +5,15 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { getNotificationContextForSubcourse } from '../mails/courses';
+import { RedundantError } from '../util/error';
 
 const logger = getLogger('Appointment');
 
 export async function declineAppointment(user: User, appointment: Appointment) {
+    if (appointment.declinedBy.includes(user.userID)) {
+        throw new RedundantError(`Appointment was already declined by User`);
+    }
+
     await prisma.lecture.update({
         data: { declinedBy: { push: user.userID } },
         where: { id: appointment.id },

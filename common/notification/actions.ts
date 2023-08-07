@@ -309,12 +309,20 @@ const _notificationActions = {
         description: 'Tutor / Lern-Fair Now Match success',
         sampleContext: {
             pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutor_matching_lern-fair-plus': {
         description: 'Tutor / Lern-Fair Plus Match success',
         sampleContext: {
             pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutor_matching_TEST-DO-NOT-USE': DEPRECATED,

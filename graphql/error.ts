@@ -7,16 +7,10 @@ import { ClientError } from '../common/util/error';
 export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from 'apollo-server-errors';
 
 export const isUnexpectedError = (error: GraphQLError) => {
-    return (
-        (error.name === 'INTERNAL_SERVER_ERROR' &&
-            !(
-                error.originalError instanceof ClientError ||
-                error.originalError instanceof ArgumentValidationError ||
-                error instanceof ValidationError ||
-                error instanceof UserInputError
-            )) ||
-        error instanceof ValidationError ||
-        error instanceof UserInputError
+    return !(
+        error.originalError instanceof ClientError ||
+        error.originalError instanceof ArgumentValidationError ||
+        error.originalError instanceof UserInputError
     );
 };
 
@@ -49,7 +43,7 @@ export function formatError(error: ApolloError) {
         return error;
     }
 
-    logger.error(`Unexpected Errors occurred`, error);
+    logger.error(`Unexpected Errors occurred`, error, { stack: error?.originalError?.stack });
     if (isErrorSafeToExpose(error)) {
         return error;
     }

@@ -251,7 +251,7 @@ void test('Admin Manage Notifications', async () => {
             language: "de"
             headline: "{{user.firstname}}"
             body: "TEST"
-            navigateTo: "/{{test}}"
+            navigateTo: ""
             modalText: ""
         )
     }`);
@@ -276,7 +276,7 @@ void test('Admin Manage Notifications', async () => {
     assert.strictEqual(notification2.state, 2);
     assert.strictEqual(notification2.message.headline, pupil.firstname);
     assert.strictEqual(notification2.message.body, "TEST");
-    assert.strictEqual(notification2.message.navigateTo, "/test2");
+    assert.strictEqual(notification2.message.navigateTo, null);
 
 
 }) 
