@@ -4,12 +4,13 @@ import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
 import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
-import { createMatch } from '../../common/match/create';
+import { createAdHocMeeting, createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
 import { getMatcheeConversation } from '../../common/chat/helper';
 import { markConversationAsWriteable } from '../../common/chat';
+import { JSONResolver } from 'graphql-scalars';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -51,5 +52,15 @@ export class MutateMatchResolver {
             await markConversationAsWriteable(conversationId);
         }
         return true;
+    }
+
+    @Mutation((returns) => JSONResolver, { nullable: true })
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async matchCreateAdHocMeeting(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number) {
+        const { user } = context;
+        const match = await getMatch(matchId);
+        await hasAccess(context, 'Match', match);
+        const { id, appointmentType } = await createAdHocMeeting(matchId, user);
+        return { id, appointmentType };
     }
 }
