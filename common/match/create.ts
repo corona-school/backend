@@ -1,13 +1,12 @@
 import { student as Student, pupil as Pupil } from '@prisma/client';
 import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
-import { mailjetTemplates, sendTemplateMail } from '../mails';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
-import type { ConcreteMatchPool, MatchPool } from './pool';
+import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { AppointmentCreateMatchInput, createMatchAppointments } from '../appointment/create';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
@@ -105,15 +104,23 @@ export async function createAdHocMeeting(matchId: number, user: User) {
 
     const appointment: AppointmentCreateMatchInput[] = [
         {
-            title: `Sofortbesprechung: ${pupil.firstname} und ${student.firstname} `,
+            title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
             matchId: matchId,
             start: new Date(),
             duration: 30,
             appointmentType: lecture_appointmenttype_enum.match,
         },
     ];
-
     const matchAppointment = await createMatchAppointments(matchId, appointment);
     const { id, appointmentType } = matchAppointment[0];
+
+    await Notification.actionTaken(pupil, 'student_add_ad_hoc_meeting', {
+        appointmentId: id.toString(),
+        student: student,
+        appointment: {
+            url: `/video-chat/${id}/${appointmentType}`,
+        },
+    });
+
     return { id, appointmentType };
 }

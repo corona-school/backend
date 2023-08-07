@@ -60,6 +60,9 @@ export class MutateMatchResolver {
         const { user } = context;
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
+        if (user.pupilId) {
+            return;
+        }
         const { id, appointmentType } = await createAdHocMeeting(matchId, user);
         return { id, appointmentType };
     }
