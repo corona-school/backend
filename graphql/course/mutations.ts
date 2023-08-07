@@ -17,6 +17,7 @@ import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { CourseState } from '../../common/entity/Course';
 import { getCourseImageKey } from '../../common/courses/util';
+import { createCourseTag } from '../../common/courses/tags';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -214,16 +215,7 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
-
-        if ((await prisma.course_tag.count({ where: { category, name } })) > 0) {
-            throw new UserInputError(`CourseTag with category ${category} and ${name} already exists!`);
-        }
-
-        const tag = await prisma.course_tag.create({
-            data: { category, identifier: `${category}/${name}`, name },
-        });
-
-        logger.info(`User(${context.user!.userID}) created CourseTag(${tag.id})`, data);
+        const tag = await createCourseTag(context.user!, name, category as course_category_enum);
 
         return tag;
     }
