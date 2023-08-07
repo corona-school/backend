@@ -50,7 +50,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     const matchDate = '' + +match.createdAt;
     const uniqueId = '' + match.id;
 
-    if (await canRemoveZoomLicense(match.studentId)) {
+    if ((await canRemoveZoomLicense(match.studentId)) && student.zoomUserId) {
         await deleteZoomUser(student);
     }
     await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
