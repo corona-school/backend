@@ -1,4 +1,4 @@
-import { ApolloError, UserInputError, ValidationError } from 'apollo-server-errors';
+import { ApolloError } from 'apollo-server-errors';
 import { GraphQLError } from 'graphql';
 import { getLogger } from 'log4js';
 import { ArgumentValidationError } from 'type-graphql';
@@ -7,10 +7,9 @@ import { ClientError } from '../common/util/error';
 export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from 'apollo-server-errors';
 
 export const isUnexpectedError = (error: GraphQLError) => {
-    return !(
-        error.originalError instanceof ClientError ||
-        error.originalError instanceof ArgumentValidationError ||
-        error.originalError instanceof UserInputError
+    return (
+        error.extensions.code === 'INTERNAL_SERVER_ERROR' &&
+        !(error.originalError instanceof ClientError || error.originalError instanceof ArgumentValidationError)
     );
 };
 
