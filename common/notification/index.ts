@@ -184,7 +184,7 @@ async function deliverNotification(
  * @param uploader  User that intends to upload the files.
  * @return          Object with attachmentListHTML, attachmentGroupId, and attachmentIds
  */
-export async function createAttachments(files: File[], uploader: Student | Pupil): Promise<AttachmentGroup | null> {
+export async function createAttachments(files: File[], uploader: User): Promise<AttachmentGroup | null> {
     if (files.length > 0) {
         let attachmentGroupId = uuid().toString();
 

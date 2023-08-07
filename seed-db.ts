@@ -13,8 +13,7 @@ import { becomeInstructor, becomeTutor, registerStudent } from './common/student
 import { addInstructorScreening, addTutorScreening } from './common/student/screening';
 import { createMatch } from './common/match/create';
 import { TEST_POOL } from './common/match/pool';
-import { createCourseTag } from './common/util/createCourseTag';
-import { CourseCategory, CourseState } from './common/entity/Course';
+import { CourseState } from './common/entity/Course';
 import { createRemissionRequest } from './common/remission-request';
 import { Subject } from './common/entity/Subject';
 import { joinSubcourse, joinSubcourseWaitinglist } from './common/courses/participants';
@@ -23,6 +22,8 @@ import { create as createCoC } from './common/certificate-of-conduct/certificate
 import { addCourseInstructor, addSubcourseInstructor } from './common/courses/states';
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
 import { createConnection } from 'typeorm';
+import { createCourseTag } from './common/courses/tags';
+import { course_category_enum as CourseCategory, } from "@prisma/client";
 
 const logger = getLogger('DevSetup');
 
@@ -496,8 +497,8 @@ void (async function setupDevDB() {
         }
     });
 
-    const mint = await createCourseTag('MINT', CourseCategory.FOCUS);
-    const music = await createCourseTag('Musik', CourseCategory.FOCUS);
+    const mint = await createCourseTag(null, 'MINT', CourseCategory.focus);
+    const music = await createCourseTag(null, 'Musik', CourseCategory.focus);
 
     const course1 = await prisma.course.create({
         data: {
@@ -505,7 +506,7 @@ void (async function setupDevDB() {
             outline: 'E(m) = m * c * c',
             description:
                 'Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.',
-            category: CourseCategory.COACHING,
+            category: CourseCategory.focus,
             course_tags_course_tag: { create: { courseTagId: mint.id }},
             courseState: CourseState.SUBMITTED
         }
@@ -518,7 +519,7 @@ void (async function setupDevDB() {
             name: 'COBOL und ABAP - Eine Reise in die Steinzeit der Informatik',
             outline: 'Mit lebenden Exemplaren zum anschauen',
             description: 'COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.',
-            category: CourseCategory.CLUB,
+            category: CourseCategory.club,
             course_tags_course_tag: { create: { courseTagId: mint.id }},
             courseState: CourseState.ALLOWED,
             allowContact: true
@@ -531,7 +532,7 @@ void (async function setupDevDB() {
             name: 'Grundlagen der Mathematik',
             outline: '(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0',
             description: 'Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...',
-            category: CourseCategory.REVISION,
+            category: CourseCategory.revision,
             course_tags_course_tag: { create: { courseTagId: mint.id }},
             courseState: CourseState.DENIED,
             subject: Subject.MATHEMATIK
@@ -545,7 +546,7 @@ void (async function setupDevDB() {
             name: 'KIZ, 187, Aligatoah.',
             outline: 'Die Musik des neuen Jahrtausends',
             description: 'Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.',
-            category: CourseCategory.REVISION,
+            category: CourseCategory.revision,
             course_tags_course_tag: { create: { courseTagId: music.id }},
             courseState: CourseState.CANCELLED,
             subject: Subject.MUSIK
@@ -558,7 +559,7 @@ void (async function setupDevDB() {
             name: 'Gitarre lernen für Anfänger',
             outline: 'Mit 3 Akkorden zum ersten Song',
             description: 'In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!',
-            category: CourseCategory.CLUB,
+            category: CourseCategory.club,
             course_tags_course_tag: { create: { courseTagId: music.id }},
             courseState: CourseState.ALLOWED,
             subject: Subject.MUSIK

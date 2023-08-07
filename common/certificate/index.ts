@@ -5,19 +5,15 @@ import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import { mailjetTemplates, sendTemplateMail } from '../mails';
 import * as Notification from '../notification';
-import { Pupil } from '../entity/Pupil';
-import { Student } from '../entity/Student';
-import { pupil as PrismaPupil, student as PrismaStudent, participation_certificate as PrismaParticipationCertificate } from '@prisma/client';
-import { getManager } from 'typeorm';
-import { Match } from '../entity/Match';
-import { ParticipationCertificate } from '../entity/ParticipationCertificate';
+import { pupil as Pupil, student as Student, match as Match, participation_certificate as ParticipationCertificate } from '@prisma/client';
 import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
-import { userForPupil, userForStudent } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { generatePDFFromHTML } from '../util/pdf';
 import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
+import { prisma } from '../prisma';
 
 // TODO: Replace TypeORM operations with Prisma
 
@@ -58,50 +54,22 @@ export interface IExposedCertificate {
 export class CertificateError extends Error {}
 
 /* Pupils can retrieve certificates of their students, students can retrieve theirs */
-export async function getCertificatesFor(user: Pupil | Student) {
-    const entityManager = getManager();
-
-    const certificatesData = await entityManager.find(ParticipationCertificate, {
-        where: user instanceof Pupil ? { pupil: user.id } : { student: user.id },
-        relations: ['student', 'pupil'],
+export async function getCertificatesFor(user: User) {
+    const certificatesData = await prisma.participation_certificate.findMany({
+        where: { pupilId: user.pupilId ?? undefined, studentId: user.studentId ?? undefined },
+        include: { student: true, pupil: true },
     });
 
     return certificatesData.map((cert) => exposeCertificate(cert, /*to*/ user));
 }
 
 /* Students can download their certificates as PDF */
-export async function getCertificatePDF(certificateId: string, _requestor: Student | PrismaStudent, lang: Language): Promise<Buffer> {
-    const entityManager = getManager();
-
-    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
-
+export async function getCertificatePDF(certificateId: string, requestor: Student, lang: Language): Promise<Buffer> {
     /* Retrieve the certificate and also get the signature columns that are usually hidden for performance reasons */
-    const certificate = await entityManager.findOne(
-        ParticipationCertificate,
-        { uuid: certificateId.toUpperCase(), student: requestor },
-        {
-            relations: ['student', 'pupil'],
-            /* Unfortunately there is no "*" option which would also select the signatures. The query builder also does not cover this case */
-            select: [
-                'uuid',
-                'categories',
-                'certificateDate',
-                'endDate',
-                'hoursPerWeek',
-                'hoursTotal',
-                'id',
-                'medium',
-                'ongoingLessons',
-                'signatureParent',
-                'signaturePupil',
-                'signatureDate',
-                'signatureLocation',
-                'startDate',
-                'state',
-                'subjects',
-            ],
-        }
-    );
+    const certificate = await prisma.participation_certificate.findFirst({
+        where: { uuid: certificateId.toUpperCase(), studentId: requestor.id },
+        include: { student: true, pupil: true },
+    });
 
     if (!certificate) {
         throw new CertificateError('Certificate not found');
@@ -124,9 +92,7 @@ export interface ICertificateCreationParams {
     state: CertificateState.manual | CertificateState.awaitingApproval;
 }
 
-export async function issueCertificateRequest(
-    pc: ParticipationCertificate | (PrismaParticipationCertificate & { pupil: PrismaPupil; student: PrismaStudent })
-) {
+export async function issueCertificateRequest(pc: CertWithUsers) {
     const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
     // We show an important message on the dashboard, where pupils can sign the certificate:
     const certificateLink = USER_APP_DOMAIN;
@@ -144,56 +110,56 @@ export async function issueCertificateRequest(
 }
 
 /* Students can create certificates, which pupils can then sign */
-export async function createCertificate(_requestor: PrismaStudent, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
-    const entityManager = getManager();
-
-    const requestor = await entityManager.findOneOrFail(Student, { id: _requestor.id });
-
-    const match = await entityManager.findOne(Match, { uuid: matchId, student: requestor });
+export async function createCertificate(requestor: Student, matchId: string, params: ICertificateCreationParams): Promise<ParticipationCertificate> {
+    const match = await prisma.match.findFirst({ where: { uuid: matchId, studentId: requestor.id } });
     if (!match) {
         throw new CertificateError(`No Match found with id '${matchId}'`);
     }
 
-    let pc = new ParticipationCertificate();
-    pc.pupil = match.pupil;
-    pc.student = requestor;
-    pc.subjects = params.subjects;
-    pc.categories = params.activities;
-    pc.hoursPerWeek = params.hoursPerWeek;
-    pc.hoursTotal = params.hoursTotal;
-    pc.medium = params.medium;
-    pc.startDate = params.startDate ?? match.createdAt;
-    pc.endDate = params.endDate;
-    pc.ongoingLessons = params.ongoingLessons;
-    pc.state = params.state;
-
+    let uuid;
     do {
-        pc.uuid = randomBytes(5).toString('hex').toUpperCase();
-    } while (await entityManager.findOne(ParticipationCertificate, { uuid: pc.uuid }));
+        uuid = randomBytes(5).toString('hex').toUpperCase();
+    } while ((await prisma.participation_certificate.count({ where: { uuid } })) > 0);
 
-    await entityManager.save(ParticipationCertificate, pc);
+    const certificate = await prisma.participation_certificate.create({
+        data: {
+            uuid,
+            pupilId: match.pupilId,
+            studentId: match.studentId,
+            subjects: params.subjects,
+            categories: params.activities,
+            hoursPerWeek: params.hoursPerWeek,
+            hoursTotal: params.hoursTotal,
+            medium: params.medium,
+            startDate: params.startDate ?? match.createdAt,
+            endDate: params.endDate,
+            ongoingLessons: params.ongoingLessons,
+            state: params.state,
+        },
+        include: { student: true, pupil: true },
+    });
+
     await logTransaction('certificateRequest', requestor as any, { uuid: match.uuid });
 
     if (params.state === 'awaiting-approval') {
-        await issueCertificateRequest(pc);
+        await issueCertificateRequest(certificate);
     }
 
-    return pc;
+    return certificate;
 }
 
 /* Everybody who sees a certificate can verify it's authenticity through a public endpoint, which shows the confirmation page */
 export async function getConfirmationPage(certificateId: string, lang: Language) {
-    const entityManager = getManager();
-
-    const certificate = await entityManager.findOne(ParticipationCertificate, { uuid: certificateId.toUpperCase() }, { relations: ['student', 'pupil'] });
+    const certificate = await prisma.participation_certificate.findFirst({
+        where: { uuid: certificateId.toUpperCase() },
+        include: { pupil: true, student: true },
+    });
 
     if (!certificate) {
         throw new CertificateError(`Certificate not found`);
     }
 
     let verificationTemplate = loadTemplate('verifiedCertificatePage', lang);
-
-    const screeningDate = (await certificate.student?.screening)?.createdAt;
 
     return verificationTemplate({
         NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
@@ -206,7 +172,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
         SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
         MEDIUM: certificate.medium,
-        SCREENINGDATUM: screeningDate ? moment(screeningDate).format('D.M.YYYY') : '[UNBEKANNTES DATUM]',
+        SCREENINGDATUM: moment(certificate.student.createdAt).format('D.M.YYYY'),
         ONGOING: certificate.ongoingLessons,
     });
 }
@@ -214,7 +180,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
 /* Pupils can sign certificates for their students through a webinterface */
 export async function signCertificate(
     certificateId: string,
-    _signer: Pupil | PrismaPupil,
+    signer: Pupil,
     signatureParent: string | undefined,
     signaturePupil: string | undefined,
     signatureLocation: string
@@ -224,15 +190,10 @@ export async function signCertificate(
     assert(!signatureParent || signatureParent.match(VALID_BASE64), 'Parent Signature is valid Base 64');
     assert(signatureLocation, 'Singature location must be set');
 
-    const entityManager = getManager();
-
-    const signer = await entityManager.findOneOrFail(Pupil, { id: _signer.id });
-
-    const certificate = await entityManager.findOne(
-        ParticipationCertificate,
-        { pupil: signer, uuid: certificateId.toUpperCase() },
-        { relations: ['student', 'pupil'] }
-    );
+    const certificate = await prisma.participation_certificate.findFirst({
+        where: { pupilId: signer.id, uuid: certificateId.toUpperCase() },
+        include: { pupil: true, student: true },
+    });
 
     if (!certificate) {
         throw new CertificateError('Missing certificateID or the pupil is not allowed to sign this certificate');
@@ -246,34 +207,40 @@ export async function signCertificate(
         throw new CertificateError('Certificate cannot be signed as it is a manual one');
     }
 
+    const update: Partial<ParticipationCertificate> = {};
+
     if (signatureParent) {
-        certificate.signatureParent = Buffer.from(signatureParent, 'utf-8');
+        update.signatureParent = Buffer.from(signatureParent, 'utf-8');
     }
 
     if (signaturePupil) {
-        certificate.signaturePupil = Buffer.from(signaturePupil, 'utf-8');
+        update.signaturePupil = Buffer.from(signaturePupil, 'utf-8');
     }
 
-    certificate.signatureDate = new Date();
-    certificate.signatureLocation = signatureLocation;
-    certificate.state = 'approved';
+    update.signatureDate = new Date();
+    update.signatureLocation = signatureLocation;
+    update.state = 'approved';
 
-    await getManager().save(ParticipationCertificate, certificate);
+    const signedCert = await prisma.participation_certificate.update({
+        where: { id: certificate.id },
+        data: update,
+        include: { pupil: true, student: true },
+    });
 
-    const rendered = await createPDFBinary(certificate, getCertificateLink(certificate, 'de'), 'de');
+    const rendered = await createPDFBinary(signedCert, getCertificateLink(signedCert, 'de'), 'de');
 
-    const authToken = await createSecretEmailToken(userForStudent(certificate.student));
+    const authToken = await createSecretEmailToken(userForStudent(signedCert.student));
     const certificateLink = `${USER_APP_DOMAIN}/profile`;
     const mail = mailjetTemplates.CERTIFICATESIGNED(
         {
             certificateLink,
-            pupilFirstname: certificate.pupil.firstname,
-            studentFirstname: certificate.student.firstname,
+            pupilFirstname: signedCert.pupil.firstname,
+            studentFirstname: signedCert.student.firstname,
         },
         rendered.toString('base64')
     );
-    await sendTemplateMail(mail, certificate.student.email);
-    await Notification.actionTaken(certificate.student, 'student_certificate_sign', {
+    await sendTemplateMail(mail, signedCert.student.email);
+    await Notification.actionTaken(signedCert.student, 'student_certificate_sign', {
         uniqueId: `${certificate.id}`,
         certificateLink,
         pupil: certificate.pupil,
@@ -312,12 +279,40 @@ function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.Clien
     }
 }
 
+type CertWithUsers = ParticipationCertificate & { student: Student; pupil: Pupil };
+
 /* Map the certificate data to something the frontend can work with while keeping user data secret */
-function exposeCertificate({ student, pupil, state, ...cert }: ParticipationCertificate, to: Student | Pupil): IExposedCertificate {
+function exposeCertificate(
+    {
+        student,
+        pupil,
+        state,
+        categories,
+        certificateDate,
+        endDate,
+        hoursPerWeek,
+        hoursTotal,
+        uuid,
+        medium,
+        ongoingLessons,
+        signatureDate,
+        signatureLocation,
+        startDate,
+        subjects,
+    }: CertWithUsers,
+    to: User
+): IExposedCertificate {
     return {
-        ...cert,
-        // NOTE: user.id is NOT unique, as Students and Pupils can have the same id
-        userIs: pupil.wix_id === to.wix_id ? 'pupil' : 'student',
+        categories,
+        certificateDate,
+        endDate,
+        hoursPerWeek: +hoursPerWeek,
+        hoursTotal: +hoursTotal,
+        medium,
+        startDate,
+        subjects,
+        uuid,
+        userIs: pupil.id === to.pupilId ? 'pupil' : 'student',
         pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
         student: { firstname: student.firstname, lastname: student.lastname },
         state: state as CertificateState,
@@ -339,7 +334,7 @@ export function convertCertificateLinkToApiLink(req: Request) {
     return url.toString();
 }
 
-async function createPDFBinary(certificate: ParticipationCertificate, link: string, lang: Language): Promise<Buffer> {
+async function createPDFBinary(certificate: CertWithUsers, link: string, lang: Language): Promise<Buffer> {
     const { student, pupil } = certificate;
 
     const template = loadTemplate('certificateTemplate', lang);
