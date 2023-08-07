@@ -114,7 +114,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
     assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
 
     await client.request(`mutation CreateAppointments {appointmentsGroupCreate(appointments: {
-        appointmentType: 'group',
+        appointmentType: "group",
         start: ${nextMonth},
         duration: 30,
         subcourseId: ${subcourseId}
