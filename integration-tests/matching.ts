@@ -75,7 +75,7 @@ const studentWithMR = test('Student Request Match', async () => {
     return { client, student };
 });
 
-const match1 = test('Manual Match creation', async () => {
+export const match1 = test('Manual Match creation', async () => {
     const { pupil, client: pupilClient } = await pupilWithMR;
     const { student, client: studentClient } = await studentWithMR;
 
@@ -117,6 +117,7 @@ const match1 = test('Manual Match creation', async () => {
                     openMatchRequestCount
                     matches {
                         id
+                        uuid
                         dissolved
                         pupil { firstname lastname }
                     }
@@ -131,7 +132,7 @@ const match1 = test('Manual Match creation', async () => {
     assert.strictEqual(s1.matches[0].pupil.firstname, pupil.firstname);
     assert.strictEqual(s1.matches[0].pupil.lastname, pupil.lastname);
 
-    return { id: s1.matches[0].id, pupil, student, pupilClient, studentClient };
+    return { id: s1.matches[0].id, uuid: s1.matches[0].uuid, pupil, student, pupilClient, studentClient };
 });
 
 void test('Create Chat for Match', async () => {

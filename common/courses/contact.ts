@@ -1,6 +1,5 @@
 import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
 import { Decision } from '../util/decision';
-import { getManager } from 'typeorm';
 import { File } from '../attachments';
 import { Pupil as TypeORMPupil } from '../entity/Pupil';
 import { Student as TypeORMStudent } from '../entity/Student';
@@ -8,6 +7,7 @@ import * as Notification from '../notification';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { subcourseOverGracePeriod } from './states';
+import { userForPupil, userForStudent } from '../user';
 
 const logger = getLogger('CourseContact');
 
@@ -37,8 +37,6 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
         throw new Error(`Not allowed to contact instructors - ${decision.reason}`);
     }
 
-    const typeORMPupil = await getManager().findOneOrFail(TypeORMPupil, pupil.id);
-
     const instructors = (
         await prisma.subcourse_instructors_student.findMany({
             where: { subcourseId: subcourse.id },
@@ -46,7 +44,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
         })
     ).map((it) => it.student);
 
-    let attachmentGroup = await Notification.createAttachments(files, typeORMPupil);
+    let attachmentGroup = await Notification.createAttachments(files, userForPupil(pupil));
 
     await Promise.all(
         instructors.map(async (instructor) => {
@@ -83,8 +81,7 @@ export async function contactParticipants(
         throw new Error(`Cannot contact participants as the course is over`);
     }
 
-    const student = await getManager().findOneOrFail(TypeORMStudent, instructor.id);
-    let attachmentGroup = await Notification.createAttachments(files, student);
+    let attachmentGroup = await Notification.createAttachments(files, userForStudent(instructor));
 
     const selectedParticipants = await prisma.pupil.findMany({
         where: {
@@ -102,16 +99,16 @@ export async function contactParticipants(
                 {
                     courseName: course.name,
                     participantFirstName: participant.firstname,
-                    instructorFirstName: student.firstname,
+                    instructorFirstName: instructor.firstname,
                     messageTitle: title,
                     messageBody: body,
-                    instructorMail: student.email,
-                    replyToAddress: student.email as any,
+                    instructorMail: instructor.email,
+                    replyToAddress: instructor.email as any,
                 },
                 attachmentGroup
             );
         })
     );
 
-    logger.info(`Student(${student.id}) contacted participants of the Subcourse(${subcourse.id}) with title '${title}' and message '${body}'`);
+    logger.info(`Student(${instructor.id}) contacted participants of the Subcourse(${subcourse.id}) with title '${title}' and message '${body}'`);
 }

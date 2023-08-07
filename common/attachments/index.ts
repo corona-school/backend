@@ -3,7 +3,7 @@ import { Pupil } from '../entity/Pupil';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile } from '../file-bucket';
-import { getUserIdTypeORM } from '../user';
+import { getUserIdTypeORM, User } from '../user';
 import { friendlyFileSize } from '../util/basic';
 import { Attachment } from '../entity/Attachment';
 
@@ -28,12 +28,12 @@ export interface AttachmentGroup {
  * @param   attachmentGroupId  Unique per group of attachments (per message)
  * @return  attachmentId       Unique per individual attachment
  */
-export async function createAttachment(file: File, uploader: Student | Pupil, attachmentGroupId: string) {
+export async function createAttachment(file: File, uploader: User, attachmentGroupId: string) {
     let attachmentId = uuid().toString();
     await prisma.attachment.create({
         data: {
             id: attachmentId,
-            uploaderID: getUserIdTypeORM(uploader),
+            uploaderID: uploader.userID,
             filename: file.originalname,
             size: file.size,
             attachmentGroupId,
