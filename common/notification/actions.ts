@@ -285,12 +285,20 @@ const _notificationActions = {
         description: 'Tutee / Lern-Fair Now Match success',
         sampleContext: {
             student: sampleUser,
+            matchSubjects: 'Deutsch, Englisch',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutee_matching_lern-fair-plus': {
         description: 'Tutee / Lern-Fair Plus Match success',
         sampleContext: {
             student: sampleUser,
+            matchSubjects: 'Deutsch, Englisch',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutee_matching_TEST-DO-NOT-USE': DEPRECATED,
