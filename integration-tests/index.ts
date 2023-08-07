@@ -12,6 +12,8 @@ import './user';
 import './screening';
 /* Feature Tests - These are independent and can be disabled */
 import './matching';
+import './certificate';
+
 import './auth';
 import './settings';
 import './course';
