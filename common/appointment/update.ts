@@ -32,7 +32,7 @@ export async function updateAppointment(
 
     logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
 
-    const sameDate = !newStart || start.toISOString() === newStart.toISOString();
+    const sameDate = !newStart || (start.toISOString() === newStart.toISOString() && (!newDuration || duration === newDuration));
     if (sameDate) {
         return;
     }
@@ -46,8 +46,6 @@ export async function updateAppointment(
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             const subcourseAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
             lastDate = subcourseAppointments[subcourseAppointments.length - 1].start;
-
-            logger.info(`Last Date: ${lastDate}`);
 
             // send notification if date has changed
             for (const participant of participants) {
