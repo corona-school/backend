@@ -79,8 +79,8 @@ async function loadTemplate(notificationID: number, language: TranslationLanguag
         type,
         body: compileTemplate(body),
         headline: compileTemplate(headline),
-        navigateTo: navigateTo && compileTemplate(navigateTo),
-        modalText: modalText && compileTemplate(modalText),
+        navigateTo: navigateTo ? compileTemplate(navigateTo) : undefined,
+        modalText: modalText ? compileTemplate(modalText) : undefined,
     };
 
     cachedTemplates.set(cacheKey, template);
