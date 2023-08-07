@@ -82,6 +82,8 @@ const courseOne = test('Create Course One', async () => {
 export const subcourseOne = test('Create Subcourse', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
 
     const { client } = await screenedInstructorOne;
     const { courseId } = await courseOne;
@@ -110,6 +112,13 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     // Does not yet appear in public subcourses
     assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
+
+    await client.request(`mutation CreateAppointments {appointmentsGroupCreate(appointments: {
+        appointmentType: 'group',
+        start: ${nextMonth},
+        duration: 30,
+        subcourseId: ${subcourseId}
+    })}`);
 
     await client.request(`
         mutation PublishSubcourse { subcoursePublish(subcourseId: ${subcourseId})}
@@ -163,7 +172,9 @@ void test('Search further instructors', async () => {
     const partialEmailSearch = await client.request(`query { otherInstructors(search: "@lern-fair.de", take: 100, skip: 0) { id }}`);
     assert.ok(partialEmailSearch.otherInstructors.length === 0);
 
-    const fullNameSearch = await client.request(`query { otherInstructors(search: "${instructor2.firstname} ${instructor2.lastname}", take: 100, skip: 0) { firstname lastname }}`);
+    const fullNameSearch = await client.request(
+        `query { otherInstructors(search: "${instructor2.firstname} ${instructor2.lastname}", take: 100, skip: 0) { firstname lastname }}`
+    );
     assert.strictEqual(fullNameSearch.otherInstructors.length, 1);
     assert.strictEqual(fullNameSearch.otherInstructors[0].firstname, instructor2.firstname);
 
