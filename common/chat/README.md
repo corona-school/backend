@@ -9,7 +9,7 @@ This project utilizes the [TalkJS API](https://talkjs.com/docs/) to provide an i
 | Components                                   | function                                                                                                                         |
 | -------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
 | `contacts.ts`                                | Get all contacts that a user is allowed to contact                                                                               |
-| `conversation.ts`                            | Gunctions to create chats, send system messages, mark conversations, update and delte conversations, add and remove participants |
+| `conversation.ts`                            | Functions to create chats, send system messages, mark conversations, update and delte conversations, add and remove participants |
 | `helper.ts`                                  | Helper functions i.e. to create IDs, chat signature                                                                              |
 | `localization.ts`                            | Translations for the system messages                                                                                             |
 | `user.ts`                                    | Functions to get or create chat user                                                                                             |
