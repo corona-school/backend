@@ -4,6 +4,7 @@ import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './screening';
 import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
+import { firstAppointment } from './appointments';
 
 const courseOne = test('Create Course One', async () => {
     const { client } = await screenedInstructorOne;
@@ -112,17 +113,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     // Does not yet appear in public subcourses
     assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
-
-    await client.request(`mutation CreateAppointments {
-        appointmentsGroupCreate(subcourseId: ${parseInt(subcourseId)}, appointments: [
-            {
-                appointmentType: group,
-                start: "${nextMonth.toISOString()}",
-                duration: 30,
-                subcourseId: ${subcourseId}
-            }])
-        }`);
-
+    await firstAppointment;
     await client.request(`
         mutation PublishSubcourse { subcoursePublish(subcourseId: ${subcourseId})}
     `);

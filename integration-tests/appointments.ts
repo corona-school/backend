@@ -9,7 +9,7 @@ const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';
 const appointmentTitle3 = 'Group Appointment 3';
 
-const firstAppointment = test('Create an appointment for a subcourse', async () => {
+export const firstAppointment = test('Create an appointment for a subcourse', async () => {
     const { subcourseId } = await subcourseOne;
     const { client, instructor } = await screenedInstructorOne;
     const next = new Date();
