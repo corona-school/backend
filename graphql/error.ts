@@ -8,8 +8,9 @@ export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } 
 
 export const isUnexpectedError = (error: GraphQLError) => {
     return (
-        error.extensions.code === 'INTERNAL_SERVER_ERROR' &&
-        !(error.originalError instanceof ClientError || error.originalError instanceof ArgumentValidationError)
+        !error.extensions ||
+        (error.extensions.code === 'INTERNAL_SERVER_ERROR' &&
+            !(error.originalError instanceof ClientError || error.originalError instanceof ArgumentValidationError))
     );
 };
 
