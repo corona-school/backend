@@ -93,7 +93,7 @@ const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[
         return pupilWithMatchId;
     }
 };
-const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseContactStudent[]> => {
+const getSubcourseInstructorsForPupil = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
     const yesterday = moment().subtract(1, 'day').toISOString();
     const studentsWithSubcourseIds = await prisma.student.findMany({
@@ -139,7 +139,7 @@ const getInstructorsForPupilSubcourses = async (pupil: User): Promise<SubcourseC
 
     return instructorsWithSubcourseIds;
 };
-const getSubcourseParticipantContactForUser = async (student: User): Promise<SubcourseContactPupil[]> => {
+const getSubcourseParticipantsForStudent = async (student: User): Promise<SubcourseContactPupil[]> => {
     assert(student.studentId, 'Student must have an studentId');
     const yesterday = moment().subtract(1, 'day').toISOString();
 
@@ -182,7 +182,7 @@ const getSubcourseParticipantContactForUser = async (student: User): Promise<Sub
 const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseContactList> => {
     let subcourseContactsList: SubcourseContactList = {};
 
-    const subcourseContacts = await getInstructorsForPupilSubcourses(pupil);
+    const subcourseContacts = await getSubcourseInstructorsForPupil(pupil);
     for (const subcourseContact of subcourseContacts) {
         const instructorSubcourseId = userForStudent(subcourseContact.student).userID;
         const contactReasons = [ContactReason.COURSE];
@@ -204,7 +204,7 @@ const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseConta
 const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseContactList> => {
     let subcourseContactsList: SubcourseContactList = {};
 
-    const subcourseContacts = await getSubcourseParticipantContactForUser(student);
+    const subcourseContacts = await getSubcourseParticipantsForStudent(student);
     for (const subcourseContact of subcourseContacts) {
         const participantSubcourseId = userForPupil(subcourseContact.pupil).userID;
         const contactReasons = [ContactReason.COURSE];
