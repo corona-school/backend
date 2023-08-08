@@ -102,6 +102,7 @@ export async function getNotificationContextForSubcourse(course: { name: string;
         },
         subcourse: {
             url: `https://app.lern-fair.de/single-course/${subcourse.id}`,
+            id: '' + subcourse.id,
         },
         firstLecture: {
             date,
