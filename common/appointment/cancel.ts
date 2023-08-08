@@ -11,6 +11,10 @@ import { RedundantError } from '../util/error';
 const logger = getLogger('Appointment');
 
 export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean) {
+    if (appointment.isCanceled) {
+        throw new RedundantError(`Appointment already cancelled`);
+    }
+
     await prisma.lecture.update({
         data: { isCanceled: true },
         where: { id: appointment.id },

@@ -305,7 +305,7 @@ export async function getCourseParticipantCount(subcourse: Subcourse) {
 }
 
 export async function getCourseCapacity(subcourse: Subcourse) {
-    return (await getCourseParticipantCount(subcourse)) / subcourse.maxParticipants;
+    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
 }
 
 export async function getCourseFreePlaces(subcourse: Subcourse) {
