@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getUser, getStudent, User } from '../user';
+import { getUser, getStudent, User, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -27,7 +27,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
             for (const organizerId of appointment.organizerIds) {
                 const user = await getUser(organizerId);
                 const organizer = await getStudent(user);
-                await Notification.actionTaken(organizer, 'pupil_decline_appointment_group', {
+                await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_group', {
                     appointment: getAppointmentForNotification(appointment),
                     pupil,
                     ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
@@ -39,7 +39,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
             for (const organizerId of appointment.organizerIds) {
                 const user = await getUser(organizerId);
                 const organizer = await getStudent(user);
-                await Notification.actionTaken(organizer, 'pupil_decline_appointment_match', {
+                await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_match', {
                     appointment: getAppointmentForNotification(appointment),
                     pupil,
                 });

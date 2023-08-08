@@ -14,6 +14,11 @@ export class UserType implements User {
     @Field()
     email: string;
 
+    @Field()
+    active: boolean;
+    @Field()
+    lastLogin: Date;
+
     @Field({ nullable: true })
     pupil?: Pupil;
     @Field({ nullable: true })

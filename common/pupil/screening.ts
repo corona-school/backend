@@ -4,6 +4,7 @@ import { getLogger } from '../logger/logger';
 import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { NotFoundError } from '@prisma/client/runtime';
+import { userForPupil } from '../user';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
@@ -24,7 +25,7 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     }
 
     await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
-    await Notification.actionTaken(pupil, 'pupil_screening_add', {});
+    await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }
@@ -52,10 +53,10 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
 
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
-            await Notification.actionTaken(screening.pupil, 'pupil_screening_rejected', {});
+            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_rejected', {});
             break;
         case PupilScreeningStatus.success:
-            await Notification.actionTaken(screening.pupil, 'pupil_screening_succeeded', {});
+            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_succeeded', {});
             break;
 
         case PupilScreeningStatus.dispute:

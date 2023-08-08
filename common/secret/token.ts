@@ -1,5 +1,5 @@
 import { SecretType } from '../entity/Secret';
-import { getUser, getUserTypeORM, updateUser, User } from '../user';
+import { getUser, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
@@ -88,8 +88,6 @@ export async function requestToken(
 
     const token = await createSecretEmailToken(user, newEmail);
 
-    const person = await getUserTypeORM(user.userID);
-
     if (redirectTo) {
         // Ensures that the user is not redirected to a potential third party
         const { host } = new URL(redirectTo, `https://${USER_APP_DOMAIN}/`);
@@ -101,7 +99,7 @@ export async function requestToken(
         redirectTo = Buffer.from(redirectTo, 'utf-8').toString('base64');
     }
 
-    await Notification.actionTaken(person, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
+    await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user by email

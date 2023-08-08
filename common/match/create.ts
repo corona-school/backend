@@ -9,6 +9,7 @@ import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool, MatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
+import { userForPupil, userForStudent } from '../user';
 
 const logger = getLogger('Match');
 
@@ -73,8 +74,8 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         matchDate,
     };
 
-    await Notification.actionTaken(student, `tutor_matching_success`, tutorContext);
-    await Notification.actionTaken(student, `tutor_matching_${pool.name}`, tutorContext);
+    await Notification.actionTaken(userForStudent(student), `tutor_matching_success`, tutorContext);
+    await Notification.actionTaken(userForStudent(student), `tutor_matching_${pool.name}`, tutorContext);
 
     const tuteeContext = {
         uniqueId: '' + match.id,
@@ -86,8 +87,8 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         matchDate,
     };
 
-    await Notification.actionTaken(pupil, `tutee_matching_${pool.name}`, tuteeContext);
-    await Notification.actionTaken(pupil, 'tutee_matching_success', tuteeContext);
+    await Notification.actionTaken(userForPupil(pupil), `tutee_matching_${pool.name}`, tuteeContext);
+    await Notification.actionTaken(userForPupil(pupil), 'tutee_matching_success', tuteeContext);
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
 }

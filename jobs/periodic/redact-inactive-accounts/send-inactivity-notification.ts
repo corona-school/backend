@@ -1,8 +1,8 @@
 import * as Notification from '../../../common/notification';
-import { Person } from '../../../common/notification/types';
 import moment from 'moment';
 import { findAllPersons } from './query';
 import { getLogger } from '../../../common/logger/logger';
+import { User, userForPupil, userForScreener, userForStudent } from '../../../common/user';
 
 export const NOTIFY_AFTER_DAYS = 3 * 365 + 9 * 30; // 3 years and 9 months
 
@@ -17,9 +17,10 @@ export async function sendInactivityNotification() {
         students: p.students.map((p) => p.id),
     });
 
-    const persons: Person[] = [...p.pupils, ...p.students, ...p.mentors, ...p.screener];
-    for (const person of persons) {
-        await Notification.actionTaken(person, 'person_inactivity_reminder', { uniqueId: person.lastLogin.toISOString() });
+    const users: User[] = [
+        ...p.pupils.map(userForPupil), ...p.students.map(userForStudent), ...p.screener.map(userForScreener)];
+    for (const user of users) {
+        await Notification.actionTaken(user, 'person_inactivity_reminder', { uniqueId: user.lastLogin.toISOString() });
     }
 
     logger.info('End sending inactivity notification');

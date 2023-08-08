@@ -7,9 +7,9 @@ import { NotificationType } from '../entity/Notification';
 import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
 import { NotificationMessageType } from '../../graphql/types/notificationMessage';
-import { getUserTypeORM } from '../user';
 import { getContext } from '.';
 import { getLogger } from 'log4js';
+import { getUser } from '../user';
 
 const logger = getLogger('Message');
 
@@ -98,8 +98,8 @@ export async function getMessage(
         return null;
     }
 
-    const legacyUser = await getUserTypeORM(concreteNotification.userId);
-    const context = getContext(concreteNotification.context as NotificationContext, legacyUser);
+    const user = await getUser(concreteNotification.userId);
+    const context = getContext(concreteNotification.context as NotificationContext, user);
 
     return {
         type: template.type,
