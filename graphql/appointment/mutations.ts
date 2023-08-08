@@ -19,6 +19,7 @@ import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
+import { getStudentsFromList, userForPupil } from '../../common/user';
 import { RedundantError } from '../../common/util/error';
 import { getNotificationContextForSubcourse } from '../../common/mails/courses';
 
@@ -49,7 +50,7 @@ export class MutateAppointmentResolver {
         // send notification
         const student = await getStudent(context.user.studentId);
 
-        await Notification.actionTaken(match.pupil, 'student_add_appointment_match', {
+        await Notification.actionTaken(userForPupil(match.pupil), 'student_add_appointment_match', {
             student,
             matchId: '' + appointment.matchId,
         });
@@ -68,7 +69,7 @@ export class MutateAppointmentResolver {
         await createMatchAppointments(matchId, appointments);
         const student = await getStudent(context.user.studentId);
 
-        await Notification.actionTaken(match.pupil, 'student_add_appointments_match', {
+        await Notification.actionTaken(userForPupil(match.pupil), 'student_add_appointments_match', {
             student,
             matchId: '' + matchId,
         });
@@ -89,7 +90,7 @@ export class MutateAppointmentResolver {
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
         for (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
+            await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
                 student: student,
                 ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });
@@ -120,7 +121,7 @@ export class MutateAppointmentResolver {
         const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
         for (const participant of participants) {
-            await Notification.actionTaken(participant.pupil, 'student_add_appointments_group', {
+            await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointments_group', {
                 student: student,
                 ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });

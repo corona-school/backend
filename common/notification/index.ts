@@ -1,9 +1,9 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Person, Channel } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
 import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications, getSampleContext, getSampleContextExternal } from './notification';
-import { getUserIdTypeORM, getUserTypeORM, getFullName, getUserForTypeORM, User, queryUser } from '../user';
+import { getFullName, User, queryUser, getUser } from '../user';
 import { getLogger } from '../logger/logger';
 import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
@@ -32,7 +32,7 @@ const HOURS_TO_MS = 60 * 60 * 1000;
 /* Creates an entry in the concrete_notifications table, to track the notification */
 async function createConcreteNotification(
     notification: Notification,
-    user: Person,
+    user: User,
     context: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<ConcreteNotification> {
@@ -40,13 +40,13 @@ async function createConcreteNotification(
         const existingNotification = await prisma.concrete_notification.findFirst({
             where: {
                 notificationID: notification.id,
-                userId: getUserIdTypeORM(user),
+                userId: user.userID,
                 contextID: context.uniqueId,
             },
         });
 
         if (existingNotification) {
-            throw new Error(`Duplicate Notification(${notification.id}) for User(${user.id}) with Context(${context.uniqueId})`);
+            throw new Error(`Duplicate Notification(${notification.id}) for User(${user.userID}) with Context(${context.uniqueId})`);
         }
     }
 
@@ -56,7 +56,7 @@ async function createConcreteNotification(
             // the unique id is automatically created by the database
             notificationID: notification.id,
             state: ConcreteNotificationState.PENDING,
-            userId: getUserIdTypeORM(user),
+            userId: user.userID,
             sentAt: new Date(),
             contextID: context.uniqueId,
             context,
@@ -82,10 +82,10 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     return Object.assign({}, channelsBasePreference, channelsUserPreference);
 };
 
-export function getContext(notificationContext: NotificationContext, legacyUser: Person): Context {
+export function getContext(notificationContext: NotificationContext, user: User): Context {
     return {
         ...notificationContext,
-        user: { ...legacyUser, fullName: getFullName(legacyUser) },
+        user: { ...user, fullName: getFullName(user) },
         USER_APP_DOMAIN,
     };
 }
@@ -93,19 +93,17 @@ export function getContext(notificationContext: NotificationContext, legacyUser:
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
-    legacyUser: Person,
+    user: User,
     notificationContext: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<void> {
-    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${legacyUser.id})`);
+    logger.debug(`Sending ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${user.userID})`);
 
-    const context = getContext(notificationContext, legacyUser);
+    const context = getContext(notificationContext, user);
     const enabledChannels: Channel[] = [...DEFAULT_CHANNELS];
     let activeChannels: Channel[] = [];
 
     try {
-        const user = getUserForTypeORM(legacyUser);
-
         if (notification.hookID) {
             await triggerHook(notification.hookID, user);
         }
@@ -148,13 +146,13 @@ async function deliverNotification(
 
         logger.info(
             `Successfully sent ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
-                legacyUser.id
+                user.userID
             }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`
         );
     } catch (error) {
         logger.warn(
             `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
-                legacyUser.id
+                user.userID
             }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
             error
         );
@@ -206,7 +204,7 @@ export async function createAttachments(files: File[], uploader: User): Promise<
 
 const DEACTIVATION_MARKER = 'ACCOUNT_DEACTIVATION';
 
-export async function cancelRemindersFor(user: Person) {
+export async function cancelRemindersFor(user: User) {
     await prisma.concrete_notification.updateMany({
         data: {
             state: ConcreteNotificationState.ACTION_TAKEN,
@@ -214,7 +212,7 @@ export async function cancelRemindersFor(user: Person) {
         },
         where: {
             state: ConcreteNotificationState.DELAYED,
-            userId: getUserIdTypeORM(user),
+            userId: user.userID,
         },
     });
 }
@@ -223,7 +221,7 @@ export async function cancelRemindersFor(user: Person) {
    as if the user took that action at actionDate */
 export async function actionTakenAt(
     actionDate: Date,
-    user: Person,
+    user: User,
     actionId: string,
     notificationContext: NotificationContext,
     apply: boolean,
@@ -241,7 +239,7 @@ export async function actionTakenAt(
     const reminders = relevantNotifications.toSend.filter((it) => it.delay);
     const remindersToCreate: Omit<ConcreteNotification, 'id' | 'error'>[] = [];
 
-    const userId = getUserIdTypeORM(user);
+    const userId = user.userID;
 
     for (const reminder of reminders) {
         if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
@@ -390,7 +388,7 @@ export * from './hook';
 
 /* sends one specific notification with a very specific notification context to the user.
    Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
-export async function sendNotification(id: NotificationID, user: Person, notificationContext: NotificationContext): Promise<void> {
+export async function sendNotification(id: NotificationID, user: User, notificationContext: NotificationContext): Promise<void> {
     const notification = await getNotification(id);
 
     const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
@@ -404,13 +402,13 @@ export async function sendNotification(id: NotificationID, user: Person, notific
 */
 
 export async function actionTaken<ID extends ActionID>(
-    user: Person,
+    user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
     attachments?: AttachmentGroup
 ) {
     if (!user.active) {
-        logger.debug(`No action '${actionId}' taken for User(${getUserIdTypeORM(user)}) as the account is deactivated`);
+        logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
         return;
     }
 
@@ -438,7 +436,7 @@ export async function actionTaken<ID extends ActionID>(
                     in: relevantNotifications.toCancel.map((it) => it.id),
                 },
                 state: ConcreteNotificationState.DELAYED,
-                userId: getUserIdTypeORM(user),
+                userId: user.userID,
                 // If a uniqueId is specified, e.g. the id of a course, only cancel reminders that are either not specific (have no contextID) or are for the same uniqueID
                 // If it is not specified, it'll apply to all reminders
                 ...(notificationContext.uniqueId
@@ -469,7 +467,7 @@ export async function actionTaken<ID extends ActionID>(
                     notificationID: it.id,
                     state: ConcreteNotificationState.DELAYED,
                     sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
-                    userId: getUserIdTypeORM(user),
+                    userId: user.userID,
                     contextID: notificationContext.uniqueId,
                     context: notificationContext,
                     attachmentGroupId: attachments?.attachmentGroupId,
@@ -479,7 +477,7 @@ export async function actionTaken<ID extends ActionID>(
             logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
         }
     } catch (e) {
-        logger.error(`Failed to perform Notification.actionTaken(${user.id}, "${actionId}") with `, e);
+        logger.error(`Failed to perform Notification.actionTaken(${user.userID}, "${actionId}") with `, e);
     }
 
     logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
@@ -532,7 +530,7 @@ export async function checkReminders() {
             }
 
             const notification = await getNotification(reminder.notificationID);
-            const user = await getUserTypeORM(reminder.userId);
+            const user = await getUser(reminder.userId);
 
             if (!user.active) {
                 throw new Error(`Reminder was found although account is deactivated`);
@@ -559,7 +557,7 @@ export async function checkReminders() {
                         notificationID: notification.id,
                         state: ConcreteNotificationState.DELAYED,
                         sentAt: new Date(Date.now() + notification.interval /* in hours */ * HOURS_TO_MS),
-                        userId: getUserIdTypeORM(user),
+                        userId: user.userID,
                         contextID: reminder.contextID,
                         context: reminder.context,
                         attachmentGroupId: reminder.attachmentGroupId,

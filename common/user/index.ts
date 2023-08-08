@@ -1,12 +1,6 @@
 /* Long term we want to move away from the disjunct Pupil / Student relationship,
     towards a common User Entity. This module contains some steps towards that entity */
 
-import { Pupil as TypeORMPupil } from '../entity/Pupil';
-import { Student as TypeORMStudent } from '../entity/Student';
-import { Screener as TypeORMScreener } from '../entity/Screener';
-
-import { getManager } from 'typeorm';
-
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
@@ -18,59 +12,6 @@ type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
 type UserTypes = 'student' | 'pupil' | 'screener';
 
-/* IDs of pupils and students collide. Thus we need to generate a unique ID out of it
-   Unfortunately we do not have a way to detect the database table a Prisma query returned from
-   Thus for interoperability with Prisma we need to decide based on the fields available
-   NOTE: isPupil can be false for Pupils and isStudent can be false for Students.
-   The existence of the boolean is however tied to the respective entities */
-export function isStudent(person: Person): boolean {
-    return typeof person.isStudent === 'boolean';
-}
-
-export function isPupil(person: Person): boolean {
-    return typeof person.isPupil === 'boolean';
-}
-
-export function getUserIdTypeORM(person: Person) {
-    if (isStudent(person)) {
-        return `student/${person.id}`;
-    }
-
-    if (isPupil(person)) {
-        return `pupil/${person.id}`;
-    }
-
-    throw new Error(`Person was neither a Student or a Pupil`);
-}
-
-export async function getUserTypeORM(userID: string): Promise<TypeORMStudent | TypeORMPupil | TypeORMScreener | never> {
-    const [type, id] = userID.split('/');
-    const manager = getManager();
-    if (type === 'student') {
-        return await manager.findOneOrFail(TypeORMStudent, { where: { id } });
-    }
-
-    if (type === 'pupil') {
-        return await manager.findOneOrFail(TypeORMPupil, { where: { id } });
-    }
-
-    if (type === 'screener') {
-        return await manager.findOneOrFail(TypeORMScreener, { where: { id } });
-    }
-    throw new Error(`Unknown User(${userID})`);
-}
-
-export function getUserForTypeORM(user: Person) {
-    if (isPupil(user)) {
-        return userForPupil(user as TypeORMPupil);
-    }
-
-    if (isStudent(user)) {
-        return userForStudent(user as TypeORMStudent);
-    }
-
-    throw new Error(`Unsupported user in getUserForTypeORM conversion`);
-}
 /* As Prisma values do not inherit an entity class but are plain objects,
    we need a wrapper around the different entities */
 export type User = {
@@ -78,13 +19,15 @@ export type User = {
     email: string;
     firstname: string;
     lastname: string;
+    active: boolean;
+    lastLogin: Date;
 
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
 };
 
-export const userSelection = { id: true, firstname: true, lastname: true, email: true };
+export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
     const validTypes = ['student', 'pupil', 'screener', 'admin'];
@@ -142,28 +85,32 @@ export async function getUserByEmail(email: string, active?: boolean): Promise<U
     throw new Error(`Unknown User(email: ${email})`);
 }
 
-export function userForPupil(pupil: Pupil | TypeORMPupil) {
+export function userForPupil(pupil: Pupil) {
     return userForType(pupil, 'pupil');
 }
 
-export function userForStudent(student: Student | TypeORMStudent) {
+export function userForStudent(student: Student) {
     return userForType(student, 'student');
 }
 
-export function userForScreener(screener: Screener | TypeORMScreener) {
+export function userForScreener(screener: Screener) {
     return userForType(screener, 'screener');
 }
 
-type userType = 'student' | 'pupil' | 'screener';
-const userForType = (user: Pupil | Student | Screener | TypeORMPupil | TypeORMStudent | TypeORMScreener, type: userType): User => {
+function userForType(user: Pupil, type: 'pupil'): User;
+function userForType(user: Student, type: 'student'): User;
+function userForType(user: Screener, type: 'screener'): User;
+function userForType(user: Pupil | Student | Screener, type: 'student' | 'pupil' | 'screener'): User {
     return {
         userID: `${type}/${user.id}`,
         firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
+        active: user.active,
+        lastLogin: user.lastLogin,
         [`${type}Id`]: user.id,
     };
-};
+}
 
 export function getFullName({ firstname, lastname }: { firstname?: string; lastname?: string }): string {
     if (!firstname) {
@@ -271,9 +218,11 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 firstname: true,
                 lastname: true,
                 email: true,
+                active: true,
+                lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isStudent: true, userID: getUserIdTypeORM({ ...p, isStudent: true }) }));
+    ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` }));
 
     const pupils = (
         await prisma.pupil.findMany({
@@ -288,9 +237,11 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 firstname: true,
                 lastname: true,
                 email: true,
+                active: true,
+                lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isPupil: true, userID: getUserIdTypeORM({ ...p, isPupil: true }) }));
+    ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` }));
     return [...students, ...pupils];
 }
 

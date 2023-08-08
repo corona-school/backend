@@ -9,6 +9,7 @@ import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
+import { userForStudent } from '../user';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
     if (!student.active) {
@@ -16,10 +17,10 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
     }
 
     if (!silent) {
-        await Notification.actionTaken(student, 'student_account_deactivated', {});
+        await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
     }
 
-    await Notification.cancelRemindersFor(student);
+    await Notification.cancelRemindersFor(userForStudent(student));
     // Setting 'active' to false will not send out any notifications during deactivation
     student.active = false;
 

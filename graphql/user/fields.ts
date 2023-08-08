@@ -13,14 +13,26 @@ import { ConcreteNotificationState } from '../../common/entity/ConcreteNotificat
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
-import { getMyContacts } from '../../common/chat/contacts';
+import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 
 @ObjectType()
+export class UserContact implements UserContactType {
+    @Field()
+    userID: string;
+    @Field()
+    firstname: string;
+    @Field()
+    lastname: string;
+    @Field()
+    email: string;
+}
+
+@ObjectType()
 export class Contact {
     @Field((_type) => UserType)
-    user: UserType;
+    user: UserContact;
     @Field((_type) => [String])
     contactReasons: string[];
     @Field((_type) => String, { nullable: true })

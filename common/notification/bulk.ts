@@ -3,7 +3,6 @@ import { prisma } from '../prisma';
 import { actionTakenAt } from './index';
 import { NotificationContext, BulkAction } from './types';
 import { getMatchHash } from '../match/util';
-import { getUserIdTypeORM } from '../user';
 
 interface BulkRun {
     name: string;
@@ -43,7 +42,7 @@ export async function runBulkAction(name: string, apply: boolean) {
                 const actionDate = bulkAction.getActionDate(entity);
                 const context = await bulkAction.getContext(entity);
 
-                bulkRun.currentUser = getUserIdTypeORM(user);
+                bulkRun.currentUser = user.userID;
 
                 const result = await actionTakenAt(actionDate, user, bulkAction.action, context, apply);
                 for (const { notificationID } of result) {
@@ -81,7 +80,7 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
         select: { id: true, pupilId: true, studentId: true, createdAt: true, uuid: true }
     }),
     getActionDate: match => match.createdAt,
-    getUser: match => prisma.student.findUnique({ where: { id: match.studentId }}),
+    getUser: match => userForStudent(prisma.student.findUnique({ where: { id: match.studentId }})),
     getContext: async match => ({
         uniqueId: "" + match.id,
         pupil: await prisma.pupil.findUnique({ where: { id: match.pupilId }}),
@@ -102,7 +101,7 @@ addBulkAction<{ id: number, pupilId: number, studentId: number, createdAt: Date,
     getUser: match => prisma.pupil.findUnique({ where: { id: match.pupilId }}),
     getContext: async match => ({
         uniqueId: "" + match.id,
-        student: await prisma.student.findUnique({ where: { id: match.studentId }}),
+        student: userForStudent(await prisma.student.findUnique({ where: { id: match.studentId }})),
         firstMatch: (await prisma.match.count({ where: { pupilId: match.pupilId, createdAt: { lt: match.createdAt }}})) === 0,
         matchHash: getMatchHash(match),
         matchDate: "" + (+match.createdAt)

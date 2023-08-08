@@ -6,7 +6,7 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
+import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';

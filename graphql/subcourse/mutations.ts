@@ -14,7 +14,7 @@ import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcours
 import { getLogger } from '../../common/logger/logger';
 import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
-import { getUserIdTypeORM, userForPupil, userForStudent } from '../../common/user';
+import { userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
 import { getSessionPupil, getSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -140,9 +140,8 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
         const instructorUser = userForStudent(instructorToBeRemoved);
-        const studentUserId = getUserIdTypeORM(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, studentUserId);
+        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID);
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }

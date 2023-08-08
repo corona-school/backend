@@ -1,4 +1,4 @@
-import { ApolloError, UserInputError, ValidationError } from 'apollo-server-errors';
+import { ApolloError } from 'apollo-server-errors';
 import { GraphQLError } from 'graphql';
 import { getLogger } from 'log4js';
 import { ArgumentValidationError } from 'type-graphql';
@@ -8,15 +8,9 @@ export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } 
 
 export const isUnexpectedError = (error: GraphQLError) => {
     return (
-        (error.name === 'INTERNAL_SERVER_ERROR' &&
-            !(
-                error.originalError instanceof ClientError ||
-                error.originalError instanceof ArgumentValidationError ||
-                error instanceof ValidationError ||
-                error instanceof UserInputError
-            )) ||
-        error instanceof ValidationError ||
-        error instanceof UserInputError
+        !error.extensions ||
+        (error.extensions.code === 'INTERNAL_SERVER_ERROR' &&
+            !(error.originalError instanceof ClientError || error.originalError instanceof ArgumentValidationError))
     );
 };
 
@@ -49,7 +43,7 @@ export function formatError(error: ApolloError) {
         return error;
     }
 
-    logger.error(`Unexpected Errors occurred`, error);
+    logger.error(`Unexpected Errors occurred`, error, { stack: error?.originalError?.stack });
     if (isErrorSafeToExpose(error)) {
         return error;
     }

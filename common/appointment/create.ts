@@ -1,9 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
-import { getUserIdTypeORM } from '../user';
 import assert from 'assert';
-import { getUserForTypeORM } from '../user';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/user';
@@ -13,6 +11,7 @@ import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
 import { getNotificationContextForSubcourse } from '../mails/courses';
+import { userForPupil, userForStudent } from '../user';
 
 const logger = getLogger();
 
@@ -55,8 +54,8 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
-    const studentUserId = getUserIdTypeORM(student);
-    const pupilUserId = getUserIdTypeORM(pupil);
+    const studentUserId = userForStudent(student).userID;
+    const pupilUserId = userForPupil(pupil).userID;
     const hosts = [student];
 
     let zoomMeetingId: string | null;
@@ -87,7 +86,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     );
 
     // * send notification
-    await Notification.actionTaken(pupil, 'student_add_appointment_match', {
+    await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
         student,
         matchId: matchId.toString(),
     });
@@ -121,8 +120,8 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         duration: appointmentToBeCreated.duration,
                         subcourseId: appointmentToBeCreated.subcourseId,
                         appointmentType: lecture_appointmenttype_enum.group,
-                        organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
-                        participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                        organizerIds: instructors.map((i) => userForStudent(i.student).userID),
+                        participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                         zoomMeetingId,
                     },
                 })
@@ -131,7 +130,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
     // * send notification
     for await (const participant of participants) {
-        await Notification.actionTaken(participant.pupil, 'student_add_appointment_group', {
+        await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
         });
