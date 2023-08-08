@@ -198,6 +198,7 @@ export class AuthenticationResolver {
             await loginAsUser(user, context);
             return true;
         } catch (error) {
+            logger.info(`Failed to log in with token: `, error);
             throw new AuthenticationError('Invalid Token');
         }
     }
