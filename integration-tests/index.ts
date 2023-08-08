@@ -16,8 +16,8 @@ import './certificate';
 
 import './auth';
 import './settings';
-import './appointments';
 import './course';
+import './appointments';
 import './chat';
 import './admin';
 import './registerPlusMany';

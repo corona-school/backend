@@ -2,66 +2,14 @@ import { test } from './base';
 import { screenedInstructorOne } from './screening';
 import { subcourseOne } from './course';
 import assert from 'assert';
-import { pupilOne } from './user';
 import { expectFetch } from './mock';
 
 const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';
 const appointmentTitle3 = 'Group Appointment 3';
 
-export const firstAppointment = test('Create an appointment for a subcourse', async () => {
-    const { subcourseId } = await subcourseOne;
-    const { client, instructor } = await screenedInstructorOne;
-    const next = new Date();
-    next.setDate(new Date().getDate() + 8);
-
-    expectFetch({
-        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
-        method: 'POST',
-        responseStatus: 200,
-        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
-    });
-
-    expectFetch({
-        url: `https://api.zoom.us/v2/users/${instructor.email.toLowerCase()}`,
-        method: 'GET',
-        responseStatus: 200,
-        response: {
-            id: '123',
-            first_name: instructor.firstname,
-            last_name: instructor.lastname,
-            email: instructor.email,
-            display_name: instructor.firstname + ' ' + instructor.lastname,
-            personal_meeting_url: 'https://meet',
-        },
-    });
-
-    expectFetch({
-        url: 'https://api.zoom.us/v2/users/123/meetings',
-        method: 'POST',
-        body: '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
-        responseStatus: 201,
-        response: { id: 10 },
-    });
-
-    const res = await client.request(`
-    mutation creategroupAppointments {
-        appointmentsGroupCreate(subcourseId: ${parseInt(subcourseId)}, appointments: [
-            {
-                title: "${appointmentTitle}"
-                start: "${next.toISOString()}"
-                duration: 15
-                subcourseId: ${subcourseId}
-                appointmentType: group
-            }])
-        }
-        `);
-    assert.ok(res.appointmentsGroupCreate);
-});
-
 const moreAppointments = test('Create more appointments for a subcourse', async () => {
-    const { subcourseId } = await subcourseOne;
-    const { client, instructor } = await screenedInstructorOne;
+    const { subcourseId, client, instructor } = await subcourseOne;
     const nextDate = new Date();
     nextDate.setDate(new Date().getDate() + 10);
     const nextMonth = new Date();
@@ -121,7 +69,6 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
 
 const myAppointments = test('Get my appointments', async () => {
     const { client } = await screenedInstructorOne;
-    await firstAppointment;
     await moreAppointments;
 
     const {
@@ -185,7 +132,6 @@ const myAppointments = test('Get my appointments', async () => {
 
 void test('Update an appointment', async () => {
     const { client } = await screenedInstructorOne;
-    await firstAppointment;
     const clientAppointments = await myAppointments;
     const appointmentId = clientAppointments[1].id;
     const nextHour = new Date();
