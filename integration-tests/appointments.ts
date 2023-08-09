@@ -192,6 +192,22 @@ void test('Update an appointment', async () => {
     const nextHour = new Date();
     nextHour.setHours(new Date().getHours() + 1);
 
+    expectFetch({
+        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
+        method: 'POST',
+        responseStatus: 200,
+        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
+    });
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/10',
+        method: 'PATCH',
+        body: '{"start_time":"*","duration":120,"timezone":"Europe/Berlin","recurrence":{"end_date_time":"*","type":2}}',
+        responseStatus: 200,
+        response: {}
+    });
+
+
     const updateTitle = 'Updated Title';
     const resp = await client.request(`mutation updateAppointment { appointmentUpdate (
         appointmentToBeUpdated: {
@@ -203,34 +219,6 @@ void test('Update an appointment', async () => {
         }
         )
     }`);
-
-    expectFetch({
-        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
-        method: 'POST',
-        responseStatus: 200,
-        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
-    });
-
-    expectFetch({
-        url: `https://api.zoom.us/v2/users/${instructor.email.toLowerCase()}`,
-        method: 'GET',
-        responseStatus: 200,
-        response: {
-            id: '123',
-            first_name: instructor.firstname,
-            last_name: instructor.lastname,
-            email: instructor.email,
-            display_name: instructor.firstname + ' ' + instructor.lastname,
-            personal_meeting_url: 'https://meet',
-        },
-    });
-
-    expectFetch({
-        url: 'https://api.zoom.us/v2/meetings/123',
-        method: 'PATCH',
-        body: '{"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"recurrence":{"end_date_time":"*","type":2}}',
-        responseStatus: 204,
-    });
 
     const {
         me: { appointments },
