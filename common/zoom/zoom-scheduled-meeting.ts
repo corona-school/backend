@@ -222,8 +222,6 @@ const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?:
         },
     });
 
-    logger.info(`UPDATE BODY: ${body}`);
-
     const response = await zoomRetry(
         () =>
             fetch(`${zoomMeetingUrl}/${meetingId}`, {
@@ -242,9 +240,7 @@ const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?:
         throw new Error(`Zoom - failed to update meeting with ${response.status} ${await response.text()}`);
     }
 
-    if (response.status === 204) {
-        logger.info(`Zoom - The Zoom Meeting was updated.`);
-    }
+    logger.info(`Zoom - The Zoom Meeting was updated.`);
 };
 
 export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting, getZoomMeetingReport, updateZoomMeeting };
