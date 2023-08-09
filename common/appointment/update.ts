@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getUser, getStudent, User } from '../user';
+import { getUser, getStudent, User, userForPupil } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -32,7 +32,10 @@ export async function updateAppointment(
 
     logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
 
-    const sameDate = !newStart || (start.toISOString() === newStart.toISOString() && (!newDuration || duration === newDuration));
+    const sameStart = !newStart || start.toISOString() === newStart.toISOString();
+    const sameDuration = !newDuration || duration === newDuration;
+    const sameDate = sameStart && sameDuration;
+
     if (sameDate) {
         return;
     }
@@ -49,7 +52,7 @@ export async function updateAppointment(
 
             // send notification if date has changed
             for (const participant of participants) {
-                await Notification.actionTaken(participant.pupil, 'pupil_change_appointment_group', {
+                await Notification.actionTaken(userForPupil(participant.pupil), 'pupil_change_appointment_group', {
                     student: student,
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
@@ -62,10 +65,8 @@ export async function updateAppointment(
             const matchAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
             lastDate = matchAppointments[matchAppointments.length - 1].start;
 
-            logger.info(`Last Date: ${lastDate}`);
-
             // send notification if date has changed
-            await Notification.actionTaken(match.pupil, 'pupil_change_appointment_match', {
+            await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
                 student: student,
                 appointment: getAppointmentForNotification(updatedAppointment, /* original */ appointment),
             });

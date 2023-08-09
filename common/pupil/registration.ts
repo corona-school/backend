@@ -18,6 +18,7 @@ import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toPupilSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
 import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
+import { userForPupil } from '../user';
 
 export interface RegisterPupilData {
     firstname: string;
@@ -102,7 +103,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
     });
 
     if (!noEmail) {
-        await Notification.actionTaken(pupil, 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
+        await Notification.actionTaken(userForPupil(pupil), 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
     await logTransaction('verificationRequets', pupil, {});

@@ -1,26 +1,8 @@
 // Prisma exports lowercase types, but we want capitalized types
-import {
-    concrete_notification as ConcreteNotification,
-    notification as Notification,
-    pupil as PrismaPupil,
-    student as PrismaStudent,
-    mentor as PrismaMentor,
-    screener as PrismaScreener,
-} from '.prisma/client';
-import { Pupil as TypeORMPupil } from './../entity/Pupil';
-import { Student as TypeORMStudent } from './../entity/Student';
-import { Mentor as TypeORMMentor } from './../entity/Mentor';
-import { Screener as TypeORMScreener } from './../entity/Screener';
+import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
 import { NotificationType } from '../entity/Notification';
-
-// Temporary interop between TypeORM and Prisma
-type Pupil = PrismaPupil | TypeORMPupil;
-type Student = PrismaStudent | TypeORMStudent;
-type Mentor = PrismaMentor | TypeORMMentor;
-type Screener = PrismaScreener | TypeORMScreener;
-export type Person = Pupil | Student | Mentor | Screener;
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
@@ -63,7 +45,7 @@ export interface NotificationContext extends NotificationContextExtensions {
 // The user is always known, also for notifications sent by Actions / Reminders
 // The authToken is passed as a separate variable, as authentication might change in the future
 export interface Context extends NotificationContext {
-    user: Omit<Person, 'fullName'> & { fullName: string };
+    user: User & { fullName: string };
     USER_APP_DOMAIN: string;
 }
 
@@ -78,7 +60,7 @@ export interface BulkAction<Entity> {
     name: string;
     action: string;
     getData: () => Promise<Entity[]>;
-    getUser: (entity: Entity) => Promise<Person>;
+    getUser: (entity: Entity) => Promise<User>;
     getContext: (entity: Entity) => Promise<NotificationContext>;
     getActionDate: (entity: Entity) => Date;
 }

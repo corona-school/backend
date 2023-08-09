@@ -17,6 +17,7 @@ import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toStudentSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
 import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
+import { userForStudent } from '../user';
 
 export interface RegisterStudentData {
     firstname: string;
@@ -79,7 +80,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
     });
 
     if (!noEmail) {
-        await Notification.actionTaken(student, 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
+        await Notification.actionTaken(userForStudent(student), 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
     await logTransaction('verificationRequets', student, {});
@@ -138,7 +139,7 @@ export async function becomeTutor(
             },
         });
         if (!batchMode) {
-            await Notification.actionTaken(student, 'tutor_screening_success', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
         }
     }
     return res;

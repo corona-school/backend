@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getStudent, User } from '../user';
+import { getStudent, User, userForPupil } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -11,6 +11,10 @@ import { RedundantError } from '../util/error';
 const logger = getLogger('Appointment');
 
 export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean) {
+    if (appointment.isCanceled) {
+        throw new RedundantError(`Appointment already cancelled`);
+    }
+
     await prisma.lecture.update({
         data: { isCanceled: true },
         where: { id: appointment.id },
@@ -28,7 +32,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                 const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
 
                 for (const participant of participants) {
-                    await Notification.actionTaken(participant.pupil, 'student_cancel_appointment_group', {
+                    await Notification.actionTaken(userForPupil(participant.pupil), 'student_cancel_appointment_group', {
                         appointment: getAppointmentForNotification(appointment),
                         student,
                         ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
@@ -39,7 +43,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
 
             case AppointmentType.match:
                 const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
-                await Notification.actionTaken(match.pupil, 'student_cancel_appointment_match', {
+                await Notification.actionTaken(userForPupil(match.pupil), 'student_cancel_appointment_match', {
                     appointment: getAppointmentForNotification(appointment),
                     student,
                 });
