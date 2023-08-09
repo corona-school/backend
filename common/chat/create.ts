@@ -1,12 +1,14 @@
 import { User } from '../user';
-import { ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { ChatMetaData, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId } from './helper';
 import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
+import { getLogger } from '../logger/logger';
 
+const logger = getLogger('Chat');
 const getOrCreateOneOnOneConversation = async (
     participants: [User, User],
     conversationInfos: ConversationInfos,
@@ -36,6 +38,8 @@ const getOrCreateOneOnOneConversation = async (
         await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
 
         const convertedConversation = convertTJConversation(newConversation);
+        logger.info(`One-on-one conversation was created with ID ${convertedConversation.id} `);
+
         return convertedConversation;
     }
 
@@ -69,13 +73,15 @@ async function handleExistingConversation(
     }
 }
 
-async function updateMatchConversation(conversationId: string, match: any): Promise<void> {
+async function updateMatchConversation(conversationId: string, match: ChatMetaData['match']): Promise<void> {
     const updatedConversation = {
         id: conversationId,
         custom: {
             match: match,
         },
     };
+
+    logger.info(`Existing match conversation ${conversationId} was updated for match ${match.matchId}.`);
 
     await updateConversation(updatedConversation);
 }
@@ -84,9 +90,7 @@ async function updateParticipantConversation(conversationId: string, subcourseId
     const subcoursesFromConversation = conversation?.custom.subcourse;
     let subcourseIds = [];
 
-    try {
-        subcourseIds = JSON.parse(subcoursesFromConversation || '[]');
-    } catch (error) {}
+    subcourseIds = JSON.parse(subcoursesFromConversation || '[]');
 
     const updatedSubcourses: number[] = [...subcourseIds, subcourseId];
     const returnUpdatedSubcourses = Array.from(new Set(updatedSubcourses));
@@ -98,6 +102,8 @@ async function updateParticipantConversation(conversationId: string, subcourseId
         },
     };
 
+    logger.info(`Existing course participant conversation ${conversationId} was updated for subcourse ${subcourseId}.`);
+
     await updateConversation(updatedConversation);
 }
 
@@ -105,9 +111,7 @@ async function updateProspectConversation(conversationId: string, subcourseId: n
     const prospectSubcoursesFromConversation = conversation?.custom.prospectSubcourse;
     let prospectSubcourseIds = [];
 
-    try {
-        prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation || '[]');
-    } catch (error) {}
+    prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation || '[]');
 
     const updatedProspectSubcourse: number[] = [...prospectSubcourseIds, subcourseId];
     const returnUpdatedProspectSubcourses = Array.from(new Set(updatedProspectSubcourse));
@@ -119,6 +123,8 @@ async function updateProspectConversation(conversationId: string, subcourseId: n
         },
     };
 
+    logger.info(`Existing prospect conversation ${conversationId} was updated for subcourse ${subcourseId}.`);
+
     await updateConversation(updatedConversation);
 }
 
@@ -127,6 +133,8 @@ async function updateContactConversation(conversationId: string, conversationInf
         id: conversationId,
         ...conversationInfos,
     };
+
+    logger.info(`Existing contact conversation ${conversationId} was updated.`);
 
     await updateConversation(updatedConversation);
 }
@@ -148,6 +156,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
             data: { conversationId: newConversationId },
         });
         const convertedConversation = convertTJConversation(newConversation);
+        logger.info(`Group conversation was created with ID ${convertedConversation.id} `);
 
         return convertedConversation;
     }
@@ -174,6 +183,7 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
     };
 
     const conversation = await getOrCreateOneOnOneConversation([meUser, contactUser], conversationInfos, ContactReason.CONTACT);
+    logger.info(`Contact conversation was created by ${meUser} with ${contactUser} with ID ${conversation.id} `);
     return conversation.id;
 }
 

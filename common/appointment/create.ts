@@ -129,7 +129,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     );
 
     // * send notification
-    for await (const participant of participants) {
+    for (const participant of participants) {
         await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
@@ -180,6 +180,8 @@ export const saveZoomMeetingReport = async (appointment: Lecture) => {
 
     await prisma.lecture.update({
         where: { id: appointment.id },
-        data: { zoomMeetingReport: meetingReports },
+        data: { zoomMeetingReport: { push: meetingReports } },
     });
+
+    logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
 };

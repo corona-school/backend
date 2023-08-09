@@ -165,7 +165,7 @@ export class MutateAppointmentResolver {
     async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        await saveZoomMeetingReport(appointment as Lecture);
+        await saveZoomMeetingReport(appointment);
 
         return true;
     }
