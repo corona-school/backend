@@ -9,6 +9,7 @@ import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
 import { Moment } from 'moment';
+import { isEmailAvailable } from '../user/email';
 
 const logger = getLogger('Token');
 
@@ -158,6 +159,11 @@ export async function loginToken(token: string): Promise<User | never> {
             // For EMAIL_TOKEN secrets, the description field is used to store the email the token was sent to
             // Thus if a token was sent to a different email than the users email, we assume that the user wants to change their email:
             const newEmail = secret.description;
+
+            if (!(await isEmailAvailable(newEmail))) {
+                throw new Error(`User(${user.userID}) tried to change their email to ${newEmail}, but this is already used`);
+            }
+
             user = await updateUser(secret.userId, { email: newEmail });
             logger.info(`User(${user.userID}) changed their email to ${newEmail} via email token login`);
         }
