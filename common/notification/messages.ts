@@ -130,7 +130,7 @@ export async function getMessage(
     let navigateTo: string | undefined;
     try {
         if (template.navigateTo) {
-            navigateTo = template.headline(context);
+            navigateTo = template.navigateTo(context);
         }
     } catch (error) {
         logger.error(
