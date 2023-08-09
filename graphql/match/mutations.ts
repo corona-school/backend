@@ -4,13 +4,15 @@ import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
 import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
-import { createAdHocMeeting, createMatch } from '../../common/match/create';
+import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
 import { getMatcheeConversation } from '../../common/chat/helper';
 import { markConversationAsWriteable } from '../../common/chat';
 import { JSONResolver } from 'graphql-scalars';
+import { createAdHocMeeting } from '../../common/appointment/create';
+import { AuthorizationError } from '../../common/appointment/util';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -60,9 +62,11 @@ export class MutateMatchResolver {
         const { user } = context;
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
+
         if (user.pupilId) {
-            return;
+            throw new AuthorizationError(`Pupil is not allowed to create ad-hoc meeting for match ${matchId}`);
         }
+
         const { id, appointmentType } = await createAdHocMeeting(matchId, user);
         return { id, appointmentType };
     }

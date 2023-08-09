@@ -1,6 +1,6 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { getUserIdTypeORM } from '../user';
+import { User, getUserIdTypeORM } from '../user';
 import assert from 'assert';
 import { getUserForTypeORM } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
@@ -10,6 +10,8 @@ import { student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom';
+import { getMatch, getPupil, getStudent } from '../../graphql/util';
+import * as Notification from '../notification';
 
 const logger = getLogger();
 
@@ -150,3 +152,35 @@ export const createZoomMeetingForAppointments = async (
         throw new Error(`Zoom - Error while creating zoom meeting: ${e}`);
     }
 };
+
+export async function createAdHocMeeting(matchId: number, user: User) {
+    const match = await getMatch(matchId);
+    const { pupilId, studentId } = match;
+
+    const pupil = await getPupil(pupilId);
+    const student = await getStudent(studentId);
+
+    const start = moment().toDate();
+
+    const appointment: AppointmentCreateMatchInput[] = [
+        {
+            title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
+            matchId: matchId,
+            start: start,
+            duration: 30,
+            appointmentType: lecture_appointmenttype_enum.match,
+        },
+    ];
+    const matchAppointment = await createMatchAppointments(matchId, appointment);
+    const { id, appointmentType } = matchAppointment[0];
+
+    await Notification.actionTaken(pupil, 'student_add_ad_hoc_meeting', {
+        appointmentId: id.toString(),
+        student: student,
+        appointment: {
+            url: `/video-chat/${id}/${appointmentType}`,
+        },
+    });
+
+    return { id, appointmentType };
+}

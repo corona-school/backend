@@ -8,10 +8,6 @@ import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
-import { AppointmentCreateMatchInput, createMatchAppointments } from '../appointment/create';
-import { getMatch, getPupil, getStudent } from '../../graphql/util';
-import { lecture_appointmenttype_enum } from '../../graphql/generated';
-import { User } from '../user';
 
 const logger = getLogger('Match');
 
@@ -93,34 +89,4 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await Notification.actionTaken(pupil, 'tutee_matching_success', tuteeContext);
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
-}
-
-export async function createAdHocMeeting(matchId: number, user: User) {
-    const match = await getMatch(matchId);
-    const { pupilId, studentId } = match;
-
-    const pupil = await getPupil(pupilId);
-    const student = await getStudent(studentId);
-
-    const appointment: AppointmentCreateMatchInput[] = [
-        {
-            title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
-            matchId: matchId,
-            start: new Date(),
-            duration: 30,
-            appointmentType: lecture_appointmenttype_enum.match,
-        },
-    ];
-    const matchAppointment = await createMatchAppointments(matchId, appointment);
-    const { id, appointmentType } = matchAppointment[0];
-
-    await Notification.actionTaken(pupil, 'student_add_ad_hoc_meeting', {
-        appointmentId: id.toString(),
-        student: student,
-        appointment: {
-            url: `/video-chat/${id}/${appointmentType}`,
-        },
-    });
-
-    return { id, appointmentType };
 }
