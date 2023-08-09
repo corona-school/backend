@@ -19,6 +19,8 @@ export const UNAUTHENTICATED_USER = {
     lastTimeCheckedNotifications: new Date(),
     notificationPreferences: DEFAULT_PREFERENCES,
     roles: [Role.UNAUTHENTICATED],
+    lastLogin: new Date(),
+    active: false,
 };
 
 /* As we only have one backend, and there is probably no need to scale in the near future,

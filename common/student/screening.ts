@@ -6,6 +6,7 @@ import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
+import { userForStudent } from '../user';
 
 interface ScreeningInput {
     success: boolean;
@@ -27,9 +28,9 @@ export async function addInstructorScreening(screener: Screener, student: Studen
 
     if (screening.success) {
         await scheduleCoCReminders(student);
-        await Notification.actionTaken(student, 'instructor_screening_success', {});
+        await Notification.actionTaken(userForStudent(student), 'instructor_screening_success', {});
     } else {
-        await Notification.actionTaken(student, 'instructor_screening_rejection', {});
+        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
     }
 
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
@@ -53,9 +54,9 @@ export async function addTutorScreening(
     if (!batchMode) {
         if (screening.success) {
             await scheduleCoCReminders(student);
-            await Notification.actionTaken(student, 'tutor_screening_success', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
         } else {
-            await Notification.actionTaken(student, 'tutor_screening_rejection', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }
     }
 
@@ -74,10 +75,10 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 
     await cancelCoCReminders(student);
     await createRemissionRequest(student);
-    await Notification.actionTaken(student, 'coc_reminder', {});
+    await Notification.actionTaken(userForStudent(student), 'coc_reminder', {});
 }
 
 export async function cancelCoCReminders(student: Student) {
-    await Notification.actionTaken(student, 'coc_cancelled', {});
+    await Notification.actionTaken(userForStudent(student), 'coc_cancelled', {});
     await logTransaction('cocCancel', student, { studentId: student.id });
 }

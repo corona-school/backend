@@ -59,8 +59,10 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
             logger.info('Found lecture on (sub)course ' + course.name + ' with start date in 2 days: ' + firstLecture.start.toDateString());
             logger.info('Sending reminders to instructor and ' + subcourse.subcourse_participants_pupil.length + ' participants');
 
-            // notify instructor
-            await sendCourseUpcomingReminderInstructor(firstLecture.student, course, subcourse, firstLecture.start);
+            if (firstLecture.student) {
+                // notify instructor
+                await sendCourseUpcomingReminderInstructor(firstLecture.student, course, subcourse, firstLecture.start);
+            }
 
             // notify all participants
             for (let i = 0; i < subcourse.subcourse_participants_pupil.length; i++) {

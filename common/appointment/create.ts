@@ -1,8 +1,8 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { User, getUserIdTypeORM } from '../user';
+import { User } from '../user';
 import assert from 'assert';
-import { getUserForTypeORM } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
@@ -54,8 +54,8 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
 
 export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
-    const studentUserId = getUserIdTypeORM(student);
-    const pupilUserId = getUserIdTypeORM(pupil);
+    const studentUserId = userForStudent(student).userID;
+    const pupilUserId = userForPupil(pupil).userID;
     const hosts = [student];
 
     let zoomMeetingId: string | null;
@@ -110,8 +110,8 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                         duration: appointmentToBeCreated.duration,
                         subcourseId: appointmentToBeCreated.subcourseId,
                         appointmentType: lecture_appointmenttype_enum.group,
-                        organizerIds: instructors.map((i) => getUserForTypeORM(i.student).userID),
-                        participantIds: participants.map((p) => getUserForTypeORM(p.pupil).userID),
+                        organizerIds: instructors.map((i) => userForStudent(i.student).userID),
+                        participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                         zoomMeetingId,
                     },
                 })
@@ -174,7 +174,7 @@ export async function createAdHocMeeting(matchId: number, user: User) {
     const matchAppointment = await createMatchAppointments(matchId, appointment);
     const { id, appointmentType } = matchAppointment[0];
 
-    await Notification.actionTaken(pupil, 'student_add_ad_hoc_meeting', {
+    await Notification.actionTaken(userForPupil(pupil), 'student_add_ad_hoc_meeting', {
         appointmentId: id.toString(),
         student: student,
         appointment: {

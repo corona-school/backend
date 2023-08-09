@@ -2,7 +2,7 @@ import { match as Match, pupil as Pupil, student as Student } from '@prisma/clie
 import { sendTemplateMail, mailjetTemplates } from '../mails';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { isStudent, isPupil } from '../user';
+import { userForStudent, userForPupil } from '../user';
 import { logTransaction } from '../transactionlog/log';
 // eslint-disable-next-line camelcase
 import { Project_match } from '../../graphql/generated';
@@ -53,13 +53,13 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     if ((await canRemoveZoomLicense(match.studentId)) && student.zoomUserId) {
         await deleteZoomUser(student);
     }
-    await Notification.actionTaken(student, 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
-    await Notification.actionTaken(pupil, 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
+    await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
+    await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 
     if (dissolver && dissolver.email === student.email) {
-        await Notification.actionTaken(pupil, 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
     } else if (dissolver && dissolver.email === pupil.email) {
-        await Notification.actionTaken(student, 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
     }
 }
 

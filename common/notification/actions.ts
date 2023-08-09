@@ -23,6 +23,7 @@ const sampleCourse = {
     },
     subcourse: {
         url: `https://app.lern-fair.de/single-course/1`,
+        id: '1',
     },
     firstLecture: {
         date: '20. Juli 1969',
@@ -285,12 +286,20 @@ const _notificationActions = {
         description: 'Tutee / Lern-Fair Now Match success',
         sampleContext: {
             student: sampleUser,
+            matchSubjects: 'Deutsch, Englisch',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutee_matching_lern-fair-plus': {
         description: 'Tutee / Lern-Fair Plus Match success',
         sampleContext: {
             student: sampleUser,
+            matchSubjects: 'Deutsch, Englisch',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutee_matching_TEST-DO-NOT-USE': DEPRECATED,
@@ -309,12 +318,20 @@ const _notificationActions = {
         description: 'Tutor / Lern-Fair Now Match success',
         sampleContext: {
             pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutor_matching_lern-fair-plus': {
         description: 'Tutor / Lern-Fair Plus Match success',
         sampleContext: {
             pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
         },
     },
     'tutor_matching_TEST-DO-NOT-USE': DEPRECATED,

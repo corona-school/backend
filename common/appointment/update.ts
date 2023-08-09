@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getUser, getStudent, User } from '../user';
+import { getUser, getStudent, User, userForPupil } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -40,7 +40,7 @@ export async function updateAppointment(
             const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             for (const participant of participants) {
-                await Notification.actionTaken(participant.pupil, 'pupil_change_appointment_group', {
+                await Notification.actionTaken(userForPupil(participant.pupil), 'pupil_change_appointment_group', {
                     student: student,
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
@@ -50,7 +50,7 @@ export async function updateAppointment(
 
         case AppointmentType.match:
             const match = await prisma.match.findUnique({ where: { id: updatedAppointment.matchId }, include: { pupil: true } });
-            await Notification.actionTaken(match.pupil, 'pupil_change_appointment_match', {
+            await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
                 student: student,
                 appointment: getAppointmentForNotification(updatedAppointment, /* original */ appointment),
             });

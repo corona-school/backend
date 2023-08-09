@@ -66,6 +66,8 @@ export default async function injectContext({ req, res }: { req: Request; res: R
             lastname: 'Min',
             email: 'test@lern-fair.de',
             roles: [Role.ADMIN, Role.UNAUTHENTICATED],
+            lastLogin: new Date(),
+            active: true,
         };
         context.sessionID = 'ADMIN';
 

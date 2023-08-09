@@ -4,6 +4,7 @@ import { dissolveMatch } from '../match/dissolve';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
+import { userForPupil } from '../user';
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
@@ -25,8 +26,8 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
         throw new RedundantError('Pupil was already deactivated');
     }
 
-    await Notification.actionTaken(pupil, 'pupil_account_deactivated', {});
-    await Notification.cancelRemindersFor(pupil);
+    await Notification.actionTaken(userForPupil(pupil), 'pupil_account_deactivated', {});
+    await Notification.cancelRemindersFor(userForPupil(pupil));
     // Setting 'active' to false will not send out any notifications during deactivation
     pupil.active = false;
 

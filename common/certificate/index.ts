@@ -102,7 +102,7 @@ export async function issueCertificateRequest(pc: CertWithUsers) {
         studentFirstname: pc.student.firstname,
     });
     await sendTemplateMail(mail, pc.pupil.email);
-    await Notification.actionTaken(pc.pupil, 'pupil_certificate_approval', {
+    await Notification.actionTaken(userForPupil(pc.pupil), 'pupil_certificate_approval', {
         uniqueId: `${pc.id}`,
         certificateLink,
         student: pc.student,
@@ -240,7 +240,7 @@ export async function signCertificate(
         rendered.toString('base64')
     );
     await sendTemplateMail(mail, signedCert.student.email);
-    await Notification.actionTaken(signedCert.student, 'student_certificate_sign', {
+    await Notification.actionTaken(userForStudent(signedCert.student), 'student_certificate_sign', {
         uniqueId: `${certificate.id}`,
         certificateLink,
         pupil: certificate.pupil,
