@@ -25,5 +25,3 @@ export function getAppointmentForNotification(appointment: Appointment, original
         original: original ? getAppointmentForNotification(original) : undefined,
     };
 }
-
-export class AuthorizationError extends Error {}

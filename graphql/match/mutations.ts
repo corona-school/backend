@@ -12,7 +12,7 @@ import { getMatcheeConversation } from '../../common/chat/helper';
 import { markConversationAsWriteable } from '../../common/chat';
 import { JSONResolver } from 'graphql-scalars';
 import { createAdHocMeeting } from '../../common/appointment/create';
-import { AuthorizationError } from '../../common/appointment/util';
+import { AuthenticationError } from '../error';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -63,11 +63,10 @@ export class MutateMatchResolver {
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
 
-        if (user.pupilId) {
-            throw new AuthorizationError(`Pupil is not allowed to create ad-hoc meeting for match ${matchId}`);
+        if (user.studentId) {
+            const { id, appointmentType } = await createAdHocMeeting(matchId, user);
+            return { id, appointmentType };
         }
-
-        const { id, appointmentType } = await createAdHocMeeting(matchId, user);
-        return { id, appointmentType };
+        throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
     }
 }
