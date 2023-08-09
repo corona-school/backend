@@ -2,6 +2,7 @@ import { adminClient, createUserClient, defaultClient, test } from './base';
 import { pupilOne } from './user';
 import assert from 'assert';
 import { assertUserReceivedNotification, createMockNotification } from './notifications';
+import { randomBytes } from 'crypto';
 
 void test('Token Login', async () => {
     const { client } = await pupilOne;
@@ -178,7 +179,8 @@ void test('Change Email', async () => {
     } = await pupilOne;
     const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
 
-    await client.request(`mutation MeChangeEmail { meChangeEmail(email: "test+newmail@lern-fair.de")}`);
+    const newEmail = `test+${randomBytes(5).toString('base64')}@lern-fair.de`;
+    await client.request(`mutation MeChangeEmail { meChangeEmail(email: "${newEmail}")}`);
 
     const { context } = await assertUserReceivedNotification(changedEmailNotification, `pupil/${id}`);
     const token = context.token as string;
@@ -189,8 +191,8 @@ void test('Change Email', async () => {
 
     const {
         me: {
-            email: newMeEmail,
-            pupil: { id: id1, email: newMail },
+            email: newMeEmailResult,
+            pupil: { id: id1, email: newEmailResult },
         },
     } = await otherDeviceClient.request(`
         query CheckLoggedIn {
@@ -204,7 +206,7 @@ void test('Change Email', async () => {
         }
     `);
 
-    assert.strictEqual(newMeEmail, 'test+newmail@lern-fair.de', 'Should be the new email');
-    assert.strictEqual(newMail, 'test+newmail@lern-fair.de', 'Should be the new email');
+    assert.strictEqual(newMeEmailResult, newEmail.toLowerCase(), 'Should be the new email');
+    assert.strictEqual(newEmailResult, newEmail.toLowerCase(), 'Should be the new email');
     assert.strictEqual(id, id1, 'Changed email of the correct user');
 });
