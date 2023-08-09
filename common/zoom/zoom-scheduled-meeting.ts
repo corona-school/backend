@@ -236,7 +236,7 @@ const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?:
         1000
     );
 
-    if (!response.ok && response.status !== 404) {
+    if (!response.ok) {
         throw new Error(`Zoom - failed to update meeting with ${response.status} ${await response.text()}`);
     }
 
