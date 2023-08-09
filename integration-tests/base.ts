@@ -107,16 +107,27 @@ const tests: { name: string; runner: () => Promise<any>; resolve: (value: any) =
    const { exposed } = await exposureTest;
    To avoid deadlocks, tests exposing something should be defined first (c.f. index.ts)
 */
-export function test<T>(name: string, runner: () => Promise<T>): Promise<T> {
-    let resolve, reject;
-    const promise = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
+export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> {
+    let result: Promise<T> | null = null;
+
+    tests.push({
+        name,
+        runner,
+        resolve: (it) => { result = Promise.resolve(it); },
+        reject: (error) => { result = Promise.reject(error); }
     });
 
-    tests.push({ name, runner, resolve, reject });
+    return {
+        // Whenever a tests awaits a previous test, this implicitly calls then(...) on this Thenable
+        // At that point we can detect cycles, or chain the promise exposed by the test
+        then(onfulfilled, onrejected) {
+            if (result === null) {
+                throw new Error(`Tests depends on test ${name} which did not run yet! This creates a deadlock. Tests must be ordered sequentially`);
+            }
 
-    return promise as Promise<T>;
+            return result.then(onfulfilled, onrejected);
+        }
+    };
 }
 
 // This one actually runs all tests that were defined
