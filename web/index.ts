@@ -1,3 +1,4 @@
+import '../common/logger/tracing';
 import { getLogger } from '../common/logger/logger';
 import { Connection, createConnection, getConnection } from 'typeorm';
 import moment from 'moment-timezone';
