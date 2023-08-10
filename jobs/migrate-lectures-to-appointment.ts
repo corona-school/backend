@@ -66,6 +66,7 @@ export default async function execute() {
             subcourse: true,
             organizerIds: true,
             start: true,
+            duration: true,
         },
     });
 
@@ -84,7 +85,7 @@ export default async function execute() {
                     zoomUsers.push(zoomUser);
                 }
             }
-            const videoMeeting = await createZoomMeeting(zoomUsers, lecture.start, Boolean(lecture.subcourseId));
+            const videoMeeting = await createZoomMeeting(zoomUsers, lecture.start, lecture.duration, Boolean(lecture.subcourseId));
             await prisma.lecture.update({ where: { id: lecture.id }, data: { zoomMeetingId: videoMeeting.id.toString() } });
         })
     );

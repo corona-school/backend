@@ -164,8 +164,8 @@ export const createZoomMeetingForAppointments = async (
 
         const newVideoChat =
             appointmentsNumber > 1
-                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, isCourse, lastDate)
-                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, isCourse);
+                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, appointmentsToBeCreated[0].duration, isCourse, lastDate)
+                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, appointmentsToBeCreated[0].duration, isCourse);
 
         return newVideoChat;
     } catch (e) {
