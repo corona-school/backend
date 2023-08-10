@@ -117,7 +117,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Match])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() pupil: Required<Pupil>) {

@@ -53,13 +53,13 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     email(@Root() user: User): string {
         return user.email;
     }
 
     @FieldResolver((returns) => Pupil)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     async pupil(@Root() user: User): Promise<Pupil> {
         if (!user.pupilId) {
             return null;
@@ -69,7 +69,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Student)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     async student(@Root() user: User): Promise<Student> {
         if (!user.studentId) {
             return null;
@@ -131,13 +131,17 @@ export class UserFieldsResolver {
     }
 
     @Query((returns) => [UserType])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async usersSearch(
+        @Ctx() context: GraphQLContext,
         @Arg('query') query: string,
         @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener',
         @Arg('take', () => Int, { nullable: true }) take?: number
     ) {
-        return await findUsers(query, only, take);
+        // "Needs to know" principle: Screeners should only find users they are supposed to screen
+        // Admins sometimes need to investigate, and thus are allowed to fuzzy search:
+        const strict = !(context.user.roles?.includes(Role.ADMIN) ?? false);
+        return await findUsers(query, only, take, strict);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
