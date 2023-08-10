@@ -24,7 +24,14 @@
             "env": {
                 "NODE_ENV": "production",
                 "ENV": "dev",
-                "MAILJET_LIVE": "0"
+                "MAILJET_LIVE": "0",
+                "DD_PROCESS_AGENT": "true",
+                "DD_APM_ENABLED": "true",
+                "DD_RUNTIME_METRICS_ENABLED": "true",
+                "DD_DYNO_HOST": "true",
+                "DD_SITE": "datadoghq.eu",
+                "DD_AGENT_MAJOR_VERSION": "7",
+                "DD_ENABLE_HEROKU_POSTGRES": "false"
             },
             "addons": [
                 "heroku-postgresql:mini"
@@ -34,6 +41,9 @@
     "buildpacks": [
         {
           "url": "jontewks/puppeteer"
+        },
+        {
+          "url": "https://github.com/DataDog/heroku-buildpack-datadog.git"
         },
         {
           "url": "heroku/nodejs"
