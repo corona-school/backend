@@ -47,7 +47,7 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
 
     // We only want to send notifications when the status got updated.
     // Otherwise, we might spam the user while updating the comment.
-    if (screening.status === screeningUpdate.status) {
+    if (screening.status && screening.status === screeningUpdate.status) {
         return;
     }
 
