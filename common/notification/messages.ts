@@ -101,12 +101,68 @@ export async function getMessage(
     const user = await getUser(concreteNotification.userId);
     const context = getContext(concreteNotification.context as NotificationContext, user);
 
+    let headline = '';
+    try {
+        headline = template.headline(context);
+    } catch (error) {
+        logger.error(
+            `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            {
+                context,
+                error,
+            }
+        );
+    }
+
+    let body = '';
+    try {
+        body = template.body(context);
+    } catch (error) {
+        logger.error(
+            `Failed to render Body Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            {
+                context,
+                error,
+            }
+        );
+    }
+
+    let navigateTo: string | undefined;
+    try {
+        if (template.navigateTo) {
+            navigateTo = template.navigateTo(context);
+        }
+    } catch (error) {
+        logger.error(
+            `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            {
+                context,
+                error,
+            }
+        );
+    }
+
+    let modalText: string | undefined;
+    try {
+        if (template.modalText) {
+            modalText = template.modalText(context);
+        }
+    } catch (error) {
+        logger.error(
+            `Failed to render Modal Text Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            {
+                context,
+                error,
+            }
+        );
+    }
+
     return {
         type: template.type,
-        headline: template.headline(context),
-        body: template.body(context),
-        navigateTo: template.navigateTo?.(context),
-        modalText: template.modalText?.(context),
+        headline,
+        body,
+        navigateTo,
+        modalText,
     };
 }
 
