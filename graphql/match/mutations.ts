@@ -10,6 +10,9 @@ import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { removeInterest } from '../../common/match/interest';
 import { getMatcheeConversation } from '../../common/chat/helper';
 import { markConversationAsWriteable } from '../../common/chat';
+import { JSONResolver } from 'graphql-scalars';
+import { createAdHocMeeting } from '../../common/appointment/create';
+import { AuthenticationError } from '../error';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -51,5 +54,19 @@ export class MutateMatchResolver {
             await markConversationAsWriteable(conversationId);
         }
         return true;
+    }
+
+    @Mutation((returns) => JSONResolver, { nullable: true })
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async matchCreateAdHocMeeting(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number) {
+        const { user } = context;
+        const match = await getMatch(matchId);
+        await hasAccess(context, 'Match', match);
+
+        if (user.studentId) {
+            const { id, appointmentType } = await createAdHocMeeting(matchId, user);
+            return { id, appointmentType };
+        }
+        throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
     }
 }
