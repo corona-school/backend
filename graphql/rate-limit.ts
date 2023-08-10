@@ -2,6 +2,7 @@ import { getLogger } from '../common/logger/logger';
 import { createMethodDecorator } from 'type-graphql';
 import { Role } from './authorizations';
 import { GraphQLContext } from './context';
+import { ForbiddenError } from 'apollo-server-express';
 
 const log = getLogger('GraphQL Rate Limiting');
 
@@ -34,7 +35,7 @@ export function RateLimit(name: string, max: number, interval: number /* in ms *
 
         if (count > max) {
             log.warn(`Blocked ${context.ip} from accessing ${name} as maximum of ${max} was reached`);
-            throw new Error(`RateLimit Enforcement`);
+            throw new ForbiddenError(`RateLimit Enforcement`);
         }
 
         log.debug(`${context.ip} requested ${name} for the ${count}th time`);
