@@ -1,13 +1,12 @@
 import { student as Student, pupil as Pupil } from '@prisma/client';
 import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
-import { mailjetTemplates, sendTemplateMail } from '../mails';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
-import type { ConcreteMatchPool, MatchPool } from './pool';
+import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
 
