@@ -10,9 +10,22 @@ import { RedundantError } from '../util/error';
 
 const logger = getLogger('Appointment');
 
+async function isLastCourseAppointment(subcourseId: number) {
+    const appointments = await prisma.lecture.findMany({ where: { subcourseId: subcourseId, isCanceled: false } });
+    if (appointments.length === 1) {
+        return true;
+    }
+    return false;
+}
+
 export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean) {
     if (appointment.isCanceled) {
         throw new RedundantError(`Appointment already cancelled`);
+    }
+
+    const isLastAppointment = await isLastCourseAppointment(appointment.subcourseId);
+    if (appointment.subcourseId && isLastAppointment) {
+        throw new RedundantError(`Appointment is last of the course`);
     }
 
     await prisma.lecture.update({
