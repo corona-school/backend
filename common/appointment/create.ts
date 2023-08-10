@@ -1,17 +1,17 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/user';
-import { student as Student } from '@prisma/client';
+import { Prisma, student as Student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
 import { getNotificationContextForSubcourse } from '../mails/courses';
-import { userForPupil, userForStudent } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
+import { getMatch, getPupil, getStudent } from '../../graphql/util';
 
 const logger = getLogger();
 
@@ -185,3 +185,34 @@ export const saveZoomMeetingReport = async (appointment: Lecture) => {
 
     logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
 };
+export async function createAdHocMeeting(matchId: number, user: User) {
+    const match = await getMatch(matchId);
+    const { pupilId, studentId } = match;
+
+    const pupil = await getPupil(pupilId);
+    const student = await getStudent(studentId);
+
+    const start = moment().toDate();
+
+    const appointment: AppointmentCreateMatchInput[] = [
+        {
+            title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
+            matchId: matchId,
+            start: start,
+            duration: 30,
+            appointmentType: lecture_appointmenttype_enum.match,
+        },
+    ];
+    const matchAppointment = await createMatchAppointments(matchId, appointment);
+    const { id, appointmentType } = matchAppointment[0];
+
+    await Notification.actionTaken(userForPupil(pupil), 'student_add_ad_hoc_meeting', {
+        appointmentId: id.toString(),
+        student: student,
+        appointment: {
+            url: `/video-chat/${id}/${appointmentType}`,
+        },
+    });
+
+    return { id, appointmentType };
+}
