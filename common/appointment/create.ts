@@ -174,13 +174,11 @@ export const createZoomMeetingForAppointments = async (
 };
 
 export const saveZoomMeetingReport = async (appointment: Lecture) => {
-    const meetingReports: Prisma.JsonValue[] = appointment.zoomMeetingReport || [];
     const result = await getZoomMeetingReport(appointment.zoomMeetingId);
-    meetingReports.push(result);
 
     await prisma.lecture.update({
         where: { id: appointment.id },
-        data: { zoomMeetingReport: { push: meetingReports } },
+        data: { zoomMeetingReport: { push: result } },
     });
 
     logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
