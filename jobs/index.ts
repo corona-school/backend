@@ -1,3 +1,4 @@
+import '../common/logger/tracing';
 import moment from 'moment-timezone';
 import { getLogger } from '../common/logger/logger';
 import { scheduleJobs } from './scheduler';
