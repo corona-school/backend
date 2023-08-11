@@ -1,5 +1,5 @@
 import { tracer } from 'dd-trace';
-import { getEnvironment, getServiceName, getVersion } from '../../utils/environment';
+import { getDDEnvironment, getServiceName, getVersion } from '../../utils/environment';
 
 tracer.init({
     profiling: true,
@@ -8,7 +8,7 @@ tracer.init({
     appsec: true,
     service: getServiceName(),
     dbmPropagationMode: 'full',
-    env: getEnvironment(),
+    env: getDDEnvironment(),
     version: getVersion(),
 });
 
