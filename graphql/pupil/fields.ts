@@ -8,7 +8,7 @@ import {
     Match,
     Pupil_screening as PupilScreening,
 } from '../generated';
-import { Arg, Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { userForPupil } from '../../common/user';
@@ -149,6 +149,16 @@ export class ExtendFieldsPupilResolver {
     async screenings(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_screening.findMany({
             where: { pupilId: pupil.id },
+        });
+    }
+
+    @Query((returns) => [Pupil])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async pupilsToBeScreened() {
+        return await prisma.pupil.findMany({
+            where: {
+                pupil_screening: { some: { invalidated: false, status: { in: ['dispute', 'pending'] } } },
+            },
         });
     }
 }

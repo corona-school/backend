@@ -112,6 +112,17 @@ void test('Screener can Query Users to Screen', async () => {
 
     assert.strictEqual(usersSearch.length, 1);
     assert.strictEqual(usersSearch[0].student.firstname, instructor.firstname);
+
+    const { studentsToBeScreened } = await client.request(`
+        query FindStudentsToBeScreened {
+            studentsToBeScreened {
+                firstname
+                lastname
+            }
+        }
+    `);
+
+    assert.ok(studentsToBeScreened.some(it => it.firstname === instructor.firstname));
 });
 
 
