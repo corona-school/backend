@@ -6,13 +6,13 @@ import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { getNotificationContextForSubcourse } from '../mails/courses';
 import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 
 const logger = getLogger('Appointment');
 
 async function isLastCourseAppointment(subcourseId: number) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId: subcourseId, isCanceled: false } });
-    if (appointments.length === 1) {
+    const appointments = await prisma.lecture.count({ where: { subcourseId: subcourseId, isCanceled: false } });
+    if (appointments === 1) {
         return true;
     }
     return false;
@@ -23,9 +23,11 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
         throw new RedundantError(`Appointment already cancelled`);
     }
 
-    const isLastAppointment = await isLastCourseAppointment(appointment.subcourseId);
-    if (appointment.subcourseId && isLastAppointment) {
-        throw new RedundantError(`Appointment is last of the course`);
+    if (appointment.subcourseId) {
+        const isLastAppointment = await isLastCourseAppointment(appointment.subcourseId);
+        if (appointment.subcourseId && isLastAppointment) {
+            throw new PrerequisiteError(`Appointment is last of the course`);
+        }
     }
 
     await prisma.lecture.update({
