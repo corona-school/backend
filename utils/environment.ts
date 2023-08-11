@@ -10,6 +10,10 @@ export function getEnvironment(): string {
     return process.env.ENV || 'dev';
 }
 
+export function getDDEnvironment(): string {
+    return process.env.DD_ENV || 'dev';
+}
+
 export function getHostname(): string {
     return process.env.DD_HOSTNAME || 'n/a';
 }
