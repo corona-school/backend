@@ -254,7 +254,8 @@ void (async function setupDevDB() {
             lastname: 'Screenerfrau',
             email: 'test+dev+sc1@lern-fair.de',
             password: "LEGACY",
-            verified: true
+            verified: true,
+            active: true
         }
     });
     await _createFixedToken(userForScreener(screener1), `authtokenSC1`);
