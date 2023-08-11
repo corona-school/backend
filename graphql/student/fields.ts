@@ -69,7 +69,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Match])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() student: Required<Student>) {
@@ -79,7 +79,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Subject])
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.USER, Role.ADMIN, Role.SCREENER)
     async subjectsFormatted(@Root() student: Required<Student>) {
         return parseSubjectString(student.subjects);
     }
@@ -125,7 +125,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Screening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async tutorScreenings(@Root() student: Student) {
         return await prisma.screening.findMany({
             where: { studentId: student.id },
@@ -133,7 +133,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [InstructorScreening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async instructorScreenings(@Root() student: Student) {
         return await prisma.instructor_screening.findMany({
             where: { studentId: student.id },

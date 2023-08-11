@@ -63,7 +63,49 @@ void test('Screener can Query Users to Screen', async () => {
     const { usersSearch } = await client.request(`
         query FindUsersToScreen {
             usersSearch(query: "${instructor.firstname} ${instructor.lastname}", take: 1) {
-                student { firstname lastname }
+                student { 
+                  firstname
+                  lastname
+                  
+                  matches {
+                    pupil { firstname lastname }
+                    subjectsFormatted { name }
+                    dissolved
+                    dissolvedAt
+                    pupilFirstMatchRequest
+                  }
+                  
+                  tutorScreenings { 
+                    success
+                    comment
+                    jobStatus
+                    knowsCoronaSchoolFrom
+                    createdAt
+                    screener { firstname lastname }
+                  }
+                  
+                  instructorScreenings { 
+                    success
+                    comment
+                    jobStatus
+                    knowsCoronaSchoolFrom
+                    createdAt
+                    screener { firstname lastname }
+                  }
+                }
+                
+                pupil { 
+                  firstname
+                  lastname
+                  
+                  screenings { 
+                    createdAt
+                    updatedAt
+                    status
+                    invalidated
+                    comment
+                  }
+                }
             }
         }
     `);
