@@ -26,8 +26,8 @@ async function getActiveJobConnection() {
 }
 
 function executeJob(name: string, job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
-    return async function () {
-        const span = tracer.startSpan(name);
+    const span = tracer.startSpan(name);
+    return tracer.scope().bind(async function () {
         //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
         //"this" is the context of the cron-job -> see definition of node cron package
         this.stop(); //start stop, so that the same job is never executed in parallel
@@ -53,7 +53,7 @@ function executeJob(name: string, job: (manager: EntityManager) => Promise<void>
 
         this.start();
         span.finish();
-    };
+    }, span);
 }
 
 const scheduledJobs: cron.CronJob[] = [];
