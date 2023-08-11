@@ -93,7 +93,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Subject])
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
@@ -127,7 +127,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => Int)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
     }
@@ -145,7 +145,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [PupilScreening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
     async screenings(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_screening.findMany({
             where: { pupilId: pupil.id },
