@@ -5,7 +5,7 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { getNotificationContextForSubcourse } from '../mails/courses';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError, RedundantError } from '../util/error';
 
 const logger = getLogger('Appointment');

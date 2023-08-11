@@ -1,4 +1,4 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
+import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -14,8 +14,8 @@ import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreference
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
-import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
-import { getUserZAK, getZoomUsers } from '../../common/zoom/zoom-user';
+import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
+import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 
 @ObjectType()
 export class UserContact implements UserContactType {

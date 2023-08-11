@@ -1,8 +1,8 @@
-import { getAccessToken } from './zoom-authorization';
-import { ZoomUser } from './zoom-user';
-import { getLogger } from '../../common/logger/logger';
-import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { getAccessToken } from './authorization';
+import { ZoomUser } from './user';
+import { getLogger } from '../logger/logger';
+import zoomRetry from './retry';
+import { assureZoomFeatureActive, isZoomFeatureActive } from './util';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';

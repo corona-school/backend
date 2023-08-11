@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
-import { prisma } from '../../common/prisma';
-import { getAccessToken } from './zoom-authorization';
+import { prisma } from '../prisma';
+import { getAccessToken } from './authorization';
 import dotenv from 'dotenv';
 import { student } from '@prisma/client';
-import { getLogger } from '../../common/logger/logger';
-import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive } from '.';
+import { getLogger } from '../logger/logger';
+import zoomRetry from './retry';
+import { assureZoomFeatureActive } from './util';
 import { ZoomUserResponse, ZoomUserType } from './type';
 
 const logger = getLogger('Zoom User');

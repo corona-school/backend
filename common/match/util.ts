@@ -4,8 +4,6 @@ import { parseSubjectString } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { hashToken } from '../util/hashing';
-import { deleteZoomUser } from '../zoom/zoom-user';
-import { excludePastSubcourses } from '../courses/filters';
 
 export function getJitsiTutoringLink(match: Match) {
     return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(match.uuid)}`;

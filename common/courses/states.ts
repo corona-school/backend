@@ -21,7 +21,6 @@ import { CourseState } from '../entity/Course';
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
-import context from '../../graphql/context';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 
 const logger = getLogger('Course States');

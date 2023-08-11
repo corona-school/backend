@@ -5,8 +5,8 @@ import { pupil as Pupil, student as Student, screener as Screener } from '@prism
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
-import { updateZoomUser } from '../zoom/zoom-user';
-import { isZoomFeatureActive } from '../zoom';
+import { updateZoomUser } from '../zoom/user';
+import { isZoomFeatureActive } from '../zoom/util';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 

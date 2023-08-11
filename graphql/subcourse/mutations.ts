@@ -16,13 +16,12 @@ import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
-import { getSessionPupil, getSessionStudent, isSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
-import { validateEmail } from '../validators';
 import { chat_type } from '../generated';
 import { addParticipant, markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { ChatType } from '../../common/chat/types';
@@ -90,8 +89,7 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
-        const { joinAfterStart, minGrade, maxGrade, maxParticipants, lectures, allowChatContactParticipants, allowChatContactProspects, groupChatType } =
-            subcourse;
+        const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
         const result = await prisma.subcourse.create({
             data: {
                 courseId,
@@ -103,7 +101,6 @@ export class MutateSubcourseResolver {
                 allowChatContactParticipants,
                 allowChatContactProspects,
                 groupChatType,
-                lecture: { createMany: { data: lectures || [] } },
             },
         });
 
@@ -215,8 +212,8 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
-        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
+        const user = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);
@@ -234,8 +231,8 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ): Promise<boolean> {
-        const { user } = context;
         const pupil = await getSessionPupil(context, pupilId);
+        const user = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
         await addGroupAppointmentsParticipant(subcourseId, user.userID);

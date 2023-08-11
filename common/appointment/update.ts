@@ -5,7 +5,7 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import moment from 'moment';
-import { updateZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { updateZoomMeeting } from '../zoom/scheduled-meeting';
 import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const logger = getLogger('Appointment');
