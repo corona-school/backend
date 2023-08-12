@@ -230,6 +230,7 @@ const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
 const adminOrOwnerOrScreener = [Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)];
 const onlyAdmin = [Authorized(Role.ADMIN)];
+const onlyAdminOrScreener = [Authorized(Role.ADMIN, Role.SCREENER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
@@ -590,7 +591,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     },
     Pupil_screening: {
         fields: {
-            comment: onlyAdmin,
+            comment: onlyAdminOrScreener,
         },
     },
 };
