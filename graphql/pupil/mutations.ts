@@ -297,7 +297,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await addPupilScreening(pupil);
@@ -306,14 +306,14 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilUpdateScreening(@Arg('pupilScreeningId') pupilScreeningId: number, @Arg('data') data: PupilScreeningUpdateInput): Promise<boolean> {
         await updatePupilScreening(pupilScreeningId, data);
         return true;
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
         await invalidatePupilScreening(pupilScreeningId);
         return true;
