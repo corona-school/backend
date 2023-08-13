@@ -157,6 +157,7 @@ export class ExtendFieldsPupilResolver {
     async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
         return await prisma.pupil.findMany({
             where: {
+                active: true,
                 pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
             },
         });

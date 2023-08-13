@@ -167,6 +167,7 @@ export class ExtendFieldsStudentResolver {
     async studentsToBeScreened() {
         return await prisma.student.findMany({
             where: {
+                active: true,
                 OR: [
                     { isStudent: true, screening: { is: null } },
                     { isInstructor: true, instructor_screening: { is: null } },
