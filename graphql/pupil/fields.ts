@@ -154,10 +154,10 @@ export class ExtendFieldsPupilResolver {
 
     @Query((returns) => [Pupil])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilsToBeScreened() {
+    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
         return await prisma.pupil.findMany({
             where: {
-                pupil_screening: { some: { invalidated: false, status: { in: ['dispute', 'pending'] } } },
+                pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
             },
         });
     }
