@@ -252,7 +252,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await deactivatePupil(pupil);
