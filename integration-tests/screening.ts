@@ -1,7 +1,7 @@
 import assert from "assert";
 import { randomBytes } from "crypto";
 import { adminClient, createUserClient, test } from "./base";
-import { instructorOne, instructorTwo, studentOne } from "./user";
+import { instructorOne, instructorTwo, pupilOne, studentOne } from "./user";
 
 const screenerOne = test('Admin can create Screener Account', async () => {
     const email = `test+${randomBytes(10).toString("base64")}@lern-fair.de`;
@@ -33,6 +33,12 @@ const screenerOne = test('Admin can create Screener Account', async () => {
         mutation ScreenerLogout { logout }
     `);
 
+    const { userDetermineLoginOptions } = await client.request(`
+        mutation DetermineScreenerLogin { userDetermineLoginOptions(email: "${email}") }
+    `);
+
+    assert.strictEqual(userDetermineLoginOptions, "password");
+
     await client.request(`
         mutation ScreenerLoginWithPassword { loginPassword(email: "${email}" password: "${password}")}
     `);
@@ -46,9 +52,20 @@ const screenerOne = test('Admin can create Screener Account', async () => {
     return { client };
 });
 
+const pupilWithScreening = test('Admin can request Pupils to Screening', async () => {
+    const { pupil, client } = await pupilOne;
+
+    await adminClient.request(`
+        mutation RequestScreening { pupilCreateScreening(pupilId: ${pupil.pupil.id})}
+    `);
+
+    return { pupil, client };
+});
+
 void test('Screener can Query Users to Screen', async () => {
     const { client } = await screenerOne;
     const { instructor } = await instructorOne;
+    const { pupil } = await pupilWithScreening;
 
     const { usersSearch: nothingFound } = await client.request(`
         query FindUsersToScreenInexact {
@@ -66,13 +83,15 @@ void test('Screener can Query Users to Screen', async () => {
                 student { 
                   firstname
                   lastname
-                  
+                  subjectsFormatted { name }
+                  languages
+
                   matches {
                     pupil { firstname lastname }
                     subjectsFormatted { name }
                     dissolved
                     dissolvedAt
-                    pupilFirstMatchRequest
+                    studentFirstMatchRequest
                   }
                   
                   tutorScreenings { 
@@ -93,25 +112,47 @@ void test('Screener can Query Users to Screen', async () => {
                     screener { firstname lastname }
                   }
                 }
-                
-                pupil { 
-                  firstname
-                  lastname
-                  
-                  screenings { 
-                    createdAt
-                    updatedAt
-                    status
-                    invalidated
-                    comment
-                  }
-                }
             }
         }
     `);
 
     assert.strictEqual(usersSearch.length, 1);
     assert.strictEqual(usersSearch[0].student.firstname, instructor.firstname);
+
+    const { usersSearch: usersSearch2 } = await client.request(`
+        query FindUsersToScreen {
+            usersSearch(query: "${pupil.firstname} ${pupil.lastname}", take: 1) {                
+                pupil { 
+                    firstname
+                    lastname
+                    subjectsFormatted { name }
+                    gradeAsInt
+                    learningGermanSince
+                    languages
+
+                    screenings {
+                        id
+                        createdAt
+                        updatedAt
+                        status
+                        invalidated
+                        comment
+                    }
+
+                    matches {
+                        pupil { firstname lastname }
+                        subjectsFormatted { name }
+                        dissolved
+                        dissolvedAt
+                        pupilFirstMatchRequest
+                    }
+                }
+            }
+        }
+    `);
+
+    assert.strictEqual(usersSearch2.length, 1);
+    assert.strictEqual(usersSearch2[0].pupil.firstname, pupil.firstname);
 
     const { studentsToBeScreened } = await client.request(`
         query FindStudentsToBeScreened {
@@ -123,6 +164,17 @@ void test('Screener can Query Users to Screen', async () => {
     `);
 
     assert.ok(studentsToBeScreened.some(it => it.firstname === instructor.firstname));
+
+    const { pupilsToBeScreened } = await client.request(`
+        query FindPupilsToBeScreened {
+            pupilsToBeScreened { 
+                firstname
+                lastname
+            }
+        }
+    `);
+
+    assert.ok(pupilsToBeScreened.some(it => it.firstname === pupil.firstname));
 });
 
 
@@ -193,4 +245,53 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
     // Got the TUTOR role!
 
     return { client, student };
+});
+
+void test('Screen Pupil One', async () => {
+    const { pupil, client } = await pupilWithScreening;
+    const { client: screenerClient } = await screenerOne;
+
+    const { pupilsToBeScreened } = await screenerClient.request(`
+        query FindPupilScreening {
+            pupilsToBeScreened {
+                firstname
+                screenings { id status }
+            }
+        }
+    `);
+
+    const pupilToBeScreened = pupilsToBeScreened.find(it => it.firstname === pupil.firstname);
+    assert.ok(pupilToBeScreened !== undefined);
+    const screening = pupilToBeScreened.screenings[0];
+    assert.ok(screening !== undefined);
+    assert.strictEqual(screening.status, 'pending');
+
+    await screenerClient.request(`
+        mutation AddDisputedScreening { pupilUpdateScreening(pupilScreeningId: ${screening.id}, data: {
+            status: dispute,
+            comment: "Some comment"
+        })}
+    `);
+
+    const { pupilsToBeScreened: pupilsToBeScreenedDisputed } = await screenerClient.request(`
+        query FindPupilScreeningDisputed {
+            pupilsToBeScreened(onlyDisputed: true) {
+                firstname
+                screenings { id status comment }
+            }
+        }
+    `);
+
+    const pupilToBeScreenedDisputed = pupilsToBeScreenedDisputed.find(it => it.firstname === pupil.firstname);
+    assert.ok(pupilToBeScreenedDisputed !== undefined);
+    const screeningDisputed = pupilToBeScreenedDisputed.screenings[0];
+    assert.ok(screeningDisputed !== undefined);
+    assert.strictEqual(screeningDisputed.status, 'dispute');
+
+    await screenerClient.request(`
+        mutation AddScreeningResult {
+            pupilUpdateScreening(pupilScreeningId: ${screeningDisputed.id}, data: { status: success })
+        }
+    `);
+
 });
