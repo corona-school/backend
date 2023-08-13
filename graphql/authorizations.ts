@@ -228,7 +228,9 @@ const entityRoles: EntityRole[] = [
 
 const allAdmin = { _all: [Authorized(Role.ADMIN)] };
 const adminOrOwner = [Authorized(Role.ADMIN, Role.OWNER)];
+const adminOrOwnerOrScreener = [Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)];
 const onlyAdmin = [Authorized(Role.ADMIN)];
+const onlyAdminOrScreener = [Authorized(Role.ADMIN, Role.SCREENER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
@@ -364,14 +366,14 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             verifiedAt: adminOrOwner,
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
-            openMatchRequestCount: adminOrOwner,
-            firstMatchRequest: adminOrOwner,
+            openMatchRequestCount: adminOrOwnerOrScreener,
+            firstMatchRequest: adminOrOwnerOrScreener,
             openProjectMatchRequestCount: adminOrOwner,
             matchingPriority: adminOrOwner,
-            learningGermanSince: adminOrOwner,
-            createdAt: adminOrOwner,
-            registrationSource: adminOrOwner,
-            school: adminOrOwner,
+            learningGermanSince: adminOrOwnerOrScreener,
+            createdAt: adminOrOwnerOrScreener,
+            registrationSource: adminOrOwnerOrScreener,
+            school: adminOrOwnerOrScreener,
             schoolId: adminOrOwner,
             teacherEmailAddress: adminOrOwner,
             coduToken: adminOrOwner,
@@ -426,16 +428,16 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             verification: nobody,
             verifiedAt: adminOrOwner,
             newsletter: adminOrOwner,
-            openMatchRequestCount: adminOrOwner,
-            firstMatchRequest: adminOrOwner,
-            university: adminOrOwner,
+            openMatchRequestCount: adminOrOwnerOrScreener,
+            firstMatchRequest: adminOrOwnerOrScreener,
+            university: adminOrOwnerOrScreener,
             module: adminOrOwner,
             moduleHours: adminOrOwner,
-            createdAt: adminOrOwner,
+            createdAt: adminOrOwnerOrScreener,
             openProjectMatchRequestCount: adminOrOwner,
-            certificate_of_conduct: adminOrOwner,
+            certificate_of_conduct: adminOrOwnerOrScreener,
             isCodu: adminOrOwner,
-            registrationSource: adminOrOwner,
+            registrationSource: adminOrOwnerOrScreener,
             lastTimeCheckedNotifications: adminOrOwner,
             notificationPreferences: adminOrOwner,
 
@@ -589,7 +591,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     },
     Pupil_screening: {
         fields: {
-            comment: onlyAdmin,
+            comment: onlyAdminOrScreener,
         },
     },
 };

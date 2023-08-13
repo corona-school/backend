@@ -287,7 +287,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
