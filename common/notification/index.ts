@@ -398,7 +398,7 @@ export async function actionTakenAt<ID extends ActionID>(
     user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
-    dryRun: boolean,
+    dryRun: boolean = false,
     attachments?: AttachmentGroup
 ) {
     if (!user.active) {
