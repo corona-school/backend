@@ -1,7 +1,7 @@
 import { test, createUserClient, adminClient } from './base';
 import assert from 'assert';
 import { randomBytes } from 'crypto';
-import { assertUserReceivedNotification, createMockNotification } from './notifications';
+import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
 
 const setup = test('Setup Configuration', async () => {
     // Ensure Rate Limits are deterministic when running the tests multiple times

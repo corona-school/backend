@@ -3,7 +3,7 @@ import { screenedInstructorOne } from './screening';
 import { subcourseOne } from './course';
 import assert from 'assert';
 import { pupilOne } from './user';
-import { expectFetch } from './mock';
+import { expectFetch } from './base/mock';
 
 const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';

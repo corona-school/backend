@@ -1,5 +1,5 @@
 import assert from "assert";
-import { blue, red } from "./base";
+import { blue, red } from ".";
 import wcmatch from "wildcard-match";
 
 interface MockedFetch {
