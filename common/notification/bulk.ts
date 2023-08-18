@@ -1,7 +1,7 @@
 import { match as Match } from '@prisma/client';
 import { prisma } from '../prisma';
 import { actionTakenAt } from './index';
-import { NotificationContext, BulkAction } from './types';
+import { NotificationContext, BulkAction, ActionID } from './types';
 import { getMatchHash } from '../match/util';
 
 interface BulkRun {
@@ -45,12 +45,22 @@ export async function runBulkAction(name: string, apply: boolean) {
                 bulkRun.currentUser = user.userID;
 
                 const result = await actionTakenAt(actionDate, user, bulkAction.action, context, apply);
-                for (const { notificationID } of result) {
-                    if (!bulkRun.notificationCount[notificationID]) {
-                        bulkRun.notificationCount[notificationID] = 0;
+                for (const { id } of result.directSends) {
+                    if (!bulkRun.notificationCount[id]) {
+                        bulkRun.notificationCount[id] = 0;
                     }
 
-                    bulkRun.notificationCount[notificationID] += 1;
+                    bulkRun.notificationCount[id] += 1;
+                }
+
+                for (const {
+                    notification: { id },
+                } of result.reminders) {
+                    if (!bulkRun.notificationCount[id]) {
+                        bulkRun.notificationCount[id] = 0;
+                    }
+
+                    bulkRun.notificationCount[id] += 1;
                 }
             } catch (error) {
                 bulkRun.errors.push(error.message);
