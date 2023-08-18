@@ -1,5 +1,5 @@
 import { User } from '../user';
-import { ChatMetaData, ContactReason, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { ChatMetaData, ContactReason, Conversation, ConversationInfos, FinishedReason, SystemMessage, TJConversation } from './types';
 import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId } from './helper';
 import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
 import { getOrCreateChatUser } from './user';
@@ -25,8 +25,16 @@ const getOrCreateOneOnOneConversation = async (
         const isChatReadOnly = readMembers.length > 0;
 
         if (isChatReadOnly) {
+            const update = {
+                id: participantsConversationId,
+                custom: {
+                    finished: FinishedReason.REACTIVATE,
+                },
+            };
+
             await markConversationAsWriteable(participantsConversationId);
             await sendSystemMessage(systemMessages.de.reactivated, participantsConversationId, SystemMessage.ONE_ON_ONE_REACTIVATE);
+            await updateConversation(update);
         }
     }
 
