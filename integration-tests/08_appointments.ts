@@ -1,6 +1,6 @@
 import { test } from './base';
 import { screenedInstructorOne } from './02_screening';
-import { subcourseOne } from './course';
+import { subcourseOne } from './07_course';
 import assert from 'assert';
 import { pupilOne } from './01_user';
 import { expectFetch } from './base/mock';
