@@ -1,8 +1,8 @@
-import { getAccessToken } from './zoom-authorization';
-import { ZoomUser } from './zoom-user';
-import { getLogger } from '../../common/logger/logger';
-import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
+import { getAccessToken } from './authorization';
+import { ZoomUser } from './user';
+import { getLogger } from '../logger/logger';
+import zoomRetry from './retry';
+import { assureZoomFeatureActive, isZoomFeatureActive } from './util';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
@@ -43,7 +43,7 @@ const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCourse: boolean, endDateTime?: Date): Promise<ZoomMeeting> => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, endDateTime?: Date): Promise<ZoomMeeting> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -71,7 +71,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, isCours
                 body: JSON.stringify({
                     agenda: 'My Meeting',
                     default_password: false,
-                    duration: 60,
+                    duration: duration,
                     start_time: start,
                     timezone: tz,
                     type: RecurrenceMeetingTypes.WEEKLY,
@@ -204,4 +204,43 @@ const getZoomMeetingReport = async (meetingId: string) => {
     return response.json();
 };
 
-export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting, getZoomMeetingReport };
+const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?: number, endTime?: Date): Promise<void> => {
+    assureZoomFeatureActive();
+
+    const { access_token } = await getAccessToken();
+    const tz = 'Europe/Berlin';
+    const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+    const end = moment(endTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+
+    const body = JSON.stringify({
+        start_time: start,
+        duration: duration,
+        timezone: tz,
+        recurrence: {
+            end_date_time: end,
+            type: RecurrenceMeetingTypes.WEEKLY,
+        },
+    });
+
+    const response = await zoomRetry(
+        () =>
+            fetch(`${zoomMeetingUrl}/${meetingId}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: body,
+            }),
+        3,
+        1000
+    );
+
+    if (!response.ok) {
+        throw new Error(`Zoom - failed to update meeting with ${response.status} ${await response.text()}`);
+    }
+
+    logger.info(`Zoom - The Zoom Meeting was updated.`);
+};
+
+export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting, getZoomMeetingReport, updateZoomMeeting };

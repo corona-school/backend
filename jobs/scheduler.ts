@@ -1,7 +1,9 @@
 import cron from 'cron';
 import { getLogger } from '../common/logger/logger';
+import tracer from '../common/logger/tracing';
 import { Connection, createConnection, EntityManager } from 'typeorm';
 import { CSCronJob } from './types';
+import { metrics, stats } from '../common/logger/metrics';
 
 const logger = getLogger();
 
@@ -23,41 +25,53 @@ async function getActiveJobConnection() {
     return connection;
 }
 
-function executeJob(job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
-    return async function () {
-        //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
-        //"this" is the context of the cron-job -> see definition of node cron package
-        this.stop(); //start stop, so that the same job is never executed in parallel
+function executeJob(name: string, job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
+    // This function will be returned, stored and executed for each run of the same job
+    return function () {
+        // This function is just a wrapper to bind a new span.
+        // The additional layer is needed, so that we open a new span everytime the job is executed.
+        // Otherwise, we would only open one span in the beginning, which would generate a huge trace of multiple hours.
+        const span = tracer.startSpan(name);
+        return tracer.scope().activate(span, async () => {
+            //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
+            //"this" is the context of the cron-job -> see definition of node cron package
+            this.stop(); //start stop, so that the same job is never executed in parallel
 
-        try {
-            //Get the connection that should be used to execute the job in
-            //we assume that the returned connection is always active
-            const connection = await jobConnectionGetter();
+            let hasError = false;
+            try {
+                //Get the connection that should be used to execute the job in
+                //we assume that the returned connection is always active
+                const connection = await jobConnectionGetter();
 
-            //The entity manager that should be used to manage the entities
-            const manager = connection.manager;
+                //The entity manager that should be used to manage the entities
+                const manager = connection.manager;
 
-            //execute the job with the manager
-            await job(manager);
-        } catch (e) {
-            logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
-            logger.debug(e);
-        }
+                //execute the job with the manager
+                await job(manager);
+            } catch (e) {
+                logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
+                logger.debug(e);
+                hasError = true;
+            }
 
-        this.start();
+            stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
+
+            this.start();
+            span.finish();
+        });
     };
 }
 
 const scheduledJobs: cron.CronJob[] = [];
 
 ///Schedules a given set of Corona School Cron Jobs
-export async function scheduleJobs(jobs: CSCronJob[]) {
+export function scheduleJobs(jobs: CSCronJob[]) {
     //create actual cron jobs
     const cronJobs = jobs.map((j) => {
         return cron.job({
             cronTime: j.cronTime,
             runOnInit: false,
-            onTick: executeJob(j.jobFunction, getActiveJobConnection),
+            onTick: executeJob(j.name, j.jobFunction, getActiveJobConnection),
         });
     });
 
@@ -71,7 +85,7 @@ export async function scheduleJobs(jobs: CSCronJob[]) {
     return cronJobs; //return the scheduled jobs, if anyone needs them
 }
 
-export async function unscheduleAllJobs() {
+export function unscheduleAllJobs() {
     scheduledJobs.forEach((j) => j.stop());
 }
 

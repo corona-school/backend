@@ -98,6 +98,10 @@ const _notificationActions = {
         description: 'Pupil / Screening was successful',
         sampleContext: {},
     },
+    pupil_screening_invalidated: {
+        description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
+        sampleContext: {},
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
         sampleContext: {},
@@ -510,7 +514,10 @@ const _notificationActions = {
         description: 'Person / Inactive Reminder. User will soon be deleted.',
         sampleContext: {},
     },
-
+    student_add_ad_hoc_meeting: {
+        description: 'User added a match ad-hoc meeting',
+        sampleContext: { student: sampleUser, appointmentId: '1', appointment: { url: '/video-chat/1/match' } },
+    },
     user_authenticate: DEPRECATED,
     user_login_email: DEPRECATED,
     coachee_project_match_success: DEPRECATED,

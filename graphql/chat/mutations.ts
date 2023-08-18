@@ -4,16 +4,11 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import {
-    ConversationInfos,
-    getOrCreateOneOnOneConversation,
-    getOrCreateGroupConversation,
-    markConversationAsReadOnlyForPupils,
-    createContactChat,
-} from '../../common/chat';
+import { ConversationInfos, markConversationAsReadOnlyForPupils } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
+import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { getCourseImageURL } from '../../common/courses/util';
 
 const logger = getLogger('MutateChatResolver');

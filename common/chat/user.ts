@@ -3,11 +3,13 @@ import dotenv from 'dotenv';
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
+import assert from 'assert';
 
 dotenv.config();
 
-const talkjsUserApiUrl = `https://api.talkjs.com/v1/${process.env.TALKJS_APP_ID}/users`;
-const apiKey = process.env.TALKJS_API_KEY;
+const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
+const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
+const TALKJS_USER_API_URL = `https://api.talkjs.com/v1/${TALKJS_APP_ID}/users`;
 
 const shortenLastName = (lastname: string) => {
     if (lastname.length > 0) {
@@ -24,13 +26,14 @@ const getChatName = (user: User) => {
 };
 
 const createChatUser = async (user: User): Promise<void> => {
+    assert(TALKJS_SECRET_KEY, `No secret key found to create chat user ${user.userID} `);
     const userId = userIdToTalkJsId(user.userID);
     const userName = getChatName(user);
     try {
-        const response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
+        const response = await fetch(`${TALKJS_USER_API_URL}/${userId}`, {
             method: 'PUT',
             headers: {
-                Authorization: `Bearer ${apiKey}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -52,13 +55,16 @@ const createChatUser = async (user: User): Promise<void> => {
  * Use the helper `parseSlashToUnderscore` and `parseUnderscoreToSlash` to transform the ID to the wanted outcome
  */
 async function getChatUser(user: User): Promise<TalkJsUser> {
+    assert(TALKJS_APP_ID, `No TalkJS app ID found to get chat user ${user.userID}`);
+    assert(TALKJS_SECRET_KEY, `No secret key found to get chat user ${user.userID}`);
+
     const userId = userIdToTalkJsId(user.userID);
     let response;
     try {
-        response = await fetch(`${talkjsUserApiUrl}/${userId}`, {
+        response = await fetch(`${TALKJS_USER_API_URL}/${userId}`, {
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${apiKey}`,
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                 'Content-Type': 'application/json',
             },
         });

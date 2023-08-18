@@ -47,7 +47,7 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
 
     // We only want to send notifications when the status got updated.
     // Otherwise, we might spam the user while updating the comment.
-    if (screening.status === screeningUpdate.status) {
+    if (screening.status && screening.status === screeningUpdate.status) {
         return;
     }
 
@@ -66,13 +66,15 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
 }
 
 export async function invalidatePupilScreening(screeningId: number) {
-    const screening = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: screeningId } });
+    const screening = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: screeningId }, include: { pupil: true } });
 
     if (screening.invalidated) {
         throw new RedundantError(`Pupil screening ${screeningId} is already invalidated`);
     }
 
     await prisma.pupil_screening.update({ where: { id: screeningId }, data: { invalidated: true } });
+    await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_invalidated', {});
+
     logger.info(`Invalidated PupilScreening (${screeningId}) for Pupil (${screening.pupilId})`);
 }
 

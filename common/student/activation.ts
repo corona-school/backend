@@ -3,12 +3,12 @@ import { course_coursestate_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
-import { getZoomUser } from '../zoom/zoom-user';
-import { deleteZoomUser } from '../zoom/zoom-user';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
+import { getZoomUser } from '../zoom/user';
+import { deleteZoomUser } from '../zoom/user';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
-import { isZoomFeatureActive } from '../zoom';
 import { logTransaction } from '../transactionlog/log';
+import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
 
 export async function deactivateStudent(student: Student, silent: boolean = false, reason?: string) {
