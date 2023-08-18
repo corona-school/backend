@@ -26,34 +26,40 @@ async function getActiveJobConnection() {
 }
 
 function executeJob(name: string, job: (manager: EntityManager) => Promise<void>, jobConnectionGetter: () => Promise<Connection>): () => Promise<void> {
-    const span = tracer.startSpan(name);
-    return tracer.scope().bind(async function () {
-        //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
-        //"this" is the context of the cron-job -> see definition of node cron package
-        this.stop(); //start stop, so that the same job is never executed in parallel
+    // This function will be returned, stored and executed for each run of the same job
+    return function () {
+        // This function is just a wrapper to bind a new span.
+        // The additional layer is needed, so that we open a new span everytime the job is executed.
+        // Otherwise, we would only open one span in the beginning, which would generate a huge trace of multiple hours.
+        const span = tracer.startSpan(name);
+        return tracer.scope().activate(span, async () => {
+            //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
+            //"this" is the context of the cron-job -> see definition of node cron package
+            this.stop(); //start stop, so that the same job is never executed in parallel
 
-        let hasError = false;
-        try {
-            //Get the connection that should be used to execute the job in
-            //we assume that the returned connection is always active
-            const connection = await jobConnectionGetter();
+            let hasError = false;
+            try {
+                //Get the connection that should be used to execute the job in
+                //we assume that the returned connection is always active
+                const connection = await jobConnectionGetter();
 
-            //The entity manager that should be used to manage the entities
-            const manager = connection.manager;
+                //The entity manager that should be used to manage the entities
+                const manager = connection.manager;
 
-            //execute the job with the manager
-            await job(manager);
-        } catch (e) {
-            logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
-            logger.debug(e);
-            hasError = true;
-        }
+                //execute the job with the manager
+                await job(manager);
+            } catch (e) {
+                logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
+                logger.debug(e);
+                hasError = true;
+            }
 
-        stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
+            stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
 
-        this.start();
-        span.finish();
-    }, span);
+            this.start();
+            span.finish();
+        });
+    };
 }
 
 const scheduledJobs: cron.CronJob[] = [];
