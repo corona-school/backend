@@ -531,7 +531,11 @@ const _notificationActions = {
     cooperation_tutee_registration_started: DEPRECATED,
     coach_screening_invitation: DEPRECATED,
     feedback_request_student: DEPRECATED,
-    feedback_request_pupil: DEPRECATED,
+
+    TEST: {
+        description: 'For Tests',
+        sampleContext: { a: 'a' },
+    },
 } as const;
 
 // Instead of specifying each action context twice (once as a type and once as a sampleContext value)
@@ -552,6 +556,15 @@ type MapLiteralTypeToType<Input> = {
 };
 
 export type ActionID = keyof typeof _notificationActions;
+const actionsIDs = Object.keys(_notificationActions);
+
+export function asActionID(id: string) {
+    if (!actionsIDs.includes(id)) {
+        throw new Error(`Invalid Action ID ${id}`);
+    }
+
+    return id as ActionID;
+}
 
 // Unlike NotificationContext which is just typed as { [any: string]: string }, this type derives concrete key value pairs from the sampleContexts above
 export type SpecificNotificationContext<ID extends ActionID> = MapLiteralTypeToType<(typeof _notificationActions)[ID]['sampleContext']> &
@@ -568,4 +581,8 @@ export function getNotificationActions(): NotificationAction[] {
             user: sampleUser,
         },
     }));
+}
+
+export function getSampleContextForAction(id: ActionID) {
+    return notificationActions[id];
 }
