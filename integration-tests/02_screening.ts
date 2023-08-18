@@ -1,6 +1,6 @@
 import assert from "assert";
 import { adminClient, test } from "./base";
-import { instructorOne, instructorTwo, studentOne } from "./user";
+import { instructorOne, instructorTwo, studentOne } from "./01_user";
 
 
 export const screenedInstructorOne = test('Screen Instructor One successfully', async () => {

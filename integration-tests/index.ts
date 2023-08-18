@@ -8,20 +8,20 @@
 import { finalizeTests } from './base';
 
 /* Base Tests - Other tests build on them and they always must run */
-import './user';
-import './screening';
+import './01_user';
+import './02_screening';
 /* Feature Tests - These are independent and can be disabled */
-import './matching';
-import './certificate';
+import './03_matching';
+import './04_certificate';
 
-import './auth';
-import './settings';
-import './course';
-import './appointments';
-import './admin';
-import './registerPlusMany';
+import './05_auth';
+import './06_settings';
+import './07_course';
+import './08_appointments';
+import './09_admin';
+import './10_registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */
-import './deactivation';
-import './redaction';
+import './11_deactivation';
+import './12_redaction';
 
 void finalizeTests();

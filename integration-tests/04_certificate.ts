@@ -1,6 +1,6 @@
 import assert from "assert";
 import { test } from "./base";
-import { match1 } from "./matching";
+import { match1 } from "./03_matching";
 import { expectFetch } from "./base/mock";
 
 const signature = (

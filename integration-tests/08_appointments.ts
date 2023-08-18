@@ -1,8 +1,8 @@
 import { test } from './base';
-import { screenedInstructorOne } from './screening';
+import { screenedInstructorOne } from './02_screening';
 import { subcourseOne } from './course';
 import assert from 'assert';
-import { pupilOne } from './user';
+import { pupilOne } from './01_user';
 import { expectFetch } from './base/mock';
 
 const appointmentTitle = 'Group Appointment 1';

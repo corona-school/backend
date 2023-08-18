@@ -1,7 +1,7 @@
 import { adminClient, defaultClient, test } from './base';
-import { pupilOne, pupilUpdated } from './user';
+import { pupilOne, pupilUpdated } from './01_user';
 import * as assert from 'assert';
-import { screenedInstructorOne, screenedInstructorTwo } from './screening';
+import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
 

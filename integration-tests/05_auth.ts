@@ -1,5 +1,5 @@
 import { adminClient, createUserClient, defaultClient, test } from './base';
-import { pupilOne } from './user';
+import { pupilOne } from './01_user';
 import assert from 'assert';
 import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
 import { randomBytes } from 'crypto';
