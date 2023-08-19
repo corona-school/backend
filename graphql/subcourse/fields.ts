@@ -199,6 +199,7 @@ export class ExtendedFieldsSubcourseResolver {
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -211,6 +212,7 @@ export class ExtendedFieldsSubcourseResolver {
     async firstLecture(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findFirst({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -224,6 +226,7 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.lecture.findFirst({
             where: {
                 subcourseId: subcourse.id,
+                isCanceled: false,
                 start: { gte: new Date() },
             },
             orderBy: { start: 'asc' },

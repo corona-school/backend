@@ -9,8 +9,8 @@ import { Project_match } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
-import { deleteZoomMeeting } from '../zoom/zoom-scheduled-meeting';
-import { deleteZoomUser } from '../zoom/zoom-user';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
+import { deleteZoomUser } from '../zoom/user';
 
 const logger = getLogger('Match');
 

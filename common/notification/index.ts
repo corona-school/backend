@@ -16,6 +16,7 @@ import { inAppChannel } from './channels/inapp';
 import { ActionID, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
+import { addTagsToActiveSpan } from '../logger/tracing';
 
 const logger = getLogger('Notification');
 
@@ -580,6 +581,7 @@ export async function checkReminders() {
         }
     }
 
+    addTagsToActiveSpan({ remindersToSend: remindersToSend.length });
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 

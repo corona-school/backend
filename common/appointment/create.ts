@@ -1,17 +1,17 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import { User } from '../user';
 import assert from 'assert';
-import { userForPupil, userForStudent } from '../user';
-import { lecture_appointmenttype_enum } from '../../graphql/generated';
-import { createZoomMeeting } from '../zoom/zoom-scheduled-meeting';
-import { createZoomUser, getZoomUser } from '../zoom/zoom-user';
-import { student } from '@prisma/client';
+import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
+import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
+import { createZoomUser, getZoomUser } from '../zoom/user';
+import { Prisma, student as Student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
-import { isZoomFeatureActive } from '../zoom';
+import { isZoomFeatureActive } from '../zoom/util';
+import * as Notification from '../../common/notification';
+import { getNotificationContextForSubcourse } from '../mails/courses';
+import { User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
-import * as Notification from '../notification';
 
 const logger = getLogger();
 
@@ -66,7 +66,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
         zoomMeetingId = videoChat.id.toString();
     }
 
-    return await Promise.all(
+    const createdMatchAppointments = await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
                 await prisma.lecture.create({
@@ -84,11 +84,21 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                 })
         )
     );
+
+    // * send notification
+    await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
+        student,
+        matchId: matchId.toString(),
+    });
+
+    return createdMatchAppointments;
 };
 
-export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[]) => {
+export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
+    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
     const hosts = instructors.map((i) => i.student);
 
@@ -99,7 +109,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         zoomMeetingId = videoChat.id.toString();
     }
 
-    return await Promise.all(
+    const createdGroupAppointments = await Promise.all(
         appointmentsToBeCreated.map(
             async (appointmentToBeCreated) =>
                 await prisma.lecture.create({
@@ -117,10 +127,20 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                 })
         )
     );
+
+    // * send notification
+    for (const participant of participants) {
+        await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
+            student: organizer,
+            ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+        });
+    }
+
+    return createdGroupAppointments;
 };
 
 export const createZoomMeetingForAppointments = async (
-    students: student[],
+    students: Student[],
     appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[],
     isCourse: boolean
 ) => {
@@ -153,6 +173,16 @@ export const createZoomMeetingForAppointments = async (
     }
 };
 
+export const saveZoomMeetingReport = async (appointment: Lecture) => {
+    const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+
+    await prisma.lecture.update({
+        where: { id: appointment.id },
+        data: { zoomMeetingReport: { push: result } },
+    });
+
+    logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
+};
 export async function createAdHocMeeting(matchId: number, user: User) {
     const match = await getMatch(matchId);
     const { pupilId, studentId } = match;

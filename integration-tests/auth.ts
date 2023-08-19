@@ -173,10 +173,10 @@ void test('Admin Login', async () => {
 void test('Change Email', async () => {
     const {
         client,
-        pupil: {
-            pupil: { id },
-        },
+        pupil,
     } = await pupilOne;
+
+    const { pupil: { id } } = pupil;
     const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
 
     const newEmail = `test+${randomBytes(5).toString('base64')}@lern-fair.de`;
@@ -209,4 +209,8 @@ void test('Change Email', async () => {
     assert.strictEqual(newMeEmailResult, newEmail.toLowerCase(), 'Should be the new email');
     assert.strictEqual(newEmailResult, newEmail.toLowerCase(), 'Should be the new email');
     assert.strictEqual(id, id1, 'Changed email of the correct user');
+
+    // Override email to be used in further tests
+    pupil.email = newEmail;
+    (pupil.pupil as any).email = pupil.email;
 });

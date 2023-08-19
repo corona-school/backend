@@ -8,7 +8,7 @@ import {
     Match,
     Pupil_screening as PupilScreening,
 } from '../generated';
-import { Arg, Authorized, Field, FieldResolver, Int, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { userForPupil } from '../../common/user';
@@ -93,7 +93,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Subject])
-    @Authorized(Role.USER, Role.ADMIN)
+    @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
     async subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
@@ -117,7 +117,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [Match])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() pupil: Required<Pupil>) {
@@ -127,7 +127,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => Int)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
     }
@@ -145,10 +145,21 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => [PupilScreening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
     async screenings(@Root() pupil: Required<Pupil>) {
         return await prisma.pupil_screening.findMany({
             where: { pupilId: pupil.id },
+        });
+    }
+
+    @Query((returns) => [Pupil])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
+        return await prisma.pupil.findMany({
+            where: {
+                active: true,
+                pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
+            },
         });
     }
 }

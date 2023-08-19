@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'crypto';
 import { hashPassword } from './common/util/hashing';
 import { getNotifications, importMessageTranslations, importNotifications } from './common/notification/notification';
 import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
-import { userForStudent, userForPupil, updateUser, refetchPupil, refetchStudent } from './common/user';
+import { userForStudent, userForPupil, updateUser, refetchPupil, refetchStudent, userForScreener } from './common/user';
 import { getLogger } from './common/logger/logger';
 import { becomeTutee, registerPupil } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
@@ -253,10 +253,13 @@ void (async function setupDevDB() {
             firstname: 'Maxi',
             lastname: 'Screenerfrau',
             email: 'test+dev+sc1@lern-fair.de',
-            password: await hashPassword('screener'),
-            verified: true
+            password: "LEGACY",
+            verified: true,
+            active: true
         }
     });
+    await _createFixedToken(userForScreener(screener1), `authtokenSC1`);
+    await createPassword(userForScreener(screener1), `test`);
 
 
     const student1 = await registerStudent({

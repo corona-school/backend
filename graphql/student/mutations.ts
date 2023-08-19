@@ -32,7 +32,7 @@ import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
-import { createZoomUser, deleteZoomUser } from '../../common/zoom/zoom-user';
+import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
 import { GraphQLJSON } from 'graphql-scalars';
 
 @InputType('Instructor_screeningCreateInput', {
@@ -287,7 +287,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
