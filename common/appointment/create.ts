@@ -52,7 +52,7 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
     return diffDays > 6;
 };
 
-export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[]) => {
+export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[], silent: boolean = false) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;
@@ -85,11 +85,12 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
         )
     );
 
-    // * send notification
-    await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
-        student,
-        matchId: matchId.toString(),
-    });
+    if (!silent) {
+        await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
+            student,
+            matchId: matchId.toString(),
+        });
+    }
 
     return createdMatchAppointments;
 };
@@ -201,7 +202,9 @@ export async function createAdHocMeeting(matchId: number, user: User) {
             appointmentType: lecture_appointmenttype_enum.match,
         },
     ];
-    const matchAppointment = await createMatchAppointments(matchId, appointment);
+
+    // Silent as we trigger a dedicated notification action for it anyways
+    const matchAppointment = await createMatchAppointments(matchId, appointment, /* silent */ true);
     const { id, appointmentType } = matchAppointment[0];
 
     await Notification.actionTaken(userForPupil(pupil), 'student_add_ad_hoc_meeting', {
