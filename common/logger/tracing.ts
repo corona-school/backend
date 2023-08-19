@@ -5,11 +5,12 @@ tracer.init({
     profiling: true,
     plugins: true,
     runtimeMetrics: true,
-    appsec: true,
+    appsec: false,
     service: getServiceName(),
     dbmPropagationMode: 'full',
     env: getDDEnvironment(),
     version: getVersion(),
+    clientIpEnabled: false,
 });
 
 tracer.use('graphql', {});
