@@ -1,7 +1,7 @@
 import { ApolloError } from 'apollo-server-errors';
 import { GraphQLError } from 'graphql';
-import { getLogger } from 'log4js';
 import { ArgumentValidationError } from 'type-graphql';
+import { getLogger } from '../common/logger/logger';
 import { ClientError } from '../common/util/error';
 
 export { AuthenticationError, ForbiddenError, UserInputError, ValidationError } from 'apollo-server-errors';
