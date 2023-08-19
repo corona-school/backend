@@ -2,7 +2,7 @@ import { Secret } from '../generated';
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
 import { createPassword, createToken, loginToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
 import { GraphQLContext } from '../context';
-import { getSessionUser, loginAsUser } from '../authentication';
+import { getSessionUser, isAdmin, isElevated, loginAsUser } from '../authentication';
 import { Role } from '../authorizations';
 import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
@@ -48,15 +48,19 @@ export class MutateSecretResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async tokenRevoke(@Ctx() context: GraphQLContext, @Arg('id', { nullable: true }) id?: number, @Arg('token', { nullable: true }) token?: string) {
         if (id) {
-            await revokeToken(getSessionUser(context), id);
+            if (isAdmin(context)) {
+                await revokeToken(null, id);
+            } else {
+                await revokeToken(getSessionUser(context), id);
+            }
             return true;
         }
 
         if (token) {
-            await revokeTokenByToken(getSessionUser(context), token);
+            await revokeTokenByToken(token);
             return true;
         }
 
