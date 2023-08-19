@@ -8,8 +8,8 @@ import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
 import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 import { getContext } from '.';
-import { getLogger } from 'log4js';
 import { getUser } from '../user';
+import { getLogger } from '../logger/logger';
 
 const logger = getLogger('Message');
 
