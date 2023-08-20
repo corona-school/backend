@@ -495,7 +495,7 @@ export async function actionTakenAt<ID extends ActionID>(
                 //   X ----X-| (NOW) |-> X
                 //   If a notification would be scheduled in the past and then repeated, we repeat till we reach a future time where
                 //   sendAt + interval * N > now
-                const n = Math.ceil((now - sendAt) / (notification.interval * HOURS_TO_MS));
+                const n = Math.ceil((now - sendAt - SLACK) / (notification.interval * HOURS_TO_MS));
                 assert.ok(n >= 0, 'Expect to go forward in time');
 
                 sendAt += n * notification.interval * HOURS_TO_MS;
@@ -504,25 +504,23 @@ export async function actionTakenAt<ID extends ActionID>(
             if (sendAt < now - SLACK) {
                 // We cannot travel back in time, so we ignore the notification:
                 logger.debug(
-                    `Notification.actionTakenAt dismissed Notification(${notification.id}) as ${at.toISOString()} was projected to ${sendAt} (with delay: ${
-                        notification.delay ?? '-'
-                    } and interval: ${notification.interval ?? '-'}) which is in the past`
+                    `Notification.actionTakenAt dismissed Notification(${notification.id}) as ${at.toISOString()} was projected to ${new Date(
+                        sendAt
+                    ).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${notification.interval ?? '-'}) which is in the past`
                 );
             } else if (sendAt < now + SLACK) {
                 directSends.push(notification);
                 logger.debug(
-                    `Notification.actionTakenAt will directly send Notification(${
-                        notification.id
-                    }) as ${at.toISOString()} was projected to ${sendAt} (with delay: ${notification.delay ?? '-'} and interval: ${
-                        notification.interval ?? '-'
-                    }) which is right now`
+                    `Notification.actionTakenAt will directly send Notification(${notification.id}) as ${at.toISOString()} was projected to ${new Date(
+                        sendAt
+                    ).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${notification.interval ?? '-'}) which is right now`
                 );
             } /* sendAt > now + SLACK */ else {
                 reminders.push({ notification, sendAt });
                 logger.debug(
                     `Notification.actionTakenAt will schedule a reminder for Notification(${
                         notification.id
-                    }) as ${at.toISOString()} was projected to ${sendAt} (with delay: ${notification.delay ?? '-'} and interval: ${
+                    }) as ${at.toISOString()} was projected to ${new Date(sendAt).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${
                         notification.interval ?? '-'
                     }) which is in the future`
                 );
