@@ -41,20 +41,6 @@ async function createConcreteNotification(
     context: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<ConcreteNotification> {
-    if (context.uniqueId) {
-        const existingNotification = await prisma.concrete_notification.findFirst({
-            where: {
-                notificationID: notification.id,
-                userId: user.userID,
-                contextID: context.uniqueId,
-            },
-        });
-
-        if (existingNotification) {
-            throw new Error(`Duplicate Notification(${notification.id}) for User(${user.userID}) with Context(${context.uniqueId})`);
-        }
-    }
-
     // First of all we commit the notification to the database, which allows us to recover if the backend crashes
     const concreteNotification = await prisma.concrete_notification.create({
         data: {
