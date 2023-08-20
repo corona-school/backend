@@ -540,6 +540,10 @@ const _notificationActions = {
         description: 'For Tests',
         sampleContext: { a: 'a' },
     },
+    TEST2: {
+        description: 'For Tests',
+        sampleContext: { a: 'a' },
+    },
 } as const;
 
 // Instead of specifying each action context twice (once as a type and once as a sampleContext value)

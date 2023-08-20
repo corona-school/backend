@@ -272,3 +272,77 @@ void test('Action Notification Timing', async () => {
     assert.strictEqual(sentAfterIntervalNotifications, 2, "Expected afterInterval notification to be in sent state two times");
 
 });
+
+void test('Reminder Cancellation', async () => {
+    const { pupil } = await pupilOne;
+
+    const notification = await createMockNotification('TEST', 'SelfCancellation', 1, undefined, 'TEST');
+
+    const { _actionTakenAt: first } = await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    const delayedNotifications = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 0 /* DELAYED */ },
+    });
+
+    assert.strictEqual(delayedNotifications, 1, "Expected notification to be delayed");
+
+    const { _actionTakenAt: second } = await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    const delayedNotifications2 = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 0 /* DELAYED */ },
+    });
+
+    const cancelledNotifications = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 4 /* ACTION_TAKEN */ },
+    });
+
+    assert.strictEqual(delayedNotifications2, 1, "Expected notification to be delayed");
+    assert.strictEqual(cancelledNotifications, 1, "Expected notification to be cancelled");
+});
+
+void test('Reminder Cancellation with UniqueID', async () => {
+    const { pupil } = await pupilOne;
+
+    const notification = await createMockNotification('TEST2', 'SelfCancellation', 1, undefined, 'TEST2');
+
+    const { _actionTakenAt: first } = await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    const { _actionTakenAt: second } = await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    const delayedNotifications = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 0 /* DELAYED */ },
+    });
+
+    assert.strictEqual(delayedNotifications, 2, "Expected notifications to be delayed");
+
+    console.log(
+        await prisma.concrete_notification.findMany({ where: { notificationID: notification.id }})
+    );
+
+    const { _actionTakenAt: third } = await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    console.log(
+        await prisma.concrete_notification.findMany({ where: { notificationID: notification.id }})
+    );
+
+    const delayedNotifications2 = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 0 /* DELAYED */ },
+    });
+
+    const cancelledNotifications = await prisma.concrete_notification.count({
+        where: { notificationID: notification.id, state: 4 /* ACTION_TAKEN */ },
+    });
+
+    assert.strictEqual(delayedNotifications2, 2, "Expected notifications to be delayed");
+    assert.strictEqual(cancelledNotifications, 1, "Expected notification to be cancelled");
+});

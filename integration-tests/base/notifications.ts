@@ -11,14 +11,14 @@ interface ConcreteNotification {
     error?: string;
 }
 
-export async function createMockNotification(action: string, description: string, delay?: number, interval?: number): Promise<MockNotification> {
+export async function createMockNotification(action: string, description: string, delay?: number, interval?: number, cancelAction?: string): Promise<MockNotification> {
     const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
         notificationCreate(notification: { 
             description: "MOCK ${description}"
             active: false
             recipient: 0
             onActions: { set: ["${action}"]}
-            cancelledOnAction: { set: []}
+            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ""}]}
             ${delay ? "delay: " + delay : ""}
             ${interval ? "interval: " + interval : ""}
         }) { id }
