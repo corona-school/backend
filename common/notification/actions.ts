@@ -588,5 +588,5 @@ export function getNotificationActions(): NotificationAction[] {
 }
 
 export function getSampleContextForAction(id: ActionID) {
-    return notificationActions[id];
+    return notificationActions[id].sampleContext;
 }
