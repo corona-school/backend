@@ -11,7 +11,7 @@ interface ConcreteNotification {
     error?: string;
 }
 
-export async function createMockNotification(action: string, description: string): Promise<MockNotification> {
+export async function createMockNotification(action: string, description: string, delay?: number, interval?: number): Promise<MockNotification> {
     const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
         notificationCreate(notification: { 
             description: "MOCK ${description}"
@@ -19,6 +19,8 @@ export async function createMockNotification(action: string, description: string
             recipient: 0
             onActions: { set: ["${action}"]}
             cancelledOnAction: { set: []}
+            ${delay ? "delay: " + delay : ""}
+            ${interval ? "interval: " + interval : ""}
         }) { id }
     }`);
 

@@ -21,8 +21,9 @@ import './08_appointments';
 import './09_chat';
 import './10_admin';
 import './11_registerPlusMany';
+import './12_notifications';
 /* Account Deactivation - Independent, but needs to be last */
-import './12_deactivation';
-import './13_redaction';
+import './13_deactivation';
+import './14_redaction';
 
 void finalizeTests();
