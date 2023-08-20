@@ -4,7 +4,7 @@ import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
-import { expectFetch } from './mock';
+import { expectFetch } from './base/mock';
 
 const appointmentTitle = 'Group Appointment 1';
 

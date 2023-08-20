@@ -19,10 +19,10 @@ import './06_settings';
 import './07_course';
 import './08_appointments';
 import './09_chat';
-import './09_admin';
-import './10_registerPlusMany';
+import './10_admin';
+import './11_registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */
-import './11_deactivation';
-import './12_redaction';
+import './12_deactivation';
+import './13_redaction';
 
 void finalizeTests();
