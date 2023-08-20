@@ -1,8 +1,8 @@
 import { prisma } from '../common/prisma';
 import { getLogger } from '../common/logger/logger';
 import { lecture_appointmenttype_enum } from '../graphql/generated';
-import { createZoomUser, getZoomUser } from '../common/zoom/zoom-user';
-import { createZoomMeeting } from '../common/zoom/zoom-scheduled-meeting';
+import { createZoomUser, getZoomUser } from '../common/zoom/user';
+import { createZoomMeeting } from '../common/zoom/scheduled-meeting';
 
 const logger = getLogger();
 

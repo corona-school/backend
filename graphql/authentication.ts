@@ -41,6 +41,16 @@ export function isElevated(context: GraphQLContext) {
     return roles.includes(Role.ADMIN) || roles.includes(Role.SCREENER);
 }
 
+export function isScreener(context: GraphQLContext) {
+    const { roles } = getSessionUser(context);
+    return roles.includes(Role.SCREENER);
+}
+
+export function isAdmin(context: GraphQLContext) {
+    const { roles } = getSessionUser(context);
+    return roles.includes(Role.ADMIN);
+}
+
 export function assertElevated(context: GraphQLContext) {
     if (!isElevated(context)) {
         throw new Error(`Only Admins or Screeners can override the session pupil/student`);

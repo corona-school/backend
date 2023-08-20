@@ -18,6 +18,7 @@ import './05_auth';
 import './06_settings';
 import './07_course';
 import './08_appointments';
+import './09_chat';
 import './09_admin';
 import './10_registerPlusMany';
 /* Account Deactivation - Independent, but needs to be last */

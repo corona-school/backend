@@ -1,8 +1,8 @@
 import assert from 'assert';
 import dotenv from 'dotenv';
-import { assureZoomFeatureActive, isZoomFeatureActive } from '.';
-import { getLogger } from '../../common/logger/logger';
-import zoomRetry from './zoom-retry';
+import { assureZoomFeatureActive, isZoomFeatureActive } from './util';
+import { getLogger } from '../logger/logger';
+import zoomRetry from './retry';
 
 const logger = getLogger('Zoom Authorization');
 

@@ -53,7 +53,7 @@ export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
                 courseState: { equals: CourseState.ALLOWED },
             },
         },
-        lecture: { some: { start: { gt: new Date() } } },
+        lecture: { some: { start: { gt: new Date() }, isCanceled: false } },
     };
 }
 
@@ -84,7 +84,7 @@ export class ExtendedFieldsSubcourseResolver {
             filters.push({
                 OR: [
                     { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
-                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
+                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() }, isCanceled: false } } },
                 ],
             });
             if (isSessionPupil(context)) {
@@ -199,6 +199,7 @@ export class ExtendedFieldsSubcourseResolver {
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -211,6 +212,7 @@ export class ExtendedFieldsSubcourseResolver {
     async firstLecture(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findFirst({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -224,6 +226,7 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.lecture.findFirst({
             where: {
                 subcourseId: subcourse.id,
+                isCanceled: false,
                 start: { gte: new Date() },
             },
             orderBy: { start: 'asc' },

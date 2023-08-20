@@ -102,6 +102,10 @@ const _notificationActions = {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
         sampleContext: {},
     },
+    pupil_screening_dispute: {
+        description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
+        sampleContext: {},
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
         sampleContext: {},

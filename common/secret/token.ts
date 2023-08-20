@@ -13,19 +13,20 @@ import { isEmailAvailable } from '../user/email';
 
 const logger = getLogger('Token');
 
-export async function revokeToken(user: User, id: number) {
-    const result = await prisma.secret.deleteMany({ where: { id, userId: user.userID } });
+export async function revokeToken(user: User | null, id: number) {
+    const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
     if (result.count !== 1) {
         throw new Error(`Failed to revoke token, does not exist`);
     }
 
-    logger.info(`User(${user.userID}) revoked token Secret(${id})`);
+    logger.info(`User(${user?.userID}) revoked token Secret(${id})`);
 }
 
-export async function revokeTokenByToken(user: User, token: string) {
+// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
+export async function revokeTokenByToken(token: string) {
     const hash = hashToken(token);
     const secret = await prisma.secret.findFirst({
-        where: { secret: hash, userId: user.userID },
+        where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
     });
     if (!secret) {
         throw new Error(`Secret not found`);
@@ -33,7 +34,7 @@ export async function revokeTokenByToken(user: User, token: string) {
 
     await prisma.secret.delete({ where: { id: secret.id } });
 
-    logger.info(`User(${user.userID}) revoked token Secret(${secret.id})`);
+    logger.info(`Token Secret(${secret.id}) was revoked`);
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user

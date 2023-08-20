@@ -2,7 +2,6 @@ import { test } from './base';
 import { screenedInstructorOne } from './02_screening';
 import { subcourseOne } from './07_course';
 import assert from 'assert';
-import { pupilOne } from './01_user';
 import { expectFetch } from './base/mock';
 
 const appointmentTitle = 'Group Appointment 1';
@@ -60,8 +59,7 @@ const firstAppointment = test('Create an appointment for a subcourse', async () 
 });
 
 const moreAppointments = test('Create more appointments for a subcourse', async () => {
-    const { subcourseId } = await subcourseOne;
-    const { client, instructor } = await screenedInstructorOne;
+    const { subcourseId, client, instructor } = await subcourseOne;
     const nextDate = new Date();
     nextDate.setDate(new Date().getDate() + 10);
     const nextMonth = new Date();
@@ -121,7 +119,6 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
 
 const myAppointments = test('Get my appointments', async () => {
     const { client } = await screenedInstructorOne;
-    await firstAppointment;
     await moreAppointments;
 
     const {
@@ -204,9 +201,8 @@ void test('Update an appointment', async () => {
         method: 'PATCH',
         body: '{"start_time":"*","duration":120,"timezone":"Europe/Berlin","recurrence":{"end_date_time":"*","type":2}}',
         responseStatus: 200,
-        response: {}
+        response: {},
     });
-
 
     const updateTitle = 'Updated Title';
     const resp = await client.request(`mutation updateAppointment { appointmentUpdate (

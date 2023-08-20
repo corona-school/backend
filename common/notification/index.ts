@@ -17,6 +17,7 @@ import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
+import { addTagsToActiveSpan } from '../logger/tracing';
 
 const logger = getLogger('Notification');
 
@@ -76,14 +77,25 @@ async function createConcreteNotification(
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const notification = await getNotification(concreteNotification.notificationID);
 
-    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    if (notificationPreferences && typeof notificationPreferences === 'string') {
+        notificationPreferences = JSON.parse(notificationPreferences);
+    }
 
     const channelsBasePreference = ALL_PREFERENCES[notification.type];
     assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
 
     const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
 
-    return Object.assign({}, channelsBasePreference, channelsUserPreference);
+    const result = Object.assign({}, channelsBasePreference, channelsUserPreference);
+    logger.info(`Got Notification preferences for User(${user.userID})`, {
+        type: notification.type,
+        notificationPreferences,
+        channelsBasePreference,
+        result,
+    });
+
+    return result;
 };
 
 export function getContext(notificationContext: NotificationContext, user: User): Context {
@@ -649,6 +661,7 @@ export async function checkReminders() {
         }
     }
 
+    addTagsToActiveSpan({ remindersToSend: remindersToSend.length });
     logger.info(`Sent ${remindersToSend.length} reminders in ${Date.now() - start}ms`);
 }
 
