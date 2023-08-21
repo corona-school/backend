@@ -346,3 +346,58 @@ void test('Reminder Cancellation with UniqueID', async () => {
     assert.strictEqual(delayedNotifications2, 2, "Expected notifications to be delayed");
     assert.strictEqual(cancelledNotifications, 1, "Expected notification to be cancelled");
 });
+
+void test('Duplicate Prevention', async () => {
+    const { pupil } = await pupilOne;
+
+    const notification = await createMockNotification('TEST', 'DuplicatePrevention');
+
+    // Usually Duplicates just trigger the same notification multiple times:
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
+    }`);
+
+    const sentWithDuplicates = await prisma.concrete_notification.count({
+        where: {
+            notificationID: notification.id,
+            state: 2 /* SENT */
+        }
+    });
+
+    assert.strictEqual(sentWithDuplicates, 2, "Expected Notification to be sent out twice with duplicate prevention");
+
+    // With Duplicate Prevention we still send out if the uniqueId is different:
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2" } dryRun: false, noDuplicates: true, userID: "${pupil.userID}")
+    }`);
+
+    const sentWithDifferentUniqueId = await prisma.concrete_notification.count({
+        where: {
+            notificationID: notification.id,
+            state: 2 /* SENT */
+        }
+    });
+
+    assert.strictEqual(sentWithDifferentUniqueId, 3, "Expected Notification to be sent out three times");
+
+    // With Duplicate Prevention but different uniqueId sending out the notification is prevented:
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, noDuplicates: true, userID: "${pupil.userID}")
+    }`);
+
+    const sentWithSameUniqueId = await prisma.concrete_notification.count({
+        where: {
+            notificationID: notification.id,
+            state: 2 /* SENT */
+        }
+    });
+
+    assert.strictEqual(sentWithSameUniqueId, 3, "Expected that no additional notification is sent out");
+});
