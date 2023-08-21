@@ -249,7 +249,7 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
 
         return usersSubset;
     } catch (error) {
-        logger.error(`ERROR to get user infos with error ${error}`);
+        logger.error(`ERROR to get user infos with error ${error}`, error);
         return null;
     }
 }

@@ -65,6 +65,7 @@ import { MutateAppointmentResolver } from './appointment/mutations';
 import { getCurrentTransaction } from '../common/session';
 import { MutateChatResolver } from './chat/mutations';
 import { playground } from './playground';
+import { ExtendedFieldsScreenerResolver } from './screener/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -163,6 +164,7 @@ const schema = buildSchemaSync({
 
         /* Screeners */
         FindManyScreenerResolver,
+        ExtendedFieldsScreenerResolver,
         MutateScreenerResolver,
 
         /* Appointments */

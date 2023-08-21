@@ -172,9 +172,9 @@ class WebSocketService {
                 this.logConnections();
             } catch (err) {
                 if (!!err?.message) {
-                    log.error(`Error in websocket service: ${err.message}`);
+                    log.error(`Error in websocket service: ${err.message}`, err);
                 } else {
-                    log.error(`Error in websocket service.`);
+                    log.error(`Error in websocket service.`, err);
                 }
                 ws.close(CloseCodes.SERVER_ERROR, err?.message ?? 'Internal server error while operating');
             }
