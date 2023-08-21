@@ -158,10 +158,14 @@ class WebSocketService {
                     throw new Error('Session Tokens must have at least 20 characters');
                 }
                 sessionUser = await getUserForSession(sessionToken);
-                log.debug(`Session user: ${JSON.stringify(sessionUser)}`);
+                if (!sessionUser) {
+                    throw new Error(`Invalid Session Token`);
+                }
+
                 if (userId !== sessionUser.userID) {
                     throw new Error('Session user does not match user id from connection request parameter');
                 }
+
                 ws['userId'] = userId;
                 // create client
                 const connectionId = createUuid();
