@@ -107,9 +107,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -120,9 +120,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Body Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -135,9 +135,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -150,9 +150,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Modal Text Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }

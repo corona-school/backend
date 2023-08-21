@@ -43,7 +43,7 @@ export function formatError(error: ApolloError) {
         return error;
     }
 
-    logger.error(`Unexpected Errors occurred`, error, { stack: error?.originalError?.stack });
+    logger.error(`Unexpected Errors occurred`, error.originalError, { stack: error?.originalError?.stack });
     if (isErrorSafeToExpose(error)) {
         return error;
     }
