@@ -106,7 +106,8 @@ export class MutateConcreteNotificationsResolver {
         @Arg('userID') userID: string,
         @Arg('context', (_type) => JSONResolver) context: any,
         @Arg('at') at: Date,
-        @Arg('dryRun') dryRun: boolean
+        @Arg('dryRun') dryRun: boolean,
+        @Arg('noDuplicates', { nullable: true }) noDuplicates: boolean
     ) {
         const actionID = asActionID(action);
         validateContextForAction(actionID, context);
@@ -114,6 +115,6 @@ export class MutateConcreteNotificationsResolver {
         const user = await getUser(userID);
 
         logger.info(`Admin triggered Action ${actionID} for User(${userID})`);
-        return await actionTakenAt(at, user, actionID, context, dryRun);
+        return await actionTakenAt(at, user, actionID, context, dryRun, noDuplicates);
     }
 }

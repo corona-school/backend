@@ -350,14 +350,15 @@ export async function actionTaken<ID extends ActionID>(
     user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
-    attachments?: AttachmentGroup
+    attachments?: AttachmentGroup,
+    noDuplicates: boolean = false
 ) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
         return;
     }
 
-    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, attachments);
+    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
 }
 
 /* actionTakenAt is the mighty variant of actionTaken:
@@ -389,6 +390,11 @@ If the context has a 'uniqueId', i.e. the id of a match, only the Notifications 
 
 Cancellation ignores 'at', so if an action is scheduled in the future and an action that cancels it is scheduled
  after that point in time, the notification is still cancelled.
+
+DUPLICATE PREVENTION:
+
+If 'noDuplicates' is set, a Notification will be ignored if a Notification already exists for this user and uniqueId.
+Otherwise a Notification will just be sent multiple times.
 */
 
 export async function actionTakenAt<ID extends ActionID>(
@@ -397,6 +403,7 @@ export async function actionTakenAt<ID extends ActionID>(
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
     dryRun: boolean = false,
+    noDuplicates: boolean = false,
     attachments?: AttachmentGroup
 ) {
     if (!user.active) {
@@ -470,6 +477,21 @@ export async function actionTakenAt<ID extends ActionID>(
         // --------------- Determine which Notifications to send directly and which to schedule ---------
 
         for (const notification of relevantNotifications.toSend) {
+            if (noDuplicates) {
+                assert(notificationContext.uniqueId, 'If noDuplicates is set, a uniqueId shall be set');
+
+                const existingNotifications = await prisma.concrete_notification.count({
+                    where: { notificationID: notification.id, userId: user.userID, contextID: notificationContext.uniqueId },
+                });
+
+                if (existingNotifications) {
+                    logger.info(
+                        `Skipping Notification(${notification.id}) as User(${user.userID}) already has an existing notification with UniqueID ${notificationContext.uniqueId}`
+                    );
+                    continue;
+                }
+            }
+
             let sendAt = +at; /* in ms */
             if (notification.delay) {
                 //   (NOW)         X <--------------- (at) ----------------> X
