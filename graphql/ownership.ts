@@ -14,6 +14,7 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
 } = {
     Pupil: (user, pupil) => user.pupilId === pupil.id,
     Student: (user, student) => user.studentId === student.id,
+    Screener: (user, screener) => user.screenerId === screener.id,
     UserType: (sessionUser, user: User) =>
         sessionUser.studentId === user.studentId && sessionUser.pupilId === user.pupilId && sessionUser.screenerId === user.screenerId,
     Course: async (user, course) => {

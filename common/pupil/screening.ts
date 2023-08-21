@@ -60,6 +60,9 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
             break;
 
         case PupilScreeningStatus.dispute:
+            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_dispute', {});
+            break;
+
         case PupilScreeningStatus.pending:
             break;
     }

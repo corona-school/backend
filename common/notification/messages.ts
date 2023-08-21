@@ -8,8 +8,8 @@ import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
 import { NotificationMessageType } from '../../graphql/types/notificationMessage';
 import { getContext } from '.';
-import { getLogger } from 'log4js';
 import { getUser } from '../user';
+import { getLogger } from '../logger/logger';
 
 const logger = getLogger('Message');
 
@@ -107,9 +107,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -120,9 +120,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Body Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -135,9 +135,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Headline Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
@@ -150,9 +150,9 @@ export async function getMessage(
     } catch (error) {
         logger.error(
             `Failed to render Modal Text Template of Notification(${concreteNotification.notificationID}) for ConcreteNotification(${concreteNotification.id})`,
+            error,
             {
                 context,
-                error,
             }
         );
     }
