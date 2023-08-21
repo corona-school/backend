@@ -48,7 +48,7 @@ export default async function flagInactiveConversationsAsReadonly() {
     const conversationsToFlag: conversationsToDeactivate[] = [];
 
     for (const conversation of conversations.data) {
-        let shouldMarkAsReadonly: boolean;
+        let shouldMarkAsReadonly: boolean = true;
 
         // to prevent to flag already deactivated chats we check if the conversation is already readonly (only readMembers)
         const countParticipants = countChatParticipants(conversation);
@@ -56,33 +56,31 @@ export default async function flagInactiveConversationsAsReadonly() {
         const isChatReadOnly = readMembers.length === countParticipants;
         if (isChatReadOnly) {
             logger.info(`Conversation ${conversation.id} is already readonly.`);
+            continue;
         }
 
-        if (!isChatReadOnly) {
-            if (conversation.custom.subcourse) {
-                const subcourseIds: number[] = JSON.parse(conversation.custom.subcourse);
-                const allSubcoursesActive = await Promise.all(subcourseIds.map((id) => isActiveSubcourse(id)));
-                shouldMarkAsReadonly = allSubcoursesActive.every((active) => active === false);
-            }
-            if (conversation.custom.prospectSubcourse) {
-                const prospectSubcourses: number[] = conversation.custom.prospectSubcourse;
-                const allProspectSubcoursesActive = await Promise.all(prospectSubcourses.map((id) => isActiveSubcourse(id)));
-                shouldMarkAsReadonly = allProspectSubcoursesActive.every((active) => active === false);
-            }
+        if (conversation.custom.subcourse) {
+            const subcourseIds: number[] = JSON.parse(conversation.custom.subcourse);
+            const allSubcoursesActive = await Promise.all(subcourseIds.map((id) => isActiveSubcourse(id)));
+            shouldMarkAsReadonly = shouldMarkAsReadonly && allSubcoursesActive.every((active) => active === false);
+        }
+        if (conversation.custom.prospectSubcourse) {
+            const prospectSubcourses: number[] = conversation.custom.prospectSubcourse;
+            const allProspectSubcoursesActive = await Promise.all(prospectSubcourses.map((id) => isActiveSubcourse(id)));
+            shouldMarkAsReadonly = shouldMarkAsReadonly && allProspectSubcoursesActive.every((active) => active === false);
+        }
+        if (conversation.custom.match) {
+            const match = JSON.parse(conversation.custom.match);
+            const matchId = match.matchId;
+            const isMatchActive = await isActiveMatch(matchId);
+            shouldMarkAsReadonly = shouldMarkAsReadonly && !isMatchActive;
+        }
 
-            if (conversation.custom.match) {
-                const match = JSON.parse(conversation.custom.match);
-                const matchId = match.matchId;
-                const isMatchActive = await isActiveMatch(matchId);
-                shouldMarkAsReadonly = !isMatchActive;
-            }
-
-            if (shouldMarkAsReadonly) {
-                conversationsToFlag.push({
-                    id: conversation.id,
-                    conversationType: conversation.custom.match ? ConversationType.ONE_ON_ONE : ConversationType.GROUP,
-                });
-            }
+        if (shouldMarkAsReadonly) {
+            conversationsToFlag.push({
+                id: conversation.id,
+                conversationType: conversation.custom.match ? ConversationType.ONE_ON_ONE : ConversationType.GROUP,
+            });
         }
     }
 
