@@ -18,12 +18,12 @@ async function isLastCourseAppointment(subcourseId: number) {
     return false;
 }
 
-export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean) {
+export async function cancelAppointment(user: User, appointment: Appointment, silent?: boolean, force?: boolean) {
     if (appointment.isCanceled) {
         throw new RedundantError(`Appointment already cancelled`);
     }
 
-    if (appointment.subcourseId) {
+    if (appointment.subcourseId && !force) {
         const isLastAppointment = await isLastCourseAppointment(appointment.subcourseId);
         if (appointment.subcourseId && isLastAppointment) {
             throw new PrerequisiteError(`Appointment is last of the course`);
