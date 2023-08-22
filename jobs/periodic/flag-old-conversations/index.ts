@@ -1,9 +1,9 @@
 import moment from 'moment';
 import { getMatch, getSubcourse } from '../../../graphql/util';
-import { getAllConversations, markConversationAsReadOnly, sendSystemMessage } from '../../../common/chat';
+import { getAllConversations, markConversationAsReadOnly, sendSystemMessage, updateConversation } from '../../../common/chat';
 import { getLogger } from '../../../common/logger/logger';
 import { Lecture } from '../../../graphql/generated';
-import { SystemMessage } from '../../../common/chat/types';
+import { FinishedReason, SystemMessage } from '../../../common/chat/types';
 import systemMessages from '../../../common/chat/localization';
 import { checkChatMembersAccessRights, countChatParticipants } from '../../../common/chat/helper';
 
@@ -48,32 +48,32 @@ export default async function flagInactiveConversationsAsReadonly() {
     const conversationsToFlag: conversationsToDeactivate[] = [];
 
     for (const conversation of conversations.data) {
-        let shouldMarkAsReadonly: boolean;
+        let shouldMarkAsReadonly: boolean = true;
 
         // to prevent to flag already deactivated chats we check if the conversation is already readonly (only readMembers)
         const countParticipants = countChatParticipants(conversation);
         const { readMembers } = checkChatMembersAccessRights(conversation);
         const isChatReadOnly = readMembers.length === countParticipants;
         if (isChatReadOnly) {
-            return;
+            logger.info(`Conversation ${conversation.id} is already readonly.`);
+            continue;
         }
 
         if (conversation.custom.subcourse) {
             const subcourseIds: number[] = JSON.parse(conversation.custom.subcourse);
             const allSubcoursesActive = await Promise.all(subcourseIds.map((id) => isActiveSubcourse(id)));
-            shouldMarkAsReadonly = allSubcoursesActive.every((active) => active === false);
+            shouldMarkAsReadonly = shouldMarkAsReadonly && allSubcoursesActive.every((active) => active === false);
         }
         if (conversation.custom.prospectSubcourse) {
             const prospectSubcourses: number[] = conversation.custom.prospectSubcourse;
             const allProspectSubcoursesActive = await Promise.all(prospectSubcourses.map((id) => isActiveSubcourse(id)));
-            shouldMarkAsReadonly = allProspectSubcoursesActive.every((active) => active === false);
+            shouldMarkAsReadonly = shouldMarkAsReadonly && allProspectSubcoursesActive.every((active) => active === false);
         }
-
         if (conversation.custom.match) {
             const match = JSON.parse(conversation.custom.match);
             const matchId = match.matchId;
             const isMatchActive = await isActiveMatch(matchId);
-            shouldMarkAsReadonly = !isMatchActive;
+            shouldMarkAsReadonly = shouldMarkAsReadonly && !isMatchActive;
         }
 
         if (shouldMarkAsReadonly) {
@@ -88,9 +88,23 @@ export default async function flagInactiveConversationsAsReadonly() {
         for (const convo of conversationsToFlag) {
             await markConversationAsReadOnly(convo.id);
             if (convo.conversationType === ConversationType.ONE_ON_ONE) {
+                const updateConversationInfo = {
+                    id: convo.id,
+                    custom: {
+                        finished: FinishedReason.MATCH_DISSOLVED,
+                    },
+                };
                 await sendSystemMessage(systemMessages.de.deactivated, convo.id, SystemMessage.ONE_ON_ONE_OVER);
+                await updateConversation(updateConversationInfo);
             } else {
+                const updateConversationInfo = {
+                    id: convo.id,
+                    custom: {
+                        finished: FinishedReason.COURSE_OVER,
+                    },
+                };
                 await sendSystemMessage(systemMessages.de.deactivated, convo.id, SystemMessage.GROUP_OVER);
+                await updateConversation(updateConversationInfo);
             }
             logger.info('Mark converstation as readonly', { conversationId: convo.id, conversationType: convo.conversationType });
         }

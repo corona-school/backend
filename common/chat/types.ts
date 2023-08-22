@@ -24,7 +24,7 @@ export type ChatMetaData = {
     match?: { matchId: number };
     subcourse?: number[];
     prospectSubcourse?: number[];
-    finished?: 'match_dissolved' | 'course_over';
+    finished?: FinishedReason;
 };
 
 export type TJConversation = Conversation & {
@@ -42,7 +42,7 @@ export type TJChatMetaData = {
     match?: string;
     subcourse?: string;
     prospectSubcourse?: string;
-    finished?: 'match_dissolved' | 'course_over';
+    finished?: FinishedReason;
 };
 export type ConversationInfos = {
     subject?: string;
@@ -68,6 +68,12 @@ export enum ChatAccess {
     READ = 'Read',
     READWRITE = 'ReadWrite',
     NONE = 'None',
+}
+
+export enum FinishedReason {
+    MATCH_DISSOLVED = 'match_dissolved',
+    COURSE_OVER = 'course_over',
+    REACTIVATE = 'reactivated',
 }
 
 export type AllConversations = {
