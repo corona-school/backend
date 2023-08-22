@@ -53,7 +53,7 @@ export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
                 courseState: { equals: CourseState.ALLOWED },
             },
         },
-        lecture: { some: { start: { gt: new Date() }, isCanceled: false } },
+        lecture: { some: { start: { gt: new Date() }, isCanceled: { not: true } } },
     };
 }
 
@@ -84,7 +84,7 @@ export class ExtendedFieldsSubcourseResolver {
             filters.push({
                 OR: [
                     { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
-                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() }, isCanceled: false } } },
+                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() }, isCanceled: { not: true } } } },
                 ],
             });
             if (isSessionPupil(context)) {
