@@ -65,8 +65,8 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
         throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
     }
 
-    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
-    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
+    const enabledNewsletter = ENABLED_NEWSLETTER;
+    const disabledNewsletter = DISABLED_NEWSLETTER;
 
     const verification = uuidv4();
 

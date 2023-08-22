@@ -55,8 +55,8 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
-    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
+    const enabledNewsletter = ENABLED_NEWSLETTER;
+    const disabledNewsletter = DISABLED_NEWSLETTER;
 
     const student = await prismaInstance.student.create({
         data: {

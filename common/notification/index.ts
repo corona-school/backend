@@ -74,9 +74,6 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const notification = await getNotification(concreteNotification.notificationID);
 
     let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-    if (notificationPreferences && typeof notificationPreferences === 'string') {
-        notificationPreferences = JSON.parse(notificationPreferences);
-    }
 
     const channelsBasePreference = ALL_PREFERENCES[notification.type];
     assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);

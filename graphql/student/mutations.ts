@@ -33,7 +33,7 @@ const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
-import { GraphQLJSON } from 'graphql-scalars';
+import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -134,8 +134,8 @@ export class StudentUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => NotificationPreferences, { nullable: true })
-    notificationPreferences?: NotificationPreferences;
+    @Field((type) => JSONResolver, { nullable: true })
+    notificationPreferences?: {};
 
     @Field((type) => [Language], { nullable: true })
     languages?: Language[];
@@ -197,7 +197,7 @@ export async function updateStudent(
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
-            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            notificationPreferences: notificationPreferences,
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
         },
