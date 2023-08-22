@@ -1,13 +1,6 @@
-import { randomBytes } from 'crypto';
-import moment from 'moment';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
-import {
-    addGroupAppointmentsOrganizer,
-    addGroupAppointmentsParticipant,
-    removeGroupAppointmentsOrganizer,
-    removeGroupAppointmentsParticipant,
-} from '../../common/appointment/participants';
+import { addGroupAppointmentsParticipant, removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
@@ -153,15 +146,8 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const subcourse = await getSubcourse(subcourseId);
-
         await hasAccess(context, 'Subcourse', subcourse);
-
         await publishSubcourse(subcourse);
-        const course = await getCourse(subcourse.courseId);
-        logger.info(`Subcourse(${subcourseId}) was published by User(${context.user!.userID})`);
-        if (course.category !== 'focus') {
-            await sendPupilCoursePromotion(subcourse);
-        }
         return true;
     }
 
