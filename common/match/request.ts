@@ -15,7 +15,7 @@ const PUPIL_MAX_DISSOLVED_MATCHES = 5;
 
 type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
-export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
+export function canPupilRequestMatch(pupil: Pupil): Decision<RequestBlockReasons> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
 
     if (!pupil.isPupil) {
@@ -48,7 +48,7 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
 
 export async function createPupilMatchRequest(pupil: Pupil, adminOverride = false) {
     if (!adminOverride) {
-        assertAllowed(await canPupilRequestMatch(pupil));
+        assertAllowed(canPupilRequestMatch(pupil));
     }
 
     const result = await prisma.pupil.update({

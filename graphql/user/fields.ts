@@ -210,9 +210,9 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => String)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
+    zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
         const meetingIdAsInt = parseInt(meetingId);
-        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
+        const sdkKey = generateMeetingSDKJWT(meetingIdAsInt, role);
         return sdkKey;
     }
 

@@ -24,7 +24,7 @@ if (isZoomFeatureActive()) {
     assert(secret, 'Missing ZOOM_MEETING_SDK_CLIENT_SECRET in ENV');
 }
 
-const generateMeetingSDKJWT = async (meetingNumber: number, role: MeetingRole) => {
+const generateMeetingSDKJWT = (meetingNumber: number, role: MeetingRole) => {
     const iat = Math.round(new Date().getTime() / 1000) - 30;
     const exp = iat + 60 * 60 * 2;
 

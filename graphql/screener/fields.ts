@@ -8,7 +8,7 @@ import { UserType } from '../types/user';
 export class ExtendedFieldsScreenerResolver {
     @FieldResolver((returns) => UserType)
     @Authorized(Role.OWNER, Role.ADMIN)
-    async user(@Root() screener: Required<Screener>) {
+    user(@Root() screener: Required<Screener>) {
         return userForScreener(screener);
     }
 }

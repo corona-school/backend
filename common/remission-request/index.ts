@@ -55,7 +55,7 @@ function loadTemplate(name: string): EJS.ClientFunction {
 
 async function createQRCode(uuid: string): Promise<string> {
     const verificationURL = `https://verify.lern-fair.de/${uuid}?ctype=remission`;
-    return QRCode.toDataURL(verificationURL);
+    return await QRCode.toDataURL(verificationURL);
 }
 
 export async function createRemissionRequestPDF(student: { id: number; firstname: string; lastname: string }): Promise<Buffer> {

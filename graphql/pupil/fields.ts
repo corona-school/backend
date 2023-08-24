@@ -94,7 +94,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => [Subject])
     @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
-    async subjectsFormatted(@Root() pupil: Required<Pupil>) {
+    subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
 
@@ -140,7 +140,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
+    canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
     }
 

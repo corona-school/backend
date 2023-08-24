@@ -9,7 +9,7 @@ export { Role } from '../common/user/roles';
 
 const logger = getLogger('Roles');
 
-export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
+export function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
     context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
@@ -91,7 +91,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
     }
 }
 
-export async function evaluateScreenerRoles(user: User, context: GraphQLContext) {
+export function evaluateScreenerRoles(user: User, context: GraphQLContext) {
     context.user.roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
     logger.info(`Screener(${user.screenerId}) was granted SCREENER role`);
 }

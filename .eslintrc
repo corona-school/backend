@@ -57,7 +57,7 @@
         "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
-        "require-await": "warn",
+        "require-await": "error",
         "import/no-cycle": ["warn"],
         "@typescript-eslint/no-floating-promises": ["error"],
         "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],

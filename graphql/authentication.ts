@@ -126,11 +126,11 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
 
     if (user.pupilId) {
         const pupil = await getPupil(user.pupilId);
-        await evaluatePupilRoles(pupil, context);
+        evaluatePupilRoles(pupil, context);
     }
 
     if (user.screenerId) {
-        await evaluateScreenerRoles(user, context);
+        evaluateScreenerRoles(user, context);
     }
 
     if (!noSession) {

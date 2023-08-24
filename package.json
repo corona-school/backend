@@ -43,6 +43,7 @@
     "@aws-sdk/client-s3": "^3.369.0",
     "@aws-sdk/s3-request-presigner": "^3.137.0",
     "@prisma/client": "4.15.0",
+    "@types/qrcode": "^1.5.1",
     "@typescript-eslint/parser": "^5.41.0",
     "apollo-server-express": "3.4.0",
     "apollo-server-plugin-response-cache": "3.4.0",

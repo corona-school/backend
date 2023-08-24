@@ -44,7 +44,7 @@ export class Screening {
     @JoinColumn()
     student: Student;
 
-    async updateScreeningInfo(screeningInfo: ScreeningInfo, screener?: Screener) {
+    updateScreeningInfo(screeningInfo: ScreeningInfo, screener?: Screener) {
         this.success = screeningInfo.verified ?? this.success;
         this.comment = screeningInfo.comment ?? this.comment;
         this.knowsCoronaSchoolFrom = screeningInfo.knowsCoronaSchoolFrom ?? this.knowsCoronaSchoolFrom;
