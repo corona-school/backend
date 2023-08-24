@@ -186,26 +186,26 @@ export class UserFieldsResolver {
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
-        return getAppointmentsForUser(user, take, skip, cursor, direction);
+        return await getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.OWNER)
     async hasAppointments(@Root() user: User): Promise<boolean> {
-        return hasAppointmentsForUser(user);
+        return await hasAppointmentsForUser(user);
     }
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return getLastAppointmentId(user);
+        return await getLastAppointmentId(user);
     }
 
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
-        return getMyContacts(user);
+        return await getMyContacts(user);
     }
 
     @FieldResolver((returns) => String)

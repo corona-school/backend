@@ -1,14 +1,11 @@
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
-import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { getNotification, getNotifications, getSampleContext, getSampleContextExternal } from './notification';
+import { getNotification, getNotifications, getSampleContextExternal } from './notification';
 import { getFullName, User, queryUser, getUser } from '../user';
 import { getLogger } from '../logger/logger';
-import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
-import { Pupil } from '../entity/Pupil';
 import { assert } from 'console';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
@@ -205,7 +202,7 @@ export async function createAttachments(files: File[], uploader: User): Promise<
             })
         );
 
-        const attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
+        const attachmentListHTML = getAttachmentListHTML(attachments, attachmentGroupId);
 
         return { attachmentListHTML, attachmentGroupId, attachmentIds: attachments.map((att) => att.attachmentId) };
     }
