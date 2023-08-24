@@ -2,7 +2,7 @@
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
-import { NotificationType } from '../entity/Notification';
+import { type NotificationType } from '../entity/Notification';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails

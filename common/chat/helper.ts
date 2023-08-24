@@ -9,7 +9,7 @@ import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
 import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
-import { MatchContactPupil, MatchContactStudent } from './contacts';
+import { type MatchContactPupil, type MatchContactStudent } from './contacts';
 import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
