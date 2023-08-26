@@ -213,7 +213,8 @@ export async function updateStudent(
 }
 
 async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    let { email, register, activate, screen } = data;
+    let { email } = data;
+    const { register, activate, screen } = data;
     const screener = await getSessionScreener(ctx);
 
     try {

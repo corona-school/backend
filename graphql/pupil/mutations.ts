@@ -189,8 +189,8 @@ export async function updatePupil(
 }
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    let { email, register, activate } = data;
-
+    let { email } = data;
+    const { register, activate } = data;
     try {
         email = validateEmail(email);
         if (register) {

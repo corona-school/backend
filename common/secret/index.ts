@@ -1,5 +1,4 @@
 import { User } from '../user';
-import { secret as Secret } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { SecretType } from '../entity/Secret';
@@ -10,7 +9,7 @@ export * from './token';
 
 const logger = getLogger('Secret');
 
-export async function getSecrets(user: User): Promise<{}[]> {
+export async function getSecrets(user: User): Promise<object[]> {
     const result = await prisma.secret.findMany({
         where: {
             userId: user.userID,

@@ -168,7 +168,7 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
     };
 
     for (const key in conversationInfos.custom) {
-        if (conversationInfos.custom.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(key)) {
             const value = conversationInfos.custom[key];
             convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
         }
@@ -202,8 +202,8 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     };
 };
 
-const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
-const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => Object.prototype.hasOwnProperty.call('student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => Object.prototype.hasOwnProperty.call('pupil');
 
 export {
     userIdToTalkJsId,
