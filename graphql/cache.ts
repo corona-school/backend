@@ -10,7 +10,7 @@ import { CacheScope } from 'apollo-server-types';
 
 /* If a Query is annotated with @PublicCache AND all the entities involved in the query are marked with "cacheAllFields" in the enhancement map below,
     then further requests with exactly the same query are served from cache for (duration) seconds */
-export function PublicCache(duration: number = 60 /*s*/) {
+export function PublicCache(duration = 60 /*s*/) {
     return createMethodDecorator<GraphQLContext>(({ info }, next) => {
         info.cacheControl.setCacheHint({
             maxAge: duration,

@@ -1,12 +1,14 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
 import { User, getUser, userForPupil, userForStudent } from '../user';
+// eslint-disable-next-line import/no-cycle
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
+// eslint-disable-next-line import/no-cycle
 import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { type MatchContactPupil, type MatchContactStudent } from './contacts';

@@ -1,4 +1,5 @@
 import assert from 'assert';
+// eslint-disable-next-line import/no-cycle
 import { blue, red } from './base';
 import wcmatch from 'wildcard-match';
 
@@ -18,7 +19,7 @@ interface MockedFetch {
 }
 
 // A FIFO queue of expected calls:
-let expectedCalls: MockedFetch[] = [];
+const expectedCalls: MockedFetch[] = [];
 
 export function expectFetch(mocked: MockedFetch) {
     expectedCalls.push(mocked);

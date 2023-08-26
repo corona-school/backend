@@ -27,7 +27,7 @@ export class CertificateOfConduct {
     @Column({
         nullable: false,
     })
-    criminalRecords: Boolean;
+    criminalRecords: boolean;
 
     @OneToOne((type) => Student, (student) => student.certificateOfConduct, {
         eager: true,

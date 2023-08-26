@@ -23,7 +23,8 @@ export async function createRemissionRequest(student: TypeORMStudent | PrismaStu
     });
 
     if (!remissionRequest) {
-        while (true) {
+        let done = false;
+        while (!done) {
             try {
                 await prisma.remission_request.create({
                     data: {
@@ -32,7 +33,7 @@ export async function createRemissionRequest(student: TypeORMStudent | PrismaStu
                     },
                 });
                 logger.info(`Created remisson request for student ${student.wix_id}`);
-                break;
+                done = true;
             } catch (e) {
                 if (e.code !== 'P2002') {
                     throw e;

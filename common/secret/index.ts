@@ -5,6 +5,7 @@ import { getLogger } from '../logger/logger';
 import { SecretType } from '../entity/Secret';
 
 export * from './password';
+// eslint-disable-next-line import/no-cycle
 export * from './token';
 
 const logger = getLogger('Secret');

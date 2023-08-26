@@ -48,7 +48,7 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
+export async function registerPupil(data: RegisterPupilData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }

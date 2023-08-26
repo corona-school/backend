@@ -72,7 +72,7 @@ export class MutateSecretResolver {
     @RateLimit('Request E-Mail Tokens', 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async tokenRequest(
         @Arg('email') email: string,
-        @Arg('action', { nullable: true }) action: string = 'user-authenticate',
+        @Arg('action', { nullable: true }) action = 'user-authenticate',
         @Arg('redirectTo', { nullable: true }) redirectTo?: string
     ) {
         const user = await getUserByEmail(validateEmail(email));

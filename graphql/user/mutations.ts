@@ -108,7 +108,7 @@ export class MutateUserResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async userContactSupport(@Ctx() context: GraphQLContext, @Arg('message') message: SupportMessage) {
-        let body =
+        const body =
             message.message +
             `\n\n\n` +
             `+------ Tech-Team Infos ------------------------+\n` +

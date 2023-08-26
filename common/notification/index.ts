@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-cycle
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
 import { prisma } from '../prisma';
@@ -193,11 +194,11 @@ async function deliverNotification(
  */
 export async function createAttachments(files: File[], uploader: User): Promise<AttachmentGroup | null> {
     if (files.length > 0) {
-        let attachmentGroupId = uuid().toString();
+        const attachmentGroupId = uuid().toString();
 
-        let attachments = await Promise.all(
+        const attachments = await Promise.all(
             files.map(async (f) => {
-                let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
+                const attachmentId = await createAttachment(f, uploader, attachmentGroupId);
                 return { attachmentId, filename: f.originalname, size: f.size };
             })
         );

@@ -5,7 +5,7 @@ import * as mailjet from './mailjetTypes';
 const logger = getLogger();
 const auth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
 
-async function sendMessage(message: mailjet.SendParamsMessage, sandbox: boolean = false) {
+async function sendMessage(message: mailjet.SendParamsMessage, sandbox = false) {
     //determine whether we have sandbox mode or not...
     let sandboxMode = sandbox;
 
@@ -19,7 +19,7 @@ async function sendMessage(message: mailjet.SendParamsMessage, sandbox: boolean 
     }
 
     //send actual email
-    let requestOptions: mailjet.SendParams = {
+    const requestOptions: mailjet.SendParams = {
         SandboxMode: sandboxMode,
         Messages: [message],
     };
@@ -46,7 +46,7 @@ async function sendMailPure(
     receiverName?: string,
     replyToAddress?: string,
     replyToName?: string,
-    sandbox: boolean = false
+    sandbox = false
 ) {
     // construct mailjet API message
     const message: mailjet.SendParamsMessage = {
@@ -80,7 +80,7 @@ async function sendMailTemplate(
     receiverAddress: string,
     templateID: number,
     variables: object,
-    sandbox: boolean = false,
+    sandbox = false,
     replyToAddress?: string,
     attachements?: {
         ContentType: string;

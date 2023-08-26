@@ -37,7 +37,7 @@ async function sendUpcomingCourseReminders(manager: EntityManager) {
     });
 
     // find courses that have a lecture the day after tomorrow
-    for (let subcourse of feasibleSubcourses) {
+    for (const subcourse of feasibleSubcourses) {
         const course = subcourse.course;
 
         // skip if this subcourse has no lectures

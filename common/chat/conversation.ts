@@ -1,6 +1,6 @@
-/* eslint-disable camelcase */
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+// eslint-disable-next-line import/no-cycle
 import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { User } from '../user';
 import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';

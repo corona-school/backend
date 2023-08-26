@@ -31,7 +31,9 @@ import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
+// eslint-disable-next-line import/no-cycle
 import { StudentUpdateInput, updateStudent } from '../student/mutations';
+// eslint-disable-next-line import/no-cycle
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
@@ -182,11 +184,7 @@ export class MutateMeResolver {
     @Mutation((returns) => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterStudent(
-        @Ctx() context: GraphQLContext,
-        @Arg('data') data: RegisterStudentInput,
-        @Arg('noEmail', { nullable: true }) noEmail: boolean = false
-    ) {
+    async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterStudentInput, @Arg('noEmail', { nullable: true }) noEmail = false) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
@@ -211,7 +209,7 @@ export class MutateMeResolver {
     @Mutation((returns) => Pupil)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail: boolean = false) {
+    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail = false) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {

@@ -1,4 +1,6 @@
 {
+    "root": true,
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 6,
@@ -34,6 +36,7 @@
                 "afterColon": true
             }
         ],
+        "@typescript-eslint/no-unused-vars": "off",
         "no-debugger": "error",
         "no-duplicate-case": "error",
         "no-eval": "error",

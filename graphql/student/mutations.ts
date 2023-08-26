@@ -30,6 +30,7 @@ import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
+// eslint-disable-next-line import/no-cycle
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
@@ -152,7 +153,7 @@ export async function updateStudent(
     update: StudentUpdateInput,
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma
 ) {
-    let {
+    const {
         firstname,
         lastname,
         email,
@@ -218,7 +219,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
     try {
         email = validateEmail(email);
 
-        if (!!register) {
+        if (register) {
             register.email = validateEmail(register.email);
             if (register.email !== email) {
                 throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
@@ -233,9 +234,9 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
 
         await prisma.$transaction(async (tx) => {
             let student = existingAccount;
-            if (!!register) {
+            if (register) {
                 //registration data was provided
-                if (!!student) {
+                if (student) {
                     log.info(`Account with email ${email} already exists, updating account with registration data instead... Student(${student.id})`);
                     // updating existing account with new registration data:
                     student = await updateStudent(ctx, student, { ...register }, tx); // languages are added in next step (becomeTutor)
@@ -249,16 +250,16 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
                 // activation data was provided; student isn't a tutor yet
                 student = await becomeTutor(student, activate, tx, true);
                 logger.info(`Made account with email ${email} a tutor. Student(${student.id})`);
-            } else if (!!activate) {
+            } else if (activate) {
                 // activation data was provided but student already is a tutor
                 logger.info(`Account with email ${email} is already a tutor, updating student with activation data... Student(${student.id})`);
                 // update existing account with new activation data:
                 student = await updateStudent(ctx, student, { ...activate }, tx);
             }
 
-            if (!!screen) {
+            if (screen) {
                 // screening data was provided
-                let canRequest = await canStudentRequestMatch(student);
+                const canRequest = await canStudentRequestMatch(student);
                 if (!canRequest.allowed && canRequest.reason === 'not-screened') {
                     await addTutorScreening(screener, student, screen, tx, true);
                     log.info(`Screened account with email ${email}. Student(${student.id})`);

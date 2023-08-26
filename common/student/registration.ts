@@ -50,7 +50,7 @@ export interface ProjectFieldWithGradeData {
     max: number;
 }
 
-export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
+export async function registerStudent(data: RegisterStudentData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }

@@ -22,7 +22,7 @@ type MessageTranslationFromDb = {
     navigateTo: string;
 };
 
-type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
+type NotificationsPerAction = Map<string, { toSend: Notification[]; toCancel: Notification[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
 
 const logger = getLogger('Notification Management');

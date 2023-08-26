@@ -4,6 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import './mock';
 
 import * as WebServer from '../web';
+// eslint-disable-next-line import/no-cycle
 import { expectNoFetchMockLeft } from './mock';
 
 /* -------------- Configuration ------------------- */
@@ -113,8 +114,12 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
     tests.push({
         name,
         runner,
-        resolve: (it) => { result = Promise.resolve(it); },
-        reject: (error) => { result = Promise.reject(error); }
+        resolve: (it) => {
+            result = Promise.resolve(it);
+        },
+        reject: (error) => {
+            result = Promise.reject(error);
+        },
     });
 
     return {
@@ -126,7 +131,7 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
             }
 
             return result.then(onfulfilled, onrejected);
-        }
+        },
     };
 }
 
