@@ -32,6 +32,10 @@ export async function sendToSlack(channel: SlackChannel, message: SlackMessage) 
         logger.info('Sent Slack Message', { message, channel: channel.name });
     } else {
         // Unlike other places we do not fail here with an error, as the Slack integration is usually optional
-        logger.error('Failed to send Slack message', { status: request.status, text: await request.text(), message: JSON.stringify(message, null, 2) });
+        logger.error('Failed to send Slack message', new Error('Failed to send Slack message'), {
+            status: request.status,
+            text: await request.text(),
+            message: JSON.stringify(message, null, 2),
+        });
     }
 }

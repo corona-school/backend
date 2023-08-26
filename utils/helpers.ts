@@ -5,7 +5,7 @@ import { getLogger } from '../common/logger/logger';
 export const renderTemplate = (template: string, context: Partial<Context>, strict: boolean = false) => {
     const log = getLogger('Template Rendering');
     if (!template) {
-        log.error('Template string undefined');
+        log.error('Template string undefined', new Error('Template string undefined'));
         return undefined;
     }
     return compile(template, { strict, noEscape: true, knownHelpersOnly: true })(context);
@@ -14,3 +14,4 @@ export const renderTemplate = (template: string, context: Partial<Context>, stri
 export function compileTemplate(template: string) {
     return compile(template, { strict: true, noEscape: true, knownHelpersOnly: true });
 }
+
