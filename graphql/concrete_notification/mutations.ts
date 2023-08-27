@@ -59,7 +59,7 @@ export class MutateConcreteNotificationsResolver {
         @Arg('notificationId', (type) => Int) notificationId: number,
         @Arg('userIds', (_type) => [String]) userIds: string[],
         @Arg('context', (_type) => JSONResolver) context: any,
-        @Arg('skipDraft') skipDraft = false,
+        @Arg('skipDraft') skipDraft: boolean = false,
         @Arg('startAt') startAt: Date
     ) {
         const notification = await getNotification(notificationId);

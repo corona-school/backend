@@ -41,7 +41,7 @@ class Statistics {
 export class StatisticsResolver {
     @Query((returns) => Statistics)
     @Authorized(Role.ADMIN)
-    statistics(@Arg('from', { nullable: true }) from = '1970-01-01', @Arg('to', { nullable: true }) to = '3000-01-01'): Statistics {
+    statistics(@Arg('from', { nullable: true }) from: string = '1970-01-01', @Arg('to', { nullable: true }) to: string = '3000-01-01'): Statistics {
         return { from, to };
     }
 
