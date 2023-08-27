@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { test } from './base';
 import { prisma } from '../common/prisma';
-import { createNewPupil, createNewStudent } from './user';
+import { createNewPupil, createNewStudent } from './01_user';
 import moment from 'moment';
 import redactInactiveAccounts, { GRACE_PERIOD } from '../jobs/periodic/redact-inactive-accounts';
 import { pupil, student } from '@prisma/client';

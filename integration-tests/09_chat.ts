@@ -1,10 +1,10 @@
 import assert from 'assert';
 import { test } from './base';
 import { ChatType } from '../common/chat/types';
-import { subcourseOne } from './course';
-import { expectFetch } from './mock';
-import { screenedInstructorOne } from './screening';
-import { pupilOne, pupilTwo } from './user';
+import { subcourseOne } from './07_course';
+import { expectFetch } from './base/mock';
+import { screenedInstructorOne } from './02_screening';
+import { pupilOne, pupilTwo } from './01_user';
 import { getSubcourse } from '../graphql/util';
 import { prisma } from '../common/prisma';
 
