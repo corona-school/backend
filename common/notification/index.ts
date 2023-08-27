@@ -480,11 +480,11 @@ export async function actionTakenAt<ID extends ActionID>(
             if (noDuplicates) {
                 assert(notificationContext.uniqueId, 'If noDuplicates is set, a uniqueId shall be set');
 
-                const existingNotifications = await prisma.concrete_notification.count({
+                const existingDuplicates = await prisma.concrete_notification.count({
                     where: { notificationID: notification.id, userId: user.userID, contextID: notificationContext.uniqueId },
                 });
 
-                if (existingNotifications) {
+                if (existingDuplicates > 0) {
                     logger.info(
                         `Skipping Notification(${notification.id}) as User(${user.userID}) already has an existing notification with UniqueID ${notificationContext.uniqueId}`
                     );
