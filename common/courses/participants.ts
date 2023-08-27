@@ -11,6 +11,8 @@ import { gradeAsInt } from '../util/gradestrings';
 import { createSecretEmailToken } from '../secret';
 import { userForPupil } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
+import { addParticipant } from '../chat';
+import { ChatType } from '../chat/types';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -227,6 +229,10 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             orderBy: { start: 'asc' },
             take: 1,
         });
+
+        await addGroupAppointmentsParticipant(subcourse.id, userForPupil(pupil).userID);
+        await addParticipant(userForPupil(pupil), subcourse.conversationId, subcourse.groupChatType as ChatType);
+
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
             const courseStart = moment(firstLecture[0].start);
@@ -250,7 +256,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
                 firstLectureTime: courseStart.format('HH:mm'),
             });
         } catch (error) {
-            logger.warn(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`);
+            logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
     });
 }
