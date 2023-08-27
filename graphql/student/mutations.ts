@@ -197,7 +197,7 @@ export async function updateStudent(
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
-            notificationPreferences: notificationPreferences,
+            notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
         },
