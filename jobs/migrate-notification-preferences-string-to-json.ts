@@ -11,7 +11,7 @@ export default async function execute() {
 
 export async function updateNotificationPreferencesForPupils() {
     const pupils = await prisma.pupil.findMany({
-        where: { notificationPreferences: { not: null } },
+        where: { notificationPreferences: { not: { equals: null } } },
         select: { id: true, notificationPreferences: true },
     });
 
@@ -51,7 +51,7 @@ export async function updateNotificationPreferencesForPupils() {
 
 export async function updateNotificationPreferencesForStudents() {
     const students = await prisma.student.findMany({
-        where: { notificationPreferences: { not: null } },
+        where: { notificationPreferences: { not: { equals: null } } },
         select: { id: true, notificationPreferences: true },
     });
 
@@ -91,7 +91,7 @@ export async function updateNotificationPreferencesForStudents() {
 
 export async function updateNotificationPreferencesForScreeners() {
     const screeners = await prisma.screener.findMany({
-        where: { notificationPreferences: { not: null } },
+        where: { notificationPreferences: { not: { equals: null } } },
         select: { id: true, notificationPreferences: true },
     });
 
