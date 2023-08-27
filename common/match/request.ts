@@ -33,12 +33,12 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
     const lastYear = new Date();
     lastYear.setFullYear(lastYear.getFullYear() - 1);
 
-    /* const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
+    const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
     if (pupil.openMatchRequestCount + activeMatchCount >= PUPIL_MAX_MATCHES) {
         return { allowed: false, reason: 'max-matches', limit: PUPIL_MAX_MATCHES };
     }
 
-    const dissolvedMatchCountLastYear = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: true, createdAt: { gte: lastYear } } });
+    /* const dissolvedMatchCountLastYear = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: true, createdAt: { gte: lastYear } } });
     if (pupil.openMatchRequestCount + activeMatchCount + dissolvedMatchCountLastYear >= PUPIL_MAX_DISSOLVED_MATCHES) {
         return { allowed: false, reason: 'max-dissolved-matches', limit: PUPIL_MAX_DISSOLVED_MATCHES };
     } */
