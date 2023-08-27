@@ -3,6 +3,7 @@ import { concrete_notification as ConcreteNotification, notification as Notifica
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
 import { NotificationType } from '../entity/Notification';
+import { ActionID } from './actions';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
@@ -58,7 +59,7 @@ export interface Channel {
 
 export interface BulkAction<Entity> {
     name: string;
-    action: string;
+    action: ActionID;
     getData: () => Promise<Entity[]>;
     getUser: (entity: Entity) => Promise<User>;
     getContext: (entity: Entity) => Promise<NotificationContext>;

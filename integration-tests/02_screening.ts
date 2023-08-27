@@ -1,7 +1,7 @@
 import assert from "assert";
 import { randomBytes } from "crypto";
 import { adminClient, createUserClient, test } from "./base";
-import { instructorOne, instructorTwo, pupilOne, studentOne } from "./user";
+import { instructorOne, instructorTwo, pupilOne, studentOne } from "./01_user";
 
 const screenerOne = test('Admin can create Screener Account', async () => {
     const email = `test+${randomBytes(10).toString("base64")}@lern-fair.de`;

@@ -4,6 +4,7 @@ import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import {
+    actionTakenAt,
     bulkCreateConcreteNotifications,
     cancelDraftedAndDelayed,
     cancelNotification,
@@ -11,11 +12,16 @@ import {
     rescheduleNotification,
     sendNotification,
     validateContext,
+    validateContextForAction,
 } from '../../common/notification';
-import { getUsers } from '../util';
+import { Deprecated, getUsers } from '../util';
 import { getNotification } from '../../common/notification/notification';
 import { getUser } from '../../common/user';
-import { JSONResolver } from 'graphql-scalars';
+import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
+import { asActionID } from '../../common/notification/actions';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger('MutateConcreteNotificationResolver');
 
 @Resolver((of) => ConcreteNotification)
 export class MutateConcreteNotificationsResolver {
@@ -90,5 +96,25 @@ export class MutateConcreteNotificationsResolver {
         const notification = await getNotification(notificationId);
         await cancelDraftedAndDelayed(notification, contextID);
         return true;
+    }
+
+    @Mutation((returns) => GraphQLJSON)
+    @Authorized(Role.ADMIN)
+    @Deprecated('TEST ONLY, DO NOT USE!')
+    async _actionTakenAt(
+        @Arg('action') action: string,
+        @Arg('userID') userID: string,
+        @Arg('context', (_type) => JSONResolver) context: any,
+        @Arg('at') at: Date,
+        @Arg('dryRun') dryRun: boolean,
+        @Arg('noDuplicates', { nullable: true }) noDuplicates: boolean
+    ) {
+        const actionID = asActionID(action);
+        validateContextForAction(actionID, context);
+
+        const user = await getUser(userID);
+
+        logger.info(`Admin triggered Action ${actionID} for User(${userID})`);
+        return await actionTakenAt(at, user, actionID, context, dryRun, noDuplicates);
     }
 }

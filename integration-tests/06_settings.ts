@@ -1,5 +1,5 @@
 import { test } from './base';
-import { pupilOne, studentOne } from './user';
+import { pupilOne, studentOne } from './01_user';
 
 void test('Student Settings', async () => {
     const { client } = await studentOne;
