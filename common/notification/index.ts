@@ -65,6 +65,11 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
 
     let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
+    // TODO: Remove after all users where migrated
+    if (notificationPreferences && typeof notificationPreferences === 'string') {
+        notificationPreferences = JSON.parse(notificationPreferences);
+    }
+
     const channelsBasePreference = ALL_PREFERENCES[notification.type];
     assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
 
