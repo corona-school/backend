@@ -19,7 +19,7 @@ class Campaign {
     contextID: string;
 
     @Field((type) => JSONResolver)
-    context: {};
+    context: object;
 
     @Field((type) => Int)
     drafted: number;

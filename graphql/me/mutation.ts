@@ -184,7 +184,11 @@ export class MutateMeResolver {
     @Mutation((returns) => Student)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterStudentInput, @Arg('noEmail', { nullable: true }) noEmail = false) {
+    async meRegisterStudent(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: RegisterStudentInput,
+        @Arg('noEmail', { nullable: true }) noEmail: boolean = false
+    ) {
         const byAdmin = context.user!.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
