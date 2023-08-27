@@ -32,6 +32,7 @@ import { addPupilScreening, updatePupilScreening } from '../../common/pupil/scre
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
+import { JSONResolver } from 'graphql-scalars';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -77,6 +78,7 @@ export class PupilUpdateInput {
 
     @Field((type) => NotificationPreferences, { nullable: true })
     notificationPreferences?: NotificationPreferences;
+
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
@@ -171,7 +173,7 @@ export async function updatePupil(
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
-            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
         },
         where: { id: pupil.id },

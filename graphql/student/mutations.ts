@@ -33,7 +33,7 @@ const log = getLogger(`StudentMutation`);
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
-import { GraphQLJSON } from 'graphql-scalars';
+import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -197,7 +197,7 @@ export async function updateStudent(
             state: ensureNoNull(state),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
-            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
         },

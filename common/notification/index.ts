@@ -64,6 +64,8 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const notification = await getNotification(concreteNotification.notificationID);
 
     let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    // TODO: Remove after all users where migrated
     if (notificationPreferences && typeof notificationPreferences === 'string') {
         notificationPreferences = JSON.parse(notificationPreferences);
     }
