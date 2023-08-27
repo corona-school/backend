@@ -51,7 +51,6 @@
     "body-parser": "^1.19.0",
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
-    "corona-school-matching": "1.3.0",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "date-holidays": "^1.5.3",
@@ -121,6 +120,9 @@
     "ts-jest": "^29.0.5",
     "typegraphql-prisma": "0.26.0",
     "typescript": "^4.3.5"
+  },
+  "optionalDependencies": {
+    "corona-school-matching": "1.3.0"
   },
   "repository": {
     "type": "git",
