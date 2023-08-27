@@ -39,8 +39,9 @@ export async function updateNotificationPreferencesForPupils() {
                 } else {
                     logger.info(`Migration of notificiation preferences didn't work`);
                 }
+            } else {
+                logger.info(`Notification preferences is already a JSON.`);
             }
-            logger.info(`Notification preferences is already a JSON.`);
         })
     );
 
@@ -77,8 +78,9 @@ export async function updateNotificationPreferencesForStudents() {
                 } else {
                     logger.info(`Migration of notificiation preferences didn't work`);
                 }
+            } else {
+                logger.info(`Notification preferences is already a JSON.`);
             }
-            logger.info(`Notification preferences is already a JSON.`);
         })
     );
 
@@ -116,8 +118,9 @@ export async function updateNotificationPreferencesForScreeners() {
                 } else {
                     logger.info(`Migration of notificiation preferences didn't work`);
                 }
+            } else {
+                logger.info(`Notification preferences is already a JSON.`);
             }
-            logger.info(`Notification preferences is already a JSON.`);
         })
     );
 
