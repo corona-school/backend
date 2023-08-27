@@ -134,8 +134,8 @@ export class StudentUpdateInput {
     @Field((type) => Date, { nullable: true })
     lastTimeCheckedNotifications?: Date;
 
-    @Field((type) => JSONResolver, { nullable: true })
-    notificationPreferences?: {};
+    @Field((type) => NotificationPreferences, { nullable: true })
+    notificationPreferences?: NotificationPreferences;
 
     @Field((type) => [Language], { nullable: true })
     languages?: Language[];
