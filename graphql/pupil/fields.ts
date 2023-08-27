@@ -134,8 +134,8 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canRequestMatch(@Root() pupil: Required<Pupil>) {
-        return await canPupilRequestMatch(pupil);
+    canRequestMatch(@Root() pupil: Required<Pupil>) {
+        return canPupilRequestMatch(pupil);
     }
 
     @FieldResolver((type) => Decision)
@@ -154,7 +154,7 @@ export class ExtendFieldsPupilResolver {
 
     @Query((returns) => [Pupil])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed = false) {
+    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
         return await prisma.pupil.findMany({
             where: {
                 active: true,
