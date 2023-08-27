@@ -5,6 +5,8 @@ import { Field, InputType, ObjectType } from 'type-graphql';
 export class Channels {
     @Field()
     email: boolean;
+
+    [otherChannel: string]: boolean;
 }
 @InputType('PreferencesInput')
 @ObjectType()
@@ -31,4 +33,6 @@ export class NotificationPreferences {
     request?: Channels;
     @Field({ nullable: true })
     alternative?: Channels;
+
+    [otherType: string]: Channels;
 }

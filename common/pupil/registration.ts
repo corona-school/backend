@@ -65,9 +65,6 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
         throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
     }
 
-    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
-    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
-
     const verification = uuidv4();
 
     const pupil = await prismaInstance.pupil.create({
@@ -98,7 +95,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,
 
-            notificationPreferences: data.newsletter ? enabledNewsletter : disabledNewsletter,
+            notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,
         },
     });
 

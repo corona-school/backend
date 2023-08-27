@@ -92,7 +92,7 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
         if (lectureIds[lecture.id]) {
             result.push(lectureIds[lecture.id]);
         } else {
-            logger.error('Cannot find lecture in webflow.', { lectureId: lecture.id, courseId: subcourse.id });
+            logger.error('Cannot find lecture in webflow.', new Error('Cannot find lecture in webflow.'), { lectureId: lecture.id, courseId: subcourse.id });
         }
     }
 

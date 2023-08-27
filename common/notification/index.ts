@@ -7,13 +7,15 @@ import { getFullName, User, queryUser, getUser } from '../user';
 import { getLogger } from '../logger/logger';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
-import { assert } from 'console';
+import { Pupil } from '../entity/Pupil';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
-import { ActionID, SpecificNotificationContext } from './actions';
+import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
+import assert from 'assert';
+import { Prisma } from '@prisma/client';
 import { addTagsToActiveSpan } from '../logger/tracing';
 
 const logger = getLogger('Notification');
@@ -26,6 +28,9 @@ const OPTIONAL_CHANNELS = [mailjetChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
+// The time where we consider a Notification to happen "now":
+const SLACK = 1000; /* ms */
+
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
@@ -35,20 +40,6 @@ async function createConcreteNotification(
     context: NotificationContext,
     attachments?: AttachmentGroup
 ): Promise<ConcreteNotification> {
-    if (context.uniqueId) {
-        const existingNotification = await prisma.concrete_notification.findFirst({
-            where: {
-                notificationID: notification.id,
-                userId: user.userID,
-                contextID: context.uniqueId,
-            },
-        });
-
-        if (existingNotification) {
-            throw new Error(`Duplicate Notification(${notification.id}) for User(${user.userID}) with Context(${context.uniqueId})`);
-        }
-    }
-
     // First of all we commit the notification to the database, which allows us to recover if the backend crashes
     const concreteNotification = await prisma.concrete_notification.create({
         data: {
@@ -72,12 +63,14 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     const notification = await getNotification(concreteNotification.notificationID);
 
     let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+
+    // TODO: Remove after all users where migrated
     if (notificationPreferences && typeof notificationPreferences === 'string') {
         notificationPreferences = JSON.parse(notificationPreferences);
     }
 
     const channelsBasePreference = ALL_PREFERENCES[notification.type];
-    assert(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
+    assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
 
     const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
 
@@ -227,73 +220,6 @@ export async function cancelRemindersFor(user: User) {
     });
 }
 
-/* When introducing new notifications, it might sometimes make sense to schedule them "in retrospective" once for all existing users,
-   as if the user took that action at actionDate */
-export async function actionTakenAt(
-    actionDate: Date,
-    user: User,
-    actionId: string,
-    notificationContext: NotificationContext,
-    apply: boolean,
-    attachments?: AttachmentGroup
-) {
-    assert(user.active, 'Cannot trigger action taken at for inactive users');
-
-    const notifications = await getNotifications();
-    const relevantNotifications = notifications.get(actionId);
-
-    if (!relevantNotifications) {
-        throw new Error(`Notification.actionTakenAt found no notifications for action '${actionId}'`);
-    }
-
-    const reminders = relevantNotifications.toSend.filter((it) => it.delay);
-    const remindersToCreate: Omit<ConcreteNotification, 'id' | 'error'>[] = [];
-
-    const userId = user.userID;
-
-    for (const reminder of reminders) {
-        if (reminder.delay * HOURS_TO_MS + +actionDate < Date.now() && !reminder.interval) {
-            // Reminder was sent in the past and will not be sent in the future
-            logger.debug(`Reminder(${reminder.id}) won't be scheduled in the future of ${actionDate.toISOString()}`);
-            continue;
-        }
-
-        let sendAt = reminder.delay * HOURS_TO_MS + +actionDate;
-        if (sendAt < Date.now()) {
-            assert(reminder.interval > 0);
-            const intervalCount = Math.ceil((Date.now() - sendAt) / (reminder.interval * HOURS_TO_MS));
-            sendAt += intervalCount * reminder.interval * HOURS_TO_MS;
-            assert(Date.now() > sendAt);
-        }
-
-        logger.debug(`Reminder(${reminder.id}) for action at ${actionDate.toISOString()} will be send at ${new Date(sendAt).toISOString()}`);
-
-        remindersToCreate.push({
-            notificationID: reminder.id,
-            state: ConcreteNotificationState.DELAYED,
-            sentAt: new Date(sendAt),
-            userId,
-            contextID: notificationContext.uniqueId,
-            context: notificationContext,
-            attachmentGroupId: attachments?.attachmentGroupId,
-        });
-    }
-
-    if (apply && remindersToCreate.length > 0) {
-        const remindersCreated = await prisma.concrete_notification.createMany({
-            data: remindersToCreate,
-        });
-
-        logger.info(
-            `Notification.actionTakenAt scheduled ${remindersCreated.count} reminders for User(${userId}) at ${remindersToCreate.map((it) =>
-                it.sentAt.toDateString()
-            )}`
-        );
-    }
-
-    return remindersToCreate;
-}
-
 export async function cancelNotification(notification: ConcreteNotification) {
     if (notification.state !== ConcreteNotificationState.DELAYED) {
         throw new Error(`Notification is not in DELAYED state, cannot be canceled`);
@@ -331,6 +257,18 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
+
+    const expectedKeys = Object.keys(sampleContext);
+    const actualKeys = Object.keys(context);
+    const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+
+    if (missing.length) {
+        throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+}
+
+export function validateContextForAction(action: ActionID, context: NotificationContext) {
+    const sampleContext = getSampleContextForAction(action);
 
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
@@ -408,13 +346,65 @@ export async function sendNotification(id: NotificationID, user: User, notificat
 
 /* Triggers all notification sending, scheduling and unscheduling of the emails for a certain action
    Call actionTaken whenever some user action gets performed where in the future, a notification might be useful
-   If 'allowDuplicates' is set, the same action may be sent multiple times by the same user
 */
-
 export async function actionTaken<ID extends ActionID>(
     user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
+    attachments?: AttachmentGroup,
+    noDuplicates: boolean = false
+) {
+    if (!user.active) {
+        logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
+        return;
+    }
+
+    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
+}
+
+/* actionTakenAt is the mighty variant of actionTaken:
+
+SCHEDULING:
+
+If there are active Notifications that contain the action in 'onActions':
+
+If 'at' is right now:
+- Notifications without a delay are immediately sent
+- Notifications with a positive delay are scheduled in now + delay
+- Notifications with a negative delay are not sent (as they are in the past)
+
+If 'at' is in the past:
+- Notifications without a delay or a negative delay are not sent (as they are in the past)
+- Notifications with a delay might be scheduled if (at + delay > now)
+- Notifications with an interval are scheduled for the next execution where (at + delay + interval * N > now)
+
+If 'at' is in the future:
+- Notifications without a delay are scheduled to be sent at 'at'
+- Notifications with a positive delay are scheduled to be sent at 'at' + delay
+- Notifications with a negative delay are scheduled to be sent at 'at' - delay (if > now)
+
+CANCELLATION:
+
+If there are Notifications scheduled in the future where cancelOnActions contains the action,
+these Notifications are cancelled (moved to state ACTION_TAKEN) and are not sent out.
+If the context has a 'uniqueId', i.e. the id of a match, only the Notifications with that uniqueId are cancelled.
+
+Cancellation ignores 'at', so if an action is scheduled in the future and an action that cancels it is scheduled
+ after that point in time, the notification is still cancelled.
+
+DUPLICATE PREVENTION:
+
+If 'noDuplicates' is set, a Notification will be ignored if a Notification already exists for this user and uniqueId.
+Otherwise a Notification will just be sent multiple times.
+*/
+
+export async function actionTakenAt<ID extends ActionID>(
+    at: Date,
+    user: User,
+    actionId: ID,
+    notificationContext: SpecificNotificationContext<ID>,
+    dryRun: boolean = false,
+    noDuplicates: boolean = false,
     attachments?: AttachmentGroup
 ) {
     if (!user.active) {
@@ -423,7 +413,17 @@ export async function actionTaken<ID extends ActionID>(
     }
 
     const startTime = Date.now();
+
+    // Use this timestamp instead of Date.now(), as otherwise calculations might differ based on runtime:
+    const now = Date.now();
+
+    let dismissedCount = 0;
+    const directSends: Readonly<Notification>[] = [];
+    const reminders: { notification: Readonly<Notification>; sendAt: number }[] = [];
+
     try {
+        // --------------- Find Notifications ----------------------------------
+
         logger.debug(`Notification.actionTaken context for action '${actionId}'`, notificationContext);
         const notifications = await getNotifications();
         const relevantNotifications = notifications.get(actionId);
@@ -433,15 +433,16 @@ export async function actionTaken<ID extends ActionID>(
             return;
         }
 
-        logger.debug(`Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`);
+        // --------------- Dismiss Concrete Notifications to cancel ------------
+        // NOTE: We need to cancel first, as otherwise a Notification with onActions: 'a', cancelOnActions: 'a' will cancel itself
+        //       This way it will cancel a previous action, and will then schedule a new one
 
-        // prevent sending of now unnecessary notifications
-        const dismissed = await prisma.concrete_notification.updateMany({
-            data: {
-                state: ConcreteNotificationState.ACTION_TAKEN,
-                sentAt: new Date(),
-            },
-            where: {
+        if (relevantNotifications.toCancel.length) {
+            logger.debug(
+                `Notification.actionTaken found notifications ${relevantNotifications.toCancel.map((it) => it.id)} to cancel for action '${actionId}'`
+            );
+
+            const queryToDismiss: Prisma.concrete_notificationWhereInput = {
                 notificationID: {
                     in: relevantNotifications.toCancel.map((it) => it.id),
                 },
@@ -454,29 +455,102 @@ export async function actionTaken<ID extends ActionID>(
                           OR: [{ contextID: null }, { contextID: notificationContext.uniqueId }],
                       }
                     : {}),
-            },
-        });
+            };
 
-        logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+            if (!dryRun) {
+                const dismissed = await prisma.concrete_notification.updateMany({
+                    data: {
+                        state: ConcreteNotificationState.ACTION_TAKEN,
+                        sentAt: new Date(now),
+                    },
+                    where: queryToDismiss,
+                });
 
-        const reminders = relevantNotifications.toSend.filter((it) => it.delay);
-        const directSends = relevantNotifications.toSend.filter((it) => !it.delay);
-
-        logger.debug(`Notification.actionTaken found reminders ${reminders.map((it) => it.id)} and directSends ${directSends.map((it) => it.id)}`);
-
-        // Trigger notifications that are supposed to be directly sent on this action
-        for (const directSend of directSends) {
-            const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
-            await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
+                logger.debug(`Notification.actionTaken dismissed ${dismissed.count} pending notifications`);
+                dismissedCount = dismissed.count;
+            } else {
+                dismissedCount = await prisma.concrete_notification.count({
+                    where: queryToDismiss,
+                });
+            }
         }
 
-        // Insert reminders into concrete_notification table so that a cron job can deliver them in the future
-        if (reminders.length) {
+        // --------------- Determine which Notifications to send directly and which to schedule ---------
+
+        for (const notification of relevantNotifications.toSend) {
+            if (noDuplicates) {
+                assert(notificationContext.uniqueId, 'If noDuplicates is set, a uniqueId shall be set');
+
+                const existingDuplicates = await prisma.concrete_notification.count({
+                    where: { notificationID: notification.id, userId: user.userID, contextID: notificationContext.uniqueId },
+                });
+
+                if (existingDuplicates > 0) {
+                    logger.info(
+                        `Skipping Notification(${notification.id}) as User(${user.userID}) already has an existing notification with UniqueID ${notificationContext.uniqueId}`
+                    );
+                    continue;
+                }
+            }
+
+            let sendAt = +at; /* in ms */
+            if (notification.delay) {
+                //   (NOW)         X <--------------- (at) ----------------> X
+                //                   (negative delay)      (positive delay)
+                sendAt += notification.delay * HOURS_TO_MS;
+            }
+
+            if (sendAt < now && notification.interval) {
+                //   X ----X-| (NOW) |-> X
+                //   If a notification would be scheduled in the past and then repeated, we repeat till we reach a future time where
+                //   sendAt + interval * N > now
+                const n = Math.ceil((now - sendAt - SLACK) / (notification.interval * HOURS_TO_MS));
+                assert.ok(n >= 0, 'Expect to go forward in time');
+
+                sendAt += n * notification.interval * HOURS_TO_MS;
+            }
+
+            if (sendAt < now - SLACK) {
+                // We cannot travel back in time, so we ignore the notification:
+                logger.debug(
+                    `Notification.actionTakenAt dismissed Notification(${notification.id}) as ${at.toISOString()} was projected to ${new Date(
+                        sendAt
+                    ).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${notification.interval ?? '-'}) which is in the past`
+                );
+            } else if (sendAt < now + SLACK) {
+                directSends.push(notification);
+                logger.debug(
+                    `Notification.actionTakenAt will directly send Notification(${notification.id}) as ${at.toISOString()} was projected to ${new Date(
+                        sendAt
+                    ).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${notification.interval ?? '-'}) which is right now`
+                );
+            } /* sendAt > now + SLACK */ else {
+                reminders.push({ notification, sendAt });
+                logger.debug(
+                    `Notification.actionTakenAt will schedule a reminder for Notification(${
+                        notification.id
+                    }) as ${at.toISOString()} was projected to ${new Date(sendAt).toISOString()} (with delay: ${notification.delay ?? '-'} and interval: ${
+                        notification.interval ?? '-'
+                    }) which is in the future`
+                );
+            }
+        }
+
+        // --------------- Send out Notifications to send directly --------------------------------------
+        if (!dryRun) {
+            for (const directSend of directSends) {
+                const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
+                await deliverNotification(concreteNotification, directSend, user, notificationContext, attachments);
+            }
+        }
+
+        // --------------- Create Reminders to be picked up by a background job somewhen ----------------
+        if (!dryRun && reminders.length) {
             const remindersCreated = await prisma.concrete_notification.createMany({
-                data: reminders.map((it) => ({
-                    notificationID: it.id,
+                data: reminders.map(({ notification, sendAt }) => ({
+                    notificationID: notification.id,
                     state: ConcreteNotificationState.DELAYED,
-                    sentAt: new Date(Date.now() + it.delay /* in hours */ * HOURS_TO_MS),
+                    sentAt: new Date(sendAt),
                     userId: user.userID,
                     contextID: notificationContext.uniqueId,
                     context: notificationContext,
@@ -487,10 +561,14 @@ export async function actionTaken<ID extends ActionID>(
             logger.debug(`Notification.actionTaken created ${remindersCreated.count} reminders`);
         }
     } catch (e) {
+        // NOTE: This shall not happen! We want to catch errors in deliverNotification and store them on the notification instead,
+        // to be able to fix and resend Notifications when something goes wrong.
         logger.error(`Failed to perform Notification.actionTaken(${user.userID}, "${actionId}") with `, e);
     }
 
     logger.debug(`Notification.actionTaken took ${Date.now() - startTime}ms`);
+
+    return { reminders, directSends, dismissedCount };
 }
 
 export async function bulkActionTaken<ID extends ActionID>(users: User[], actionId: ID, notificationContext: SpecificNotificationContext<ID>) {
@@ -506,7 +584,7 @@ export async function bulkActionTaken<ID extends ActionID>(users: User[], action
     }
     try {
         for (const notification of relevantNotifications.toSend) {
-            assert(!notification.delay, 'Notifications with delay unsupported for bulk actions');
+            assert.ok(!notification.delay, 'Notifications with delay unsupported for bulk actions');
             await bulkCreateConcreteNotifications(notification, users, notificationContext, ConcreteNotificationState.DELAYED, new Date());
         }
     } catch (e) {

@@ -20,7 +20,7 @@ export async function sendInactivityNotification() {
     const users: User[] = [
         ...p.pupils.map(userForPupil), ...p.students.map(userForStudent), ...p.screener.map(userForScreener)];
     for (const user of users) {
-        await Notification.actionTaken(user, 'person_inactivity_reminder', { uniqueId: user.lastLogin.toISOString() });
+        await Notification.actionTaken(user, 'person_inactivity_reminder', { uniqueId: user.lastLogin.toISOString() }, undefined, /* no duplicates */ true);
     }
 
     logger.info('End sending inactivity notification');

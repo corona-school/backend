@@ -3,7 +3,7 @@ import { GraphQLClient } from 'graphql-request';
 
 import './mock';
 
-import * as WebServer from '../web';
+import * as WebServer from '../../web';
 // eslint-disable-next-line import/no-cycle
 import { expectNoFetchMockLeft } from './mock';
 

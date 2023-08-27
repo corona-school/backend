@@ -111,7 +111,7 @@ async function request(req: Request): Promise<any> {
     const res = await fetch(url, options);
     if (res.status < 200 || res.status >= 300) {
         const data = await res.json();
-        logger.error('webflow api request failed', { status: res.status, data });
+        logger.error('webflow api request failed', new Error('webflow api request failed'), { status: res.status, data });
         throw new Error(`API returned invalid status ${res.status}: `);
     }
     return res.json();

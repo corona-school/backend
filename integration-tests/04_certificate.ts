@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { test } from './base';
-import { match1 } from './matching';
-import { expectFetch } from './mock';
+import { match1 } from './03_matching';
+import { expectFetch } from './base/mock';
 
 const signature =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAACdCAMAAAAe7DTLAAADAFBMVEX//' +
