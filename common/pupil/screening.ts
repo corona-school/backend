@@ -1,4 +1,4 @@
-import { pupil as Pupil, pupil_screening_status_enum as PupilScreeningStatus } from '@prisma/client';
+import { pupil as Pupil, pupil_screening_status_enum as PupilScreeningStatus, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import * as Notification from '../notification';
@@ -35,7 +35,7 @@ interface PupilScreeningUpdate {
     comment?: string;
 }
 
-export async function updatePupilScreening(pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
+export async function updatePupilScreening(screener: Screener, pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
     const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
     if (screening === null) {
         logger.error('cannot find PupilScreening', new Error('cannot find PupilScreening'), { pupilScreeningId });
@@ -44,6 +44,10 @@ export async function updatePupilScreening(pupilScreeningId: number, screeningUp
 
     await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
     logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate });
+
+    if (!screening.screenerIds.includes(screener.id)) {
+        await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { screenerIds: { push: screener.id } } });
+    }
 
     // We only want to send notifications when the status got updated.
     // Otherwise, we might spam the user while updating the comment.
