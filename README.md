@@ -30,6 +30,8 @@ Then run `npm run db:setup` to configure Postgres correctly, then `npm run db:re
 To run the development configuration of the web server handling the API requests run `npm run web:dev`.
 The development version of the jobs can be run using `npm run jobs:dev`.
 
+The backend has some very exotic dependencies (namely Chromium for rendering PDFs and our C++ Matching Algorithm) that require quite some effort to install on non-Linux environments. With `npm ci --omit=optional` one can skip installing these dependencies, then the Backend can be run with a limited feature set (no matching and no certificate rendering), also running the integration tests will fail. This should still be enough for the majority of development tasks though.
+
 The `/assets` folder contains development versions of various files. During Heroku builds, the folder is replaced by a secret version that is maintained in a [separate private repository](https://github.com/corona-school/coronaschool-certificate). The commit id of the version pulled is 
 stored in `.certificate-version`. 
 
