@@ -21,12 +21,14 @@ export async function postStatisticsToSlack() {
 
     const pupilRegisteredCount = await prisma.pupil.count({ where: { createdAt: { gte: begin, lte: end } }});
     const studentsRegisteredCount = await prisma.student.count({ where: { createdAt: { gte: begin, lte: end }}});
+    const coursesCreatedCount = await prisma.subcourse.count({ where: { createdAt: { gte: begin, lte: end }}});
 
     await sendToSlack(SLACK_CHANNEL.PublicStatistics, {
         blocks: [
             table(`Statistiken vom ${begin} zum ${end}`, "Name", "Wert", [
                 ["Anzahl registrierter Schüler", "" + pupilRegisteredCount],
-                ["Anzahl registrierter Helfer", "" + studentsRegisteredCount]
+                ["Anzahl registrierter Helfer", "" + studentsRegisteredCount],
+                ["Anzahl erstellter Kurse", "" + coursesCreatedCount]
             ])
         ]
     });
