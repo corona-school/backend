@@ -209,7 +209,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         const pupilUser = userForPupil(pupil);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
-        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
 
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
@@ -231,9 +230,9 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             take: 1,
         });
 
-        await addGroupAppointmentsParticipant(subcourse.id, userForPupil(pupil).userID);
-        if (isChatFeatureActive()) {
-            await addParticipant(userForPupil(pupil), subcourse.conversationId, subcourse.groupChatType as ChatType);
+        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
+        if (isChatFeatureActive() && subcourse.conversationId) {
+            await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }
 
         try {
