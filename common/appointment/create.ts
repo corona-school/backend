@@ -11,7 +11,7 @@ import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
 import { getNotificationContextForSubcourse } from '../mails/courses';
 import { User, userForPupil, userForStudent } from '../user';
-import { getMatch, getPupil, getStudent } from '../../graphql/util';
+import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
 
 const logger = getLogger();
 
@@ -58,31 +58,28 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const pupilUserId = userForPupil(pupil).userID;
     const hosts = [student];
 
-    let zoomMeetingId: string | null;
-
-    if (isZoomFeatureActive()) {
-        const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated, false);
-        logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId} with ${appointmentsToBeCreated.length} appointments`);
-        zoomMeetingId = videoChat.id.toString();
-    }
-
     const createdMatchAppointments = await Promise.all(
-        appointmentsToBeCreated.map(
-            async (appointmentToBeCreated) =>
-                await prisma.lecture.create({
-                    data: {
-                        title: appointmentToBeCreated.title,
-                        description: appointmentToBeCreated.description,
-                        start: appointmentToBeCreated.start,
-                        duration: appointmentToBeCreated.duration,
-                        matchId: appointmentToBeCreated.matchId,
-                        appointmentType: lecture_appointmenttype_enum.match,
-                        organizerIds: [studentUserId],
-                        participantIds: [pupilUserId],
-                        zoomMeetingId,
-                    },
-                })
-        )
+        appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
+            let zoomMeetingId: string | null;
+            if (isZoomFeatureActive()) {
+                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, false);
+                logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId}`);
+                zoomMeetingId = videoChat.id.toString();
+            }
+            return await prisma.lecture.create({
+                data: {
+                    title: appointmentToBeCreated.title,
+                    description: appointmentToBeCreated.description,
+                    start: appointmentToBeCreated.start,
+                    duration: appointmentToBeCreated.duration,
+                    matchId: appointmentToBeCreated.matchId,
+                    appointmentType: lecture_appointmenttype_enum.match,
+                    organizerIds: [studentUserId],
+                    participantIds: [pupilUserId],
+                    zoomMeetingId,
+                },
+            });
+        })
     );
 
     if (!silent) {
@@ -103,30 +100,30 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
     const hosts = instructors.map((i) => i.student);
 
-    let zoomMeetingId: string | null;
-
-    if (isZoomFeatureActive()) {
-        const videoChat = await createZoomMeetingForAppointments(hosts, appointmentsToBeCreated, true);
-        zoomMeetingId = videoChat.id.toString();
-    }
-
     const createdGroupAppointments = await Promise.all(
-        appointmentsToBeCreated.map(
-            async (appointmentToBeCreated) =>
-                await prisma.lecture.create({
-                    data: {
-                        title: appointmentToBeCreated.title,
-                        description: appointmentToBeCreated.description,
-                        start: appointmentToBeCreated.start,
-                        duration: appointmentToBeCreated.duration,
-                        subcourseId: appointmentToBeCreated.subcourseId,
-                        appointmentType: lecture_appointmenttype_enum.group,
-                        organizerIds: instructors.map((i) => userForStudent(i.student).userID),
-                        participantIds: participants.map((p) => userForPupil(p.pupil).userID),
-                        zoomMeetingId,
-                    },
-                })
-        )
+        appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
+            let zoomMeetingId: string | null;
+
+            if (isZoomFeatureActive()) {
+                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, false);
+                logger.info(`Zoom - Created meeting ${videoChat.id} for subcourse ${subcourseId}`);
+                zoomMeetingId = videoChat.id.toString();
+            }
+
+            return await prisma.lecture.create({
+                data: {
+                    title: appointmentToBeCreated.title,
+                    description: appointmentToBeCreated.description,
+                    start: appointmentToBeCreated.start,
+                    duration: appointmentToBeCreated.duration,
+                    subcourseId: appointmentToBeCreated.subcourseId,
+                    appointmentType: lecture_appointmenttype_enum.group,
+                    organizerIds: instructors.map((i) => userForStudent(i.student).userID),
+                    participantIds: participants.map((p) => userForPupil(p.pupil).userID),
+                    zoomMeetingId,
+                },
+            });
+        })
     );
 
     // * send notification
@@ -140,18 +137,12 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     return createdGroupAppointments;
 };
 
-export const createZoomMeetingForAppointments = async (
+const createZoomMeetingForAppointment = async (
     students: Student[],
-    appointmentsToBeCreated: AppointmentCreateMatchInput[] | AppointmentCreateGroupInput[],
+    appointment: AppointmentCreateMatchInput | AppointmentCreateGroupInput,
     isCourse: boolean
 ) => {
     try {
-        if (appointmentsToBeCreated.length === 0) {
-            return;
-        }
-        const appointmentsNumber = appointmentsToBeCreated.length;
-        const lastDate = appointmentsToBeCreated[appointmentsNumber - 1].start;
-
         const studentZoomUsers = await Promise.all(
             students.map(async (student) => {
                 const existingUser = await getZoomUser(student.email);
@@ -163,14 +154,13 @@ export const createZoomMeetingForAppointments = async (
             })
         );
 
-        const newVideoChat =
-            appointmentsNumber > 1
-                ? await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, appointmentsToBeCreated[0].duration, isCourse, lastDate)
-                : await createZoomMeeting(studentZoomUsers, appointmentsToBeCreated[0].start, appointmentsToBeCreated[0].duration, isCourse);
+        // exist meeting already?
+        // what if failed?
 
+        const newVideoChat = await createZoomMeeting(studentZoomUsers, appointment.start, appointment.duration, isCourse);
         return newVideoChat;
-    } catch (e) {
-        throw new Error(`Zoom - Error while creating zoom meeting: ${e}`);
+    } catch (error) {
+        throw new Error(`Zoom - Error while creating zoom meeting: ${error}`);
     }
 };
 
@@ -184,6 +174,7 @@ export const saveZoomMeetingReport = async (appointment: Lecture) => {
 
     logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
 };
+
 export async function createAdHocMeeting(matchId: number, user: User) {
     const match = await getMatch(matchId);
     const { pupilId, studentId } = match;
