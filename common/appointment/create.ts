@@ -105,7 +105,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
             let zoomMeetingId: string | null;
 
             if (isZoomFeatureActive()) {
-                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, false);
+                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, true);
                 logger.info(`Zoom - Created meeting ${videoChat.id} for subcourse ${subcourseId}`);
                 zoomMeetingId = videoChat.id.toString();
             }
