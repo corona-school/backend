@@ -133,7 +133,7 @@ export class MutateSubcourseResolver {
         const instructorToBeRemoved = await getStudent(studentId);
         const instructorUser = userForStudent(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID);
+        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }

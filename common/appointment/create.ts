@@ -154,9 +154,6 @@ const createZoomMeetingForAppointment = async (
             })
         );
 
-        // exist meeting already?
-        // what if failed?
-
         const newVideoChat = await createZoomMeeting(studentZoomUsers, appointment.start, appointment.duration, isCourse);
         return newVideoChat;
     } catch (error) {

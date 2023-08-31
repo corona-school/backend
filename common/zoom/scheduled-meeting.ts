@@ -2,7 +2,7 @@ import { getAccessToken } from './authorization';
 import { ZoomUser } from './user';
 import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from './util';
+import { addHost, assureZoomFeatureActive, isZoomFeatureActive, removeHost } from './util';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
@@ -243,8 +243,12 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
 const addOrganizerToZoomMeeting = async (appointment: Appointment, organizerEmail?: string) => {
     const zoomMeeting = await getZoomMeeting(appointment);
     const existingAltHosts = zoomMeeting.settings.alternative_hosts;
+    if (existingAltHosts.includes(organizerEmail)) {
+        logger.info(`Zoom - Organizer is already alternative host for zoom meeting ${zoomMeeting.id}`);
+        return;
+    }
+    const newAlternativeHosts = addHost(existingAltHosts, organizerEmail);
 
-    const newAlternativeHosts = existingAltHosts.concat(';', organizerEmail);
     const update = {
         organizers: newAlternativeHosts,
     };
@@ -255,8 +259,12 @@ const addOrganizerToZoomMeeting = async (appointment: Appointment, organizerEmai
 const removeOrganizerFromZoomMeeting = async (appointment: Appointment, organizerEmail?: string) => {
     const zoomMeeting = await getZoomMeeting(appointment);
     const existingAltHosts = zoomMeeting.settings.alternative_hosts;
+    if (!existingAltHosts.includes(organizerEmail)) {
+        logger.info(`Zoom - Organizer is no alternative host from zoom meeting ${zoomMeeting.id}`);
+        return;
+    }
 
-    const newAlternativeHosts = existingAltHosts.replace(organizerEmail + ';', '').replace(';' + organizerEmail, '');
+    const newAlternativeHosts = removeHost(existingAltHosts, organizerEmail);
 
     const update = {
         organizers: newAlternativeHosts,
