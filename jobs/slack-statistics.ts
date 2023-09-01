@@ -18,18 +18,55 @@ export async function postStatisticsToSlack() {
     lastMonthEnd.setUTCSeconds(0);
     const end = lastMonthEnd.toISOString();
 
+    const pupilRegisteredCount = await prisma.pupil.count({ where: { createdAt: { gte: begin, lte: end } } });
+    const studentsRegisteredCount = await prisma.student.count({ where: { createdAt: { gte: begin, lte: end } } });
 
-    const pupilRegisteredCount = await prisma.pupil.count({ where: { createdAt: { gte: begin, lte: end } }});
-    const studentsRegisteredCount = await prisma.student.count({ where: { createdAt: { gte: begin, lte: end }}});
-    const coursesCreatedCount = await prisma.subcourse.count({ where: { createdAt: { gte: begin, lte: end }}});
+    //Screenings
+    const pupilScreeningCount = await prisma.pupil_screening.count({ where: { createdAt: { gte: begin, lte: end } } });
+    const tutorScreeningCount = await prisma.screening.count({ where: { createdAt: { gte: begin, lte: end } } });
+    const instructorScreeningCount = await prisma.instructor_screening.count({ where: { createdAt: { gte: begin, lte: end } } });
+    const tutorScreeningCountGroupBy = await prisma.screening.groupBy({
+        by: ['knowsCoronaSchoolFrom'],
+        where: { createdAt: { gte: begin, lte: end } },
+        _count: { success: true },
+    });
+    const instructorScreeningCountGroupBy = await prisma.instructor_screening.groupBy({
+        by: ['knowsCoronaSchoolFrom'],
+        where: { createdAt: { gte: begin, lte: end } },
+        _count: { success: true },
+    });
+
+    //Matches
+    const matchCount = await prisma.match.count({ where: { createdAt: { gte: begin, lte: end } } });
+
+    //Subcourses
+    const subcourseCreatedCount = await prisma.subcourse.count({ where: { createdAt: { gte: begin, lte: end } } });
+    //TODO: number of free / taken seats of current public subcourses
+
+    //Match appointments
+    const matchAppointmentCount = await prisma.lecture.count({
+        where: {
+            createdAt: { gte: begin, lte: end },
+            matchId: {
+                notIn: [],
+            },
+        },
+    });
 
     await sendToSlack(SLACK_CHANNEL.PublicStatistics, {
         blocks: [
-            table(`Statistiken vom ${begin} zum ${end}`, "Name", "Wert", [
-                ["Anzahl registrierter Schüler", "" + pupilRegisteredCount],
-                ["Anzahl registrierter Helfer", "" + studentsRegisteredCount],
-                ["Anzahl erstellter Kurse", "" + coursesCreatedCount]
-            ])
-        ]
+            table(`Statistiken vom ${begin} zum ${end}`, 'Name', 'Wert', [
+                ['Anzahl registrierter Schüler*innen', '' + pupilRegisteredCount],
+                ['Anzahl registrierter Helfer*innen', '' + studentsRegisteredCount],
+                ['Anzahl Screenings Schüler*innen', '' + pupilScreeningCount],
+                ['Anzahl Screenings Helfer*innen', '' + tutorScreeningCount],
+                ['Anzahl Screenings Lehrer*innen', '' + instructorScreeningCount],
+                ['Anzahl erstellter Matches', '' + matchCount],
+                ['Anzahl erstellter Kurse', '' + subcourseCreatedCount],
+                ['Anzahl Match-Termine', '' + matchAppointmentCount],
+            ]),
+            //TODO: Tables for screenings (knowsCoronaSchoolFrom)
+            //TODO: Table for free/taken seats for subcourses
+        ],
     });
 }
