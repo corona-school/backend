@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { course_coursestate_enum, student as Student } from '@prisma/client';
+import { course_coursestate_enum, dissolved_by_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
@@ -32,7 +32,7 @@ export async function deactivateStudent(student: Student, silent: boolean = fals
         },
     });
     for (const match of matches) {
-        await dissolveMatch(match, 0, student);
+        await dissolveMatch(match, 0, student, dissolved_by_enum.student);
     }
 
     //Delete course records for the student.

@@ -5,6 +5,7 @@ import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { userForPupil } from '../user';
+import { dissolved_by_enum } from '../../graphql/generated';
 
 export async function activatePupil(pupil: Pupil) {
     if (pupil.active) {
@@ -39,7 +40,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
     });
 
     for (const match of matches) {
-        await dissolveMatch(match, 0, pupil);
+        await dissolveMatch(match, 0, pupil, dissolved_by_enum.pupil);
     }
 
     const updatedPupil = await prisma.pupil.update({

@@ -13,6 +13,7 @@ import { markConversationAsWriteable } from '../../common/chat';
 import { JSONResolver } from 'graphql-scalars';
 import { createAdHocMeeting } from '../../common/appointment/create';
 import { AuthenticationError } from '../error';
+import { dissolved_by_enum } from '@prisma/client';
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -37,8 +38,16 @@ export class MutateMatchResolver {
     async matchDissolve(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number, @Arg('dissolveReason') dissolveReason: number): Promise<boolean> {
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
+        let dissolvedBy: dissolved_by_enum;
+        if (context.user.pupilId != null) {
+            dissolvedBy = dissolved_by_enum.pupil;
+        } else if (context.user.studentId != null) {
+            dissolvedBy = dissolved_by_enum.student;
+        } else {
+            dissolvedBy = dissolved_by_enum.admin;
+        }
 
-        await dissolveMatch(match, dissolveReason, /* dissolver:*/ null);
+        await dissolveMatch(match, dissolveReason, /* dissolver:*/ null, dissolvedBy);
         return true;
     }
 

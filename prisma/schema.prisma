@@ -273,12 +273,12 @@ model log {
 }
 
 model match {
-  id                    Int       @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  id                    Int                @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   // DEPRECATED: The uuid was used to generate non-guessable meeting room links, replaced by Appointments/Zoom
-  uuid                  String    @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
-  dissolved             Boolean   @default(false)
-  dissolvedAt           DateTime? @db.Timestamp(6)
-  // dissolvedBy           dissolved_by_enum?
+  uuid                  String             @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
+  dissolved             Boolean            @default(false)
+  dissolvedAt           DateTime?          @db.Timestamp(6)
+  dissolvedBy           dissolved_by_enum?
   // At some point in time the dissolve UI of pupils and students deviated,
   // and they would write different ids for the same dissolve reason into this field
   // As we do not store who dissolved the match, it is quite hard to interpret this number:
@@ -286,15 +286,15 @@ model match {
   dissolveReason        Int?
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
-  proposedTime          DateTime? @db.Timestamp(6)
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  proposedTime          DateTime?          @db.Timestamp(6)
+  createdAt             DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime           @default(now()) @db.Timestamp(6)
   // DEPRECATED: With the Notification System we now use Concrete Notifications to track
   // whether a notification was already sent. These booleans were used a long time ago by some cron jobs:
-  feedbackToPupilMail   Boolean   @default(false)
-  feedbackToStudentMail Boolean   @default(false)
-  followUpToPupilMail   Boolean   @default(false)
-  followUpToStudentMail Boolean   @default(false)
+  feedbackToPupilMail   Boolean            @default(false)
+  feedbackToStudentMail Boolean            @default(false)
+  followUpToPupilMail   Boolean            @default(false)
+  followUpToStudentMail Boolean            @default(false)
 
   // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
   source match_source_enum @default(matchedinternal)
@@ -1246,9 +1246,8 @@ enum screening_jobstatus_enum {
   Misc
 }
 
-//
-// enum dissolved_by_enum {
-//   pupil
-//   student
-//   admin
-// }
+enum dissolved_by_enum {
+  pupil
+  student
+  admin
+}
