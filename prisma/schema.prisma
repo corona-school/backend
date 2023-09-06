@@ -1251,3 +1251,15 @@ enum dissolved_by_enum {
   student
   admin
 }
+
+enum dissolve_reason {
+  ghosted // "Mein:e Lernpartner:in hat sich nicht zurückgemeldet"
+  noMoreHelpNeeded // "Mein:e Lernpartner:in benötigt keine Unterstützung mehr" and "Ich benötige keine Unterstützung mehr"
+  isOfNoHelp // "Ich konnte meinem/meiner Lernpartner:in nicht behilflich sein" and "Mein:e Lernpartner:in konnte mir nicht behilflich sein"
+  noMoreTime // "Ich habe keine Zeit mehr mein*e Lernpartner:in zu unterstützen" and "Mein:e Lernpartner:in hat keine Zeit mehr mich zu unterstützen"
+  personalIssues // "Wir hatten Schwierigkeiten auf zwischenmenschlicher Ebene"
+  scheduleIssues // "Wir konnten keine gemeinsamen Termine finden"
+  technicalIssues // "Wir hatten technische Schwierigkeiten"
+  languageIssues // "Wir hatten sprachliche Schwierigkeiten"
+  other // "Sonstiges"
+}
