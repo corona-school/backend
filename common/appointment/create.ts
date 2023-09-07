@@ -12,6 +12,7 @@ import * as Notification from '../../common/notification';
 import { getNotificationContextForSubcourse } from '../mails/courses';
 import { User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
+import { getAppointmentForNotification } from './util';
 
 const logger = getLogger();
 
@@ -90,6 +91,21 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             student,
             matchId: matchId.toString(),
         });
+
+        for (const appointment of createdMatchAppointments) {
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(pupil), 'pupil_match_appointment_reminder', {
+                uniqueId: appointment.id.toString(),
+                matchId: appointment.matchId.toString(),
+                appointment: await getAppointmentForNotification(appointment),
+                student,
+            });
+            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_reminder', {
+                uniqueId: appointment.id.toString(),
+                matchId: appointment.matchId.toString(),
+                appointment: await getAppointmentForNotification(appointment),
+                pupil,
+            });
+        }
     }
 
     return createdMatchAppointments;
@@ -135,6 +151,25 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
         });
+        for (const appointment of createdGroupAppointments) {
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_reminder', {
+                uniqueId: appointment.id.toString(),
+                appointment: await getAppointmentForNotification(appointment),
+                student: organizer,
+                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+            });
+        }
+    }
+
+    for (const instructor of instructors) {
+        for (const appointment of createdGroupAppointments) {
+            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_reminder', {
+                uniqueId: appointment.id.toString(),
+                appointment: await getAppointmentForNotification(appointment),
+                student: organizer,
+                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+            });
+        }
     }
 
     return createdGroupAppointments;
