@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getUser, getStudent, User, userForPupil } from '../user';
+import { getUser, getStudent, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -47,6 +47,7 @@ export async function updateAppointment(
         case AppointmentType.group:
             const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+            const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
             const subcourseAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
             lastDate = subcourseAppointments[subcourseAppointments.length - 1].start;
 
@@ -55,6 +56,21 @@ export async function updateAppointment(
                 await Notification.actionTaken(userForPupil(participant.pupil), 'pupil_change_appointment_group', {
                     student: student,
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
+                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+                });
+                await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_reminder', {
+                    uniqueId: appointment.id.toString(),
+                    appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+                    student,
+                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+                });
+            }
+
+            for (const instructor of instructors) {
+                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_reminder', {
+                    uniqueId: updatedAppointment.id.toString(),
+                    appointment: await getAppointmentForNotification(updatedAppointment),
+                    student,
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
             }
@@ -69,6 +85,18 @@ export async function updateAppointment(
             await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
                 student: student,
                 appointment: getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+            });
+            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_reminder', {
+                uniqueId: updatedAppointment.id.toString(),
+                matchId: updatedAppointment.matchId.toString(),
+                appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+                student,
+            });
+            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(student), 'student_match_appointment_reminder', {
+                uniqueId: updatedAppointment.id.toString(),
+                matchId: updatedAppointment.matchId.toString(),
+                appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+                pupil: match.pupil,
             });
 
             break;
