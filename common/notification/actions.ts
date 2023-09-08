@@ -546,6 +546,18 @@ const _notificationActions = {
             ...sampleCourse,
         },
     },
+    cancel_group_appointment_reminder: {
+        description: 'Cancel: group appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
+    cancel_match_appointment_reminder: {
+        description: 'Cancel: match appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
