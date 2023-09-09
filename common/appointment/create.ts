@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
-import { createZoomUser, getZoomUser } from '../zoom/user';
+import { ZoomUser, createZoomUser, getZoomUser } from '../zoom/user';
 import { Prisma, student as Student, lecture as Appointment } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
@@ -58,7 +58,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;
-    const hosts = [student];
+    const hosts = await hostsForStudents([student]);
 
     const createdMatchAppointments = await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
@@ -100,7 +100,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
 
     assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
-    const hosts = instructors.map((i) => i.student);
+    const hosts = await hostsForStudents(instructors.map((i) => i.student));
 
     const createdGroupAppointments = await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
@@ -148,7 +148,7 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
         throw new RedundantError(`Appointment already has a Zoom Meeting`);
     }
 
-    const hosts = await getStudentsFromList(appointment.organizerIds);
+    const hosts = await hostsForStudents(await getStudentsFromList(appointment.organizerIds));
     if (hosts.length !== appointment.organizerIds.length) {
         throw new PrerequisiteError(`Unsupported Organizer Types for Zoom Appointment`);
     }
@@ -156,24 +156,27 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
     await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
 }
 
+// Returns a Zoom User for each Student, if a Student does not have an account one is created
+async function hostsForStudents(students: Student[]) {
+    return await Promise.all(
+        students.map(async (student) => {
+            const existingUser = await getZoomUser(student.email);
+            if (existingUser) {
+                return existingUser;
+            }
+            const studentZoomUser = await createZoomUser(student);
+            return studentZoomUser;
+        })
+    );
+}
+
 const createZoomMeetingForAppointmentWithHosts = async (
-    students: Student[],
+    hosts: ZoomUser[],
     appointment: AppointmentCreateMatchInput | AppointmentCreateGroupInput | Appointment,
     isCourse: boolean
 ) => {
     try {
-        const studentZoomUsers = await Promise.all(
-            students.map(async (student) => {
-                const existingUser = await getZoomUser(student.email);
-                if (existingUser) {
-                    return existingUser;
-                }
-                const studentZoomUser = await createZoomUser(student);
-                return studentZoomUser;
-            })
-        );
-
-        const newVideoChat = await createZoomMeeting(studentZoomUsers, appointment.start, appointment.duration, isCourse);
+        const newVideoChat = await createZoomMeeting(hosts, appointment.start, appointment.duration, isCourse);
         return newVideoChat;
     } catch (error) {
         throw new Error(`Zoom - Error while creating zoom meeting: ${error}`);
