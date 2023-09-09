@@ -12,7 +12,16 @@ import './01_user';
 import './02_screening';
 /* Feature Tests - These are independent and can be disabled */
 import './03_matching';
-import './04_certificate';
+
+try {
+    // Try loading PDF rendering
+    require('html-pppdf');
+    // If that worked, also run the tests related to it
+    require('./04_certificate');
+} catch(error) {
+    // If not, ignore the tests
+    console.warn('Skipped Certificate Test as PDF Rendering is not supported', error);
+}
 
 import './05_auth';
 import './06_settings';
