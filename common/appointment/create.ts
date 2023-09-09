@@ -4,14 +4,16 @@ import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { createZoomUser, getZoomUser } from '../zoom/user';
-import { Prisma, student as Student } from '@prisma/client';
+import { Prisma, student as Student, lecture as Appointment } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
 import { getNotificationContextForSubcourse } from '../mails/courses';
-import { User, userForPupil, userForStudent } from '../user';
+import { User, getStudentsFromList, userForPupil, userForStudent } from '../user';
 import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
+import { PrerequisiteError, RedundantError } from '../../common/util/error';
+import { AppointmentType } from '../../common/entity/Lecture';
 
 const logger = getLogger();
 
@@ -62,7 +64,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
             let zoomMeetingId: string | null;
             if (isZoomFeatureActive()) {
-                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, false);
+                const videoChat = await createZoomMeetingForAppointmentWithHosts(hosts, appointmentToBeCreated, false);
                 logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId}`);
                 zoomMeetingId = videoChat.id.toString();
             }
@@ -105,7 +107,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
             let zoomMeetingId: string | null;
 
             if (isZoomFeatureActive()) {
-                const videoChat = await createZoomMeetingForAppointment(hosts, appointmentToBeCreated, true);
+                const videoChat = await createZoomMeetingForAppointmentWithHosts(hosts, appointmentToBeCreated, true);
                 logger.info(`Zoom - Created meeting ${videoChat.id} for subcourse ${subcourseId}`);
                 zoomMeetingId = videoChat.id.toString();
             }
@@ -137,9 +139,26 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     return createdGroupAppointments;
 };
 
-const createZoomMeetingForAppointment = async (
+export async function createZoomMeetingForAppointment(appointment: Appointment) {
+    if (!isZoomFeatureActive()) {
+        throw new PrerequisiteError(`Zoom is not active`);
+    }
+
+    if (appointment.zoomMeetingId) {
+        throw new RedundantError(`Appointment already has a Zoom Meeting`);
+    }
+
+    const hosts = await getStudentsFromList(appointment.organizerIds);
+    if (hosts.length !== appointment.organizerIds.length) {
+        throw new PrerequisiteError(`Unsupported Organizer Types for Zoom Appointment`);
+    }
+
+    await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
+}
+
+const createZoomMeetingForAppointmentWithHosts = async (
     students: Student[],
-    appointment: AppointmentCreateMatchInput | AppointmentCreateGroupInput,
+    appointment: AppointmentCreateMatchInput | AppointmentCreateGroupInput | Appointment,
     isCourse: boolean
 ) => {
     try {
