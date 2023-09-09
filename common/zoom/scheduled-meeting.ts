@@ -125,7 +125,10 @@ async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
         throw new Error(`Zoom - failed to get meeting with ${response.status} ${await response.text()}`);
     }
 
-    return (await response.json()) as ZoomMeeting;
+    const meeting = (await response.json()) as ZoomMeeting;
+    logger.debug(`Got Zoom Meeting `, meeting);
+
+    return meeting;
 }
 
 async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
@@ -260,7 +263,7 @@ const removeOrganizerFromZoomMeeting = async (appointment: Appointment, organize
     const zoomMeeting = await getZoomMeeting(appointment);
     const existingAltHosts = zoomMeeting.settings.alternative_hosts;
     if (!existingAltHosts.includes(organizerEmail)) {
-        logger.info(`Zoom - Organizer is no alternative host from zoom meeting ${zoomMeeting.id}`);
+        logger.info(`Zoom - Organizer ${organizerEmail} is no alternative host from zoom meeting ${zoomMeeting.id}`);
         return;
     }
 
