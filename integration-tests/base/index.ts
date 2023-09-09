@@ -5,6 +5,7 @@ import './mock';
 
 import * as WebServer from '../../web';
 import { expectNoFetchMockLeft } from './mock';
+import { cleanupMockedNotifications } from './notifications';
 
 /* -------------- Configuration ------------------- */
 
@@ -161,6 +162,7 @@ export async function finalizeTests() {
     const durationAll = Date.now() - startAll;
 
     console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
+    await cleanupMockedNotifications();
     await WebServer.shutdown();
     console.log(green(`Regular shut down done, stop pending tasks by aborting process`));
 
