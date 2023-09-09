@@ -21,11 +21,11 @@ if (isZoomFeatureActive()) {
 
 let accessTokenPerScope = new Map<string, string>();
 
-let currentFetch: Promise<void> = Promise.resolve();
+let currentFetch: Promise<any> = Promise.resolve();
 function getAccessToken(scope?: string) {
     // This synchronizes all access token fetches to be sequential,
     // so that we only fetch an access token once, and then potentially reuse it
-    return currentFetch.catch(() => {}).then(() => fetchAccessToken(scope));
+    return (currentFetch = currentFetch.catch(() => {}).then(() => fetchAccessToken(scope)));
 }
 
 const fetchAccessToken = async (scope?: string) => {
