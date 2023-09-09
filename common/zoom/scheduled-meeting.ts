@@ -6,6 +6,7 @@ import { addHost, assureZoomFeatureActive, isZoomFeatureActive, removeHost } fro
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
+import assert from 'assert';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -51,13 +52,9 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
 
     const { access_token } = await getAccessToken();
 
-    const altHosts: string[] = [];
-    zoomUsers.forEach((user, index) => {
-        if (index !== 0) {
-            altHosts.push(user.email);
-        }
-    });
-    const combinedAlternativeHosts = altHosts.join(';');
+    assert.ok(zoomUsers.length > 0, 'Required at least one user for meeting');
+    const [mainUser, ...furtherUsers] = zoomUsers;
+    const combinedAlternativeHosts = furtherUsers.map((it) => it.email).join(';');
 
     const tz = 'Europe/Berlin';
     const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
@@ -65,7 +62,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
 
     const response = await zoomRetry(
         () =>
-            fetch(`${zoomUsersUrl}/${zoomUsers[0].id}/meetings`, {
+            fetch(`${zoomUsersUrl}/${mainUser.id}/meetings`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${access_token}`,
@@ -98,7 +95,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
     const data = await response.json();
 
     if (response.status === 201) {
-        logger.info(`Zoom - The Zoom Meeting ${data.id} was created.`);
+        logger.info(`Zoom - The Zoom Meeting ${data.id} was created for ZoomUser(${mainUser.email})`);
     }
 
     return data;
