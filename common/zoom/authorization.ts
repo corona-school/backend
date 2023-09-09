@@ -21,7 +21,14 @@ if (isZoomFeatureActive()) {
 
 let accessToken: string | null = null;
 
-const getAccessToken = async (scope?: string) => {
+let currentFetch: Promise<void> = Promise.resolve();
+function getAccessToken(scope?: string) {
+    // This synchronizes all access token fetches to be sequential,
+    // so that we only fetch an access token once, and then potentially reuse it
+    return currentFetch.catch(() => {}).then(() => fetchAccessToken(scope));
+}
+
+const fetchAccessToken = async (scope?: string) => {
     assureZoomFeatureActive();
 
     if (accessToken && !scope) {
