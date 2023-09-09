@@ -287,7 +287,7 @@ void test('Add / Remove another instructor', async () => {
         "url": "https://api.zoom.us/v2/meetings/10",
         "method": "GET",
         "responseStatus": 200,
-        "response": {"agenda":"My Meeting","default_password":false,"duration":60,"start_time": new Date().toISOString(),"timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}
+        "response": { "agenda": "My Meeting", "default_password": false, "duration": 60, "start_time": new Date().toISOString(), "timezone": "Europe/Berlin", "type": 2, "mute_upon_entry": true, "join_before_host": true, "waiting_room": true, "breakout_room": true, "settings": { "alternative_hosts": "", "alternative_hosts_email_notification": false } }
     });
 
     expectFetch({
@@ -296,7 +296,7 @@ void test('Add / Remove another instructor', async () => {
         "body": `{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":"${instructor2.email.toLowerCase()}"}}`,
         "responseStatus": 200,
         "response": "{}"
-    })
+    });
 
     await client.request(`mutation AddInstructorToSubcourse {
         subcourseAddInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
@@ -313,7 +313,7 @@ void test('Add / Remove another instructor', async () => {
         "url": "https://api.zoom.us/v2/meetings/10",
         "method": "GET",
         "responseStatus": 200,
-        "response": {"id": 10, "agenda":"My Meeting","default_password":false,"duration":60,"start_time": new Date().toISOString(),"timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts": instructor2.email.toLowerCase(),"alternative_hosts_email_notification":false}}
+        "response": { "id": 10, "agenda": "My Meeting", "default_password": false, "duration": 60, "start_time": new Date().toISOString(), "timezone": "Europe/Berlin", "type": 2, "mute_upon_entry": true, "join_before_host": true, "waiting_room": true, "breakout_room": true, "settings": { "alternative_hosts": instructor2.email.toLowerCase(), "alternative_hosts_email_notification": false } }
     });
 
     expectFetch({
@@ -322,7 +322,7 @@ void test('Add / Remove another instructor', async () => {
         "body": '{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":""}}',
         "responseStatus": 200,
         "response": "{}"
-    })
+    });
 
     await client.request(`mutation RemoveInstructorFromSubcourse {
         subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
