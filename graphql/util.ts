@@ -20,6 +20,10 @@ export function Deprecated(reason: string) {
     return Directive(`@deprecated(reason: "${reason}")`);
 }
 
+export function Doc(documentation: string) {
+    return Directive(`""" ${documentation} """`);
+}
+
 /* GraphQL only has 'null values' whereas Prisma has dedicated semantics:
    - null means 'set to NULL'
    - undefined means 'do not change'

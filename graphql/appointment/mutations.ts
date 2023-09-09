@@ -1,11 +1,12 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int, Authorized } from 'type-graphql';
-import { Lecture as Appointment, Lecture } from '../generated';
+import { Lecture as Appointment } from '../generated';
 import { Role } from '../../common/user/roles';
 import {
     AppointmentCreateGroupInput,
     AppointmentCreateMatchInput,
     createGroupAppointments,
     createMatchAppointments,
+    createZoomMeetingForAppointment,
     isAppointmentOneWeekLater,
     saveZoomMeetingReport,
 } from '../../common/appointment/create';
@@ -13,15 +14,16 @@ import * as Notification from '../../common/notification';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture, getStudent } from '../util';
+import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
-import { getStudentsFromList, userForPupil } from '../../common/user';
+import { userForPupil } from '../../common/user';
 import { RedundantError } from '../../common/util/error';
 import { getNotificationContextForSubcourse } from '../../common/mails/courses';
+import { GraphQLInt } from 'graphql';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -180,5 +182,14 @@ export class MutateAppointmentResolver {
 
         await deleteZoomMeeting(appointment);
         logger.info(`Admin deleted Zoom Meeting of Appointment(${appointment.id})`);
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc('Usually Zoom Meetings are created automatically when an appointment is scheduled. If this fails, one can recreate them manually')
+    async appointmentAddZoomMeeting(@Ctx() context: GraphQLContext, @Arg('appointmentId', () => GraphQLInt) appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await createZoomMeetingForAppointment(appointment);
+        return true;
     }
 }

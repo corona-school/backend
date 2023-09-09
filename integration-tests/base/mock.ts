@@ -4,7 +4,7 @@ import wcmatch from "wildcard-match";
 
 interface MockedFetch {
     // The fetch request:
-    method: "GET" | "POST" | "PUT" | "PATCH";
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     // Use * as a wildcard (or any other 'glob' pattern)
     url: string;
     // If the body is not set, it is not tested
@@ -41,7 +41,7 @@ export function setupFetchMock() {
         const urlMatches = mock && (mock.url === url || wcmatch(mock.url)(url));
 
         if (!urlMatches) {
-            console.log(red(`Request to ${url} not mocked (net mock is for ${mock?.url ?? "-"}). The integration tests must be self containing. Mock with:\n`));
+            console.log(red(`Request to ${url} not mocked (next mock is for ${mock?.url ?? "-"}). The integration tests must be self containing. Mock with:\n`));
             console.log(blue(`expectFetch(${JSON.stringify({ url, method: options.method, body: options.body, responseStatus: 200, response: "?" }, null, 2)})`));
             process.exit(1);
         }

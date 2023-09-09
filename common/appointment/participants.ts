@@ -1,7 +1,8 @@
 import { getLogger } from '../logger/logger';
 import { Lecture } from '../entity/Lecture';
 import { prisma } from '../prisma';
-import { User } from '../user';
+import { User, userForStudent } from '../user';
+import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zoom/scheduled-meeting';
 
 const logger = getLogger('Appointment Participants');
 
@@ -52,7 +53,7 @@ export async function removeGroupAppointmentsParticipant(subcourseId: number, us
     );
 }
 
-export async function addGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
+export async function addGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail: string) {
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(organizerId)) {
             throw new Error(
@@ -65,12 +66,13 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
             continue;
         }
 
-        await prisma.lecture.update({ where: { id: lecture.id }, data: { participantIds: { push: organizerId } } });
+        await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
         logger.info(`User(${organizerId}) added as organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+        await addOrganizerToZoomMeeting(lecture, organizerEmail);
     }
 }
 
-export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
+export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail?: string) {
     const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
     await Promise.all(
         appointments.map(async (a) => {
@@ -81,6 +83,7 @@ export async function removeGroupAppointmentsOrganizer(subcourseId: number, orga
                 data: { organizerIds: { set: newOrganizers } },
             });
             logger.info(`Removed User(${organizerId}) as organizer of Appointment(${a.id}) of Subcourse(${subcourseId})`);
+            await removeOrganizerFromZoomMeeting(a, organizerEmail);
         })
     );
 }

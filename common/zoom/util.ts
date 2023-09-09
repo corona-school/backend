@@ -52,4 +52,24 @@ function assureZoomFeatureActive() {
     }
 }
 
-export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive };
+function removeHost(existingHosts: string, hostToRemove: string): string {
+    const hostsArray = existingHosts.split(';');
+    const indexToRemove = hostsArray.indexOf(hostToRemove);
+
+    if (indexToRemove !== -1) {
+        hostsArray.splice(indexToRemove, 1);
+        return hostsArray.join(';');
+    } else {
+        return existingHosts;
+    }
+}
+
+function addHost(existingHosts: string, newHost: string): string {
+    if (existingHosts === '') {
+        return newHost;
+    } else {
+        return existingHosts + (existingHosts.endsWith(';') ? '' : ';') + newHost;
+    }
+}
+
+export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive, addHost, removeHost };
