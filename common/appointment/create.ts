@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
-import { ZoomUser, createZoomUser, getZoomUser } from '../zoom/user';
+import { ZoomUser, createZoomUser, getOrCreateZoomUser, getZoomUser } from '../zoom/user';
 import { Prisma, student as Student, lecture as Appointment } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
@@ -158,16 +158,7 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
 
 // Returns a Zoom User for each Student, if a Student does not have an account one is created
 async function hostsForStudents(students: Student[]) {
-    return await Promise.all(
-        students.map(async (student) => {
-            const existingUser = await getZoomUser(student.email);
-            if (existingUser) {
-                return existingUser;
-            }
-            const studentZoomUser = await createZoomUser(student);
-            return studentZoomUser;
-        })
-    );
+    return await Promise.all(students.map(getOrCreateZoomUser));
 }
 
 const createZoomMeetingForAppointmentWithHosts = async (
