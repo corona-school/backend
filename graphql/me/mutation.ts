@@ -39,6 +39,7 @@ import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
+import { GraphQLBoolean } from 'graphql';
 
 @InputType()
 export class RegisterStudentInput implements RegisterStudentData {
@@ -187,9 +188,9 @@ export class MutateMeResolver {
     async meRegisterStudent(
         @Ctx() context: GraphQLContext,
         @Arg('data') data: RegisterStudentInput,
-        @Arg('noEmail', { nullable: true }) noEmail: boolean = false
+        @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
-        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+        const byAdmin = context.user.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus students may only be registered by admins');
@@ -213,8 +214,12 @@ export class MutateMeResolver {
     @Mutation((returns) => Pupil)
     @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async meRegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: RegisterPupilInput, @Arg('noEmail', { nullable: true }) noEmail: boolean = false) {
-        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+    async meRegisterPupil(
+        @Ctx() context: GraphQLContext,
+        @Arg('data') data: RegisterPupilInput,
+        @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
+    ) {
+        const byAdmin = context.user.roles.includes(Role.ADMIN);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
@@ -271,7 +276,11 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await deactivatePupil(pupil, reason);
-            evaluatePupilRoles(updatedPupil, context);
+
+            const roles: Role[] = [];
+            evaluatePupilRoles(updatedPupil, roles);
+            context.user = { ...context.user, roles };
+
             logger.info(`Pupil(${pupil.id}) deactivated their account`);
 
             return true;
@@ -280,7 +289,11 @@ export class MutateMeResolver {
         if (isSessionStudent(context)) {
             const student = await getSessionStudent(context);
             const updatedStudent = await deactivateStudent(student, false, reason);
-            await evaluateStudentRoles(updatedStudent, context);
+
+            const roles: Role[] = [];
+            await evaluateStudentRoles(updatedStudent, roles);
+            context.user = { ...context.user, roles };
+
             logger.info(`Student(${student.id}) deactivated their account`);
             return true;
         }
@@ -294,7 +307,11 @@ export class MutateMeResolver {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await activatePupil(pupil);
-            evaluatePupilRoles(updatedPupil, context);
+
+            const roles: Role[] = [];
+            evaluatePupilRoles(updatedPupil, roles);
+            context.user = { ...context.user, roles };
+
             logger.info(`Pupil(${pupil.id}) reactivated their account`);
 
             return true;
@@ -347,12 +364,14 @@ export class MutateMeResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.PUPIL, Role.ADMIN)
     async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeTuteeInput, @Arg('pupilId', { nullable: true }) pupilId: number) {
-        const byAdmin = context.user!.roles.includes(Role.ADMIN);
+        const byAdmin = context.user.roles.includes(Role.ADMIN);
 
         const pupil = await getSessionPupil(context, pupilId);
         const updatedPupil = await becomeTutee(pupil, data);
         if (!byAdmin) {
-            evaluatePupilRoles(updatedPupil, context);
+            const roles: Role[] = [];
+            evaluatePupilRoles(updatedPupil, roles);
+            context.user = { ...context.user, roles };
         }
 
         logger.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
@@ -366,7 +385,9 @@ export class MutateMeResolver {
         const pupil = await getSessionPupil(context, pupilId);
 
         const updatedPupil = await becomeStatePupil(pupil, data);
-        evaluatePupilRoles(updatedPupil, context);
+        const roles: Role[] = [];
+        evaluatePupilRoles(updatedPupil, roles);
+        context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
 
@@ -379,7 +400,9 @@ export class MutateMeResolver {
         const pupil = await getSessionPupil(context, pupilId);
 
         const updatedPupil = await becomeParticipant(pupil);
-        evaluatePupilRoles(updatedPupil, context);
+        const roles: Role[] = [];
+        evaluatePupilRoles(updatedPupil, roles);
+        context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);
 

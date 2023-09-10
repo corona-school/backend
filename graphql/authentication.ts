@@ -1,7 +1,7 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 import { Role } from './roles';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
-import type { GraphQLContext } from './context';
+import type { GraphQLContext, GraphQLContextPupil, GraphQLContextScreener, GraphQLContextStudent } from './context';
 import { assert } from 'console';
 import { Deprecated, getPupil, getScreener, getStudent } from './util';
 import { prisma } from '../common/prisma';
@@ -57,9 +57,9 @@ export function assertElevated(context: GraphQLContext) {
     }
 }
 
-export const isSessionStudent = (context: GraphQLContext) => getSessionUser(context).studentId !== undefined;
-export const isSessionPupil = (context: GraphQLContext) => getSessionUser(context).pupilId !== undefined;
-export const isSessionScreener = (context: GraphQLContext) => getSessionUser(context).screenerId !== undefined;
+export const isSessionStudent = (context: GraphQLContext): context is GraphQLContextStudent => getSessionUser(context).studentId !== undefined;
+export const isSessionPupil = (context: GraphQLContext): context is GraphQLContextPupil => getSessionUser(context).pupilId !== undefined;
+export const isSessionScreener = (context: GraphQLContext): context is GraphQLContextScreener => getSessionUser(context).screenerId !== undefined;
 
 export async function getSessionStudent(context: GraphQLContext, studentIdOverride?: number): Promise<Student | never> {
     if (studentIdOverride !== undefined) {
@@ -117,21 +117,22 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
         ensureSession(context);
     }
 
-    context.user = { ...user, roles: [] };
-
+    const roles: Role[] = [];
     if (user.studentId) {
         const student = await getStudent(user.studentId);
-        await evaluateStudentRoles(student, context);
+        await evaluateStudentRoles(student, roles);
     }
 
     if (user.pupilId) {
         const pupil = await getPupil(user.pupilId);
-        evaluatePupilRoles(pupil, context);
+        evaluatePupilRoles(pupil, roles);
     }
 
     if (user.screenerId) {
-        evaluateScreenerRoles(user, context);
+        evaluateScreenerRoles(user, roles);
     }
+
+    context.user = { ...user, roles };
 
     if (!noSession) {
         await userSessions.set(context.sessionToken, context.user);

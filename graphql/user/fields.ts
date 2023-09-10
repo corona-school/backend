@@ -1,6 +1,6 @@
 import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { loginAsUser } from '../authentication';
+import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -97,7 +97,16 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {}, sessionID: 'FAKE' };
+        const fakeContext: GraphQLContext = {
+            user: UNAUTHENTICATED_USER,
+            ip: '?',
+            prisma,
+            sessionToken: 'fake',
+            setCookie: () => {
+                /* ignore */
+            },
+            sessionID: 'FAKE',
+        };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }
