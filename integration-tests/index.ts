@@ -5,7 +5,7 @@
   This can be run with 'npm run integration-tests', and by default runs against the dev backend.
   A different target can be configured by setting the INTEGRATION_TARGET environment */
 
-import { finalizeTests } from './base';
+import { finalizeTests, logger } from './base';
 
 /* Base Tests - Other tests build on them and they always must run */
 import './01_user';
@@ -20,7 +20,7 @@ try {
     require('./04_certificate');
 } catch(error) {
     // If not, ignore the tests
-    console.warn('Skipped Certificate Test as PDF Rendering is not supported', error);
+    logger.failure('Skipped Certificate Test as PDF Rendering is not supported');
 }
 
 import './05_auth';
