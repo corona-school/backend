@@ -65,7 +65,7 @@ class WebSocketService {
 
     private removeConnection(userId: string, connectionId: string) {
         if (!this.connectedUsers.has(userId) || !this.connectedUsers.get(userId)?.has(connectionId)) {
-            log.error('UserId or clientId not found in connected clients.', new Error('UserId or clientId not found in connected clients.'));
+            log.info('UserId or clientId not found in connected clients.', new Error('UserId or clientId not found in connected clients.'));
             return;
         }
         this.connectedUsers.get(userId).delete(connectionId);
@@ -109,7 +109,7 @@ class WebSocketService {
                 });
             }
         } catch (err) {
-            log.error('Error while sending websocket message', err);
+            log.info('Error while sending websocket message', err);
         }
     }
 
@@ -175,7 +175,7 @@ class WebSocketService {
                 log.info(`Connected websocket client with userId: ${userId} and connectionId: ${connectionId}`);
                 this.logConnections();
             } catch (err) {
-                log.error('Error in websocket service.', err);
+                log.info('Error in websocket service.', err);
                 ws.close(CloseCodes.SERVER_ERROR, err?.message ?? 'Internal server error while operating');
             }
 
