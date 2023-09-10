@@ -323,10 +323,6 @@ void test('Reminder Cancellation with UniqueID', async () => {
 
     assert.strictEqual(delayedNotifications, 2, "Expected notifications to be delayed");
 
-    console.log(
-        await prisma.concrete_notification.findMany({ where: { notificationID: notification.id }})
-    );
-
     const { _actionTakenAt: third } = await adminClient.request(`mutation TriggerAction {
         _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
     }`);
