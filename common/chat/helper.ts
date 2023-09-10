@@ -167,11 +167,9 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
         custom: {} as ChatMetaData,
     };
 
-    for (const key in conversationInfos.custom) {
-        if (Object.prototype.hasOwnProperty.call(conversationInfos, key)) {
-            const value = conversationInfos.custom[key];
-            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
-        }
+    for (const key of Object.keys(conversationInfos.custom)) {
+        const value = conversationInfos.custom[key];
+        convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
     }
 
     return convertedConversationInfos;
