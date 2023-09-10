@@ -153,7 +153,8 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
         throw new PrerequisiteError(`Unsupported Organizer Types for Zoom Appointment`);
     }
 
-    await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
+    const meeting = await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
+    await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: meeting.id } });
 }
 
 // Returns a Zoom User for each Student, if a Student does not have an account one is created
