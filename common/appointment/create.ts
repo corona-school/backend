@@ -154,7 +154,7 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
     }
 
     const meeting = await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
-    await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: meeting.id } });
+    await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: meeting.id.toString() } });
 }
 
 // Returns a Zoom User for each Student, if a Student does not have an account one is created
