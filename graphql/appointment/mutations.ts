@@ -182,6 +182,7 @@ export class MutateAppointmentResolver {
 
         await deleteZoomMeeting(appointment);
         logger.info(`Admin deleted Zoom Meeting of Appointment(${appointment.id})`);
+        return true;
     }
 
     @Mutation(() => Boolean)
