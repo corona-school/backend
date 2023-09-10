@@ -49,7 +49,7 @@ const screenerOne = test('Admin can create Screener Account', async () => {
 
     assert.ok(myRoles.includes('SCREENER'), "Screener must have SCREENER Role");
 
-    return { client };
+    return { client, screener: { firstname, lastname, email } };
 });
 
 const pupilWithScreening = test('Admin can request Pupils to Screening', async () => {
@@ -249,7 +249,7 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
 
 void test('Screen Pupil One', async () => {
     const { pupil, client } = await pupilWithScreening;
-    const { client: screenerClient } = await screenerOne;
+    const { client: screenerClient, screener } = await screenerOne;
 
     const { pupilsToBeScreened } = await screenerClient.request(`
         query FindPupilScreening {
@@ -277,7 +277,7 @@ void test('Screen Pupil One', async () => {
         query FindPupilScreeningDisputed {
             pupilsToBeScreened(onlyDisputed: true) {
                 firstname
-                screenings { id status comment }
+                screenings { id status comment screeners { firstname lastname } }
             }
         }
     `);
@@ -287,6 +287,7 @@ void test('Screen Pupil One', async () => {
     const screeningDisputed = pupilToBeScreenedDisputed.screenings[0];
     assert.ok(screeningDisputed !== undefined);
     assert.strictEqual(screeningDisputed.status, 'dispute');
+    assert.strictEqual(screeningDisputed.screeners[0].firstname, screener.firstname);
 
     await screenerClient.request(`
         mutation AddScreeningResult {

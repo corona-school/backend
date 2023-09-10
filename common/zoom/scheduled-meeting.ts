@@ -2,10 +2,11 @@ import { getAccessToken } from './authorization';
 import { ZoomUser } from './user';
 import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
-import { assureZoomFeatureActive, isZoomFeatureActive } from './util';
+import { addHost, assureZoomFeatureActive, isZoomFeatureActive, removeHost } from './util';
 import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
+import assert from 'assert';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -28,6 +29,9 @@ export type ZoomMeeting = {
     topic: string;
     type: number;
     uuid: string;
+    settings: {
+        alternative_hosts: string;
+    };
 };
 
 export type ZoomMeetings = {
@@ -43,18 +47,14 @@ const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, endDateTime?: Date): Promise<ZoomMeeting> => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean): Promise<ZoomMeeting> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
 
-    const altHosts: string[] = [];
-    zoomUsers.forEach((user, index) => {
-        if (index !== 0) {
-            altHosts.push(user.email);
-        }
-    });
-    const combinedAlternativeHosts = altHosts.join(';');
+    assert.ok(zoomUsers.length > 0, 'Required at least one user for meeting');
+    const [mainUser, ...furtherUsers] = zoomUsers;
+    const combinedAlternativeHosts = furtherUsers.map((it) => it.email).join(';');
 
     const tz = 'Europe/Berlin';
     const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
@@ -62,7 +62,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
 
     const response = await zoomRetry(
         () =>
-            fetch(`${zoomUsersUrl}/${zoomUsers[0].id}/meetings`, {
+            fetch(`${zoomUsersUrl}/${mainUser.id}/meetings`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${access_token}`,
@@ -79,10 +79,6 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
                     join_before_host: true,
                     waiting_room: isCourse ? true : false,
                     breakout_room: isCourse ? true : false,
-                    recurrence: endDateTime && {
-                        end_date_time: moment(endDateTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss'),
-                        type: RecurrenceMeetingTypes.WEEKLY,
-                    },
                     settings: {
                         alternative_hosts: combinedAlternativeHosts,
                         alternative_hosts_email_notification: false,
@@ -99,7 +95,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
     const data = await response.json();
 
     if (response.status === 201) {
-        logger.info(`Zoom - The Zoom Meeting ${data.id} was created.`);
+        logger.info(`Zoom - The Zoom Meeting ${data.id} was created for ZoomUser(${mainUser.email})`);
     }
 
     return data;
@@ -126,7 +122,10 @@ async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
         throw new Error(`Zoom - failed to get meeting with ${response.status} ${await response.text()}`);
     }
 
-    return (await response.json()) as ZoomMeeting;
+    const meeting = (await response.json()) as ZoomMeeting;
+    logger.debug(`Got Zoom Meeting `, meeting);
+
+    return meeting;
 }
 
 async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
@@ -204,21 +203,19 @@ const getZoomMeetingReport = async (meetingId: string) => {
     return response.json();
 };
 
-const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?: number, endTime?: Date): Promise<void> => {
+const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; duration?: number; endTime?: Date; organizers?: string }): Promise<void> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
     const tz = 'Europe/Berlin';
-    const start = moment(startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
-    const end = moment(endTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+    const start = moment(update.startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
 
     const body = JSON.stringify({
         start_time: start,
-        duration: duration,
+        duration: update.duration,
         timezone: tz,
-        recurrence: {
-            end_date_time: end,
-            type: RecurrenceMeetingTypes.WEEKLY,
+        settings: {
+            alternative_hosts: update.organizers,
         },
     });
 
@@ -243,4 +240,46 @@ const updateZoomMeeting = async (meetingId: string, startTime?: Date, duration?:
     logger.info(`Zoom - The Zoom Meeting was updated.`);
 };
 
-export { getZoomMeeting, getUsersZoomMeetings, createZoomMeeting, deleteZoomMeeting, getZoomMeetingReport, updateZoomMeeting };
+const addOrganizerToZoomMeeting = async (appointment: Appointment, organizerEmail?: string) => {
+    const zoomMeeting = await getZoomMeeting(appointment);
+    const existingAltHosts = zoomMeeting.settings.alternative_hosts;
+    if (existingAltHosts.includes(organizerEmail)) {
+        logger.info(`Zoom - Organizer is already alternative host for zoom meeting ${zoomMeeting.id}`);
+        return;
+    }
+    const newAlternativeHosts = addHost(existingAltHosts, organizerEmail);
+
+    const update = {
+        organizers: newAlternativeHosts,
+    };
+    await updateZoomMeeting(appointment.zoomMeetingId, update);
+    logger.info(`Zoom - Added instructor to zoom meeting`);
+};
+
+const removeOrganizerFromZoomMeeting = async (appointment: Appointment, organizerEmail?: string) => {
+    const zoomMeeting = await getZoomMeeting(appointment);
+    const existingAltHosts = zoomMeeting.settings.alternative_hosts;
+    if (!existingAltHosts.includes(organizerEmail)) {
+        logger.info(`Zoom - Organizer ${organizerEmail} is no alternative host from zoom meeting ${zoomMeeting.id}`);
+        return;
+    }
+
+    const newAlternativeHosts = removeHost(existingAltHosts, organizerEmail);
+
+    const update = {
+        organizers: newAlternativeHosts,
+    };
+    await updateZoomMeeting(appointment.zoomMeetingId, update);
+    logger.info(`Zoom - Deleted instructor from zoom meeting`);
+};
+
+export {
+    getZoomMeeting,
+    getUsersZoomMeetings,
+    createZoomMeeting,
+    deleteZoomMeeting,
+    getZoomMeetingReport,
+    updateZoomMeeting,
+    addOrganizerToZoomMeeting,
+    removeOrganizerFromZoomMeeting,
+};

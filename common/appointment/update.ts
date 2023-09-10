@@ -78,7 +78,13 @@ export async function updateAppointment(
             break;
     }
 
-    await updateZoomMeeting(appointment.zoomMeetingId, newStart, newDuration, lastDate);
+    const zoomUpdate = {
+        start: newStart,
+        duration: newDuration,
+        endDate: lastDate,
+    };
+
+    await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
 
     logger.info(`Participants of Appointment(${id}) were notified of the appointment change`);
 }

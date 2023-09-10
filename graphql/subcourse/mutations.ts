@@ -16,8 +16,7 @@ import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { chat_type } from '../generated';
-import { addParticipant, markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
-import { ChatType } from '../../common/chat/types';
+import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -134,7 +133,7 @@ export class MutateSubcourseResolver {
         const instructorToBeRemoved = await getStudent(studentId);
         const instructorUser = userForStudent(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID);
+        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }
@@ -202,10 +201,6 @@ export class MutateSubcourseResolver {
         const user = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        if (subcourse.conversationId) {
-            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
-        }
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId})`);
         return true;
     }
@@ -218,11 +213,8 @@ export class MutateSubcourseResolver {
         @Arg('pupilId', { nullable: false }) pupilId: number
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
-        const user = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, false);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
         logger.info(`Pupil(${pupilId}) manually joined Subcourse(${subcourseId})`);
         return true;
     }
@@ -234,7 +226,6 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: false }) pupilId: number
     ) {
-        const { user } = context;
         let subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const pupil = await getPupil(pupilId);
@@ -254,10 +245,6 @@ export class MutateSubcourseResolver {
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
-        await addGroupAppointmentsParticipant(subcourseId, user.userID);
-        if (subcourse.conversationId) {
-            await addParticipant(user, subcourse.conversationId, subcourse.groupChatType as ChatType);
-        }
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from waitinglist`);
         return true;
     }

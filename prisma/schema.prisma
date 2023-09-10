@@ -852,6 +852,10 @@ model pupil_screening {
   comment     String?                     @db.VarChar
   pupilId     Int?
   pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+  
+  // During the Pupil Screening, various screeners are involved ('four eye principle')
+  // This was not tracked before September 23
+  screenerIds Int[]                       @default([])
 }
 
 // When a subcourse is already full, pupils can still enroll on a waiting list

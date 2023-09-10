@@ -6,7 +6,7 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -309,8 +309,13 @@ export class MutatePupilResolver {
 
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilUpdateScreening(@Arg('pupilScreeningId') pupilScreeningId: number, @Arg('data') data: PupilScreeningUpdateInput): Promise<boolean> {
-        await updatePupilScreening(pupilScreeningId, data);
+    async pupilUpdateScreening(
+        @Ctx() context: GraphQLContext,
+        @Arg('pupilScreeningId') pupilScreeningId: number,
+        @Arg('data') data: PupilScreeningUpdateInput
+    ): Promise<boolean> {
+        const screener = await getSessionScreener(context);
+        await updatePupilScreening(screener, pupilScreeningId, data);
         return true;
     }
 
