@@ -114,7 +114,7 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
         name,
         runner,
         resolve: (it) => { result = Promise.resolve(it); },
-        reject: (error) => { 
+        reject: (error) => {
             result = Promise.reject(error);
             // Prevent unhandled rejections:
             result.catch(() => {});
@@ -176,6 +176,6 @@ export async function finalizeTests() {
     }
 
     logger.failure(`${failedTests.length} tests FAILED:\n${failedTests.map(it => "  - " + it).join('\n')}\n\n`);
-    logger.success('To debug the tests, run "npm run integration-tests:debug" then have a look at integration-tests.log')
+    logger.success('To debug the tests, run "npm run integration-tests:debug" then have a look at integration-tests.log');
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }

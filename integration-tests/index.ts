@@ -18,7 +18,7 @@ try {
     require('html-pppdf');
     // If that worked, also run the tests related to it
     require('./04_certificate');
-} catch(error) {
+} catch (error) {
     // If not, ignore the tests
     logger.failure('Skipped Certificate Test as PDF Rendering is not supported');
 }
