@@ -9,6 +9,7 @@ import { RateLimit } from '../rate-limit';
 import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
+import { GraphQLString } from 'graphql';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -72,7 +73,7 @@ export class MutateSecretResolver {
     @RateLimit('Request E-Mail Tokens', 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async tokenRequest(
         @Arg('email') email: string,
-        @Arg('action', { nullable: true }) action: string = 'user-authenticate',
+        @Arg('action', () => GraphQLString, { nullable: true }) action = 'user-authenticate',
         @Arg('redirectTo', { nullable: true }) redirectTo?: string
     ) {
         const user = await getUserByEmail(validateEmail(email));

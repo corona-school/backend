@@ -352,7 +352,7 @@ export async function actionTaken<ID extends ActionID>(
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
     attachments?: AttachmentGroup,
-    noDuplicates: boolean = false
+    noDuplicates = false
 ) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
@@ -403,8 +403,8 @@ export async function actionTakenAt<ID extends ActionID>(
     user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
-    dryRun: boolean = false,
-    noDuplicates: boolean = false,
+    dryRun = false,
+    noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
     if (!user.active) {

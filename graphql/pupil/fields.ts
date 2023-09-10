@@ -22,6 +22,7 @@ import { canJoinSubcourses } from '../../common/courses/participants';
 import { UserType } from '../types/user';
 import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
+import { GraphQLBoolean } from 'graphql';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -154,7 +155,7 @@ export class ExtendFieldsPupilResolver {
 
     @Query((returns) => [Pupil])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
+    async pupilsToBeScreened(@Arg('onlyDisputed', () => GraphQLBoolean, { nullable: true }) onlyDisputed = false) {
         return await prisma.pupil.findMany({
             where: {
                 active: true,

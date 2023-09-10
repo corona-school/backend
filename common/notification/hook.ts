@@ -22,7 +22,7 @@ export async function triggerHook(hookID: string, user: User) {
         throw new Error(`Unknown hook ${hookID}`);
     }
 
-    const hook = hooks[hookID]!;
+    const hook = hooks[hookID];
 
     await hook.fn(user);
 }

@@ -20,6 +20,7 @@ import { getUser } from '../../common/user';
 import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
 import { asActionID } from '../../common/notification/actions';
 import { getLogger } from '../../common/logger/logger';
+import { GraphQLBoolean } from 'graphql';
 
 const logger = getLogger('MutateConcreteNotificationResolver');
 
@@ -59,7 +60,7 @@ export class MutateConcreteNotificationsResolver {
         @Arg('notificationId', (type) => Int) notificationId: number,
         @Arg('userIds', (_type) => [String]) userIds: string[],
         @Arg('context', (_type) => JSONResolver) context: any,
-        @Arg('skipDraft') skipDraft: boolean = false,
+        @Arg('skipDraft', () => GraphQLBoolean) skipDraft = false,
         @Arg('startAt') startAt: Date
     ) {
         const notification = await getNotification(notificationId);
