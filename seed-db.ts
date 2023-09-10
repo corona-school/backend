@@ -645,7 +645,6 @@ void (async function setupDevDB() {
                     duration: 15,
                     start: new Date(currentLecture),
                     organizerIds: [],
-                    zoomMeetingId: '123456789',
                     participantIds: [],
                     appointmentType: AppointmentType.GROUP,
                 }
@@ -661,7 +660,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 10, 19, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
@@ -673,7 +671,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 14, 21, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
@@ -685,7 +682,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date, 4, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
@@ -697,7 +693,6 @@ void (async function setupDevDB() {
             duration: 60,
             start: new Date(year, month, date, hours, minutes - 1, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
@@ -709,7 +704,6 @@ void (async function setupDevDB() {
             duration: 90,
             start: new Date(year, month, date + 5, 10, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
@@ -721,7 +715,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 15, 11, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.GROUP
         }
