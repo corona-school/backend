@@ -68,7 +68,9 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 
         await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
         logger.info(`User(${organizerId}) added as organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
-        await addOrganizerToZoomMeeting(lecture, organizerEmail);
+        if (lecture.zoomMeetingId) {
+            await addOrganizerToZoomMeeting(lecture, organizerEmail);
+        }
     }
 }
 
@@ -83,7 +85,9 @@ export async function removeGroupAppointmentsOrganizer(subcourseId: number, orga
                 data: { organizerIds: { set: newOrganizers } },
             });
             logger.info(`Removed User(${organizerId}) as organizer of Appointment(${a.id}) of Subcourse(${subcourseId})`);
-            await removeOrganizerFromZoomMeeting(a, organizerEmail);
+            if (a.zoomMeetingId) {
+                await removeOrganizerFromZoomMeeting(a, organizerEmail);
+            }
         })
     );
 }
