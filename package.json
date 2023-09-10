@@ -152,6 +152,7 @@
     "testRegex": ".*\\.spec\\.ts$",
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
     },
     "main": "index.js",
     "scripts": {
@@ -320,4 +321,5 @@
         ],
         "ext": "js,json"
     }
+
 }

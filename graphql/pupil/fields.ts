@@ -134,8 +134,8 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    canRequestMatch(@Root() pupil: Required<Pupil>) {
-        return canPupilRequestMatch(pupil);
+    async canRequestMatch(@Root() pupil: Required<Pupil>) {
+        return await canPupilRequestMatch(pupil);
     }
 
     @FieldResolver((type) => Decision)
