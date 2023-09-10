@@ -101,12 +101,12 @@ export class ExtendedFieldsSubcourseResolver {
         if (excludeKnown) {
             if (isSessionStudent(context)) {
                 filters.push({
-                    subcourse_instructors_student: { none: { studentId: context.user!.studentId! } },
+                    subcourse_instructors_student: { none: { studentId: context.user.studentId } },
                 });
             } else if (isSessionPupil(context)) {
                 filters.push({
-                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
-                    waiting_list_enrollment: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_participants_pupil: { none: { pupilId: context.user.pupilId } },
+                    waiting_list_enrollment: { none: { pupilId: context.user.pupilId } },
                 });
             } /* else ignore */
         }
@@ -142,14 +142,14 @@ export class ExtendedFieldsSubcourseResolver {
             // A pupil has access to unpublished subcourses if they are a participant ...
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
 
             // ... or on the waiting list
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
         }
@@ -158,7 +158,7 @@ export class ExtendedFieldsSubcourseResolver {
             // Students have access to all subcourses they own
             accessGrantFilters.push({
                 subcourse_instructors_student: {
-                    some: { studentId: context.user!.studentId },
+                    some: { studentId: context.user.studentId },
                 },
             });
         }

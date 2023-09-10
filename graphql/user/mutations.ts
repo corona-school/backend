@@ -116,14 +116,14 @@ export class MutateUserResolver {
             `Roles: ${context.user.roles.join(', ')}\n`;
 
         await mailjet.sendPure(
-            `User-App - ${getFullName(context.user!)} - ${message.subject}`,
+            `User-App - ${getFullName(context.user)} - ${message.subject}`,
             body,
             /* from */ DEFAULTSENDERS.noreply,
             /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
             /* from name */ 'User-App Kontaktformular',
             /* to name */ `Das beste Supportteam der Welt`,
-            /* reply to */ context.user!.email,
-            /* reply to name */ getFullName(context.user!)
+            /* reply to */ context.user.email,
+            /* reply to name */ getFullName(context.user)
         );
 
         return true;

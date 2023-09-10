@@ -135,7 +135,7 @@ export class MutateCourseResolver {
             data: courseTagIds.map((it) => ({ courseId: course.id, courseTagId: it })),
         });
 
-        logger.info(`User(${context.user!.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
+        logger.info(`User(${context.user.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
         return true;
     }
 
@@ -160,7 +160,7 @@ export class MutateCourseResolver {
             where: { id: course.id },
         });
 
-        logger.info(`User(${context.user!.userID}) uploaded a new course image for Course(${course.id})`);
+        logger.info(`User(${context.user.userID}) uploaded a new course image for Course(${course.id})`);
         return true;
     }
 
@@ -171,7 +171,7 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
 
         const newInstructor = await getStudent(studentId);
-        await addCourseInstructor(context.user!, course, newInstructor);
+        await addCourseInstructor(context.user, course, newInstructor);
         return true;
     }
 
@@ -183,7 +183,7 @@ export class MutateCourseResolver {
         await getStudent(studentId);
 
         await prisma.course_instructors_student.delete({ where: { courseId_studentId: { courseId, studentId } } });
-        logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user!.userID})`);
+        logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user.userID})`);
         return true;
     }
 
@@ -215,7 +215,7 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
-        const tag = await createCourseTag(context.user!, name, category as course_category_enum);
+        const tag = await createCourseTag(context.user, name, category as course_category_enum);
 
         return tag;
     }
@@ -236,7 +236,7 @@ export class MutateCourseResolver {
             where: { id: courseTagId },
         });
 
-        logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
+        logger.info(`User(${context.user.userID}) removed CourseTag(${tag.id})`);
         return tag;
     }
 }
