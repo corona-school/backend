@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore Optional Dependency for slim local setups
 import type { Options } from 'html-pppdf';
 import { getLogger } from '../logger/logger';
@@ -10,6 +11,7 @@ async function ensureBrowserSetup() {
         return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { setupBrowser } = await import('html-pppdf');
 
@@ -24,6 +26,7 @@ async function ensureBrowserSetup() {
 
 process.on('SIGTERM', async () => {
     if (browserSetupDone) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const { closeBrowser } = await import('html-pppdf');
 
@@ -35,6 +38,7 @@ process.on('SIGTERM', async () => {
 export async function generatePDFFromHTML(html: string, options: Options) {
     await ensureBrowserSetup();
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { generatePDFFromHTMLString } = await import('html-pppdf');
 
