@@ -40,6 +40,16 @@ void (async function setupDevDB() {
 
     await createConnection();
 
+    await prisma.cooperation.create({
+        data: {
+            name: "Lern-Fair e.V.",
+            tag: "self",
+
+            welcomeTitle: "Wilkommen im Userbereich",
+            welcomeMessage: "Als Lern-Fairer kennst du dich ja hier aus :)",
+        }
+    });
+
     const pupil1 = await registerPupil({
         firstname: 'Max',
         lastname: 'Musterschüler',

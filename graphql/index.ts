@@ -66,6 +66,8 @@ import { getCurrentTransaction } from '../common/session';
 import { MutateChatResolver } from './chat/mutations';
 import { playground } from './playground';
 import { ExtendedFieldsScreenerResolver } from './screener/fields';
+import { ExtendedFieldsCooperationResolver } from './cooperation/fields';
+import { MutateCooperationResolver } from './cooperation/mutation';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -174,6 +176,10 @@ const schema = buildSchemaSync({
 
         /* Chat */
         MutateChatResolver,
+
+        /* Cooperation */
+        ExtendedFieldsCooperationResolver,
+        MutateCooperationResolver,
 
         AdminMutationsResolver,
     ],
