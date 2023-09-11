@@ -51,6 +51,7 @@ model bbb_meeting {
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
   id             Int       @id() @default(autoincrement())
+  name           String
   // This is a short string which can be passed in to the registration to associate users with this
   tag            String
   // Text shown to users on the registration page

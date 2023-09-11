@@ -6,6 +6,8 @@ import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-grap
 @InputType()
 class CreateCooperationInput {
     @Field()
+    name: string;
+    @Field()
     tag: string;
 
     @Field()
