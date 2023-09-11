@@ -14,7 +14,7 @@ import { User, getStudentsFromList, userForPupil, userForStudent } from '../user
 import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { AppointmentType } from '../../common/entity/Lecture';
-import { getAppointmentForNotification } from './util';
+import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 
 const logger = getLogger();
 
@@ -91,17 +91,14 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             matchId: matchId.toString(),
         });
 
+        // Send out reminders 12 hours before the appointment starts
         for (const appointment of createdMatchAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(pupil), 'pupil_match_appointment_reminder', {
-                uniqueId: appointment.id.toString(),
-                matchId: appointment.matchId.toString(),
-                appointment: await getAppointmentForNotification(appointment),
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(pupil), 'pupil_match_appointment_starts', {
+                ...(await getContextForMatchAppointmentReminder(appointment)),
                 student,
             });
-            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_reminder', {
-                uniqueId: appointment.id.toString(),
-                matchId: appointment.matchId.toString(),
-                appointment: await getAppointmentForNotification(appointment),
+            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_starts', {
+                ...(await getContextForMatchAppointmentReminder(appointment)),
                 pupil,
             });
         }
@@ -150,23 +147,21 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
         });
+
+        // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_reminder', {
-                uniqueId: appointment.id.toString(),
-                appointment: await getAppointmentForNotification(appointment),
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
+                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
                 student: organizer,
-                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });
         }
     }
 
     for (const instructor of instructors) {
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_reminder', {
-                uniqueId: appointment.id.toString(),
-                appointment: await getAppointmentForNotification(appointment),
+            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
                 student: organizer,
-                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
             });
         }
     }

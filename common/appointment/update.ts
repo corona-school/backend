@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { getUser, getStudent, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
-import { getAppointmentForNotification } from './util';
+import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getAppointmentForNotification } from './util';
 import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
 import { getNotificationContextForSubcourse } from '../mails/courses';
@@ -58,20 +58,16 @@ export async function updateAppointment(
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
-                await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_reminder', {
-                    uniqueId: appointment.id.toString(),
-                    appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
+                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
                     student,
-                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
             }
 
             for (const instructor of instructors) {
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_reminder', {
-                    uniqueId: updatedAppointment.id.toString(),
-                    appointment: await getAppointmentForNotification(updatedAppointment),
+                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
                     student,
-                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
             }
             break;
@@ -84,18 +80,14 @@ export async function updateAppointment(
             // send notification if date has changed
             await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
                 student: student,
-                appointment: getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+                appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
             });
-            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_reminder', {
-                uniqueId: updatedAppointment.id.toString(),
-                matchId: updatedAppointment.matchId.toString(),
-                appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_starts', {
+                ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
                 student,
             });
-            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(student), 'student_match_appointment_reminder', {
-                uniqueId: updatedAppointment.id.toString(),
-                matchId: updatedAppointment.matchId.toString(),
-                appointment: await getAppointmentForNotification(updatedAppointment, /* original */ appointment),
+            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(student), 'student_match_appointment_starts', {
+                ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
                 pupil: match.pupil,
             });
 
