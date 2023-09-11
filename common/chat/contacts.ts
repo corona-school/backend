@@ -92,6 +92,9 @@ const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[
 
         return pupilWithMatchId;
     }
+
+    // This can happen if for example a screener is logged in
+    return [];
 };
 const getSubcourseInstructorsForPupil = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
