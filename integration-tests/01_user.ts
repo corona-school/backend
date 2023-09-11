@@ -286,10 +286,17 @@ export async function createNewStudent() {
 
 export const studentOne = test('Register Student', createNewStudent);
 
+const cooperationOne = test('Admin Creates Cooperation', async () => {
+    await adminClient.request(`mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "" })}`);
+
+    return { cooperationTag: "evil-corp" };
+});
+
 export const instructorOne = test('Register Instructor', async () => {
     await setup;
     const mockEmailVerification = await createMockVerification;
-
+    const { cooperationTag } = await cooperationOne;
+    
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
 
@@ -301,6 +308,7 @@ export const instructorOne = test('Register Instructor', async () => {
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                cooperationTag: "${cooperationTag}"
             }) {
                 id
             }
