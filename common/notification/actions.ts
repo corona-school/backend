@@ -522,15 +522,15 @@ const _notificationActions = {
         description: 'User added a match ad-hoc meeting',
         sampleContext: { student: sampleUser, appointmentId: '1', appointment: { url: '/video-chat/1/match' } },
     },
-    pupil_match_appointment_reminder: {
+    pupil_match_appointment_starts: {
         description: 'Remind pupil of upcoming match appointment',
         sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
     },
-    student_match_appointment_reminder: {
+    student_match_appointment_starts: {
         description: 'Remind student of upcoming match appointment',
         sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
     },
-    pupil_group_appointment_reminder: {
+    pupil_group_appointment_starts: {
         description: 'Remind pupil of upcoming group appointment',
         sampleContext: {
             appointment: sampleAppointment,
@@ -538,7 +538,7 @@ const _notificationActions = {
             ...sampleCourse,
         },
     },
-    student_group_appointment_reminder: {
+    student_group_appointment_starts: {
         description: 'Remind student of upcoming group appointment',
         sampleContext: {
             appointment: sampleAppointment,
@@ -547,13 +547,13 @@ const _notificationActions = {
         },
     },
     cancel_group_appointment_reminder: {
-        description: 'Cancel: group appointment reminder',
+        description: 'Cancel / group appointment reminder',
         sampleContext: {
             appointment: sampleAppointment,
         },
     },
     cancel_match_appointment_reminder: {
-        description: 'Cancel: match appointment reminder',
+        description: 'Cancel / match appointment reminder',
         sampleContext: {
             appointment: sampleAppointment,
         },
