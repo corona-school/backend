@@ -300,6 +300,14 @@ export const instructorOne = test('Register Instructor', async () => {
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
 
+    const { cooperations } = await client.request(`
+        query StudentQueriesCooperations {
+            cooperations { tag name welcomeTitle welcomeMessage }
+        }
+    `);
+
+    assert.ok(cooperations.some(it => it.tag === cooperationTag));
+
     await client.request(`
         mutation RegisterStudent {
             meRegisterStudent(data: {
