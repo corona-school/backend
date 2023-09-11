@@ -296,7 +296,7 @@ export const instructorOne = test('Register Instructor', async () => {
     await setup;
     const mockEmailVerification = await createMockVerification;
     const { cooperationTag } = await cooperationOne;
-    
+
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
 
