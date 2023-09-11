@@ -127,6 +127,15 @@ async function getZoomUser(email: string): Promise<ZoomUser | null> {
     return data;
 }
 
+export async function getOrCreateZoomUser(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>) {
+    const existing = await getZoomUser(student.email);
+    if (existing) {
+        return existing;
+    }
+
+    return await createZoomUser(student);
+}
+
 async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
     assureZoomFeatureActive();
 
