@@ -80,6 +80,9 @@ export class RegisterStudentInput implements RegisterStudentData {
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
+
+    @Field((type) => String, { nullable: true })
+    cooperationTag?: string;
 }
 
 @InputType()
