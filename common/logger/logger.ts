@@ -30,10 +30,13 @@ if (process.env.LOG_FORMAT === 'json') {
     appenders = ['outJson'];
 } else if (process.env.LOG_FORMAT === 'brief') {
     appenders = ['outBrief'];
+} else if (process.env.LOG_FORMAT === 'verbose') {
+    appenders = ['outBrief', 'fileVerbose'];
 }
 
 configure({
     appenders: {
+        // By default Log Session IDs and all content
         out: {
             type: 'stdout',
             layout: {
@@ -50,19 +53,54 @@ configure({
                 },
             },
         },
-        outBrief: {
+        // Brief Logging for Integration Tests, only log the message
+        outBriefWriter: {
             type: 'stdout',
             layout: {
                 type: 'pattern',
-                pattern: '     %[[%c]%] %m{0, 1}',
+                pattern: '%[%m{0, 1}%]',
             },
         },
+        outBrief: {
+            type: 'logLevelFilter',
+            appender: 'outBriefWriter',
+            level: 'mark',
+            maxLevel: 'mark',
+        },
+        // Verbose Logging to debug Integration Tests, also log further details
+        fileVerbose: {
+            type: 'file',
+            filename: 'integration-tests.log',
+            flags: 'w', // drop previous log
+            layout: {
+                type: 'pattern',
+                pattern: '%c - %m',
+            },
+        },
+        // Log JSON for Datadog
         outJson: { type: 'stdout', layout: { type: 'json' } },
     },
     categories: {
         default: {
             appenders,
             level: isCommandArg('--debug') ? 'debug' : 'info',
+        },
+    },
+
+    levels: {
+        FAILURE: {
+            value: 9007199254740992, // same as MARK
+            colour: 'red',
+        },
+
+        SUCCESS: {
+            value: 9007199254740992, // same as MARK
+            colour: 'green',
+        },
+
+        HEADLINE: {
+            value: 9007199254740992, // same as MARK
+            colour: 'blue',
         },
     },
 });
@@ -87,6 +125,8 @@ export class Logger {
         }
     }
 
+    // ----- Debugging, will not be logged in Production -----
+
     trace(message: string, args: LogData = {}): void {
         this.enrich();
         this.logger.trace(message, args);
@@ -96,6 +136,8 @@ export class Logger {
         this.enrich();
         this.logger.debug(message, args);
     }
+
+    // ----- Regular Logging, will be logged in Production ---
 
     info(message: string, args: LogData = {}): void {
         this.enrich();
@@ -107,7 +149,8 @@ export class Logger {
         this.logger.warn(message, args);
     }
 
-    error(message: string, err: Error, args: LogData = {}): void {
+    // Error Logs should be used for unexpected errors, as they trigger alerts
+    error(message: string, err?: Error, args: LogData = {}): void {
         this.enrich();
         // In order to use the datadog error tracking feature, we have to attach the error details to the root of the log message.
         // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.
@@ -124,9 +167,25 @@ export class Logger {
         this.logger.fatal(message, args);
     }
 
+    // ----- "Higher Level Logging" i.e. in Tests ---
     mark(message: string, args: LogData = {}): void {
         this.enrich();
         this.logger.mark(message, args);
+    }
+
+    success(message: string, args: LogData = {}) {
+        this.enrich();
+        this.logger.log('SUCCESS', message, args);
+    }
+
+    failure(message: string, args: LogData = {}) {
+        this.enrich();
+        this.logger.log('FAILURE', message, args);
+    }
+
+    headline(message: string) {
+        this.enrich();
+        this.logger.log('HEADLINE', `-------------------- ${message} ------------------------`);
     }
 
     addContext(key: string, value: any) {

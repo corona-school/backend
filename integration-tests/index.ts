@@ -5,14 +5,23 @@
   This can be run with 'npm run integration-tests', and by default runs against the dev backend.
   A different target can be configured by setting the INTEGRATION_TARGET environment */
 
-import { finalizeTests } from './base';
+import { finalizeTests, logger } from './base';
 
 /* Base Tests - Other tests build on them and they always must run */
 import './01_user';
 import './02_screening';
 /* Feature Tests - These are independent and can be disabled */
 import './03_matching';
-import './04_certificate';
+
+try {
+    // Try loading PDF rendering
+    require('html-pppdf');
+    // If that worked, also run the tests related to it
+    require('./04_certificate');
+} catch (error) {
+    // If not, ignore the tests
+    logger.failure('Skipped Certificate Test as PDF Rendering is not supported');
+}
 
 import './05_auth';
 import './06_settings';
