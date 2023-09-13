@@ -197,7 +197,7 @@ const getZoomMeetingReport = async (meetingId: string) => {
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
     } else if (response.status === 404) {
-        logger.info(`Zoom - Meeting report could not be received because only one participant was in the meeting.`);
+        logger.info(`Zoom - Meeting report could not be received: ${await response.text()}`);
         return null;
     } else if (!response.ok) {
         throw new Error(`Failed to retrieve Zoom Meeting Report ${await response.text()}`);

@@ -208,11 +208,14 @@ const createZoomMeetingForAppointmentWithHosts = async (
 export const saveZoomMeetingReport = async (appointment: Lecture) => {
     const result = await getZoomMeetingReport(appointment.zoomMeetingId);
 
+    if (!result) {
+        logger.info(`Meeting report could not be saved for appointment (${appointment.id})`);
+    }
+
     await prisma.lecture.update({
         where: { id: appointment.id },
         data: { zoomMeetingReport: { push: result } },
     });
-
     logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
 };
 
