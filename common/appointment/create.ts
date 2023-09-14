@@ -210,6 +210,7 @@ export const saveZoomMeetingReport = async (appointment: Lecture) => {
 
     if (!result) {
         logger.info(`Meeting report could not be saved for appointment (${appointment.id})`);
+        return;
     }
 
     await prisma.lecture.update({
