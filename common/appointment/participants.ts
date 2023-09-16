@@ -3,6 +3,8 @@ import { Lecture } from '../entity/Lecture';
 import { prisma } from '../prisma';
 import { User, userForStudent } from '../user';
 import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zoom/scheduled-meeting';
+import { student as Student } from '@prisma/client';
+import { getOrCreateZoomUser } from '../zoom/user';
 
 const logger = getLogger('Appointment Participants');
 
@@ -53,7 +55,9 @@ export async function removeGroupAppointmentsParticipant(subcourseId: number, us
     );
 }
 
-export async function addGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail: string) {
+export async function addGroupAppointmentsOrganizer(subcourseId: number, organizer: Student) {
+    const organizerId = userForStudent(organizer).userID;
+
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(organizerId)) {
             throw new Error(
@@ -68,7 +72,10 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 
         await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
         logger.info(`User(${organizerId}) added as organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
-        await addOrganizerToZoomMeeting(lecture, organizerEmail);
+        if (lecture.zoomMeetingId) {
+            const zoomUser = await getOrCreateZoomUser(organizer);
+            await addOrganizerToZoomMeeting(lecture, zoomUser);
+        }
     }
 }
 
@@ -83,7 +90,9 @@ export async function removeGroupAppointmentsOrganizer(subcourseId: number, orga
                 data: { organizerIds: { set: newOrganizers } },
             });
             logger.info(`Removed User(${organizerId}) as organizer of Appointment(${a.id}) of Subcourse(${subcourseId})`);
-            await removeOrganizerFromZoomMeeting(a, organizerEmail);
+            if (a.zoomMeetingId) {
+                await removeOrganizerFromZoomMeeting(a, organizerEmail);
+            }
         })
     );
 }

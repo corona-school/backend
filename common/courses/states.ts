@@ -225,10 +225,10 @@ export async function addCourseInstructor(user: User | null, course: Course, new
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
     await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
 
-    const newInstructorUser = userForStudent(newInstructor);
-    await addGroupAppointmentsOrganizer(subcourse.id, newInstructorUser.userID, newInstructorUser.email);
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor);
 
     if (subcourse.conversationId) {
+        const newInstructorUser = userForStudent(newInstructor);
         await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
     }
 

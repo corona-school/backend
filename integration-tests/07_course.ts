@@ -284,6 +284,20 @@ void test('Add / Remove another instructor', async () => {
     });
 
     expectFetch({
+        "url": `https://api.zoom.us/v2/users/${instructor2.email.toLowerCase()}`,
+        "method": "GET",
+        "responseStatus": 200,
+        "response": {
+            id: '123',
+            first_name: instructor2.firstname,
+            last_name: instructor2.lastname,
+            email: instructor2.email.toLowerCase(),
+            display_name: instructor2.firstname + ' ' + instructor2.lastname,
+            personal_meeting_url: 'https://meet',
+        },
+    });
+
+    expectFetch({
         "url": "https://api.zoom.us/v2/meetings/10",
         "method": "GET",
         "responseStatus": 200,

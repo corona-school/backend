@@ -196,6 +196,9 @@ const getZoomMeetingReport = async (meetingId: string) => {
 
     if (response.status === 200) {
         logger.info(`Zoom - The Zoom Meeting ${meetingId} report was received.`);
+    } else if (response.status === 404) {
+        logger.info(`Zoom - Meeting report could not be received: ${await response.text()}`);
+        return null;
     } else if (!response.ok) {
         throw new Error(`Failed to retrieve Zoom Meeting Report ${await response.text()}`);
     }
@@ -240,14 +243,14 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
     logger.info(`Zoom - The Zoom Meeting was updated.`);
 };
 
-const addOrganizerToZoomMeeting = async (appointment: Appointment, organizerEmail?: string) => {
+const addOrganizerToZoomMeeting = async (appointment: Appointment, organizer: ZoomUser) => {
     const zoomMeeting = await getZoomMeeting(appointment);
     const existingAltHosts = zoomMeeting.settings.alternative_hosts;
-    if (existingAltHosts.includes(organizerEmail)) {
+    if (existingAltHosts.includes(organizer.email)) {
         logger.info(`Zoom - Organizer is already alternative host for zoom meeting ${zoomMeeting.id}`);
         return;
     }
-    const newAlternativeHosts = addHost(existingAltHosts, organizerEmail);
+    const newAlternativeHosts = addHost(existingAltHosts, organizer.email);
 
     const update = {
         organizers: newAlternativeHosts,
