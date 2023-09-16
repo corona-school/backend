@@ -3,6 +3,7 @@ import { prisma } from '../prisma';
 import { parseSubjectString } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { hashToken } from '../util/hashing';
+// eslint-disable-next-line import/no-cycle
 import { DEFAULT_TUTORING_GRADERESTRICTIONS } from './pool';
 
 export function getJitsiTutoringLink(match: Match) {

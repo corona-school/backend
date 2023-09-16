@@ -6,6 +6,7 @@ import * as Notification from '../notification';
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
+// eslint-disable-next-line import/no-cycle
 import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
