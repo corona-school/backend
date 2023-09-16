@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 import { getLogger } from '../../../common/logger/logger';
 import { sendCourseUpcomingReminderInstructor, sendCourseUpcomingReminderParticipant } from '../../../common/mails/courses';
 import { prisma } from '../../../common/prisma';
-import { course_coursestate_enum as CourseState } from "@prisma/client";
+import { course_coursestate_enum as CourseState } from '@prisma/client';
 
 const logger = getLogger();
 

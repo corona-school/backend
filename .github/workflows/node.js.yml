@@ -1,101 +1,101 @@
 name: Master Barrier
 
 on:
-  pull_request:
-    branches: [ master ]
+    pull_request:
+        branches: [master]
 
 jobs:
-  integration:
-    runs-on: ubuntu-20.04
+    integration:
+        runs-on: ubuntu-20.04
 
-    strategy:
-      matrix:
-        node-version: [18.x]
+        strategy:
+            matrix:
+                node-version: [18.x]
 
-    services:
-      postgres-integration:
-        image: postgres:10.8
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: integration
-        ports:
-          - 5001:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      postgres-verify-schema:
-        image: postgres:10.8
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: verify-schema
-        ports:
-          - 5002:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        services:
+            postgres-integration:
+                image: postgres:10.8
+                env:
+                    POSTGRES_USER: test
+                    POSTGRES_PASSWORD: test
+                    POSTGRES_DB: integration
+                ports:
+                    - 5001:5432
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+            postgres-verify-schema:
+                image: postgres:10.8
+                env:
+                    POSTGRES_USER: test
+                    POSTGRES_PASSWORD: test
+                    POSTGRES_DB: verify-schema
+                ports:
+                    - 5002:5432
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+        steps:
+            - uses: actions/checkout@v2
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
 
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v2
-        with:
-          path: ./node_modules
-          key: modules-${{ hashFiles('package-lock.json') }}
+            - name: Cache dependencies
+              id: cache
+              uses: actions/cache@v2
+              with:
+                  path: ./node_modules
+                  key: modules-${{ hashFiles('package-lock.json') }}
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
+            - name: Install dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: npm ci
 
-      - name: Install Prisma
-        run: npx prisma generate
+            - name: Install Prisma
+              run: npx prisma generate
 
-      - name: Build Backend
-        run: npm run build --if-present
+            - name: Build Backend
+              run: npm run build --if-present
 
-      - name: Verify Prisma Schema against Prisma Migrations
-        run: npm run db:verify-schema
-        env:
-          SHADOW_DB: "postgres://test:test@localhost:5002/verify-schema"
-          DATABASE_URL: "postgres://test:test@localhost:5002/DO-NOT-USE"
+            - name: Verify Prisma Schema against Prisma Migrations
+              run: npm run db:verify-schema
+              env:
+                  SHADOW_DB: 'postgres://test:test@localhost:5002/verify-schema'
+                  DATABASE_URL: 'postgres://test:test@localhost:5002/DO-NOT-USE'
 
-      - name: Run Unit Tests
-        run: npm test
+            - name: Run Unit Tests
+              run: npm test
 
-      - name: Setup Dev DB with Prisma Schema
-        run: npm run db:setup && npm run db:reset
-        env:
-          DATABASE_URL: "postgres://test:test@localhost:5001/integration"
+            - name: Setup Dev DB with Prisma Schema
+              run: npm run db:setup && npm run db:reset
+              env:
+                  DATABASE_URL: 'postgres://test:test@localhost:5001/integration'
 
-      - name: Run Integration Tests
-        run: npm run integration-tests
-        env:
-          DATABASE_URL: "postgres://test:test@localhost:5001/integration"
+            - name: Run Integration Tests
+              run: npm run integration-tests
+              env:
+                  DATABASE_URL: 'postgres://test:test@localhost:5001/integration'
 
-  lint:
-    runs-on: ubuntu-20.04
+    lint:
+        runs-on: ubuntu-20.04
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v2
-        with:
-          path: ./node_modules
-          key: modules-${{ hashFiles('package-lock.json') }}
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.x'
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
+            - name: Cache dependencies
+              id: cache
+              uses: actions/cache@v2
+              with:
+                  path: ./node_modules
+                  key: modules-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Prisma
-        run: npx prisma generate
+            - name: Install dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: npm ci
 
-      - run: npm run linter -- --max-warnings=0
+            - name: Install Prisma
+              run: npx prisma generate
+
+            - run: npm run linter -- --max-warnings=0

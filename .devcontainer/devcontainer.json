@@ -1,41 +1,38 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
-	"name": "Corona School – Backend",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "app",
-	"workspaceFolder": "/workspace",
+    "name": "Corona School – Backend",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": { 
-		"terminal.integrated.shell.linux": "/bin/zsh",
-		"sqltools.connections": [{
-			"name": "Container database",
-			"driver": "PostgreSQL",
-			"previewLimit": 50,
-			"server": "localhost",
-			"port": 5432,
-			"database": "coronaschool-dev",
-			"username": "postgres",
-			"password": "postgres"
-		}],
-		"remote.restoreForwardedPorts": false,
-		"typescript.preferences.importModuleSpecifier": "relative"
-	},
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/zsh",
+        "sqltools.connections": [
+            {
+                "name": "Container database",
+                "driver": "PostgreSQL",
+                "previewLimit": 50,
+                "server": "localhost",
+                "port": 5432,
+                "database": "coronaschool-dev",
+                "username": "postgres",
+                "password": "postgres"
+            }
+        ],
+        "remote.restoreForwardedPorts": false,
+        "typescript.preferences.importModuleSpecifier": "relative"
+    },
 
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"eamodio.gitlens",
-		"mtxr.sqltools",
-		"mtxr.sqltools-driver-pg"
-	],
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": ["dbaeumer.vscode-eslint", "eamodio.gitlens", "mtxr.sqltools", "mtxr.sqltools-driver-pg"],
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [5000, 5432],
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    "forwardPorts": [5000, 5432],
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo chown node node_modules built && npm ci", //change owner such that the user node can use the mounted volumes
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "sudo chown node node_modules built && npm ci", //change owner such that the user node can use the mounted volumes
 
-	// Comment out the next line to run as root instead.
-	"remoteUser": "node"
+    // Comment out the next line to run as root instead.
+    "remoteUser": "node"
 }

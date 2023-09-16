@@ -10,7 +10,7 @@ import { clearFetchMocks, expectNoFetchMockLeft } from './mock';
 import { cleanupMockedNotifications } from './notifications';
 import { getLogger } from '../../common/logger/logger';
 
-export const logger = getLogger("TEST");
+export const logger = getLogger('TEST');
 
 /* -------------- Configuration ------------------- */
 
@@ -122,7 +122,7 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
             result = Promise.reject(error);
             // Prevent unhandled rejections:
             result.catch(() => {});
-        }
+        },
     });
 
     return {
@@ -179,7 +179,7 @@ export async function finalizeTests() {
         return;
     }
 
-    logger.failure(`${failedTests.length} tests FAILED:\n${failedTests.map(it => "  - " + it).join('\n')}\n\n`);
+    logger.failure(`${failedTests.length} tests FAILED:\n${failedTests.map((it) => '  - ' + it).join('\n')}\n\n`);
     logger.success('To debug the tests, run "npm run integration-tests:debug" then have a look at integration-tests.log');
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }
