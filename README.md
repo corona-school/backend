@@ -1,11 +1,18 @@
 # LernFair Backend
 
+Basics:
 -   [GraphQL Guidelines](graphql/README.md)
--   [The Notification System](common/notification/README.md)
 -   [Writing Integration Tests](integration-tests/WRITING_TESTS.md)
 
-The backend exposes various APIs to other services and runs various background jobs on top of a PostgreSQL database.
-It is deployed in two Heroku Dynos, one answering API requests and one running jobs.
+Components:
+-   [Notification System (Mail & In-App)](common/notification/README.md)
+-   [Appointments](common/appointment/README.md)
+-   [Chat (TalkJS)](common/chat/README.md)
+-   [Video Chat (Zoom)](common/zoom/README.md)
+
+The backend exposes various APIs to other services and runs various background jobs on top of a PostgreSQL database. 
+It is deployed in two Heroku Dynos, one answering API requests and one running jobs. 
+
 
 ```
                                        +-[ Backend Web Dyno ]-----------------------------------------------------------+
