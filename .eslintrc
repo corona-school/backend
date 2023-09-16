@@ -1,4 +1,6 @@
 {
+    "root": true,
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 6,
@@ -17,7 +19,7 @@
     },
     "rules": {
         "block-scoped-var": "error",
-        "camelcase": ["warn", { "allow": ["wix_id", "wix_creation_date"] }],
+        "camelcase": "off",
         "comma-dangle": "off",
         "indent": "off",
         "keyword-spacing": [
@@ -34,6 +36,8 @@
                 "afterColon": true
             }
         ],
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
         "no-debugger": "error",
         "no-duplicate-case": "error",
         "no-eval": "error",
@@ -57,7 +61,7 @@
         "lernfair-lint/graphql-undeferred-impossible": "error",
         "lernfair-lint/graphql-cache": "error",
         "lernfair-lint/prisma-laziness": "error",
-        "require-await": "warn",
+        "require-await": "error",
         "import/no-cycle": ["warn"],
         "@typescript-eslint/no-floating-promises": ["error"],
         "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],

@@ -48,7 +48,7 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
-export async function registerPupil(data: RegisterPupilData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
+export async function registerPupil(data: RegisterPupilData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
@@ -64,9 +64,6 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
     } else if (data.registrationSource === RegistrationSource.cooperation) {
         throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
     }
-
-    const enabledNewsletter = JSON.stringify(ENABLED_NEWSLETTER);
-    const disabledNewsletter = JSON.stringify(DISABLED_NEWSLETTER);
 
     const verification = uuidv4();
 
@@ -98,7 +95,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail: boolean = 
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,
 
-            notificationPreferences: data.newsletter ? enabledNewsletter : disabledNewsletter,
+            notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,
         },
     });
 

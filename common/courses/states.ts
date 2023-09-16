@@ -3,7 +3,7 @@ import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { getCourse } from '../../graphql/util';
-import { sendSubcourseCancelNotifications } from '../mails/courses';
+import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from '../mails/courses';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
@@ -20,7 +20,6 @@ import {
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
-import context from '../../graphql/context';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 
 const logger = getLogger('Course States');
@@ -97,7 +96,7 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
         return { allowed: false, reason: 'no-lectures' };
     }
 
-    let currentDate = moment();
+    const currentDate = moment();
     const pastLectures = lectures.filter((lecture) => moment(lecture.start).isBefore(currentDate));
     if (pastLectures.length !== 0) {
         return { allowed: false, reason: 'past-lectures' };
@@ -111,12 +110,14 @@ export async function publishSubcourse(subcourse: Subcourse) {
     if (!can.allowed) {
         throw new Error(`Cannot Publish Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
-
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
-    // const course = await getCourse(subcourse.courseId);
-    // TODO: Seperate Issue, Promotion every 7 days
+    const course = await getCourse(subcourse.courseId);
+    if (course.category !== 'focus') {
+        await sendPupilCoursePromotion(subcourse);
+        logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
+    }
 }
 
 /* ---------------- Subcourse Cancel ------------ */
@@ -147,7 +148,7 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     const course = await getCourse(subcourse.courseId);
     const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     for (const appointment of courseAppointments) {
-        await cancelAppointment(user, appointment, true);
+        await cancelAppointment(user, appointment, /* silent */ true, /* force */ true);
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
@@ -170,8 +171,8 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     }
     const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
 
-    const isMaxParticipantsChanged: boolean = Boolean(update.maxParticipants);
-    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
+    const isMaxParticipantsChanged = Boolean(update.maxParticipants);
+    const isGroupChatTypeChanged = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
 
     if (isMaxParticipantsChanged) {
         if (update.maxParticipants < participantCount) {
@@ -223,10 +224,10 @@ export async function addCourseInstructor(user: User | null, course: Course, new
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
     await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
 
-    const newInstructorUser = userForStudent(newInstructor);
-    await addGroupAppointmentsOrganizer(subcourse.id, newInstructorUser.userID);
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor);
 
     if (subcourse.conversationId) {
+        const newInstructorUser = userForStudent(newInstructor);
         await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
     }
 

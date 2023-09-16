@@ -1,15 +1,15 @@
 import { User } from '../user';
-import { secret as Secret } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { secret_type_enum as SecretType } from '@prisma/client';
 
 export * from './password';
+// eslint-disable-next-line import/no-cycle
 export * from './token';
 
 const logger = getLogger('Secret');
 
-export async function getSecrets(user: User): Promise<{}[]> {
+export async function getSecrets(user: User): Promise<object[]> {
     const result = await prisma.secret.findMany({
         where: {
             userId: user.userID,

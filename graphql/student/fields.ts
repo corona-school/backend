@@ -26,6 +26,8 @@ import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
 import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
 import { Prisma } from '@prisma/client';
+import assert from 'assert';
+import { isSessionStudent } from '../authentication';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -38,12 +40,14 @@ export class ExtendFieldsStudentResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ): Promise<Instructor[]> {
+        assert.ok(isSessionStudent(context));
+
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
             verification: null,
             instructor_screening: { is: { success: { equals: true } } },
-            id: { not: { equals: context.user.studentId! } },
+            id: { not: { equals: context.user.studentId } },
         };
 
         return await prisma.student.findMany({
@@ -69,7 +73,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Match])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async matches(@Root() student: Required<Student>) {
@@ -79,8 +83,8 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Subject])
-    @Authorized(Role.USER, Role.ADMIN)
-    async subjectsFormatted(@Root() student: Required<Student>) {
+    @Authorized(Role.USER, Role.ADMIN, Role.SCREENER)
+    subjectsFormatted(@Root() student: Required<Student>) {
         return parseSubjectString(student.subjects);
     }
 
@@ -125,7 +129,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Screening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async tutorScreenings(@Root() student: Student) {
         return await prisma.screening.findMany({
             where: { studentId: student.id },
@@ -133,7 +137,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [InstructorScreening])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async instructorScreenings(@Root() student: Student) {
         return await prisma.instructor_screening.findMany({
             where: { studentId: student.id },
@@ -160,5 +164,20 @@ export class ExtendFieldsStudentResolver {
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async coursesInstructing(@Root() student: Student) {
         return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
+    }
+
+    @Query((returns) => [Student])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async studentsToBeScreened() {
+        return await prisma.student.findMany({
+            where: {
+                active: true,
+                OR: [
+                    { isStudent: true, screening: { is: null } },
+                    { isInstructor: true, instructor_screening: { is: null } },
+                ],
+            },
+            take: 100,
+        });
     }
 }

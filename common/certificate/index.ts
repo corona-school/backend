@@ -17,7 +17,7 @@ import { prisma } from '../prisma';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
-export const VALID_BASE64 = /^data\:image\/(png|jpeg)\;base64\,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
+export const VALID_BASE64 = /^data:image\/(png|jpeg);base64,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
 // supported certificate languages:
 export const LANGUAGES = ['de', 'en'] as const;
@@ -157,7 +157,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language)
         throw new CertificateError(`Certificate not found`);
     }
 
-    let verificationTemplate = loadTemplate('verifiedCertificatePage', lang);
+    const verificationTemplate = loadTemplate('verifiedCertificatePage', lang);
 
     return verificationTemplate({
         NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
@@ -250,12 +250,12 @@ export async function signCertificate(
 const _templates: { [name: string]: { [key in Language | 'default']?: EJS.ClientFunction } } = {};
 
 /* Loads the template from the /assets folder, falls back to the default language if fallback is true */
-function loadTemplate(name, lang: Language, fallback: boolean = true): EJS.ClientFunction {
+function loadTemplate(name, lang: Language, fallback = true): EJS.ClientFunction {
     if (_templates[name] && _templates[name][lang]) {
         return _templates[name][lang];
     }
 
-    let file = path.join(ASSETS, `${name}.${lang}.html`);
+    const file = path.join(ASSETS, `${name}.${lang}.html`);
     console.log('Loading template from ', file);
 
     if (existsSync(file)) {

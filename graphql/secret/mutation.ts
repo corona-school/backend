@@ -1,14 +1,15 @@
 import { Secret } from '../generated';
-import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, loginToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
+import { createPassword, createToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
 import { GraphQLContext } from '../context';
-import { getSessionUser, loginAsUser } from '../authentication';
+import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
 import { getUser, getUserByEmail } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from '../../common/logger/logger';
-import { AuthenticationError, UserInputError } from 'apollo-server-express';
+import { UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
+import { GraphQLString } from 'graphql';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -42,21 +43,25 @@ export class MutateSecretResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async meChangeEmail(@Ctx() context: GraphQLContext, @Arg('email') email: string) {
-        const user = await getSessionUser(context);
+        const user = getSessionUser(context);
         await requestToken(user, 'user-email-change', '/start', email);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.ADMIN)
     async tokenRevoke(@Ctx() context: GraphQLContext, @Arg('id', { nullable: true }) id?: number, @Arg('token', { nullable: true }) token?: string) {
         if (id) {
-            await revokeToken(getSessionUser(context), id);
+            if (isAdmin(context)) {
+                await revokeToken(null, id);
+            } else {
+                await revokeToken(getSessionUser(context), id);
+            }
             return true;
         }
 
         if (token) {
-            await revokeTokenByToken(getSessionUser(context), token);
+            await revokeTokenByToken(token);
             return true;
         }
 
@@ -68,7 +73,7 @@ export class MutateSecretResolver {
     @RateLimit('Request E-Mail Tokens', 50 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async tokenRequest(
         @Arg('email') email: string,
-        @Arg('action', { nullable: true }) action: string = 'user-authenticate',
+        @Arg('action', () => GraphQLString, { nullable: true }) action = 'user-authenticate',
         @Arg('redirectTo', { nullable: true }) redirectTo?: string
     ) {
         const user = await getUserByEmail(validateEmail(email));

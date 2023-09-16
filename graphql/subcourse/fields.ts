@@ -52,7 +52,7 @@ export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
                 courseState: { equals: CourseState.allowed },
             },
         },
-        lecture: { some: { start: { gt: new Date() } } },
+        lecture: { some: { start: { gt: new Date() }, isCanceled: false } },
     };
 }
 
@@ -83,7 +83,7 @@ export class ExtendedFieldsSubcourseResolver {
             filters.push({
                 OR: [
                     { joinAfterStart: { equals: false }, lecture: { every: { start: { gt: new Date() } } } },
-                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() } } } },
+                    { joinAfterStart: { equals: true }, lecture: { some: { start: { gt: new Date() }, isCanceled: false } } },
                 ],
             });
             if (isSessionPupil(context)) {
@@ -100,12 +100,12 @@ export class ExtendedFieldsSubcourseResolver {
         if (excludeKnown) {
             if (isSessionStudent(context)) {
                 filters.push({
-                    subcourse_instructors_student: { none: { studentId: context.user!.studentId! } },
+                    subcourse_instructors_student: { none: { studentId: context.user.studentId } },
                 });
             } else if (isSessionPupil(context)) {
                 filters.push({
-                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
-                    waiting_list_enrollment: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_participants_pupil: { none: { pupilId: context.user.pupilId } },
+                    waiting_list_enrollment: { none: { pupilId: context.user.pupilId } },
                 });
             } /* else ignore */
         }
@@ -141,14 +141,14 @@ export class ExtendedFieldsSubcourseResolver {
             // A pupil has access to unpublished subcourses if they are a participant ...
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
 
             // ... or on the waiting list
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
         }
@@ -157,7 +157,7 @@ export class ExtendedFieldsSubcourseResolver {
             // Students have access to all subcourses they own
             accessGrantFilters.push({
                 subcourse_instructors_student: {
-                    some: { studentId: context.user!.studentId },
+                    some: { studentId: context.user.studentId },
                 },
             });
         }
@@ -198,6 +198,7 @@ export class ExtendedFieldsSubcourseResolver {
     async lectures(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findMany({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -210,6 +211,7 @@ export class ExtendedFieldsSubcourseResolver {
     async firstLecture(@Root() subcourse: Subcourse) {
         return await prisma.lecture.findFirst({
             where: {
+                isCanceled: false,
                 subcourseId: subcourse.id,
             },
             orderBy: { start: 'asc' },
@@ -223,6 +225,7 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.lecture.findFirst({
             where: {
                 subcourseId: subcourse.id,
+                isCanceled: false,
                 start: { gte: new Date() },
             },
             orderBy: { start: 'asc' },
@@ -456,7 +459,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Number)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async capacity(@Root() subcourse: Required<Subcourse>) {
-        return getCourseCapacity(subcourse);
+        return await getCourseCapacity(subcourse);
     }
 
     @FieldResolver((returns) => [Lecture])

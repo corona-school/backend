@@ -1,9 +1,8 @@
 import { test } from './base';
-import { screenedInstructorOne } from './screening';
-import { subcourseOne } from './course';
+import { screenedInstructorOne } from './02_screening';
+import { subcourseOne } from './07_course';
 import assert from 'assert';
-import { pupilOne } from './user';
-import { expectFetch } from './mock';
+import { expectFetch } from './base/mock';
 
 const appointmentTitle = 'Group Appointment 1';
 const appointmentTitle2 = 'Group Appointment 2';
@@ -19,7 +18,8 @@ const firstAppointment = test('Create an appointment for a subcourse', async () 
         url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
         method: 'POST',
         responseStatus: 200,
-        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
+        // The token expires immediately, thus the next test will fetch a new token
+        response: { access_token: 'ZOOM_ACCESS_TOKEN', expires_in: 0 },
     });
 
     expectFetch({
@@ -60,8 +60,7 @@ const firstAppointment = test('Create an appointment for a subcourse', async () 
 });
 
 const moreAppointments = test('Create more appointments for a subcourse', async () => {
-    const { subcourseId } = await subcourseOne;
-    const { client, instructor } = await screenedInstructorOne;
+    const { subcourseId, client, instructor } = await subcourseOne;
     const nextDate = new Date();
     nextDate.setDate(new Date().getDate() + 10);
     const nextMonth = new Date();
@@ -71,7 +70,8 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
         url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
         method: 'POST',
         responseStatus: 200,
-        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
+        // The token never expires, and will thus be reused by following tests
+        response: { access_token: 'ZOOM_ACCESS_TOKEN', expires_in: 100000 },
     });
 
     expectFetch({
@@ -91,9 +91,17 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: '{"agenda":"My Meeting","default_password":false,"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"recurrence":{"end_date_time":"*","type":2},"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+        body: '{"agenda":"My Meeting","default_password":false,"duration":30,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
         responseStatus: 201,
-        response: { id: 10 },
+        response: { id: 11 },
+    });
+
+    expectFetch({
+        "url": "https://api.zoom.us/v2/users/123/meetings",
+        "method": "POST",
+        "body": '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+        "responseStatus": 200,
+        "response": { id: 12 }
     });
 
     const res = await client.request(`
@@ -121,7 +129,6 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
 
 const myAppointments = test('Get my appointments', async () => {
     const { client } = await screenedInstructorOne;
-    await firstAppointment;
     await moreAppointments;
 
     const {
@@ -161,30 +168,9 @@ const myAppointments = test('Get my appointments', async () => {
     return appointments;
 });
 
-// void test('Cancel an appointment as a organizer', async () => {
-//     const { client } = await screenedInstructorOne;
-//     await firstAppointment;
-//     const clientAppointments = await myAppointments;
-//     const appointmentId = clientAppointments[0].id;
 
-// expectFetch({
-//     url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
-//     method: 'POST',
-//     responseStatus: 200,
-//     response: { access_token: 'ZOOM_ACCESS_TOKEN' },
-// });
 
-//     await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);
-//     const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
-//     const {
-//         me: { appointments },
-//     } = await client.request(`query myAppointments { me { appointments(take: 3, skip: 0) { id }}}`);
-
-//     assert.ok(isAppointmentCanceled);
-//     assert.ok(appointments.some((a) => a.id != appointmentId));
-// });
-
-void test('Update an appointment', async () => {
+const updatedAppointments = test('Update an appointment', async () => {
     const { client, instructor } = await screenedInstructorOne;
     await firstAppointment;
     const clientAppointments = await myAppointments;
@@ -193,20 +179,12 @@ void test('Update an appointment', async () => {
     nextHour.setHours(new Date().getHours() + 1);
 
     expectFetch({
-        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
-        method: 'POST',
-        responseStatus: 200,
-        response: { access_token: 'ZOOM_ACCESS_TOKEN' },
-    });
-
-    expectFetch({
         url: 'https://api.zoom.us/v2/meetings/10',
         method: 'PATCH',
-        body: '{"start_time":"*","duration":120,"timezone":"Europe/Berlin","recurrence":{"end_date_time":"*","type":2}}',
+        body: '{"start_time":"*","duration":120,"timezone":"Europe/Berlin","settings":{}}',
         responseStatus: 200,
-        response: {}
+        response: {},
     });
-
 
     const updateTitle = 'Updated Title';
     const resp = await client.request(`mutation updateAppointment { appointmentUpdate (
@@ -237,4 +215,27 @@ void test('Update an appointment', async () => {
     `);
 
     assert.ok(appointments.some((a) => a.id == appointmentId && a.title == updateTitle));
+});
+
+void test('Cancel an appointment as a organizer', async () => {
+    const { client } = await screenedInstructorOne;
+    await updatedAppointments;
+    const clientAppointments = await myAppointments;
+    const appointmentId = clientAppointments[0].id;
+
+    expectFetch({
+        "url": "https://api.zoom.us/v2/meetings/10?action=delete",
+        "method": "DELETE",
+        "responseStatus": 200,
+        "response": "{}"
+    });
+
+    await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);
+    const isAppointmentCanceled = await client.request(`query appointment {appointment(appointmentId: ${appointmentId}){isCanceled}}`);
+    const {
+        me: { appointments },
+    } = await client.request(`query myAppointments { me { appointments(take: 3, skip: 0) { id }}}`);
+
+    assert.ok(isAppointmentCanceled);
+    assert.ok(appointments.some((a) => a.id != appointmentId));
 });

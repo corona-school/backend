@@ -12,16 +12,21 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
             NOT: {
                 declinedBy: { has: user.userID },
             },
-            OR: [
+            AND: [
+                { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
                 {
-                    participantIds: {
-                        has: user.userID,
-                    },
-                },
-                {
-                    organizerIds: {
-                        has: user.userID,
-                    },
+                    OR: [
+                        {
+                            participantIds: {
+                                has: user.userID,
+                            },
+                        },
+                        {
+                            organizerIds: {
+                                has: user.userID,
+                            },
+                        },
+                    ],
                 },
             ],
         },
@@ -37,16 +42,21 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
             NOT: {
                 declinedBy: { has: user.userID },
             },
-            OR: [
+            AND: [
+                { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
                 {
-                    participantIds: {
-                        has: user.userID,
-                    },
-                },
-                {
-                    organizerIds: {
-                        has: user.userID,
-                    },
+                    OR: [
+                        {
+                            participantIds: {
+                                has: user.userID,
+                            },
+                        },
+                        {
+                            organizerIds: {
+                                has: user.userID,
+                            },
+                        },
+                    ],
                 },
             ],
         },
@@ -58,14 +68,14 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
 
 export const getAppointmentsForUser = async (user: User, take: number, skip: number, cursor?: number, direction?: QueryDirection): Promise<Appointment[]> => {
     if (!direction && !cursor) {
-        return getAppointmentsForUserFromNow(user.userID, take, skip);
+        return await getAppointmentsForUserFromNow(user.userID, take, skip);
     }
 
     if (!direction || !cursor) {
         throw Error('Cursor or direction not specified for cursor based pagination');
     }
 
-    return getAppointmentsForUserFromCursor(user.userID, take, skip, cursor, direction);
+    return await getAppointmentsForUserFromCursor(user.userID, take, skip, cursor, direction);
 };
 
 const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: number, skip: number, cursor: number, direction: QueryDirection) => {
@@ -76,16 +86,21 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
             NOT: {
                 declinedBy: { has: userId },
             },
-            OR: [
+            AND: [
+                { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
                 {
-                    participantIds: {
-                        has: userId,
-                    },
-                },
-                {
-                    organizerIds: {
-                        has: userId,
-                    },
+                    OR: [
+                        {
+                            participantIds: {
+                                has: userId,
+                            },
+                        },
+                        {
+                            organizerIds: {
+                                has: userId,
+                            },
+                        },
+                    ],
                 },
             ],
         },
@@ -115,20 +130,25 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
             NOT: {
                 declinedBy: { has: userId },
             },
-            OR: [
+            AND: [
+                { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
                 {
-                    participantIds: {
-                        has: userId,
-                    },
-                },
-                {
-                    organizerIds: {
-                        has: userId,
-                    },
+                    OR: [
+                        {
+                            participantIds: {
+                                has: userId,
+                            },
+                        },
+                        {
+                            organizerIds: {
+                                has: userId,
+                            },
+                        },
+                    ],
                 },
             ],
         },
-        orderBy: [{ start: 'asc' }],
+        orderBy: { start: 'asc' },
         take,
         skip,
     });

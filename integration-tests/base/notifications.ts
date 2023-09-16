@@ -1,5 +1,6 @@
 import assert from "assert";
-import { adminClient } from "./base";
+// eslint-disable-next-line import/no-cycle
+import { adminClient } from ".";
 
 interface MockNotification {
     id: number;
@@ -11,20 +12,34 @@ interface ConcreteNotification {
     error?: string;
 }
 
-export async function createMockNotification(action: string, description: string): Promise<MockNotification> {
+let currentMockedNotifications: number[] = [];
+
+export async function createMockNotification(action: string, description: string, delay?: number, interval?: number, cancelAction?: string): Promise<MockNotification> {
     const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
         notificationCreate(notification: { 
             description: "MOCK ${description}"
             active: false
             recipient: 0
             onActions: { set: ["${action}"]}
-            cancelledOnAction: { set: []}
+            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ""}]}
+            ${delay ? "delay: " + delay : ""}
+            ${interval ? "interval: " + interval : ""}
         }) { id }
     }`);
 
     await adminClient.request(`mutation Activate${description} { notificationActivate(notificationId: ${id}, active: true)}`);
 
+    currentMockedNotifications.push(id);
+
     return { id };
+}
+
+export async function cleanupMockedNotifications() {
+    for (const id of currentMockedNotifications) {
+        await adminClient.request(`mutation Cleanup${id} { notificationActivate(notificationId: ${id}, active: false)}`);
+    }
+
+    currentMockedNotifications = [];
 }
 
 export async function assertUserReceivedNotification(notification: MockNotification, userID: string): Promise<ConcreteNotification> {

@@ -27,13 +27,21 @@ function timingSafeCompare(a: string, b: string) {
 }
 
 export interface GraphQLContext extends Session {
-    user?: GraphQLUser;
+    user: Readonly<GraphQLUser>;
     sessionToken?: string;
     prisma: PrismaClient;
     deferredRequiredRoles?: Role[];
     ip: string;
     setCookie(key: string, value: string);
 }
+
+type GraphQLUserStudent = GraphQLUser & { studentId: number };
+type GraphQLUserPupil = GraphQLUser & { pupilId: number };
+type GraphQLUserScreener = GraphQLUser & { screenerId: number };
+
+export type GraphQLContextStudent = GraphQLContext & { user: Readonly<GraphQLUserStudent> };
+export type GraphQLContextPupil = GraphQLContext & { user: Readonly<GraphQLUserPupil> };
+export type GraphQLContextScreener = GraphQLContext & { user: Readonly<GraphQLUserScreener> };
 
 const authLogger = getLogger('GraphQL Authentication');
 

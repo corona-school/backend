@@ -1,6 +1,8 @@
 import { prisma } from '../prisma';
 import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
-import { Helpee, Helper, match, Settings, Match as MatchResult, SubjectWithGradeRestriction } from 'corona-school-matching';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore The matching algorithm is optional, to allow for slim local setups
+import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
 import { createMatch } from './create';
 import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
@@ -362,6 +364,12 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     logger.info(`MatchingPool(${pool.name}) found ${pupils.length} pupils and ${students.length} students for matching in ${timing.preparation}ms`);
 
     const startMatching = Date.now();
+
+    // To run the matching we need the C++ Part, if it is not installed this will fail at runtime
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { match } = await import('corona-school-matching');
+
     const result = match(helpers, helpees, pool.settings);
 
     const matches = result.matches.map((it) => ({

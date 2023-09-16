@@ -69,7 +69,7 @@ export const server = (async function setupWebserver() {
             'http://localhost:3000',
             ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
             'https://lernfair-user-app-dev.herokuapp.com',
-            /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
+            /^https:\/\/user-app-[a-z0-9]+\.herokuapp\.com$/,
             'https://lern.retool.com',
         ];
     } else {

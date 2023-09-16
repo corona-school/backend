@@ -1,7 +1,7 @@
 import { test, createUserClient, adminClient } from './base';
 import assert from 'assert';
 import { randomBytes } from 'crypto';
-import { assertUserReceivedNotification, createMockNotification } from './notifications';
+import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
 
 const setup = test('Setup Configuration', async () => {
     // Ensure Rate Limits are deterministic when running the tests multiple times
@@ -109,6 +109,97 @@ export async function createNewPupil() {
     return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
 }
 
+export const pupilTwo = test('Register Pupil', async () => {
+    const mockEmailVerification = await createMockVerification;
+
+    await setup;
+
+    const client = createUserClient();
+
+    const userRandom = randomBytes(5).toString('base64');
+
+    const {
+        meRegisterPupil: { id },
+    } = await client.request(`
+        mutation RegisterPupil {
+            meRegisterPupil(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "test+${userRandom}@lern-fair.de"
+                newsletter: false
+                state: bw
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    // E-Mail cannot be registered again (case insensitive)
+    await client.requestShallFail(`
+        mutation RegisterPupilAgain {
+            meRegisterPupil(data: {
+                firstname: "firstname:${userRandom}"
+                lastname: "lastname:${userRandom}"
+                email: "TEST+${userRandom}@lern-fair.de"
+                newsletter: false
+                state: bw
+                registrationSource: normal
+            }) {
+                id
+            }
+        }
+    `);
+
+    const { myRoles: rolesBeforeEmailVerification } = await client.request(`
+        query GetRolesBeforeEmailVerification {
+            myRoles
+        }
+    `);
+
+    assert.deepStrictEqual(rolesBeforeEmailVerification, ['UNAUTHENTICATED', 'USER', 'PUPIL']);
+
+    await client.request(`mutation RequestVerifyToken { tokenRequest(email: "TEST+${userRandom}@lern-fair.de", action: "user-verify-email")}`);
+
+    const {
+        context: { token },
+    } = await assertUserReceivedNotification(mockEmailVerification, `pupil/${id}`);
+    assert(token, 'User received email verification token');
+    await client.request(`mutation LoginForEmailVerify { loginToken(token: "${token}")}`);
+
+    const { me: pupil, myRoles } = await client.request(`
+        query GetBasics {
+            myRoles
+            me {
+                userID
+                firstname
+                lastname
+                email
+                pupil {
+                    id
+                    isPupil
+                    isParticipant
+                    openMatchRequestCount
+                }
+            }
+        }
+    `);
+
+    assert.strictEqual(pupil.firstname, `firstname:${userRandom}`);
+    assert.strictEqual(pupil.lastname, `lastname:${userRandom}`);
+    assert.strictEqual(pupil.email, `test+${userRandom}@lern-fair.de`.toLowerCase());
+    assert.strictEqual(pupil.pupil.isPupil, true);
+    assert.strictEqual(pupil.pupil.isParticipant, true);
+    assert.strictEqual(pupil.pupil.openMatchRequestCount, 0);
+
+    assert.deepStrictEqual(myRoles, ['UNAUTHENTICATED', 'USER', 'PUPIL', 'TUTEE', 'PARTICIPANT']);
+
+    // Ensure that E-Mails are consumed case-insensitive everywhere:
+    pupil.email = pupil.email.toUpperCase();
+
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
+});
+
 export const pupilOne = test('Register Pupil', createNewPupil);
 
 export async function createNewStudent() {
@@ -195,12 +286,27 @@ export async function createNewStudent() {
 
 export const studentOne = test('Register Student', createNewStudent);
 
+const cooperationOne = test('Admin Creates Cooperation', async () => {
+    await adminClient.request(`mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "" })}`);
+
+    return { cooperationTag: "evil-corp" };
+});
+
 export const instructorOne = test('Register Instructor', async () => {
     await setup;
     const mockEmailVerification = await createMockVerification;
+    const { cooperationTag } = await cooperationOne;
 
     const client = createUserClient();
     const userRandom = randomBytes(5).toString('base64');
+
+    const { cooperations } = await client.request(`
+        query StudentQueriesCooperations {
+            cooperations { tag name welcomeTitle welcomeMessage }
+        }
+    `);
+
+    assert.ok(cooperations.some(it => it.tag === cooperationTag));
 
     await client.request(`
         mutation RegisterStudent {
@@ -210,6 +316,7 @@ export const instructorOne = test('Register Instructor', async () => {
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                cooperationTag: "${cooperationTag}"
             }) {
                 id
             }

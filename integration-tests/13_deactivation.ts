@@ -1,6 +1,6 @@
-import { pupilOneWithPassword } from './auth';
+import { pupilOneWithPassword } from './05_auth';
 import { test } from './base';
-import { createNewPupil, createNewStudent, createInactivityMockNotification } from './user';
+import { createNewPupil, createNewStudent, createInactivityMockNotification } from './01_user';
 import { adminClient } from './base';
 import { prisma } from '../common/prisma';
 import { DEACTIVATE_ACCOUNTS_INACTIVITY_DAYS, deactivateInactiveAccounts } from '../jobs/periodic/redact-inactive-accounts/deactivate-inactive-accounts';

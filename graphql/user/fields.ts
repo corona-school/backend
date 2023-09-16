@@ -1,6 +1,6 @@
-import { Student, Pupil, Screener, Secret, PupilWhereInput, StudentWhereInput, Concrete_notification as ConcreteNotification, Lecture } from '../generated';
+import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { loginAsUser } from '../authentication';
+import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -13,8 +13,8 @@ import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreference
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
-import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom';
-import { getUserZAK, getZoomUsers } from '../../common/zoom/zoom-user';
+import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
+import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
 
 @ObjectType()
@@ -53,13 +53,13 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     email(@Root() user: User): string {
         return user.email;
     }
 
     @FieldResolver((returns) => Pupil)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     async pupil(@Root() user: User): Promise<Pupil> {
         if (!user.pupilId) {
             return null;
@@ -69,7 +69,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Student)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
     async student(@Root() user: User): Promise<Student> {
         if (!user.studentId) {
             return null;
@@ -97,7 +97,16 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {}, sessionID: 'FAKE' };
+        const fakeContext: GraphQLContext = {
+            user: UNAUTHENTICATED_USER,
+            ip: '?',
+            prisma,
+            sessionToken: 'fake',
+            setCookie: () => {
+                /* ignore */
+            },
+            sessionID: 'FAKE',
+        };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }
@@ -127,17 +136,21 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
-        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? JSON.stringify(DEFAULT_PREFERENCES);
+        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
     }
 
     @Query((returns) => [UserType])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async usersSearch(
+        @Ctx() context: GraphQLContext,
         @Arg('query') query: string,
         @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener',
         @Arg('take', () => Int, { nullable: true }) take?: number
     ) {
-        return await findUsers(query, only, take);
+        // "Needs to know" principle: Screeners should only find users they are supposed to screen
+        // Admins sometimes need to investigate, and thus are allowed to fuzzy search:
+        const strict = !(context.user.roles?.includes(Role.ADMIN) ?? false);
+        return await findUsers(query, only, take, strict);
     }
 
     // During mail campaigns we need to retrieve a potentially large amount of users
@@ -182,33 +195,33 @@ export class UserFieldsResolver {
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
-        return getAppointmentsForUser(user, take, skip, cursor, direction);
+        return await getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.OWNER)
     async hasAppointments(@Root() user: User): Promise<boolean> {
-        return hasAppointmentsForUser(user);
+        return await hasAppointmentsForUser(user);
     }
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return getLastAppointmentId(user);
+        return await getLastAppointmentId(user);
     }
 
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
-        return getMyContacts(user);
+        return await getMyContacts(user);
     }
 
     @FieldResolver((returns) => String)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
+    zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
         const meetingIdAsInt = parseInt(meetingId);
-        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
+        const sdkKey = generateMeetingSDKJWT(meetingIdAsInt, role);
         return sdkKey;
     }
 

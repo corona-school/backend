@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { randomBytes } from 'crypto';
 import { adminClient, test } from './base';
-import { pupilOne, studentOne } from './user';
+import { pupilOne, studentOne } from './01_user';
 
 /* eslint-disable  */
 

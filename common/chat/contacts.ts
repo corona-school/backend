@@ -92,6 +92,9 @@ const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[
 
         return pupilWithMatchId;
     }
+
+    // This can happen if for example a screener is logged in
+    return [];
 };
 const getSubcourseInstructorsForPupil = async (pupil: User): Promise<SubcourseContactStudent[]> => {
     assert(pupil.pupilId, 'Pupil must have an pupilId');
@@ -180,7 +183,7 @@ const getSubcourseParticipantsForStudent = async (student: User): Promise<Subcou
     return participantsWithSubcourseIds;
 };
 const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseContactList> => {
-    let subcourseContactsList: SubcourseContactList = {};
+    const subcourseContactsList: SubcourseContactList = {};
 
     const subcourseContacts = await getSubcourseInstructorsForPupil(pupil);
     for (const subcourseContact of subcourseContacts) {
@@ -202,7 +205,7 @@ const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseConta
     return subcourseContactsList;
 };
 const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseContactList> => {
-    let subcourseContactsList: SubcourseContactList = {};
+    const subcourseContactsList: SubcourseContactList = {};
 
     const subcourseContacts = await getSubcourseParticipantsForStudent(student);
     for (const subcourseContact of subcourseContacts) {
@@ -223,7 +226,7 @@ const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseC
     return subcourseContactsList;
 };
 const getMyMatchContacts = async (user: User): Promise<MatchContactList> => {
-    let matchContactList: MatchContactList = {};
+    const matchContactList: MatchContactList = {};
     const matchContacts = await getMatchContactsForUser(user);
     for (const matchContact of matchContacts) {
         let matchee: User;

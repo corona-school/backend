@@ -5,8 +5,8 @@ import { pupil as Pupil, student as Student, screener as Screener } from '@prism
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
-import { updateZoomUser } from '../zoom/zoom-user';
-import { isZoomFeatureActive } from '../zoom';
+import { updateZoomUser } from '../zoom/user';
+import { isZoomFeatureActive } from '../zoom/util';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -272,9 +272,9 @@ export async function getPupilsFromList(userIDs: string[]) {
 }
 
 export async function refetchStudent(student: Student) {
-    return (await prisma.student.findUnique({ where: { id: student.id } }))!;
+    return await prisma.student.findUnique({ where: { id: student.id } });
 }
 
 export async function refetchPupil(pupil: Pupil) {
-    return (await prisma.pupil.findUnique({ where: { id: pupil.id } }))!;
+    return await prisma.pupil.findUnique({ where: { id: pupil.id } });
 }

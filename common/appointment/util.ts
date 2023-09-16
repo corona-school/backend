@@ -1,4 +1,5 @@
-import { lecture as Appointment } from '@prisma/client';
+import { lecture as Appointment, subcourse as Subcourse } from '@prisma/client';
+import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const language = 'de-DE';
 
@@ -23,5 +24,26 @@ export function getAppointmentForNotification(appointment: Appointment, original
         end_time: end.toLocaleString(language, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }),
 
         original: original ? getAppointmentForNotification(original) : undefined,
+    };
+}
+
+export async function getContextForMatchAppointmentReminder(appointment: Appointment, original?: Appointment) {
+    return {
+        uniqueId: appointment.id.toString(),
+        matchId: appointment.matchId.toString(),
+        appointment: await getAppointmentForNotification(appointment, original),
+    };
+}
+
+export async function getContextForGroupAppointmentReminder(
+    appointment: Appointment,
+    subcourse: Subcourse,
+    course: { name: string; description: string; imageKey: string },
+    original?: Appointment
+) {
+    return {
+        uniqueId: appointment.id.toString(),
+        appointment: await getAppointmentForNotification(appointment, original),
+        ...(await getNotificationContextForSubcourse(course, subcourse)),
     };
 }

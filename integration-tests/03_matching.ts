@@ -1,7 +1,7 @@
 import { adminClient, defaultClient, test } from './base';
-import { pupilOne, studentOne } from './user';
+import { pupilOne, studentOne } from './01_user';
 import * as assert from 'assert';
-import { expectFetch } from './mock';
+import { expectFetch } from './base/mock';
 
 const pupilWithMR = test('Pupil Request Match', async () => {
     const { client, pupil } = await pupilOne;

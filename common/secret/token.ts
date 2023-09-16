@@ -2,6 +2,7 @@ import { getUser, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
+// eslint-disable-next-line import/no-cycle
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
@@ -13,19 +14,20 @@ import { secret_type_enum as SecretType } from '@prisma/client';
 
 const logger = getLogger('Token');
 
-export async function revokeToken(user: User, id: number) {
-    const result = await prisma.secret.deleteMany({ where: { id, userId: user.userID } });
+export async function revokeToken(user: User | null, id: number) {
+    const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
     if (result.count !== 1) {
         throw new Error(`Failed to revoke token, does not exist`);
     }
 
-    logger.info(`User(${user.userID}) revoked token Secret(${id})`);
+    logger.info(`User(${user?.userID}) revoked token Secret(${id})`);
 }
 
-export async function revokeTokenByToken(user: User, token: string) {
+// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
+export async function revokeTokenByToken(token: string) {
     const hash = hashToken(token);
     const secret = await prisma.secret.findFirst({
-        where: { secret: hash, userId: user.userID },
+        where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
     });
     if (!secret) {
         throw new Error(`Secret not found`);
@@ -33,7 +35,7 @@ export async function revokeTokenByToken(user: User, token: string) {
 
     await prisma.secret.delete({ where: { id: secret.id } });
 
-    logger.info(`User(${user.userID}) revoked token Secret(${secret.id})`);
+    logger.info(`Token Secret(${secret.id}) was revoked`);
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user

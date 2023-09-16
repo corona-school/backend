@@ -3,8 +3,14 @@ import { GraphQLClient } from 'graphql-request';
 
 import './mock';
 
-import * as WebServer from '../web';
-import { expectNoFetchMockLeft } from './mock';
+import * as WebServer from '../../web';
+// eslint-disable-next-line import/no-cycle
+import { clearFetchMocks, expectNoFetchMockLeft } from './mock';
+// eslint-disable-next-line import/no-cycle
+import { cleanupMockedNotifications } from './notifications';
+import { getLogger } from '../../common/logger/logger';
+
+export const logger = getLogger("TEST");
 
 /* -------------- Configuration ------------------- */
 
@@ -16,11 +22,7 @@ const silent = process.env.INTEGRATION_SILENT === 'true';
 
 /* -------------- Utils --------------------------- */
 
-export const blue = (msg: string) => '\u001b[94m' + msg + '\u001b[39m';
-export const red = (msg: string) => '\u001b[31m' + msg + '\u001b[39m';
-export const green = (msg: string) => '\u001b[32m' + msg + '\u001b[39m';
-
-console.log(blue(`\n\nBackend Integration Tests\n`) + ` testing ${URL}\n\n`);
+logger.mark(`Backend Integration Tests\n` + ` testing ${URL}\n\n`);
 
 /* -------------- GraphQL Client Wrapper ------------------ */
 
@@ -28,30 +30,30 @@ console.log(blue(`\n\nBackend Integration Tests\n`) + ` testing ${URL}\n\n`);
 function wrapClient(client: GraphQLClient) {
     async function request(query: string) {
         const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
-        console.log(blue(`+ ${name}`));
+        logger.mark(`+ ${name}`);
         if (!silent) {
-            console.log(`   request:`, query.trim());
+            logger.info(`request: ` + query.trim());
         }
         const response = await client.request(query);
         if (!silent) {
-            console.log(`   response:`, response);
+            logger.info(`response: ` + JSON.stringify(response, null, 2));
         }
         return response;
     }
 
     async function requestShallFail(query: string): Promise<never> {
         const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
-        console.log(blue(`+ ${name}`));
+        logger.mark(`+ ${name}`);
 
         if (!silent) {
-            console.log(`  request (should fail):`, query.trim());
+            logger.info(`  request (should fail):` + query.trim());
         }
 
         try {
             await client.request(query);
         } catch (error) {
             if (!silent) {
-                console.log(`  successfully failed with ${error.message.split(':')[0]}`);
+                logger.info(`  successfully failed with ${error.message.split(':')[0]}`);
             }
             return;
         }
@@ -113,8 +115,14 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
     tests.push({
         name,
         runner,
-        resolve: (it) => { result = Promise.resolve(it); },
-        reject: (error) => { result = Promise.reject(error); }
+        resolve: (it) => {
+            result = Promise.resolve(it);
+        },
+        reject: (error) => {
+            result = Promise.reject(error);
+            // Prevent unhandled rejections:
+            result.catch(() => {});
+        }
     });
 
     return {
@@ -126,50 +134,52 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
             }
 
             return result.then(onfulfilled, onrejected);
-        }
+        },
     };
 }
 
 // This one actually runs all tests that were defined
 export async function finalizeTests() {
-    console.log(blue('-------------------- SETUP ------------------------'));
+    logger.headline('SETUP');
 
     await WebServer.started;
 
-    console.log(blue('\n\n-------------------- TESTING ----------------------'));
+    logger.headline('TESTING');
 
     const startAll = Date.now();
-    let failureCount = 0;
+    const failedTests: string[] = [];
     for (const test of tests) {
-        console.log(blue(`\n\n------------------ TEST ${test.name} -----------`));
+        logger.headline(`TEST ${test.name}`);
         try {
             const start = Date.now();
             const result = await test.runner();
             const duration = Date.now() - start;
-            console.log(green(`= SUCCESS in ${duration}ms\n`));
+            logger.success(`= SUCCESS in ${duration}ms\n\n\n`);
             test.resolve(result);
+            expectNoFetchMockLeft();
         } catch (error) {
-            console.log('\n\n', error, '\n\n');
-            console.log(red(`= FAILURE\n`));
-            failureCount += 1;
+            logger.failure(error.message, error);
+            logger.failure(`= FAILURE\n\n\n`);
+            failedTests.push(test.name);
             test.reject(new Error(`Dependency ${test.name} failed`));
+            clearFetchMocks();
         }
-
-        expectNoFetchMockLeft();
     }
 
     const durationAll = Date.now() - startAll;
 
-    console.log(blue('\n\n-------------------- TEARDOWN ------------------------'));
+    logger.headline('TEARDOWN');
+    await cleanupMockedNotifications();
     await WebServer.shutdown();
-    console.log(green(`Regular shut down done, stop pending tasks by aborting process`));
+    logger.mark(`Regular shut down done, stop pending tasks by aborting process\n\n\n`);
 
-    if (failureCount === 0) {
-        console.log(green(`\n\n\nAll tests SUCCEEDED in ${durationAll}ms`));
+    if (failedTests.length === 0) {
+        logger.success(`All tests SUCCEEDED in ${durationAll}ms`);
         process.exit(0);
         return;
     }
 
-    console.error(red(`\n\n\n${failureCount} tests FAILED`));
+    logger.failure(`${failedTests.length} tests FAILED:\n${failedTests.map(it => "  - " + it).join('\n')}\n\n`);
+    logger.success('To debug the tests, run "npm run integration-tests:debug" then have a look at integration-tests.log');
     process.exit(1); // A non-zero return code indicates a failure to the pipeline
 }

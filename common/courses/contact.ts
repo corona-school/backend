@@ -42,7 +42,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
         })
     ).map((it) => it.student);
 
-    let attachmentGroup = await Notification.createAttachments(files, userForPupil(pupil));
+    const attachmentGroup = await Notification.createAttachments(files, userForPupil(pupil));
 
     await Promise.all(
         instructors.map(async (instructor) => {
@@ -79,7 +79,7 @@ export async function contactParticipants(
         throw new Error(`Cannot contact participants as the course is over`);
     }
 
-    let attachmentGroup = await Notification.createAttachments(files, userForStudent(instructor));
+    const attachmentGroup = await Notification.createAttachments(files, userForStudent(instructor));
 
     const selectedParticipants = await prisma.pupil.findMany({
         where: {

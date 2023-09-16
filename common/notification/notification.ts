@@ -5,8 +5,9 @@ import { prisma } from '../prisma';
 import { Context, Notification, NotificationID, NotificationMessage, NotificationRecipient } from './types';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
+// eslint-disable-next-line import/no-cycle
 import { hookExists } from './hook';
-import { getNotificationActions, sampleUser } from './actions';
+import { ActionID, getNotificationActions, sampleUser } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
 import { NotificationUpdateInput } from '../../graphql/generated';
 import { USER_APP_DOMAIN } from '../util/environment';
@@ -22,7 +23,7 @@ type MessageTranslationFromDb = {
     navigateTo: string;
 };
 
-type NotificationsPerAction = Map<String, { toSend: Notification[]; toCancel: Notification[] }>;
+type NotificationsPerAction = Map<string, { toSend: Readonly<Notification>[]; toCancel: Readonly<Notification>[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
 
 const logger = getLogger('Notification Management');

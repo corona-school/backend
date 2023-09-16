@@ -1,18 +1,23 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
 import { User, getUser, userForPupil, userForStudent } from '../user';
+// eslint-disable-next-line import/no-cycle
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
+// eslint-disable-next-line import/no-cycle
 import { getConversation } from './conversation';
-import { ChatAccess, ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
-import { MatchContactPupil, MatchContactStudent } from './contacts';
+import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
+import { type MatchContactPupil, type MatchContactStudent } from './contacts';
+import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
 export type UserId = `${'pupil' | 'student'}/${number}`;
+
+const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
@@ -22,8 +27,9 @@ const talkJsIdToUserId = (userId: string): UserId => {
     return userId.replace('_', '/') as UserId;
 };
 const createChatSignature = async (user: User): Promise<string> => {
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
     const userId = (await getOrCreateChatUser(user)).id;
-    const key = process.env.TALKJS_API_KEY;
+    const key = TALKJS_SECRET_KEY;
     const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
     return hash.digest('hex');
 };
@@ -33,11 +39,6 @@ function createOneOnOneId(userA: User, userB: User): string {
     const hashedIds = sha1(userIds);
     return truncate(hashedIds, { length: 10 });
 }
-
-const getConversationId = (participants: User[]) => {
-    const conversationId = createOneOnOneId(participants[0], participants[1]);
-    return conversationId;
-};
 
 const parseUnderscoreToSlash = (id: string): string => {
     return id.replace('_', '/');
@@ -130,7 +131,7 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     const pupil = await getPupil(matchees.pupilId);
     const studentUser = userForStudent(student);
     const pupilUser = userForPupil(pupil);
-    const conversationId = getConversationId([studentUser, pupilUser]);
+    const conversationId = createOneOnOneId(studentUser, pupilUser);
     const conversation = await getConversation(conversationId);
     return { conversation, conversationId };
 };
@@ -166,11 +167,9 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
         custom: {} as ChatMetaData,
     };
 
-    for (const key in conversationInfos.custom) {
-        if (conversationInfos.custom.hasOwnProperty(key)) {
-            const value = conversationInfos.custom[key];
-            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
-        }
+    for (const key of Object.keys(conversationInfos.custom)) {
+        const value = conversationInfos.custom[key];
+        convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
     }
 
     return convertedConversationInfos;
@@ -201,8 +200,10 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     };
 };
 
-const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
-const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent =>
+    Object.prototype.hasOwnProperty.call(contact, 'student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil =>
+    Object.prototype.hasOwnProperty.call(contact, 'pupil');
 
 export {
     userIdToTalkJsId,
@@ -213,7 +214,6 @@ export {
     getMatchByMatchees,
     createOneOnOneId,
     countChatParticipants,
-    getConversationId,
     getMatcheeConversation,
     checkChatMembersAccessRights,
     isSubcourseParticipant,

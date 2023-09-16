@@ -77,7 +77,7 @@ function getTotalCouseDuration(subcourse: WebflowSubcourse): number {
 }
 
 function listLectureStartDates(subcourse: WebflowSubcourse): string {
-    let appointments = [];
+    const appointments = [];
     for (const lecture of subcourse.lecture) {
         const startDate = moment(lecture.start).locale('de');
         appointments.push(startDate.format('dddd, DD. MMMM YYYY, HH:mm [Uhr]'));
@@ -86,13 +86,13 @@ function listLectureStartDates(subcourse: WebflowSubcourse): string {
 }
 
 function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DBIdMap<LectureDTO>): string[] {
-    let result: LectureDTO[] = [];
+    const result: LectureDTO[] = [];
 
     for (const lecture of subcourse.lecture) {
         if (lectureIds[lecture.id]) {
             result.push(lectureIds[lecture.id]);
         } else {
-            logger.error('Cannot find lecture in webflow.', { lectureId: lecture.id, courseId: subcourse.id });
+            logger.error('Cannot find lecture in webflow.', new Error('Cannot find lecture in webflow.'), { lectureId: lecture.id, courseId: subcourse.id });
         }
     }
 
@@ -103,7 +103,7 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
 // The description is a WYSIWYG editor that translates the information into HTML code, so we should do the same.
 function parseDescription(description: string): string {
     // Replace new lines with <br> tags
-    let newDescription = description.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    const newDescription = description.replace(/(?:\r\n|\r|\n)/g, '<br>');
     // Wrap the description into a <p> tag, because webflow would do the same
     return `<p>${newDescription}</p>`;
 }

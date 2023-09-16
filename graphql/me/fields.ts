@@ -9,7 +9,7 @@ import { createChatSignature } from '../../common/chat/helper';
 export class FieldMeResolver {
     @Query((returns) => UserType)
     @Authorized(Role.USER)
-    async me(@Ctx() context: GraphQLContext): Promise<GraphQLUser> {
+    me(@Ctx() context: GraphQLContext): GraphQLUser {
         return getSessionUser(context);
     }
 

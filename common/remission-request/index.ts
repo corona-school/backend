@@ -22,7 +22,8 @@ export async function createRemissionRequest(student: Student) {
     });
 
     if (!remissionRequest) {
-        while (true) {
+        let done = false;
+        while (!done) {
             try {
                 await prisma.remission_request.create({
                     data: {
@@ -31,7 +32,7 @@ export async function createRemissionRequest(student: Student) {
                     },
                 });
                 logger.info(`Created remisson request for student ${student.wix_id}`);
-                break;
+                done = true;
             } catch (e) {
                 if (e.code !== 'P2002') {
                     throw e;
@@ -54,7 +55,7 @@ function loadTemplate(name: string): EJS.ClientFunction {
 
 async function createQRCode(uuid: string): Promise<string> {
     const verificationURL = `https://verify.lern-fair.de/${uuid}?ctype=remission`;
-    return QRCode.toDataURL(verificationURL);
+    return await QRCode.toDataURL(verificationURL);
 }
 
 export async function createRemissionRequestPDF(student: { id: number; firstname: string; lastname: string }): Promise<Buffer> {

@@ -2,7 +2,7 @@ import EJS from 'ejs';
 import { readFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 import moment from 'moment-timezone';
-import { generatePDFFromHTMLString } from 'html-pppdf';
+import { generatePDFFromHTML } from '../util/pdf';
 
 const TEMPLATE_FOLDER = './assets/courses/certificate';
 const TEMPLATE_ASSETS_FOLDER = `${TEMPLATE_FOLDER}/assets`;
@@ -13,7 +13,7 @@ let cachedTemplate: EJS.ClientFunction = null;
 /* Loads the template from the /assets folder, falls back to the default language if fallback is true */
 function getTemplate(): EJS.ClientFunction {
     if (!cachedTemplate) {
-        let path = CERTFICATE_PATH;
+        const path = CERTFICATE_PATH;
 
         cachedTemplate = EJS.compile(readFileSync(path, 'utf8'));
     }
@@ -45,7 +45,7 @@ export async function getCourseCertificate(
 
     const includePaths = process.env.ENV === 'dev' ? [] : [resolvePath(TEMPLATE_ASSETS_FOLDER)]; //only include assets in production
 
-    const buffer = await generatePDFFromHTMLString(htmlString, {
+    const buffer = await generatePDFFromHTML(htmlString, {
         includePaths,
     });
 

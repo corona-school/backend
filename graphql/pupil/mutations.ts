@@ -4,10 +4,9 @@ import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
-import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -25,6 +24,7 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
+// eslint-disable-next-line import/no-cycle
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
@@ -32,6 +32,7 @@ import { addPupilScreening, updatePupilScreening } from '../../common/pupil/scre
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
+import { JSONResolver } from 'graphql-scalars';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -77,6 +78,7 @@ export class PupilUpdateInput {
 
     @Field((type) => NotificationPreferences, { nullable: true })
     notificationPreferences?: NotificationPreferences;
+
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
@@ -171,7 +173,7 @@ export async function updatePupil(
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
-            notificationPreferences: notificationPreferences ? JSON.stringify(notificationPreferences) : undefined,
+            notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
         },
         where: { id: pupil.id },
@@ -189,11 +191,11 @@ export async function updatePupil(
 }
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    let { email, register, activate } = data;
-
+    let { email } = data;
+    const { register, activate } = data;
     try {
         email = validateEmail(email);
-        if (!!register) {
+        if (register) {
             register.email = validateEmail(register.email);
             if (register.email !== email) {
                 throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
@@ -208,8 +210,8 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 
         await prisma.$transaction(async (tx) => {
             let pupil = existingAccount;
-            if (!!register) {
-                if (!!pupil) {
+            if (register) {
+                if (pupil) {
                     // if account already exists, overwrite relevant data with new plus data
                     logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
                     pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
@@ -252,7 +254,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await deactivatePupil(pupil);
@@ -297,7 +299,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await addPupilScreening(pupil);
@@ -306,14 +308,19 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
-    async pupilUpdateScreening(@Arg('pupilScreeningId') pupilScreeningId: number, @Arg('data') data: PupilScreeningUpdateInput): Promise<boolean> {
-        await updatePupilScreening(pupilScreeningId, data);
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async pupilUpdateScreening(
+        @Ctx() context: GraphQLContext,
+        @Arg('pupilScreeningId') pupilScreeningId: number,
+        @Arg('data') data: PupilScreeningUpdateInput
+    ): Promise<boolean> {
+        const screener = await getSessionScreener(context);
+        await updatePupilScreening(screener, pupilScreeningId, data);
         return true;
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
         await invalidatePupilScreening(pupilScreeningId);
         return true;

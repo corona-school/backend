@@ -9,9 +9,10 @@ const logger = getLogger();
 function executeJob(name: string, job: () => Promise<void>): () => Promise<void> {
     return async function () {
         const span = tracer.startSpan(name);
-        //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
-        //"this" is the context of the cron-job -> see definition of node cron package
-        this.stop(); //start stop, so that the same job is never executed in parallel
+        return tracer.scope().activate(span, async () => {
+            //return a real function, not an arrow-function here, because we need this to be set according to the context defined as part of the CronJob creation
+            //"this" is the context of the cron-job -> see definition of node cron package
+            this.stop(); //start stop, so that the same job is never executed in parallel
 
         let hasError = false;
         try {
@@ -23,10 +24,11 @@ function executeJob(name: string, job: () => Promise<void>): () => Promise<void>
             hasError = true;
         }
 
-        stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
+            stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
 
-        this.start();
-        span.finish();
+            this.start();
+            span.finish();
+        });
     };
 }
 

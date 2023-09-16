@@ -51,7 +51,7 @@ async function getAttachmentUrlEndpoint(req: Request, res: Response) {
         }
 
 
-        let s3url = await getAttachmentURL(attachmentId, filename);
+        const s3url = await getAttachmentURL(attachmentId, filename);
 
         return res.redirect(s3url);
     } catch (error) {

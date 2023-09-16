@@ -10,6 +10,10 @@ import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
 import { createSecretEmailToken } from '../secret';
 import { userForPupil } from '../user';
+import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
+import { addParticipant } from '../chat';
+import { ChatType } from '../chat/types';
+import { isChatFeatureActive } from '../chat/util';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -203,6 +207,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
         }
 
+        const pupilUser = userForPupil(pupil);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
 
         const insertion = await prisma.subcourse_participants_pupil.create({
@@ -224,6 +229,12 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             orderBy: { start: 'asc' },
             take: 1,
         });
+
+        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
+        if (isChatFeatureActive() && subcourse.conversationId) {
+            await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
+        }
+
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
             const courseStart = moment(firstLecture[0].start);
@@ -247,7 +258,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
                 firstLectureTime: courseStart.format('HH:mm'),
             });
         } catch (error) {
-            logger.warn(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`);
+            logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
     });
 }
@@ -260,6 +271,9 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
             pupilId: pupil.id,
         },
     });
+
+    const pupilUser = userForPupil(pupil);
+    await removeGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
 
     if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Pupil is not a participant`);

@@ -18,7 +18,7 @@ import { NotificationContext } from '../../notification/types';
 const logger = getLogger('Course Notification');
 
 export async function sendSubcourseCancelNotifications(course: Prisma.course, subcourse: Prisma.subcourse) {
-    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     if (lectures.length == 0) {
         logger.info('No lectures found: no cancellation mails sent for subcourse ' + subcourse.id + ' of course ' + course.name);
         return;
@@ -32,10 +32,10 @@ export async function sendSubcourseCancelNotifications(course: Prisma.course, su
         }
     }
 
-    let participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, select: { pupil: true } });
+    const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, select: { pupil: true } });
     // Send mail or this lecture to each participant
     logger.info('Sending cancellation mails for subcourse ' + subcourse.id + ' of course ' + course.name + ' to ' + participants.length + ' participants');
-    for (let participant of participants) {
+    for (const participant of participants) {
         const mail = mailjetTemplates.COURSESCANCELLED({
             participantFirstname: participant.pupil.firstname,
             courseName: course.name,
@@ -131,7 +131,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
         grades.push(`${grade}. Klasse`);
     }
 
-    let pupils = await prisma.pupil.findMany({
+    const pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
     });
 

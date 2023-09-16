@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'crypto';
 import { hashPassword } from './common/util/hashing';
 import { getNotifications, importMessageTranslations, importNotifications } from './common/notification/notification';
 import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
-import { userForStudent, userForPupil, updateUser, refetchPupil, refetchStudent } from './common/user';
+import { userForStudent, userForPupil, updateUser, refetchPupil, refetchStudent, userForScreener } from './common/user';
 import { getLogger } from './common/logger/logger';
 import { becomeTutee, registerPupil } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
@@ -33,6 +33,16 @@ void (async function setupDevDB() {
     }
 
     logger.info('Starting to Seed DB');
+
+    await prisma.cooperation.create({
+        data: {
+            name: "Lern-Fair e.V.",
+            tag: "self",
+
+            welcomeTitle: "Wilkommen im Userbereich",
+            welcomeMessage: "Als Lern-Fairer kennst du dich ja hier aus :)",
+        }
+    });
 
     const pupil1 = await registerPupil({
         firstname: 'Max',
@@ -247,10 +257,13 @@ void (async function setupDevDB() {
             firstname: 'Maxi',
             lastname: 'Screenerfrau',
             email: 'test+dev+sc1@lern-fair.de',
-            password: await hashPassword('screener'),
-            verified: true
+            password: "LEGACY",
+            verified: true,
+            active: true
         }
     });
+    await _createFixedToken(userForScreener(screener1), `authtokenSC1`);
+    await createPassword(userForScreener(screener1), `test`);
 
 
     const student1 = await registerStudent({
@@ -628,7 +641,7 @@ void (async function setupDevDB() {
     {
         // The first course has a lot of lectures to better test joining course meetings
         let currentLecture = Date.now();
-        let endLectures = Date.now() + 24 * 60 * 60 * 1000;
+        const endLectures = Date.now() + 24 * 60 * 60 * 1000;
         while (currentLecture < endLectures) {
             await prisma.lecture.create({
                 data: {
@@ -636,7 +649,6 @@ void (async function setupDevDB() {
                     duration: 15,
                     start: new Date(currentLecture),
                     organizerIds: [],
-                    zoomMeetingId: '123456789',
                     participantIds: [],
                     appointmentType: AppointmentType.group,
                 }
@@ -652,7 +664,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 10, 19, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }
@@ -664,7 +675,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 14, 21, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }
@@ -676,7 +686,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date, 4, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }
@@ -688,7 +697,6 @@ void (async function setupDevDB() {
             duration: 60,
             start: new Date(year, month, date, hours, minutes - 1, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }
@@ -700,7 +708,6 @@ void (async function setupDevDB() {
             duration: 90,
             start: new Date(year, month, date + 5, 10, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }
@@ -712,7 +719,6 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 15, 11, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
             appointmentType: AppointmentType.group
         }

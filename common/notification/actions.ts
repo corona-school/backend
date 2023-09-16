@@ -3,7 +3,7 @@
 //  however a few other attributes of the action are maintained here to provide admin users with better tooling
 //  for creating notifications for these actions. The ones documented here are incomplete
 
-import { NotificationContextExtensions } from './types';
+import { type NotificationContextExtensions } from './types';
 
 type NestedStringObject = { [key: string]: string | boolean | NestedStringObject };
 
@@ -100,6 +100,10 @@ const _notificationActions = {
     },
     pupil_screening_invalidated: {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
+        sampleContext: {},
+    },
+    pupil_screening_dispute: {
+        description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
         sampleContext: {},
     },
     pupil_registration_finished: {
@@ -518,20 +522,50 @@ const _notificationActions = {
         description: 'User added a match ad-hoc meeting',
         sampleContext: { student: sampleUser, appointmentId: '1', appointment: { url: '/video-chat/1/match' } },
     },
-    user_authenticate: DEPRECATED,
-    user_login_email: DEPRECATED,
-    coachee_project_match_success: DEPRECATED,
-    coach_project_match_success: DEPRECATED,
-    coach_screening_rejection: DEPRECATED,
-    coach_screening_success: DEPRECATED,
-    coachee_project_match_dissolved: DEPRECATED,
-    coach_project_match_dissolved: DEPRECATED,
-    codu_student_registration: DEPRECATED,
-    mentor_registration_started: DEPRECATED,
-    cooperation_tutee_registration_started: DEPRECATED,
-    coach_screening_invitation: DEPRECATED,
-    feedback_request_student: DEPRECATED,
-    feedback_request_pupil: DEPRECATED,
+    pupil_match_appointment_starts: {
+        description: 'Remind pupil of upcoming match appointment',
+        sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
+    },
+    student_match_appointment_starts: {
+        description: 'Remind student of upcoming match appointment',
+        sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
+    },
+    pupil_group_appointment_starts: {
+        description: 'Remind pupil of upcoming group appointment',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: { firstname: 'Student' },
+            ...sampleCourse,
+        },
+    },
+    student_group_appointment_starts: {
+        description: 'Remind student of upcoming group appointment',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: { firstname: 'Student' },
+            ...sampleCourse,
+        },
+    },
+    cancel_group_appointment_reminder: {
+        description: 'Cancel / group appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
+    cancel_match_appointment_reminder: {
+        description: 'Cancel / match appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
+    TEST: {
+        description: 'For Tests',
+        sampleContext: { a: 'a' },
+    },
+    TEST2: {
+        description: 'For Tests',
+        sampleContext: { a: 'a' },
+    },
 } as const;
 
 // Instead of specifying each action context twice (once as a type and once as a sampleContext value)
@@ -552,6 +586,15 @@ type MapLiteralTypeToType<Input> = {
 };
 
 export type ActionID = keyof typeof _notificationActions;
+const actionsIDs = Object.keys(_notificationActions);
+
+export function asActionID(id: string) {
+    if (!actionsIDs.includes(id)) {
+        throw new Error(`Invalid Action ID ${id}`);
+    }
+
+    return id as ActionID;
+}
 
 // Unlike NotificationContext which is just typed as { [any: string]: string }, this type derives concrete key value pairs from the sampleContexts above
 export type SpecificNotificationContext<ID extends ActionID> = MapLiteralTypeToType<(typeof _notificationActions)[ID]['sampleContext']> &
@@ -568,4 +611,8 @@ export function getNotificationActions(): NotificationAction[] {
             user: sampleUser,
         },
     }));
+}
+
+export function getSampleContextForAction(id: ActionID) {
+    return notificationActions[id].sampleContext;
 }

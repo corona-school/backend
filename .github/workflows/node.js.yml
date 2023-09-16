@@ -98,4 +98,4 @@ jobs:
       - name: Install Prisma
         run: npx prisma generate
 
-      - run: npm run linter
+      - run: npm run linter -- --max-warnings=0

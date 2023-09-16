@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
-import { prisma } from '../../common/prisma';
-import { getAccessToken } from './zoom-authorization';
+import { prisma } from '../prisma';
+import { getAccessToken } from './authorization';
 import dotenv from 'dotenv';
 import { student } from '@prisma/client';
-import { getLogger } from '../../common/logger/logger';
-import zoomRetry from './zoom-retry';
-import { assureZoomFeatureActive } from '.';
+import { getLogger } from '../logger/logger';
+import zoomRetry from './retry';
+import { assureZoomFeatureActive } from './util';
 import { ZoomUserResponse, ZoomUserType } from './type';
 
 const logger = getLogger('Zoom User');
@@ -125,6 +125,15 @@ async function getZoomUser(email: string): Promise<ZoomUser | null> {
     logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
     const data = response.json() as unknown as ZoomUser;
     return data;
+}
+
+export async function getOrCreateZoomUser(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>) {
+    const existing = await getZoomUser(student.email);
+    if (existing) {
+        return existing;
+    }
+
+    return await createZoomUser(student);
 }
 
 async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
@@ -249,7 +258,7 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
 
         return usersSubset;
     } catch (error) {
-        logger.error(`ERROR to get user infos with error ${error}`);
+        logger.error(`ERROR to get user infos with error ${error}`, error);
         return null;
     }
 }

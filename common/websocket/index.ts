@@ -65,7 +65,7 @@ class WebSocketService {
 
     private removeConnection(userId: string, connectionId: string) {
         if (!this.connectedUsers.has(userId) || !this.connectedUsers.get(userId)?.has(connectionId)) {
-            log.error(`UserId or clientId not found in connected clients: ${[...this.connectedUsers.entries()]}.`);
+            log.info('UserId or clientId not found in connected clients.', new Error('UserId or clientId not found in connected clients.'));
             return;
         }
         this.connectedUsers.get(userId).delete(connectionId);
@@ -109,7 +109,7 @@ class WebSocketService {
                 });
             }
         } catch (err) {
-            log.error(`Error while sending websocket message: ${err.message}`);
+            log.info('Error while sending websocket message', err);
         }
     }
 
@@ -124,7 +124,7 @@ class WebSocketService {
 
     private getAllClients(): ExtendedWebsocket[] {
         let clients: ExtendedWebsocket[] = [];
-        for (let [_, connections] of this.connectedUsers) {
+        for (const [_, connections] of this.connectedUsers) {
             clients = [...clients, ...Array.from(connections.values())];
         }
         return clients;
@@ -150,18 +150,20 @@ class WebSocketService {
     configure(): void {
         this.websocketServer.on('connection', async (ws: ExtendedWebsocket, request) => {
             try {
-                let sessionUser: GraphQLUser;
-
                 const { userId, sessionToken } = getParamsFromConnectionRequest(request.url);
                 log.debug(`Session token: ${sessionToken}`);
                 if (sessionToken.length < 20) {
                     throw new Error('Session Tokens must have at least 20 characters');
                 }
-                sessionUser = await getUserForSession(sessionToken);
-                log.debug(`Session user: ${JSON.stringify(sessionUser)}`);
+                const sessionUser = await getUserForSession(sessionToken);
+                if (!sessionUser) {
+                    throw new Error(`Invalid Session Token`);
+                }
+
                 if (userId !== sessionUser.userID) {
                     throw new Error('Session user does not match user id from connection request parameter');
                 }
+
                 ws['userId'] = userId;
                 // create client
                 const connectionId = createUuid();
@@ -171,11 +173,7 @@ class WebSocketService {
                 log.info(`Connected websocket client with userId: ${userId} and connectionId: ${connectionId}`);
                 this.logConnections();
             } catch (err) {
-                if (!!err?.message) {
-                    log.error(`Error in websocket service: ${err.message}`);
-                } else {
-                    log.error(`Error in websocket service.`);
-                }
+                log.info('Error in websocket service.', err);
                 ws.close(CloseCodes.SERVER_ERROR, err?.message ?? 'Internal server error while operating');
             }
 

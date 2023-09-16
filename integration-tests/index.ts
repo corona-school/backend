@@ -5,23 +5,34 @@
   This can be run with 'npm run integration-tests', and by default runs against the dev backend.
   A different target can be configured by setting the INTEGRATION_TARGET environment */
 
-import { finalizeTests } from './base';
+import { finalizeTests, logger } from './base';
 
 /* Base Tests - Other tests build on them and they always must run */
-import './user';
-import './screening';
+import './01_user';
+import './02_screening';
 /* Feature Tests - These are independent and can be disabled */
-import './matching';
-import './certificate';
+import './03_matching';
 
-import './auth';
-import './settings';
-import './course';
-import './appointments';
-import './admin';
-import './registerPlusMany';
+try {
+    // Try loading PDF rendering
+    require('html-pppdf');
+    // If that worked, also run the tests related to it
+    require('./04_certificate');
+} catch (error) {
+    // If not, ignore the tests
+    logger.failure('Skipped Certificate Test as PDF Rendering is not supported');
+}
+
+import './05_auth';
+import './06_settings';
+import './07_course';
+import './08_appointments';
+import './09_chat';
+import './10_admin';
+import './11_registerPlusMany';
+import './12_notifications';
 /* Account Deactivation - Independent, but needs to be last */
-import './deactivation';
-import './redaction';
+import './13_deactivation';
+import './14_redaction';
 
 void finalizeTests();
