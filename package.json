@@ -178,7 +178,7 @@
     "ext": "js,json"
   },
   "lint-staged": {
-    "*.ts": ["eslint --fix", "prettier --write"],
+    "*.ts": ["prettier --write"],
     "*.md": ["prettier --write"]
   }
 }
