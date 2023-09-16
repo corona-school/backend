@@ -31,6 +31,10 @@ const HOURS_TO_MS = 60 * 60 * 1000;
 // The time where we consider a Notification to happen "now":
 const SLACK = 1000; /* ms */
 
+// DO NOT USE! Only use in local / test environments
+let SILENCE_NOTIFICATION_SYTEM = false;
+export let _setSilenceNotificationSystem = (value: boolean) => (SILENCE_NOTIFICATION_SYTEM = value);
+
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
 /* Creates an entry in the concrete_notifications table, to track the notification */
@@ -407,6 +411,11 @@ export async function actionTakenAt<ID extends ActionID>(
     noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
+    if (SILENCE_NOTIFICATION_SYTEM) {
+        logger.debug(`No Action taken as Notification System is silenced`);
+        return;
+    }
+
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
         return;

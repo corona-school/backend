@@ -24,6 +24,7 @@ import { createPupilMatchRequest, createStudentMatchRequest } from './common/mat
 import { createConnection } from 'typeorm';
 import { createCourseTag } from './common/courses/tags';
 import { course_category_enum as CourseCategory, } from "@prisma/client";
+import { _setSilenceNotificationSystem } from './common/notification';
 
 const logger = getLogger('DevSetup');
 
@@ -39,6 +40,10 @@ void (async function setupDevDB() {
     logger.info('Starting to Seed DB');
 
     await createConnection();
+
+
+
+    _setSilenceNotificationSystem(true);
 
     await prisma.cooperation.create({
         data: {
@@ -768,6 +773,8 @@ void (async function setupDevDB() {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
+
+    _setSilenceNotificationSystem(false);
 
     logger.info(`Successfully seeded the DB`);
 })();
