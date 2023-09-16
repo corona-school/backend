@@ -13,7 +13,7 @@ let cachedTemplate: EJS.ClientFunction = null;
 /* Loads the template from the /assets folder, falls back to the default language if fallback is true */
 function getTemplate(): EJS.ClientFunction {
     if (!cachedTemplate) {
-        let path = CERTFICATE_PATH;
+        const path = CERTFICATE_PATH;
 
         cachedTemplate = EJS.compile(readFileSync(path, 'utf8'));
     }

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { Match } from './Match';
 import { Person, RegistrationSource } from './Person';

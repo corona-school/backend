@@ -30,5 +30,5 @@ export function accessURLForKey(key: string) {
 
 export async function generatePresignedURL(key: string, bucket: string) {
     const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
-    return getSignedUrl(s3, cmd, { expiresIn: 3600 });
+    return await getSignedUrl(s3, cmd, { expiresIn: 3600 });
 }

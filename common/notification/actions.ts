@@ -3,7 +3,7 @@
 //  however a few other attributes of the action are maintained here to provide admin users with better tooling
 //  for creating notifications for these actions. The ones documented here are incomplete
 
-import { NotificationContextExtensions } from './types';
+import { type NotificationContextExtensions } from './types';
 
 type NestedStringObject = { [key: string]: string | boolean | NestedStringObject };
 

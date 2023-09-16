@@ -1,5 +1,5 @@
-/* eslint-disable camelcase */
 import dotenv from 'dotenv';
+// eslint-disable-next-line import/no-cycle
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';

@@ -55,7 +55,7 @@ export const isAppointmentOneWeekLater = (appointmentDate: Date) => {
     return diffDays > 6;
 };
 
-export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[], silent: boolean = false) => {
+export const createMatchAppointments = async (matchId: number, appointmentsToBeCreated: AppointmentCreateMatchInput[], silent = false) => {
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;

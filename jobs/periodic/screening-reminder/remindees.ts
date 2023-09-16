@@ -1,9 +1,8 @@
-import { EntityManager } from "typeorm";
-import { Student } from "../../../common/entity/Student";
+import { EntityManager } from 'typeorm';
+import { Student } from '../../../common/entity/Student';
 
-import { MAX_REMINDER_COUNT, REMINDER_INTERVALS } from "./constants";
-import moment from "moment-timezone";
-
+import { MAX_REMINDER_COUNT, REMINDER_INTERVALS } from './constants';
+import moment from 'moment-timezone';
 
 // ------------
 // HeLPERS
@@ -19,8 +18,7 @@ function computeNextScreeningReminderDate(sentReminderCount: number, lastInvitat
 
     const daysAfterPreviousReminderUntilNextReminder = REMINDER_INTERVALS[sentReminderCount];
 
-    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, "days")
-        .toDate();
+    return moment(lastInvitationSentDate).add(daysAfterPreviousReminderUntilNextReminder, 'days').toDate();
 }
 
 // ------------
@@ -28,33 +26,42 @@ function computeNextScreeningReminderDate(sentReminderCount: number, lastInvitat
 // ------------
 // All students who still need a tutor screening (and no Jufo-alumni screening or instructor screening)
 async function getAllStudentsWithPendingTutorScreening(manager: EntityManager) {
-    return manager
+    return await manager
         .createQueryBuilder()
-        .select("s")
-        .from(Student, "s")
-        .leftJoinAndSelect("s.screening", "sc")
-        .leftJoinAndSelect("s.projectCoachingScreening", "pcsc")
-        .where("s.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS FALSE AND (s.isStudent IS TRUE OR (s.isProjectCoach IS TRUE AND s.isUniversityStudent IS TRUE)) AND (sc IS NULL AND pcsc IS NULL) AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
+        .select('s')
+        .from(Student, 's')
+        .leftJoinAndSelect('s.screening', 'sc')
+        .leftJoinAndSelect('s.projectCoachingScreening', 'pcsc')
+        .where(
+            's.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS FALSE AND (s.isStudent IS TRUE OR (s.isProjectCoach IS TRUE AND s.isUniversityStudent IS TRUE)) AND (sc IS NULL AND pcsc IS NULL) AND s.sentScreeningReminderCount BETWEEN :srcLow AND :srcUp',
+            { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }
+        )
         .getMany();
 }
 
 async function getAllStudentsWithPendingJufoAlumniScreening(manager: EntityManager) {
-    return manager
+    return await manager
         .createQueryBuilder()
-        .select("s")
-        .from(Student, "s")
-        .leftJoinAndSelect("s.projectCoachingScreening", "pcsc")
-        .where("s.active IS TRUE AND s.verification IS NULL AND (s.isInstructor IS FALSE AND s.isStudent IS FALSE AND s.isProjectCoach IS TRUE AND s.isUniversityStudent IS FALSE) AND pcsc IS NULL AND s.sentJufoAlumniScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
+        .select('s')
+        .from(Student, 's')
+        .leftJoinAndSelect('s.projectCoachingScreening', 'pcsc')
+        .where(
+            's.active IS TRUE AND s.verification IS NULL AND (s.isInstructor IS FALSE AND s.isStudent IS FALSE AND s.isProjectCoach IS TRUE AND s.isUniversityStudent IS FALSE) AND pcsc IS NULL AND s.sentJufoAlumniScreeningReminderCount BETWEEN :srcLow AND :srcUp',
+            { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }
+        )
         .getMany();
 }
 
 async function getAllStudentsWithPendingInstructorScreening(manager: EntityManager) {
-    return manager
+    return await manager
         .createQueryBuilder()
-        .select("s")
-        .from(Student, "s")
-        .leftJoinAndSelect("s.instructorScreening", "sc")
-        .where ("s.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS TRUE AND sc IS NULL AND s.sentInstructorScreeningReminderCount BETWEEN :srcLow AND :srcUp", { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 })
+        .select('s')
+        .from(Student, 's')
+        .leftJoinAndSelect('s.instructorScreening', 'sc')
+        .where(
+            's.active IS TRUE AND s.verification IS NULL AND s.isInstructor IS TRUE AND sc IS NULL AND s.sentInstructorScreeningReminderCount BETWEEN :srcLow AND :srcUp',
+            { srcLow: 0, srcUp: MAX_REMINDER_COUNT - 1 }
+        )
         .getMany();
 }
 
@@ -63,7 +70,7 @@ async function getAllStudentsWithPendingInstructorScreening(manager: EntityManag
 // ------------
 function filterToRemindAtDate(remindDateForStudent: (s: Student) => Date): (students: Student[], date: Date) => Student[] {
     return (students: Student[], date: Date) => {
-        return students.filter(s => {
+        return students.filter((s) => {
             const remindDate = remindDateForStudent(s);
 
             if (!remindDate) {
@@ -74,9 +81,15 @@ function filterToRemindAtDate(remindDateForStudent: (s: Student) => Date): (stud
         });
     };
 }
-const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate));
-const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate));
-const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate(s => computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate));
+const filterStudentsForTutorScreeningToRemindAtDate = filterToRemindAtDate((s) =>
+    computeNextScreeningReminderDate(s.sentScreeningReminderCount, s.lastSentScreeningInvitationDate)
+);
+const filterStudentsForJufoAlumniScreeningToRemindAtDate = filterToRemindAtDate((s) =>
+    computeNextScreeningReminderDate(s.sentJufoAlumniScreeningReminderCount, s.lastSentJufoAlumniScreeningInvitationDate)
+);
+const filterStudentsForInstructorScreeningToRemindAtDate = filterToRemindAtDate((s) =>
+    computeNextScreeningReminderDate(s.sentInstructorScreeningReminderCount, s.lastSentInstructorScreeningInvitationDate)
+);
 
 // ------------------
 // StUDENTS TO REMIND

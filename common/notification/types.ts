@@ -2,6 +2,7 @@
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
+// eslint-disable-next-line import/no-cycle
 import { NotificationType } from '../entity/Notification';
 import { ActionID } from './actions';
 

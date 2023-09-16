@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
 import { Pupil } from './Pupil';
 import { Subcourse } from './Subcourse';

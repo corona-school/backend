@@ -1,6 +1,6 @@
 import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { loginAsUser } from '../authentication';
+import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -97,7 +97,16 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = { ip: '?', prisma, sessionToken: 'fake', setCookie: () => {}, sessionID: 'FAKE' };
+        const fakeContext: GraphQLContext = {
+            user: UNAUTHENTICATED_USER,
+            ip: '?',
+            prisma,
+            sessionToken: 'fake',
+            setCookie: () => {
+                /* ignore */
+            },
+            sessionID: 'FAKE',
+        };
         await loginAsUser(user, fakeContext);
         return fakeContext.user.roles;
     }
@@ -186,33 +195,33 @@ export class UserFieldsResolver {
         @Arg('cursor', { nullable: true }) cursor?: number,
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
-        return getAppointmentsForUser(user, take, skip, cursor, direction);
+        return await getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.OWNER)
     async hasAppointments(@Root() user: User): Promise<boolean> {
-        return hasAppointmentsForUser(user);
+        return await hasAppointmentsForUser(user);
     }
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return getLastAppointmentId(user);
+        return await getLastAppointmentId(user);
     }
 
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
-        return getMyContacts(user);
+        return await getMyContacts(user);
     }
 
     @FieldResolver((returns) => String)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
+    zoomSDKJWT(@Ctx() context: GraphQLContext, @Arg('meetingId') meetingId: string, @Arg('role') role: number) {
         const meetingIdAsInt = parseInt(meetingId);
-        const sdkKey = await generateMeetingSDKJWT(meetingIdAsInt, role);
+        const sdkKey = generateMeetingSDKJWT(meetingIdAsInt, role);
         return sdkKey;
     }
 

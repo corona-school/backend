@@ -2,6 +2,7 @@ import { UserInputError } from 'apollo-server-express';
 import { isEmail } from 'class-validator';
 
 // ---------- Metadata Storage ----------------------
+// eslint-disable-next-line @typescript-eslint/ban-types
 type GraphQLTypeClass = Function;
 
 interface Validator<Options, Value> {
@@ -37,7 +38,7 @@ const CreateValidate = <Options, Value>(validate: Validator<Options, Value>['val
     };
 
 // --------- Runtime - Validate incoming arguments against Metadata --------
-export function validate(argValue: any, argType: Function) {
+export function validate(argValue: any, argType: GraphQLTypeClass) {
     if (!validatorRegistry.has(argType)) {
         return;
     }

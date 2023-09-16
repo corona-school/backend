@@ -4,7 +4,6 @@ import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
 import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
-import { refreshToken } from '../../common/pupil/token';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
@@ -25,6 +24,7 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
+// eslint-disable-next-line import/no-cycle
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
@@ -191,11 +191,11 @@ export async function updatePupil(
 }
 
 async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    let { email, register, activate } = data;
-
+    let { email } = data;
+    const { register, activate } = data;
     try {
         email = validateEmail(email);
-        if (!!register) {
+        if (register) {
             register.email = validateEmail(register.email);
             if (register.email !== email) {
                 throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
@@ -210,8 +210,8 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 
         await prisma.$transaction(async (tx) => {
             let pupil = existingAccount;
-            if (!!register) {
-                if (!!pupil) {
+            if (register) {
+                if (pupil) {
                     // if account already exists, overwrite relevant data with new plus data
                     logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
                     pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);

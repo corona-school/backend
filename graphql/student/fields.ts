@@ -26,6 +26,8 @@ import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
 import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
 import { Prisma } from '@prisma/client';
+import assert from 'assert';
+import { isSessionStudent } from '../authentication';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -38,12 +40,14 @@ export class ExtendFieldsStudentResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ): Promise<Instructor[]> {
+        assert.ok(isSessionStudent(context));
+
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
             verification: null,
             instructor_screening: { is: { success: { equals: true } } },
-            id: { not: { equals: context.user.studentId! } },
+            id: { not: { equals: context.user.studentId } },
         };
 
         return await prisma.student.findMany({
@@ -80,7 +84,7 @@ export class ExtendFieldsStudentResolver {
 
     @FieldResolver((type) => [Subject])
     @Authorized(Role.USER, Role.ADMIN, Role.SCREENER)
-    async subjectsFormatted(@Root() student: Required<Student>) {
+    subjectsFormatted(@Root() student: Required<Student>) {
         return parseSubjectString(student.subjects);
     }
 

@@ -42,7 +42,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
     // Notifications are sent only when an appointment is cancelled, not when a subcourse is cancelled
     if (!silent) {
         switch (appointment.appointmentType) {
-            case AppointmentType.group:
+            case AppointmentType.group: {
                 const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
                 const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
                 const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
@@ -62,10 +62,9 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                         appointment: getAppointmentForNotification(appointment),
                     });
                 }
-
                 break;
-
-            case AppointmentType.match:
+            }
+            case AppointmentType.match: {
                 const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true, student: true } });
                 await Notification.actionTaken(userForPupil(match.pupil), 'student_cancel_appointment_match', {
                     appointment: getAppointmentForNotification(appointment),
@@ -79,7 +78,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                 });
 
                 break;
-
+            }
             case AppointmentType.internal:
             case AppointmentType.legacy:
                 break;

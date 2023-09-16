@@ -124,7 +124,7 @@ class WebSocketService {
 
     private getAllClients(): ExtendedWebsocket[] {
         let clients: ExtendedWebsocket[] = [];
-        for (let [_, connections] of this.connectedUsers) {
+        for (const [_, connections] of this.connectedUsers) {
             clients = [...clients, ...Array.from(connections.values())];
         }
         return clients;
@@ -150,14 +150,12 @@ class WebSocketService {
     configure(): void {
         this.websocketServer.on('connection', async (ws: ExtendedWebsocket, request) => {
             try {
-                let sessionUser: GraphQLUser;
-
                 const { userId, sessionToken } = getParamsFromConnectionRequest(request.url);
                 log.debug(`Session token: ${sessionToken}`);
                 if (sessionToken.length < 20) {
                     throw new Error('Session Tokens must have at least 20 characters');
                 }
-                sessionUser = await getUserForSession(sessionToken);
+                const sessionUser = await getUserForSession(sessionToken);
                 if (!sessionUser) {
                     throw new Error(`Invalid Session Token`);
                 }

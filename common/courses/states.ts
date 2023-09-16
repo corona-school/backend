@@ -97,7 +97,7 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
         return { allowed: false, reason: 'no-lectures' };
     }
 
-    let currentDate = moment();
+    const currentDate = moment();
     const pastLectures = lectures.filter((lecture) => moment(lecture.start).isBefore(currentDate));
     if (pastLectures.length !== 0) {
         return { allowed: false, reason: 'past-lectures' };
@@ -172,8 +172,8 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
     }
     const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
 
-    const isMaxParticipantsChanged: boolean = Boolean(update.maxParticipants);
-    const isGroupChatTypeChanged: boolean = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
+    const isMaxParticipantsChanged = Boolean(update.maxParticipants);
+    const isGroupChatTypeChanged = Boolean(update.groupChatType && subcourse.groupChatType !== update.groupChatType);
 
     if (isMaxParticipantsChanged) {
         if (update.maxParticipants < participantCount) {

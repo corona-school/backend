@@ -44,7 +44,7 @@ export async function updateAppointment(
 
     const student = await getStudent(user);
     switch (appointmentType) {
-        case AppointmentType.group:
+        case AppointmentType.group: {
             const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
@@ -71,8 +71,8 @@ export async function updateAppointment(
                 });
             }
             break;
-
-        case AppointmentType.match:
+        }
+        case AppointmentType.match: {
             const match = await prisma.match.findUnique({ where: { id: updatedAppointment.matchId }, include: { pupil: true } });
             const matchAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
             lastDate = matchAppointments[matchAppointments.length - 1].start;
@@ -92,7 +92,7 @@ export async function updateAppointment(
             });
 
             break;
-
+        }
         case AppointmentType.internal:
         case AppointmentType.legacy:
             break;

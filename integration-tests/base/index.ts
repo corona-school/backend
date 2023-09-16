@@ -4,7 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import './mock';
 
 import * as WebServer from '../../web';
+// eslint-disable-next-line import/no-cycle
 import { clearFetchMocks, expectNoFetchMockLeft } from './mock';
+// eslint-disable-next-line import/no-cycle
 import { cleanupMockedNotifications } from './notifications';
 import { getLogger } from '../../common/logger/logger';
 
@@ -113,7 +115,9 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
     tests.push({
         name,
         runner,
-        resolve: (it) => { result = Promise.resolve(it); },
+        resolve: (it) => {
+            result = Promise.resolve(it);
+        },
         reject: (error) => {
             result = Promise.reject(error);
             // Prevent unhandled rejections:
@@ -130,7 +134,7 @@ export function test<T>(name: string, runner: () => Promise<T>): PromiseLike<T> 
             }
 
             return result.then(onfulfilled, onrejected);
-        }
+        },
     };
 }
 
@@ -143,7 +147,7 @@ export async function finalizeTests() {
     logger.headline('TESTING');
 
     const startAll = Date.now();
-    let failedTests: string[] = [];
+    const failedTests: string[] = [];
     for (const test of tests) {
         logger.headline(`TEST ${test.name}`);
         try {

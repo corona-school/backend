@@ -22,7 +22,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
     const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 
     switch (appointment.appointmentType) {
-        case AppointmentType.group:
+        case AppointmentType.group: {
             const subCourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { course: true } });
             for (const organizerId of appointment.organizerIds) {
                 const user = await getUser(organizerId);
@@ -34,7 +34,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
                 });
             }
             break;
-
+        }
         case AppointmentType.match:
             for (const organizerId of appointment.organizerIds) {
                 const user = await getUser(organizerId);

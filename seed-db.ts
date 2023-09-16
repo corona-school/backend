@@ -647,7 +647,7 @@ void (async function setupDevDB() {
     {
         // The first course has a lot of lectures to better test joining course meetings
         let currentLecture = Date.now();
-        let endLectures = Date.now() + 24 * 60 * 60 * 1000;
+        const endLectures = Date.now() + 24 * 60 * 60 * 1000;
         while (currentLecture < endLectures) {
             await prisma.lecture.create({
                 data: {

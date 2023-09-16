@@ -1,15 +1,17 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
 import { User, getUser, userForPupil, userForStudent } from '../user';
+// eslint-disable-next-line import/no-cycle
 import { getOrCreateChatUser } from './user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
 import { getPupil, getStudent } from '../../graphql/util';
+// eslint-disable-next-line import/no-cycle
 import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
-import { MatchContactPupil, MatchContactStudent } from './contacts';
+import { type MatchContactPupil, type MatchContactStudent } from './contacts';
 import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
@@ -165,11 +167,9 @@ const convertConversationInfosToString = (conversationInfos: ConversationInfos):
         custom: {} as ChatMetaData,
     };
 
-    for (const key in conversationInfos.custom) {
-        if (conversationInfos.custom.hasOwnProperty(key)) {
-            const value = conversationInfos.custom[key];
-            convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
-        }
+    for (const key of Object.keys(conversationInfos.custom)) {
+        const value = conversationInfos.custom[key];
+        convertedConversationInfos.custom[key] = typeof value === 'string' ? value : JSON.stringify(value);
     }
 
     return convertedConversationInfos;
@@ -200,8 +200,10 @@ const convertTJConversation = (conversation: TJConversation): Conversation => {
     };
 };
 
-const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent => contact.hasOwnProperty('student');
-const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil => contact.hasOwnProperty('pupil');
+const isStudentContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactStudent =>
+    Object.prototype.hasOwnProperty.call(contact, 'student');
+const isPupilContact = (contact: MatchContactPupil | MatchContactStudent): contact is MatchContactPupil =>
+    Object.prototype.hasOwnProperty.call(contact, 'pupil');
 
 export {
     userIdToTalkJsId,
