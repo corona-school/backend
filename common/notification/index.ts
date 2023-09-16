@@ -33,7 +33,7 @@ const SLACK = 1000; /* ms */
 
 // DO NOT USE! Only use in local / test environments
 let SILENCE_NOTIFICATION_SYTEM = false;
-export let _setSilenceNotificationSystem = (value: boolean) => (SILENCE_NOTIFICATION_SYTEM = value);
+export const _setSilenceNotificationSystem = (value: boolean) => (SILENCE_NOTIFICATION_SYTEM = value);
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
