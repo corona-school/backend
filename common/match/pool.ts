@@ -3,18 +3,22 @@ import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore The matching algorithm is optional, to allow for slim local setups
 import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
+// eslint-disable-next-line import/no-cycle
 import { createMatch } from './create';
 import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
-import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
-import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
-import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, InterestConfirmationStatus, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
+
+export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13,
+};
 
 const logger = getLogger('MatchingPool');
 

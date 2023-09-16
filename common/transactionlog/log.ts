@@ -5,8 +5,8 @@ import {
     course_attendance_log as CourseAttendanceLog,
     bbb_meeting as BBBMeeting,
 } from '@prisma/client';
-import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
 import { getLogger } from '../../common/logger/logger';
+import { InterestConfirmationStatus } from '../match/interest';
 import { prisma } from '../prisma';
 
 /* To ensure consistency with existing logs,

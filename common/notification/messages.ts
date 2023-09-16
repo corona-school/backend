@@ -1,12 +1,10 @@
-import { message_translation_language_enum as MessageTranslationLanguage } from '@prisma/client';
+import { message_translation_language_enum as TranslationLanguage } from '@prisma/client';
 import { getSampleContext } from './notification';
-import { ConcreteNotification, Notification, NotificationContext, NotificationMessage } from './types';
+import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate } from './types';
 import { prisma } from '../prisma';
-import { MessageTranslation, TranslationLanguage } from '../entity/MessageTranslation';
-import { NotificationType } from '../entity/Notification';
 import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
-import { NotificationMessageType } from '../../graphql/types/notificationMessage';
+import { MessageTemplateType, NotificationMessageType } from '../../graphql/types/notificationMessage';
 import { getContext } from '.';
 import { getUser } from '../user';
 import { getLogger } from '../logger/logger';
@@ -15,7 +13,7 @@ const logger = getLogger('Message');
 
 export async function getMessageForNotification(
     notificationId: number,
-    language: TranslationLanguage = TranslationLanguage.DE
+    language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessage | null> {
     const notification = await prisma.notification.findUnique({
         where: { id: notificationId },
@@ -26,16 +24,16 @@ export async function getMessageForNotification(
         return null;
     }
 
-    const translation = (await prisma.message_translation.findFirst({
+    const translation = await prisma.message_translation.findFirst({
         where: { notificationId: notificationId, language },
         select: { template: true, navigateTo: true },
-    })) as unknown as Partial<MessageTranslation> | null;
+    });
 
     if (!translation || !translation.template) {
         return null;
     }
 
-    const { headline, body, modalText } = translation.template;
+    const { headline, body, modalText } = translation.template as unknown as TranslationTemplate;
 
     if (!body || !headline) {
         return null;
@@ -91,7 +89,7 @@ async function loadTemplate(notificationID: number, language: TranslationLanguag
 // Renders a Message for a certain Concrete Notification
 export async function getMessage(
     concreteNotification: ConcreteNotification,
-    language: TranslationLanguage = TranslationLanguage.DE
+    language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessageType | null> {
     const template = await loadTemplate(concreteNotification.notificationID, language);
     if (!template) {
@@ -175,7 +173,7 @@ export async function setMessageTranslation({
     navigateTo,
 }: {
     notification: Notification;
-    language: MessageTranslationLanguage;
+    language: TranslationLanguage;
     body: string;
     headline: string;
     modalText?: string;

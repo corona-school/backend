@@ -2,8 +2,7 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Context, Notification, NotificationID } from './types';
-import { NotificationRecipient } from '../entity/Notification';
+import { Context, Notification, NotificationID, NotificationMessage, NotificationRecipient } from './types';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 // eslint-disable-next-line import/no-cycle

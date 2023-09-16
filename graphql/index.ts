@@ -1,3 +1,6 @@
+// c.f. https://typegraphql.com/docs/0.17.5/installation.html
+import 'reflect-metadata';
+
 import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap, FindManyStudentResolver, FindManyPupil_screeningResolver } from './generated';
 import { buildSchemaSync } from 'type-graphql';
 import {

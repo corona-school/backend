@@ -4,7 +4,7 @@ import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { ZoomUser, createZoomUser, getOrCreateZoomUser, getZoomUser } from '../zoom/user';
-import { Prisma, student as Student, lecture as Appointment } from '@prisma/client';
+import { Prisma, student as Student, lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
@@ -13,7 +13,6 @@ import { getNotificationContextForSubcourse } from '../mails/courses';
 import { User, getStudentsFromList, userForPupil, userForStudent } from '../user';
 import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
-import { AppointmentType } from '../../common/entity/Lecture';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 
 const logger = getLogger();
@@ -183,7 +182,7 @@ export async function createZoomMeetingForAppointment(appointment: Appointment) 
         throw new PrerequisiteError(`Unsupported Organizer Types for Zoom Appointment`);
     }
 
-    const meeting = await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.GROUP);
+    const meeting = await createZoomMeetingForAppointmentWithHosts(hosts, appointment, appointment.appointmentType === AppointmentType.group);
     await prisma.lecture.update({ where: { id: appointment.id }, data: { zoomMeetingId: meeting.id.toString() } });
 }
 

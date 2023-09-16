@@ -7,7 +7,6 @@ import { getFullName, User, queryUser, getUser } from '../user';
 import { getLogger } from '../logger/logger';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
-import { Pupil } from '../entity/Pupil';
 import { triggerHook } from './hook';
 import { USER_APP_DOMAIN } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
