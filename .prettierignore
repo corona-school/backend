@@ -4,3 +4,4 @@ graphql/generated/**
 linter/**
 node_modules/**
 built/**
+package-lock.json

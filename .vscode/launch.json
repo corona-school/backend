@@ -10,9 +10,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "web:debug"
-            ],
+            "runtimeArgs": ["run-script", "web:debug"],
             "envFile": "${workspaceRoot}/.env",
             "outputCapture": "std",
             "timeout": 20000
@@ -23,9 +21,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "jobs:debug"
-            ],
+            "runtimeArgs": ["run-script", "jobs:debug"],
             "port": 9229,
             "envFile": "${workspaceRoot}/.env",
             "outputCapture": "std",
@@ -37,9 +33,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "test"
-            ],
+            "runtimeArgs": ["run-script", "test"],
             "envFile": "${workspaceRoot}/.env",
             "outputCapture": "std"
         }

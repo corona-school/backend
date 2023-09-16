@@ -1,4 +1,4 @@
-import { subcourse as Subcourse, course as Course, student as Student } from '@prisma/client';
+import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -17,7 +17,6 @@ import {
     sendSystemMessage,
     updateConversation,
 } from '../chat';
-import { CourseState } from '../entity/Course';
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
@@ -65,7 +64,7 @@ export async function subcourseOver(subcourse: Subcourse) {
 
 /* ------------------ Course Review ----------------- */
 export async function allowCourse(course: Course, screeningComment: string | null) {
-    await prisma.course.update({ data: { screeningComment, courseState: CourseState.ALLOWED }, where: { id: course.id } });
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.allowed }, where: { id: course.id } });
     logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 
     // Usually when a new course is created, instructors also create a proper subcourse with it
@@ -80,7 +79,7 @@ export async function allowCourse(course: Course, screeningComment: string | nul
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
-    await prisma.course.update({ data: { screeningComment, courseState: CourseState.DENIED }, where: { id: course.id } });
+    await prisma.course.update({ data: { screeningComment, courseState: CourseState.denied }, where: { id: course.id } });
     logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 }
 

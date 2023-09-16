@@ -1,6 +1,6 @@
-import assert from "assert";
+import assert from 'assert';
 // eslint-disable-next-line import/no-cycle
-import { adminClient } from ".";
+import { adminClient } from '.';
 
 interface MockNotification {
     id: number;
@@ -14,16 +14,24 @@ interface ConcreteNotification {
 
 let currentMockedNotifications: number[] = [];
 
-export async function createMockNotification(action: string, description: string, delay?: number, interval?: number, cancelAction?: string): Promise<MockNotification> {
-    const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
+export async function createMockNotification(
+    action: string,
+    description: string,
+    delay?: number,
+    interval?: number,
+    cancelAction?: string
+): Promise<MockNotification> {
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation Create${description} {
         notificationCreate(notification: { 
             description: "MOCK ${description}"
             active: false
             recipient: 0
             onActions: { set: ["${action}"]}
-            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ""}]}
-            ${delay ? "delay: " + delay : ""}
-            ${interval ? "interval: " + interval : ""}
+            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ''}]}
+            ${delay ? 'delay: ' + delay : ''}
+            ${interval ? 'interval: ' + interval : ''}
         }) { id }
     }`);
 
@@ -54,7 +62,7 @@ export async function assertUserReceivedNotification(notification: MockNotificat
       }
     }`);
 
-    assert.strictEqual(result.concrete_notifications.length, 1, "Expected user to receive exactly one concrete notification");
+    assert.strictEqual(result.concrete_notifications.length, 1, 'Expected user to receive exactly one concrete notification');
 
     return result.concrete_notifications[0];
 }

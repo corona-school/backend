@@ -6,7 +6,6 @@ import * as scheduler from './scheduler';
 import { allJobs } from './list';
 import { configureGracefulShutdown } from './shutdown';
 import { executeJob } from './manualExecution';
-import { createConnection } from 'typeorm';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
@@ -28,10 +27,7 @@ configureGracefulShutdown(scheduler);
 if (process.argv.length >= 4 && process.argv[2] === '--execute') {
     const job = process.argv[3];
     log.info(`Manually executing ${job}, creating DB connection`);
-    void createConnection().then(() => {
-        log.info(`DB connection created, running job`);
-        void executeJob(job);
-    });
+    void executeJob(job);
 } else {
     log.info('To directly run one of the jobs, use --execute <name>, we now schedule Cron Jobs to run in the future');
     void scheduleJobs(allJobs);

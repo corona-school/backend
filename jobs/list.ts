@@ -1,7 +1,6 @@
 import { CSCronJob } from './types';
 
 //import the jobs
-import screeningReminderJob from './periodic/screening-reminder';
 import courseReminderJob from './periodic/course-reminder';
 import * as Notification from '../common/notification';
 import { cleanupSecrets } from '../common/secret';
@@ -19,8 +18,6 @@ export const allJobs: CSCronJob[] = [
     // every morning, quite early (but only on Monday and Thursday)
     // { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
     { cronTime: '00 55 07 * * 1,4', jobFunction: runInterestConfirmations, name: 'runInterestConfirmations' },
-    // every morning
-    { cronTime: '00 00 09 * * *', jobFunction: screeningReminderJob, name: 'screeningReminderJob' },
     // { cronTime: "00 56 08 * * *", jobFunction: tutoringMatchMaking}, // only scheduled manually, at the moment
     // every morning, but a little later
     // { cronTime: '00 15 09 * * *', jobFunction: courseReminderJob, name: 'courseReminderJob' },

@@ -1,7 +1,7 @@
 import { User } from '../user';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
-import { SecretType } from '../entity/Secret';
+import { secret_type_enum as SecretType } from '@prisma/client';
 
 export * from './password';
 // eslint-disable-next-line import/no-cycle

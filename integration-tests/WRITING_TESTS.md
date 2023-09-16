@@ -8,31 +8,32 @@ To run integration tests locally, ensure the database url is set correctly to so
 
 To write a new integration test, add a new Typescript file to `/integration-tests` and import it from `index.ts`.
 A test consists of the following parts:
-- the `test` function gives the test a name and handles errors
-- with the clients `defaultClient` (unauthenticated user), `adminClient` and the clients created with `createUserClient` one can send requests to GraphQL via the `.request` and `.requestShallFail` methods
-- For validation the [`assert`](https://nodejs.org/api/assert.html) module of NodeJS is used
-- calls to external systems must be mocked with `expectFetch`
+
+-   the `test` function gives the test a name and handles errors
+-   with the clients `defaultClient` (unauthenticated user), `adminClient` and the clients created with `createUserClient` one can send requests to GraphQL via the `.request` and `.requestShallFail` methods
+-   For validation the [`assert`](https://nodejs.org/api/assert.html) module of NodeJS is used
+-   calls to external systems must be mocked with `expectFetch`
 
 The result when look like this:
 
 ```ts
-test("Example Test", async () => {
+test('Example Test', async () => {
     const client = createUserClient();
-    
+
     const response = await client.request(`query { ... }`);
-    assert.assertEqual(response.value, "expected");
+    assert.assertEqual(response.value, 'expected');
 });
 ```
 
 Tests can also build up on results of previous tests, i.e. one can use the account registered in the registration test in the login test:
 
 ```ts
-const accountTest = test("RegisterPupil", async () => {
+const accountTest = test('RegisterPupil', async () => {
     // ...
     return account;
 });
 
-test("LoginPupil", async () => {
+test('LoginPupil', async () => {
     const account = await accountTest;
     // ...
 });
