@@ -1,5 +1,4 @@
 import assert from "assert";
-// eslint-disable-next-line import/no-cycle
 import { adminClient } from ".";
 
 interface MockNotification {
