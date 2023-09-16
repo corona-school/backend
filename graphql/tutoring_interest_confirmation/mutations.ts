@@ -1,13 +1,12 @@
 import { Resolver, Mutation, Root, Arg, Authorized, Ctx } from 'type-graphql';
 import { Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation } from '../generated';
-import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
 import { Role } from '../authorizations';
 import { getPupil } from '../util';
 import { prisma } from '../../common/prisma';
 import { logTransaction } from '../../common/transactionlog/log';
 import { RedundantError } from '../../common/util/error';
 import { UserInputError } from '../error';
-import { requestInterestConfirmation } from '../../common/match/interest';
+import { InterestConfirmationStatus, requestInterestConfirmation } from '../../common/match/interest';
 import { getLogger } from '../../common/logger/logger';
 import { v4 as uuid } from 'uuid';
 

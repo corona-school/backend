@@ -2,13 +2,18 @@ import type { Prisma, pupil as Pupil, student as Student, pupil_tutoring_interes
 import * as Notification from '../notification';
 import { v4 as uuid } from 'uuid';
 import { prisma } from '../prisma';
-import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
 import assert from 'assert';
 import { getLogger } from '../logger/logger';
 import { userForPupil } from '../user';
 
 const REMIND_AFTER = 7; /* days */
 const REMOVE_AFTER = 14; /* days */
+
+export enum InterestConfirmationStatus {
+    PENDING = 'pending',
+    CONFIRMED = 'confirmed',
+    REFUSED = 'refused',
+}
 
 const log = getLogger('InterestConfirmation');
 

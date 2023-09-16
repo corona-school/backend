@@ -12,7 +12,6 @@ import {
     Prisma,
     PrismaClient,
 } from '@prisma/client';
-import { DEFAULT_SCREENER_NUMBER_ID } from '../entity/Screener';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toStudentSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
@@ -134,24 +133,6 @@ export async function becomeTutor(
         where: { id: student.id },
     });
 
-    const isScreenedCoach =
-        (await prismaInstance.project_coaching_screening.count({
-            where: { studentId: student.id, success: true },
-        })) > 0;
-
-    if (isScreenedCoach) {
-        await prismaInstance.screening.create({
-            data: {
-                success: true,
-                screenerId: DEFAULT_SCREENER_NUMBER_ID,
-                comment: `[AUTOMATICALLY GENERATED SECONDARY SCREENING DUE TO VALID PROJECT COACHING SCREENING]`,
-                knowsCoronaSchoolFrom: '',
-            },
-        });
-        if (!batchMode) {
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
-        }
-    }
     return res;
     // TODO: Currently students are not invited for screening again when they want to become tutors? Why is that?
 }

@@ -1,14 +1,13 @@
 import { getLogger } from '../logger/logger';
-import { Lecture } from '../entity/Lecture';
 import { prisma } from '../prisma';
 import { User, userForStudent } from '../user';
 import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zoom/scheduled-meeting';
-import { student as Student } from '@prisma/client';
+import { student as Student, lecture as Appointment } from '@prisma/client';
 import { getOrCreateZoomUser } from '../zoom/user';
 
 const logger = getLogger('Appointment Participants');
 
-export async function isAppointmentParticipant(lecture: Lecture, user: User): Promise<boolean> {
+export async function isAppointmentParticipant(lecture: Appointment, user: User): Promise<boolean> {
     return !!(await prisma.lecture.findFirst({
         where: {
             id: lecture.id,

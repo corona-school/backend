@@ -9,13 +9,13 @@ import { queryUser, User, userForPupil, userForStudent } from '../../common/user
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
+import { ConcreteNotificationState } from '../../common/notification/types';
 
 @ObjectType()
 export class UserContact implements UserContactType {

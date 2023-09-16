@@ -3,7 +3,6 @@ import { concrete_notification as ConcreteNotification, notification as Notifica
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
 // eslint-disable-next-line import/no-cycle
-import { NotificationType } from '../entity/Notification';
 import { ActionID } from './actions';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
@@ -13,8 +12,6 @@ export type { ActionID } from './actions';
 export type Email = `${string}@${string}.${string}`;
 
 export { ConcreteNotification, Notification };
-
-export { ConcreteNotificationState } from '../entity/ConcreteNotification';
 
 interface Attachment {
     Filename: string;
@@ -78,4 +75,45 @@ export interface TranslationTemplate {
 export interface NotificationMessage extends TranslationTemplate {
     type: NotificationType;
     navigateTo?: string;
+}
+
+export enum ConcreteNotificationState {
+    DELAYED = 0, // the action was called but there is a delay set (it's a Reminder)
+    PENDING = 1, // notification was sent, not sure if arrived
+    SENT = 2, // we're pretty sure the notification arrived (no bounce, no API error)
+    ERROR = 3, // the notification bounced
+    ACTION_TAKEN = 4, // the user took an action which cancelled the pending reminder
+    ARCHIVED = 5, // the notification was archived after some months due to privacy reasons (might contain data of other users)
+    DRAFTED = 6, // the notification was drafted and is not supposed to be sent out yet (mainly during campaigns)
+}
+
+export enum NotificationRecipient {
+    USER,
+    TEACHER,
+    PARENT,
+}
+
+export enum NotificationSender {
+    SUPPORT = 'SUPPORT',
+    CERTIFICATE_OF_CONDUCT = 'CERTIFICATE_OF_CONDUCT',
+}
+
+export enum NotificationType {
+    CHAT = 'chat',
+    SURVEY = 'survey',
+    APPOINTMENT = 'appointment',
+    ADVICE = 'advice',
+    SUGGESTION = 'suggestion',
+    ANNOUNCEMENT = 'announcement',
+    CALL = 'call',
+    NEWS = 'news',
+    EVENT = 'event',
+    REQUEST = 'request',
+    ALTERNATIVE = 'alternative',
+    ACCOUNT = 'account',
+    ONBOARDING = 'onboarding',
+    MATCH = 'match',
+    COURSE = 'course',
+    CERTIFICATE = 'certificate',
+    LEGACY = 'legacy',
 }
