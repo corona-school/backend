@@ -3,10 +3,10 @@ import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
+// eslint-disable-next-line import/no-cycle
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
-// eslint-disable-next-line import/no-cycle
 import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
