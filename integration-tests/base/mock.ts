@@ -20,7 +20,7 @@ interface MockedFetch {
 }
 
 // A FIFO queue of expected calls:
-const expectedCalls: MockedFetch[] = [];
+let expectedCalls: MockedFetch[] = [];
 
 export function expectFetch(mocked: MockedFetch) {
     expectedCalls.push(mocked);
