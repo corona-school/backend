@@ -14,15 +14,15 @@ function executeJob(name: string, job: () => Promise<void>): () => Promise<void>
             //"this" is the context of the cron-job -> see definition of node cron package
             this.stop(); //start stop, so that the same job is never executed in parallel
 
-        let hasError = false;
-        try {
-            //execute the job with the manager
-            await job();
-        } catch (e) {
-            logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
-            logger.debug(e);
-            hasError = true;
-        }
+            let hasError = false;
+            try {
+                //execute the job with the manager
+                await job();
+            } catch (e) {
+                logger.error(`Can't execute job: ${job.name} due to error with message:`, e);
+                logger.debug(e);
+                hasError = true;
+            }
 
             stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
 

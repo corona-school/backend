@@ -97,11 +97,11 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     });
 
     expectFetch({
-        "url": "https://api.zoom.us/v2/users/123/meetings",
-        "method": "POST",
-        "body": '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
-        "responseStatus": 200,
-        "response": { id: 12 }
+        url: 'https://api.zoom.us/v2/users/123/meetings',
+        method: 'POST',
+        body: '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+        responseStatus: 200,
+        response: { id: 12 },
     });
 
     const res = await client.request(`
@@ -168,8 +168,6 @@ const myAppointments = test('Get my appointments', async () => {
     return appointments;
 });
 
-
-
 const updatedAppointments = test('Update an appointment', async () => {
     const { client, instructor } = await screenedInstructorOne;
     await firstAppointment;
@@ -224,10 +222,10 @@ void test('Cancel an appointment as a organizer', async () => {
     const appointmentId = clientAppointments[0].id;
 
     expectFetch({
-        "url": "https://api.zoom.us/v2/meetings/10?action=delete",
-        "method": "DELETE",
-        "responseStatus": 200,
-        "response": "{}"
+        url: 'https://api.zoom.us/v2/meetings/10?action=delete',
+        method: 'DELETE',
+        responseStatus: 200,
+        response: '{}',
     });
 
     await client.request(`mutation cancelAppointment {appointmentCancel(appointmentId: ${appointmentId})}`);

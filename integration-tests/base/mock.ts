@@ -1,8 +1,8 @@
-import assert from "assert";
-import wcmatch from "wildcard-match";
-import { getLogger } from "../../common/logger/logger";
+import assert from 'assert';
+import wcmatch from 'wildcard-match';
+import { getLogger } from '../../common/logger/logger';
 
-const logger = getLogger("MOCK");
+const logger = getLogger('MOCK');
 
 interface MockedFetch {
     // The fetch request:
@@ -47,14 +47,14 @@ export function setupFetchMock() {
         const urlMatches = mock && (mock.url === url || wcmatch(mock.url)(url));
 
         if (!urlMatches) {
-            logger.failure(`Request to ${url} not mocked (next mock is for ${mock?.url ?? "-"}). The integration tests must be self containing. Mock with:\n`);
-            logger.mark(`expectFetch(${JSON.stringify({ url, method: options.method, body: options.body, responseStatus: 200, response: "?" }, null, 2)})`);
+            logger.failure(`Request to ${url} not mocked (next mock is for ${mock?.url ?? '-'}). The integration tests must be self containing. Mock with:\n`);
+            logger.mark(`expectFetch(${JSON.stringify({ url, method: options.method, body: options.body, responseStatus: 200, response: '?' }, null, 2)})`);
             process.exit(1);
         }
 
         const methodMatches = mock && mock.method === (options.method ?? 'GET');
         if (!methodMatches) {
-            logger.failure(`Expected request to ${url} to be ${mock.method}, but it was ${options.method ?? "GET"}`);
+            logger.failure(`Expected request to ${url} to be ${mock.method}, but it was ${options.method ?? 'GET'}`);
             process.exit(1);
         }
 
@@ -68,7 +68,9 @@ export function setupFetchMock() {
         }
 
         logger.info(`     request to ${mock.method} ${url} mocked`);
-        return new Response(mock.response ? (typeof mock.response === "string" ? mock.response : JSON.stringify(mock.response)) : "mocked response", { status: mock.responseStatus });
+        return new Response(mock.response ? (typeof mock.response === 'string' ? mock.response : JSON.stringify(mock.response)) : 'mocked response', {
+            status: mock.responseStatus,
+        });
         // return originalFetch(resource, options);
     }
 

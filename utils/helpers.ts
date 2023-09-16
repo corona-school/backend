@@ -14,4 +14,3 @@ export const renderTemplate = (template: string, context: Partial<Context>, stri
 export function compileTemplate(template: string) {
     return compile(template, { strict: true, noEscape: true, knownHelpersOnly: true });
 }
-
