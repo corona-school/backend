@@ -120,7 +120,7 @@ async function deliverNotification(
             }
         }
 
-        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+        activeChannels = await enabledChannels.filter((channel) => channel.canSend(notification, user));
 
         if (!activeChannels.length) {
             logger.warn(
