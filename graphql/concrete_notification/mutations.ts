@@ -20,6 +20,7 @@ import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
 import { asActionID } from '../../common/notification/actions';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
+import { ConcreteNotificationState } from '../../common/notification/types';
 
 const logger = getLogger('MutateConcreteNotificationResolver');
 
